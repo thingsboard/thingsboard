@@ -22,7 +22,7 @@ import java.util.Set;
 
 public enum Resource {
 
-    ADMIN_SETTINGS(),
+    ADMIN_SETTINGS(EntityType.ADMIN_SETTINGS),
     ALARM(EntityType.ALARM),
     DEVICE(EntityType.DEVICE),
     ASSET(EntityType.ASSET),

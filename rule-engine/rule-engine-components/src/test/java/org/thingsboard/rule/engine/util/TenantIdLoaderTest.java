@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -172,7 +173,6 @@ public class TenantIdLoaderTest {
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
-    private NotificationId notificationId;
     private AbstractListeningExecutor dbExecutor;
 
     @BeforeEach
@@ -184,9 +184,8 @@ public class TenantIdLoaderTest {
             }
         };
         dbExecutor.init();
-        this.tenantId = new TenantId(UUID.randomUUID());
+        this.tenantId = TenantId.fromUUID(UUID.randomUUID());
         this.tenantProfileId = new TenantProfileId(UUID.randomUUID());
-        this.notificationId = new NotificationId(UUID.randomUUID());
 
         when(ctx.getTenantId()).thenReturn(tenantId);
 
@@ -204,6 +203,7 @@ public class TenantIdLoaderTest {
         switch (entityType) {
             case TENANT:
             case NOTIFICATION:
+            case ADMIN_SETTINGS:
                 break;
             case CUSTOMER:
                 Customer customer = new Customer();
@@ -476,7 +476,7 @@ public class TenantIdLoaderTest {
 
     @Test
     public void test_findEntityIdAsync_other_tenant() {
-        checkTenant(new TenantId(UUID.randomUUID()), false);
+        checkTenant(TenantId.fromUUID(UUID.randomUUID()), false);
     }
 
 }

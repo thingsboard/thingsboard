@@ -22,9 +22,6 @@ import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author Andrew Shvayka
- */
 public enum EntityType {
     TENANT(1),
     CUSTOMER(2),
@@ -66,7 +63,8 @@ public enum EntityType {
     CALCULATED_FIELD(39),
     CALCULATED_FIELD_LINK(40),
     JOB(41),
-    AI_MODEL(42, "ai_model") {
+    ADMIN_SETTINGS(42),
+    AI_MODEL(43, "ai_model") {
         @Override
         public String getNormalName() {
             return "AI model";

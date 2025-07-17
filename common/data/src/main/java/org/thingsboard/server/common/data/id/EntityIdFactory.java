@@ -20,9 +20,6 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 25.04.17.
- */
 public class EntityIdFactory {
 
     public static EntityId getByTypeAndUuid(int type, String uuid) {
@@ -85,63 +82,39 @@ public class EntityIdFactory {
             case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
             case CALCULATED_FIELD_LINK -> new CalculatedFieldLinkId(uuid);
             case JOB -> new JobId(uuid);
+            case ADMIN_SETTINGS -> new AdminSettingsId(uuid);
             case AI_MODEL -> new AiModelId(uuid);
-            default -> throw new IllegalArgumentException("EntityType " + type + " is not supported!");
         };
     }
 
     public static EntityId getByEdgeEventTypeAndUuid(EdgeEventType edgeEventType, UUID uuid) {
-        switch (edgeEventType) {
-            case TENANT:
-                return TenantId.fromUUID(uuid);
-            case CUSTOMER:
-                return new CustomerId(uuid);
-            case USER:
-                return new UserId(uuid);
-            case DASHBOARD:
-                return new DashboardId(uuid);
-            case DEVICE:
-                return new DeviceId(uuid);
-            case ASSET:
-                return new AssetId(uuid);
-            case ALARM:
-                return new AlarmId(uuid);
-            case RULE_CHAIN:
-                return new RuleChainId(uuid);
-            case ENTITY_VIEW:
-                return new EntityViewId(uuid);
-            case WIDGETS_BUNDLE:
-                return new WidgetsBundleId(uuid);
-            case WIDGET_TYPE:
-                return new WidgetTypeId(uuid);
-            case DEVICE_PROFILE:
-                return new DeviceProfileId(uuid);
-            case ASSET_PROFILE:
-                return new AssetProfileId(uuid);
-            case TENANT_PROFILE:
-                return new TenantProfileId(uuid);
-            case OTA_PACKAGE:
-                return new OtaPackageId(uuid);
-            case EDGE:
-                return new EdgeId(uuid);
-            case QUEUE:
-                return new QueueId(uuid);
-            case TB_RESOURCE:
-                return new TbResourceId(uuid);
-            case NOTIFICATION_RULE:
-                return new NotificationRuleId(uuid);
-            case NOTIFICATION_TARGET:
-                return new NotificationTargetId(uuid);
-            case NOTIFICATION_TEMPLATE:
-                return new NotificationTemplateId(uuid);
-            case OAUTH2_CLIENT:
-                return new OAuth2ClientId(uuid);
-            case DOMAIN:
-                return new DomainId(uuid);
-            case CALCULATED_FIELD:
-                return new CalculatedFieldId(uuid);
-        }
-        throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
+        return switch (edgeEventType) {
+            case TENANT -> TenantId.fromUUID(uuid);
+            case CUSTOMER -> new CustomerId(uuid);
+            case USER -> new UserId(uuid);
+            case DASHBOARD -> new DashboardId(uuid);
+            case DEVICE -> new DeviceId(uuid);
+            case ASSET -> new AssetId(uuid);
+            case ALARM -> new AlarmId(uuid);
+            case RULE_CHAIN -> new RuleChainId(uuid);
+            case ENTITY_VIEW -> new EntityViewId(uuid);
+            case WIDGETS_BUNDLE -> new WidgetsBundleId(uuid);
+            case WIDGET_TYPE -> new WidgetTypeId(uuid);
+            case DEVICE_PROFILE -> new DeviceProfileId(uuid);
+            case ASSET_PROFILE -> new AssetProfileId(uuid);
+            case TENANT_PROFILE -> new TenantProfileId(uuid);
+            case OTA_PACKAGE -> new OtaPackageId(uuid);
+            case EDGE -> EdgeId.fromUUID(uuid);
+            case QUEUE -> new QueueId(uuid);
+            case TB_RESOURCE -> new TbResourceId(uuid);
+            case NOTIFICATION_RULE -> new NotificationRuleId(uuid);
+            case NOTIFICATION_TARGET -> new NotificationTargetId(uuid);
+            case NOTIFICATION_TEMPLATE -> new NotificationTemplateId(uuid);
+            case OAUTH2_CLIENT -> new OAuth2ClientId(uuid);
+            case DOMAIN -> new DomainId(uuid);
+            case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
+            default -> throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
+        };
     }
 
 }
