@@ -3811,9 +3811,9 @@
     },
     "mobile": {
         "add-application": "Add application",
-        "app-id": "App ID",
-        "app-id-required": "App ID is required",
-        "app-id-pattern": "Invalid format App ID",
+        "app-id": "App Site Association ID",
+        "app-id-required": "App Site Association ID is required",
+        "app-id-pattern": "Invalid format App Site Association ID",
         "app-store-link": "App Store link",
         "app-store-link-required": "App Store link is required",
         "application-details": "Application details",
