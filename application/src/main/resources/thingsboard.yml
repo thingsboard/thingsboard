@@ -1479,6 +1479,13 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
+  stats:
+    # Enable or disable reporting of edge communication stats (true or false)
+    enabled: "${EDGES_STATS_ENABLED:true}"
+    # Time-to-live in days for stored edge communication stats in timeseries
+    ttl: "${EDGES_STATS_TTL:30}"
+    # How often to report edge communication stats in milliseconds
+    report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:20000}"
 
 # Spring doc common parameters
 springdoc:
@@ -2018,12 +2025,3 @@ mqtt:
       # The actual delay is randomized within a range defined by multiplying the base delay by a factor between (1 - jitter_factor) and (1 + jitter_factor).
       # For example, a jitter_factor of 0.15 means the actual delay may vary by up to ±15% of the base delay.
       jitter_factor: "${TB_MQTT_CLIENT_RETRANSMISSION_JITTER_FACTOR:0.15}"
-
-edge:
-  stats:
-    # Enable or disable reporting of edge communication stats (true or false)
-    enabled: "${EDGE_STATS_ENABLED:true}"
-    # Time-to-live in days for stored edge communication stats in timeseries
-    ttl: "${EDGE_STATS_TTL:30}"
-    # How often to report edge communication stats in milliseconds
-    report-interval-millis: "${EDGE_STATS_REPORT_INTERVAL_MS:20000}"

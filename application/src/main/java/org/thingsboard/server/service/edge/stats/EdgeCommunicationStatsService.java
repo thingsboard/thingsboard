@@ -55,16 +55,16 @@ public class EdgeCommunicationStatsService {
     @Autowired(required = false)
     private TbKafkaAdmin tbKafkaAdmin;
 
-    @Value("${edge.stats.enabled:true}")
-    private boolean edgeStatsEnabled;
-    @Value("${edge.stats.ttl:30}")
-    private int edgeStatsTtlDays;
-    @Value("${edge.stats.report-interval-millis:20000}")
+    @Value("${edges.stats.enabled:true}")
+    private boolean edgesStatsEnabled;
+    @Value("${edges.stats.ttl:30}")
+    private int edgesStatsTtlDays;
+    @Value("${edges.stats.report-interval-millis:20000}")
     private long reportIntervalMillis;
 
-    @Scheduled(fixedDelayString = "${edge.stats.report-interval-millis:20000}")
+    @Scheduled(fixedDelayString = "${edges.stats.report-interval-millis:20000}")
     public void reportStats() {
-        if (!edgeStatsEnabled) {
+        if (!edgesStatsEnabled) {
             log.debug("Edge stats reporting is disabled by configuration.");
             return;
         }
@@ -115,7 +115,7 @@ public class EdgeCommunicationStatsService {
 
     private void saveTs(TenantId tenantId, EdgeId edgeId, List<TsKvEntry> statsEntries) {
         try {
-            tsService.save(tenantId, edgeId, statsEntries, TimeUnit.DAYS.toSeconds(edgeStatsTtlDays));
+            tsService.save(tenantId, edgeId, statsEntries, TimeUnit.DAYS.toSeconds(edgesStatsTtlDays));
             log.debug("Successfully saved edge event with stats: {} for edge: {}", statsEntries, edgeId);
         } finally {
             statsCounterService.clear(edgeId);
