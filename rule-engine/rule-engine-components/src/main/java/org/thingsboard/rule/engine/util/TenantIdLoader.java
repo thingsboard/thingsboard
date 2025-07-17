@@ -146,6 +146,7 @@ public class TenantIdLoader {
                 tenantEntity = ctx.getNotificationRequestService().findNotificationRequestById(ctxTenantId, new NotificationRequestId(id));
                 break;
             case NOTIFICATION:
+            case ADMIN_SETTINGS:
                 return ctxTenantId;
             case NOTIFICATION_RULE:
                 tenantEntity = ctx.getNotificationRuleService().findNotificationRuleById(ctxTenantId, new NotificationRuleId(id));
