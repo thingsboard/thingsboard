@@ -295,7 +295,7 @@ public class RuleChainController extends BaseController {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         RuleChainType type = RuleChainType.CORE;
-        if (StringUtils.isNotEmpty(typeStr)) {
+        if (StringUtils.isNotBlank(typeStr)) {
             type = RuleChainType.valueOf(typeStr);
         }
         return checkNotNull(ruleChainService.findTenantRuleChainsByType(tenantId, type, pageLink));
