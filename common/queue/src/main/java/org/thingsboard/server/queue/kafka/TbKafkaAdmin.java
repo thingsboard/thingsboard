@@ -31,8 +31,10 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -258,6 +260,47 @@ public class TbKafkaAdmin implements TbQueueAdmin, TbEdgeQueueAdmin {
             log.error("Failed to check if topics [{}] empty.", topics, e);
             return false;
         }
+    }
+
+    public Map<String, Long> getTotalLagForGroupsBulk(Set<String> groupIds) {
+        Map<String, Long> result = new HashMap<>();
+        try {
+            Map<String, Map<TopicPartition, OffsetAndMetadata>> allCommittedOffsets = new HashMap<>();
+            for (String groupId : groupIds) {
+                allCommittedOffsets.put(groupId, getConsumerGroupOffsets(groupId));
+            }
+
+            Set<TopicPartition> allPartitions = allCommittedOffsets.values().stream()
+                    .flatMap(map -> map.keySet().stream())
+                    .collect(Collectors.toSet());
+
+            if (allPartitions.isEmpty()) {
+                return result;
+            }
+
+            Map<TopicPartition, OffsetSpec> latestOffsetsSpec = allPartitions.stream()
+                    .collect(Collectors.toMap(tp -> tp, tp -> OffsetSpec.latest()));
+
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
+                    settings.getAdminClient().listOffsets(latestOffsetsSpec)
+                            .all().get(10, TimeUnit.SECONDS);
+
+            for (String groupId : groupIds) {
+                Map<TopicPartition, OffsetAndMetadata> committedOffsets = allCommittedOffsets.get(groupId);
+                long lag = committedOffsets.entrySet().stream()
+                        .mapToLong(entry -> {
+                            TopicPartition tp = entry.getKey();
+                            long committed = entry.getValue().offset();
+                            long end = endOffsets.getOrDefault(tp,
+                                    new ListOffsetsResult.ListOffsetsResultInfo(0L, 0L, Optional.empty())).offset();
+                            return end - committed;
+                        }).sum();
+                result.put(groupId, lag);
+            }
+        } catch (Exception e) {
+            log.error("Failed to get total lag for consumer groups: {}", groupIds, e);
+        }
+        return result;
     }
 
 }
