@@ -495,6 +495,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode': 'ruleNodeSaveTimeseries',
   'org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode': 'ruleNodeSaveToCustomTable',
   'org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode': 'ruleNodeAwsLambda',
+  'org.thingsboard.rule.engine.ai.TbAiNode': 'ruleNodeAiRequest',
   'org.thingsboard.rule.engine.aws.sns.TbSnsNode': 'ruleNodeAwsSns',
   'org.thingsboard.rule.engine.aws.sqs.TbSqsNode': 'ruleNodeAwsSqs',
   'org.thingsboard.rule.engine.kafka.TbKafkaNode': 'ruleNodeKafka',
