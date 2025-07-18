@@ -138,7 +138,7 @@ public class TenantActor extends RuleChainManagerActor {
     @Override
     protected boolean doProcess(TbActorMsg msg) {
         if (cantFindTenant) {
-            log.trace("[{}] Processing missing Tenant msg: {}", tenantId, msg);
+            log.info("[{}] Processing missing Tenant msg: {}", tenantId, msg);
             if (msg.getMsgType().equals(MsgType.QUEUE_TO_RULE_ENGINE_MSG)) {
                 QueueToRuleEngineMsg queueMsg = (QueueToRuleEngineMsg) msg;
                 queueMsg.getMsg().getCallback().onSuccess();
