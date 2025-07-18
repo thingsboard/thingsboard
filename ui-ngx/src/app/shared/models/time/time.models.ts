@@ -15,11 +15,12 @@
 ///
 
 import { TimeService } from '@core/services/time.service';
-import { deepClone, isDefined, isDefinedAndNotNull, isNumeric, isUndefined } from '@app/core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isNumeric, isUndefined, isUndefinedOrNull } from '@app/core/utils';
 import moment_ from 'moment';
 import * as momentTz from 'moment-timezone';
 import { IntervalType } from '@shared/models/telemetry/telemetry.models';
 import { FormGroup } from '@angular/forms';
+import { isEmpty } from 'lodash';
 
 const moment = moment_;
 
@@ -314,7 +315,7 @@ const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
 };
 
 export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean,
-                                               historyOnly: boolean, timeService: TimeService): Timewindow => {
+                                               historyOnly: boolean, timeService: TimeService, hasAggregation: boolean): Timewindow => {
   const model = defaultTimewindow(timeService);
   if (value) {
     if (value.allowedAggTypes?.length) {
@@ -446,7 +447,9 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       }
       model.aggregation.limit = value.aggregation.limit || Math.floor(timeService.getMaxDatapointsLimit() / 2);
     }
-    model.timezone = value.timezone;
+    if (value.timezone) {
+      model.timezone = value.timezone;
+    }
   }
   if (quickIntervalOnly) {
     model.realtime.realtimeType = RealtimeWindowType.INTERVAL;
@@ -454,6 +457,7 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
   if (historyOnly) {
     model.selectedTab = TimewindowType.HISTORY;
   }
+  clearTimewindowConfig(model, quickIntervalOnly, historyOnly, hasAggregation);
   return model;
 };
 
@@ -1106,11 +1110,80 @@ export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   if (isDefined(timewindow.selectedTab)) {
     cloned.selectedTab = timewindow.selectedTab;
   }
-  cloned.realtime = deepClone(timewindow.realtime);
-  cloned.history = deepClone(timewindow.history);
-  cloned.aggregation = deepClone(timewindow.aggregation);
-  cloned.timezone = timewindow.timezone;
+  if (isDefined(timewindow.realtime)) {
+    cloned.realtime = deepClone(timewindow.realtime);
+  }
+  if (isDefined(timewindow.history)) {
+    cloned.history = deepClone(timewindow.history);
+  }
+  if (isDefined(timewindow.aggregation)) {
+    cloned.aggregation = deepClone(timewindow.aggregation);
+  }
+  if (timewindow.timezone) {
+    cloned.timezone = timewindow.timezone;
+  }
   return cloned;
+};
+
+export const clearTimewindowConfig = (timewindow: Timewindow, quickIntervalOnly: boolean,
+                                      historyOnly: boolean, hasAggregation: boolean, hasTimezone = true): Timewindow => {
+  if (timewindow.selectedTab === TimewindowType.REALTIME) {
+    if (quickIntervalOnly || timewindow.realtime.realtimeType === RealtimeWindowType.INTERVAL) {
+      delete timewindow.realtime.timewindowMs;
+    } else {
+      delete timewindow.realtime.quickInterval;
+    }
+
+    delete timewindow.history.historyType;
+    delete timewindow.history.timewindowMs;
+    delete timewindow.history.fixedTimewindow;
+    delete timewindow.history.quickInterval;
+
+    delete timewindow.history.interval;
+    if (!hasAggregation) {
+      delete timewindow.realtime.interval;
+    }
+  } else {
+    if (timewindow.history.historyType === HistoryWindowType.LAST_INTERVAL) {
+      delete timewindow.history.fixedTimewindow;
+      delete timewindow.history.quickInterval;
+    } else if (timewindow.history.historyType === HistoryWindowType.FIXED) {
+      delete timewindow.history.timewindowMs;
+      delete timewindow.history.quickInterval;
+    } else if (timewindow.history.historyType === HistoryWindowType.INTERVAL) {
+      delete timewindow.history.timewindowMs;
+      delete timewindow.history.fixedTimewindow;
+    } else {
+      delete timewindow.history.timewindowMs;
+      delete timewindow.history.fixedTimewindow;
+      delete timewindow.history.quickInterval;
+    }
+
+    delete timewindow.realtime.realtimeType;
+    delete timewindow.realtime.timewindowMs;
+    delete timewindow.realtime.quickInterval;
+
+    delete timewindow.realtime.interval;
+    if (!hasAggregation) {
+      delete timewindow.history.interval;
+    }
+  }
+
+  if (!hasAggregation) {
+    delete timewindow.aggregation;
+  }
+
+  if (isEmpty(timewindow.history)) {
+    delete timewindow.history;
+  }
+  if (historyOnly || isEmpty(timewindow.realtime)) {
+    delete timewindow.realtime;
+  }
+
+  if (!hasTimezone || isUndefinedOrNull(timewindow.timezone)) {
+    delete timewindow.timezone;
+  }
+  return timewindow;
 };
 
 export interface TimeInterval {
