@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 #
+
 services:
 # Valkey standalone
 # The latest version of Valkey compatible with ThingsBoard is 8.0
