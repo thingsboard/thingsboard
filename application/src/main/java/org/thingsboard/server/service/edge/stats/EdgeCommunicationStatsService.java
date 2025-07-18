@@ -73,15 +73,15 @@ public class EdgeCommunicationStatsService {
         long ts = (System.currentTimeMillis() / reportIntervalMillis) * reportIntervalMillis;
 
         Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
-        Map<EdgeId, Long> lagByEdgeId = getEdgeLagByEdgeId(countersByEdge);
-
+        Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin != null ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
         for (Map.Entry<EdgeId, MsgCounters> counterByEdge : countersByEdge.entrySet()) {
             EdgeId edgeId = counterByEdge.getKey();
             MsgCounters counters = counterByEdge.getValue();
             TenantId tenantId = counters.getTenantId();
 
-            counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
-
+            if (tbKafkaAdmin != null) {
+                counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
+            }
             List<TsKvEntry> statsEntries = List.of(
                     entry(ts, DOWNLINK_MSGS_ADDED, counters.getMsgsAdded().get()),
                     entry(ts, DOWNLINK_MSGS_PUSHED, counters.getMsgsPushed().get()),
@@ -102,9 +102,7 @@ public class EdgeCommunicationStatsService {
                         e -> topicService.buildEdgeEventNotificationsTopicPartitionInfo(e.getValue().getTenantId(), e.getKey()).getTopic()
                 ));
 
-        Map<String, Long> lagByTopic = tbKafkaAdmin != null
-                ? tbKafkaAdmin.getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()))
-                : Collections.emptyMap();
+        Map<String, Long> lagByTopic = tbKafkaAdmin.getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));
 
         return edgeToTopicMap.entrySet().stream()
                 .collect(Collectors.toMap(
@@ -116,7 +114,7 @@ public class EdgeCommunicationStatsService {
     private void saveTs(TenantId tenantId, EdgeId edgeId, List<TsKvEntry> statsEntries) {
         try {
             tsService.save(tenantId, edgeId, statsEntries, TimeUnit.DAYS.toSeconds(edgesStatsTtlDays));
-            log.debug("Successfully saved edge event with stats: {} for edge: {}", statsEntries, edgeId);
+            log.debug("Successfully saved edge time-series stats: {} for edge: {}", statsEntries, edgeId);
         } finally {
             statsCounterService.clear(edgeId);
         }

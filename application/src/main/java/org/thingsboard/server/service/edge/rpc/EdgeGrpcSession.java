@@ -299,8 +299,10 @@ public abstract class EdgeGrpcSession implements Closeable {
             processHighPriorityEvents();
             PageData<EdgeEvent> pageData = fetcher.fetchEdgeEvents(edge.getTenantId(), edge, pageLink);
             if (isConnected() && !pageData.getData().isEmpty()) {
-                long queueSize = Math.max(pageData.getTotalElements() - ((long) pageLink.getPage() * pageLink.getPageSize()), 0);
-                ctx.getStatsCounterService().setDownlinkMsgsLag(edge.getId(), edge.getTenantId(), queueSize);
+                if (pageLink != null) {
+                    long queueSize = (long) pageLink.getPageSize() * pageLink.getPage();
+                    ctx.getStatsCounterService().setDownlinkMsgsLag(edge.getId(), edge.getTenantId(), queueSize);
+                }
                 log.trace("[{}][{}][{}] event(s) are going to be processed.", tenantId, edge.getId(), pageData.getData().size());
                 List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());
                 Futures.addCallback(sendDownlinkMsgsPack(downlinkMsgsPack), new FutureCallback<>() {

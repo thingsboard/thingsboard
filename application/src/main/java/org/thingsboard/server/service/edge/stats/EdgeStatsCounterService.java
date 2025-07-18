@@ -46,7 +46,7 @@ public class EdgeStatsCounterService {
     }
 
     public void clear(EdgeId edgeId) {
-        counterByEdge.remove(edgeId);
+        counterByEdge.get(edgeId).clear();
     }
 
     public MsgCounters getOrCreateCounters(EdgeId edgeId, TenantId tenantId) {
