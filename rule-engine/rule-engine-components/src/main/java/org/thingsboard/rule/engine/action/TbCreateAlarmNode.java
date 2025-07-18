@@ -70,7 +70,6 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
         }
     }
 
-
     @Override
     protected TbCreateAlarmNodeConfiguration loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException {
         TbCreateAlarmNodeConfiguration nodeConfiguration = TbNodeUtils.convert(configuration, TbCreateAlarmNodeConfiguration.class);
@@ -96,12 +95,13 @@ public class TbCreateAlarmNode extends TbAbstractAlarmNode<TbCreateAlarmNodeConf
             }
         }
 
-        Alarm existingAlarm = ctx.getAlarmService().findLatestActiveByOriginatorAndType(ctx.getTenantId(), msg.getOriginator(), alarmType);
-        if (existingAlarm == null || existingAlarm.getStatus().isCleared()) {
-            return createNewAlarm(ctx, msg, msgAlarm);
-        } else {
-            return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
-        }
+        return ctx.getAlarmService().findLatestActiveByOriginatorAndTypeAsync(ctx.getTenantId(), msg.getOriginator(), alarmType).transformAsync(existingAlarm -> {
+            if (existingAlarm == null || existingAlarm.getStatus().isCleared()) {
+                return createNewAlarm(ctx, msg, msgAlarm);
+            } else {
+                return updateAlarm(ctx, msg, existingAlarm, msgAlarm);
+            }
+        }, ctx.getDbCallbackExecutor());
     }
 
     private Alarm getAlarmFromMessage(TbContext ctx, TbMsg msg) throws IOException {

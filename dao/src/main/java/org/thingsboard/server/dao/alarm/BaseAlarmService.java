@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -167,6 +168,11 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmDao.findLatestActiveByOriginatorAndType(tenantId, originator, type);
+    }
+
+    @Override
+    public FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return alarmDao.findLatestActiveByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Override
