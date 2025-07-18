@@ -17,10 +17,11 @@ package org.thingsboard.server.transport.mqtt;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
+import java.lang.annotation.Inherited;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
+@Inherited
 @Retention(RetentionPolicy.RUNTIME)
 @ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled}'=='true')")
-public @interface TbMqttTransportComponent {
-}
+public @interface TbMqttTransportComponent {}
