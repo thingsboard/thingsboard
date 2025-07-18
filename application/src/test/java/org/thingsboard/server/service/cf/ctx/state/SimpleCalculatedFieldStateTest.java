@@ -42,6 +42,7 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -134,9 +135,10 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
 
-        assertThat(result).isNotNull();
+        assertThat(resultList).isNotNull().hasSize(1);
+        CalculatedFieldResult result = resultList.get(0);
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
@@ -164,9 +166,10 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
 
-        assertThat(result).isNotNull();
+        assertThat(resultList).isNotNull().hasSize(1);
+        CalculatedFieldResult result = resultList.get(0);
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
@@ -185,9 +188,10 @@ public class SimpleCalculatedFieldStateTest {
         output.setDecimalsByDefault(3);
         ctx.setOutput(output);
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
 
-        assertThat(result).isNotNull();
+        assertThat(resultList).isNotNull().hasSize(1);
+        CalculatedFieldResult result = resultList.get(0);
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
         assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49.546)));

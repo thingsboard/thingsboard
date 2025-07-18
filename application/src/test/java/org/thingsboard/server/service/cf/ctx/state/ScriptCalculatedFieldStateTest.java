@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -124,9 +125,10 @@ public class ScriptCalculatedFieldStateTest {
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
 
-        assertThat(result).isNotNull();
+        assertThat(resultList).isNotNull().hasSize(1);
+        CalculatedFieldResult result = resultList.get(0);
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
