@@ -27,7 +27,8 @@ import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import {
   CompiledTbFunction,
-  compileTbFunction, GenericFunction,
+  compileTbFunction,
+  GenericFunction,
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
@@ -771,6 +772,33 @@ export function deepTrim<T>(obj: T): T {
     }
     return acc;
   }, (Array.isArray(obj) ? [] : {}) as T);
+}
+
+export function deepClean<T extends Record<string, any> | any[]>(obj: T, {
+  cleanKeys = []
+} = {}): T {
+  return _.transform(obj, (result, value, key) => {
+    if (cleanKeys.includes(key)) {
+      return;
+    }
+    if (Array.isArray(value) || isLiteralObject(value)) {
+      value = deepClean(value, {cleanKeys});
+    }
+    if(isLiteralObject(value) && isEmpty(value)) {
+      return;
+    }
+    if (Array.isArray(value) && !value.length) {
+      return;
+    }
+    if (value === undefined || value === null || value === '' || Number.isNaN(value)) {
+      return;
+    }
+
+    if (Array.isArray(result)) {
+      return result.push(value);
+    }
+    result[key] = value;
+  });
 }
 
 export function generateSecret(length?: number): string {
