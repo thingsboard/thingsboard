@@ -381,8 +381,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       this.timewindowForm.valueChanges.pipe(
         takeUntil(this.destroy$)
       ).subscribe(() => {
-        this.prepareTimewindowConfig();
-        this.changeTimewindow.emit(this.clearTimewindowConfig());
+        this.changeTimewindow.emit(this.prepareTimewindowConfig());
       });
     }
   }
@@ -408,12 +407,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   update() {
-    this.prepareTimewindowConfig();
-    this.result = this.clearTimewindowConfig();
+    this.result = this.prepareTimewindowConfig();
     this.overlayRef?.dispose();
   }
 
-  private prepareTimewindowConfig() {
+  private prepareTimewindowConfig(clearConfig = true): Timewindow {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow.selectedTab = timewindowFormValue.selectedTab;
     if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
@@ -442,10 +440,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     if (this.timezone) {
       this.timewindow.timezone = timewindowFormValue.timezone;
     }
-  }
 
-  private clearTimewindowConfig(): Timewindow {
-    return clearTimewindowConfig(this.timewindow, this.quickIntervalOnly, this.historyOnly, this.aggregation, this.timezone);
+    if (clearConfig) {
+      return clearTimewindowConfig(this.timewindow, this.quickIntervalOnly, this.historyOnly, this.aggregation, this.timezone);
+    } else {
+      return deepClone(this.timewindow);
+    }
   }
 
   private updateTimewindowForm() {
@@ -555,7 +555,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   openTimewindowConfig() {
-    this.prepareTimewindowConfig();
     this.dialog.open<TimewindowConfigDialogComponent, TimewindowConfigDialogData, Timewindow>(
       TimewindowConfigDialogComponent, {
         autoFocus: false,
@@ -564,7 +563,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         data: {
           quickIntervalOnly: this.quickIntervalOnly,
           aggregation: this.aggregation,
-          timewindow: deepClone(this.timewindow)
+          timewindow: this.prepareTimewindowConfig(false)
         }
       }).afterClosed()
       .subscribe((res) => {

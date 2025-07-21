@@ -1132,12 +1132,12 @@ export const clearTimewindowConfig = (timewindow: Timewindow, quickIntervalOnly:
       delete timewindow.realtime.quickInterval;
     }
 
-    delete timewindow.history.historyType;
-    delete timewindow.history.timewindowMs;
-    delete timewindow.history.fixedTimewindow;
-    delete timewindow.history.quickInterval;
+    delete timewindow.history?.historyType;
+    delete timewindow.history?.timewindowMs;
+    delete timewindow.history?.fixedTimewindow;
+    delete timewindow.history?.quickInterval;
 
-    delete timewindow.history.interval;
+    delete timewindow.history?.interval;
     if (!hasAggregation) {
       delete timewindow.realtime.interval;
     }
@@ -1157,11 +1157,11 @@ export const clearTimewindowConfig = (timewindow: Timewindow, quickIntervalOnly:
       delete timewindow.history.quickInterval;
     }
 
-    delete timewindow.realtime.realtimeType;
-    delete timewindow.realtime.timewindowMs;
-    delete timewindow.realtime.quickInterval;
+    delete timewindow.realtime?.realtimeType;
+    delete timewindow.realtime?.timewindowMs;
+    delete timewindow.realtime?.quickInterval;
 
-    delete timewindow.realtime.interval;
+    delete timewindow.realtime?.interval;
     if (!hasAggregation) {
       delete timewindow.history.interval;
     }
