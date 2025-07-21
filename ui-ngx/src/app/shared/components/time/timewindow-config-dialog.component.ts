@@ -36,7 +36,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-import { deepClean, deepClone, isDefined, isDefinedAndNotNull, isEmpty, mergeDeepIgnoreArray } from '@core/utils';
+import {
+  deepClean,
+  deepClone,
+  deleteFalseProperties,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmpty,
+  mergeDeepIgnoreArray
+} from '@core/utils';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -472,54 +480,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       delete this.timewindow.allowedAggTypes;
     }
 
-    if (!this.timewindow.realtime.disableCustomInterval) {
-      delete this.timewindow.realtime.disableCustomInterval;
-    }
-    if (!this.timewindow.realtime.disableCustomGroupInterval) {
-      delete this.timewindow.realtime.disableCustomGroupInterval;
-    }
-    if (!this.timewindow.history.disableCustomInterval) {
-      delete this.timewindow.history.disableCustomInterval;
-    }
-    if (!this.timewindow.history.disableCustomGroupInterval) {
-      delete this.timewindow.history.disableCustomGroupInterval;
-    }
-
-    if (!this.timewindow.hideAggregation) {
-      delete this.timewindow.hideAggregation;
-    }
-    if (!this.timewindow.hideAggInterval) {
-      delete this.timewindow.hideAggInterval;
-    }
-    if (!this.timewindow.hideTimezone) {
-      delete this.timewindow.hideTimezone;
-    }
-
-    if (!this.timewindow.realtime.hideInterval) {
-      delete this.timewindow.realtime.hideInterval;
-    }
-    if (!this.timewindow.realtime.hideLastInterval) {
-      delete this.timewindow.realtime.hideLastInterval;
-    }
-    if (!this.timewindow.realtime.hideQuickInterval) {
-      delete this.timewindow.realtime.hideQuickInterval;
-    }
-    if (!this.timewindow.history.hideInterval) {
-      delete this.timewindow.history.hideInterval;
-    }
-    if (!this.timewindow.history.hideLastInterval) {
-      delete this.timewindow.history.hideLastInterval;
-    }
-    if (!this.timewindow.history.hideFixedInterval) {
-      delete this.timewindow.history.hideFixedInterval;
-    }
-    if (!this.timewindow.history.hideQuickInterval) {
-      delete this.timewindow.history.hideQuickInterval;
-    }
-
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }
+
+    deleteFalseProperties(this.timewindow);
     this.dialogRef.close(deepClean(this.timewindow));
   }
 

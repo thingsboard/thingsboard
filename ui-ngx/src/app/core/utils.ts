@@ -197,6 +197,23 @@ export function deleteNullProperties(obj: any) {
   });
 }
 
+export function deleteFalseProperties(obj: any) {
+  if (isUndefinedOrNull(obj)) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === false || isUndefinedOrNull(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteFalseProperties(obj[propName]);
+    } else if (Array.isArray(obj[propName])) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteFalseProperties(elem);
+      });
+    }
+  });
+}
+
 export function objToBase64(obj: any): string {
   const json = JSON.stringify(obj);
   return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,
