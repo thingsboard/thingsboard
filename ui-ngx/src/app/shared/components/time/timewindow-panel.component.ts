@@ -421,6 +421,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
           realtimeType: timewindowFormValue.realtime.realtimeType,
           timewindowMs: timewindowFormValue.realtime.timewindowMs,
           quickInterval: timewindowFormValue.realtime.quickInterval,
+          interval: timewindowFormValue.realtime.interval,
         }};
     } else {
       this.timewindow.history = {...this.timewindow.history, ...{
@@ -428,13 +429,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
           timewindowMs: timewindowFormValue.history.timewindowMs,
           fixedTimewindow: timewindowFormValue.history.fixedTimewindow,
           quickInterval: timewindowFormValue.history.quickInterval,
+          interval: timewindowFormValue.history.interval,
         }};
     }
 
     if (this.aggregation) {
-      this.timewindow.realtime.interval = timewindowFormValue.realtime.interval;
-      this.timewindow.history.interval = timewindowFormValue.history.interval;
-
       this.timewindow.aggregation = {
         type: timewindowFormValue.aggregation.type,
         limit: timewindowFormValue.aggregation.limit
