@@ -15,12 +15,11 @@
 ///
 
 import { TimeService } from '@core/services/time.service';
-import { deepClone, isDefined, isDefinedAndNotNull, isNumeric, isUndefined, isUndefinedOrNull } from '@app/core/utils';
+import { deepClean, deepClone, isDefined, isDefinedAndNotNull, isNumeric, isUndefined } from '@app/core/utils';
 import moment_ from 'moment';
 import * as momentTz from 'moment-timezone';
 import { IntervalType } from '@shared/models/telemetry/telemetry.models';
 import { FormGroup } from '@angular/forms';
-import { isEmpty } from 'lodash';
 
 const moment = moment_;
 
@@ -457,8 +456,7 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
   if (historyOnly) {
     model.selectedTab = TimewindowType.HISTORY;
   }
-  clearTimewindowConfig(model, quickIntervalOnly, historyOnly, hasAggregation);
-  return model;
+  return clearTimewindowConfig(model, quickIntervalOnly, historyOnly, hasAggregation);
 };
 
 export const toHistoryTimewindow = (timewindow: Timewindow, startTimeMs: number, endTimeMs: number,
@@ -1173,17 +1171,14 @@ export const clearTimewindowConfig = (timewindow: Timewindow, quickIntervalOnly:
     delete timewindow.aggregation;
   }
 
-  if (isEmpty(timewindow.history)) {
-    delete timewindow.history;
-  }
-  if (historyOnly || isEmpty(timewindow.realtime)) {
+  if (historyOnly) {
     delete timewindow.realtime;
   }
 
-  if (!hasTimezone || isUndefinedOrNull(timewindow.timezone)) {
+  if (!hasTimezone) {
     delete timewindow.timezone;
   }
-  return timewindow;
+  return deepClean(timewindow);
 };
 
 export interface TimeInterval {

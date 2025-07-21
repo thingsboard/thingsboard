@@ -382,8 +382,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         takeUntil(this.destroy$)
       ).subscribe(() => {
         this.prepareTimewindowConfig();
-        this.clearTimewindowConfig();
-        this.changeTimewindow.emit(this.timewindow);
+        this.changeTimewindow.emit(this.clearTimewindowConfig());
       });
     }
   }
@@ -410,8 +409,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
 
   update() {
     this.prepareTimewindowConfig();
-    this.clearTimewindowConfig();
-    this.result = this.timewindow;
+    this.result = this.clearTimewindowConfig();
     this.overlayRef?.dispose();
   }
 
@@ -447,8 +445,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     }
   }
 
-  private clearTimewindowConfig() {
-    clearTimewindowConfig(this.timewindow, this.quickIntervalOnly, this.historyOnly, this.aggregation, this.timezone);
+  private clearTimewindowConfig(): Timewindow {
+    return clearTimewindowConfig(this.timewindow, this.quickIntervalOnly, this.historyOnly, this.aggregation, this.timezone);
   }
 
   private updateTimewindowForm() {
