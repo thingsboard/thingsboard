@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.persistence.EntityManager;
@@ -69,9 +68,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         log.debug("Saving entity {}", entity);
         boolean isNew = entity.getUuid() == null;
         if (isNew) {
-            UUID uuid = Uuids.timeBased();
-            entity.setUuid(uuid);
-            entity.setCreatedTime(Uuids.unixTimestamp(uuid));
+            entity.setCreatedTime(System.currentTimeMillis());
         }
         try {
             entity = doSave(entity, isNew, flush);
