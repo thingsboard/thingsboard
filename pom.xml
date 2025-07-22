@@ -121,6 +121,7 @@
         <dbunit.version>2.7.3</dbunit.version>
         <java-websocket.version>1.5.6</java-websocket.version>
         <mock-server.version>5.15.0</mock-server.version>
+        <nimbus-jose-jwt.version>9.37.2</nimbus-jose-jwt.version> <!-- to fix CVE-2023-52428. TODO: remove when fixed in mockserver-netty  -->
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <jeasy.version>5.0.0</jeasy.version>
@@ -1776,6 +1777,12 @@
                         <artifactId>commons-logging</artifactId>
                     </exclusion>
                 </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>com.nimbusds</groupId>
+                <artifactId>nimbus-jose-jwt</artifactId>
+                <version>${nimbus-jose-jwt.version}</version>
+                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>
