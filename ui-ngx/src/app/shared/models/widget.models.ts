@@ -489,6 +489,14 @@ export const targetDeviceValid = (targetDevice?: TargetDevice): boolean =>
     ((targetDevice.type === TargetDeviceType.device && !!targetDevice.deviceId) ||
       (targetDevice.type === TargetDeviceType.entity && !!targetDevice.entityAliasId));
 
+export const widgetTypeHasTimewindow = (type: widgetType): boolean => {
+  return type === widgetType.timeseries || type === widgetType.alarm;
+}
+
+export const widgetTypeCanHaveTimewindow = (type: widgetType): boolean => {
+  return widgetTypeHasTimewindow(type) || type === widgetType.latest;
+}
+
 export const datasourcesHasAggregation = (datasources?: Array<Datasource>): boolean => {
   if (datasources) {
     const foundDatasource = datasources.find(datasource => {

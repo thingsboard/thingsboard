@@ -38,6 +38,7 @@ import {
   TargetDevice,
   targetDeviceValid,
   Widget,
+  widgetTypeCanHaveTimewindow,
   WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
@@ -53,7 +54,7 @@ import {
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, genNextLabel, isDefined, isObject } from '@app/core/utils';
+import { deepClone, genNextLabel, isDefined, isDefinedAndNotNull, isObject } from '@app/core/utils';
 import { alarmFields, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAlias } from '@shared/models/alias.models';
@@ -84,6 +85,8 @@ import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/co
 import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { WidgetService } from '@core/http/widget.service';
+import { TimeService } from '@core/services/time.service';
+import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -201,6 +204,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
               private entityService: EntityService,
+              public timeService: TimeService,
               private dialog: MatDialog,
               public translate: TranslateService,
               private fb: UntypedFormBuilder,
@@ -366,16 +370,16 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
-    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+    if (widgetTypeCanHaveTimewindow(this.widgetType)) {
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
-        useDashboardTimewindow: true,
-        displayTimewindow: true,
+        useDashboardTimewindow: this.widgetType !== widgetType.latest,
+        displayTimewindow: this.widgetType !== widgetType.latest,
         timewindow: null,
         timewindowStyle: null
       }));
-      if (this.widgetType === widgetType.alarm) {
-        this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
-      }
+    }
+    if (this.widgetType === widgetType.alarm) {
+      this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
     }
     if (this.modelValue.isDataEnabled) {
       if (this.widgetType !== widgetType.rpc &&
@@ -529,14 +533,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         },
         {emitEvent: false}
       );
-      if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+      if (widgetTypeCanHaveTimewindow(this.widgetType)) {
         const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
-          config.useDashboardTimewindow : true;
+          config.useDashboardTimewindow : this.widgetType !== widgetType.latest;
         this.dataSettings.get('timewindowConfig').patchValue({
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
-            config.displayTimewindow : true,
-          timewindow: config.timewindow,
+            config.displayTimewindow : this.widgetType !== widgetType.latest,
+          timewindow: isDefinedAndNotNull(config.timewindow)
+            ? config.timewindow
+            : initModelFromDefaultTimewindow(null, this.widgetType === widgetType.latest, this.onlyHistoryTimewindow(),
+              this.timeService, this.widgetType === widgetType.timeseries),
           timewindowStyle: config.timewindowStyle
         }, {emitEvent: false});
       }
