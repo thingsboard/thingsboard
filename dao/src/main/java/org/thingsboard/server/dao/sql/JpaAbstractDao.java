@@ -98,6 +98,11 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         if (entity instanceof HasVersion versionedEntity) {
             /*
+             * by default, Hibernate doesn't issue an update query and thus version increment
+             * if the entity was not modified. to bypass this and always increment the version, we do it manually
+             * */
+            versionedEntity.setVersion(versionedEntity.getVersion() + 1);
+            /*
              * flushing and then removing the entity from the persistence context so that it is not affected
              * by next flushes (e.g. when a transaction is committed) to avoid double version increment
              * */
@@ -113,7 +118,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     private E create(E entity) {
         if (entity instanceof HasVersion versionedEntity) {
-            versionedEntity.setVersion(1L);
+            versionedEntity.setVersion(0L);
         }
         if (entity.getUuid() == null) {
             getEntityManager().persist(entity);
@@ -147,11 +152,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             }
             versionedEntity = entityManager.merge(versionedEntity);
             entity = (E) versionedEntity;
-            /*
-             * by default, Hibernate doesn't issue an update query and thus version increment
-             * if the entity was not modified. to bypass this and always increment the version, we do it manually
-             * */
-            versionedEntity.setVersion(versionedEntity.getVersion() + 1);
         } else {
             entity = entityManager.merge(entity);
         }
