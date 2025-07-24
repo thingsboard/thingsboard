@@ -24,6 +24,7 @@ import {
 } from '@shared/models/action-widget-settings.models';
 import { BackgroundSettings, BackgroundType, cssUnit, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { TbUnit } from '@shared/models/unit.models';
 
 export enum SliderLayout {
   default = 'default',
@@ -56,7 +57,7 @@ export interface SliderWidgetSettings {
   layout: SliderLayout;
   autoScale: boolean;
   showValue: boolean;
-  valueUnits: string;
+  valueUnits: TbUnit;
   valueDecimals: number;
   valueFont: Font;
   valueColor: string;

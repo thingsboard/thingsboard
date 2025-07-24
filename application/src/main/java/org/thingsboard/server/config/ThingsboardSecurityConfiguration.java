@@ -26,9 +26,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.DefaultAuthenticationEventPublisher;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
-import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -47,6 +45,7 @@ import org.springframework.web.filter.ShallowEtagHeaderFilter;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.AuthExceptionHandler;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.jwt.JwtTokenAuthenticationProcessingFilter;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenAuthenticationProvider;
@@ -129,6 +128,9 @@ public class ThingsboardSecurityConfiguration {
     @Autowired
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
+    @Autowired
+    private AuthExceptionHandler authExceptionHandler;
+
     @Bean
     protected PayloadSizeFilter payloadSizeFilter() {
         return new PayloadSizeFilter(maxPayloadSizeConfig);
@@ -179,15 +181,12 @@ public class ThingsboardSecurityConfiguration {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(ObjectPostProcessor<Object> objectPostProcessor) throws Exception {
-        DefaultAuthenticationEventPublisher eventPublisher = objectPostProcessor
-                .postProcess(new DefaultAuthenticationEventPublisher());
-        var auth = new AuthenticationManagerBuilder(objectPostProcessor);
-        auth.authenticationEventPublisher(eventPublisher);
-        auth.authenticationProvider(restAuthenticationProvider);
-        auth.authenticationProvider(jwtAuthenticationProvider);
-        auth.authenticationProvider(refreshTokenAuthenticationProvider);
-        return auth.build();
+    public AuthenticationManager authenticationManager() {
+        return new ProviderManager(List.of(
+                restAuthenticationProvider,
+                jwtAuthenticationProvider,
+                refreshTokenAuthenticationProvider
+        ));
     }
 
     @Autowired
@@ -235,7 +234,8 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(payloadSizeFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(authExceptionHandler, buildRestLoginProcessingFilter().getClass());
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login
                     .authorizationEndpoint(config -> config
@@ -260,4 +260,5 @@ public class ThingsboardSecurityConfiguration {
             return new CorsFilter(source);
         }
     }
+
 }

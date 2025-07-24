@@ -88,7 +88,8 @@
     <div class="tb-form-row space-between">
       <div translate>widget-config.units-short</div>
       <tb-unit-input
-          formControlName="units">
+        supportsUnitConversion
+        formControlName="units">
       </tb-unit-input>
     </div>
     <div class="tb-form-row space-between">
@@ -500,6 +501,17 @@
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.radar-chart.radar-axis</div>
+      <div class="tb-form-row column">
+        <div class="tb-form-row no-border no-padding space-between">
+          <div tb-hint-tooltip-icon="{{ 'widgets.radar-chart.max-axes-scaling-hint' | translate }}">
+            {{ 'widgets.radar-chart.max-axes-scaling' | translate }}
+          </div>
+          <tb-toggle-select formControlName="normalizeAxes">
+            <tb-toggle-option [value]="false">{{ 'widgets.radar-chart.separate' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="true">{{ 'widgets.radar-chart.common' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+      </div>
       <div class="tb-form-row space-between">
         <mat-slide-toggle class="mat-slide" formControlName="axisShowLabel">
           {{ 'widgets.radar-chart.axis-label' | translate }}

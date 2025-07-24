@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateType;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
@@ -44,6 +45,7 @@ import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -93,9 +95,14 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
     public void setAndResolveQuery(T query) {
         dynamicValues.clear();
         this.query = query;
-        if (query != null && query.getKeyFilters() != null) {
-            for (KeyFilter filter : query.getKeyFilters()) {
-                registerDynamicValues(filter.getPredicate());
+        if (query != null) {
+            if (query.getEntityFilter() != null) {
+                EntityFilter.resolveEntityFilter(query.getEntityFilter(), getTenantId(), getUserId(), getOwnerId());
+            }
+            if (query.getKeyFilters() != null) {
+                for (KeyFilter filter : query.getKeyFilters()) {
+                    registerDynamicValues(filter.getPredicate());
+                }
             }
         }
         resolve(getTenantId(), getCustomerId(), getUserId());
@@ -154,9 +161,8 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
     private void dynamicValueSubUpdate(String sessionId, TelemetrySubscriptionUpdate subscriptionUpdate,
                                        Map<String, DynamicValueKeySub> dynamicValueKeySubMap) {
         Map<String, TsValue> latestUpdate = new HashMap<>();
-        subscriptionUpdate.getData().forEach((k, v) -> {
-            Object[] data = (Object[]) v.get(0);
-            latestUpdate.put(k, new TsValue((Long) data[0], (String) data[1]));
+        subscriptionUpdate.getValues().forEach((key, values) -> {
+            latestUpdate.put(key, getLatest(values));
         });
 
         boolean invalidateFilter = false;
@@ -281,6 +287,12 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
             log.trace("[{}][{}] Canceling old refresh task", sessionRef.getSessionId(), cmdId);
             this.refreshTask.cancel(true);
         }
+    }
+
+    protected TsValue getLatest(List<TsValue> values) {
+        return values.stream()
+                .max(Comparator.comparing(TsValue::getTs))
+                .orElse(null);
     }
 
     @Data

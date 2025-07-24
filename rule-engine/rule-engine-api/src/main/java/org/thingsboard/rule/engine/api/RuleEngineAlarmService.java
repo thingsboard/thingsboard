@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -70,13 +71,15 @@ public interface RuleEngineAlarmService {
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
 
     // Other API
-    Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
+    boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
@@ -99,4 +102,5 @@ public interface RuleEngineAlarmService {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
+
 }

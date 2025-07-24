@@ -75,6 +75,7 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.edge.EdgeEventService;
@@ -115,7 +116,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 @Slf4j
 abstract public class AbstractEdgeTest extends AbstractControllerTest {
-
+    public static final Integer CONNECT_MESSAGE_COUNT = 17;
+    public static final Integer INSTALLATION_MESSAGE_COUNT = 8;
+    public static final Integer SYNC_MESSAGE_COUNT = CONNECT_MESSAGE_COUNT + INSTALLATION_MESSAGE_COUNT;
     private static final String THERMOSTAT_DEVICE_PROFILE_NAME = "Thermostat";
 
     protected DeviceProfile thermostatDeviceProfile;
@@ -136,11 +139,12 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         doPost("/api/admin/jwtSettings", settings).andExpect(status().isOk());
 
         loginTenantAdmin();
-
+        //8 installation messages
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.expectMessageAmount(25);
+        // 17 connect messages + 8 installation messages
+        edgeImitator.expectMessageAmount(SYNC_MESSAGE_COUNT);
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
         edgeImitator.connect();
@@ -164,22 +168,32 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         thermostatDeviceProfile = this.createDeviceProfile(THERMOSTAT_DEVICE_PROFILE_NAME,
                 createMqttDeviceProfileTransportConfiguration(new JsonTransportPayloadConfiguration(), false));
         extendDeviceProfileData(thermostatDeviceProfile);
+        //2 messages DeviceProfile
         thermostatDeviceProfile = doPost("/api/deviceProfile", thermostatDeviceProfile, DeviceProfile.class);
 
         Device savedDevice = saveDevice("Edge Device 1", THERMOSTAT_DEVICE_PROFILE_NAME);
 
         // create public customer
+        //1 message
+        // Customer
         doPost("/api/customer/public/device/" + savedDevice.getId().getId(), Device.class);
         doDelete("/api/customer/device/" + savedDevice.getId().getId(), Device.class);
 
-        Asset savedAsset = saveAsset("Edge Asset 1");
 
+        Asset savedAsset = saveAsset("Edge Asset 1");
         updateRootRuleChainMetadata();
 
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
 
+        //3 messages
+        // Device
+        // DeviceProfile
+        // DeviceCredentials
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
+        //2 messages
+        // Asset
+        // AssetProfile
         doPost("/api/edge/" + edge.getUuidId()
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
 
@@ -552,7 +566,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected Device saveDeviceOnCloudAndVerifyDeliveryToEdge() throws Exception {
         // create device and assign to edge
         Device savedDevice = saveDevice(StringUtils.randomAlphanumeric(15), thermostatDeviceProfile.getName());
-        edgeImitator.expectMessageAmount(2); // device and device profile messages
+        DeviceCredentials deviceCredentials = doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
+        edgeImitator.expectMessageAmount(3); // device and device profile messages and device credentials
         doPost("/api/edge/" + edge.getUuidId()
                 + "/device/" + savedDevice.getUuidId(), Device.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
@@ -569,6 +584,15 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, deviceProfileUpdateMsg.getMsgType());
         Assert.assertEquals(thermostatDeviceProfile.getUuidId().getMostSignificantBits(), deviceProfileUpdateMsg.getIdMSB());
         Assert.assertEquals(thermostatDeviceProfile.getUuidId().getLeastSignificantBits(), deviceProfileUpdateMsg.getIdLSB());
+
+        Optional<DeviceCredentialsUpdateMsg> deviceCredentialsUpdateMsgOpt = edgeImitator.findMessageByType(DeviceCredentialsUpdateMsg.class);
+        Assert.assertTrue(deviceCredentialsUpdateMsgOpt.isPresent());
+        DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = deviceCredentialsUpdateMsgOpt.get();
+        DeviceCredentials deviceCredentialsMsg = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
+        Assert.assertNotNull(deviceCredentialsMsg);
+        Assert.assertEquals(savedDevice.getId(), deviceCredentialsMsg.getDeviceId());
+        Assert.assertEquals(deviceCredentials, deviceCredentialsMsg);
+
         return savedDevice;
     }
 

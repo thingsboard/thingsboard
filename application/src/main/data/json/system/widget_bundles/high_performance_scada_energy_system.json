@@ -15,7 +15,7 @@
     "hp_wind_turbine_cluster",
     "hp_fuel_generator",
     "hp_industrial_fuel_generator",
-    "hp_circuit_breaker2",
+    "hp_circuit_breaker",
     "hp_horizontal_circuit_breaker",
     "hp_voltage_relay",
     "hp_3_phase_voltage_relay",

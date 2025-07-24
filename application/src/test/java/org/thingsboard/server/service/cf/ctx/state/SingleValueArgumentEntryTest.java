@@ -17,7 +17,14 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
+import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -46,7 +53,7 @@ public class SingleValueArgumentEntryTest {
     }
 
     @Test
-    void testUpdateEntryWithThaSameTs() {
+    void testUpdateEntryWithTheSameTs() {
         assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts, new LongDataEntry("key", 13L), 363L))).isFalse();
     }
 
@@ -72,5 +79,40 @@ public class SingleValueArgumentEntryTest {
     @Test
     void testUpdateEntryWhenValueWasNotChanged() {
         assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 18, new LongDataEntry("key", 11L), 364L))).isTrue();
+    }
+
+    @Test
+    void testUpdateEntryWithOldTs() {
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts - 10, new LongDataEntry("key", 14L), 365L))).isFalse();
+    }
+
+    @Test
+    void testToTbelCfArgWhenJsonIsObject() {
+        entry = new SingleValueArgumentEntry(ts, new JsonDataEntry("key", "{\"test\": 10}"), 370L);
+        TbelCfArg tbelCfArg = entry.toTbelCfArg();
+        assertThat(tbelCfArg).isNotNull();
+        assertThat(tbelCfArg).isInstanceOf(TbelCfSingleValueArg.class);
+
+        TbelCfSingleValueArg singleValueArg = (TbelCfSingleValueArg) tbelCfArg;
+
+        assertThat(singleValueArg.getValue()).isInstanceOf(Map.class);
+        Map<String, Integer> expectedMap = Map.of("test", 10);
+        assertThat(singleValueArg.getValue()).isEqualTo(expectedMap);
+    }
+
+    @Test
+    void testToTbelCfArgWhenJsonIsArray() {
+        entry = new SingleValueArgumentEntry(ts, new JsonDataEntry("key", "[{\"test\": 10}, {\"test2\": 20}]"), 371L);
+        TbelCfArg tbelCfArg = entry.toTbelCfArg();
+        assertThat(tbelCfArg).isNotNull();
+        assertThat(tbelCfArg).isInstanceOf(TbelCfSingleValueArg.class);
+
+        TbelCfSingleValueArg singleValueArg = (TbelCfSingleValueArg) tbelCfArg;
+
+        assertThat(singleValueArg.getValue()).isInstanceOf(List.class);
+        List<Map<String, Integer>> expectedList = new ArrayList<>();
+        expectedList.add(Map.of("test", 10));
+        expectedList.add(Map.of("test2", 20));
+        assertThat(singleValueArg.getValue()).isEqualTo(expectedList);
     }
 }

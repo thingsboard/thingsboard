@@ -43,6 +43,9 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @NotBlank
     @Length(fieldName = "pkgName")
     private String pkgName;
+    @Schema(description = "Application title")
+    @Length(fieldName = "title")
+    private String title;
     @Schema(description = "Application secret. The length must be at least 16 characters", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty
     @Length(fieldName = "appSecret", min = 16, max = 2048, message = "must be at least 16 and max 2048 characters")
@@ -72,6 +75,7 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
         super(mobile);
         this.tenantId = mobile.tenantId;
         this.pkgName = mobile.pkgName;
+        this.title = mobile.title;
         this.appSecret = mobile.appSecret;
         this.platformType = mobile.platformType;
         this.status = mobile.status;

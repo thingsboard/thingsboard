@@ -34,12 +34,12 @@
     },
     {
       "tag": "units",
-      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.properties.units);\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.properties.showUnits) {\n    element.show();\n    ctx.api.font(element, ctx.properties.unitsFont, ctx.properties.unitsColor);\n    ctx.api.text(element, ctx.api.unitSymbol(ctx.properties.units));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
       "tag": "value",
-      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.voltage, 0, null, 0));\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "if (ctx.values.running) {\n    element.show();\n    ctx.api.font(element, ctx.properties.currentVoltageFont, ctx.properties.currentVoltageColor);\n    ctx.api.text(element, ctx.api.formatValue(ctx.values.voltage, {units: ctx.properties.units, decimals: 0, ignoreUnitSymbol: true}));\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -379,6 +379,7 @@
       "name": "{i18n:scada.symbol.units}",
       "type": "units",
       "default": "V",
+      "supportsUnitConversion": true,
       "disabled": false,
       "visible": true
     },

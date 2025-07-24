@@ -114,9 +114,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
     private final VersionControlExecutor executor;
 
-    @SuppressWarnings("UnstableApiUsage")
     @Override
-    public ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) throws Exception {
+    public ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) {
         checkBranchName(request.getBranch());
         var pendingCommit = gitServiceQueue.prepareCommit(user, request);
         DonAsynchron.withCallback(pendingCommit, commit -> {
@@ -454,7 +453,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private VersionLoadResult onError(EntityId externalId, Throwable e) {
-        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e)));
+        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e, externalId)));
     }
 
     private Optional<VersionLoadResult> analyze(Throwable e, EntityId externalId) {
@@ -546,7 +545,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
+    public ListenableFuture<UUID> autoCommit(User user, EntityId entityId) {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
         if (repositorySettings == null || repositorySettings.isReadOnly()) {
             return Futures.immediateFuture(null);
@@ -573,7 +572,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception {
+    public ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
         if (repositorySettings == null || repositorySettings.isReadOnly()) {
             return Futures.immediateFuture(null);

@@ -23,14 +23,17 @@ import org.bouncycastle.util.Arrays;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.api.DeviceStateManager;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.rule.engine.api.MqttClientSettings;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.rule.engine.api.RuleEngineAiChatModelService;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
 import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineCalculatedFieldQueueService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
-import org.thingsboard.rule.engine.api.DeviceStateManager;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -74,6 +77,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -92,6 +96,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.mobile.MobileAppBundleService;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
@@ -234,7 +239,8 @@ public class DefaultTbContext implements TbContext {
         TransportProtos.ToRuleEngineMsg msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
-                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
+                .build();
         mainCtx.getClusterService().pushMsgToRuleEngine(tpi, tbMsg.getId(), msg, callback);
     }
 
@@ -313,7 +319,7 @@ public class DefaultTbContext implements TbContext {
         TransportProtos.ToRuleEngineMsg.Builder msg = TransportProtos.ToRuleEngineMsg.newBuilder()
                 .setTenantIdMSB(getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(getTenantId().getId().getLeastSignificantBits())
-                .setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
                 .addAllRelationTypes(relationTypes);
         if (failureMessage != null) {
             msg.setFailureMessage(failureMessage);
@@ -888,6 +894,16 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
+    public JobService getJobService() {
+        return mainCtx.getJobService();
+    }
+
+    @Override
+    public JobManager getJobManager() {
+        return mainCtx.getJobManager();
+    }
+
+    @Override
     public boolean isExternalNodeForceAck() {
         return mainCtx.isExternalNodeForceAck();
     }
@@ -1010,12 +1026,26 @@ public class DefaultTbContext implements TbContext {
         return mainCtx.getAuditLogService();
     }
 
+    @Override
+    public RuleEngineAiChatModelService getAiChatModelService() {
+        return mainCtx.getAiChatModelService();
+    }
+
+    @Override
+    public AiModelService getAiModelService() {
+        return mainCtx.getAiModelService();
+    }
+
+    @Override
+    public MqttClientSettings getMqttClientSettings() {
+        return mainCtx.getMqttClientSettings();
+    }
+
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("ruleNodeId", ruleNodeId.toString());
         return metaData;
     }
-
 
     @Override
     public void schedule(Runnable runnable, long delay, TimeUnit timeUnit) {

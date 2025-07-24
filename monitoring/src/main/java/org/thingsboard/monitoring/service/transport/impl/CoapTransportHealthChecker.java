@@ -20,6 +20,7 @@ import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.MediaTypeRegistry;
+import org.eclipse.californium.elements.config.SystemConfig;
 import org.springframework.beans.factory.config.ConfigurableBeanFactory;
 import org.springframework.context.annotation.Scope;
 import org.springframework.stereotype.Component;
@@ -34,6 +35,10 @@ import java.io.IOException;
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
 public class CoapTransportHealthChecker extends TransportHealthChecker<CoapTransportMonitoringConfig> {
+
+    static {
+        SystemConfig.register();
+    }
 
     private CoapClient coapClient;
 

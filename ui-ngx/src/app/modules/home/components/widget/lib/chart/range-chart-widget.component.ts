@@ -33,7 +33,8 @@ import {
   ComponentStyle,
   getDataKey,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
@@ -49,6 +50,8 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 import { WidgetComponent } from '@home/components/widget/widget.component';
+import { TbUnit } from '@shared/models/unit.models';
+import { UnitService } from '@core/services/unit.service';
 
 @Component({
   selector: 'tb-range-chart-widget',
@@ -66,6 +69,9 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   @Input()
   ctx: WidgetContext;
 
+  @Input()
+  widgetTitlePanel: TemplateRef<any>;
+
   showLegend: boolean;
   legendClass: string;
 
@@ -78,7 +84,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   visibleRangeItems: RangeItem[];
 
   private decimals = 0;
-  private units = '';
+  private units: TbUnit = '';
 
   private rangeItems: RangeItem[];
 
@@ -94,6 +100,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
   ngOnInit(): void {
     this.ctx.$scope.rangeChartWidget = this;
     this.settings = {...rangeChartDefaultSettings, ...this.ctx.settings};
+    const unitService = this.ctx.$injector.get(UnitService);
 
     this.decimals = this.ctx.decimals;
     this.units = this.ctx.units;
@@ -108,11 +115,17 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
       dataKey.settings = rangeChartTimeSeriesKeySettings(this.settings);
     }
 
+    const valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {
+      units: this.units,
+      decimals: this.decimals,
+      ignoreUnitSymbol: true
+    });
+
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
     this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
-    this.rangeItems = toRangeItems(this.settings.rangeColors);
+    this.rangeItems = toRangeItems(this.settings.rangeColors, valueFormat);
     this.visibleRangeItems = this.rangeItems.filter(item => item.visible);
 
     this.showLegend = this.settings.showLegend && !!this.rangeItems.length;

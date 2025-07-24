@@ -23,6 +23,7 @@ import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
+import org.mvel2.execution.ExecutionLinkedHashSet;
 import org.mvel2.util.MethodStub;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
@@ -46,6 +47,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -380,6 +382,18 @@ public class TbUtils {
                 double.class, double.class, String.class)));
         parserConfig.addImport("isInsideCircle", new MethodStub(TbUtils.class.getMethod("isInsideCircle",
                 double.class, double.class, String.class)));
+        parserConfig.addImport("isMap", new MethodStub(TbUtils.class.getMethod("isMap",
+                Object.class)));
+        parserConfig.addImport("isList", new MethodStub(TbUtils.class.getMethod("isList",
+                Object.class)));
+        parserConfig.addImport("isArray", new MethodStub(TbUtils.class.getMethod("isArray",
+                Object.class)));
+        parserConfig.addImport("newSet", new MethodStub(TbUtils.class.getMethod("newSet",
+                ExecutionContext.class)));
+        parserConfig.addImport("toSet", new MethodStub(TbUtils.class.getMethod("toSet",
+                ExecutionContext.class, List.class)));
+        parserConfig.addImport("isSet", new MethodStub(TbUtils.class.getMethod("isSet",
+                Object.class)));
     }
 
     public static String btoa(String input) {
@@ -1460,6 +1474,32 @@ public class TbUtils {
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
         Coordinates perimeterCoordinates = new Coordinates(centerLatitude, centerLongitude);
         return range > GeoUtil.distance(entityCoordinates, perimeterCoordinates, rangeUnit);
+    }
+
+    public static boolean isMap(Object obj) {
+        return obj instanceof Map;
+
+    }
+
+    public static boolean isList(Object obj) {
+        return obj instanceof List;
+    }
+
+    public static boolean isArray(Object obj) {
+        return obj != null && obj.getClass().isArray();
+    }
+
+    public static <E> Set<E> newSet(ExecutionContext ctx) {
+        return new ExecutionLinkedHashSet<>(ctx);
+    }
+
+    public static <E> Set<E> toSet(ExecutionContext ctx, List<E> list) {
+        Set<E> newSet = new LinkedHashSet<>(list);
+        return new ExecutionLinkedHashSet<>(newSet, ctx);
+    }
+
+    public static boolean isSet(Object obj) {
+        return obj instanceof Set;
     }
 
     private static byte isValidIntegerToByte(Integer val) {

@@ -16,12 +16,9 @@
 package org.thingsboard.rule.engine.api;
 
 import lombok.Getter;
-import org.thingsboard.server.common.msg.TbActorError;
+import org.thingsboard.common.util.RecoveryAware;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-public class TbNodeException extends Exception implements TbActorError {
+public class TbNodeException extends Exception implements RecoveryAware {
 
     @Getter
     private final boolean unrecoverable;

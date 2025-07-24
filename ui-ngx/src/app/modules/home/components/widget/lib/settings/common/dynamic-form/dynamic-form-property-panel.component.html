@@ -31,6 +31,12 @@
       </mat-form-field>
     </div>
     <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.hint</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="hint" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
       <div class="fixed-title-width" translate>dynamic-form.property.group-title</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="group" placeholder="{{ 'widget-config.set' | translate }}">
@@ -380,6 +386,11 @@
         </mat-radio-button>
       </mat-radio-group>
     </div>
+    <div *ngIf="propertyItemType === FormPropertyType.units" class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="supportsUnitConversion">
+        {{ 'dynamic-form.property.support-unit-conversion' | translate }}
+      </mat-slide-toggle>
+    </div>
     <div *ngIf="isPropertyTypeAllowedForRow(propertyItemType)" class="tb-form-row space-between">
       <div class="fixed-title-width" translate>dynamic-form.property.default-value</div>
       <mat-form-field  *ngIf="[FormPropertyType.text, FormPropertyType.password].includes(propertyItemType)"
@@ -412,6 +423,7 @@
                         disabledLineHeight>
       </tb-font-settings>
       <tb-unit-input *ngIf="propertyItemType === FormPropertyType.units"
+                     [supportsUnitConversion]="propertyFormGroup.get('supportsUnitConversion').value"
                      formControlName="default"></tb-unit-input>
       <tb-value-input *ngIf="propertyItemType === FormPropertyType.switch"
                       [valueType]="ValueType.BOOLEAN"

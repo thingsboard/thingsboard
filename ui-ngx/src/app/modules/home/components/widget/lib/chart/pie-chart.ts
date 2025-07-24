@@ -122,17 +122,10 @@ export class TbPieChart extends TbLatestChart<PieChartSettings> {
         seriesData.push(
           {id: dataItem.id, value: dataItem.value, name: dataItem.dataKey.label, itemStyle: {color: dataItem.dataKey.color}}
         );
-        if (this.settings.doughnut && enabledDataItems.length > 1) {
-          seriesData.push({
-            value: 0, name: '', itemStyle: {color: 'transparent'}, emphasis: {disabled: true}
-          });
-        }
       }
     }
     if (this.settings.doughnut) {
-      for (let i = 1; i < seriesData.length; i += 2) {
-        seriesData[i].value = this.total / 100;
-      }
+      this.latestChartOption.series[0].padAngle = enabledDataItems.length > 1 ? 2 : 0;
     }
     this.latestChartOption.series[0].data = seriesData;
   }

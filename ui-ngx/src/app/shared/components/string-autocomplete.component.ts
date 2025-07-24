@@ -77,6 +77,9 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   label: string;
 
   @Input()
+  panelWidth: string = 'fit-content';
+
+  @Input()
   tooltipClass = 'tb-error-tooltip';
 
   @Input()

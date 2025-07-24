@@ -92,7 +92,7 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    requires("java-17")
+    requires("(java-17 or java-17-headless or jre-17 or jre-17-headless)") // .or() notation does work in RPM plugin
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"

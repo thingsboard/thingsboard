@@ -467,7 +467,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
 
         consumerManager.delete(true);
 
-        await().atMost(2, TimeUnit.SECONDS)
+        await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verify(ruleEngineMsgProducer).send(any(), any(), any());
                 });
@@ -737,7 +737,7 @@ public class TbRuleEngineQueueConsumerManagerTest {
                     .setTenantIdMSB(tenantId.getMostSignificantBits())
                     .setTenantIdLSB(tenantId.getLeastSignificantBits())
                     .addRelationTypes("Success")
-                    .setTbMsg(TbMsg.toByteString(tbMsg))
+                    .setTbMsgProto(TbMsg.toProto(tbMsg))
                     .build());
         }
 

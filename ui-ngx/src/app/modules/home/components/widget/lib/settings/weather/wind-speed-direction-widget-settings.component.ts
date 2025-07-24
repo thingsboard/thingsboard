@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Injector } from '@angular/core';
+import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -28,6 +28,7 @@ import {
   windSpeedDirectionLayoutTranslations
 } from '@home/components/widget/lib/weather/wind-speed-direction-widget.models';
 import { getDataKey } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol, TbUnit } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-wind-speed-direction-widget-settings',
@@ -60,7 +61,6 @@ export class WindSpeedDirectionWidgetSettingsComponent extends WidgetSettingsCom
   centerValuePreviewFn = this._centerValuePreviewFn.bind(this);
 
   constructor(protected store: Store<AppState>,
-              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -122,7 +122,7 @@ export class WindSpeedDirectionWidgetSettingsComponent extends WidgetSettingsCom
   private _centerValuePreviewFn(): string {
     const centerValueDataKey = getDataKey(this.widgetConfig.config.datasources, 1);
     if (centerValueDataKey) {
-      let units: string = this.widgetConfig.config.units;
+      let units: TbUnit = this.widgetConfig.config.units;
       let decimals: number = this.widgetConfig.config.decimals;
       if (isDefinedAndNotNull(centerValueDataKey?.decimals)) {
         decimals = centerValueDataKey.decimals;
@@ -130,7 +130,7 @@ export class WindSpeedDirectionWidgetSettingsComponent extends WidgetSettingsCom
       if (centerValueDataKey?.units) {
         units = centerValueDataKey.units;
       }
-      return formatValue(25, decimals, units, true);
+      return formatValue(25, decimals, getSourceTbUnitSymbol(units), true);
     } else {
       return '225°';
     }

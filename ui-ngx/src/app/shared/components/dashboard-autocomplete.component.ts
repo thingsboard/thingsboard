@@ -190,15 +190,22 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     this.searchText = '';
     if (value != null) {
       if (typeof value === 'string') {
-        this.dashboardService.getDashboardInfo(value).subscribe(
-          (dashboard) => {
+        this.dashboardService.getDashboardInfo(value, {ignoreLoading: true, ignoreErrors: true}).subscribe({
+          next: (dashboard) => {
             this.modelValue = this.useIdValue ? dashboard.id.id : dashboard;
             if (this.useDashboardLink) {
               this.dashboardURL = getEntityDetailsPageURL(this.modelValue as string, EntityType.DASHBOARD);
             }
             this.selectDashboardFormGroup.get('dashboard').patchValue(dashboard, {emitEvent: false});
+          },
+          error: () => {
+            this.modelValue = null;
+            this.selectDashboardFormGroup.get('dashboard').patchValue('', {emitEvent: false});
+            if (this.required) {
+              this.propagateChange(this.modelValue);
+            }
           }
-        );
+        });
       } else {
         this.modelValue = this.useIdValue ? value.id.id : value;
         this.selectDashboardFormGroup.get('dashboard').patchValue(value, {emitEvent: false});

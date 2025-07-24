@@ -216,7 +216,9 @@ CREATE TABLE IF NOT EXISTS ota_package (
     data oid,
     data_size bigint,
     additional_info varchar,
-    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version)
+    external_id uuid,
+    CONSTRAINT ota_package_tenant_title_version_unq_key UNIQUE (tenant_id, title, version),
+    CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
 CREATE TABLE IF NOT EXISTS queue (
@@ -624,6 +626,7 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     created_time bigint NOT NULL,
     tenant_id uuid,
     pkg_name varchar(255),
+    title varchar(255),
     app_secret varchar(2048),
     platform_type varchar(32),
     status varchar(32),
@@ -948,3 +951,28 @@ CREATE TABLE IF NOT EXISTS cf_debug_event (
     e_result varchar,
     e_error varchar
 ) PARTITION BY RANGE (ts);
+
+CREATE TABLE IF NOT EXISTS job (
+    id uuid NOT NULL CONSTRAINT job_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    type varchar NOT NULL,
+    key varchar NOT NULL,
+    entity_id uuid NOT NULL,
+    entity_type varchar NOT NULL,
+    status varchar NOT NULL,
+    configuration varchar NOT NULL,
+    result varchar
+);
+
+CREATE TABLE IF NOT EXISTS ai_model (
+    id              UUID          NOT NULL PRIMARY KEY,
+    external_id     UUID,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    version         BIGINT        NOT NULL DEFAULT 1,
+    name            VARCHAR(255)  NOT NULL,
+    configuration   JSONB         NOT NULL,
+    CONSTRAINT ai_model_name_unq_key        UNIQUE (tenant_id, name),
+    CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
+);

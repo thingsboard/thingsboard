@@ -15,10 +15,13 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetType } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { knobWidgetDefaultSettings, prepareKnobSettings } from '@shared/models/widget/rpc/knob.component.models';
+import { ValueType } from '@shared/models/constants';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-knob-control-widget-settings',
@@ -26,6 +29,16 @@ import { AppState } from '@core/core.state';
   styleUrls: ['./../widget-settings.scss']
 })
 export class KnobControlWidgetSettingsComponent extends WidgetSettingsComponent {
+
+  get targetDevice(): TargetDevice {
+    return this.widgetConfig?.config?.targetDevice;
+  }
+
+  get widgetType(): widgetType {
+    return this.widgetConfig?.widgetType;
+  }
+
+  valueType = ValueType;
 
   knobControlWidgetSettingsForm: UntypedFormGroup;
 
@@ -39,17 +52,25 @@ export class KnobControlWidgetSettingsComponent extends WidgetSettingsComponent 
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {
-      title: '',
-      minValue: 0,
-      maxValue: 100,
-      initialValue: 50,
-      getValueMethod: 'getValue',
-      setValueMethod: 'setValue',
-      requestTimeout: 500,
-      requestPersistent: false,
-      persistentPollingInterval: 5000
-    };
+    return knobWidgetDefaultSettings;
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    const knobSettings = prepareKnobSettings(deepClone(settings) as any) as WidgetSettings;
+    knobSettings.valueDecimals = this.widgetConfig?.config?.decimals;
+    knobSettings.valueUnits = deepClone(this.widgetConfig?.config?.units);
+    return super.prepareInputSettings(knobSettings);
+  }
+
+  protected prepareOutputSettings(settings: any): WidgetSettings {
+    const newSettings = deepClone(settings);
+    if (this.widgetConfig?.config) {
+      this.widgetConfig.config.units = settings.valueUnits;
+      this.widgetConfig.config.decimals = settings.valueDecimals;
+    }
+    delete newSettings.valueUnits;
+    delete newSettings.valueDecimals;
+    return super.prepareOutputSettings(newSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -61,35 +82,16 @@ export class KnobControlWidgetSettingsComponent extends WidgetSettingsComponent 
 
       // Value settings
 
-      initialValue: [settings.initialValue, []],
+      initialState: [settings.initialState, []],
+      valueChange: [settings.valueChange, []],
+
       minValue: [settings.minValue, [Validators.required]],
       maxValue: [settings.maxValue, [Validators.required]],
 
-      getValueMethod: [settings.getValueMethod, [Validators.required]],
-      setValueMethod: [settings.setValueMethod, [Validators.required]],
+      valueUnits: [settings.valueUnits, []],
+      valueDecimals: [settings.valueDecimals, []],
+      initialValue: [settings.initialValue, []],
 
-      // RPC settings
-
-      requestTimeout: [settings.requestTimeout, [Validators.min(0), Validators.required]],
-
-      // --> Persistent RPC settings
-
-      requestPersistent: [settings.requestPersistent, []],
-      persistentPollingInterval: [settings.persistentPollingInterval, [Validators.min(1000)]]
     });
-  }
-
-  protected validatorTriggers(): string[] {
-    return ['requestPersistent'];
-  }
-
-  protected updateValidators(emitEvent: boolean): void {
-    const requestPersistent: boolean = this.knobControlWidgetSettingsForm.get('requestPersistent').value;
-    if (requestPersistent) {
-      this.knobControlWidgetSettingsForm.get('persistentPollingInterval').enable({emitEvent});
-    } else {
-      this.knobControlWidgetSettingsForm.get('persistentPollingInterval').disable({emitEvent});
-    }
-    this.knobControlWidgetSettingsForm.get('persistentPollingInterval').updateValueAndValidity({emitEvent: false});
   }
 }

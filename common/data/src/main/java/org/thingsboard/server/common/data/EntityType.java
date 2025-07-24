@@ -18,12 +18,10 @@ package org.thingsboard.server.common.data;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
 
+import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.List;
 
-/**
- * @author Andrew Shvayka
- */
 public enum EntityType {
     TENANT(1),
     CUSTOMER(2),
@@ -63,7 +61,15 @@ public enum EntityType {
     MOBILE_APP(37),
     MOBILE_APP_BUNDLE(38),
     CALCULATED_FIELD(39),
-    CALCULATED_FIELD_LINK(40);
+    CALCULATED_FIELD_LINK(40),
+    JOB(41),
+    ADMIN_SETTINGS(42),
+    AI_MODEL(43, "ai_model") {
+        @Override
+        public String getNormalName() {
+            return "AI model";
+        }
+    };
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto
@@ -75,6 +81,15 @@ public enum EntityType {
 
     public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()
             .map(EntityType::getNormalName).toList();
+
+    private static final EntityType[] BY_PROTO;
+
+    static {
+        BY_PROTO = new EntityType[Arrays.stream(values()).mapToInt(EntityType::getProtoNumber).max().orElse(0) + 1];
+        for (EntityType entityType : values()) {
+            BY_PROTO[entityType.getProtoNumber()] = entityType;
+        }
+    }
 
     EntityType(int protoNumber) {
         this.protoNumber = protoNumber;
@@ -96,6 +111,13 @@ public enum EntityType {
             }
         }
         return false;
+    }
+
+    public static EntityType forProtoNumber(int protoNumber) {
+        if (protoNumber < 0 || protoNumber >= BY_PROTO.length) {
+            throw new IllegalArgumentException("Invalid EntityType proto number " + protoNumber);
+        }
+        return BY_PROTO[protoNumber];
     }
 
 }

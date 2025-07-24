@@ -182,7 +182,8 @@ export class MobileBundleTableConfigResolver {
         data: {
           afterAdd,
           androidApp: data.androidApp,
-          iosApp: data.iosApp
+          iosApp: data.iosApp,
+          bundle: entity
         }
       }).afterClosed()
         .subscribe();
