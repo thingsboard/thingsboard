@@ -43,29 +43,27 @@ public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<Alarms
         EntityType entityType = entityId.getEntityType();
         TenantId tenantId = task.getTenantId();
 
-        if (entityType == EntityType.DEVICE || entityType == EntityType.ASSET) {
-            if (task.getAlarms() == null) {
-                AlarmId lastId = null;
-                long lastCreatedTime = 0;
-                while (true) {
-                    List<TbPair<UUID, Long>> alarms = alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, lastCreatedTime, lastId, 128);
-                    if (alarms.isEmpty()) {
-                        break;
-                    }
-
-                    housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream().map(TbPair::getFirst).toList()));
-
-                    TbPair<UUID, Long> last = alarms.get(alarms.size() - 1);
-                    lastId = new AlarmId(last.getFirst());
-                    lastCreatedTime = last.getSecond();
-                    log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
+        if (task.getAlarms() == null) {
+            AlarmId lastId = null;
+            long lastCreatedTime = 0;
+            while (true) {
+                List<TbPair<UUID, Long>> alarms = alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, lastCreatedTime, lastId, 128);
+                if (alarms.isEmpty()) {
+                    break;
                 }
-            } else {
-                for (UUID alarmId : task.getAlarms()) {
-                    alarmService.delAlarm(tenantId, new AlarmId(alarmId));
-                }
-                log.debug("[{}][{}][{}] Deleted {} alarms", tenantId, entityType, entityId, task.getAlarms().size());
+
+                housekeeperClient.submitTask(new AlarmsDeletionHousekeeperTask(tenantId, entityId, alarms.stream().map(TbPair::getFirst).toList()));
+
+                TbPair<UUID, Long> last = alarms.get(alarms.size() - 1);
+                lastId = new AlarmId(last.getFirst());
+                lastCreatedTime = last.getSecond();
+                log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
             }
+        } else {
+            for (UUID alarmId : task.getAlarms()) {
+                alarmService.delAlarm(tenantId, new AlarmId(alarmId));
+            }
+            log.debug("[{}][{}][{}] Deleted {} alarms", tenantId, entityType, entityId, task.getAlarms().size());
         }
 
         int count = alarmService.deleteEntityAlarmRecords(tenantId, entityId);
