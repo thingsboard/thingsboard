@@ -71,6 +71,8 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
     private String userNameAttributeName;
     @Column(name = ModelConstants.OAUTH2_JWK_SET_URI_PROPERTY)
     private String jwkSetUri;
+    @Column(name = ModelConstants.OAUTH2_END_SESSION_ENDPOINT)
+    private String endSessionEndpoint;
     @Column(name = ModelConstants.OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY)
     private String clientAuthenticationMethod;
     @Column(name = ModelConstants.OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY)
@@ -133,6 +135,7 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
         this.userInfoUri = oAuth2Client.getUserInfoUri();
         this.userNameAttributeName = oAuth2Client.getUserNameAttributeName();
         this.jwkSetUri = oAuth2Client.getJwkSetUri();
+        this.endSessionEndpoint = oAuth2Client.getEndSessionEndpoint();
         this.clientAuthenticationMethod = oAuth2Client.getClientAuthenticationMethod();
         this.loginButtonLabel = oAuth2Client.getLoginButtonLabel();
         this.loginButtonIcon = oAuth2Client.getLoginButtonIcon();
@@ -212,6 +215,7 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
         registration.setUserInfoUri(userInfoUri);
         registration.setUserNameAttributeName(userNameAttributeName);
         registration.setJwkSetUri(jwkSetUri);
+        registration.setEndSessionEndpoint(endSessionEndpoint);
         registration.setClientAuthenticationMethod(clientAuthenticationMethod);
         registration.setLoginButtonLabel(loginButtonLabel);
         registration.setLoginButtonIcon(loginButtonIcon);
