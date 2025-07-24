@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.model;
 
+import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
@@ -38,6 +39,8 @@ public class SecurityUser extends User {
     private UserPrincipal userPrincipal;
     @Getter @Setter
     private String sessionId = UUID.randomUUID().toString();
+    @Getter @Setter
+    private UUID ssoId = null;
 
     public SecurityUser() {
         super();
@@ -51,6 +54,13 @@ public class SecurityUser extends User {
         super(user);
         this.enabled = enabled;
         this.userPrincipal = userPrincipal;
+    }
+
+    public SecurityUser(User user, boolean enabled, UserPrincipal userPrincipal, UUID ssoId) {
+        super(user);
+        this.enabled = enabled;
+        this.userPrincipal = userPrincipal;
+        this.ssoId = ssoId;
     }
 
     public Collection<GrantedAuthority> getAuthorities() {

@@ -77,6 +77,9 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
     @Schema(description = "JSON Web Key URI of the OAuth2 provider")
     @Length(fieldName = "jwkSetUri")
     private String jwkSetUri;
+    @Schema(description = "The logout endpoint URI used to logs out the authenticated user in OAuth2 provider.")
+    @Length(fieldName = "endSessionEndpoint")
+    private String endSessionEndpoint;
     @Schema(description = "Client authentication method to use: 'BASIC' or 'POST'. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
     @Length(fieldName = "clientAuthenticationMethod")
@@ -115,6 +118,7 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
         this.userInfoUri = oAuth2Client.userInfoUri;
         this.userNameAttributeName = oAuth2Client.userNameAttributeName;
         this.jwkSetUri = oAuth2Client.jwkSetUri;
+        this.endSessionEndpoint = oAuth2Client.endSessionEndpoint;
         this.clientAuthenticationMethod = oAuth2Client.clientAuthenticationMethod;
         this.loginButtonLabel = oAuth2Client.loginButtonLabel;
         this.loginButtonIcon = oAuth2Client.loginButtonIcon;
