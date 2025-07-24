@@ -34,7 +34,7 @@
   <div class="tb-form-row tb-standard-fields no-border no-padding">
     <mat-form-field class="flex">
       <mat-label translate>admin.oauth2.redirect-url-template</mat-label>
-      <input matInput [value]="redirectURI()" readonly>
+      <input matInput [value]="redirectURI()" readonly [disabled]="!isEdit && !isAdd">
       <tb-copy-button
         matSuffix
         miniButton="false"
