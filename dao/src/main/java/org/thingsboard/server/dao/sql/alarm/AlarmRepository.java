@@ -32,9 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 5/21/2017.
- */
 public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType ORDER BY a.startTs DESC")
