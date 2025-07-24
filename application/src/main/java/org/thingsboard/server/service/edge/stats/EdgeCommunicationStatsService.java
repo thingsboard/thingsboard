@@ -57,8 +57,6 @@ public class EdgeCommunicationStatsService {
     private final TopicService topicService;
     private final Optional<TbKafkaAdmin> tbKafkaAdmin;
 
-    @Value("${edges.stats.enabled:true}")
-    private boolean edgesStatsEnabled;
     @Value("${edges.stats.ttl:30}")
     private int edgesStatsTtlDays;
     @Value("${edges.stats.report-interval-millis:20000}")

@@ -32,6 +32,7 @@ import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.service.edge.stats.CounterEventType;
 import org.thingsboard.server.service.edge.stats.EdgeStatsCounterService;
 
+import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
@@ -42,7 +43,7 @@ public class KafkaEdgeEventService extends BaseEdgeEventService {
 
     private final TopicService topicService;
     private final TbQueueProducerProvider producerProvider;
-    private final EdgeStatsCounterService statsCounterService;
+    private final Optional<EdgeStatsCounterService> statsCounterService;
 
     @Override
     public ListenableFuture<Void> saveAsync(EdgeEvent edgeEvent) {
@@ -51,8 +52,7 @@ public class KafkaEdgeEventService extends BaseEdgeEventService {
         TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
         ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
         producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
-        statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1);
-
+        statsCounterService.ifPresent(statsCounterService -> statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
         return Futures.immediateFuture(null);
     }
 

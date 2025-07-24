@@ -199,7 +199,7 @@ public class EdgeContextComponent {
     @Autowired
     private WidgetsBundleService widgetsBundleService;
 
-    @Autowired
+    @Autowired(required = false)
     private EdgeStatsCounterService statsCounterService;
 
 
