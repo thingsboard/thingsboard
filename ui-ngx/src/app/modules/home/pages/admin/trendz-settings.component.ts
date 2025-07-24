@@ -97,7 +97,7 @@ export class TrendzSettingsComponent extends PageComponent implements OnInit, Ha
     this.trendzSettingsService.saveTrendzSettings(trendzSettings)
       .subscribe(() => {
         this.setTrendzSettings(trendzSettings);
-        this.store.dispatch(new ActionAuthUpdateTrendzSettings({ trendzSettings: trendzSettings}))
+        this.store.dispatch(new ActionAuthUpdateTrendzSettings(trendzSettings))
       })
   }
 }

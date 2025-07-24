@@ -102,7 +102,7 @@ export class ActionPreferencesDeleteUserSettings implements Action {
 export class ActionAuthUpdateTrendzSettings implements Action {
   readonly type = AuthActionTypes.UPDATE_TRENDZ_SETTINGS;
 
-  constructor(readonly payload: { trendzSettings: TrendzSettings }) {}
+  constructor(readonly payload: TrendzSettings) {}
 }
 
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |

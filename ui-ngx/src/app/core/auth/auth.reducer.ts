@@ -100,7 +100,7 @@ export const authReducer = (
       return { ...state, ...{ userSettings }};
 
     case AuthActionTypes.UPDATE_TRENDZ_SETTINGS:
-      return { ...state, ...action.payload };
+      return { ...state, trendzSettings: action.payload };
 
     default:
       return state;
