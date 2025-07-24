@@ -69,7 +69,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
         Futures.addCallback(saveFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(Void result) {
-                statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getEdgeId(), edgeEvent.getTenantId(), 1);
+                statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1);
                 eventPublisher.publishEvent(SaveEntityEvent.builder()
                         .tenantId(edgeEvent.getTenantId())
                         .entityId(edgeEvent.getEdgeId())

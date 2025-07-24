@@ -51,7 +51,7 @@ public class KafkaEdgeEventService extends BaseEdgeEventService {
         TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
         ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
         producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
-        statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getEdgeId(), edgeEvent.getTenantId(), 1);
+        statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1);
 
         return Futures.immediateFuture(null);
     }

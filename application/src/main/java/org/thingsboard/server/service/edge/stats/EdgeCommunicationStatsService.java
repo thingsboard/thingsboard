@@ -15,9 +15,10 @@
  */
 package org.thingsboard.server.service.edge.stats;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -28,14 +29,19 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+@TbCoreComponent
+@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
+@RequiredArgsConstructor
 @Service
 @Slf4j
 public class EdgeCommunicationStatsService {
@@ -46,14 +52,10 @@ public class EdgeCommunicationStatsService {
     private static final String DOWNLINK_MSGS_TMP_FAILED = "downlinkMsgsTmpFailed";
     private static final String DOWNLINK_MSGS_LAG = "downlinkMsgsLag";
 
-    @Autowired
-    private TimeseriesService tsService;
-    @Autowired
-    private EdgeStatsCounterService statsCounterService;
-    @Autowired
-    private TopicService topicService;
-    @Autowired(required = false)
-    private TbKafkaAdmin tbKafkaAdmin;
+    private final TimeseriesService tsService;
+    private final EdgeStatsCounterService statsCounterService;
+    private final TopicService topicService;
+    private final Optional<TbKafkaAdmin> tbKafkaAdmin;
 
     @Value("${edges.stats.enabled:true}")
     private boolean edgesStatsEnabled;
@@ -62,24 +64,24 @@ public class EdgeCommunicationStatsService {
     @Value("${edges.stats.report-interval-millis:20000}")
     private long reportIntervalMillis;
 
-    @Scheduled(fixedDelayString = "${edges.stats.report-interval-millis:20000}")
+
+    @Scheduled(
+            fixedDelayString = "${edges.stats.report-interval-millis:20000}",
+            initialDelayString = "${edges.stats.report-interval-millis:20000}"
+    )
     public void reportStats() {
-        if (!edgesStatsEnabled) {
-            log.debug("Edge stats reporting is disabled by configuration.");
-            return;
-        }
         log.debug("Reporting Edge communication stats...");
 
         long ts = (System.currentTimeMillis() / reportIntervalMillis) * reportIntervalMillis;
 
         Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
-        Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin != null ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
+        Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
         for (Map.Entry<EdgeId, MsgCounters> counterByEdge : countersByEdge.entrySet()) {
             EdgeId edgeId = counterByEdge.getKey();
             MsgCounters counters = counterByEdge.getValue();
             TenantId tenantId = counters.getTenantId();
 
-            if (tbKafkaAdmin != null) {
+            if (tbKafkaAdmin.isPresent()) {
                 counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
             }
             List<TsKvEntry> statsEntries = List.of(
@@ -102,7 +104,7 @@ public class EdgeCommunicationStatsService {
                         e -> topicService.buildEdgeEventNotificationsTopicPartitionInfo(e.getValue().getTenantId(), e.getKey()).getTopic()
                 ));
 
-        Map<String, Long> lagByTopic = tbKafkaAdmin.getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));
+        Map<String, Long> lagByTopic = tbKafkaAdmin.get().getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));
 
         return edgeToTopicMap.entrySet().stream()
                 .collect(Collectors.toMap(

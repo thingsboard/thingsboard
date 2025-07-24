@@ -17,22 +17,24 @@ package org.thingsboard.server.service.edge.stats;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
-
+@TbCoreComponent
+@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
 @Service
 @Slf4j
 @Getter
 public class EdgeStatsCounterService {
 
-    private final ConcurrentMap<EdgeId, MsgCounters> counterByEdge = new ConcurrentHashMap<>();
+    private final ConcurrentReferenceHashMap<EdgeId, MsgCounters> counterByEdge = new ConcurrentReferenceHashMap<>();
 
-    public void recordEvent(CounterEventType type, EdgeId edgeId, TenantId tenantId, long value) {
-        MsgCounters counters = getOrCreateCounters(edgeId, tenantId);
+    public void recordEvent(CounterEventType type, TenantId tenantId, EdgeId edgeId, long value) {
+        MsgCounters counters = getOrCreateCounters(tenantId, edgeId);
         switch (type) {
             case DOWNLINK_MSG_ADDED -> counters.getMsgsAdded().addAndGet(value);
             case DOWNLINK_MSG_PUSHED -> counters.getMsgsPushed().addAndGet(value);
@@ -41,15 +43,15 @@ public class EdgeStatsCounterService {
         }
     }
 
-    public void setDownlinkMsgsLag(EdgeId edgeId, TenantId tenantId, long value) {
-        getOrCreateCounters(edgeId, tenantId).getMsgsLag().set(value);
+    public void setDownlinkMsgsLag(TenantId tenantId, EdgeId edgeId, long value) {
+        getOrCreateCounters(tenantId, edgeId).getMsgsLag().set(value);
     }
 
     public void clear(EdgeId edgeId) {
         counterByEdge.get(edgeId).clear();
     }
 
-    public MsgCounters getOrCreateCounters(EdgeId edgeId, TenantId tenantId) {
+    public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {
         return counterByEdge.computeIfAbsent(edgeId, id -> new MsgCounters(tenantId));
     }
 

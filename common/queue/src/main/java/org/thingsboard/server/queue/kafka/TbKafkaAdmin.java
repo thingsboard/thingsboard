@@ -40,6 +40,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /**
@@ -265,10 +266,11 @@ public class TbKafkaAdmin implements TbQueueAdmin, TbEdgeQueueAdmin {
     public Map<String, Long> getTotalLagForGroupsBulk(Set<String> groupIds) {
         Map<String, Long> result = new HashMap<>();
         try {
-            Map<String, Map<TopicPartition, OffsetAndMetadata>> allCommittedOffsets = new HashMap<>();
-            for (String groupId : groupIds) {
-                allCommittedOffsets.put(groupId, getConsumerGroupOffsets(groupId));
-            }
+            Map<String, Map<TopicPartition, OffsetAndMetadata>> allCommittedOffsets =
+                    groupIds.stream().collect(Collectors.toMap(
+                            Function.identity(),
+                            this::getConsumerGroupOffsets
+                    ));
 
             Set<TopicPartition> allPartitions = allCommittedOffsets.values().stream()
                     .flatMap(map -> map.keySet().stream())
