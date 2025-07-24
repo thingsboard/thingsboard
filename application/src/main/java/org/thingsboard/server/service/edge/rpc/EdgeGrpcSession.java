@@ -88,7 +88,7 @@ import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
-import org.thingsboard.server.service.edge.stats.CounterEventType;
+import org.thingsboard.server.service.edge.stats.EdgeStatsKey;
 
 import java.io.Closeable;
 import java.util.ArrayList;
@@ -467,7 +467,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                                     .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg).error(error).build());
                         }
                         ctx.getStatsCounterService().ifPresent(statsCounterService ->
-                                statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_TMP_FAILED, edge.getTenantId(), edge.getId(), 1));
+                                statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_TMP_FAILED, edge.getTenantId(), edge.getId(), 1));
                         log.warn("[{}][{}] {} on attempt {}", tenantId, edge.getId(), failureMsg, attempt);
                         log.debug("[{}][{}] entities in failed batch: {}", tenantId, edge.getId(), copy);
                     }
@@ -482,7 +482,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                             ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId)
                                     .edgeId(edge.getId()).customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(message).error(error).build());
                             ctx.getStatsCounterService().ifPresent(statsCounterService ->
-                                    statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_PERMANENTLY_FAILED, edge.getTenantId(), edge.getId(), 1));
+                                    statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_PERMANENTLY_FAILED, edge.getTenantId(), edge.getId(), 1));
                             sessionState.getPendingMsgsMap().remove(downlinkMsg.getDownlinkMsgId());
                         } else {
                             sendDownlinkMsg(ResponseMsg.newBuilder()
@@ -499,7 +499,7 @@ public abstract class EdgeGrpcSession implements Closeable {
                         ctx.getRuleProcessor().process(EdgeCommunicationFailureTrigger.builder().tenantId(tenantId).edgeId(edge.getId())
                                 .customerId(edge.getCustomerId()).edgeName(edge.getName()).failureMsg(failureMsg)
                                 .error("Failed to deliver messages after " + MAX_DOWNLINK_ATTEMPTS + " attempts").build());
-                        ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_PERMANENTLY_FAILED, edge.getTenantId(), edge.getId(), copy.size()));
+                        ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_PERMANENTLY_FAILED, edge.getTenantId(), edge.getId(), copy.size()));
                         stopCurrentSendDownlinkMsgsTask(false);
                     }
                 } else {
@@ -539,7 +539,7 @@ public abstract class EdgeGrpcSession implements Closeable {
         try {
             if (msg.getSuccess()) {
                 sessionState.getPendingMsgsMap().remove(msg.getDownlinkMsgId());
-                ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_PUSHED, edge.getTenantId(), edge.getId(), 1));
+                ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_PUSHED, edge.getTenantId(), edge.getId(), 1));
                 log.debug("[{}][{}][{}] Msg has been processed successfully! Msg Id: [{}], Msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg);
             } else {
                 log.debug("[{}][{}][{}] Msg processing failed! Msg Id: [{}], Error msg: {}", tenantId, edge.getId(), sessionId, msg.getDownlinkMsgId(), msg.getErrorMsg());
@@ -807,7 +807,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             }
         }
         highPriorityQueue.add(edgeEvent);
-        ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edge.getTenantId(), edgeEvent.getEdgeId(), 1));
+        ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_ADDED, edge.getTenantId(), edgeEvent.getEdgeId(), 1));
     }
 
     protected ListenableFuture<List<Void>> processUplinkMsg(UplinkMsg uplinkMsg) {

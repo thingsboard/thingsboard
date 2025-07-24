@@ -29,7 +29,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeEventNotificat
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
-import org.thingsboard.server.service.edge.stats.CounterEventType;
+import org.thingsboard.server.service.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.service.edge.stats.EdgeStatsCounterService;
 
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class KafkaEdgeEventService extends BaseEdgeEventService {
         TopicPartitionInfo tpi = topicService.getEdgeEventNotificationsTopic(edgeEvent.getTenantId(), edgeEvent.getEdgeId());
         ToEdgeEventNotificationMsg msg = ToEdgeEventNotificationMsg.newBuilder().setEdgeEventMsg(ProtoUtils.toProto(edgeEvent)).build();
         producerProvider.getTbEdgeEventsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), null);
-        statsCounterService.ifPresent(statsCounterService -> statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
+        statsCounterService.ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
         return Futures.immediateFuture(null);
     }
 

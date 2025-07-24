@@ -15,10 +15,16 @@
  */
 package org.thingsboard.server.service.edge.stats;
 
-public enum CounterEventType {
+public enum EdgeStatsKey {
     DOWNLINK_MSG_PUSHED,
     DOWNLINK_MSG_PERMANENTLY_FAILED,
     DOWNLINK_MSG_TMP_FAILED,
-    DOWNLINK_MSG_ADDED
+    DOWNLINK_MSG_ADDED;
+
+    public static final String DOWNLINK_MSGS_ADDED = "downlinkMsgsAdded";
+    public static final String DOWNLINK_MSGS_PUSHED = "downlinkMsgsPushed";
+    public static final String DOWNLINK_MSGS_PERMANENTLY_FAILED = "downlinkMsgsPermanentlyFailed";
+    public static final String DOWNLINK_MSGS_TMP_FAILED = "downlinkMsgsTmpFailed";
+    public static final String DOWNLINK_MSGS_LAG = "downlinkMsgsLag";
 
 }

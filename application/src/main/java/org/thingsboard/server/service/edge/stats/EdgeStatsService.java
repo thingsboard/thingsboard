@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.service.edge.stats;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,6 +29,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -39,18 +44,18 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
+import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
+import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
+import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
+import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
+
 @TbCoreComponent
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
 @RequiredArgsConstructor
 @Service
 @Slf4j
-public class EdgeCommunicationStatsService {
-
-    private static final String DOWNLINK_MSGS_ADDED = "downlinkMsgsAdded";
-    private static final String DOWNLINK_MSGS_PUSHED = "downlinkMsgsPushed";
-    private static final String DOWNLINK_MSGS_PERMANENTLY_FAILED = "downlinkMsgsPermanentlyFailed";
-    private static final String DOWNLINK_MSGS_TMP_FAILED = "downlinkMsgsTmpFailed";
-    private static final String DOWNLINK_MSGS_LAG = "downlinkMsgsLag";
+public class EdgeStatsService {
 
     private final TimeseriesService tsService;
     private final EdgeStatsCounterService statsCounterService;
@@ -59,24 +64,22 @@ public class EdgeCommunicationStatsService {
 
     @Value("${edges.stats.ttl:30}")
     private int edgesStatsTtlDays;
-    @Value("${edges.stats.report-interval-millis:20000}")
+    @Value("${edges.stats.report-interval-millis:600000}")
     private long reportIntervalMillis;
 
 
     @Scheduled(
-            fixedDelayString = "${edges.stats.report-interval-millis:20000}",
-            initialDelayString = "${edges.stats.report-interval-millis:20000}"
+            fixedDelayString = "${edges.stats.report-interval-millis:600000}",
+            initialDelayString = "${edges.stats.report-interval-millis:600000}"
     )
     public void reportStats() {
         log.debug("Reporting Edge communication stats...");
-
-        long ts = (System.currentTimeMillis() / reportIntervalMillis) * reportIntervalMillis;
+        long now = System.currentTimeMillis();
+        long ts = now - (now % reportIntervalMillis);
 
         Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
         Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
-        for (Map.Entry<EdgeId, MsgCounters> counterByEdge : countersByEdge.entrySet()) {
-            EdgeId edgeId = counterByEdge.getKey();
-            MsgCounters counters = counterByEdge.getValue();
+        countersByEdge.forEach((edgeId, counters) -> {
             TenantId tenantId = counters.getTenantId();
 
             if (tbKafkaAdmin.isPresent()) {
@@ -90,9 +93,9 @@ public class EdgeCommunicationStatsService {
                     entry(ts, DOWNLINK_MSGS_LAG, counters.getMsgsLag().get())
             );
 
-            log.trace("Reported Edge communication stats: {}", statsEntries);
+            log.trace("Reported Edge communication stats: {} tenantId - {}, edgeId - {}", statsEntries, tenantId, edgeId);
             saveTs(tenantId, edgeId, statsEntries);
-        }
+        });
     }
 
     private Map<EdgeId, Long> getEdgeLagByEdgeId(Map<EdgeId, MsgCounters> countersByEdge) {
@@ -113,8 +116,24 @@ public class EdgeCommunicationStatsService {
 
     private void saveTs(TenantId tenantId, EdgeId edgeId, List<TsKvEntry> statsEntries) {
         try {
-            tsService.save(tenantId, edgeId, statsEntries, TimeUnit.DAYS.toSeconds(edgesStatsTtlDays));
-            log.debug("Successfully saved edge time-series stats: {} for edge: {}", statsEntries, edgeId);
+            ListenableFuture<TimeseriesSaveResult> future = tsService.save(
+                    tenantId,
+                    edgeId,
+                    statsEntries,
+                    TimeUnit.DAYS.toSeconds(edgesStatsTtlDays)
+            );
+
+            Futures.addCallback(future, new FutureCallback<>() {
+                @Override
+                public void onSuccess(TimeseriesSaveResult result) {
+                    log.debug("Successfully saved edge time-series stats: {} for edge: {}", statsEntries, edgeId);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    log.warn("Failed to save edge time-series stats for edge: {}", edgeId, t);
+                }
+            }, MoreExecutors.directExecutor());
         } finally {
             statsCounterService.clear(edgeId);
         }

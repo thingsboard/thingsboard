@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.dao.edge.BaseEdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeEventDao;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.service.edge.stats.CounterEventType;
+import org.thingsboard.server.service.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.service.edge.stats.EdgeStatsCounterService;
 
 import java.util.Optional;
@@ -70,7 +70,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
         Futures.addCallback(saveFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(Void result) {
-                statsCounterService.ifPresent(statsCounterService -> statsCounterService.recordEvent(CounterEventType.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
+                statsCounterService.ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSG_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
                 eventPublisher.publishEvent(SaveEntityEvent.builder()
                         .tenantId(edgeEvent.getTenantId())
                         .entityId(edgeEvent.getEdgeId())

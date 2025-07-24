@@ -19,10 +19,11 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+
+import java.util.concurrent.ConcurrentHashMap;
 
 @TbCoreComponent
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
@@ -31,9 +32,9 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @Getter
 public class EdgeStatsCounterService {
 
-    private final ConcurrentReferenceHashMap<EdgeId, MsgCounters> counterByEdge = new ConcurrentReferenceHashMap<>();
+    private final ConcurrentHashMap<EdgeId, MsgCounters> counterByEdge = new ConcurrentHashMap<>();
 
-    public void recordEvent(CounterEventType type, TenantId tenantId, EdgeId edgeId, long value) {
+    public void recordEvent(EdgeStatsKey type, TenantId tenantId, EdgeId edgeId, long value) {
         MsgCounters counters = getOrCreateCounters(tenantId, edgeId);
         switch (type) {
             case DOWNLINK_MSG_ADDED -> counters.getMsgsAdded().addAndGet(value);
@@ -48,7 +49,7 @@ public class EdgeStatsCounterService {
     }
 
     public void clear(EdgeId edgeId) {
-        counterByEdge.get(edgeId).clear();
+        counterByEdge.remove(edgeId);
     }
 
     public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {

@@ -1485,7 +1485,7 @@ edges:
     # Time-to-live in days for stored edge communication stats in timeseries
     ttl: "${EDGES_STATS_TTL:30}"
     # How often to report edge communication stats in milliseconds
-    report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:20000}"
+    report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:600000}"
 
 # Spring doc common parameters
 springdoc:
