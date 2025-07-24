@@ -37,6 +37,7 @@ import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -79,7 +80,8 @@ public class EdgeStatsService {
 
         Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
         Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
-        countersByEdge.forEach((edgeId, counters) -> {
+        Map<EdgeId, MsgCounters> countersByEdgeSnapshot = new HashMap<>(statsCounterService.getCounterByEdge());
+        countersByEdgeSnapshot.forEach((edgeId, counters) -> {
             TenantId tenantId = counters.getTenantId();
 
             if (tbKafkaAdmin.isPresent()) {
