@@ -25,6 +25,8 @@ import org.springframework.security.oauth2.client.OAuth2AuthorizedClient;
 import org.springframework.security.oauth2.client.OAuth2AuthorizedClientService;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.endpoint.OAuth2AuthorizationRequest;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
@@ -35,6 +37,8 @@ import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.security.model.JwtToken;
+import org.thingsboard.server.common.data.security.model.OauthJwtPair;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
@@ -107,7 +111,17 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
             clearAuthenticationAttributes(request, response);
 
-            JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
+            Object principal = token.getPrincipal();
+            OidcIdToken idToken = null;
+
+            if (principal instanceof OidcUser oidcUser) {
+                idToken = oidcUser.getIdToken();
+            }
+
+            var tokenPair = (idToken != null)
+                    ? tokenFactory.createOpenIdTokenPair(securityUser, idToken)
+                    : tokenFactory.createTokenPair(securityUser);
+
             getRedirectStrategy().sendRedirect(request, response, getRedirectUrl(baseUrl, tokenPair));
             systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, oauth2Client.getName(), null);
         } catch (Exception e) {
@@ -136,6 +150,15 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         } else {
             baseUrl += "/?";
         }
-        return baseUrl + "accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken();
+
+        StringBuilder url = new StringBuilder(baseUrl);
+        url.append("accessToken=").append(tokenPair.getToken())
+                .append("&refreshToken=").append(tokenPair.getRefreshToken());
+
+        if (tokenPair instanceof OauthJwtPair oauthPair) {
+            url.append("&idToken=").append(oauthPair.getIdToken());
+        }
+
+        return url.toString();
     }
 }

@@ -254,6 +254,13 @@ public class JwtTokenFactory {
         return new JwtPair(accessToken.getToken(), refreshToken.getToken());
     }
 
+    public OauthJwtPair createOpenIdTokenPair(SecurityUser securityUser, OidcIdToken idToken) {
+        securityUser.setSessionId(UUID.randomUUID().toString());
+        JwtToken accessToken = createAccessJwtToken(securityUser);
+        JwtToken refreshToken = createRefreshToken(securityUser);
+        return new OauthJwtPair(accessToken.getToken(), refreshToken.getToken(), idToken.getTokenValue());
+    }
+
     private SecretKey getSecretKey(boolean forceReload) {
         if (secretKey == null || forceReload) {
             synchronized (this) {
