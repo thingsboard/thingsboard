@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.eventsourcing.ActionCause;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -46,7 +47,7 @@ public class CleanUpService {
     private final Set<EntityType> skippedEntities = EnumSet.of(
             EntityType.ALARM, EntityType.QUEUE, EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE,
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_TEMPLATE,
-            EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
+            EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE, EntityType.AI_MODEL
     );
 
     @TransactionalEventListener(fallbackExecution = true) // after transaction commit
@@ -76,6 +77,9 @@ public class CleanUpService {
         submitTask(HousekeeperTask.deleteEvents(tenantId, entityId));
         submitTask(HousekeeperTask.deleteAlarms(tenantId, entityId));
         submitTask(HousekeeperTask.deleteCalculatedFields(tenantId, entityId));
+        if (Job.SUPPORTED_ENTITY_TYPES.contains(entityId.getEntityType())) {
+            submitTask(HousekeeperTask.deleteJobs(tenantId, entityId));
+        }
     }
 
     public void removeTenantEntities(TenantId tenantId, EntityType... entityTypes) {

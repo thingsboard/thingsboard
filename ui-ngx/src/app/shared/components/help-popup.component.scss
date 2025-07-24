@@ -17,15 +17,18 @@
   width: initial;
   display: inline-block;
   vertical-align: middle;
-  &.hint-button {
-    line-height: 1;
-  }
+  line-height: 1;
 }
 
 .tb-help-popup-button-loading {
   background: #fff;
   border-radius: 50%;
   z-index: 1;
+}
+
+.tb-toggle-help-popup-button {
+  border-radius: 50%;
+  line-height: normal;
 }
 
 .tb-help-popup-button {

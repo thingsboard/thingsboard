@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -79,9 +80,6 @@ import static org.thingsboard.server.common.data.page.SortOrder.Direction.ASC;
 import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
 import static org.thingsboard.server.dao.DaoUtil.toPageable;
 
-/**
- * Created by Valerii Sosliuk on 5/19/2017.
- */
 @Slf4j
 @Component
 @SqlDao
@@ -122,6 +120,11 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
                 type,
                 PageRequest.of(0, 1));
         return latest.isEmpty() ? null : DaoUtil.getData(latest.get(0));
+    }
+
+    @Override
+    public FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return FluentFuture.from(service.submit(() -> findLatestActiveByOriginatorAndType(tenantId, originator, type)));
     }
 
     @Override

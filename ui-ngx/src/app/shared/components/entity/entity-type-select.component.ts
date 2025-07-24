@@ -53,6 +53,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   showLabel: boolean;
 
   @Input()
+  label = this.translate.instant('entity.type');
+
+  @Input()
   @coerceBoolean()
   required: boolean;
 
@@ -65,12 +68,16 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
+
   entityTypes: Array<EntityType | AliasEntityType | string>;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (_v: any) => { };
 
   constructor(private entityService: EntityService,
-              public translate: TranslateService,
+              private translate: TranslateService,
               private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
     this.entityTypeFormGroup = this.fb.group({
@@ -82,7 +89,7 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   ngOnInit() {
@@ -97,7 +104,7 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(
       (value) => {
-        let modelValue;
+        let modelValue: EntityType | AliasEntityType;
         if (!value || value === '') {
           modelValue = null;
         } else {

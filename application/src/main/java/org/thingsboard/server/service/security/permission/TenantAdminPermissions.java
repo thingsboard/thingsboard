@@ -18,6 +18,8 @@ package org.thingsboard.server.service.security.permission;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
@@ -55,6 +57,8 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, new PermissionChecker.GenericPermissionChecker(Operation.READ));
         put(Resource.MOBILE_APP, tenantEntityPermissionChecker);
         put(Resource.MOBILE_APP_BUNDLE, tenantEntityPermissionChecker);
+        put(Resource.JOB, tenantEntityPermissionChecker);
+        put(Resource.AI_MODEL, aiModelPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
@@ -141,6 +145,20 @@ public class TenantAdminPermissions extends AbstractPermissions {
                 return false;
             }
             return true;
+        }
+
+    };
+
+    private static final PermissionChecker<AiModelId, AiModel> aiModelPermissionChecker = new PermissionChecker<>() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return true;
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, AiModelId entityId, AiModel entity) {
+            return user.getTenantId().equals(entity.getTenantId());
         }
 
     };

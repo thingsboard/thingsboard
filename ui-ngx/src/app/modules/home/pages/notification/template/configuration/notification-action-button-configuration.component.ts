@@ -84,7 +84,7 @@ export class NotificationActionButtonConfigurationComponent implements ControlVa
       enabled: [false],
       text: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(50)]],
       linkType: [ActionButtonLinkType.LINK],
-      link: [{value: '', disabled: true}, Validators.required],
+      link: [{value: '', disabled: true}, [Validators.required, Validators.maxLength(300)]],
       dashboardId: [{value: null, disabled: true}, Validators.required],
       dashboardState: [{value: null, disabled: true}],
       setEntityIdInState: [{value: true, disabled: true}]

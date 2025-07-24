@@ -15,25 +15,7 @@
  */
 :host {
   .tb-entity-filter {
-    #relationsQueryFilter {
-      padding-top: 20px;
-
-      tb-entity-select {
-        min-height: 92px;
-      }
-    }
-
-    .tb-root-state-entity-switch {
-      padding-left: 10px;
-      padding-bottom: 10px;
-
-      .root-state-entity-switch {
-        margin: 0;
-      }
-
-      .root-state-entity-label {
-        margin: 5px 0 5px 10px;
-      }
-    }
+    display: flex;
+    flex-direction: column;
   }
 }

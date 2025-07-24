@@ -19,6 +19,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edqs.EdqsObject;
+import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsMsg;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -46,5 +47,15 @@ public class DummyEdqsService implements EdqsService {
 
     @Override
     public void processSystemMsg(ToCoreEdqsMsg request) {}
+
+    @Override
+    public boolean isApiEnabled() {
+        return getState().isApiEnabled();
+    }
+
+    @Override
+    public EdqsState getState() {
+        return new EdqsState();
+    }
 
 }

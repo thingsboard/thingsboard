@@ -15,14 +15,16 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="entityTypeFormGroup" [appearance]="appearance">
-  <mat-label *ngIf="showLabel">{{ 'entity.type' | translate }}</mat-label>
+<mat-form-field [formGroup]="entityTypeFormGroup"
+                [subscriptSizing]="inlineField ? 'dynamic' : 'fixed'"
+                [appearance]="inlineField ? 'outline' : appearance">
+  <mat-label *ngIf="showLabel && !inlineField">{{ label }}</mat-label>
   <mat-select [required]="required" formControlName="entityType">
     <mat-option *ngFor="let type of entityTypes" [value]="type">
       {{ displayEntityTypeFn(type) }}
     </mat-option>
   </mat-select>
-  <mat-error *ngIf="entityTypeFormGroup.get('entityType').hasError('required')">
+  <mat-error *ngIf="!inlineField && entityTypeFormGroup.get('entityType').hasError('required')">
     {{ 'entity.type-required' | translate }}
   </mat-error>
 </mat-form-field>

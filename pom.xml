@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.thingsboard</groupId>
     <artifactId>thingsboard</artifactId>
-    <version>4.1.0-SNAPSHOT</version>
+    <version>4.2.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <name>Thingsboard</name>
@@ -42,19 +42,19 @@
         <jakarta.xml.bind-api.version>4.0.2</jakarta.xml.bind-api.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jaxb-runtime.version>4.0.5</jaxb-runtime.version>
-        <tomcat.version>10.1.40</tomcat.version> <!-- Vulnerability fix, Remove after update spring-boot to new version-->
+        <tomcat.version>10.1.42</tomcat.version> <!-- Vulnerability fix, Remove after update spring-boot to new version-->
         <net.minidev.json-smart>2.5.2</net.minidev.json-smart> <!-- Vulnerability fix, CVE-2024-57699, Remove after update spring-boot 3.2.12 to a newer version-->
         <spring-boot.version>3.2.12</spring-boot.version>
         <spring-data.version>3.2.12</spring-data.version>
         <spring-data-redis.version>3.2.12</spring-data-redis.version>
-        <spring.version>6.1.15</spring.version>
+        <spring.version>6.1.21</spring.version>
         <spring-redis.version>6.2.11</spring-redis.version>
-        <spring-security.version>6.3.8</spring-security.version>
+        <spring-security.version>6.3.9</spring-security.version>
         <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
-        <slf4j.version>2.0.13</slf4j.version>
-        <log4j.version>2.23.1</log4j.version>
-        <logback.version>1.5.5</logback.version>
+        <slf4j.version>2.0.17</slf4j.version>
+        <log4j.version>2.24.3</log4j.version>
+        <logback.version>1.5.6</logback.version>
         <rat.version>0.10</rat.version> <!-- unused -->
         <cassandra.version>4.17.0</cassandra.version>
         <metrics.version>4.2.25</metrics.version>
@@ -83,16 +83,18 @@
         <freemarker.version>2.3.32</freemarker.version>
         <mail.version>2.0.1</mail.version>
         <curator.version>5.6.0</curator.version>
-        <zookeeper.version>3.9.2</zookeeper.version>
+        <zookeeper.version>3.9.3</zookeeper.version>
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.63.0</grpc.version>
-        <tbel.version>1.2.6</tbel.version>
+        <tbel.version>1.2.8</tbel.version>
         <lombok.version>1.18.32</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <netty.version>4.1.119.Final</netty.version>
         <netty-tcnative.version>2.0.65.Final</netty-tcnative.version>
         <reactor-netty.version>1.1.18</reactor-netty.version>
+        <reactive-streams.version>1.0.4</reactive-streams.version>
+        <reactor-core.version>3.6.12</reactor-core.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <rabbitmq.version>5.21.0</rabbitmq.version>
         <surefire.version>3.2.5</surefire.version>
@@ -103,7 +105,7 @@
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
         <winsw.version>2.0.1</winsw.version>
-        <postgresql.driver.version>42.7.5</postgresql.driver.version>
+        <postgresql.driver.version>42.7.7</postgresql.driver.version>
         <sonar.exclusions>org/thingsboard/server/gen/**/*,
             org/thingsboard/server/extensions/core/plugin/telemetry/gen/**/*
         </sonar.exclusions>
@@ -113,13 +115,20 @@
         <!-- IMPORTANT: If you change the version of the kafka client, make sure to synchronize our overwritten implementation of the
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
-        <kafka.version>3.7.2</kafka.version>
+        <kafka.version>3.9.1</kafka.version>
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
         <snakeyaml.version>2.2</snakeyaml.version>
         <aws.sdk.version>1.12.701</aws.sdk.version>
         <pubsub.client.version>1.128.1</pubsub.client.version>
-        <google.common.protos.version>2.37.1</google.common.protos.version>
+
+        <google-auth-library.version>1.34.0</google-auth-library.version>
+        <google-http-client.version>1.46.3</google-http-client.version>
+        <google-api-common.version>2.48.0</google-api-common.version>
+        <google-api-gax.version>2.65.0</google-api-gax.version>
+        <google-proto-common.version>2.37.1</google-proto-common.version>
+        <google-proto-iam-v1.version>1.51.0</google-proto-iam-v1.version>
+
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
         <commons-beanutils.version>1.9.4</commons-beanutils.version>
@@ -135,6 +144,13 @@
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
         <json-path.version>2.9.0</json-path.version>
+        <langchain4j.version>1.1.0</langchain4j.version>
+        <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
+        <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
+        <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
+        <checker-qual.version>3.49.3</checker-qual.version>
+        <perfmark-api.version>0.27.0</perfmark-api.version>
+        <threetenbp.version>1.7.0</threetenbp.version>
         <!--         TEST SCOPE         -->
         <awaitility.version>4.2.1</awaitility.version>
         <dbunit.version>2.7.3</dbunit.version>
@@ -158,7 +174,7 @@
         <allure-maven.version>2.12.0</allure-maven.version>
 
         <opensmpp.version>3.0.2</opensmpp.version>
-        <jgit.version>6.9.0.202403050737-r</jgit.version>
+        <jgit.version>6.10.1.202505221210-r</jgit.version>
         <exp4j.version>0.4.8</exp4j.version>
         <aerogear-otp.version>1.0.0</aerogear-otp.version>
 
@@ -965,6 +981,11 @@
                 <version>${project.version}</version>
             </dependency>
             <dependency>
+                <groupId>org.thingsboard.common</groupId>
+                <artifactId>discovery-api</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>org.thingsboard.rule-engine</groupId>
                 <artifactId>rule-engine-api</artifactId>
                 <version>${project.version}</version>
@@ -1173,7 +1194,7 @@
             <!-- ...Vulnerability fix - transitive dependency from Spring Boot, remove after Spring Boot upgrade -->
             <dependency>
                 <groupId>org.springframework.boot</groupId>
-                <artifactId>spring-boot-starter</artifactId>
+                    <artifactId>spring-boot-starter</artifactId>
                 <version>${spring-boot.version}</version>
             </dependency>
             <dependency>
@@ -1254,6 +1275,16 @@
                 <groupId>io.projectreactor.netty</groupId>
                 <artifactId>reactor-netty-http</artifactId>
                 <version>${reactor-netty.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.reactivestreams</groupId>
+                <artifactId>reactive-streams</artifactId>
+                <version>${reactive-streams.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.projectreactor</groupId>
+                <artifactId>reactor-core</artifactId>
+                <version>${reactor-core.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.kafka</groupId>
@@ -2075,9 +2106,54 @@
                 <version>${pubsub.client.version}</version>
             </dependency>
             <dependency>
+                <groupId>com.google.auth</groupId>
+                <artifactId>google-auth-library-credentials</artifactId>
+                <version>${google-auth-library.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auth</groupId>
+                <artifactId>google-auth-library-oauth2-http</artifactId>
+                <version>${google-auth-library.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client</artifactId>
+                <version>${google-http-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.http-client</groupId>
+                <artifactId>google-http-client-gson</artifactId>
+                <version>${google-http-client.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>api-common</artifactId>
+                <version>${google-api-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>gax</artifactId>
+                <version>${google-api-gax.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>gax-grpc</artifactId>
+                <version>${google-api-gax.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api</groupId>
+                <artifactId>gax-httpjson</artifactId>
+                <version>${google-api-gax.version}</version>
+            </dependency>
+            <dependency>
                 <groupId>com.google.api.grpc</groupId>
                 <artifactId>proto-google-common-protos</artifactId>
-                <version>${google.common.protos.version}</version>
+                <version>${google-proto-common.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.api.grpc</groupId>
+                <artifactId>proto-google-iam-v1</artifactId>
+                <version>${google-proto-iam-v1.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.passay</groupId>
@@ -2330,6 +2406,43 @@
                 <groupId>org.rocksdb</groupId>
                 <artifactId>rocksdbjni</artifactId>
                 <version>${rocksdbjni.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.errorprone</groupId>
+                <artifactId>error_prone_annotations</artifactId>
+                <version>${error_prone_annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>animal-sniffer-annotations</artifactId>
+                <version>${animal-sniffer-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.google.auto.value</groupId>
+                <artifactId>auto-value-annotations</artifactId>
+                <version>${auto-value-annotations.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.checkerframework</groupId>
+                <artifactId>checker-qual</artifactId>
+                <version>${checker-qual.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>io.perfmark</groupId>
+                <artifactId>perfmark-api</artifactId>
+                <version>${perfmark-api.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.threeten</groupId>
+                <artifactId>threetenbp</artifactId>
+                <version>${threetenbp.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>dev.langchain4j</groupId>
+                <artifactId>langchain4j-bom</artifactId>
+                <version>${langchain4j.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>

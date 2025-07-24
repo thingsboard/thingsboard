@@ -194,7 +194,7 @@ export class ArgumentsMapConfigComponent extends PageComponent implements Contro
       key: [property?.key, [Validators.required]],
       name: [ArgumentName[index], [Validators.required]],
       attributeScope: [property?.attributeScope ?? AttributeScope.SERVER_SCOPE, [Validators.required]],
-      defaultValue: [property?.defaultValue ? property?.defaultValue : null]
+      defaultValue: [property?.defaultValue ?? null]
     });
     this.updateArgumentControlValidators(argumentControl);
     argumentControl.get('type').valueChanges.pipe(

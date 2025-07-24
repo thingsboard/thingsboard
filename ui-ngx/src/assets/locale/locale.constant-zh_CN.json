@@ -4675,7 +4675,6 @@
             "add-limit": "添加限制",
             "advanced-settings": "高级设置",
             "edit-limit": "编辑限制",
-            "but-less-than": "但小于",
             "edit-transport-tenant-msg-title": "编辑传输租户消息速率限制",
             "edit-transport-tenant-telemetry-msg-title": "编辑传输租户遥测消息速率限制",
             "edit-transport-tenant-telemetry-data-points-title": "编辑传输租户遥测数据点速率限制",

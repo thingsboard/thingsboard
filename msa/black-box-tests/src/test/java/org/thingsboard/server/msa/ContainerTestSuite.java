@@ -38,12 +38,13 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
+import static org.thingsboard.server.msa.TestUtils.addComposeVersion;
 
 @Slf4j
 public class ContainerTestSuite {
-    final static boolean IS_REDIS_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
-    final static boolean IS_REDIS_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
-    final static boolean IS_REDIS_SSL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSsl"));
+    final static boolean IS_VALKEY_CLUSTER = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisCluster"));
+    final static boolean IS_VALKEY_SENTINEL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSentinel"));
+    final static boolean IS_VALKEY_SSL = Boolean.parseBoolean(System.getProperty("blackBoxTests.redisSsl"));
     final static boolean IS_HYBRID_MODE = Boolean.parseBoolean(System.getProperty("blackBoxTests.hybridMode"));
     private static final String SOURCE_DIR = "./../../docker/";
     private static final String TB_CORE_LOG_REGEXP = ".*Starting polling for events.*";
@@ -53,7 +54,7 @@ public class ContainerTestSuite {
     private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
-    private DockerComposeContainer<?> testContainer;
+    private DockerComposeContainerImpl testContainer;
     private ThingsBoardDbInstaller installTb;
     private boolean isActive;
 
@@ -78,11 +79,9 @@ public class ContainerTestSuite {
     }
 
     public void start() {
-        installTb = new ThingsBoardDbInstaller();
-        installTb.createVolumes();
-        log.info("System property of blackBoxTests.redisCluster is {}", IS_REDIS_CLUSTER);
-        log.info("System property of blackBoxTests.redisSentinel is {}", IS_REDIS_SENTINEL);
-        log.info("System property of blackBoxTests.redisSsl is {}", IS_REDIS_SSL);
+        log.info("System property of blackBoxTests.redisCluster is {}", IS_VALKEY_CLUSTER);
+        log.info("System property of blackBoxTests.redisSentinel is {}", IS_VALKEY_SENTINEL);
+        log.info("System property of blackBoxTests.redisSsl is {}", IS_VALKEY_SSL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
         boolean skipTailChildContainers = Boolean.parseBoolean(System.getProperty("blackBoxTests.skipTailChildContainers"));
         try {
@@ -93,22 +92,13 @@ public class ContainerTestSuite {
 
             FileUtils.copyDirectory(new File("src/test/resources"), new File(targetDir));
 
-            class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
-                public DockerComposeContainerImpl(List<File> composeFiles) {
-                    super(composeFiles);
-                }
+            installTb = new ThingsBoardDbInstaller(targetDir);
+            installTb.createVolumes();
 
-                @Override
-                public void stop() {
-                    super.stop();
-                    tryDeleteDir(targetDir);
-                }
-            }
-
-            if (IS_REDIS_SSL) {
-                addToFile(targetDir, "cache-redis.env",
+            if (IS_VALKEY_SSL) {
+                addToFile(targetDir, "cache-valkey.env",
                         Map.of("TB_REDIS_SSL_ENABLED", "true",
-                                "TB_REDIS_SSL_PEM_CERT", "/redis/certs/redisCA.crt"));
+                                "TB_REDIS_SSL_PEM_CERT", "/valkey/certs/valkeyCA.crt"));
             }
 
             List<File> composeFiles = new ArrayList<>(Arrays.asList(
@@ -121,8 +111,8 @@ public class ContainerTestSuite {
                     new File(targetDir + (IS_HYBRID_MODE ? "docker-compose.hybrid-test-extras.yml" : "docker-compose.postgres-test-extras.yml")),
                     new File(targetDir + "docker-compose.postgres.volumes.yml"),
                     new File(targetDir + "docker-compose.kafka.yml"),
-                    new File(targetDir + resolveRedisComposeFile()),
-                    new File(targetDir + resolveRedisComposeVolumesFile()),
+                    new File(targetDir + resolveValkeyComposeFile()),
+                    new File(targetDir + resolveValkeyComposeVolumesFile()),
                     new File(targetDir + ("docker-selenium.yml"))
             ));
             addToFile(targetDir, "queue-kafka.env", Map.of("TB_QUEUE_PREFIX", "test"));
@@ -132,7 +122,9 @@ public class ContainerTestSuite {
                 composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
             }
 
-            testContainer = new DockerComposeContainerImpl<>(composeFiles)
+            addComposeVersion(composeFiles, "3.0");
+
+            testContainer = new DockerComposeContainerImpl(targetDir, composeFiles)
                     .withPull(false)
                     .withLocalCompose(true)
                     .withOptions("--compatibility")
@@ -165,36 +157,37 @@ public class ContainerTestSuite {
         }
     }
 
-    private static String resolveRedisComposeFile() {
-        if (IS_REDIS_CLUSTER) {
-            return "docker-compose.redis-cluster.yml";
+    private static String resolveValkeyComposeFile() {
+        if (IS_VALKEY_CLUSTER) {
+            return "docker-compose.valkey-cluster.yml";
         }
-        if (IS_REDIS_SENTINEL) {
-            return "docker-compose.redis-sentinel.yml";
+        if (IS_VALKEY_SENTINEL) {
+            return "docker-compose.valkey-sentinel.yml";
         }
-        if (IS_REDIS_SSL) {
-            return "docker-compose.redis-ssl.yml";
+        if (IS_VALKEY_SSL) {
+            return "docker-compose.valkey-ssl.yml";
         }
-        return "docker-compose.redis.yml";
+        return "docker-compose.valkey.yml";
     }
 
-    private static String resolveRedisComposeVolumesFile() {
-        if (IS_REDIS_CLUSTER) {
-            return "docker-compose.redis-cluster.volumes.yml";
+    private static String resolveValkeyComposeVolumesFile() {
+        if (IS_VALKEY_CLUSTER) {
+            return "docker-compose.valkey-cluster.volumes.yml";
         }
-        if (IS_REDIS_SENTINEL) {
-            return "docker-compose.redis-sentinel.volumes.yml";
+        if (IS_VALKEY_SENTINEL) {
+            return "docker-compose.valkey-sentinel.volumes.yml";
         }
-        if (IS_REDIS_SSL) {
-            return "docker-compose.redis-ssl.volumes.yml";
+        if (IS_VALKEY_SSL) {
+            return "docker-compose.valkey-ssl.volumes.yml";
         }
-        return "docker-compose.redis.volumes.yml";
+        return "docker-compose.valkey.volumes.yml";
     }
 
     public void stop() {
         if (isActive) {
             testContainer.stop();
-            installTb.savaLogsAndRemoveVolumes();
+            installTb.saveLogsAndRemoveVolumes();
+            testContainer.cleanup();
             setActive(false);
         }
     }
@@ -260,5 +253,24 @@ public class ContainerTestSuite {
 
     public DockerComposeContainer<?> getTestContainer() {
         return testContainer;
+    }
+
+    static class DockerComposeContainerImpl extends DockerComposeContainer<DockerComposeContainerImpl> {
+
+        private final String targetDir;
+
+        public DockerComposeContainerImpl(String targetDir, List<File> composeFiles) {
+            super(composeFiles);
+            this.targetDir = targetDir;
+        }
+
+        @Override
+        public void stop() {
+            super.stop();
+        }
+
+        public void cleanup() {
+            tryDeleteDir(this.targetDir);
+        }
     }
 }

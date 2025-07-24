@@ -323,7 +323,7 @@ cassandra:
     poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     # Interval in milliseconds for printing Cassandra query queue statistic
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
-    # set all data type values except target to null for the same ts on save
+    # When saving a value, set other data types to null (to avoid having multiple telemetry values with the same timestamp).
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:true}"
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
@@ -346,6 +346,7 @@ sql:
     stats_print_interval_ms: "${SQL_TS_BATCH_STATS_PRINT_MS:10000}" # Interval in milliseconds for printing timeseries insert statistic
     batch_threads: "${SQL_TS_BATCH_THREADS:3}" # batch thread count has to be a prime number like 3 or 5 to gain perfect hash distribution
     value_no_xss_validation: "${SQL_TS_VALUE_NO_XSS_VALIDATION:false}" # If true telemetry values will be checked for XSS vulnerability
+    callback_thread_pool_size: "${SQL_TS_CALLBACK_THREAD_POOL_SIZE:12}" # Thread pool size for telemetry callback executor
   ts_latest:
     batch_size: "${SQL_TS_LATEST_BATCH_SIZE:1000}" # Batch size for persisting latest telemetry updates
     batch_max_delay: "${SQL_TS_LATEST_BATCH_MAX_DELAY_MS:50}" # Maximum timeout for latest telemetry entries queue polling. The value set in milliseconds
@@ -463,6 +464,14 @@ actors:
     allow_system_sms_service: "${ACTORS_RULE_ALLOW_SYSTEM_SMS_SERVICE:true}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
+    # Configuration for the thread pool that executes HTTP calls to AI provider APIs
+    ai-requests-thread-pool:
+      # The base name for threads
+      pool-name: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_NAME:ai-requests}"
+      # The maximum number of concurrent HTTP requests
+      pool-size: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_SIZE:50}"
+      # The maximum time in seconds to wait for active tasks to complete during graceful shutdown
+      termination-timeout-seconds: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_TERMINATION_TIMEOUT_SECONDS:60}"
     chain:
       # Errors for particular actors are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
@@ -647,6 +656,9 @@ cache:
     trendzSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
       maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    aiModel:
+      timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_TTL:1440}" # AI model cache TTL
+      maxSize: "${CACHE_SPECS_AI_MODEL_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -846,22 +858,23 @@ audit-log:
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
   logging-level:
     mask:
-      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
+      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels.
+      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels.
+      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels.
+      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels.
+      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels.
+      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels.
+      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels.
+      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels.
+      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels.
+      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels.
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels.
+      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels.
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels.
+      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels.
+      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels.
+      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels.
+      "ai_model": "${AUDIT_LOG_MASK_AI_MODEL:W}" # AI model logging levels.
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -898,6 +911,8 @@ state:
   # Used only when state.persistToTelemetry is set to 'true' and Cassandra is used for timeseries data.
   # 0 means time-to-live mechanism is disabled.
   telemetryTtl: "${STATE_TELEMETRY_TTL:0}"
+  # Number of device records to fetch per batch when initializing device activity states
+  initFetchPackSize: "${TB_DEVICE_STATE_INIT_FETCH_PACK_SIZE:50000}"
   # Configuration properties for rule nodes related to device activity state
   rule:
     node:
@@ -1631,6 +1646,11 @@ queue:
         - key: max.poll.records
           # Max poll records for edqs.state topic
           value: "${TB_QUEUE_KAFKA_EDQS_STATE_MAX_POLL_RECORDS:512}"
+      tasks:
+        # Key-value properties for Kafka consumer for tasks topics
+        - key: max.poll.records
+          # Max poll records for tasks topics
+          value: "${TB_QUEUE_KAFKA_TASKS_MAX_POLL_RECORDS:1}"
     # If you override any default Kafka topic name using environment variables, you must also specify the related consumer properties
     # for the new topic in `consumer-properties-per-topic-inline`. Otherwise, the topic will not inherit its expected configuration (e.g., max.poll.records, timeouts, etc).
     # Each entry sets a single property for a specific topic. To define multiple properties for a topic, repeat the topic key.
@@ -1653,7 +1673,7 @@ queue:
       # Kafka properties for Notifications topics
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for JS Executor topics
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:104857600;partitions:30;min.insync.replicas:1}"
       # Kafka properties for OTA updates topic
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Version Control topic
@@ -1676,6 +1696,8 @@ queue:
       edqs-requests: "${TB_QUEUE_KAFKA_EDQS_REQUESTS_TOPIC_PROPERTIES:retention.ms:180000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for EDQS state topic (infinite retention, compaction)
       edqs-state: "${TB_QUEUE_KAFKA_EDQS_STATE_TOPIC_PROPERTIES:retention.ms:-1;segment.bytes:52428800;retention.bytes:-1;partitions:1;min.insync.replicas:1;cleanup.policy:compact}"
+      # Kafka properties for tasks topics
+      tasks: "${TB_QUEUE_KAFKA_TASKS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1764,6 +1786,8 @@ queue:
       supported: "${TB_EDQS_API_SUPPORTED:false}"
       # Whether to auto-enable EDQS API (if queue.edqs.api.supported is true) when sync of data to Kafka is finished 
       auto_enable: "${TB_EDQS_API_AUTO_ENABLE:true}"
+    # Interval in milliseconds to check for ready EDQS servers
+    readiness_check_interval: "${TB_EDQS_READINESS_CHECK_INTERVAL_MS:60000}"
     # Mode of EDQS: local (for monolith) or remote (with separate EDQS microservices)
     mode: "${TB_EDQS_MODE:local}"
     local:
@@ -1787,6 +1811,10 @@ queue:
     max_pending_requests: "${TB_EDQS_MAX_PENDING_REQUESTS:10000}"
     # Maximum timeout for requests to EDQS
     max_request_timeout: "${TB_EDQS_MAX_REQUEST_TIMEOUT:20000}"
+    # Thread pool size for EDQS requests executor
+    request_executor_size: "${TB_EDQS_REQUEST_EXECUTOR_SIZE:50}"
+    # Time to live for EDQS versions cache in minutes. Must be bigger than the time taken for the sync process.
+    versions_cache_ttl: "${TB_EDQS_VERSIONS_CACHE_TTL_MINUTES:60}"
     # Strings longer than this threshold will be compressed
     string_compression_length_threshold: "${TB_EDQS_STRING_COMPRESSION_LENGTH_THRESHOLD:512}"
     stats:
@@ -1890,6 +1918,23 @@ queue:
       enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
       # Statistics printing interval for Edge services
       print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
+  tasks:
+    # Poll interval in milliseconds for tasks topics
+    poll_interval: "${TB_QUEUE_TASKS_POLL_INTERVAL_MS:500}"
+    # Partitions count for tasks queues
+    partitions: "${TB_QUEUE_TASKS_PARTITIONS:12}"
+    # Custom partitions count for tasks queues per type. Format: 'TYPE1:24;TYPE2:36', e.g. 'CF_REPROCESSING:24;TENANT_EXPORT:6'
+    partitions_per_type: "${TB_QUEUE_TASKS_PARTITIONS_PER_TYPE:}"
+    # Tasks partitioning strategy: 'tenant' or 'entity'. By default, using 'tenant' - tasks of a specific tenant are processed in the same partition.
+    # In a single-tenant environment, use 'entity' strategy to distribute the tasks among multiple partitions.
+    partitioning_strategy: "${TB_QUEUE_TASKS_PARTITIONING_STRATEGY:tenant}"
+    stats:
+      # Name for the tasks stats topic
+      topic: "${TB_QUEUE_TASKS_STATS_TOPIC:jobs.stats}"
+      # Poll interval in milliseconds for tasks stats topic
+      poll_interval: "${TB_QUEUE_TASKS_STATS_POLL_INTERVAL_MS:500}"
+      # Interval in milliseconds to process job stats
+      processing_interval: "${TB_QUEUE_TASKS_STATS_PROCESSING_INTERVAL_MS:1000}"
 
 # Event configuration parameters
 event:

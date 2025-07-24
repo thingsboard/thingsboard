@@ -37,9 +37,10 @@ import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.jetbrains.annotations.Contract;
+import org.thingsboard.server.common.data.Views;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.Views;
 
 import java.io.File;
 import java.io.IOException;
@@ -61,9 +62,6 @@ import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
-/**
- * Created by Valerii Sosliuk on 5/12/2017.
- */
 @Slf4j
 public class JacksonUtil {
 
@@ -109,6 +107,7 @@ public class JacksonUtil {
         }
     }
 
+    @Contract("null, _ -> null") // so that IDE doesn't show NPE warning when input is not null
     public static <T> T fromString(String string, Class<T> clazz) {
         try {
             return string != null ? OBJECT_MAPPER.readValue(string, clazz) : null;

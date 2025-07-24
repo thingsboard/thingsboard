@@ -26,7 +26,6 @@ import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.AddPartitionsTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.DeletePartitionsTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.RemovePartitionsTask;
-import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
@@ -44,7 +43,7 @@ public class PartitionedQueueConsumerManager<M extends TbQueueMsg> extends MainQ
     private final String topic;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
-    public PartitionedQueueConsumerManager(QueueKey queueKey, String topic, long pollInterval, MsgPackProcessor<M, QueueConfig> msgPackProcessor,
+    public PartitionedQueueConsumerManager(Object queueKey, String topic, long pollInterval, MsgPackProcessor<M, QueueConfig> msgPackProcessor,
                                            BiFunction<QueueConfig, TopicPartitionInfo, TbQueueConsumer<M>> consumerCreator, TbQueueAdmin queueAdmin,
                                            ExecutorService consumerExecutor, ScheduledExecutorService scheduler,
                                            ExecutorService taskExecutor, Consumer<Throwable> uncaughtErrorHandler) {

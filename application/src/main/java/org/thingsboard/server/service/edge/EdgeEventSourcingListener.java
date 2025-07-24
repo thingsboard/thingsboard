@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -112,7 +113,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.TENANT.equals(entityType) || EntityType.EDGE.equals(entityType)) {
+            if (EntityType.TENANT == entityType || EntityType.EDGE == entityType || EntityType.AI_MODEL == entityType) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
@@ -226,7 +227,7 @@ public class EdgeEventSourcingListener {
                     break;
                 case TENANT:
                     return !event.getCreated();
-                case API_USAGE_STATE, EDGE:
+                case API_USAGE_STATE, EDGE, AI_MODEL:
                     return false;
                 case DOMAIN:
                     if (entity instanceof Domain domain) {
@@ -262,6 +263,8 @@ public class EdgeEventSourcingListener {
     private String getBodyMsgForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return JacksonUtil.toString(entity);
+        } else if (entity instanceof CalculatedField calculatedField) {
+            return JacksonUtil.toString(calculatedField.getEntityId());
         }
         return null;
     }

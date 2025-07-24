@@ -18,11 +18,9 @@ package org.thingsboard.server.dao.sqlts.insert.latest.sql;
 import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
-import org.thingsboard.server.dao.util.SqlDao;
 import org.thingsboard.server.dao.util.SqlTsLatestAnyDao;
 
 import java.sql.PreparedStatement;
@@ -32,8 +30,6 @@ import java.util.List;
 
 @SqlTsLatestAnyDao
 @Repository
-@Transactional
-@SqlDao
 public class SqlLatestInsertTsRepository extends AbstractVersionedInsertRepository<TsKvLatestEntity> implements InsertLatestTsRepository {
 
     @Value("${sql.ts_latest.update_by_latest_ts:true}")
