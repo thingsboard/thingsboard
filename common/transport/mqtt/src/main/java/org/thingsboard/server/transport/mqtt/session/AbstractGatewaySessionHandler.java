@@ -673,6 +673,8 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     private TransportProtos.GetAttributeRequestMsg toGetAttributeRequestMsg(int requestId, boolean clientScope, Set<String> keys) {
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
         result.setRequestId(requestId);
+        result.setAddClient(clientScope);
+        result.setAddShared(!clientScope);
 
         if (clientScope) {
             result.addAllClientAttributeNames(keys);

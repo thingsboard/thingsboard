@@ -38,10 +38,10 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
 
@@ -178,6 +178,8 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
         String topicName = inbound.variableHeader().topicName();
         try {
             TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
+            boolean addClient = false;
+            boolean addShared = false;
             result.setRequestId(getRequestId(topicName, topicBase));
             String payload = inbound.payload().toString(UTF8);
             JsonElement requestBody = JsonParser.parseString(payload);
@@ -185,10 +187,18 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
             Set<String> sharedKeys = toStringSet(requestBody, "sharedKeys");
             if (clientKeys != null) {
                 result.addAllClientAttributeNames(clientKeys);
+                addClient = true;
             }
             if (sharedKeys != null) {
                 result.addAllSharedAttributeNames(sharedKeys);
+                addShared = true;
             }
+            if (clientKeys == null && sharedKeys == null) {
+                addClient = true;
+                addShared = true;
+            }
+            result.setAddClient(addClient);
+            result.setAddShared(addShared);
             return result.build();
         } catch (RuntimeException e) {
             log.debug("Failed to decode get attributes request", e);
@@ -255,7 +265,10 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     private Set<String> toStringSet(JsonElement requestBody, String name) {
         JsonElement element = requestBody.getAsJsonObject().get(name);
         if (element != null) {
-            return new HashSet<>(Arrays.asList(element.getAsString().split(",")));
+            return Arrays.stream(element.getAsString().split(","))
+                    .map(String::trim)
+                    .filter(s -> !s.isEmpty())
+                    .collect(Collectors.toSet());
         } else {
             return null;
         }
