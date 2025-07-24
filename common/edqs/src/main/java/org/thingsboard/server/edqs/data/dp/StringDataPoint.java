@@ -34,6 +34,16 @@ public class StringDataPoint extends AbstractDataPoint {
     }
 
     @Override
+    public double getDouble() {
+        return Double.parseDouble(value);
+    }
+
+    @Override
+    public long getLong() {
+        return Long.parseLong(value);
+    }
+
+    @Override
     public DataType getType() {
         return DataType.STRING;
     }
