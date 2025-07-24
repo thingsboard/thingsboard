@@ -79,6 +79,7 @@ import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Lazy
 @Data
@@ -199,8 +200,8 @@ public class EdgeContextComponent {
     @Autowired
     private WidgetsBundleService widgetsBundleService;
 
-    @Autowired(required = false)
-    private EdgeStatsCounterService statsCounterService;
+    @Autowired
+    private Optional<EdgeStatsCounterService> statsCounterService;
 
 
     // processors
