@@ -59,15 +59,14 @@ public class AlarmsDeletionTaskProcessor extends HousekeeperTaskProcessor<Alarms
                 lastCreatedTime = last.getSecond();
                 log.debug("[{}][{}][{}] Submitted task for deleting {} alarms", tenantId, entityType, entityId, alarms.size());
             }
+            int count = alarmService.deleteEntityAlarmRecords(tenantId, entityId);
+            log.debug("[{}][{}][{}] Deleted {} entity alarms", tenantId, entityType, entityId, count);
         } else {
             for (UUID alarmId : task.getAlarms()) {
                 alarmService.delAlarm(tenantId, new AlarmId(alarmId));
             }
             log.debug("[{}][{}][{}] Deleted {} alarms", tenantId, entityType, entityId, task.getAlarms().size());
         }
-
-        int count = alarmService.deleteEntityAlarmRecords(tenantId, entityId);
-        log.debug("[{}][{}][{}] Deleted {} entity alarms", tenantId, entityType, entityId, count);
     }
 
     @Override
