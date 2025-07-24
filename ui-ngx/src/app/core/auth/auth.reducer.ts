@@ -99,6 +99,9 @@ export const authReducer = (
       action.payload.forEach(path => unset(userSettings, path));
       return { ...state, ...{ userSettings }};
 
+    case AuthActionTypes.UPDATE_TRENDZ_SETTINGS:
+      return { ...state, trendzSettings: action.payload };
+
     default:
       return state;
   }
