@@ -22,6 +22,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.Session;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -69,9 +70,15 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         log.debug("Saving entity {}", entity);
         boolean isNew = entity.getUuid() == null;
         if (isNew) {
-            UUID uuid = Uuids.timeBased();
-            entity.setUuid(uuid);
-            entity.setCreatedTime(Uuids.unixTimestamp(uuid));
+            entity.setCreatedTime(System.currentTimeMillis());
+        } else {
+            if (entity.getCreatedTime() == 0) {
+                if (entity.getUuid().version() == 1) {
+                    entity.setCreatedTime(Uuids.unixTimestamp(entity.getUuid()));
+                } else {
+                    entity.setCreatedTime(System.currentTimeMillis());
+                }
+            }
         }
         try {
             entity = doSave(entity, isNew, flush);
@@ -85,35 +92,16 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         boolean flushed = false;
         EntityManager entityManager = getEntityManager();
         if (isNew) {
-            entityManager.persist(entity);
-            if (entity instanceof HasVersion versionedEntity) {
-                versionedEntity.setVersion(1L);
-            }
+            entity = create(entity);
         } else {
-            if (entity instanceof HasVersion versionedEntity) {
-                if (versionedEntity.getVersion() == null) {
-                    HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
-                    if (existingEntity != null) {
-                        /*
-                         * manually resetting the version to latest to allow force overwrite of the entity
-                         * */
-                        versionedEntity.setVersion(existingEntity.getVersion());
-                    } else {
-                        return doSave(entity, true, flush);
-                    }
-                }
-                versionedEntity = entityManager.merge(versionedEntity);
-                entity = (E) versionedEntity;
-                /*
-                 * by default, Hibernate doesn't issue an update query and thus version increment
-                 * if the entity was not modified. to bypass this and always increment the version, we do it manually
-                 * */
-                versionedEntity.setVersion(versionedEntity.getVersion() + 1);
-            } else {
-                entity = entityManager.merge(entity);
-            }
+            entity = update(entity);
         }
         if (entity instanceof HasVersion versionedEntity) {
+            /*
+             * by default, Hibernate doesn't issue an update query and thus version increment
+             * if the entity was not modified. to bypass this and always increment the version, we do it manually
+             * */
+            versionedEntity.setVersion(versionedEntity.getVersion() + 1);
             /*
              * flushing and then removing the entity from the persistence context so that it is not affected
              * by next flushes (e.g. when a transaction is committed) to avoid double version increment
@@ -124,6 +112,48 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         if (flush && !flushed) {
             entityManager.flush();
+        }
+        return entity;
+    }
+
+    private E create(E entity) {
+        if (entity instanceof HasVersion versionedEntity) {
+            versionedEntity.setVersion(0L);
+        }
+        if (entity.getUuid() == null) {
+            getEntityManager().persist(entity);
+        } else {
+            if (entity instanceof HasVersion) {
+                /*
+                 * Hibernate 6 does not allow creating versioned entities with preset IDs.
+                 * Bypassing by calling the underlying session directly
+                 * */
+                Session session = getEntityManager().unwrap(Session.class);
+                session.save(entity);
+            } else {
+                entity = getEntityManager().merge(entity);
+            }
+        }
+        return entity;
+    }
+
+    private E update(E entity) {
+        if (entity instanceof HasVersion versionedEntity) {
+            if (versionedEntity.getVersion() == null) {
+                HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
+                if (existingEntity != null) {
+                    /*
+                     * manually resetting the version to latest to allow force overwriting of the entity
+                     * */
+                    versionedEntity.setVersion(existingEntity.getVersion());
+                } else {
+                    return create(entity);
+                }
+            }
+            versionedEntity = entityManager.merge(versionedEntity);
+            entity = (E) versionedEntity;
+        } else {
+            entity = entityManager.merge(entity);
         }
         return entity;
     }

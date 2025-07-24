@@ -383,7 +383,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 LwM2mPath path = instant.getKey();
                 LwM2mNode node = instant.getValue();
                 LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-                ObjectModel objectModelVersion = lwM2MClient.getObjectModel(path.toString(), modelProvider);
+                ObjectModel objectModelVersion = lwM2MClient.getObjectModel(convertObjectIdToVersionedId(path.toString(), lwM2MClient), modelProvider);
                 if (objectModelVersion != null) {
                     ResourceUpdateResult updateResource = new ResourceUpdateResult(lwM2MClient);
                     if (node instanceof LwM2mObject) {

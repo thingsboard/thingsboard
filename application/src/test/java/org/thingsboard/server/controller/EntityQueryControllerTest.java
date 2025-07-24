@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataPageLink;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.DeviceTypeFilter;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -707,7 +708,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         }
 
         RelationsQueryFilter filter = new RelationsQueryFilter();
-        filter.setRootEntity(mainDevice.getId());
+        filter.setRootEntity(AliasEntityId.fromEntityId(mainDevice.getId()));
         filter.setDirection(EntitySearchDirection.FROM);
         filter.setNegate(true);
         filter.setFilters(List.of(new RelationEntityTypeFilter("CONTAINS", List.of(EntityType.DEVICE), false)));

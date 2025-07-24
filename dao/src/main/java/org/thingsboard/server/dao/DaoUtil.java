@@ -43,10 +43,9 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public abstract class DaoUtil {
+public final class DaoUtil {
 
-    private DaoUtil() {
-    }
+    private DaoUtil() {}
 
     public static <T> PageData<T> toPageData(Page<? extends ToData<T>> page) {
         List<T> data = convertDataList(page.getContent());
@@ -98,17 +97,17 @@ public abstract class DaoUtil {
         return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(sortOrders, columnMap, addDefaultSorting));
     }
 
-    public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList) {
-        List<T> list = Collections.emptyList();
-        if (toDataList != null && !toDataList.isEmpty()) {
-            list = new ArrayList<>();
-            for (ToData<T> object : toDataList) {
-                if (object != null) {
-                    list.add(object.toData());
-                }
+    public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toConvert) {
+        if (CollectionUtils.isEmpty(toConvert)) {
+            return Collections.emptyList();
+        }
+        List<T> converted = new ArrayList<>(toConvert.size());
+        for (ToData<T> object : toConvert) {
+            if (object != null) {
+                converted.add(object.toData());
             }
         }
-        return list;
+        return converted;
     }
 
     public static <T> T getData(ToData<T> data) {

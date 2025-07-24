@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.RuleEngineAssetProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -69,6 +71,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
@@ -94,6 +97,7 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -164,10 +168,11 @@ public class TenantIdLoaderTest {
     private CalculatedFieldService calculatedFieldService;
     @Mock
     private JobService jobService;
+    @Mock
+    private AiModelService aiModelService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
-    private NotificationId notificationId;
     private AbstractListeningExecutor dbExecutor;
 
     @BeforeEach
@@ -179,9 +184,8 @@ public class TenantIdLoaderTest {
             }
         };
         dbExecutor.init();
-        this.tenantId = new TenantId(UUID.randomUUID());
+        this.tenantId = TenantId.fromUUID(UUID.randomUUID());
         this.tenantProfileId = new TenantProfileId(UUID.randomUUID());
-        this.notificationId = new NotificationId(UUID.randomUUID());
 
         when(ctx.getTenantId()).thenReturn(tenantId);
 
@@ -199,6 +203,7 @@ public class TenantIdLoaderTest {
         switch (entityType) {
             case TENANT:
             case NOTIFICATION:
+            case ADMIN_SETTINGS:
                 break;
             case CUSTOMER:
                 Customer customer = new Customer();
@@ -429,6 +434,12 @@ public class TenantIdLoaderTest {
                 when(ctx.getJobService()).thenReturn(jobService);
                 doReturn(job).when(jobService).findJobById(eq(tenantId), any());
                 break;
+            case AI_MODEL:
+                AiModel aiModel = new AiModel();
+                aiModel.setTenantId(tenantId);
+                when(ctx.getAiModelService()).thenReturn(aiModelService);
+                doReturn(Optional.of(aiModel)).when(aiModelService).findAiModelById(eq(tenantId), any());
+                break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);
         }
@@ -465,7 +476,7 @@ public class TenantIdLoaderTest {
 
     @Test
     public void test_findEntityIdAsync_other_tenant() {
-        checkTenant(new TenantId(UUID.randomUUID()), false);
+        checkTenant(TenantId.fromUUID(UUID.randomUUID()), false);
     }
 
 }

@@ -38,14 +38,14 @@
         <span style="min-width: 80px;"></span>
       </div>
     </div>
-    <fieldset [disabled]="isLoading$ | async">
+    <fieldset [disabled]="isLoading$ | async" class="tb-form-panel outlined">
       <mat-divider></mat-divider>
       <div class="flex flex-1 flex-row items-center justify-start"
            formArrayName="entityAliases"
            *ngFor="let entityAliasControl of entityAliasesFormArray().controls; let $index = index">
         <span class="max-w-5% flex-full">{{$index + 1}}.</span>
         <div class="mat-elevation-z4 tb-alias flex max-w-95% flex-full flex-row items-center justify-start">
-          <mat-form-field class="mat-block flex-1 gt-sm:min-w-52 gt-sm:max-w-52 gt-sm:basis-52" style="padding-top: 20px;">
+          <mat-form-field class="mat-block flex-1 gt-sm:min-w-52 gt-sm:max-w-52 gt-sm:basis-52" style="padding-top: 20px;" appearance="outline">
             <input matInput [formControl]="entityAliasControl.get('alias')" required placeholder="{{ 'entity.alias' | translate }}">
             <mat-error *ngIf="entityAliasControl.get('alias').hasError('required')">
               {{ 'entity.alias-required' | translate }}

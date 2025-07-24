@@ -15,16 +15,23 @@
  */
 package org.thingsboard.mqtt;
 
+import lombok.AccessLevel;
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.regex.Pattern;
 
 final class MqttSubscription {
 
+    @Getter(AccessLevel.PACKAGE)
     private final String topic;
     private final Pattern topicRegex;
+    @Getter
     private final MqttHandler handler;
-
+    @Getter(AccessLevel.PACKAGE)
     private final boolean once;
-
+    @Getter(AccessLevel.PACKAGE)
+    @Setter(AccessLevel.PACKAGE)
     private volatile boolean called;
 
     MqttSubscription(String topic, MqttHandler handler, boolean once) {
@@ -38,22 +45,6 @@ final class MqttSubscription {
         this.handler = handler;
         this.once = once;
         this.topicRegex = Pattern.compile(topic.replace("+", "[^/]+").replace("#", ".+") + "$");
-    }
-
-    String getTopic() {
-        return topic;
-    }
-
-    public MqttHandler getHandler() {
-        return handler;
-    }
-
-    boolean isOnce() {
-        return once;
-    }
-
-    boolean isCalled() {
-        return called;
     }
 
     boolean matches(String topic) {
@@ -78,7 +69,4 @@ final class MqttSubscription {
         return result;
     }
 
-    void setCalled(boolean called) {
-        this.called = called;
-    }
 }

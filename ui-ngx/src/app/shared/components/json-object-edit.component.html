@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="flex flex-col" style="background: #fff;" [class.fill-height]="fillHeight"
+<div class="tb-json-object flex flex-col" style="background: #fff;" [class.fill-height]="fillHeight"
      tb-fullscreen
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
   <div class="tb-json-object-toolbar flex flex-row items-center justify-start">
@@ -32,6 +32,7 @@
             mat-button *ngIf="!readonly && !disabled" class="tidy" (click)="minifyJSON()">
       {{'js-func.mini' | translate }}
     </button>
+    <ng-content select="[toolbarSuffixButton]"></ng-content>
     <button mat-icon-button class="tb-mat-32" (click)="fullscreen = !fullscreen"
             matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
             matTooltipPosition="above">

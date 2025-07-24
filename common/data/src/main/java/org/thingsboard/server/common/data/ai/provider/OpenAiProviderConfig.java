@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg;
+package org.thingsboard.server.common.data.ai.provider;
 
-public interface TbActorError {
+import jakarta.validation.constraints.NotNull;
 
-    boolean isUnrecoverable();
-
-}
+public record OpenAiProviderConfig(
+        @NotNull String apiKey
+) implements AiProviderConfig {}
