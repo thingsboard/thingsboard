@@ -276,6 +276,7 @@
           "first-name-attribute-key-max-length": "First name attribute key should be less than 32",
           "general": "General",
           "jwk-set-uri": "JSON Web Key URI",
+          "end-session-endpoint": "OpenID end session endpoint URI",
           "last-name-attribute-key": "Last name attribute key",
           "last-name-attribute-key-max-length": "Last name attribute key should be less than 32",
           "login-button-icon": "Login button icon",
