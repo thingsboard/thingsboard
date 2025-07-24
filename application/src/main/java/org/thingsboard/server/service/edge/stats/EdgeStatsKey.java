@@ -15,16 +15,20 @@
  */
 package org.thingsboard.server.service.edge.stats;
 
-public enum EdgeStatsKey {
-    DOWNLINK_MSG_PUSHED,
-    DOWNLINK_MSG_PERMANENTLY_FAILED,
-    DOWNLINK_MSG_TMP_FAILED,
-    DOWNLINK_MSG_ADDED;
+import lombok.Getter;
 
-    public static final String DOWNLINK_MSGS_ADDED = "downlinkMsgsAdded";
-    public static final String DOWNLINK_MSGS_PUSHED = "downlinkMsgsPushed";
-    public static final String DOWNLINK_MSGS_PERMANENTLY_FAILED = "downlinkMsgsPermanentlyFailed";
-    public static final String DOWNLINK_MSGS_TMP_FAILED = "downlinkMsgsTmpFailed";
-    public static final String DOWNLINK_MSGS_LAG = "downlinkMsgsLag";
+@Getter
+public enum EdgeStatsKey {
+    DOWNLINK_MSGS_ADDED("downlinkMsgsAdded"),
+    DOWNLINK_MSGS_PUSHED("downlinkMsgsPushed"),
+    DOWNLINK_MSGS_PERMANENTLY_FAILED("downlinkMsgsPermanentlyFailed"),
+    DOWNLINK_MSGS_TMP_FAILED("downlinkMsgsTmpFailed"),
+    DOWNLINK_MSGS_LAG("downlinkMsgsLag");
+
+    private final String key;
+
+    EdgeStatsKey(String key) {
+        this.key = key;
+    }
 
 }

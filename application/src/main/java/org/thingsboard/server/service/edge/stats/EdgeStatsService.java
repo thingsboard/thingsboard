@@ -86,11 +86,11 @@ public class EdgeStatsService {
                 counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
             }
             List<TsKvEntry> statsEntries = List.of(
-                    entry(ts, DOWNLINK_MSGS_ADDED, counters.getMsgsAdded().get()),
-                    entry(ts, DOWNLINK_MSGS_PUSHED, counters.getMsgsPushed().get()),
-                    entry(ts, DOWNLINK_MSGS_PERMANENTLY_FAILED, counters.getMsgsPermanentlyFailed().get()),
-                    entry(ts, DOWNLINK_MSGS_TMP_FAILED, counters.getMsgsTmpFailed().get()),
-                    entry(ts, DOWNLINK_MSGS_LAG, counters.getMsgsLag().get())
+                    entry(ts, DOWNLINK_MSGS_ADDED.getKey(), counters.getMsgsAdded().get()),
+                    entry(ts, DOWNLINK_MSGS_PUSHED.getKey(), counters.getMsgsPushed().get()),
+                    entry(ts, DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey(), counters.getMsgsPermanentlyFailed().get()),
+                    entry(ts, DOWNLINK_MSGS_TMP_FAILED.getKey(), counters.getMsgsTmpFailed().get()),
+                    entry(ts, DOWNLINK_MSGS_LAG.getKey(), counters.getMsgsLag().get())
             );
 
             log.trace("Reported Edge communication stats: {} tenantId - {}, edgeId - {}", statsEntries, tenantId, edgeId);

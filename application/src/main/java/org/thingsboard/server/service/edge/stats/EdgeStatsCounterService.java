@@ -37,10 +37,10 @@ public class EdgeStatsCounterService {
     public void recordEvent(EdgeStatsKey type, TenantId tenantId, EdgeId edgeId, long value) {
         MsgCounters counters = getOrCreateCounters(tenantId, edgeId);
         switch (type) {
-            case DOWNLINK_MSG_ADDED -> counters.getMsgsAdded().addAndGet(value);
-            case DOWNLINK_MSG_PUSHED -> counters.getMsgsPushed().addAndGet(value);
-            case DOWNLINK_MSG_PERMANENTLY_FAILED -> counters.getMsgsPermanentlyFailed().addAndGet(value);
-            case DOWNLINK_MSG_TMP_FAILED -> counters.getMsgsTmpFailed().addAndGet(value);
+            case DOWNLINK_MSGS_ADDED -> counters.getMsgsAdded().addAndGet(value);
+            case DOWNLINK_MSGS_PUSHED -> counters.getMsgsPushed().addAndGet(value);
+            case DOWNLINK_MSGS_PERMANENTLY_FAILED -> counters.getMsgsPermanentlyFailed().addAndGet(value);
+            case DOWNLINK_MSGS_TMP_FAILED -> counters.getMsgsTmpFailed().addAndGet(value);
         }
     }
 
