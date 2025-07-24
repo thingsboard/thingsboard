@@ -47,7 +47,7 @@ public class CleanUpService {
     private final Set<EntityType> skippedEntities = EnumSet.of(
             EntityType.ALARM, EntityType.QUEUE, EntityType.TB_RESOURCE, EntityType.OTA_PACKAGE,
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_TEMPLATE,
-            EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE
+            EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE, EntityType.AI_MODEL
     );
 
     @TransactionalEventListener(fallbackExecution = true) // after transaction commit

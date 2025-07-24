@@ -43,23 +43,14 @@
                  [data]=createMarkDownCommand(gitRepositoryLink)></tb-markdown>
   </div>
   <div class="tb-form-panel stroked">
-    <div class="tb-form-panel-title" translate>mobile.configuration-step.configure-api-title</div>
-    <div translate>mobile.configuration-step.configure-api-text</div>
-    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                 [data]=createMarkDownCommand(pathToConstants)></tb-markdown>
-    <div translate>mobile.configuration-step.configure-api-hint</div>
-    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                 [data]=createMarkDownCommand(configureApi)></tb-markdown>
-  </div>
-  <div class="tb-form-panel stroked" *ngIf="setApplication">
-    <div class="tb-form-panel-title" translate>mobile.configuration-step.configure-package-title</div>
-    <div translate>mobile.configuration-step.configure-package-text</div>
-    <div translate>mobile.configuration-step.configure-package-text-install</div>
-    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                 [data]=createMarkDownCommand(flutterInstallRenameCommand)></tb-markdown>
-    <div translate>mobile.configuration-step.configure-package-run-commands</div>
-    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                 [data]=createMarkDownCommand(renameCommands)></tb-markdown>
+    <div class="tb-form-panel-title" translate>mobile.configuration-step.configure-app-settings-title</div>
+    <div class="flex gap-4">
+      <div class="flex-1" translate>mobile.configuration-step.configure-app-settings-text</div>
+      <button mat-stroked-button color="primary" type="button" (click)="downloadSettings()">
+        <mat-icon class="tb-mat-24">download</mat-icon>
+        {{ 'mobile.configuration-step.download-file' | translate }}
+      </button>
+    </div>
   </div>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>mobile.configuration-step.run-app-title</div>

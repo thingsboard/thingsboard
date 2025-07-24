@@ -15,7 +15,7 @@
 ///
 
 import { PageLink } from '@shared/models/page/page-link';
-import { BehaviorSubject, Observable, of, ReplaySubject } from 'rxjs';
+import { BehaviorSubject, Observable, of, ReplaySubject, Subscription } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { BaseData, HasId } from '@shared/models/base-data';
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
@@ -28,6 +28,7 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
 
   private entitiesSubject = new BehaviorSubject<T[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<T>>(emptyPageData<T>());
+  private currentLoadSubscription: Subscription = null;
 
   public pageData$ = this.pageDataSubject.asObservable();
 
@@ -58,9 +59,12 @@ export class EntitiesDataSource<T extends BaseData<HasId>, P extends PageLink = 
   }
 
   loadEntities(pageLink: P): Observable<PageData<T>> {
+    if (this.currentLoadSubscription) {
+      this.currentLoadSubscription.unsubscribe();
+    }
     this.dataLoading = true;
     const result = new ReplaySubject<PageData<T>>();
-    this.fetchFunction(pageLink).pipe(
+    this.currentLoadSubscription = this.fetchFunction(pageLink).pipe(
       tap(() => {
         this.selection.clear();
       }),

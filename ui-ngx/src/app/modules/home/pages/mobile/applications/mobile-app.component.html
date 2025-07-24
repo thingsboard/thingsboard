@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="mat-padding flex flex-col" [formGroup]="entityForm">
+<section class="mat-padding tb-form-panel outlined" [formGroup]="entityForm">
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label translate>mobile.mobile-package</mat-label>
     <input matInput required formControlName="pkgName">
@@ -36,6 +36,14 @@
     </mat-error>
     <mat-error *ngIf="entityForm.get('pkgName').hasError('pattern')">
       {{ 'mobile.mobile-package-pattern' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>mobile.mobile-package-title</mat-label>
+    <input matInput formControlName="title">
+    <mat-hint></mat-hint>
+    <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+      {{ 'mobile.mobile-package-title-max-length' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field appearance="outline" class="flex">

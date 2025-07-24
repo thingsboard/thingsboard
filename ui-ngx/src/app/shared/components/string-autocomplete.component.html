@@ -29,7 +29,7 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-icon *ngIf="selectionFormControl.hasError('required') && !showInlineError"
+  <mat-icon *ngIf="selectionFormControl.hasError('required') && selectionFormControl.touched && !showInlineError"
             matIconSuffix
             [matTooltip]="errorText"
             matTooltipPosition="above"
@@ -43,7 +43,7 @@
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-options-input-autocomplete"
-    panelWidth="fit-content">
+    [panelWidth]="panelWidth">
     <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
       <span class="tb-option-name flex-1" [innerHTML]="option | highlight:searchText:true:'ig'"></span>
     </mat-option>

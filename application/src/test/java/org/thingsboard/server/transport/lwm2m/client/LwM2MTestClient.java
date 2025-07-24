@@ -144,7 +144,7 @@ public class LwM2MTestClient {
     public void init(Security security, Security securityBs, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
                      LwM2mClientContext clientContext, Integer cIdLength, boolean queueMode,
-                     boolean supportFormatOnly_SenMLJSON_SenMLCBOR) throws InvalidDDFFileException, IOException {
+                     boolean supportFormatOnly_SenMLJSON_SenMLCBOR, Integer value3_0_9) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -197,7 +197,7 @@ public class LwM2MTestClient {
             initializer.setInstancesForObject(SERVER, lwm2mServer);
         }
 
-        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
+        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor, value3_0_9));
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);

@@ -41,7 +41,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -133,7 +132,7 @@ public class TbMsgAttributesNode implements TbNode {
             return;
         }
         String src = msg.getData();
-        List<AttributeKvEntry> newAttributes = new ArrayList<>(JsonConverter.convertToAttributes(JsonParser.parseString(src)));
+        List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(JsonParser.parseString(src));
         if (newAttributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;

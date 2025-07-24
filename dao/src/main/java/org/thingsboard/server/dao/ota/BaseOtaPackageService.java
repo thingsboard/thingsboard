@@ -54,6 +54,7 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 @Slf4j
 @RequiredArgsConstructor
 public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackageCacheKey, OtaPackageInfo, OtaPackageCacheEvictEvent> implements OtaPackageService {
+
     public static final String INCORRECT_OTA_PACKAGE_ID = "Incorrect otaPackageId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
@@ -73,7 +74,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     @Override
     public OtaPackageInfo saveOtaPackageInfo(OtaPackageInfo otaPackageInfo, boolean isUrl) {
         log.trace("Executing saveOtaPackageInfo [{}]", otaPackageInfo);
-        if (isUrl && (StringUtils.isEmpty(otaPackageInfo.getUrl()) || otaPackageInfo.getUrl().trim().length() == 0)) {
+        if (isUrl && StringUtils.isBlank(otaPackageInfo.getUrl())) {
             throw new DataValidationException("Ota package URL should be specified!");
         }
         otaPackageInfoValidator.validate(otaPackageInfo, OtaPackageInfo::getTenantId);
@@ -90,12 +91,10 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             if (otaPackageId != null) {
                 handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
-                throw new DataValidationException("OtaPackage with such title and version already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "ota_package_tenant_title_version_unq_key", "OtaPackage with such title and version already exists!",
+                    "ota_package_external_id_unq_key", "OtaPackage with such external id already exists!");
+            throw t;
         }
     }
 
@@ -116,12 +115,10 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
             if (otaPackageId != null) {
                 handleEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
             }
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("ota_package_tenant_title_version_unq_key")) {
-                throw new DataValidationException("OtaPackage with such title and version already exists!");
-            } else {
-                throw t;
-            }
+            checkConstraintViolation(t,
+                    "ota_package_tenant_title_version_unq_key", "OtaPackage with such title and version already exists!",
+                    "ota_package_external_id_unq_key", "OtaPackage with such external id already exists!");
+            throw t;
         }
     }
 
@@ -136,24 +133,16 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
 
     @SuppressWarnings("deprecation")
     private HashFunction getHashFunction(ChecksumAlgorithm checksumAlgorithm) {
-        switch (checksumAlgorithm) {
-            case MD5:
-                return Hashing.md5();
-            case SHA256:
-                return Hashing.sha256();
-            case SHA384:
-                return Hashing.sha384();
-            case SHA512:
-                return Hashing.sha512();
-            case CRC32:
-                return Hashing.crc32();
-            case MURMUR3_32:
-                return Hashing.murmur3_32();
-            case MURMUR3_128:
-                return Hashing.murmur3_128();
-            default:
-                throw new DataValidationException("Unknown checksum algorithm!");
-        }
+        return switch (checksumAlgorithm) {
+            case MD5 -> Hashing.md5();
+            case SHA256 -> Hashing.sha256();
+            case SHA384 -> Hashing.sha384();
+            case SHA512 -> Hashing.sha512();
+            case CRC32 -> Hashing.crc32();
+            case MURMUR3_32 -> Hashing.murmur3_32();
+            case MURMUR3_128 -> Hashing.murmur3_128();
+            default -> throw new DataValidationException("Unknown checksum algorithm!");
+        };
     }
 
     @Override
@@ -169,6 +158,12 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         validateId(otaPackageId, id -> INCORRECT_OTA_PACKAGE_ID + id);
         return cache.getAndPutInTransaction(new OtaPackageCacheKey(otaPackageId),
                 () -> otaPackageInfoDao.findById(tenantId, otaPackageId.getId()), true);
+    }
+
+    @Override
+    public OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version) {
+        log.trace("Executing findOtaPackageByTenantIdAndTitle [{}] [{}] [{}]", tenantId, title, version);
+        return otaPackageDao.findOtaPackageByTenantIdAndTitleAndVersion(tenantId, title, version);
     }
 
     @Override

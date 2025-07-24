@@ -16,25 +16,38 @@
 
 -->
 <section [formGroup]="timeInputForm" class="flex gap-4">
-  <mat-form-field class="max-w-66% flex-full" subscriptSizing="dynamic">
-    <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
-    <input type="number" min="0" step="1" matInput formControlName="time">
+  <mat-form-field [class]="{'number': inlineField, 'max-w-66%': !inlineField, 'flex-full': !inlineField}"
+                  [appearance]="inlineField ? 'outline' : appearance"
+                  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+    @if (labelText && !inlineField) {
+      <mat-label>{{ labelText }}</mat-label>
+    }
+    <input type="number" min="0" step="1" matInput formControlName="time" placeholder="{{ 'widget-config.set' | translate }}">
     <div matSuffix>
       <ng-content select="[matSuffix]"></ng-content>
     </div>
-    <mat-hint *ngIf="subscriptSizing === 'fixed'"></mat-hint>
-    <mat-error *ngIf="timeInputForm.get('time').hasError('required') && requiredText">
-      {{ requiredText }}
-    </mat-error>
-    <mat-error *ngIf="timeInputForm.get('time').hasError('min') && minErrorText">
-      {{ minErrorText }}
-    </mat-error>
-    <mat-error *ngIf="timeInputForm.get('time').hasError('max') && maxErrorText">
-      {{ maxErrorText }}
-    </mat-error>
+    @if (inlineField) {
+      <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="hasError"
+                  *ngIf="hasError"
+                  class="tb-error">
+          warning
+        </mat-icon>
+    } @else {
+      <mat-hint *ngIf="subscriptSizing === 'fixed'"></mat-hint>
+      <mat-error *ngIf="hasError">
+        {{ hasError }}
+      </mat-error>
+    }
   </mat-form-field>
-  <mat-form-field class="h-fit max-w-33% flex-full" [subscriptSizing]="subscriptSizing">
-    <mat-label translate>rule-node-config.units</mat-label>
+  <mat-form-field [class.h-fit.max-w-33%.flex-full]="!inlineField"
+                  [appearance]="inlineField ? 'outline' : appearance"
+                  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+    @if (!inlineField) {
+      <mat-label translate>rule-node-config.units</mat-label>
+    }
     <mat-select formControlName="timeUnit">
       @for (timeUnit of timeUnits; track timeUnit) {
         <mat-option [value]="timeUnit">{{ timeUnitTranslations.get(timeUnit) | translate }}</mat-option>
