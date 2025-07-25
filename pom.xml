@@ -71,8 +71,8 @@
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
         <surefire.version>3.2.5</surefire.version>
         <jar-plugin.version>3.4.0</jar-plugin.version>
-        <springdoc-swagger.version>2.4.0TB</springdoc-swagger.version>
-        <swagger-annotations.version>2.2.21</swagger-annotations.version>
+        <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
+        <swagger-annotations.version>2.2.30</swagger-annotations.version>
         <spatial4j.version>0.8</spatial4j.version>
         <jts.version>1.19.0</jts.version>
         <bouncycastle.version>1.78.1</bouncycastle.version>
