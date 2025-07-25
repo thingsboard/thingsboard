@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.alarm;
 
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.base.Function;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -68,7 +67,6 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.util.ArrayList;
@@ -98,7 +96,6 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     private final TenantService tenantService;
     private final AlarmDao alarmDao;
     private final EntityService entityService;
-    private final DataValidator<Alarm> alarmDataValidator;
 
     @TransactionalEventListener(classes = AlarmTypesCacheEvictEvent.class)
     @Override
@@ -442,12 +439,6 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
         } catch (Exception e) {
             log.warn("[{}] Failed to create entity alarm record: {}", tenantId, entityAlarm, e);
         }
-    }
-
-    private <T> T getAndUpdate(TenantId tenantId, AlarmId alarmId, Function<Alarm, T> function) {
-        validateId(alarmId, "Alarm id should be specified!");
-        Alarm entity = alarmDao.findAlarmById(tenantId, alarmId.getId());
-        return function.apply(entity);
     }
 
     @Override

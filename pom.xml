@@ -38,8 +38,7 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>3.4.7</spring-boot.version>
-        <tomcat.version>10.1.43</tomcat.version> <!-- to fix CVE-2025-52520 and CVE-2025-53506. TODO: remove when fixed in spring-boot-dependencies -->
+        <spring-boot.version>3.4.8</spring-boot.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
@@ -52,6 +51,7 @@
         <commons-io.version>2.16.1</commons-io.version>
         <commons-logging.version>1.3.1</commons-logging.version>
         <commons-csv.version>1.10.0</commons-csv.version>
+        <nimbus-jose-jwt.version>10.0.2</nimbus-jose-jwt.version> <!-- to fix CVE-2023-52428, CVE-2025-53864. TODO: remove when fixed in spring-security-oauth2-client and mockserver-netty   -->
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
         <joda-time.version>2.12.7</joda-time.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
@@ -121,7 +121,6 @@
         <dbunit.version>2.7.3</dbunit.version>
         <java-websocket.version>1.5.6</java-websocket.version>
         <mock-server.version>5.15.0</mock-server.version>
-        <nimbus-jose-jwt.version>9.37.2</nimbus-jose-jwt.version> <!-- to fix CVE-2023-52428. TODO: remove when fixed in mockserver-netty  -->
         <spring-test-dbunit.version>1.3.0</spring-test-dbunit.version> <!-- 2016 -->
         <takari-cpsuite.version>1.2.7</takari-cpsuite.version> <!-- 2015 -->
         <jeasy.version>5.0.0</jeasy.version>
@@ -1132,21 +1131,6 @@
                 <version>${javax.xml.bind-api.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-core</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-el</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.tomcat.embed</groupId>
-                <artifactId>tomcat-embed-websocket</artifactId>
-                <version>${tomcat.version}</version>
-            </dependency>
-            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-starter-test</artifactId>
                 <version>${spring-boot.version}</version>
@@ -1782,7 +1766,6 @@
                 <groupId>com.nimbusds</groupId>
                 <artifactId>nimbus-jose-jwt</artifactId>
                 <version>${nimbus-jose-jwt.version}</version>
-                <scope>test</scope>
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>

@@ -42,9 +42,6 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 
 import java.util.Collection;
 
-/**
- * Created by ashvayka on 02.04.18.
- */
 public interface RuleEngineAlarmService {
 
     /*
