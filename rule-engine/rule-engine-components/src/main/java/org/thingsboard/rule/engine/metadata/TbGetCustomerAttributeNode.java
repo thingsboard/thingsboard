@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -56,9 +57,9 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<Cust
 
     @Override
     protected ListenableFuture<CustomerId> findEntityAsync(TbContext ctx, EntityId originator) {
-        return Futures.transformAsync(EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, originator),
+        return Futures.transform(EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctx, originator),
                 checkIfEntityIsPresentOrThrow(String.format(CUSTOMER_NOT_FOUND_MESSAGE, originator.getId(), originator.getEntityType().getNormalName())),
-                ctx.getDbCallbackExecutor()
+                MoreExecutors.directExecutor()
         );
     }
 
