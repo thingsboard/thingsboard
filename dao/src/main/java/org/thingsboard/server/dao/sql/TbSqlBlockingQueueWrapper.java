@@ -50,7 +50,7 @@ public class TbSqlBlockingQueueWrapper<E, R> {
 
     public void init(ScheduledLogExecutorComponent logExecutor, Function<List<E>, List<R>> saveFunction, Comparator<E> batchUpdateComparator, Function<List<TbSqlQueueElement<E, R>>, List<TbSqlQueueElement<E, R>>> filter) {
         for (int i = 0; i < maxThreads; i++) {
-            MessagesStats stats = statsFactory.createMessagesStats(params.getStatsNamePrefix() + ".queue." + i);
+            MessagesStats stats = statsFactory.createMessagesStats(params.getStatsNamePrefix() + ".queue", "index", String.valueOf(i));
             TbSqlBlockingQueue<E, R> queue = new TbSqlBlockingQueue<>(params, stats);
             queues.add(queue);
             queue.init(logExecutor, saveFunction, batchUpdateComparator, filter, i);
