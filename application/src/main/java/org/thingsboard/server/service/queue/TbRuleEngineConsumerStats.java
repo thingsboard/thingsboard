@@ -45,6 +45,7 @@ public class TbRuleEngineConsumerStats {
     public static final String SUCCESSFUL_ITERATIONS = "successfulIterations";
     public static final String FAILED_ITERATIONS = "failedIterations";
     public static final String TENANT_ID_TAG = "tenantId";
+    public static final String QUEUE_ID_TAG = "queue";
 
     private final StatsFactory statsFactory;
 
@@ -72,16 +73,16 @@ public class TbRuleEngineConsumerStats {
         this.tenantId = queueKey.getTenantId();
         this.statsFactory = statsFactory;
 
-        String statsKey = StatsType.RULE_ENGINE.getName() + "." + queueName;
+        String statsKey = StatsType.RULE_ENGINE.getName();
         String tenant = tenantId == null || tenantId.isSysTenantId() ? "system" : tenantId.toString();
-        this.totalMsgCounter = statsFactory.createStatsCounter(statsKey, TOTAL_MSGS, TENANT_ID_TAG, tenant);
-        this.successMsgCounter = statsFactory.createStatsCounter(statsKey, SUCCESSFUL_MSGS, TENANT_ID_TAG, tenant);
-        this.timeoutMsgCounter = statsFactory.createStatsCounter(statsKey, TIMEOUT_MSGS, TENANT_ID_TAG, tenant);
-        this.failedMsgCounter = statsFactory.createStatsCounter(statsKey, FAILED_MSGS, TENANT_ID_TAG, tenant);
-        this.tmpTimeoutMsgCounter = statsFactory.createStatsCounter(statsKey, TMP_TIMEOUT, TENANT_ID_TAG, tenant);
-        this.tmpFailedMsgCounter = statsFactory.createStatsCounter(statsKey, TMP_FAILED, TENANT_ID_TAG, tenant);
-        this.successIterationsCounter = statsFactory.createStatsCounter(statsKey, SUCCESSFUL_ITERATIONS, TENANT_ID_TAG, tenant);
-        this.failedIterationsCounter = statsFactory.createStatsCounter(statsKey, FAILED_ITERATIONS, TENANT_ID_TAG, tenant);
+        this.totalMsgCounter = statsFactory.createStatsCounter(statsKey, TOTAL_MSGS, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.successMsgCounter = statsFactory.createStatsCounter(statsKey, SUCCESSFUL_MSGS, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.timeoutMsgCounter = statsFactory.createStatsCounter(statsKey, TIMEOUT_MSGS, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.failedMsgCounter = statsFactory.createStatsCounter(statsKey, FAILED_MSGS, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.tmpTimeoutMsgCounter = statsFactory.createStatsCounter(statsKey, TMP_TIMEOUT, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.tmpFailedMsgCounter = statsFactory.createStatsCounter(statsKey, TMP_FAILED, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.successIterationsCounter = statsFactory.createStatsCounter(statsKey, SUCCESSFUL_ITERATIONS, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
+        this.failedIterationsCounter = statsFactory.createStatsCounter(statsKey, FAILED_ITERATIONS, QUEUE_ID_TAG, queueName, TENANT_ID_TAG, tenant);
 
         counters.add(totalMsgCounter);
         counters.add(successMsgCounter);
@@ -96,8 +97,9 @@ public class TbRuleEngineConsumerStats {
 
     public Timer getTimer(TenantId tenantId, String status) {
         return tenantMsgProcessTimers.computeIfAbsent(tenantId,
-                id -> statsFactory.createTimer(StatsType.RULE_ENGINE.getName() + "." + queueName,
-                        "tenantId", tenantId.getId().toString(),
+                id -> statsFactory.createTimer(StatsType.RULE_ENGINE.getName(),
+                        QUEUE_ID_TAG, queueName,
+                        TENANT_ID_TAG, tenantId.getId().toString(),
                         "status", status
                 ));
     }
