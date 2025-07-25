@@ -67,7 +67,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(statsName)(increase(ruleEngine_Main_total[1m]))",
+          "expr": "sum by(statsName)(increase(ruleEngine_total{queue=\"Main\"}[1m]))",
           "interval": "",
           "legendFormat": "{{statsName}}",
           "refId": "A"
@@ -163,7 +163,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(statsName)(increase(ruleEngine_HighPriority_total[1m]))",
+          "expr": "sum by(statsName)(increase(ruleEngine_total{queue=\"HighPriority\"}[1m]))",
           "interval": "",
           "legendFormat": "{{statsName}}",
           "refId": "A"
@@ -259,7 +259,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(statsName)(increase(ruleEngine_SequentialByOriginator_total[1m]))",
+          "expr": "sum by(statsName)(increase(ruleEngine_total{queue=\"SequentialByOriginator\"}[1m]))",
           "interval": "",
           "legendFormat": "{{statsName}}",
           "refId": "A"
