@@ -64,7 +64,8 @@ class AbstractScriptInvokeServiceTest {
 
     @Test
     void evalWithValidationCallTest() throws ExecutionException, InterruptedException, TimeoutException {
-        ReflectionTestUtils.setField(service, "requestsCounter", mock(StatsCounter.class));
+        ReflectionTestUtils.setField(service, "invokeRequestsCounter", mock(StatsCounter.class));
+        ReflectionTestUtils.setField(service, "evalRequestsCounter", mock(StatsCounter.class));
         ReflectionTestUtils.setField(service, "evalCallback", mock(FutureCallback.class));
 
         doReturn(Futures.immediateFuture(id)).when(service).doEvalScript(any(), any(), anyString(), any(), any(String[].class));
