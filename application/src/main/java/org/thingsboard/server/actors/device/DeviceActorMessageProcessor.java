@@ -270,8 +270,17 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         rpc.setExpirationTime(request.getExpirationTime());
         rpc.setRequest(JacksonUtil.valueToTree(request));
         rpc.setStatus(status);
-        rpc.setAdditionalInfo(JacksonUtil.toJsonNode(request.getAdditionalInfo()));
+        rpc.setAdditionalInfo(getAdditionalInfo(request));
         systemContext.getTbRpcService().save(tenantId, rpc);
+    }
+
+    private JsonNode getAdditionalInfo(ToDeviceRpcRequest request) {
+        try {
+            return JacksonUtil.toJsonNode(request.getAdditionalInfo());
+        } catch (IllegalArgumentException e) {
+            log.debug("Failed to parse additional info [{}]", request.getAdditionalInfo());
+            return JacksonUtil.valueToTree(request.getAdditionalInfo());
+        }
     }
 
     private ToDeviceRpcRequestMsg createToDeviceRpcRequestMsg(ToDeviceRpcRequest request) {

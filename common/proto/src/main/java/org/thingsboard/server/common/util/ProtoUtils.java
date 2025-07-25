@@ -529,8 +529,10 @@ public class ProtoUtils {
                 .setRequestIdMSB(msg.getMsg().getId().getMostSignificantBits())
                 .setRequestIdLSB(msg.getMsg().getId().getLeastSignificantBits())
                 .setOneway(msg.getMsg().isOneway())
-                .setPersisted(msg.getMsg().isPersisted())
-                .setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+                .setPersisted(msg.getMsg().isPersisted());
+        if (msg.getMsg().getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+        }
         if (msg.getMsg().getRetries() != null) {
             builder.setRetries(msg.getMsg().getRetries());
         }
@@ -555,7 +557,9 @@ public class ProtoUtils {
                 toDeviceRpcRequestMsg.getOneway(),
                 toDeviceRpcRequestMsg.getExpirationTime(),
                 new ToDeviceRpcRequestBody(toDeviceRpcRequestMsg.getMethodName(), toDeviceRpcRequestMsg.getParams()),
-                toDeviceRpcRequestMsg.getPersisted(), toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null, toDeviceRpcRequestMsg.getAdditionalInfo());
+                toDeviceRpcRequestMsg.getPersisted(),
+                toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null,
+                toDeviceRpcRequestMsg.hasAdditionalInfo() ? toDeviceRpcRequestMsg.getAdditionalInfo() : null);
         return new ToDeviceRpcRequestActorMsg(proto.getServiceId(), toDeviceRpcRequest);
     }
 
