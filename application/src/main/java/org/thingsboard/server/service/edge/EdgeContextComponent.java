@@ -73,11 +73,13 @@ import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProce
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainMetadataEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
+import org.thingsboard.server.service.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Lazy
 @Data
@@ -197,6 +199,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private WidgetsBundleService widgetsBundleService;
+
+    @Autowired
+    private Optional<EdgeStatsCounterService> statsCounterService;
 
 
     // processors
