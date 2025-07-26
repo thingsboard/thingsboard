@@ -1848,6 +1848,7 @@
             "selected-options-limit": "Selected options limit",
             "advanced-ui-settings": "Advanced UI settings",
             "disable-on-property": "Disable on property",
+            "disable-on-property-none": "None (field always enabled)",
             "display-condition-function": "Display condition function",
             "sub-label": "Sub label",
             "vertical-divider-after": "Vertical divider after",
