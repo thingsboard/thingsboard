@@ -423,7 +423,7 @@
 }]]></tb:metadata>
 <rect x="1" y="1" width="398" height="198" fill="#fff" stroke="#1A1A1A" stroke-width="2" tb:tag="background"/><circle cx="49" cy="100" r="19" stroke="#1a1a1a" stroke-width="2"/><circle cx="351" cy="100" r="19" stroke="#1a1a1a" stroke-width="2"/><path d="m0 100h31" stroke="#1A1A1A" stroke-width="6"/><path d="m369 100h31" stroke="#1A1A1A" stroke-width="6"/><g tb:tag="breaker">
   <path d="m101 51h198v97c0 0.552-0.448 1-1 1h-196c-0.552 0-1-0.448-1-1v-97z" fill="#fff" stroke="#1A1A1A" stroke-width="2" tb:tag="label-box"/>
-  <text x="200.83984" y="114.56055" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan dominant-baseline="start">ON</tspan></text>
+  <text x="200.83984" y="114.56055" fill="#000000" font-family="Roboto, sans-serif" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan dominant-baseline="start">ON</tspan></text>
   <rect x="261" y="25" width="38" height="150" rx="1" fill="#999" stroke="#1A1A1A" stroke-width="2" tb:tag="breaker-trigger"/>
  </g><g fill="#d12730" style="display: none;" tb:tag="critical">
   <rect width="84" height="84" rx="4" fill="#fff" style=""/>

@@ -657,7 +657,7 @@
  </g><g filter="url(#filter0_ii_3742_299961)" tb:tag="value-box">
   <rect x="22" y="164" width="56" height="28" rx="4" fill="#FFFEFE" fill-opacity=".75" tb:tag="value-box-background"/>
   <rect x="23" y="165" width="54" height="26" rx="3" stroke="#fff" stroke-width="2"/>
-  <text x="49.853027" y="179.5625" fill="#727171" font-family="Roboto" font-size="14px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan dominant-baseline="middle">37%</tspan></text>
+  <text x="49.853027" y="179.5625" fill="#727171" font-family="Roboto, sans-serif" font-size="14px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan dominant-baseline="middle">37%</tspan></text>
  </g><g tb:tag="progressBar">
   <rect x="69" y="10.5" width="6" height="134" ry="1.12" stroke="#cecece" tb:tag="progressBorder"/>
   <rect transform="scale(1,-1)" x="69" y="-144.5" width="6" height="50" ry="1.12" fill="#4d94e1" stroke="#4d94e1" tb:tag="progressFill"/>

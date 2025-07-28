@@ -584,7 +584,7 @@
  </g><g filter="url(#filter2_ii_1826_356092)">
   <path d="m124 82c0-6.6274 5.373-12 12-12h157c6.627 0 12 5.3726 12 12v56c0 6.627-5.373 12-12 12h-157c-6.627 0-12-5.373-12-12z" fill="#fff" tb:tag="value-box-background"/>
   <path d="m125 82c0-6.0751 4.925-11 11-11h157c6.075 0 11 4.9249 11 11v56c0 6.075-4.925 11-11 11h-157c-6.075 0-11-4.925-11-11z" stroke="#fff" stroke-width="2"/>
-  <text x="214.69531" y="113.5625" fill="#000000" font-family="Roboto" font-size="40px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">27</tspan></text>
+  <text x="214.69531" y="113.5625" fill="#000000" font-family="Roboto, sans-serif" font-size="40px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">27</tspan></text>
  </g><circle cx="530" cy="280.2" r="180" fill="#b6b4b4"/><circle cx="530" cy="280.2" r="180" fill="url(#paint34_radial_1826_356092)" style="fill:url(#paint34_radial_1826_356092)"/><circle cx="530" cy="280.2" r="178.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g transform="translate(349.75 99.867)" tb:tag="fan">
   <circle cx="180" cy="180.2" r="180" fill="#b6b4b4"/>
   <circle cx="180" cy="180.2" r="178.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
