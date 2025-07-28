@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -169,6 +170,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Override
     public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, type);
+    }
+
+    @Override
+    public FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return alarmService.findLatestActiveByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Override

@@ -13,49 +13,49 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
+.tb-json-object {
   position: relative;
 
-  .fill-height {
+  &.fill-height {
     height: 100%;
   }
-}
 
-.tb-json-object-toolbar {
-  button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
-    align-items: center;
-    vertical-align: middle;
-    min-width: 32px;
-    min-height: 15px;
-    padding: 4px;
-    margin: 0;
-    font-size: .8rem;
-    line-height: 15px;
-    color: #7b7b7b;
-    background: rgba(220, 220, 220, .35);
+  .tb-json-object-toolbar {
+    button.mat-mdc-button-base, button.mat-mdc-button-base.tb-mat-32 {
+      align-items: center;
+      vertical-align: middle;
+      min-width: 32px;
+      min-height: 15px;
+      padding: 4px;
+      margin: 0;
+      font-size: .8rem;
+      line-height: 15px;
+      color: #7b7b7b;
+      background: rgba(220, 220, 220, .35);
 
-    &:not(:last-child) {
-      margin-right: 4px;
+      &:not(:last-child) {
+        margin-right: 4px;
+      }
+    }
+    button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
+      height: 23px;
     }
   }
-  button.mat-mdc-button-base:not(.mat-mdc-icon-button) {
-    height: 23px;
-  }
-}
 
-.tb-json-object-panel {
-  height: 100%;
-  margin-left: 15px;
-  border: 1px solid #c0c0c0;
-
-  #tb-json-input {
-    width: 100%;
-    min-width: 200px;
+  .tb-json-object-panel {
     height: 100%;
-    min-height: 300px;
+    margin-left: 15px;
+    border: 1px solid #c0c0c0;
 
-    &:not(.fill-height) {
-      min-height: 200px;
+    #tb-json-input {
+      width: 100%;
+      min-width: 200px;
+      height: 100%;
+      min-height: 300px;
+
+      &:not(.fill-height) {
+        min-height: 200px;
+      }
     }
   }
 }

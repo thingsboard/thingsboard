@@ -77,16 +77,4 @@ public class RateLimitUtil {
         return true;
     }
 
-    @Deprecated(forRemoval = true, since = "4.1")
-    public static String deduplicateByDuration(String configStr) {
-        if (configStr == null) {
-            return null;
-        }
-        Set<Long> distinctDurations = new HashSet<>();
-        return parseConfig(configStr).stream()
-                .filter(entry -> distinctDurations.add(entry.durationSeconds()))
-                .map(RateLimitEntry::toString)
-                .collect(Collectors.joining(","));
-    }
-
 }

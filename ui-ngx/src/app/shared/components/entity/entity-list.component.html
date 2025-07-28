@@ -21,7 +21,7 @@
                 [class.tb-chips]="inlineField"
                 [class.flex]="inlineField"
                 [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
-  <mat-label *ngIf="!inlineField && labelText">{{ labelText }}</mat-label>  <mat-label *ngIf="labelText">{{ labelText }}</mat-label>
+  <mat-label *ngIf="!inlineField && labelText">{{ labelText }}</mat-label>
   <mat-chip-grid #chipList formControlName="entities">
     <mat-chip-row
       *ngFor="let entity of entities"

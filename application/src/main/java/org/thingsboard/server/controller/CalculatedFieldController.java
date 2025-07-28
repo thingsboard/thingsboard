@@ -17,19 +17,21 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ObjectUtils;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
@@ -41,7 +43,6 @@ import org.thingsboard.script.api.tbel.TbelCfTsRollingArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.event.EventType;
@@ -49,17 +50,14 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
-import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldScriptEngine;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldTbelScriptEngine;
 import org.thingsboard.server.service.entitiy.cf.TbCalculatedFieldService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.ArrayList;
@@ -100,30 +98,30 @@ public class CalculatedFieldController extends BaseController {
 
     private static final String TEST_SCRIPT_EXPRESSION =
             "Execute the Script expression and return the result. The format of request: \n\n"
-            + MARKDOWN_CODE_BLOCK_START
-            + "{\n" +
-            "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
-            "  \"arguments\": {\n" +
-            "    \"temperature\": {\n" +
-            "      \"type\": \"TS_ROLLING\",\n" +
-            "      \"timeWindow\": {\n" +
-            "        \"startTs\": 1739775630002,\n" +
-            "        \"endTs\": 65432211,\n" +
-            "        \"limit\": 5\n" +
-            "      },\n" +
-            "      \"values\": [\n" +
-            "        { \"ts\": 1739775639851, \"value\": 23 },\n" +
-            "        { \"ts\": 1739775664561, \"value\": 43 },\n" +
-            "        { \"ts\": 1739775713079, \"value\": 15 },\n" +
-            "        { \"ts\": 1739775999522, \"value\": 34 },\n" +
-            "        { \"ts\": 1739776228452, \"value\": 22 }\n" +
-            "      ]\n" +
-            "    },\n" +
-            "    \"humidity\": { \"type\": \"SINGLE_VALUE\", \"ts\": 1739776478057, \"value\": 23 }\n" +
-            "  }\n" +
-            "}"
-            + MARKDOWN_CODE_BLOCK_END
-            + "\n\n Expected result JSON contains \"output\" and \"error\".";
+                    + MARKDOWN_CODE_BLOCK_START
+                    + "{\n" +
+                    "  \"expression\": \"var temp = 0; foreach(element: temperature.values) {temp += element.value;} var avgTemperature = temp / temperature.values.size(); var adjustedTemperature = avgTemperature + 0.1 * humidity.value; return {\\\"adjustedTemperature\\\": adjustedTemperature};\",\n" +
+                    "  \"arguments\": {\n" +
+                    "    \"temperature\": {\n" +
+                    "      \"type\": \"TS_ROLLING\",\n" +
+                    "      \"timeWindow\": {\n" +
+                    "        \"startTs\": 1739775630002,\n" +
+                    "        \"endTs\": 65432211,\n" +
+                    "        \"limit\": 5\n" +
+                    "      },\n" +
+                    "      \"values\": [\n" +
+                    "        { \"ts\": 1739775639851, \"value\": 23 },\n" +
+                    "        { \"ts\": 1739775664561, \"value\": 43 },\n" +
+                    "        { \"ts\": 1739775713079, \"value\": 15 },\n" +
+                    "        { \"ts\": 1739775999522, \"value\": 34 },\n" +
+                    "        { \"ts\": 1739776228452, \"value\": 22 }\n" +
+                    "      ]\n" +
+                    "    },\n" +
+                    "    \"humidity\": { \"type\": \"SINGLE_VALUE\", \"ts\": 1739776478057, \"value\": 23 }\n" +
+                    "  }\n" +
+                    "}"
+                    + MARKDOWN_CODE_BLOCK_END
+                    + "\n\n Expected result JSON contains \"output\" and \"error\".";
 
     @ApiOperation(value = "Create Or Update Calculated Field (saveCalculatedField)",
             notes = "Creates or Updates the Calculated Field. When creating calculated field, platform generates Calculated Field Id as " + UUID_WIKI_LINK +
@@ -133,13 +131,12 @@ public class CalculatedFieldController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Calculated Field entity. "
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/calculatedField", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping("/calculatedField")
     public CalculatedField saveCalculatedField(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the calculated field.")
                                                @RequestBody CalculatedField calculatedField) throws Exception {
         calculatedField.setTenantId(getTenantId());
         checkEntityId(calculatedField.getEntityId(), Operation.WRITE_CALCULATED_FIELD);
-        checkReferencedEntities(calculatedField.getConfiguration(), getCurrentUser());
+        checkReferencedEntities(calculatedField.getConfiguration());
         return tbCalculatedFieldService.save(calculatedField, getCurrentUser());
     }
 
@@ -147,8 +144,7 @@ public class CalculatedFieldController extends BaseController {
             notes = "Fetch the Calculated Field object based on the provided Calculated Field Id."
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/calculatedField/{calculatedFieldId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping("/calculatedField/{calculatedFieldId}")
     public CalculatedField getCalculatedFieldById(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
@@ -162,8 +158,7 @@ public class CalculatedFieldController extends BaseController {
             notes = "Fetch the Calculated Fields based on the provided Entity Id."
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/{entityType}/{entityId}/calculatedFields", params = {"pageSize", "page"})
     public PageData<CalculatedField> getCalculatedFieldsByEntityId(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
@@ -182,8 +177,8 @@ public class CalculatedFieldController extends BaseController {
     @ApiOperation(value = "Delete Calculated Field (deleteCalculatedField)",
             notes = "Deletes the calculated field. Referencing non-existing Calculated Field Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/calculatedField/{calculatedFieldId}", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
+    @DeleteMapping("/calculatedField/{calculatedFieldId}")
+    @ResponseStatus(HttpStatus.OK)
     public void deleteCalculatedField(@PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws Exception {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
@@ -196,8 +191,7 @@ public class CalculatedFieldController extends BaseController {
             notes = "Gets latest calculated field debug event for specified calculated field id. " +
                     "Referencing non-existing calculated field id will cause an error. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/calculatedField/{calculatedFieldId}/debug", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping("/calculatedField/{calculatedFieldId}/debug")
     public JsonNode getLatestCalculatedFieldDebugEvent(@Parameter @PathVariable(CALCULATED_FIELD_ID) String strCalculatedFieldId) throws ThingsboardException {
         checkParameter(CALCULATED_FIELD_ID, strCalculatedFieldId);
         CalculatedFieldId calculatedFieldId = new CalculatedFieldId(toUUID(strCalculatedFieldId));
@@ -212,15 +206,13 @@ public class CalculatedFieldController extends BaseController {
     @ApiOperation(value = "Test Script expression",
             notes = TEST_SCRIPT_EXPRESSION + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/calculatedField/testScript", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping("/calculatedField/testScript")
     public JsonNode testScript(
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Test calculated field TBEL expression.")
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();
         Map<String, TbelCfArg> arguments = Objects.requireNonNullElse(
-                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<>() {
-                }),
+                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<>() {}),
                 Collections.emptyMap()
         );
 
@@ -231,12 +223,13 @@ public class CalculatedFieldController extends BaseController {
         String output = "";
         String errorText = "";
 
+        CalculatedFieldTbelScriptEngine engine = null;
         try {
             if (tbelInvokeService == null) {
                 throw new IllegalArgumentException("TBEL script engine is disabled!");
             }
 
-            CalculatedFieldScriptEngine calculatedFieldScriptEngine = new CalculatedFieldTbelScriptEngine(
+            engine = new CalculatedFieldTbelScriptEngine(
                     getTenantId(),
                     tbelInvokeService,
                     expression,
@@ -254,17 +247,20 @@ public class CalculatedFieldController extends BaseController {
                 }
             }
 
-            JsonNode json = calculatedFieldScriptEngine.executeJsonAsync(args).get(TIMEOUT, TimeUnit.SECONDS);
+            JsonNode json = engine.executeJsonAsync(args).get(TIMEOUT, TimeUnit.SECONDS);
             output = JacksonUtil.toString(json);
         } catch (Exception e) {
             log.error("Error evaluating expression", e);
-            errorText = e.getMessage();
+            Throwable rootCause = ExceptionUtils.getRootCause(e);
+            errorText = ObjectUtils.firstNonNull(rootCause.getMessage(), e.getMessage(), e.getClass().getSimpleName());
+        } finally {
+            if (engine != null) {
+                engine.destroy();
+            }
         }
-
-        ObjectNode result = JacksonUtil.newObjectNode();
-        result.put("output", output);
-        result.put("error", errorText);
-        return result;
+        return JacksonUtil.newObjectNode()
+                .put("output", output)
+                .put("error", errorText);
     }
 
     private long getLatestTimestamp(Map<String, TbelCfArg> arguments) {
@@ -281,7 +277,7 @@ public class CalculatedFieldController extends BaseController {
         return lastUpdateTimestamp == -1 ? System.currentTimeMillis() : lastUpdateTimestamp;
     }
 
-    private <E extends HasId<I> & HasTenantId, I extends EntityId> void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig, SecurityUser user) throws ThingsboardException {
+    private void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig) throws ThingsboardException {
         List<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
         for (EntityId referencedEntityId : referencedEntityIds) {
             EntityType entityType = referencedEntityId.getEntityType();
@@ -290,8 +286,7 @@ public class CalculatedFieldController extends BaseController {
                     return;
                 }
                 case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                default ->
-                        throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
+                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
 

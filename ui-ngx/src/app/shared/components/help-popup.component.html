@@ -17,9 +17,9 @@
 -->
 <fieldset class="tb-help-popup-button-container" *ngIf="!textMode">
   <div #toggleHelpButton
+       class="tb-toggle-help-popup-button"
        matTooltip="{{ helpIconTooltip }}"
        matTooltipPosition="above"
-       style="border-radius: 50%"
        (click)="toggleHelp()">
     <button mat-icon-button
             [disabled]="disabled()"
@@ -34,8 +34,9 @@
     </button>
   </div>
 </fieldset>
-<fieldset class="tb-help-popup-button-container" [class.hint-button]="hintMode" *ngIf="textMode">
+<fieldset class="tb-help-popup-button-container" *ngIf="textMode">
   <div #toggleHelpTextButton
+       class="tb-toggle-help-popup-text-button"
        (click)="toggleHelp()">
     <button mat-button
             [disabled]="disabled()"

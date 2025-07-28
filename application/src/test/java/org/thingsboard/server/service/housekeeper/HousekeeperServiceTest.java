@@ -31,6 +31,8 @@ import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -77,6 +79,8 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.customer.CustomerService;
+import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -145,6 +149,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private ApiUsageStateDao apiUsageStateDao;
     @Autowired
     private EntityServiceRegistry entityServiceRegistry;
+    @Autowired
+    private CustomerService customerService;
+    @Autowired
+    private DashboardService dashboardService;
     @SpyBean
     private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
 
@@ -238,8 +246,64 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
 
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyNoAlarms(device.getId());
+        });
+    }
+
+    @Test
+    public void whenAssetIsDeleted_thenDeleteAllAlarms() throws Exception {
+        Asset asset = createAsset();
+        for (int i = 1; i <= 1000; i++) {
+            createAlarm(asset.getId());
+        }
+
+        doDelete("/api/asset/" + asset.getId()).andExpect(status().isOk());
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            verifyNoAlarms(asset.getId());
+        });
+    }
+
+    @Test
+    public void whenDashboardIsDeleted_thenDeleteAllAlarms() throws Exception {
+        Dashboard dashboard = createDashboard();
+        for (int i = 1; i <= 1000; i++) {
+            createAlarm(dashboard.getId());
+        }
+
+        doDelete("/api/dashboard/" + dashboard.getId()).andExpect(status().isOk());
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            verifyNoAlarms(dashboard.getId());
+        });
+    }
+
+    @Test
+    public void whenCustomerIsDeleted_thenDeleteAllAlarms() throws Exception {
+        Customer customer = createCustomer();
+        for (int i = 1; i <= 1000; i++) {
+            createAlarm(customer.getId());
+        }
+
+        doDelete("/api/customer/" + customer.getId()).andExpect(status().isOk());
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            verifyNoAlarms(customer.getId());
+        });
+    }
+
+    @Test
+    public void whenUserIsDeleted_thenDeleteAllAlarms() throws Exception {
+        UserId userId = customerUserId;
+        for (int i = 1; i <= 1000; i++) {
+            createAlarm(userId);
+        }
+
+        doDelete("/api/user/" + userId).andExpect(status().isOk());
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            verifyNoAlarms(userId);
         });
     }
 
@@ -335,7 +399,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
 
         int attempts = 2;
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
             for (int i = 0; i <= attempts; i++) {
                 int attempt = i;
                 verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY,
@@ -345,7 +409,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
 
         assertThat(getTimeseriesHistory(device.getId())).isNotEmpty();
         doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(getTimeseriesHistory(device.getId())).isEmpty();
         });
     }
@@ -379,7 +443,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
 
         int attempts = 2;
-        await().atMost(30, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).pollInterval(1, TimeUnit.SECONDS).untilAsserted(() -> {
             for (int i = 0; i <= attempts; i++) {
                 int attempt = i;
                 verify(housekeeperReprocessingService).submitForReprocessing(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY,
@@ -393,7 +457,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
         someExecutor.shutdown();
 
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(getTimeseriesHistory(device.getId())).isEmpty();
         });
     }
@@ -409,7 +473,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         doDelete("/api/device/" + device.getId()).andExpect(status().isOk());
 
         int maxAttempts = 5;
-        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             for (int i = 1; i <= maxAttempts; i++) {
                 verifyTaskProcessing(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, i);
             }
@@ -479,7 +543,6 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         eventService.saveAsync(event);
         await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> !getEvents(entityId).isEmpty());
-
     }
 
     private void createRelation(DeviceId to, AssetId from) {
@@ -502,14 +565,14 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, deviceId, 0, null, 10)).isNotEmpty();
     }
 
-    private void createAlarm(DeviceId deviceId) {
-        Alarm alarm = doPost("/api/alarm", Alarm.builder()
+    private void createAlarm(EntityId entityId) {
+        doPost("/api/alarm", Alarm.builder()
                 .tenantId(tenantId)
-                .originator(deviceId)
+                .originator(entityId)
                 .severity(AlarmSeverity.CRITICAL)
-                .type("test alarm for " + deviceId + " " + RandomStringUtils.randomAlphabetic(10))
+                .type("test alarm for " + entityId + " " + RandomStringUtils.randomAlphabetic(10))
                 .build(), Alarm.class);
-        assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, deviceId, 0, null, 10)).isNotEmpty();
+        assertThat(alarmService.findAlarmIdsByOriginatorId(tenantId, entityId, 0, null, 10)).isNotEmpty();
     }
 
     private TsKvEntry getLatestTelemetry(EntityId entityId) throws Exception {
@@ -532,6 +595,20 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         asset.setName("test");
         asset.setType("test");
         return doPost("/api/asset", asset, Asset.class);
+    }
+
+    private Customer createCustomer() {
+        Customer customer = new Customer();
+        customer.setTenantId(tenantId);
+        customer.setTitle(StringUtils.randomAlphabetic(10));
+        return customerService.saveCustomer(customer);
+    }
+
+    private Dashboard createDashboard() {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTenantId(tenantId);
+        dashboard.setTitle(StringUtils.randomAlphabetic(10));
+        return dashboardService.saveDashboard(dashboard);
     }
 
     private RuleChainMetaData createRuleChain() {

@@ -51,6 +51,7 @@ export enum EntityType {
   MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
   MOBILE_APP = 'MOBILE_APP',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
+  AI_MODEL = 'AI_MODEL',
 }
 
 export enum AliasEntityType {
@@ -346,6 +347,8 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.OTA_PACKAGE,
       {
         type: 'entity.type-ota-package',
+        typePlural: 'entity.type-ota-packages',
+        list: 'entity.list-of-ota-packages',
         details: 'ota-update.ota-update-details',
         add: 'ota-update.add',
         noEntities: 'ota-update.no-packages-text',
@@ -491,6 +494,18 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'action.search',
         selectedEntities: 'calculated-fields.selected-fields'
       }
+    ],
+    [
+      EntityType.AI_MODEL,
+      {
+        type: 'entity.type-ai-model',
+        typePlural: 'entity.type-ai-models',
+        list: 'ai-models.list',
+        add: 'ai-models.add',
+        noEntities: 'ai-models.no-found',
+        search: 'action.search',
+        selectedEntities: 'ai-models.selected-fields'
+      }
     ]
   ]
 );
@@ -622,6 +637,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.MOBILE_APP_BUNDLE,
       {
         helpLinkId: 'mobileBundle'
+      }
+    ],
+    [
+      EntityType.AI_MODEL,
+      {
+        helpLinkId: 'aiModels'
       }
     ]
   ]

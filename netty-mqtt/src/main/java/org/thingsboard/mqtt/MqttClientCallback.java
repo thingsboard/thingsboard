@@ -21,9 +21,6 @@ import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 
-/**
- * Created by Valerii Sosliuk on 12/30/2017.
- */
 public interface MqttClientCallback {
 
     /**
@@ -53,4 +50,5 @@ public interface MqttClientCallback {
 
     default void onDisconnect(MqttMessage mqttDisconnectMessage) {
     }
+
 }

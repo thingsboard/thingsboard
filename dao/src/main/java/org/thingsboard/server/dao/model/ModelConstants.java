@@ -457,6 +457,7 @@ public class ModelConstants {
      */
     public static final String MOBILE_APP_TABLE_NAME = "mobile_app";
     public static final String MOBILE_APP_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String MOBILE_APP_TITLE_PROPERTY = "title";
     public static final String MOBILE_APP_APP_SECRET_PROPERTY = "app_secret";
     public static final String MOBILE_APP_PLATFORM_TYPE_PROPERTY = "platform_type";
     public static final String MOBILE_APP_STATUS_PROPERTY = "status";
@@ -750,6 +751,14 @@ public class ModelConstants {
     public static final String JOB_STATUS_PROPERTY = "status";
     public static final String JOB_CONFIGURATION_PROPERTY = "configuration";
     public static final String JOB_RESULT_PROPERTY = "result";
+
+    /**
+     * AI model constants.
+     */
+    public static final String AI_MODEL_TABLE_NAME = "ai_model";
+    public static final String AI_MODEL_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
+    public static final String AI_MODEL_NAME_COLUMN_NAME = NAME_PROPERTY;
+    public static final String AI_MODEL_CONFIGURATION_COLUMN_NAME = "configuration";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

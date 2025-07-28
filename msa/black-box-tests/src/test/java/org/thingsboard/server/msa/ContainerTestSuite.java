@@ -38,6 +38,7 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.CoreMatchers.not;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.testng.Assert.fail;
+import static org.thingsboard.server.msa.TestUtils.addComposeVersion;
 
 @Slf4j
 public class ContainerTestSuite {
@@ -53,7 +54,7 @@ public class ContainerTestSuite {
     private static final String TB_JS_EXECUTOR_LOG_REGEXP = ".*template started.*";
     private static final Duration CONTAINER_STARTUP_TIMEOUT = Duration.ofSeconds(400);
 
-    private DockerComposeContainer<?> testContainer;
+    private DockerComposeContainerImpl testContainer;
     private ThingsBoardDbInstaller installTb;
     private boolean isActive;
 
@@ -78,8 +79,6 @@ public class ContainerTestSuite {
     }
 
     public void start() {
-        installTb = new ThingsBoardDbInstaller();
-        installTb.createVolumes();
         log.info("System property of blackBoxTests.redisCluster is {}", IS_VALKEY_CLUSTER);
         log.info("System property of blackBoxTests.redisSentinel is {}", IS_VALKEY_SENTINEL);
         log.info("System property of blackBoxTests.redisSsl is {}", IS_VALKEY_SSL);
@@ -93,17 +92,8 @@ public class ContainerTestSuite {
 
             FileUtils.copyDirectory(new File("src/test/resources"), new File(targetDir));
 
-            class DockerComposeContainerImpl<SELF extends DockerComposeContainer<SELF>> extends DockerComposeContainer<SELF> {
-                public DockerComposeContainerImpl(List<File> composeFiles) {
-                    super(composeFiles);
-                }
-
-                @Override
-                public void stop() {
-                    super.stop();
-                    tryDeleteDir(targetDir);
-                }
-            }
+            installTb = new ThingsBoardDbInstaller(targetDir);
+            installTb.createVolumes();
 
             if (IS_VALKEY_SSL) {
                 addToFile(targetDir, "cache-valkey.env",
@@ -132,7 +122,9 @@ public class ContainerTestSuite {
                 composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
             }
 
-            testContainer = new DockerComposeContainerImpl<>(composeFiles)
+            addComposeVersion(composeFiles, "3.0");
+
+            testContainer = new DockerComposeContainerImpl(targetDir, composeFiles)
                     .withPull(false)
                     .withLocalCompose(true)
                     .withOptions("--compatibility")
@@ -194,7 +186,8 @@ public class ContainerTestSuite {
     public void stop() {
         if (isActive) {
             testContainer.stop();
-            installTb.savaLogsAndRemoveVolumes();
+            installTb.saveLogsAndRemoveVolumes();
+            testContainer.cleanup();
             setActive(false);
         }
     }
@@ -260,5 +253,24 @@ public class ContainerTestSuite {
 
     public DockerComposeContainer<?> getTestContainer() {
         return testContainer;
+    }
+
+    static class DockerComposeContainerImpl extends DockerComposeContainer<DockerComposeContainerImpl> {
+
+        private final String targetDir;
+
+        public DockerComposeContainerImpl(String targetDir, List<File> composeFiles) {
+            super(composeFiles);
+            this.targetDir = targetDir;
+        }
+
+        @Override
+        public void stop() {
+            super.stop();
+        }
+
+        public void cleanup() {
+            tryDeleteDir(this.targetDir);
+        }
     }
 }
