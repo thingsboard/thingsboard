@@ -20,6 +20,7 @@ import org.testcontainers.utility.Base58;
 import org.thingsboard.server.common.data.StringUtils;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -28,6 +29,8 @@ import java.util.Map;
 import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+
+import static org.thingsboard.server.msa.TestUtils.addComposeVersion;
 
 @Slf4j
 public class ThingsBoardDbInstaller {
@@ -53,6 +56,7 @@ public class ThingsBoardDbInstaller {
 
     private final DockerComposeExecutor dockerCompose;
 
+    private final String targetDir;
     private final String postgresDataVolume;
     private final String cassandraDataVolume;
 
@@ -69,26 +73,29 @@ public class ThingsBoardDbInstaller {
     private final String tbEdqsLogVolume;
     private final Map<String, String> env;
 
-    public ThingsBoardDbInstaller() {
+    public ThingsBoardDbInstaller(String targetDir) throws IOException {
+        this.targetDir = targetDir;
         log.info("System property of blackBoxTests.redisCluster is {}", IS_VALKEY_CLUSTER);
-        log.info("System property of blackBoxTests.redisCluster is {}", IS_VALKEY_SENTINEL);
+        log.info("System property of blackBoxTests.redisSentinel is {}", IS_VALKEY_SENTINEL);
         log.info("System property of blackBoxTests.hybridMode is {}", IS_HYBRID_MODE);
         List<File> composeFiles = new ArrayList<>(Arrays.asList(
-                new File("./../../docker/docker-compose.yml"),
-                new File("./../../docker/docker-compose.volumes.yml"),
+                new File(targetDir + "docker-compose.yml"),
+                new File(targetDir + "docker-compose.volumes.yml"),
                 IS_HYBRID_MODE
-                        ? new File("./../../docker/docker-compose.hybrid.yml")
-                        : new File("./../../docker/docker-compose.postgres.yml"),
-                new File("./../../docker/docker-compose.postgres.volumes.yml"),
-                resolveValkeyComposeFile(),
-                resolveValkeyComposeVolumesFile()
+                        ? new File(targetDir + "docker-compose.hybrid.yml")
+                        : new File(targetDir + "docker-compose.postgres.yml"),
+                new File(targetDir + "docker-compose.postgres.volumes.yml"),
+                resolveValkeyComposeFile(targetDir),
+                resolveValkeyComposeVolumesFile(targetDir)
         ));
         if (IS_HYBRID_MODE) {
-            composeFiles.add(new File("./../../docker/docker-compose.cassandra.volumes.yml"));
-            composeFiles.add(new File("src/test/resources/docker-compose.hybrid-test-extras.yml"));
+            composeFiles.add(new File(targetDir + "docker-compose.cassandra.volumes.yml"));
+            composeFiles.add(new File(targetDir + "docker-compose.hybrid-test-extras.yml"));
         } else {
-            composeFiles.add(new File("src/test/resources/docker-compose.postgres-test-extras.yml"));
+            composeFiles.add(new File(targetDir + "docker-compose.postgres-test-extras.yml"));
         }
+
+        addComposeVersion(composeFiles, "3.0");
 
         String identifier = Base58.randomString(6).toLowerCase();
         String project = identifier + Base58.randomString(6).toLowerCase();
@@ -137,24 +144,24 @@ public class ThingsBoardDbInstaller {
         dockerCompose.withEnv(env);
     }
 
-    private static File resolveValkeyComposeVolumesFile() {
+    private static File resolveValkeyComposeVolumesFile(String targetDir) {
         if (IS_VALKEY_CLUSTER) {
-            return new File("./../../docker/docker-compose.valkey-cluster.volumes.yml");
+            return new File(targetDir + "docker-compose.valkey-cluster.volumes.yml");
         }
         if (IS_VALKEY_SENTINEL) {
-            return new File("./../../docker/docker-compose.valkey-sentinel.volumes.yml");
+            return new File(targetDir + "docker-compose.valkey-sentinel.volumes.yml");
         }
-        return new File("./../../docker/docker-compose.valkey.volumes.yml");
+        return new File(targetDir + "docker-compose.valkey.volumes.yml");
     }
 
-    private static File resolveValkeyComposeFile() {
+    private static File resolveValkeyComposeFile(String targetDir) {
         if (IS_VALKEY_CLUSTER) {
-            return new File("./../../docker/docker-compose.valkey-cluster.yml");
+            return new File(targetDir + "docker-compose.valkey-cluster.yml");
         }
         if (IS_VALKEY_SENTINEL) {
-            return new File("./../../docker/docker-compose.valkey-sentinel.yml");
+            return new File(targetDir + "docker-compose.valkey-sentinel.yml");
         }
-        return new File("./../../docker/docker-compose.valkey.yml");
+        return new File(targetDir + "docker-compose.valkey.yml");
     }
 
     public Map<String, String> getEnv() {
@@ -240,7 +247,7 @@ public class ThingsBoardDbInstaller {
         }
     }
 
-    public void savaLogsAndRemoveVolumes() {
+    public void saveLogsAndRemoveVolumes() {
         copyLogs(tbLogVolume, "./target/tb-logs/");
         copyLogs(tbCoapTransportLogVolume, "./target/tb-coap-transport-logs/");
         copyLogs(tbLwm2mTransportLogVolume, "./target/tb-lwm2m-transport-logs/");

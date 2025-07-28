@@ -23,6 +23,7 @@ import org.springframework.util.ConcurrentReferenceHashMap;
 import org.springframework.util.ConcurrentReferenceHashMap.ReferenceType;
 import org.thingsboard.server.common.data.EntityType;
 
+import java.io.Serial;
 import java.util.UUID;
 
 public final class TenantId extends UUIDBased implements EntityId {
@@ -33,6 +34,7 @@ public final class TenantId extends UUIDBased implements EntityId {
     @JsonIgnore
     public static final TenantId SYS_TENANT_ID = TenantId.fromUUID(EntityId.NULL_UUID);
 
+    @Serial
     private static final long serialVersionUID = 1L;
 
     @JsonCreator

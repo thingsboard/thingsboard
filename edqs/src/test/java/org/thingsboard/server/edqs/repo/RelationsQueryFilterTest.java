@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityKeyType;
@@ -146,7 +147,7 @@ public class RelationsQueryFilterTest extends AbstractEDQTest {
 
     private PageData<QueryResult> filter(CustomerId customerId, EntityId rootId, int maxLevel, boolean lastLevelOnly, RelationEntityTypeFilter... relationEntityTypeFilters) {
         RelationsQueryFilter filter = new RelationsQueryFilter();
-        filter.setRootEntity(rootId);
+        filter.setRootEntity(AliasEntityId.fromEntityId(rootId));
         filter.setFilters(Arrays.asList(relationEntityTypeFilters));
         filter.setDirection(EntitySearchDirection.FROM);
         filter.setFetchLastLevelOnly(lastLevelOnly);

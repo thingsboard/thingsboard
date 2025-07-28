@@ -21,6 +21,9 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TrendzSettingsService } from '@core/http/trendz-settings.service';
 import { TrendzSettings } from '@shared/models/trendz-settings.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Store } from "@ngrx/store";
+import { AppState } from "@core/core.state";
+import { ActionAuthUpdateTrendzSettings } from "@core/auth/auth.actions";
 
 @Component({
   selector: 'tb-trendz-settings',
@@ -31,7 +34,8 @@ export class TrendzSettingsComponent extends PageComponent implements OnInit, Ha
 
   trendzSettingsForm: FormGroup;
 
-  constructor(private fb: FormBuilder,
+  constructor(protected store: Store<AppState>,
+              private fb: FormBuilder,
               private trendzSettingsService: TrendzSettingsService,
               private destroyRef: DestroyRef) {
     super();
@@ -93,6 +97,7 @@ export class TrendzSettingsComponent extends PageComponent implements OnInit, Ha
     this.trendzSettingsService.saveTrendzSettings(trendzSettings)
       .subscribe(() => {
         this.setTrendzSettings(trendzSettings);
+        this.store.dispatch(new ActionAuthUpdateTrendzSettings(trendzSettings))
       })
   }
 }

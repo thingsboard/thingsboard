@@ -208,7 +208,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.1}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.2}"
 
 # Database telemetry parameters
 database:
@@ -323,7 +323,7 @@ cassandra:
     poll_ms: "${CASSANDRA_QUERY_POLL_MS:50}"
     # Interval in milliseconds for printing Cassandra query queue statistic
     rate_limit_print_interval_ms: "${CASSANDRA_QUERY_RATE_LIMIT_PRINT_MS:10000}"
-    # set all data type values except target to null for the same ts on save
+    # When saving a value, set other data types to null (to avoid having multiple telemetry values with the same timestamp).
     set_null_values_enabled: "${CASSANDRA_QUERY_SET_NULL_VALUES_ENABLED:true}"
     # log one of cassandra queries with specified frequency (0 - logging is disabled)
     print_queries_freq: "${CASSANDRA_QUERY_PRINT_FREQ:0}"
@@ -464,6 +464,14 @@ actors:
     allow_system_sms_service: "${ACTORS_RULE_ALLOW_SYSTEM_SMS_SERVICE:true}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
+    # Configuration for the thread pool that executes HTTP calls to AI provider APIs
+    ai-requests-thread-pool:
+      # The base name for threads
+      pool-name: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_NAME:ai-requests}"
+      # The maximum number of concurrent HTTP requests
+      pool-size: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_SIZE:50}"
+      # The maximum time in seconds to wait for active tasks to complete during graceful shutdown
+      termination-timeout-seconds: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_TERMINATION_TIMEOUT_SECONDS:60}"
     chain:
       # Errors for particular actors are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
@@ -648,6 +656,9 @@ cache:
     trendzSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
       maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    aiModel:
+      timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_TTL:1440}" # AI model cache TTL
+      maxSize: "${CACHE_SPECS_AI_MODEL_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -847,22 +858,23 @@ audit-log:
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
   logging-level:
     mask:
-      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
+      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels.
+      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels.
+      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels.
+      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels.
+      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels.
+      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels.
+      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels.
+      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels.
+      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels.
+      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels.
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels.
+      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels.
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels.
+      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels.
+      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels.
+      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels.
+      "ai_model": "${AUDIT_LOG_MASK_AI_MODEL:W}" # AI model logging levels.
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -1661,7 +1673,7 @@ queue:
       # Kafka properties for Notifications topics
       notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for JS Executor topics
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:86400000;segment.bytes:52428800;retention.bytes:104857600;partitions:30;min.insync.replicas:1}"
       # Kafka properties for OTA updates topic
       ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Version Control topic

@@ -19,25 +19,66 @@
   padding: 8px;
   background-color: #fff;
 
+  .css-panel, .html-panel{
+    border-color: #c0c0c0;
+    border-width: 0 1px 1px 1px;
+    border-style: solid;
+  }
+
+  .tb-js-func-toolbar{
+    padding: 0 3px;
+  }
+
+  .tb-js-func {
+    &:not(.tb-fullscreen) {
+      &.tb-hide-brackets {
+        padding-bottom: 0;
+      }
+    }
+  }
+
   .tb-fullscreen-panel {
     .tb-custom-action-editor-container {
+      height: 100%;
+    }
+
+    .css-panel, .html-panel{
+      border: none;
+    }
+
+    .left-panel, .right-panel{
       height: calc(100% - 40px);
     }
 
     .right-panel {
-      padding-top: 8px;
-      padding-left: 3px;
+      padding: 8px 0 0;
     }
 
-    tb-js-func .tb-js-func-panel {
-      box-sizing: border-box;
+    .tb-js-func {
+      .tb-js-func-panel {
+        box-sizing: border-box;
+      }
+      &.fill-height {
+        .tb-js-func-toolbar{
+          padding: 0 5px;
+        }
+
+        &.tb-hide-brackets {
+          .tb-js-func-panel {
+            border: none;
+            border-top: 1px solid #c0c0c0;
+          }
+        }
+      }
     }
 
     .mat-mdc-tab-group {
       .mat-mdc-tab-body-wrapper {
         height: 100%;
+
         .mat-mdc-tab-body {
           height: 100%;
+
           & > div {
             height: 100%;
           }
@@ -70,7 +111,7 @@
   .tb-split.tb-split-horizontal,
   .gutter.gutter-horizontal {
     float: left;
-    height: 100%;
+    height: calc(100% - 40px);
   }
 
   .tb-action-expand-button {
@@ -81,20 +122,7 @@
     &.tb-fullscreen-editor {
       position: relative;
       right: 0;
-     /* .mat-mdc-button {
-        .mat-icon {
-          margin-right: 5px;
-        }
-      } */
     }
-
-   /* .mat-mdc-button {
-      min-width: 36px;
-      padding: 0;
-      .mat-icon {
-        margin-right: 0;
-      }
-    } */
   }
 
   .tb-custom-action-editor {
@@ -103,5 +131,6 @@
     }
   }
 }
+
 
 

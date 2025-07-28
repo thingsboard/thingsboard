@@ -32,7 +32,7 @@ public class RelationsQueryFilter implements EntityFilter {
         return EntityFilterType.RELATIONS_QUERY;
     }
 
-    private EntityId rootEntity;
+    private AliasEntityId rootEntity;
     private boolean isMultiRoot;
     private EntityType multiRootEntitiesType;
     private Set<String> multiRootEntityIds;
@@ -41,5 +41,7 @@ public class RelationsQueryFilter implements EntityFilter {
     private int maxLevel;
     private boolean fetchLastLevelOnly;
     private boolean negate;
+    private boolean rootStateEntity;
+    private AliasEntityId defaultStateEntity;
 
 }

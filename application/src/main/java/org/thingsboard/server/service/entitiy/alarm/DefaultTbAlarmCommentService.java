@@ -32,7 +32,7 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 @Service
 @AllArgsConstructor
-public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService{
+public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService {
 
     @Autowired
     private AlarmCommentService alarmCommentService;
@@ -68,4 +68,5 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
             throw new ThingsboardException("System comment could not be deleted", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
+
 }

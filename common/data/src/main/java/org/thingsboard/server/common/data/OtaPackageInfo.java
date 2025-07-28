@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -29,12 +30,15 @@ import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+
 @Schema
 @Slf4j
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId, HasTitle {
+public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> implements HasName, HasTenantId, HasTitle, ExportableEntity<OtaPackageId> {
 
+    @Serial
     private static final long serialVersionUID = 3168391583570815419L;
 
     @Schema(description = "JSON object with Tenant Id. Tenant Id of the ota package can't be changed.", accessMode = Schema.AccessMode.READ_ONLY)
@@ -77,6 +81,8 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     @Schema(description = "OTA Package data size.", example = "8", accessMode = Schema.AccessMode.READ_ONLY)
     private Long dataSize;
 
+    private OtaPackageId externalId;
+
     public OtaPackageInfo() {
         super();
     }
@@ -100,6 +106,7 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
         this.checksumAlgorithm = otaPackageInfo.getChecksumAlgorithm();
         this.checksum = otaPackageInfo.getChecksum();
         this.dataSize = otaPackageInfo.getDataSize();
+        this.externalId = otaPackageInfo.getExternalId();
     }
 
     @Schema(description = "JSON object with the ota package Id. " +
@@ -118,7 +125,7 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     }
 
     @Override
-    @JsonIgnore
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
         return title;
     }
@@ -133,4 +140,5 @@ public class OtaPackageInfo extends BaseDataWithAdditionalInfo<OtaPackageId> imp
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
     }
+
 }
