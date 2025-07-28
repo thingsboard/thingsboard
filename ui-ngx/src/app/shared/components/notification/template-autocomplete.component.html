@@ -63,7 +63,7 @@
         <ng-template #searchNotEmpty>
           <span>{{ 'notification.no-template-matching' | translate : {template: truncate.transform(searchText, true, 6, &apos;...&apos;)} }}</span>
           <span *ngIf="allowCreate">
-            <a translate (click)="createTemplateBySearchText($event, searchText)">notification.create-new-template</a>
+            <a translate (click)="createTemplateByName($event, searchText)">notification.create-new-template</a>
           </span>
         </ng-template>
       </div>
