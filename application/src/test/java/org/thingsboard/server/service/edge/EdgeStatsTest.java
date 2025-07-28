@@ -29,12 +29,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
+import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
-import org.thingsboard.server.service.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.service.edge.stats.EdgeStatsService;
-import org.thingsboard.server.service.edge.stats.MsgCounters;
 
 import java.util.List;
 import java.util.Map;
@@ -49,11 +49,11 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
 
 @ExtendWith(MockitoExtension.class)
 public class EdgeStatsTest {

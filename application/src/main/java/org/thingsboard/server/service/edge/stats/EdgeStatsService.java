@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
+import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
@@ -45,11 +47,11 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
-import static org.thingsboard.server.service.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_LAG;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
 
 @TbCoreComponent
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)

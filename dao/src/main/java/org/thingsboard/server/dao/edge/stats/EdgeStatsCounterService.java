@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.stats;
+package org.thingsboard.server.dao.edge.stats;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -21,11 +21,9 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-@TbCoreComponent
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
 @Service
 @Slf4j

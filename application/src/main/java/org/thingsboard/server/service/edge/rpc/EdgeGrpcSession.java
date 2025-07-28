@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -88,7 +89,6 @@ import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.fetch.EdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.fetch.GeneralEdgeEventFetcher;
 import org.thingsboard.server.service.edge.rpc.utils.EdgeVersionUtils;
-import org.thingsboard.server.service.edge.stats.EdgeStatsKey;
 
 import java.io.Closeable;
 import java.util.ArrayList;

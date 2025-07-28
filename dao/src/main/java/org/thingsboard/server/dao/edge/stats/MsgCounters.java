@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge.stats;
+package org.thingsboard.server.dao.edge.stats;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
