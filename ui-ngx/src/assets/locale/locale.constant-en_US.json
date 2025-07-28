@@ -4071,6 +4071,7 @@
         "no-severity-found": "No severity found",
         "no-severity-matching": "'{{severity}}' not found.",
         "no-template-matching": "No resource matching '{{template}}' were found.",
+        "create-new-template": "Create a new one!",
         "not-found-slack-recipient": "Slack recipient not found",
         "notification": "Notification",
         "notification-center": "Notification center",

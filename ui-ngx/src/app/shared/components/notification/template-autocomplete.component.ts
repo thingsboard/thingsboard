@@ -221,6 +221,16 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
       predefinedType: this.notificationTypes
     });
   }
+  createTemplateBySearchText($event: Event, searchText: string) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.openNotificationTemplateDialog({
+      isAdd: true,
+      predefinedType: this.notificationTypes,
+      name: searchText
+    });
+  }
 
   private openNotificationTemplateDialog(dialogData?: TemplateNotificationDialogData) {
     this.dialog.open<TemplateNotificationDialogComponent, TemplateNotificationDialogData,
