@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-/**
- * @author Andrew Shvayka
- */
 public class DataConstants {
 
     public static final String TENANT = "TENANT";

@@ -68,7 +68,7 @@ import java.util.stream.Collectors;
  */
 @Slf4j
 public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareMsgProcessor {
-    // (1 for result persistence + 1 for the state persistence )
+    // (1 for result persistence + 1 for the state persistence)
     public static final int CALLBACKS_PER_CF = 2;
 
     final TenantId tenantId;

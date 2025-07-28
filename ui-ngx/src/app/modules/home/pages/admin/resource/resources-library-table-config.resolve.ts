@@ -37,6 +37,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { map } from 'rxjs/operators';
 import { ResourcesTableHeaderComponent } from '@home/pages/admin/resource/resources-table-header.component';
+import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
 
 @Injectable()
 export class ResourcesLibraryTableConfigResolver  {
@@ -55,6 +56,7 @@ export class ResourcesLibraryTableConfigResolver  {
     this.config.entityTranslations = entityTypeTranslations.get(EntityType.TB_RESOURCE);
     this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
     this.config.headerComponent = ResourcesTableHeaderComponent;
+    this.config.entityTabsComponent = ResourceLibraryTabsComponent;
 
     this.config.entityTitle = (resource) => resource ?
       resource.title : '';

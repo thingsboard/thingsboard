@@ -45,15 +45,20 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
         deviceProfile.setDefaultRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultRuleChainId()));
         deviceProfile.setDefaultEdgeRuleChainId(idProvider.getInternalId(deviceProfile.getDefaultEdgeRuleChainId()));
         deviceProfile.setDefaultDashboardId(idProvider.getInternalId(deviceProfile.getDefaultDashboardId()));
-        deviceProfile.setFirmwareId(getOldEntityField(old, DeviceProfile::getFirmwareId));
-        deviceProfile.setSoftwareId(getOldEntityField(old, DeviceProfile::getSoftwareId));
+        deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId(), false));
+        deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId(), false));
         return deviceProfile;
     }
 
     @Override
     protected DeviceProfile saveOrUpdate(EntitiesImportCtx ctx, DeviceProfile deviceProfile, EntityExportData<DeviceProfile> exportData, IdProvider idProvider, CompareResult compareResult) {
+        boolean toUpdate = ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds();
+        if (toUpdate) {
+            deviceProfile.setFirmwareId(idProvider.getInternalId(deviceProfile.getFirmwareId()));
+            deviceProfile.setSoftwareId(idProvider.getInternalId(deviceProfile.getSoftwareId()));
+        }
         DeviceProfile saved = deviceProfileService.saveDeviceProfile(deviceProfile);
-        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+        if (toUpdate) {
             importCalculatedFields(ctx, saved, exportData, idProvider);
         }
         return saved;
@@ -73,8 +78,6 @@ public class DeviceProfileImportService extends BaseEntityImportService<DevicePr
     @Override
     protected void cleanupForComparison(DeviceProfile deviceProfile) {
         super.cleanupForComparison(deviceProfile);
-        deviceProfile.setFirmwareId(null);
-        deviceProfile.setSoftwareId(null);
     }
 
     @Override

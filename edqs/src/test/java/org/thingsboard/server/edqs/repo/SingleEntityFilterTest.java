@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
@@ -113,7 +114,7 @@ public class SingleEntityFilterTest extends AbstractEDQTest {
 
     private static EntityDataQuery getEntityDataQuery(DeviceId deviceId) {
         SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(deviceId);
+        filter.setSingleEntity(AliasEntityId.fromEntityId(deviceId));
         var pageLink = new EntityDataPageLink(20, 0, null, new EntityDataSortOrder(new EntityKey(EntityKeyType.TIME_SERIES, "state"), EntityDataSortOrder.Direction.DESC), false);
 
         var entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"));

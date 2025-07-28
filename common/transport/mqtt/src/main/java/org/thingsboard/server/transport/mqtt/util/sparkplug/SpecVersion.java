@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg;
+package org.thingsboard.server.transport.mqtt.util.sparkplug;
 
-public interface TbActorError {
+import java.lang.annotation.Documented;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
-    boolean isUnrecoverable();
-
+@Documented
+@Target(ElementType.TYPE)
+public @interface SpecVersion {
+    String spec() default "";
+    String version();
 }

@@ -336,6 +336,7 @@ import * as DatapointsLimitComponent from '@shared/components/time/datapoints-li
 import * as AggregationTypeSelectComponent from '@shared/components/time/aggregation/aggregation-type-select.component';
 import * as AggregationOptionsConfigComponent from '@shared/components/time/aggregation/aggregation-options-config-panel.component';
 import * as IntervalOptionsConfigPanelComponent from '@shared/components/time/interval-options-config-panel.component';
+import * as AIModelDialogComponent from '@home/components/ai-model/ai-model-dialog.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { Observable, of } from 'rxjs';
@@ -668,7 +669,8 @@ class ModulesMap implements IModulesMap {
     '@home/components/dashboard-page/dashboard-image-dialog.component': DashboardImageDialogComponent,
     '@home/components/widget/widget-container.component': WidgetContainerComponent,
     '@home/components/profile/queue/tenant-profile-queues.component': TenantProfileQueuesComponent,
-    '@home/components/queue/queue-form.component': QueueFormComponent
+    '@home/components/queue/queue-form.component': QueueFormComponent,
+    '@home/components/ai-model/ai-model-dialog.component': AIModelDialogComponent,
   };
 
   init(): Observable<any> {

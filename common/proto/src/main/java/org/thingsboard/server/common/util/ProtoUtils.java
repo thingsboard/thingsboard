@@ -252,7 +252,7 @@ public class ProtoUtils {
 
     public static EdgeEvent fromProto(TransportProtos.EdgeEventMsgProto proto) {
         EdgeEvent edgeEvent = new EdgeEvent();
-        TenantId tenantId = new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+        TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setType(EdgeEventType.valueOf(proto.getEntityType()));
         edgeEvent.setAction(EdgeEventActionType.valueOf(proto.getAction()));
@@ -529,8 +529,10 @@ public class ProtoUtils {
                 .setRequestIdMSB(msg.getMsg().getId().getMostSignificantBits())
                 .setRequestIdLSB(msg.getMsg().getId().getLeastSignificantBits())
                 .setOneway(msg.getMsg().isOneway())
-                .setPersisted(msg.getMsg().isPersisted())
-                .setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+                .setPersisted(msg.getMsg().isPersisted());
+        if (msg.getMsg().getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+        }
         if (msg.getMsg().getRetries() != null) {
             builder.setRetries(msg.getMsg().getRetries());
         }
@@ -555,7 +557,9 @@ public class ProtoUtils {
                 toDeviceRpcRequestMsg.getOneway(),
                 toDeviceRpcRequestMsg.getExpirationTime(),
                 new ToDeviceRpcRequestBody(toDeviceRpcRequestMsg.getMethodName(), toDeviceRpcRequestMsg.getParams()),
-                toDeviceRpcRequestMsg.getPersisted(), toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null, toDeviceRpcRequestMsg.getAdditionalInfo());
+                toDeviceRpcRequestMsg.getPersisted(),
+                toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null,
+                toDeviceRpcRequestMsg.hasAdditionalInfo() ? toDeviceRpcRequestMsg.getAdditionalInfo() : null);
         return new ToDeviceRpcRequestActorMsg(proto.getServiceId(), toDeviceRpcRequest);
     }
 
@@ -845,7 +849,7 @@ public class ProtoUtils {
     public static Device fromProto(TransportProtos.DeviceProto proto) {
         Device device = new Device(getEntityId(proto.getDeviceIdMSB(), proto.getDeviceIdLSB(), DeviceId::new));
         device.setCreatedTime(proto.getCreatedTime());
-        device.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        device.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         device.setName(proto.getDeviceName());
         device.setType(proto.getDeviceType());
         device.setDeviceProfileId(getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new));
@@ -937,7 +941,7 @@ public class ProtoUtils {
     public static DeviceProfile fromProto(TransportProtos.DeviceProfileProto proto) {
         DeviceProfile deviceProfile = new DeviceProfile(getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new));
         deviceProfile.setCreatedTime(proto.getCreatedTime());
-        deviceProfile.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        deviceProfile.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         deviceProfile.setName(proto.getName());
         deviceProfile.setDefault(proto.getIsDefault());
         deviceProfile.setType(DeviceProfileType.valueOf(proto.getType()));
@@ -1028,7 +1032,7 @@ public class ProtoUtils {
     }
 
     public static Tenant fromProto(TransportProtos.TenantProto proto) {
-        Tenant tenant = new Tenant(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        Tenant tenant = new Tenant(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         tenant.setCreatedTime(proto.getCreatedTime());
         tenant.setTenantProfileId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantProfileId::new));
         tenant.setTitle(proto.getTitle());
@@ -1142,7 +1146,7 @@ public class ProtoUtils {
 
     public static TbResource fromProto(TransportProtos.TbResourceProto proto) {
         TbResource resource = new TbResource(getEntityId(proto.getResourceIdMSB(), proto.getResourceIdLSB(), TbResourceId::new));
-        resource.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        resource.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         resource.setCreatedTime(proto.getCreatedTime());
         resource.setTitle(proto.getTitle());
         resource.setResourceType(ResourceType.valueOf(proto.getResourceType()));
@@ -1198,7 +1202,7 @@ public class ProtoUtils {
 
     public static ApiUsageState fromProto(TransportProtos.ApiUsageStateProto proto) {
         ApiUsageState apiUsageState = new ApiUsageState(getEntityId(proto.getApiUsageStateIdMSB(), proto.getApiUsageStateIdLSB(), ApiUsageStateId::new));
-        apiUsageState.setTenantId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantId::new));
+        apiUsageState.setTenantId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantId::fromUUID));
         apiUsageState.setCreatedTime(proto.getCreatedTime());
         apiUsageState.setEntityId(EntityIdFactory.getByTypeAndUuid(fromProto(proto.getEntityType()), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())));
         apiUsageState.setTransportState(ApiUsageStateValue.valueOf(proto.getTransportState()));

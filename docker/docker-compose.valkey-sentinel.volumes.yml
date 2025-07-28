@@ -14,8 +14,6 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
   # Valkey sentinel
   valkey-primary:

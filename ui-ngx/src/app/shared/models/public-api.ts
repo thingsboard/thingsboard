@@ -63,4 +63,5 @@ export * from './window-message.model';
 export * from './usage.models';
 export * from './query/query.models';
 export * from './regex.constants';
-export * from './trendz-settings.models'
+export * from './trendz-settings.models';
+export * from './ai-model.models';

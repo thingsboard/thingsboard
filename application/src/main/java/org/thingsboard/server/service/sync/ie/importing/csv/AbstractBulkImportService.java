@@ -67,7 +67,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -235,7 +234,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     @SneakyThrows
     private void saveAttributes(SecurityUser user, E entity, Map.Entry<BulkImportColumnType, JsonObject> kvsEntry, BulkImportColumnType kvType) {
         String scope = kvType.getKey();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(kvsEntry.getValue());
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
             tsSubscriptionService.saveAttributes(AttributesSaveRequest.builder()

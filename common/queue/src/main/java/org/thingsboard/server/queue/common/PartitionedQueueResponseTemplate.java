@@ -21,9 +21,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.stats.MessagesStats;
+import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueHandler;
 import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
 
@@ -119,8 +121,20 @@ public class PartitionedQueueResponseTemplate<Request extends TbQueueMsg, Respon
                             response -> {
                                 pendingRequestCount.decrementAndGet();
                                 response.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
-                                responseProducer.send(TopicPartitionInfo.builder().topic(responseTopic).build(), response, null);
-                                stats.incrementSuccessful();
+                                TopicPartitionInfo tpi = TopicPartitionInfo.builder().topic(responseTopic).build();
+                                responseProducer.send(tpi, response, new TbQueueCallback() {
+                                    @Override
+                                    public void onSuccess(TbQueueMsgMetadata metadata) {
+                                        stats.incrementSuccessful();
+                                    }
+
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        log.error("[{}] Failed to send response {}", requestId, response, t);
+                                        sendErrorResponse(requestId, tpi, request, t);
+                                        stats.incrementFailed();
+                                    }
+                                });
                             },
                             e -> {
                                 pendingRequestCount.decrementAndGet();
@@ -142,6 +156,15 @@ public class PartitionedQueueResponseTemplate<Request extends TbQueueMsg, Respon
             }
         });
         consumer.commit();
+    }
+
+    private void sendErrorResponse(UUID requestId, TopicPartitionInfo tpi, Request request, Throwable cause) {
+        Response errorResponseMsg = handler.constructErrorResponseMsg(request, cause);
+
+        if (errorResponseMsg != null) {
+            errorResponseMsg.getHeaders().put(REQUEST_ID_HEADER, uuidToBytes(requestId));
+            responseProducer.send(tpi, errorResponseMsg, null);
+        }
     }
 
     public void subscribe(Set<TopicPartitionInfo> partitions) {

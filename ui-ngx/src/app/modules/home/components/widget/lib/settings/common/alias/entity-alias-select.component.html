@@ -74,8 +74,7 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-            {{ translate.get('entity.no-alias-matching',
-              {alias: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            {{ 'entity.no-alias-matching' | translate : {alias: (searchText | truncate: true: 6: &apos;...&apos;)} }}
           </span>
         </ng-template>
         <span>
