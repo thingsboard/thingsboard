@@ -36,7 +36,9 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
     private boolean seqIdNewCycleStarted;
     private Long maxReadRecordsCount;
     private final EdgeEventService edgeEventService;
-    // Subtract from queueStartTs to ensure no data is lost due to potential misordering of edge events by created_time.
+    // Subtract from queueStartTs to compensate for possible misalignment between `created_time` and `seqId`.
+    // This ensures early events with lower seqId are not skipped due to partitioning by `created_time`.
+    // See: edge_event is partitioned by created_time but sorted by seqId during retrieval.
     private final long misorderingCompensationMillis;
 
     @Override
