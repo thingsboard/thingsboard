@@ -31,8 +31,10 @@ import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -257,6 +259,43 @@ public class TbKafkaAdmin implements TbQueueAdmin, TbEdgeQueueAdmin {
         } catch (InterruptedException | ExecutionException e) {
             log.error("Failed to check if topics [{}] empty.", topics, e);
             return false;
+        }
+    }
+
+    public Map<String, Long> getTotalLagForGroupsBulk(Set<String> groupIds) {
+        Map<String, Long> result = new HashMap<>();
+        for (String groupId : groupIds) {
+            result.put(groupId, getTotalConsumerGroupLag(groupId));
+        }
+        return result;
+    }
+
+    public long getTotalConsumerGroupLag(String groupId) {
+        try {
+            Map<TopicPartition, OffsetAndMetadata> committedOffsets = getConsumerGroupOffsets(groupId);
+            if (committedOffsets.isEmpty()) {
+                return 0L;
+            }
+
+            Map<TopicPartition, OffsetSpec> latestOffsetsSpec = committedOffsets.keySet().stream()
+                    .collect(Collectors.toMap(tp -> tp, tp -> OffsetSpec.latest()));
+
+            Map<TopicPartition, ListOffsetsResult.ListOffsetsResultInfo> endOffsets =
+                    settings.getAdminClient().listOffsets(latestOffsetsSpec)
+                            .all().get(10, TimeUnit.SECONDS);
+
+            return committedOffsets.entrySet().stream()
+                    .mapToLong(entry -> {
+                        TopicPartition tp = entry.getKey();
+                        long committed = entry.getValue().offset();
+                        long end = endOffsets.getOrDefault(tp,
+                                new ListOffsetsResult.ListOffsetsResultInfo(0L, 0L, Optional.empty())).offset();
+                        return end - committed;
+                    }).sum();
+
+        } catch (Exception e) {
+            log.error("Failed to get total lag for consumer group: {}", groupId, e);
+            return 0L;
         }
     }
 
