@@ -77,8 +77,13 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
 import org.thingsboard.server.service.state.DeviceStateService;
+import org.thingsboard.server.utils.CsvUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
@@ -1584,6 +1589,61 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
                 .filter(att -> att.get("key").equals("DATA")).findFirst().get();
         Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
+    }
+
+    @Test
+    public void testBulkImportDeviceWithJsonAttr() throws Exception {
+        String deviceName = "some_device";
+        String deviceType = "some_type";
+        JsonNode deviceAttr = JacksonUtil.toJsonNode("{\"threshold\": 45}");
+
+        List<List<String>> content = new LinkedList<>();
+        content.add(Arrays.asList("NAME", "TYPE", "ATTR"));
+        content.add(Arrays.asList(deviceName, deviceType, deviceAttr.toString()));
+
+        byte[] bytes = CsvUtils.generateCsv(content);
+        BulkImportRequest request = new BulkImportRequest();
+        request.setFile(new String(bytes, StandardCharsets.UTF_8));
+        BulkImportRequest.Mapping mapping = new BulkImportRequest.Mapping();
+        BulkImportRequest.ColumnMapping name = new BulkImportRequest.ColumnMapping();
+        name.setType(BulkImportColumnType.NAME);
+        BulkImportRequest.ColumnMapping type = new BulkImportRequest.ColumnMapping();
+        type.setType(BulkImportColumnType.TYPE);
+        BulkImportRequest.ColumnMapping attr = new BulkImportRequest.ColumnMapping();
+        attr.setType(BulkImportColumnType.SERVER_ATTRIBUTE);
+        attr.setKey("attr");
+        List<BulkImportRequest.ColumnMapping> columns = new ArrayList<>();
+        columns.add(name);
+        columns.add(type);
+        columns.add(attr);
+
+        mapping.setColumns(columns);
+        mapping.setDelimiter(',');
+        mapping.setUpdate(true);
+        mapping.setHeader(true);
+        request.setMapping(mapping);
+
+        BulkImportResult<Device> deviceBulkImportResult = doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
+
+        Assert.assertEquals(1, deviceBulkImportResult.getCreated().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getErrors().get());
+        Assert.assertEquals(0, deviceBulkImportResult.getUpdated().get());
+        Assert.assertTrue(deviceBulkImportResult.getErrorsList().isEmpty());
+
+        Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
+
+        Assert.assertNotNull(savedDevice);
+        Assert.assertEquals(deviceName, savedDevice.getName());
+        Assert.assertEquals(deviceType, savedDevice.getType());
+
+        //check server attribute value
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("attr")).findFirst().get();
+            LinkedHashMap<String, Object> expected = JacksonUtil.convertValue(deviceAttr, new TypeReference<>() {});
+            Assert.assertEquals(expected, actualAttribute.get("value"));
+        });
     }
 
     @Test
