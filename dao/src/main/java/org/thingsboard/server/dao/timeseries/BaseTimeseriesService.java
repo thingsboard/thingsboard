@@ -196,7 +196,8 @@ public class BaseTimeseriesService implements TimeseriesService {
             if (saveLatest) {
                 latestFutures.add(Futures.transform(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry), version -> {
                     if (version != null) {
-                        edqsService.onUpdate(tenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, tsKvEntry, version));
+                        TenantId edqsTenantId = entityId.getEntityType() == EntityType.TENANT ? (TenantId) entityId : tenantId;
+                        edqsService.onUpdate(edqsTenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, tsKvEntry, version));
                     }
                     return version;
                 }, MoreExecutors.directExecutor()));
