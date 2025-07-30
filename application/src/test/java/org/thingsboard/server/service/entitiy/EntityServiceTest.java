@@ -1771,13 +1771,8 @@ public class EntityServiceTest extends AbstractControllerTest {
         EntityDataPageLink pageLink = new EntityDataPageLink(1000, 0, null, null);
         EntityDataQuery query = new EntityDataQuery(singleEntityFilter, pageLink, entityFields, latestValues, null);
 
-        PageData<EntityData> result = findByQueryAndCheck(query, 1);
-
-        Map<EntityKeyType, Map<String, TsValue>> latest = result.getData().get(0).getLatest();
-        String tsValue = latest.get(EntityKeyType.TIME_SERIES).get("temperature").getValue();
-        String attrValue = latest.get(SERVER_ATTRIBUTE).get("attr").getValue();
-        assertThat(tsValue).isEqualTo("45.5");
-        assertThat(attrValue).isEqualTo("10");
+        findByQueryAndCheckTelemetry(query, EntityKeyType.TIME_SERIES, "temperature", List.of("45.5"));
+        findByQueryAndCheckTelemetry(query, EntityKeyType.SERVER_ATTRIBUTE, "attr", List.of("10"));
     }
 
     @Test
