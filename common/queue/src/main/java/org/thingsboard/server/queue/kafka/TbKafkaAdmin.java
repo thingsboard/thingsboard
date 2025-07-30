@@ -70,10 +70,12 @@ public class TbKafkaAdmin implements TbQueueAdmin, TbEdgeQueueAdmin {
     }
 
     @Override
-    public void createTopicIfNotExists(String topic, String properties) {
-        Set<String> topics = getTopics();
-        if (topics.contains(topic)) {
-            return;
+    public void createTopicIfNotExists(String topic, String properties, boolean force) {
+        if (!force) {
+            Set<String> topics = getTopics();
+            if (topics.contains(topic)) {
+                return;
+            }
         }
         try {
             Map<String, String> configs = PropertyUtils.getProps(topicConfigs, properties);
