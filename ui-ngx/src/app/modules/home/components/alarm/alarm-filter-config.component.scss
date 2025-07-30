@@ -13,6 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
+@import '../scss/constants';
+
 :host {
   display: flex;
   max-width: 100%;
@@ -39,15 +42,11 @@
 
     tb-entity-subtype-list {
       flex: 1;
-      width: 180px;
+      @media #{$mat-gt-xs} {
+        width: 180px;
+      }
       .mdc-evolution-chip-set__chips {
         width: 100%;
-      }
-    }
-
-    .mat-mdc-chip {
-      .mdc-evolution-chip__cell, .mat-mdc-chip-action, .mat-mdc-chip-action-label {
-        overflow: hidden;
       }
     }
   }
