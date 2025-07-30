@@ -277,7 +277,8 @@ public class BaseTimeseriesService implements TimeseriesService {
         return Futures.transform(timeseriesLatestDao.removeLatest(tenantId, entityId, query), result -> {
             if (result.isRemoved()) {
                 Long version = result.getVersion();
-                edqsService.onDelete(tenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, query.getKey(), version));
+                TenantId edqsTenantId = entityId.getEntityType() == EntityType.TENANT ? (TenantId) entityId : tenantId;
+                edqsService.onDelete(edqsTenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, query.getKey(), version));
             }
             return result;
         }, MoreExecutors.directExecutor());
