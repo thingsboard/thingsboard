@@ -77,8 +77,9 @@ public class TypeCastUtil {
     }
 
     private static boolean looksLikeJson(String value) {
-        return (value.startsWith("{") && value.endsWith("}")) ||
-                (value.startsWith("[") && value.endsWith("]"));
+        String trimmed = value.trim();
+        return (trimmed.startsWith("{") && trimmed.endsWith("}")) ||
+                (trimmed.startsWith("[") && trimmed.endsWith("]"));
     }
 
 }

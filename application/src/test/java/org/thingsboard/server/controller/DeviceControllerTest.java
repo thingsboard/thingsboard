@@ -38,6 +38,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -59,6 +60,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -82,10 +84,10 @@ import org.thingsboard.server.utils.CsvUtils;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.LinkedHashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -1595,11 +1597,11 @@ public class DeviceControllerTest extends AbstractControllerTest {
     public void testBulkImportDeviceWithJsonAttr() throws Exception {
         String deviceName = "some_device";
         String deviceType = "some_type";
-        JsonNode deviceAttr = JacksonUtil.toJsonNode("{\"threshold\": 45}");
+        String deviceAttr = "{\"threshold\":45}";
 
         List<List<String>> content = new LinkedList<>();
         content.add(Arrays.asList("NAME", "TYPE", "ATTR"));
-        content.add(Arrays.asList(deviceName, deviceType, deviceAttr.toString()));
+        content.add(Arrays.asList(deviceName, deviceType, deviceAttr));
 
         byte[] bytes = CsvUtils.generateCsv(content);
         BulkImportRequest request = new BulkImportRequest();
@@ -1636,14 +1638,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(deviceName, savedDevice.getName());
         Assert.assertEquals(deviceType, savedDevice.getType());
 
-        //check server attribute value
-        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
-            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
-                    .filter(att -> att.get("key").equals("attr")).findFirst().get();
-            LinkedHashMap<String, Object> expected = JacksonUtil.convertValue(deviceAttr, new TypeReference<>() {});
-            Assert.assertEquals(expected, actualAttribute.get("value"));
-        });
+        Optional<AttributeKvEntry> retrieved = attributesService.find(tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, "attr").get();
+        assertThat(retrieved.get().getJsonValue().get()).isEqualTo(deviceAttr);
+        assertThat(retrieved.get().getStrValue()).isNotPresent();
     }
 
     @Test
