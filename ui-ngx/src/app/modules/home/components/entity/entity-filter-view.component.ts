@@ -128,6 +128,9 @@ export class EntityFilterViewComponent implements ControlValueAccessor {
               {edgeTypes});
           }
           break;
+        case AliasFilterType.apiUsageState:
+          this.filterDisplayValue = this.translate.instant('alias.filter-type-apiUsageState');
+          break;
         case AliasFilterType.entityViewType:
           const entityViewTypesQuoted = [];
           this.filter.entityViewTypes.forEach((entityViewType) => {

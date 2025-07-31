@@ -23,6 +23,7 @@
   <mat-label *ngIf="label">{{ label }}</mat-label>
   <mat-chip-grid #itemsChipList formControlName="items" [required]="required">
     <mat-chip-row *ngFor="let item of itemList"
+                  class="tb-chip-row-ellipsis"
                   [removable]="!disabled"
                   [contentEditable]="editable && !disabled"
                   (removed)="removeItems(item)">

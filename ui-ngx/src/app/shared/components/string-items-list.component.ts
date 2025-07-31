@@ -39,7 +39,7 @@ export interface StringItemsOption {
 @Component({
   selector: 'tb-string-items-list',
   templateUrl: './string-items-list.component.html',
-  styleUrls: ['./string-items-list.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
