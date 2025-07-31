@@ -489,7 +489,6 @@
       "type": "number",
       "default": 6,
       "required": true,
-      "subLabel": "Main",
       "divider": false,
       "fieldSuffix": "px",
       "min": 0,
