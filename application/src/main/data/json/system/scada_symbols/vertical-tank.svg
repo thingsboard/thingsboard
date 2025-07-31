@@ -566,7 +566,7 @@
  </mask><path d="m7 181c-3.866 0-7-3.134-7-7s3.134-7 7-7h586c3.866 0 7 3.134 7 7s-3.134 7-7 7z" fill="#d9d9d9"/><path d="m7 170h586v-6h-586zm586 8h-586v6h586zm4-4c0 2.209-1.791 4-4 4v6c5.523 0 10-4.477 10-10zm-4-4c2.209 0 4 1.791 4 4h6c0-5.523-4.477-10-10-10zm-590 4c0-2.209 1.7909-4 4-4v-6c-5.5228 0-10 4.477-10 10zm-6 0c0 5.523 4.4771 10 10 10v-6c-2.2091 0-4-1.791-4-4z" fill="#727171" mask="url(#path-215-inside-2_1687_130892)"/><g filter="url(#filter0_ii_1687_130892)" tb:tag="value-box">
   <path d="m180 62c0-6.6274 5.373-12 12-12h216c6.627 0 12 5.3726 12 12v56c0 6.627-5.373 12-12 12h-216c-6.627 0-12-5.373-12-12z" fill="#f3f3f3" tb:tag="value-box-background"/>
   <path d="m192 51.5h216c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-216c-5.799 0-10.5-4.701-10.5-10.5v-56c0-5.799 4.701-10.5 10.5-10.5z" stroke="#727171" stroke-width="3"/>
-  <text x="301.5625" y="93.546875" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
+  <text x="301.5625" y="93.546875" fill="#727171" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><defs>
   <filter id="filter0_ii_1687_130892" x="176" y="46" width="248" height="88" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
