@@ -1187,8 +1187,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
-    if ($event) {
-      $event.stopPropagation();
+    $event?.stopPropagation();
+    if (entity.id.id === NULL_UUID) {
+      return
     }
     const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();

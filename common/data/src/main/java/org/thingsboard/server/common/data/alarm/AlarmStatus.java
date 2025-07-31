@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
-/**
- * Created by ashvayka on 11.05.17.
- */
 public enum AlarmStatus {
 
     ACTIVE_UNACK, ACTIVE_ACK, CLEARED_UNACK, CLEARED_ACK;

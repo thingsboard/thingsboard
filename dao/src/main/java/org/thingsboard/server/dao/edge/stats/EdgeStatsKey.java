@@ -13,10 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm;
+package org.thingsboard.server.dao.edge.stats;
 
-public enum AlarmSeverity {
+import lombok.Getter;
 
-    CRITICAL, MAJOR, MINOR, WARNING, INDETERMINATE;
+@Getter
+public enum EdgeStatsKey {
+    DOWNLINK_MSGS_ADDED("downlinkMsgsAdded"),
+    DOWNLINK_MSGS_PUSHED("downlinkMsgsPushed"),
+    DOWNLINK_MSGS_PERMANENTLY_FAILED("downlinkMsgsPermanentlyFailed"),
+    DOWNLINK_MSGS_TMP_FAILED("downlinkMsgsTmpFailed"),
+    DOWNLINK_MSGS_LAG("downlinkMsgsLag");
+
+    private final String key;
+
+    EdgeStatsKey(String key) {
+        this.key = key;
+    }
 
 }
