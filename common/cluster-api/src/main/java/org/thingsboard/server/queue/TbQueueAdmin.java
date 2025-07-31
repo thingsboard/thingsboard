@@ -18,12 +18,13 @@ package org.thingsboard.server.queue;
 public interface TbQueueAdmin {
 
     default void createTopicIfNotExists(String topic) {
-        createTopicIfNotExists(topic, null);
+        createTopicIfNotExists(topic, null, false);
     }
 
-    void createTopicIfNotExists(String topic, String properties);
+    void createTopicIfNotExists(String topic, String properties, boolean force);
 
     void destroy();
 
     void deleteTopic(String topic);
+
 }
