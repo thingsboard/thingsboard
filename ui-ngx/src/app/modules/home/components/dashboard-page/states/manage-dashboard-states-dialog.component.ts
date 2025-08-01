@@ -265,6 +265,7 @@ export class ManageDashboardStatesDialogComponent
       if (this.states[newStateId]) {
         this.stateNames.add(newStateName);
         this.duplicateState(null, state);
+        return;
       }
       const duplicatedStates = deepClone(originalState);
       const duplicatedWidgets = deepClone(this.widgets);
