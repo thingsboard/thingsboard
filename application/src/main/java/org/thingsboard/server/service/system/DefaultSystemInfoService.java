@@ -97,6 +97,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final SmsService smsService;
     private final NotificationRuleProcessor notificationRuleProcessor;
     private volatile ScheduledExecutorService scheduler;
+    private volatile long lastEmailTestTime = 0;
 
     @Value("${metrics.system_info.persist_frequency:60}")
     private int systemInfoPersistFrequencySeconds;
@@ -154,6 +155,10 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     }
 
     private boolean isEmailEnabled() {
+        if(System.currentTimeMillis() - lastEmailTestTime < 600000){
+            return mailService.isConfigured(TenantId.SYS_TENANT_ID);
+        }
+        lastEmailTestTime = System.currentTimeMillis();
         try {
             mailService.testConnection(TenantId.SYS_TENANT_ID);
             return true;
