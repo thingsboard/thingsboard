@@ -13,26 +13,38 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../scss/constants";
+
 :host {
+  height: 100%;
+  display: grid;
+  grid-template-rows: min-content auto min-content;
+
   .manage-dashboard-states {
-    .tb-entity-table {
-      .tb-entity-table-content {
-        width: 100%;
-        height: 100%;
-        background: #fff;
+    .tb-entity-table-content {
+      width: 100%;
+      height: 100%;
+      background: #fff;
 
-        .tb-entity-table-title {
-          padding-right: 20px;
-          white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
-        }
+      .tb-entity-table-title {
+        padding-right: 20px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
 
-        .table-container {
-          overflow: auto;
-        }
+      .table-container {
+        overflow: auto;
       }
     }
+  }
+
+  @media #{$mat-sm} {
+    min-width: 470px;
+  }
+
+  @media #{$mat-gt-sm} {
+    min-width: 750px;
   }
 }
 
