@@ -231,7 +231,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     public void process(EntityCalculatedFieldCheckForUpdatesMsg msg) throws CalculatedFieldException {
         CalculatedFieldCtx cfCtx = msg.getCfCtx();
         CalculatedFieldId cfId = cfCtx.getCfId();
-        log.debug("[{}] [{}] Processing CF dynamic sources refresh msg.", entityId, cfId);
+        log.debug("[{}][{}] Processing CF check for updates msg.", entityId, cfId);
         try {
             var state = updateStateFromDb(cfCtx);
             if (state.isSizeOk()) {

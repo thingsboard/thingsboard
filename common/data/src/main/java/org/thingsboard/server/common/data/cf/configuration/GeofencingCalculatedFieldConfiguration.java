@@ -30,7 +30,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         return CalculatedFieldType.GEOFENCING;
     }
 
-    public boolean isDynamicRefreshEnabled() {
+    public boolean isScheduledUpdateEnabled() {
         return refreshIntervalSec > 0;
     }
 

@@ -63,11 +63,11 @@ public interface CalculatedFieldConfiguration {
     boolean hasDynamicSourceArguments();
 
     @JsonIgnore
-    default boolean isDynamicRefreshEnabled() {
-        return hasDynamicSourceArguments() && getRefreshIntervalSec() > 0;
+    default boolean isScheduledUpdateEnabled() {
+        return hasDynamicSourceArguments() && getScheduledUpdateIntervalSec() > 0;
     }
 
-    default int getRefreshIntervalSec() {
+    default int getScheduledUpdateIntervalSec() {
         return 0;
     }
 

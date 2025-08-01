@@ -315,8 +315,8 @@ public class CalculatedFieldCtx {
     public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
         CalculatedFieldConfiguration thisConfig = calculatedField.getConfiguration();
         CalculatedFieldConfiguration otherConfig = other.calculatedField.getConfiguration();
-        boolean refreshTriggerChanged = thisConfig.isDynamicRefreshEnabled() != otherConfig.isDynamicRefreshEnabled();
-        boolean refreshIntervalChanged = thisConfig.getRefreshIntervalSec() != otherConfig.getRefreshIntervalSec();
+        boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
+        boolean refreshIntervalChanged = thisConfig.getScheduledUpdateIntervalSec() != otherConfig.getScheduledUpdateIntervalSec();
         return refreshTriggerChanged || refreshIntervalChanged;
     }
 

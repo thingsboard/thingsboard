@@ -31,6 +31,7 @@ import java.util.List;
 public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
     private int maxLevel;
+    private boolean fetchLastLevelOnly;
     private EntitySearchDirection direction;
     private String relationType;
     private List<EntityType> profiles;
@@ -40,9 +41,18 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         return CFArgumentDynamicSourceType.RELATION_QUERY;
     }
 
+    @Override
+    public boolean isSimpleRelation() {
+        return maxLevel == 1 && (profiles == null || profiles.isEmpty());
+    }
+
+    @Override
     public EntityRelationsQuery toEntityRelationsQuery(EntityId rootEntityId) {
+        if (isSimpleRelation()) {
+            throw new IllegalArgumentException("Entity relations query can't be created for a simple relation!");
+        }
         var entityRelationsQuery = new EntityRelationsQuery();
-        entityRelationsQuery.setParameters(new RelationsSearchParameters(rootEntityId, direction, maxLevel, false));
+        entityRelationsQuery.setParameters(new RelationsSearchParameters(rootEntityId, direction, maxLevel, fetchLastLevelOnly));
         entityRelationsQuery.setFilters(Collections.singletonList(new RelationEntityTypeFilter(relationType, profiles)));
         return entityRelationsQuery;
     }

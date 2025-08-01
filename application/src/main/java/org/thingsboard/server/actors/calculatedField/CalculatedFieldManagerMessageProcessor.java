@@ -334,7 +334,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 calculatedFields.put(newCf.getId(), newCfCtx);
                 List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
 
-                if (newCfCtx.hasSchedulingConfigChanges(oldCfCtx)) {
+                boolean hasSchedulingConfigChanges = newCfCtx.hasSchedulingConfigChanges(oldCfCtx);
+                if (hasSchedulingConfigChanges) {
                     cancelCfUpdateTaskIfExists(cfId, false);
                 }
 
@@ -359,7 +360,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 var stateChanges = newCfCtx.hasStateChanges(oldCfCtx);
-                if (stateChanges || newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
+                if (stateChanges || newCfCtx.hasOtherSignificantChanges(oldCfCtx) || hasSchedulingConfigChanges) {
                     initCf(newCfCtx, callback, stateChanges);
                 } else {
                     callback.onSuccess();
@@ -514,6 +515,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void initCf(CalculatedFieldCtx cfCtx, TbCallback callback, boolean forceStateReinit) {
         EntityId entityId = cfCtx.getEntityId();
         EntityType entityType = cfCtx.getEntityId().getEntityType();
+        scheduleCalculatedFieldUpdateMsgIfNeeded(cfCtx);
         if (isProfileEntity(entityType)) {
             var entityIds = entityProfileCache.getEntityIdsByProfileId(entityId);
             if (!entityIds.isEmpty()) {
@@ -523,29 +525,25 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                         initCfForEntity(id, cfCtx, forceStateReinit, multiCallback);
                     }
                 });
-                scheduleCalculatedFieldUpdateMsgIfNeeded(cfCtx);
             } else {
                 callback.onSuccess();
             }
-        } else {
-            if (isMyPartition(entityId, callback)) {
-                initCfForEntity(entityId, cfCtx, forceStateReinit, callback);
-                scheduleCalculatedFieldUpdateMsgIfNeeded(cfCtx);
-            }
+        } else if (isMyPartition(entityId, callback)) {
+            initCfForEntity(entityId, cfCtx, forceStateReinit, callback);
         }
     }
 
     private void scheduleCalculatedFieldUpdateMsgIfNeeded(CalculatedFieldCtx cfCtx) {
         CalculatedField cf = cfCtx.getCalculatedField();
         CalculatedFieldConfiguration cfConfig = cf.getConfiguration();
-        if (!cfConfig.isDynamicRefreshEnabled()) {
+        if (!cfConfig.isScheduledUpdateEnabled()) {
             return;
         }
         if (checkForCalculatedFieldUpdateTasks.containsKey(cf.getId())) {
             log.debug("[{}][{}] Check for update msg for CF is already scheduled!", tenantId, cf.getId());
             return;
         }
-        long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(cfConfig.getRefreshIntervalSec());
+        long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(cfConfig.getScheduledUpdateIntervalSec());
         var scheduledMsg = new CalculatedFieldScheduledCheckForUpdatesMsg(tenantId, cfCtx);
 
         ScheduledFuture<?> scheduledFuture = systemContext
