@@ -29,6 +29,8 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
 import java.time.Instant;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -55,7 +57,11 @@ public class Oauth2AuthenticationSuccessHandlerTest extends AbstractControllerTe
         when(jwtTokenFactory.createTokenPair(eq(securityUser))).thenReturn(new JwtPair("testAccessToken", "testRefreshToken"));
 
         Instant issuedAt = Instant.now();
-        idToken = new OidcIdToken("idToken", issuedAt, issuedAt.plusSeconds(3600), null);
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", "test-subject");
+        claims.put("iss", "test-issuer");
+
+        idToken = new OidcIdToken("idToken", issuedAt, issuedAt.plusSeconds(3600), claims);
         ssoIdSecurityUser = new SecurityUser(userId);
         ssoIdSecurityUser.setSsoId(UUID.randomUUID());
         when(jwtTokenFactory.createOpenIdTokenPair(eq(ssoIdSecurityUser), eq(idToken))).thenReturn(new OauthJwtPair("testAccessToken", "testRefreshToken", "testIdToken"));
@@ -90,7 +96,7 @@ public class Oauth2AuthenticationSuccessHandlerTest extends AbstractControllerTe
         assertEquals(expectedUrl, redirectUrl);
 
         redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithParams, jwtPair);
-        expectedUrl = urlWithoutParams + "/?accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken() + "&idToken=" + jwtPair.getIdToken();
+        expectedUrl = urlWithParams + "&accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken() + "&idToken=" + jwtPair.getIdToken();
         assertEquals(expectedUrl, redirectUrl);
     }
 }
