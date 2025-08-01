@@ -150,7 +150,10 @@ public enum MsgType {
     /* CF Manager Actor -> CF Entity actor */
     CF_ENTITY_TELEMETRY_MSG,
     CF_ENTITY_INIT_CF_MSG,
-    CF_ENTITY_DELETE_MSG;
+    CF_ENTITY_DELETE_MSG,
+
+    CF_SCHEDULED_CHECK_FOR_UPDATES_MSG,
+    CF_ENTITY_CHECK_FOR_UPDATES_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

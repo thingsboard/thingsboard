@@ -58,4 +58,9 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         return link;
     }
 
+    @Override
+    public boolean hasDynamicSourceArguments() {
+        return arguments.values().stream().anyMatch(arg -> arg.getRefDynamicSource() != null);
+    }
+
 }

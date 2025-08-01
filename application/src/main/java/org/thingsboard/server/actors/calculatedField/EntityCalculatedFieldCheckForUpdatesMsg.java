@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.actors.calculatedField;
 
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public class EntityCalculatedFieldCheckForUpdatesMsg implements ToCalculatedFieldSystemMsg {
 
-    private int refreshIntervalSec;
+    private final TenantId tenantId;
+    private final CalculatedFieldCtx cfCtx;
+    private final TbCallback callback;
 
     @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.GEOFENCING;
-    }
-
-    public boolean isDynamicRefreshEnabled() {
-        return refreshIntervalSec > 0;
+    public MsgType getMsgType() {
+        return MsgType.CF_ENTITY_CHECK_FOR_UPDATES_MSG;
     }
 
 }

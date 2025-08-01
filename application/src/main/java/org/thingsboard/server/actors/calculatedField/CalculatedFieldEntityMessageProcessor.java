@@ -59,7 +59,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 
@@ -91,16 +93,18 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.ctx = ctx;
     }
 
-    public void stop() {
-        log.info("[{}][{}] Stopping entity actor.", tenantId, entityId);
+    public void stop(boolean partitionChanged) {
+        log.info(partitionChanged ?
+                        "[{}][{}] Stopping entity actor due to change partition event." :
+                        "[{}][{}] Stopping entity actor.",
+                tenantId, entityId);
         states.clear();
         ctx.stop(ctx.getSelf());
     }
 
     public void process(CalculatedFieldPartitionChangeMsg msg) {
         if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
-            log.info("[{}] Stopping entity actor due to change partition event.", entityId);
-            ctx.stop(ctx.getSelf());
+            stop(true);
         }
     }
 
@@ -224,6 +228,25 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
+    public void process(EntityCalculatedFieldCheckForUpdatesMsg msg) throws CalculatedFieldException {
+        CalculatedFieldCtx cfCtx = msg.getCfCtx();
+        CalculatedFieldId cfId = cfCtx.getCfId();
+        log.debug("[{}] [{}] Processing CF dynamic sources refresh msg.", entityId, cfId);
+        try {
+            var state = updateStateFromDb(cfCtx);
+            if (state.isSizeOk()) {
+                processStateIfReady(cfCtx, Collections.singletonList(cfId), state, null, null, msg.getCallback());
+            } else {
+                throw new RuntimeException(cfCtx.getSizeExceedsLimitMessage());
+            }
+        } catch (Exception e) {
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
+            }
+            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(entityId).cause(e).build();
+        }
+    }
+
     private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
@@ -270,16 +293,19 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         CalculatedFieldState state = states.get(ctx.getCfId());
         if (state != null) {
             return state;
-        } else {
-            ListenableFuture<CalculatedFieldState> stateFuture = systemContext.getCalculatedFieldProcessingService().fetchStateFromDb(ctx, entityId);
-            // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
-            // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
-            // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
-            // but this will significantly complicate the code.
-            state = stateFuture.get(1, TimeUnit.MINUTES);
-            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
-            states.put(ctx.getCfId(), state);
         }
+        return updateStateFromDb(ctx);
+    }
+
+    private CalculatedFieldState updateStateFromDb(CalculatedFieldCtx ctx) throws InterruptedException, ExecutionException, TimeoutException {
+        ListenableFuture<CalculatedFieldState> stateFuture = cfService.fetchStateFromDb(ctx, entityId);
+        // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
+        // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
+        // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
+        // but this will significantly complicate the code.
+        CalculatedFieldState state = stateFuture.get(1, TimeUnit.MINUTES);
+        state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
+        states.put(ctx.getCfId(), state);
         return state;
     }
 
@@ -297,12 +323,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                     } else {
                         TbCallback effectiveCallback = calculationResults.size() > 1 ?
                                 new MultipleTbCallback(calculationResults.size(), callback) : callback;
-
                         for (CalculatedFieldResult calculationResult : calculationResults) {
                             if (calculationResult.isEmpty()) {
                                 effectiveCallback.onSuccess();
                             } else {
-                                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
+                                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, effectiveCallback);
                             }
                         }
                     }

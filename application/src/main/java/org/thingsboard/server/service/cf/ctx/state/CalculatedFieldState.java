@@ -26,6 +26,8 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import java.util.List;
 import java.util.Map;
 
+import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
+
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -63,6 +65,16 @@ public interface CalculatedFieldState {
 
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
 
-    void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx);
+    default void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx) {
+        // TODO: Do we need to restrict the size of Geofencing arguments? Number of zones?
+        if (entry instanceof TsRollingArgumentEntry || entry instanceof GeofencingArgumentEntry) {
+            return;
+        }
+        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, singleValueArgumentEntry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
+                throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
+            }
+        }
+    }
 
 }

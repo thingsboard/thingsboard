@@ -140,7 +140,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
                     case SAVE_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
                         var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
                         argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
-                                fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue()), MoreExecutors.directExecutor()));
+                                fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue()), calculatedFieldCallbackExecutor));
                     }
                 }
             }
@@ -288,7 +288,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             case RELATION_QUERY -> {
                 var relationQueryDynamicSourceConfiguration = (RelationQueryDynamicSourceConfiguration) value.getRefDynamicSourceConfiguration();
                 yield Futures.transform(relationService.findByQuery(tenantId, relationQueryDynamicSourceConfiguration.toEntityRelationsQuery(entityId)),
-                        relationQueryDynamicSourceConfiguration::resolveEntityIds, MoreExecutors.directExecutor());
+                        relationQueryDynamicSourceConfiguration::resolveEntityIds, calculatedFieldCallbackExecutor);
             }
         };
     }
@@ -298,7 +298,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         if (argument.getRefEntityKey().getType() != ArgumentType.ATTRIBUTE) {
             throw new IllegalStateException("Unsupported argument key type: " + argument.getRefEntityKey().getType());
         }
-
         List<ListenableFuture<Map.Entry<EntityId, AttributeKvEntry>>> kvFutures = geofencingEntities.stream()
                 .map(entityId -> {
                     var attributesFuture = attributesService.find(

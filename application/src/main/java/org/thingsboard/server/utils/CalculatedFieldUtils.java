@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.utils;
 
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.geo.EntityGeofencingState;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -26,21 +28,30 @@ import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.GeofencingArgumentProto;
+import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneIdProto;
+import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.GeofencingZoneState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class CalculatedFieldUtils {
 
@@ -80,6 +91,8 @@ public class CalculatedFieldUtils {
                 builder.addSingleValueArguments(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
             } else if (argEntry instanceof TsRollingArgumentEntry rollingArgumentEntry) {
                 builder.addRollingValueArguments(toRollingArgumentProto(argName, rollingArgumentEntry));
+            } else if (argEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
+                builder.addGeofencingArguments(toGeofencingArgumentProto(argName, geofencingArgumentEntry));
             }
         });
         return builder.build();
@@ -109,6 +122,42 @@ public class CalculatedFieldUtils {
         return builder.build();
     }
 
+
+    private static GeofencingArgumentProto toGeofencingArgumentProto(String argName, GeofencingArgumentEntry geofencingArgumentEntry) {
+        GeofencingArgumentProto.Builder builder = GeofencingArgumentProto.newBuilder()
+                .setArgName(argName);
+        Map<EntityId, GeofencingZoneState> zoneStates = geofencingArgumentEntry.getZoneStates();
+        zoneStates.forEach((entityId, zoneState) -> {
+            builder.addZones(toGeofencingZoneProto(entityId, zoneState));
+        });
+        return builder.build();
+    }
+
+    private static GeofencingZoneProto toGeofencingZoneProto(EntityId entityId, GeofencingZoneState zoneState) {
+        GeofencingZoneProto.Builder builder = GeofencingZoneProto.newBuilder()
+                .setZoneId(toGeofencingZoneIdProto(entityId))
+                .setTs(zoneState.getTs())
+                .setVersion(zoneState.getVersion())
+                .setPerimeterDefinition(JacksonUtil.toString(zoneState.getPerimeterDefinition()));
+        if (zoneState.getState() != null) {
+            EntityGeofencingState state = zoneState.getState();
+            builder.setInside(state.isInside())
+                    .setStayed(state.isStayed())
+                    .setStateSwitchTime(state.getStateSwitchTime());
+
+        }
+        return builder.build();
+    }
+
+    private static GeofencingZoneIdProto toGeofencingZoneIdProto(EntityId zoneId) {
+        return GeofencingZoneIdProto.newBuilder()
+                .setType(zoneId.getEntityType().name())
+                .setZoneIdLSB(zoneId.getId().getLeastSignificantBits())
+                .setZoneIdMSB(zoneId.getId().getMostSignificantBits())
+                .build();
+    }
+
+
     public static CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
         if (StringUtils.isEmpty(proto.getType())) {
             return null;
@@ -122,14 +171,17 @@ public class CalculatedFieldUtils {
             case GEOFENCING -> new GeofencingCalculatedFieldState();
         };
 
-        // TODO: add logic to restore geofencing state from proto
-
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
         if (CalculatedFieldType.SCRIPT.equals(type)) {
             proto.getRollingValueArgumentsList().forEach(argProto ->
                     state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
+        }
+
+        if (CalculatedFieldType.GEOFENCING.equals(type)) {
+            proto.getGeofencingArgumentsList().forEach(argProto ->
+                    state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
         }
 
         return state;
@@ -151,6 +203,17 @@ public class CalculatedFieldUtils {
         TreeMap<Long, Double> tsRecords = new TreeMap<>();
         proto.getTsValueList().forEach(tsValueProto -> tsRecords.put(tsValueProto.getTs(), tsValueProto.getValue()));
         return new TsRollingArgumentEntry(tsRecords, proto.getLimit(), proto.getTimeWindow());
+    }
+
+
+    private static ArgumentEntry fromGeofencingArgumentProto(GeofencingArgumentProto proto) {
+        Map<EntityId, GeofencingZoneState> zoneStates = proto.getZonesList()
+                .stream()
+                .map(GeofencingZoneState::new)
+                .collect(Collectors.toMap(GeofencingZoneState::getZoneId, Function.identity()));
+        GeofencingArgumentEntry geofencingArgumentEntry = new GeofencingArgumentEntry();
+        geofencingArgumentEntry.setZoneStates(zoneStates);
+        return geofencingArgumentEntry;
     }
 
 }

@@ -109,25 +109,29 @@ public class CalculatedFieldCtx {
     }
 
     public void init() {
-        if (CalculatedFieldType.SCRIPT.equals(cfType)) {
-            try {
-                this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
-                initialized = true;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+        switch (cfType) {
+            case SCRIPT -> {
+                try {
+                    this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+                    initialized = true;
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+                }
             }
-        } else {
-            if (isValidExpression(expression)) {
-                this.customExpression = ThreadLocal.withInitial(() ->
-                        new ExpressionBuilder(expression)
-                                .functions(userDefinedFunctions)
-                                .implicitMultiplication(true)
-                                .variables(this.arguments.keySet())
-                                .build()
-                );
-                initialized = true;
-            } else {
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            case GEOFENCING -> initialized = true;
+            default -> {
+                if (isValidExpression(expression)) {
+                    this.customExpression = ThreadLocal.withInitial(() ->
+                            new ExpressionBuilder(expression)
+                                    .functions(userDefinedFunctions)
+                                    .implicitMultiplication(true)
+                                    .variables(this.arguments.keySet())
+                                    .build()
+                    );
+                    initialized = true;
+                } else {
+                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+                }
             }
         }
     }
@@ -306,6 +310,14 @@ public class CalculatedFieldCtx {
         boolean typeChanged = !cfType.equals(other.cfType);
         boolean argumentsChanged = !arguments.equals(other.arguments);
         return typeChanged || argumentsChanged;
+    }
+
+    public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
+        CalculatedFieldConfiguration thisConfig = calculatedField.getConfiguration();
+        CalculatedFieldConfiguration otherConfig = other.calculatedField.getConfiguration();
+        boolean refreshTriggerChanged = thisConfig.isDynamicRefreshEnabled() != otherConfig.isDynamicRefreshEnabled();
+        boolean refreshIntervalChanged = thisConfig.getRefreshIntervalSec() != otherConfig.getRefreshIntervalSec();
+        return refreshTriggerChanged || refreshIntervalChanged;
     }
 
     public String getSizeExceedsLimitMessage() {

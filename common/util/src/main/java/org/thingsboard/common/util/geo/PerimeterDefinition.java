@@ -35,5 +35,6 @@ public interface PerimeterDefinition extends Serializable {
     @JsonIgnore
     PerimeterType getType();
 
+    @JsonIgnore
     boolean checkMatches(Coordinates entityCoordinates);
 }

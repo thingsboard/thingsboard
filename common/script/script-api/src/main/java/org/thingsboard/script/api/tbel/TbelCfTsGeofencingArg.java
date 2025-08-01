@@ -13,7 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.script.api.tbel;
 
-public interface CalculatedFieldInitService {
+// TODO: should I add any specific logic for this?
+public class TbelCfTsGeofencingArg implements TbelCfArg {
+
+    public TbelCfTsGeofencingArg() {
+
+    }
+
+    @Override
+    public String getType() {
+        return "GEOFENCING_CF_ARGUMENT_VALUE";
+    }
+
+
+    @Override
+    public long memorySize() {
+        return OBJ_SIZE;
+    }
+
 }
