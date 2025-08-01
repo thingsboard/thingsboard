@@ -258,58 +258,52 @@ export class ManageDashboardStatesDialogComponent
   }
 
   duplicateState($event: Event, state: DashboardStateInfo) {
-    const originalState = state;
-    const newStateName = this.getNextDuplicatedName(state.name);
-    if (newStateName) {
-      const newStateId = newStateName.toLowerCase().replace(/\W/g, '_');
-      if (this.states[newStateId]) {
-        this.stateNames.add(newStateName);
-        this.duplicateState(null, state);
+    const suffix = ` - ${this.translate.instant('action.copy')} `;
+    let counter = 0;
+    const maxAttempts = 1000;
+
+    while (counter++ < maxAttempts) {
+      const candidateName = `${state.name}${suffix}${counter}`;
+      if (this.stateNames.has(candidateName)) continue;
+
+      const candidateId = candidateName.toLowerCase().replace(/\W/g, '_');
+      if (this.states[candidateId]) {
+        continue;
       }
-      const duplicatedStates = deepClone(originalState);
+
+      const originalState = state;
+      const duplicatedState = deepClone(originalState);
       const duplicatedWidgets = deepClone(this.widgets);
       const mainWidgets = {};
       const rightWidgets = {};
-      duplicatedStates.id = newStateId;
-      duplicatedStates.name = newStateName;
-      duplicatedStates.root = false;
-      this.stateNames.add(duplicatedStates.name);
+      duplicatedState.id = candidateId;
+      duplicatedState.name = candidateName;
+      duplicatedState.root = false;
+      this.stateNames.add(duplicatedState.name);
 
-      for (const [key, value] of Object.entries(duplicatedStates.layouts.main.widgets)) {
+      for (const [key, value] of Object.entries(duplicatedState.layouts.main.widgets)) {
         const guid = this.utils.guid();
         mainWidgets[guid] = value;
         duplicatedWidgets[guid] = this.widgets[key];
         duplicatedWidgets[guid].id = guid;
       }
-      duplicatedStates.layouts.main.widgets = mainWidgets;
+      duplicatedState.layouts.main.widgets = mainWidgets;
 
-      if (isDefined(duplicatedStates.layouts?.right)) {
-        for (const [key, value] of Object.entries(duplicatedStates.layouts.right.widgets)) {
+      if (isDefined(duplicatedState.layouts?.right)) {
+        for (const [key, value] of Object.entries(duplicatedState.layouts.right.widgets)) {
           const guid = this.utils.guid();
           rightWidgets[guid] = value;
           duplicatedWidgets[guid] = this.widgets[key];
           duplicatedWidgets[guid].id = guid;
         }
-        duplicatedStates.layouts.right.widgets = rightWidgets;
+        duplicatedState.layouts.right.widgets = rightWidgets;
       }
 
-      this.states[duplicatedStates.id] = duplicatedStates;
+      this.states[duplicatedState.id] = duplicatedState;
       this.widgets = duplicatedWidgets;
       this.onStatesUpdated();
+      return;
     }
-  }
-
-  private getNextDuplicatedName(stateName: string): string {
-    const suffix = ` - ${this.translate.instant('action.copy')} `;
-    let counter = 0;
-    while (++counter < Number.MAX_SAFE_INTEGER) {
-      const newName = `${stateName}${suffix}${counter}`;
-      if (!this.stateNames.has(newName)) {
-        return newName;
-      }
-    }
-
-    return null;
   }
 
   private onStatesUpdated() {
