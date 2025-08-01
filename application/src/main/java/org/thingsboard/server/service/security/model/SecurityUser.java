@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.model;
 
-import jakarta.annotation.Nullable;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
