@@ -93,10 +93,10 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState.RESTRICTED_ZONES_ARGUMENT_KEY;
-import static org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState.SAVE_ZONES_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.SAVE_ZONES_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent

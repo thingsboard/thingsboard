@@ -78,6 +78,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
             updateDebugSettings(tenantId, calculatedField, System.currentTimeMillis());
+            updatedSchedulingConfiguration(calculatedField);
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
@@ -89,6 +90,17 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
                     "calculated_field_external_id_unq_key", "Calculated Field with such external id already exists!");
             throw e;
         }
+    }
+
+    private void updatedSchedulingConfiguration(CalculatedField calculatedField) {
+        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
+        if (!configuration.isScheduledUpdateEnabled()) {
+            return;
+        }
+        var defaultProfileConfiguration = tbTenantProfileCache.get(calculatedField.getTenantId()).getDefaultProfileConfiguration();
+        int min = defaultProfileConfiguration.getMinAllowedScheduledUpdateIntervalInSecForCF();
+        int max = defaultProfileConfiguration.getMaxAllowedScheduledUpdateIntervalInSecForCF();
+        configuration.setScheduledUpdateIntervalSec(Math.max(min, Math.min(configuration.getScheduledUpdateIntervalSec(), max)));
     }
 
     @Override

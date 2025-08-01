@@ -33,6 +33,8 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
     protected String expression;
     protected Output output;
 
+    protected int scheduledUpdateIntervalSec;
+
     @Override
     public List<EntityId> getReferencedEntities() {
         return arguments.values().stream()
@@ -58,9 +60,19 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         return link;
     }
 
+    // TODO: update validate method in PE version.
     @Override
-    public boolean hasDynamicSourceArguments() {
-        return arguments.values().stream().anyMatch(arg -> arg.getRefDynamicSource() != null);
+    public void validate() {
+        boolean hasDynamicSourceRelationQuery = arguments.values()
+                .stream()
+                .anyMatch(arg -> CFArgumentDynamicSourceType.RELATION_QUERY.equals(arg.getRefDynamicSource()));
+        if (hasDynamicSourceRelationQuery) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support arguments with 'RELATION_QUERY' dynamic source type!");
+        }
+    }
+
+    public boolean isScheduledUpdateEnabled() {
+        return scheduledUpdateIntervalSec > 0 && arguments.values().stream().anyMatch(arg -> arg.getRefDynamicSource() != null);
     }
 
 }

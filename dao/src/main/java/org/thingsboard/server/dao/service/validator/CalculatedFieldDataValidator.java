@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.service.validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -39,7 +41,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     protected void validateCreate(TenantId tenantId, CalculatedField calculatedField) {
         validateNumberOfCFsPerEntity(tenantId, calculatedField.getEntityId());
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
-        validateArgumentNames(calculatedField);
+        validateCalculatedFieldConfiguration(calculatedField);
     }
 
     @Override
@@ -49,7 +51,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
             throw new DataValidationException("Can't update non existing calculated field!");
         }
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
-        validateArgumentNames(calculatedField);
+        validateCalculatedFieldConfiguration(calculatedField);
         return old;
     }
 
@@ -68,14 +70,25 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (maxArgumentsPerCF <= 0) {
             return;
         }
+        if (CalculatedFieldType.GEOFENCING.equals(calculatedField.getType()) && maxArgumentsPerCF < 4) {
+            throw new DataValidationException("Geofencing calculated field requires 4 arguments, but the system limit is " +
+                                              maxArgumentsPerCF + ". Contact your administrator to increase the limit."
+            );
+        }
         if (calculatedField.getConfiguration().getArguments().size() > maxArgumentsPerCF) {
             throw new DataValidationException("Calculated field arguments limit reached!");
         }
     }
 
-    private void validateArgumentNames(CalculatedField calculatedField) {
-        if (calculatedField.getConfiguration().getArguments().containsKey("ctx")) {
+    private void validateCalculatedFieldConfiguration(CalculatedField calculatedField) {
+        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
+        if (configuration.getArguments().containsKey("ctx")) {
             throw new DataValidationException("Argument name 'ctx' is reserved and cannot be used.");
+        }
+        try {
+            configuration.validate();
+        } catch (IllegalArgumentException e) {
+            throw new DataValidationException(e.getMessage(), e);
         }
     }
 

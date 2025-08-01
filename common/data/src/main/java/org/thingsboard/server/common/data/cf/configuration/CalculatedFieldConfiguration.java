@@ -59,16 +59,15 @@ public interface CalculatedFieldConfiguration {
 
     CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
 
-    @JsonIgnore
-    boolean hasDynamicSourceArguments();
+    void validate();
 
     @JsonIgnore
     default boolean isScheduledUpdateEnabled() {
-        return hasDynamicSourceArguments() && getScheduledUpdateIntervalSec() > 0;
+        return false;
     }
 
-    default int getScheduledUpdateIntervalSec() {
-        return 0;
-    }
+    void setScheduledUpdateIntervalSec(int scheduledUpdateIntervalSec);
+
+    int getScheduledUpdateIntervalSec();
 
 }

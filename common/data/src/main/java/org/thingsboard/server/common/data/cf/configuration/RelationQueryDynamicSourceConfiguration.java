@@ -42,6 +42,19 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
     }
 
     @Override
+    public void validate() {
+        if (maxLevel > 2) {
+            throw new IllegalArgumentException("Relation query dynamic source configuration max relation level can't be greater than 2!");
+        }
+        if (direction == null) {
+            throw new IllegalArgumentException("Relation query dynamic source configuration direction must be specified!");
+        }
+        if (relationType == null) {
+            throw new IllegalArgumentException("Relation query dynamic source configuration relation type must be specified!");
+        }
+    }
+
+    @Override
     public boolean isSimpleRelation() {
         return maxLevel == 1 && (profiles == null || profiles.isEmpty());
     }

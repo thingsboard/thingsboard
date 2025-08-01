@@ -16,16 +16,16 @@
 package org.thingsboard.server.actors.calculatedField;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
 public class CalculatedFieldScheduledCheckForUpdatesMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
-    private final CalculatedFieldCtx cfCtx;
+    private final CalculatedFieldId cfId;
 
     @Override
     public MsgType getMsgType() {

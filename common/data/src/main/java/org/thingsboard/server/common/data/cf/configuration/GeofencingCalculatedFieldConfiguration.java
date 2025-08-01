@@ -19,19 +19,77 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
+import java.util.Set;
+
+import static org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType.RELATION_QUERY;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
 
-    private int refreshIntervalSec;
+    public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
+    public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
+    public static final String SAVE_ZONES_ARGUMENT_KEY = "saveZones";
+    public static final String RESTRICTED_ZONES_ARGUMENT_KEY = "restrictedZones";
+
+    private static final Set<String> requiredKeys = Set.of(
+            ENTITY_ID_LATITUDE_ARGUMENT_KEY,
+            ENTITY_ID_LONGITUDE_ARGUMENT_KEY,
+            SAVE_ZONES_ARGUMENT_KEY,
+            RESTRICTED_ZONES_ARGUMENT_KEY
+    );
 
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.GEOFENCING;
     }
 
-    public boolean isScheduledUpdateEnabled() {
-        return refreshIntervalSec > 0;
+    // TODO: update validate method in PE version.
+    @Override
+    public void validate() {
+        if (arguments == null || arguments.size() != 4) {
+            throw new IllegalArgumentException("Geofencing calculated field configuration must contain exactly 4 arguments: " + requiredKeys);
+        }
+        for (String requiredKey : requiredKeys) {
+            Argument argument = arguments.get(requiredKey);
+            if (argument == null) {
+                throw new IllegalArgumentException("Missing required argument: " + requiredKey);
+            }
+            ReferencedEntityKey refEntityKey = argument.getRefEntityKey();
+            if (refEntityKey == null || refEntityKey.getType() == null) {
+                throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + requiredKey);
+            }
+            switch (requiredKey) {
+                case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
+                    if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
+                        throw new IllegalArgumentException("Argument: '" + requiredKey + "' must be set to " + ArgumentType.TS_LATEST + " type!");
+                    }
+                    var dynamicSource = argument.getRefDynamicSource();
+                    if (dynamicSource != null) {
+                        String test = "test";
+                        throw new IllegalArgumentException("Dynamic source configuration is forbidden for '" + requiredKey + "' argument. " +
+                                                           "Only '" + SAVE_ZONES_ARGUMENT_KEY + "' and '" + RESTRICTED_ZONES_ARGUMENT_KEY + "' " +
+                                                           "may use dynamic source configuration.");
+                    }
+                }
+                case SAVE_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
+                    if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
+                        throw new IllegalArgumentException("Argument: '" + requiredKey + "' must be set to " + ArgumentType.ATTRIBUTE + " type!");
+                    }
+                    var dynamicSource = argument.getRefDynamicSource();
+                    if (dynamicSource == null) {
+                        continue;
+                    }
+                    if (!RELATION_QUERY.equals(dynamicSource)) {
+                        throw new IllegalArgumentException("Only relation query dynamic source is supported for argument: " + requiredKey);
+                    }
+                    if (argument.getRefDynamicSourceConfiguration() == null) {
+                        throw new IllegalArgumentException("Missing dynamic source configuration for: " + requiredKey);
+                    }
+                    argument.getRefDynamicSourceConfiguration().validate();
+                }
+            }
+        }
     }
 
 }

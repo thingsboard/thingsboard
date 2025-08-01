@@ -544,7 +544,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             return;
         }
         long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(cfConfig.getScheduledUpdateIntervalSec());
-        var scheduledMsg = new CalculatedFieldScheduledCheckForUpdatesMsg(tenantId, cfCtx);
+        var scheduledMsg = new CalculatedFieldScheduledCheckForUpdatesMsg(tenantId, cfCtx.getCfId());
 
         ScheduledFuture<?> scheduledFuture = systemContext
                 .schedulePeriodicMsgWithDelay(ctx, scheduledMsg, refreshDynamicSourceInterval, refreshDynamicSourceInterval);
@@ -553,9 +553,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void onScheduledCheckForUpdatesMsg(CalculatedFieldScheduledCheckForUpdatesMsg msg) {
-        CalculatedFieldCtx cfCtx = msg.getCfCtx();
+        log.debug("[{}] [{}] Processing CF scheduled update msg.", tenantId, msg.getCfId());
+        CalculatedFieldCtx cfCtx = calculatedFields.get(msg.getCfId());
+        if (cfCtx == null) {
+            log.debug("[{}][{}] Failed to find CF context, going to stop scheduler updates.", tenantId, msg.getCfId());
+            cancelCfUpdateTaskIfExists(msg.getCfId(), true);
+            return;
+        }
         EntityId entityId = cfCtx.getEntityId();
-        log.debug("[{}] [{}] Processing CF scheduled update msg.", cfCtx.getCfId(), entityId);
         EntityType entityType = entityId.getEntityType();
         if (isProfileEntity(entityType)) {
             var entityIds = entityProfileCache.getEntityIdsByProfileId(entityId);

@@ -31,13 +31,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.SAVE_ZONES_ARGUMENT_KEY;
+
 @Data
 public class GeofencingCalculatedFieldState implements CalculatedFieldState {
-
-    public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
-    public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
-    public static final String SAVE_ZONES_ARGUMENT_KEY = "saveZones";
-    public static final String RESTRICTED_ZONES_ARGUMENT_KEY = "restrictedZones";
 
     private List<String> requiredArguments;
     private Map<String, ArgumentEntry> arguments;
@@ -73,7 +73,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             String key = entry.getKey();
             ArgumentEntry newEntry = entry.getValue();
 
-             checkArgumentSize(key, newEntry, ctx);
+            checkArgumentSize(key, newEntry, ctx);
 
             ArgumentEntry existingEntry = arguments.get(key);
             boolean entryUpdated;
