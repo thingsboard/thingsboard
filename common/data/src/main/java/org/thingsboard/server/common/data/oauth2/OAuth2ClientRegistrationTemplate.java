@@ -58,6 +58,9 @@ public class OAuth2ClientRegistrationTemplate extends BaseDataWithAdditionalInfo
     @Length(fieldName = "jwkSetUri")
     @Schema(description = "Default JSON Web Key URI of the OAuth2 provider")
     private String jwkSetUri;
+    @Length(fieldName = "jwkSetUri")
+    @Schema(description = "Default logout endpoint URI used to logs out the authenticated user in OAuth2 provider.")
+    private String endSessionEndpoint;
     @Length(fieldName = "clientAuthenticationMethod")
     @Schema(description = "Default client authentication method to use: 'BASIC' or 'POST'")
     private String clientAuthenticationMethod;
@@ -83,6 +86,7 @@ public class OAuth2ClientRegistrationTemplate extends BaseDataWithAdditionalInfo
         this.userInfoUri = clientRegistrationTemplate.userInfoUri;
         this.userNameAttributeName = clientRegistrationTemplate.userNameAttributeName;
         this.jwkSetUri = clientRegistrationTemplate.jwkSetUri;
+        this.endSessionEndpoint = clientRegistrationTemplate.endSessionEndpoint;
         this.clientAuthenticationMethod = clientRegistrationTemplate.clientAuthenticationMethod;
         this.comment = clientRegistrationTemplate.comment;
         this.loginButtonIcon = clientRegistrationTemplate.loginButtonIcon;

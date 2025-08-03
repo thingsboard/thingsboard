@@ -16,6 +16,9 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -33,10 +36,14 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.cache.limits.RateLimitService;
+import org.thingsboard.server.common.data.LogoutResponse;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -46,6 +53,7 @@ import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
@@ -74,6 +82,7 @@ public class AuthController extends BaseController {
     private final SecuritySettingsService securitySettingsService;
     private final RateLimitService rateLimitService;
     private final ApplicationEventPublisher eventPublisher;
+    private final OAuth2ClientService oAuth2ClientService;
 
 
     @ApiOperation(value = "Get current User (getUser)",
@@ -88,11 +97,32 @@ public class AuthController extends BaseController {
     }
 
     @ApiOperation(value = "Logout (logout)",
-            notes = "Special API call to record the 'logout' of the user to the Audit Logs. Since platform uses [JWT](https://jwt.io/), the actual logout is the procedure of clearing the [JWT](https://jwt.io/) token on the client side. ")
+            notes = "Special API call to record the 'logout' of the user to the Audit Logs. Since platform uses [JWT](https://jwt.io/), the actual logout is the procedure of clearing the [JWT](https://jwt.io/) token on the client side. "+
+                    "If the token user is logged in via SSO with configured RP-Initiated Logout, endpoint returns end_session_endpoint that must be called to logout user form SSO")
+    @ApiResponse(
+            responseCode = "200",
+            description = "OK, response can be empty or contain LogoutResponse if the token was obtained using oAuth",
+            content = {
+                    @Content(schema = @Schema(implementation = LogoutResponse.class, nullable = true))
+            }
+    )
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/auth/logout")
-    public void logout(HttpServletRequest request) throws ThingsboardException {
-        logLogoutAction(request);
+    public LogoutResponse logout(HttpServletRequest request) throws ThingsboardException {
+        SecurityUser securityUser = getCurrentUser();
+        var ssoId = securityUser.getSsoId();
+
+        if(ssoId != null){
+            var oAuth2Client = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2ClientId(ssoId));
+            var baseUrl = this.systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, new CustomerId(EntityId.NULL_UUID), request);
+
+            logLogoutAction(request, oAuth2Client.getName());
+            return new LogoutResponse(oAuth2Client.getEndSessionEndpoint(), baseUrl);
+        }
+        else {
+            logLogoutAction(request);
+            return new LogoutResponse();
+        }
     }
 
     @ApiOperation(value = "Change password for current User (changePassword)",
@@ -273,4 +303,9 @@ public class AuthController extends BaseController {
         eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
     }
 
+    private void logLogoutAction(HttpServletRequest request, String ssoName) throws ThingsboardException {
+        var user = getCurrentUser();
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGOUT, ssoName, null);
+        eventPublisher.publishEvent(new UserSessionInvalidationEvent(user.getSessionId()));
+    }
 }

@@ -246,6 +246,7 @@
             "first-name-attribute-key-max-length": "Klucz atrybutu imienia powinien być mniejszy niż 32",
             "general": "Ogólne",
             "jwk-set-uri": "URI klucza internetowego JSON",
+            "end-session-endpoint": "URI wylogowania sesji OpenID",
             "last-name-attribute-key": "Klucz atrybutu nazwiska",
             "last-name-attribute-key-max-length": "Klucz atrybutu nazwiska powinien być mniejszy niż 32",
             "login-button-icon": "Ikona przycisku logowania",

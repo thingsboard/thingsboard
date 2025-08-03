@@ -592,6 +592,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client (
     user_info_uri varchar(255),
     user_name_attribute_name varchar(255),
     jwk_set_uri varchar(255),
+    end_session_endpoint varchar(255),
     client_authentication_method varchar(255),
     login_button_label varchar(255),
     login_button_icon varchar(255),

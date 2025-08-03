@@ -125,6 +125,15 @@
               </mat-error>
             </mat-form-field>
           </div>
+          <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
+            <mat-form-field class="flex">
+              <mat-label translate>admin.oauth2.end-session-endpoint</mat-label>
+              <input matInput formControlName="endSessionEndpoint">
+              <mat-error *ngIf="entityForm.get('endSessionEndpoint').hasError('pattern')">
+                {{ 'admin.oauth2.uri-pattern-error' | translate }}
+              </mat-error>
+            </mat-form-field>
+          </div>
           <div class="tb-form-row tb-standard-fields no-border no-padding">
             <mat-form-field class="flex">
               <mat-label translate>admin.oauth2.client-authentication-method</mat-label>
