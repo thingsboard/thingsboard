@@ -15,21 +15,19 @@
  */
 package org.thingsboard.server.dao.edge.stats;
 
-import lombok.Getter;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-@Getter
-public enum EdgeStatsKey {
-    DOWNLINK_MSGS_ADDED("downlinkMsgsAdded"),
-    DOWNLINK_MSGS_PUSHED("downlinkMsgsPushed"),
-    DOWNLINK_MSGS_PERMANENTLY_FAILED("downlinkMsgsPermanentlyFailed"),
-    DOWNLINK_MSGS_TMP_FAILED("downlinkMsgsTmpFailed"),
-    DOWNLINK_MSGS_LAG("downlinkMsgsLag"),
-    NETWORK_BANDWIDTH("networkBandwidth");
+import java.util.concurrent.atomic.AtomicLong;
 
-    private final String key;
+@Data
+public class EdgeStats {
+    private final MsgCounters msgCounters;
+    private final AtomicLong networkBandwidth;
 
-    EdgeStatsKey(String key) {
-        this.key = key;
+    public EdgeStats(TenantId tenantId) {
+        this.msgCounters = new MsgCounters(tenantId);
+        networkBandwidth = new AtomicLong();
     }
 
 }

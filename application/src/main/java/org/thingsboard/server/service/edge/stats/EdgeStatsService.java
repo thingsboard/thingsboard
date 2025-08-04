@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.edge.stats.EdgeStats;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -52,6 +53,7 @@ import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_L
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
+import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.NETWORK_BANDWIDTH;
 
 @TbCoreComponent
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
@@ -80,10 +82,11 @@ public class EdgeStatsService {
         long now = System.currentTimeMillis();
         long ts = now - (now % reportIntervalMillis);
 
-        Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
-        Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
-        Map<EdgeId, MsgCounters> countersByEdgeSnapshot = new HashMap<>(statsCounterService.getCounterByEdge());
-        countersByEdgeSnapshot.forEach((edgeId, counters) -> {
+        Map<EdgeId, EdgeStats> edgeStatsByEdge = statsCounterService.getEdgeStatsByEdge();
+        Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin.isPresent() ? getEdgeLagByEdgeId(edgeStatsByEdge) : Collections.emptyMap();
+        Map<EdgeId, EdgeStats> edgeStatsByEdgeSnapshot = new HashMap<>(statsCounterService.getEdgeStatsByEdge());
+        edgeStatsByEdgeSnapshot.forEach((edgeId, edgeStats) -> {
+            MsgCounters counters = edgeStats.getMsgCounters();
             TenantId tenantId = counters.getTenantId();
 
             if (tbKafkaAdmin.isPresent()) {
@@ -94,7 +97,8 @@ public class EdgeStatsService {
                     entry(ts, DOWNLINK_MSGS_PUSHED.getKey(), counters.getMsgsPushed().get()),
                     entry(ts, DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey(), counters.getMsgsPermanentlyFailed().get()),
                     entry(ts, DOWNLINK_MSGS_TMP_FAILED.getKey(), counters.getMsgsTmpFailed().get()),
-                    entry(ts, DOWNLINK_MSGS_LAG.getKey(), counters.getMsgsLag().get())
+                    entry(ts, DOWNLINK_MSGS_LAG.getKey(), counters.getMsgsLag().get()),
+                    entry(ts, NETWORK_BANDWIDTH.getKey(), edgeStats.getNetworkBandwidth().get())
             );
 
             log.trace("Reported Edge communication stats: {} tenantId - {}, edgeId - {}", statsEntries, tenantId, edgeId);
@@ -102,11 +106,11 @@ public class EdgeStatsService {
         });
     }
 
-    private Map<EdgeId, Long> getEdgeLagByEdgeId(Map<EdgeId, MsgCounters> countersByEdge) {
-        Map<EdgeId, String> edgeToTopicMap = countersByEdge.entrySet().stream()
+    private Map<EdgeId, Long> getEdgeLagByEdgeId(Map<EdgeId, EdgeStats> edgeStatsByEdge) {
+        Map<EdgeId, String> edgeToTopicMap = edgeStatsByEdge.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        e -> topicService.buildEdgeEventNotificationsTopicPartitionInfo(e.getValue().getTenantId(), e.getKey()).getTopic()
+                        e -> topicService.buildEdgeEventNotificationsTopicPartitionInfo(e.getValue().getMsgCounters().getTenantId(), e.getKey()).getTopic()
                 ));
 
         Map<String, Long> lagByTopic = tbKafkaAdmin.get().getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));

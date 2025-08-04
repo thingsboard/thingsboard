@@ -51,6 +51,7 @@ import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AttributesRequestMsg;
+import org.thingsboard.server.gen.edge.v1.BandwidthTestMsg;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldRequestMsg;
 import org.thingsboard.server.gen.edge.v1.CalculatedFieldUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.ConnectRequestMsg;
@@ -201,6 +202,11 @@ public abstract class EdgeGrpcSession implements Closeable {
                             onDownlinkResponse(requestMsg.getDownlinkResponseMsg());
                         }
                     }
+                    if (requestMsg.getMsgType().equals(RequestMsgType.BANDWIDTH_TEST_RPC_MESSAGE)) {
+                        if (requestMsg.hasBandwidthTestMsg()) {
+                            handleBandwidthTestMsg(requestMsg.getBandwidthTestMsg());
+                        }
+                    }
                 }
             }
 
@@ -230,6 +236,21 @@ public abstract class EdgeGrpcSession implements Closeable {
                 }
             }
         };
+    }
+
+    private void handleBandwidthTestMsg(BandwidthTestMsg bandwidthTestMsg) {
+        long edgeTimestamp = bandwidthTestMsg.getTimestamp();
+        long cloudTimestamp = System.currentTimeMillis();
+        long rtt = cloudTimestamp - edgeTimestamp;
+
+        int payloadSizeBytes = bandwidthTestMsg.getPayload().size();
+        double rttSeconds = rtt > 0 ? (rtt / 1000.0) : 0.001;
+        double mbps = (payloadSizeBytes * 8) / (rttSeconds * 1_000_000);
+
+        long mbpsRounded = Math.round(mbps);
+
+        log.trace("[{}] Calculated RTT = {} ms, estimated bandwidth = {} mpbs", edge.getId(), rtt, mbps);
+        ctx.getStatsCounterService().ifPresent(statsCounter -> statsCounter.recordEvent(EdgeStatsKey.NETWORK_BANDWIDTH, tenantId, edge.getId(), mbpsRounded));
     }
 
     public void onConfigurationUpdate(Edge edge) {
@@ -301,7 +322,7 @@ public abstract class EdgeGrpcSession implements Closeable {
             if (isConnected() && !pageData.getData().isEmpty()) {
                 if (fetcher instanceof GeneralEdgeEventFetcher) {
                     long queueSize = pageData.getTotalElements() - ((long) pageLink.getPageSize() * pageLink.getPage());
-                    ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.setDownlinkMsgsLag(edge.getTenantId(), edge.getId(), queueSize));
+                    ctx.getStatsCounterService().ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_LAG, tenantId, edge.getId(), queueSize));
                 }
                 log.trace("[{}][{}][{}] event(s) are going to be processed.", tenantId, edge.getId(), pageData.getData().size());
                 List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(pageData.getData());

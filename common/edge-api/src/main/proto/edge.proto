@@ -57,6 +57,7 @@ message RequestMsg {
   UplinkMsg uplinkMsg = 3;
   DownlinkResponseMsg downlinkResponseMsg = 4;
   SyncRequestMsg syncRequestMsg = 5;
+  BandwidthTestMsg bandwidthTestMsg = 6;
 }
 
 message ResponseMsg {
@@ -70,10 +71,17 @@ enum RequestMsgType {
   CONNECT_RPC_MESSAGE = 0;
   UPLINK_RPC_MESSAGE = 1;
   SYNC_REQUEST_RPC_MESSAGE = 2;
+  BANDWIDTH_TEST_RPC_MESSAGE = 3;
 }
 
 message EdgeUpdateMsg {
   EdgeConfiguration configuration = 1;
+}
+
+message BandwidthTestMsg {
+  int64 testPayloadSize = 1;
+  int64 timestamp = 2;
+  bytes payload = 3;
 }
 
 message ConnectRequestMsg {
