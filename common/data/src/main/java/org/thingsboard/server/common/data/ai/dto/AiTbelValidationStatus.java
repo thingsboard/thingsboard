@@ -13,10 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.server.common.data.ai.dto;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OpenAiTbelProviderConfig {}
+public enum AiTbelValidationStatus {
+    UPDATED,    // The script was modified by the model
+    UNCHANGED,  // The model found no issues with the script
+    ERROR,      // An error occurred during validation
+    CRITICAL_ERROR,      //  a gross violation of the rules by the AI
+    CREATED,
+    CHANGED
+}
