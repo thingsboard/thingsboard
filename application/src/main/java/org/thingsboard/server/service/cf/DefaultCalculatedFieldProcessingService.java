@@ -96,7 +96,7 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.SAVE_ZONES_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ALLOWED_ZONES_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
@@ -138,7 +138,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
                 switch (entry.getKey()) {
                     case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY ->
                             argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), resolveEntityId(entityId, entry), entry.getValue()));
-                    case SAVE_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
+                    case ALLOWED_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
                         var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
                         argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
                                 fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue()), calculatedFieldCallbackExecutor));

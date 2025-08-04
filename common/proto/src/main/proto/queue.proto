@@ -909,7 +909,7 @@ message GeofencingZoneProto {
 }
 
 message GeofencingArgumentProto {
-  string argName = 1; // e.g., "restrictedZones" or "saveZones"
+  string argName = 1; // e.g., "restrictedZones" or "allowedZones"
   repeated GeofencingZoneProto zones = 2;
 }
 

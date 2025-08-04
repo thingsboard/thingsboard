@@ -29,13 +29,13 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
 
     public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
     public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
-    public static final String SAVE_ZONES_ARGUMENT_KEY = "saveZones";
+    public static final String ALLOWED_ZONES_ARGUMENT_KEY = "allowedZones";
     public static final String RESTRICTED_ZONES_ARGUMENT_KEY = "restrictedZones";
 
     private static final Set<String> requiredKeys = Set.of(
             ENTITY_ID_LATITUDE_ARGUMENT_KEY,
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY,
-            SAVE_ZONES_ARGUMENT_KEY,
+            ALLOWED_ZONES_ARGUMENT_KEY,
             RESTRICTED_ZONES_ARGUMENT_KEY
     );
 
@@ -68,11 +68,11 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
                     if (dynamicSource != null) {
                         String test = "test";
                         throw new IllegalArgumentException("Dynamic source configuration is forbidden for '" + requiredKey + "' argument. " +
-                                                           "Only '" + SAVE_ZONES_ARGUMENT_KEY + "' and '" + RESTRICTED_ZONES_ARGUMENT_KEY + "' " +
+                                                           "Only '" + ALLOWED_ZONES_ARGUMENT_KEY + "' and '" + RESTRICTED_ZONES_ARGUMENT_KEY + "' " +
                                                            "may use dynamic source configuration.");
                     }
                 }
-                case SAVE_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
+                case ALLOWED_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
                     if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
                         throw new IllegalArgumentException("Argument: '" + requiredKey + "' must be set to " + ArgumentType.ATTRIBUTE + " type!");
                     }

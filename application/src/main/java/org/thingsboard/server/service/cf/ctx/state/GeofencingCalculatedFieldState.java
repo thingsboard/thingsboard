@@ -34,7 +34,7 @@ import java.util.Map;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.SAVE_ZONES_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ALLOWED_ZONES_ARGUMENT_KEY;
 
 @Data
 public class GeofencingCalculatedFieldState implements CalculatedFieldState {
@@ -48,7 +48,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
 
     public GeofencingCalculatedFieldState() {
-        this(List.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, SAVE_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY));
+        this(List.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, ALLOWED_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY));
     }
 
     public GeofencingCalculatedFieldState(List<String> argNames) {
@@ -88,7 +88,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
                         arguments.put(key, singleValueArgumentEntry);
                         entryUpdated = true;
                         break;
-                    case SAVE_ZONES_ARGUMENT_KEY:
+                    case ALLOWED_ZONES_ARGUMENT_KEY:
                     case RESTRICTED_ZONES_ARGUMENT_KEY:
                         if (!(newEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
                             throw new IllegalArgumentException(key + " argument must be a geofencing argument entry.");
@@ -143,7 +143,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
 
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
-        String zoneKey = restricted ? RESTRICTED_ZONES_ARGUMENT_KEY : SAVE_ZONES_ARGUMENT_KEY;
+        String zoneKey = restricted ? RESTRICTED_ZONES_ARGUMENT_KEY : ALLOWED_ZONES_ARGUMENT_KEY;
         GeofencingArgumentEntry zonesEntry = (GeofencingArgumentEntry) arguments.get(zoneKey);
 
         for (var zoneEntry : zonesEntry.getZoneStates().entrySet()) {
