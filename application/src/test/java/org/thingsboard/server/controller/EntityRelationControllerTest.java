@@ -21,6 +21,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.Collections;
@@ -48,6 +50,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 public class EntityRelationControllerTest extends AbstractControllerTest {
 
     public static final String BASE_DEVICE_NAME = "Test dummy device";
+
+    @Autowired
+    private RelationDao relationDao;
 
     private Device mainDevice;
 
@@ -354,6 +359,45 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         getRelation(relation)
                 .andExpect(status().isNotFound())
                 .andExpect(statusReason(is(msgErrorNotFound)));
+    }
+
+    @Test
+    public void testDeleteRelationWithTypeEmptyOrBlank() throws Exception {
+        // GIVEN
+        Device device = createDevice("Test device");
+
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            // saving relation with empty type
+            EntityRelation emptyRelation = createFromRelation(mainDevice, device, "");
+            relationDao.saveRelation(tenantId, emptyRelation);
+
+            // saving relation with blank type
+            EntityRelation blankRelation = createFromRelation(mainDevice, device, " ");
+            relationDao.saveRelation(tenantId, blankRelation);
+
+            // deleting relation with empty type
+            String deleteEmptyUrl = String.format(endpoint + "?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                    mainDevice.getUuidId(), EntityType.DEVICE,
+                    emptyRelation.getType(), device.getUuidId(), EntityType.DEVICE
+            );
+            doDelete(deleteEmptyUrl).andExpect(status().isOk());
+
+            getRelation(emptyRelation)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(is(msgErrorNotFound)));
+
+            // deleting relation with blank type
+            String deleteBlankUrl = String.format(endpoint + "?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                    mainDevice.getUuidId(), EntityType.DEVICE,
+                    blankRelation.getType(), device.getUuidId(), EntityType.DEVICE
+            );
+            doDelete(deleteBlankUrl).andExpect(status().isOk());
+
+            getRelation(blankRelation)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(is(msgErrorNotFound)));
+        }
     }
 
     @Test

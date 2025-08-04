@@ -42,7 +42,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
@@ -295,7 +294,6 @@ public class EntityRelationController extends BaseController {
     @PostMapping("/relations")
     public List<EntityRelation> findByQuery(@Parameter(description = "A JSON value representing the entity relations query object.", required = true)
                                             @RequestBody EntityRelationsQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
@@ -310,7 +308,6 @@ public class EntityRelationController extends BaseController {
     @PostMapping("/relations/info")
     public List<EntityRelationInfo> findInfoByQuery(@Parameter(description = "A JSON value representing the entity relations query object.", required = true)
                                                     @RequestBody EntityRelationsQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
@@ -338,7 +335,7 @@ public class EntityRelationController extends BaseController {
                 return false;
             }
             return true;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
     private static RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
