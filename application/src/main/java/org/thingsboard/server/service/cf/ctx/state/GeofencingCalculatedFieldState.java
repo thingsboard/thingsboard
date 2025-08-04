@@ -104,7 +104,6 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             }
             if (entryUpdated) {
                 stateUpdated = true;
-                updateLastUpdateTimestamp(newEntry);
             }
         }
         return stateUpdated;
@@ -138,18 +137,8 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         }
     }
 
-    private void updateLastUpdateTimestamp(ArgumentEntry entry) {
-        long newTs = this.latestTimestamp;
-        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            newTs = singleValueArgumentEntry.getTs();
-        }
-        this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
-    }
-
-    // TODO: Ensure all cases are covered based on rule node logic.
     private List<CalculatedFieldResult> updateGeofencingZonesState(CalculatedFieldCtx ctx, boolean restricted) {
         var results = new ArrayList<CalculatedFieldResult>();
-        long stateSwitchTime = System.currentTimeMillis();
         double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
 
@@ -159,7 +148,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
         for (var zoneEntry : zonesEntry.getZoneStates().entrySet()) {
             GeofencingZoneState state = zoneEntry.getValue();
-            String event = state.evaluate(entityCoordinates, stateSwitchTime);
+            String event = state.evaluate(entityCoordinates);
             ObjectNode stateNode = JacksonUtil.newObjectNode();
             stateNode.put("entityId", ctx.getEntityId().toString());
             stateNode.put("zoneId", state.getZoneId().toString());

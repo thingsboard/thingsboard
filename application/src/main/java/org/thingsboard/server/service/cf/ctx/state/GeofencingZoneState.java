@@ -16,10 +16,10 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.common.util.geo.PerimeterDefinition;
-import org.thingsboard.rule.engine.geo.EntityGeofencingState;
 import org.thingsboard.rule.engine.util.GpsGeofencingEvents;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -39,7 +39,8 @@ public class GeofencingZoneState {
     private Long version;
     private PerimeterDefinition perimeterDefinition;
 
-    private EntityGeofencingState state;
+    @EqualsAndHashCode.Exclude
+    private Boolean inside;
 
     public GeofencingZoneState(EntityId zoneId, KvEntry entry) {
         this.zoneId = zoneId;
@@ -59,7 +60,9 @@ public class GeofencingZoneState {
         this.ts = proto.getTs();
         this.version = proto.getVersion();
         this.perimeterDefinition = JacksonUtil.fromString(proto.getPerimeterDefinition(), PerimeterDefinition.class);
-        this.state = new EntityGeofencingState(proto.getInside(), proto.getStateSwitchTime(), proto.getStayed());
+        if (proto.hasInside()) {
+            this.inside = proto.getInside();
+        }
     }
 
     public boolean update(GeofencingZoneState newZoneState) {
@@ -72,20 +75,16 @@ public class GeofencingZoneState {
             this.version = newVersion;
             this.perimeterDefinition = newZoneState.getPerimeterDefinition();
             // TODO: should we reinitialize state if zone changed?
+            // this.inside = null;
             return true;
         }
         return false;
     }
 
-    public String evaluate(Coordinates entityCoordinates, long currentTs) {
+    public String evaluate(Coordinates entityCoordinates) {
         boolean inside = perimeterDefinition.checkMatches(entityCoordinates);
-        if (state == null) {
-            state = new EntityGeofencingState(inside, ts, false);
-        }
-        if (state.getStateSwitchTime() == 0L || state.isInside() != inside) {
-            state.setInside(inside);
-            state.setStateSwitchTime(currentTs);
-            state.setStayed(false);
+        if (this.inside == null || this.inside != inside) {
+            this.inside = inside;
             return inside ? GpsGeofencingEvents.ENTERED : GpsGeofencingEvents.LEFT;
         }
         return inside ? GpsGeofencingEvents.INSIDE : GpsGeofencingEvents.OUTSIDE;

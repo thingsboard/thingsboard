@@ -232,10 +232,16 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         CalculatedFieldCtx cfCtx = msg.getCfCtx();
         CalculatedFieldId cfId = cfCtx.getCfId();
         log.debug("[{}][{}] Processing CF check for updates msg.", entityId, cfId);
+        CalculatedFieldState currentState = states.get(cfId);
         try {
-            var state = updateStateFromDb(cfCtx);
-            if (state.isSizeOk()) {
-                processStateIfReady(cfCtx, Collections.singletonList(cfId), state, null, null, msg.getCallback());
+            var stateFromDb = getStateFromDb(cfCtx);
+            if (currentState.equals(stateFromDb)) {
+                log.debug("[{}][{}] CF state is up-to-date.", entityId, cfId);
+                return;
+            }
+            states.put(cfId, stateFromDb);
+            if (stateFromDb.isSizeOk()) {
+                processStateIfReady(cfCtx, Collections.singletonList(cfId), stateFromDb, null, null, msg.getCallback());
             } else {
                 throw new RuntimeException(cfCtx.getSizeExceedsLimitMessage());
             }
@@ -298,6 +304,12 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private CalculatedFieldState updateStateFromDb(CalculatedFieldCtx ctx) throws InterruptedException, ExecutionException, TimeoutException {
+        CalculatedFieldState stateFromDb = getStateFromDb(ctx);
+        states.put(ctx.getCfId(), stateFromDb);
+        return stateFromDb;
+    }
+
+    private CalculatedFieldState getStateFromDb(CalculatedFieldCtx ctx) throws InterruptedException, ExecutionException, TimeoutException {
         ListenableFuture<CalculatedFieldState> stateFuture = cfService.fetchStateFromDb(ctx, entityId);
         // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
         // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
@@ -305,7 +317,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         // but this will significantly complicate the code.
         CalculatedFieldState state = stateFuture.get(1, TimeUnit.MINUTES);
         state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
-        states.put(ctx.getCfId(), state);
         return state;
     }
 

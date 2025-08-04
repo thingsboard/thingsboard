@@ -905,9 +905,7 @@ message GeofencingZoneProto {
   int64 ts = 2;
   string perimeterDefinition = 3;
   int64 version = 4;
-  bool inside = 5;
-  int64 stateSwitchTime = 6;
-  bool stayed = 7;
+  optional bool inside = 5;
 }
 
 message GeofencingArgumentProto {

@@ -305,7 +305,6 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
     }
 
     private ListenableFuture<ArgumentEntry> fetchGeofencingKvEntry(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument) {
-        // TODO: Should we handle any other case?
         if (argument.getRefEntityKey().getType() != ArgumentType.ATTRIBUTE) {
             throw new IllegalStateException("Unsupported argument key type: " + argument.getRefEntityKey().getType());
         }

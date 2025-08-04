@@ -16,7 +16,6 @@
 package org.thingsboard.server.utils;
 
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.geo.EntityGeofencingState;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -139,12 +138,8 @@ public class CalculatedFieldUtils {
                 .setTs(zoneState.getTs())
                 .setVersion(zoneState.getVersion())
                 .setPerimeterDefinition(JacksonUtil.toString(zoneState.getPerimeterDefinition()));
-        if (zoneState.getState() != null) {
-            EntityGeofencingState state = zoneState.getState();
-            builder.setInside(state.isInside())
-                    .setStayed(state.isStayed())
-                    .setStateSwitchTime(state.getStateSwitchTime());
-
+        if (zoneState.getInside() != null) {
+            builder.setInside(zoneState.getInside());
         }
         return builder.build();
     }

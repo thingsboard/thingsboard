@@ -409,7 +409,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         if (existingTask != null) {
             existingTask.cancel(false);
             String reason = cfDeleted ? "removal" : "update";
-            log.debug("[{}][{}] Cancelled check for update task for CF due to: " + reason + "!", tenantId, cfId);
+            log.debug("[{}][{}] Cancelled check for update task due to CF " + reason + "!", tenantId, cfId);
         }
     }
 
