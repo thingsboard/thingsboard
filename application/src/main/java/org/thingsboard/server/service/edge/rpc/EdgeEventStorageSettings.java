@@ -29,6 +29,6 @@ public class EdgeEventStorageSettings {
     private long noRecordsSleepInterval;
     @Value("${edges.storage.sleep_between_batches}")
     private long sleepIntervalBetweenBatches;
-    @Value("${edges.storage.misordering_compensation_millis:3600000}")
+    @Value("${edges.storage.misordering_compensation_millis:60000}")
     private long misorderingCompensationMillis;
 }
