@@ -31,20 +31,7 @@ import java.util.regex.Pattern;
 @Slf4j
 public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
 
-    private static final Pattern[] DANGEROUS_JS_PATTERNS = new Pattern[] {
-            Pattern.compile("\\{\\{.*constructor\\.constructor.*\\}\\}", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)constructor\\s*\\.", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)new Function\\s*\\(", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)eval\\s*\\(", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)setTimeout\\s*\\(", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)setInterval\\s*\\(", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)window\\s*\\[\\s*['\"]?\\w+['\"]?\\s*\\]", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)document\\s*\\[\\s*['\"]?\\w+['\"]?\\s*\\]", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)location\\.href\\s*=", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)on\\w+\\s*=", Pattern.CASE_INSENSITIVE), // onclick=, onerror=, etc.
-            Pattern.compile("(?i)src\\s*=\\s*[\"']\\s*javascript:", Pattern.CASE_INSENSITIVE),
-            Pattern.compile("(?i)<\\s*(iframe|object|embed|link)\\b", Pattern.CASE_INSENSITIVE)
-    };
+    private static final Pattern BLOCKED_TEMPLATE_PATTERN = Pattern.compile("^\\s*\\{\\{.*\\}\\}\\s*$", Pattern.DOTALL);
     private static final AntiSamy xssChecker = new AntiSamy();
     private static final Policy xssPolicy;
 
@@ -83,16 +70,7 @@ public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
             return false;
         }
 
-        return !matchesDangerousJS(stringValue);
-    }
-
-    public static boolean matchesDangerousJS(String input) {
-        for (Pattern pattern : DANGEROUS_JS_PATTERNS) {
-            if (pattern.matcher(input).find()) {
-                return true;
-            }
-        }
-        return false;
+        return !BLOCKED_TEMPLATE_PATTERN.matcher(stringValue).matches();
     }
 
 }
