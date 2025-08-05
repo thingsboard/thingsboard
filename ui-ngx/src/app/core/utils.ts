@@ -197,7 +197,7 @@ export function deleteNullProperties(obj: any) {
   });
 }
 
-export function deleteFalseProperties(obj: any) {
+export function deleteFalseProperties(obj: Record<string, any>): void  {
   if (isUndefinedOrNull(obj)) {
     return;
   }

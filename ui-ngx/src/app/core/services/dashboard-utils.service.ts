@@ -296,9 +296,8 @@ export class DashboardUtilsService {
     }
     widgetConfig.datasources = this.validateAndUpdateDatasources(widgetConfig.datasources);
     if (type === widgetType.latest) {
-      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
-      const aggregationEnabledForKeys = datasourcesHasAggregation(widgetConfig.datasources);
-      if (aggregationEnabledForKeys) {
+      if (datasourcesHasAggregation(widgetConfig.datasources)) {
+        const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
         widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true,
           onlyHistoryTimewindow, this.timeService, false);
       }
@@ -356,7 +355,7 @@ export class DashboardUtilsService {
     return widgetConfig;
   }
 
-  public removeTimewindowConfigIfUnused(widgetConfig: WidgetConfig, type: widgetType) {
+  private removeTimewindowConfigIfUnused(widgetConfig: WidgetConfig, type: widgetType) {
     const widgetHasTimewindow = widgetTypeHasTimewindow(type) || (type === widgetType.latest && datasourcesHasAggregation(widgetConfig.datasources));
     if (!widgetHasTimewindow || widgetConfig.useDashboardTimewindow) {
       delete widgetConfig.displayTimewindow;
