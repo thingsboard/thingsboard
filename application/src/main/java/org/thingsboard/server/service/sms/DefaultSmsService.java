@@ -18,6 +18,7 @@ package org.thingsboard.server.service.sms;
 import com.fasterxml.jackson.databind.JsonNode;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.NestedRuntimeException;
 import org.springframework.stereotype.Service;
@@ -37,8 +38,9 @@ import org.thingsboard.server.common.stats.TbApiUsageReportClient;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 
-@Service
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class DefaultSmsService implements SmsService {
 
     private final SmsSenderFactory smsSenderFactory;
@@ -47,13 +49,6 @@ public class DefaultSmsService implements SmsService {
     private final TbApiUsageReportClient apiUsageClient;
 
     private SmsSender smsSender;
-
-    public DefaultSmsService(SmsSenderFactory smsSenderFactory, AdminSettingsService adminSettingsService, TbApiUsageStateService apiUsageStateService, TbApiUsageReportClient apiUsageClient) {
-        this.smsSenderFactory = smsSenderFactory;
-        this.adminSettingsService = adminSettingsService;
-        this.apiUsageStateService = apiUsageStateService;
-        this.apiUsageClient = apiUsageClient;
-    }
 
     @PostConstruct
     private void init() {
@@ -148,4 +143,5 @@ public class DefaultSmsService implements SmsService {
         return new ThingsboardException(String.format("Unable to send SMS: %s", message),
                 ThingsboardErrorCode.GENERAL);
     }
+
 }

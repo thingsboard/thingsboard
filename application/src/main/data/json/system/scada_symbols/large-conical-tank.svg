@@ -268,7 +268,7 @@
  </g><g transform="translate(0,235)" filter="url(#filter0_ii_1694_158298)" tb:tag="value-box">
   <path d="m381 272c0-6.627 5.373-12 12-12h216c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-216c-6.627 0-12-5.373-12-12z" fill="#f3f3f3" tb:tag="value-box-background"/>
   <path d="m382.5 272c0-5.799 4.701-10.5 10.5-10.5h216c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-216c-5.799 0-10.5-4.701-10.5-10.5z" stroke="#727171" stroke-width="3"/>
-  <text x="500.74219" y="300.07812" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan dominant-baseline="middle">1660 gal</tspan></text>
+  <text x="500.74219" y="300.07812" fill="#727171" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><ellipse cx="500" cy="16" rx="496" ry="16" fill="#5D5C5C"/><rect transform="rotate(-90 451.5 1398.5)" x="451.5" y="1398.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><g style="display: none;" tb:tag="stand">
   <rect x="107" y="1363" width="80" height="24" rx="7" fill="#fff" style=""/>
   <rect x="107" y="1363" width="80" height="24" rx="7" fill="url(#paint629_linear_2901_184330)" style=""/>

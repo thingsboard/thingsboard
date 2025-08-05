@@ -58,7 +58,7 @@ import {
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { deepClone, guid, isDefined, isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@app/core/utils';
+import { deepClone, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
 import {
   DashboardContext,
   DashboardPageInitData,
@@ -119,7 +119,8 @@ import {
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 import {
   ManageDashboardStatesDialogComponent,
-  ManageDashboardStatesDialogData
+  ManageDashboardStatesDialogData,
+  ManageDashboardStatesDialogResult
 } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { AuthState } from '@app/core/auth/auth.models';
@@ -964,17 +965,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       $event.stopPropagation();
     }
     this.dialog.open<ManageDashboardStatesDialogComponent, ManageDashboardStatesDialogData,
-      {states: {[id: string]: DashboardState}; widgets: {[id: string]: Widget}}>(ManageDashboardStatesDialogComponent, {
+      ManageDashboardStatesDialogResult>(ManageDashboardStatesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         states: deepClone(this.dashboard.configuration.states),
-        widgets: deepClone(this.dashboard.configuration.widgets) as {[id: string]: Widget}
+        widgets: this.dashboard.configuration.widgets as {[id: string]: Widget}
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
-        if (!isEqual(result.widgets, this.dashboard.configuration.widgets)) {
-          this.dashboard.configuration.widgets = result.widgets;
+        if (result.addWidgets) {
+          Object.assign(this.dashboard.configuration.widgets, result.addWidgets);
         }
         if (result.states) {
           this.updateStates(result.states);

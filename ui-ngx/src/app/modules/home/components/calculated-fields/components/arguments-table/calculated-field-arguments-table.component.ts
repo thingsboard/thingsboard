@@ -179,7 +179,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         renderer: this.renderer,
         componentType: CalculatedFieldArgumentPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: isExists ? 'left' : 'right',
+        preferredPlacement: isExists ? ['left', 'leftTop', 'leftBottom'] : ['topRight', 'right', 'rightTop'],
         context: ctx,
         isModal: true
       });

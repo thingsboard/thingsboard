@@ -19,10 +19,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -32,6 +34,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.query.EntityKeyType.TIME_SERIES;
 
@@ -115,7 +118,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Device device = createDevice();
 
         SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(device.getId());
+        filter.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
 
         getWsClient().subscribeLatestUpdate(List.of(new EntityKey(TIME_SERIES, "data")), filter);
 
@@ -159,7 +162,7 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         Device device = createDevice();
 
         SingleEntityFilter filter = new SingleEntityFilter();
-        filter.setSingleEntity(device.getId());
+        filter.setSingleEntity(AliasEntityId.fromEntityId(device.getId()));
 
         getWsClient().subscribeLatestUpdate(List.of(new EntityKey(TIME_SERIES, "data")), filter);
 
@@ -205,6 +208,15 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         String invalidRequestBody = "{\"data\": \"<object data=\\\"data:text/html,<script>alert(document)</script>\\\"></object>\"}";
         doPostAsync("/api/plugins/telemetry/" + device.getId() + "/SHARED_SCOPE", invalidRequestBody, String.class, status().isBadRequest());
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody, String.class, status().isBadRequest());
+    }
+
+    @Test
+    public void testBadRequestReturnedWhenMethodArgumentTypeMismatch() throws Exception {
+        loginTenantAdmin();
+        String content = "{\"key\": \"value\"}";
+        doPost("/api/plugins/telemetry/DEVICE/20b559f5-849f-4361-b4f6-b6d0b76687e9/INVALID_SCOPE", content, (String) null)
+                .andExpect(status().isBadRequest())
+                .andExpect(result -> assertThat(result.getResolvedException()).isInstanceOf(MethodArgumentTypeMismatchException.class));
     }
 
     @Test

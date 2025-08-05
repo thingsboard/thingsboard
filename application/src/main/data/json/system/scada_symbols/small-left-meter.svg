@@ -720,6 +720,6 @@
  </g><g transform="translate(-12)" filter="url(#filter0_ii_3742_299961)" style="display: none;" tb:tag="value-box">
   <rect x="22" y="164" width="56" height="28" rx="4" fill="#fffefe" fill-opacity=".75" tb:tag="value-box-background" style=""/>
   <rect x="23" y="165" width="54" height="26" rx="3" stroke="#fff" stroke-width="2" style=""/>
-  <text x="49.853027" y="179.5625" fill="#727171" font-family="Roboto" font-size="14px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve" style=""><tspan dominant-baseline="middle">37%</tspan></text>
+  <text x="49.853027" y="179.5625" fill="#727171" font-family="Roboto, sans-serif" font-size="14px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve" style=""><tspan dominant-baseline="middle">37%</tspan></text>
  </g><path d="m25.56-0.12402s-25.56 0-25.56 33.5v164.18c0 1.3256 0.68053 2.3202 1.52 2.3202h72.96c0.83942 0 1.52-0.9946 1.52-2.3202v-164.18c0-33.5-25.107-33.5-25.107-33.5h-12.893zm25.487 40.6c-0.48969 0-0.88669 0.6268-0.88669 1.4v150.2c0 0.7732 0.39697 1.4 0.88669 1.4h5.5733c0.48969 0 0.88669-0.6268 0.88669-1.4v-150.2c0-0.7732-0.39697-1.4-0.88669-1.4z" fill-opacity="0" fill="#000" tb:tag="clickArea"/>
 </svg>
