@@ -15,18 +15,23 @@
  */
 package org.thingsboard.server.service.ai.tbel;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 
+@Slf4j
 @Component
 public class AiTbelHelper {
 
     public static final String TBEL_RULES_VERSION = "2025-05-15";
     public static final String TBEL_RULES_SOURCE_URL = "https://thingsboard.io/docs/user-guide/tbel/";
-    public static final String TBEL_RULES_CONTENT;
+    public static final Path TBEL_RULES_PATH;
     private static final String BASE_DIR_PATH = System.getProperty("user.dir");
     private static final String APP_DIR = "application";
     private static final String SRC_DIR = "src";
@@ -36,13 +41,7 @@ public class AiTbelHelper {
     private static final String FILE_NAME = "tbel.md";
 
     static {
-        try {
-            TBEL_RULES_CONTENT = Files.readString(
-                    Paths.get(BASE_DIR_PATH, APP_DIR, SRC_DIR, MAIN_DIR, DATA_DIR, AI_DIR, FILE_NAME)
-            );
-        } catch (IOException e) {
-            throw new ExceptionInInitializerError("Failed to load tbel.md: " + e.getMessage());
-        }
+        TBEL_RULES_PATH = Paths.get(BASE_DIR_PATH, SRC_DIR, MAIN_DIR, DATA_DIR, AI_DIR, FILE_NAME);
     }
 
 
@@ -105,7 +104,7 @@ public class AiTbelHelper {
             - TBEL Documentation Version: %s
             - Source: %s
 
-        """.formatted(TBEL_RULES_CONTENT, TBEL_RULES_VERSION, TBEL_RULES_SOURCE_URL);
+        """.formatted(getTbelMd(), TBEL_RULES_VERSION, TBEL_RULES_SOURCE_URL);
 
     public static final String SYSTEM_PROMPT_TBEL_COMMIT = """
         Section 2: Comments during validation
@@ -306,6 +305,34 @@ public class AiTbelHelper {
         This list will be extended in future documentation updates.
 
     """;
+
+    public static String getTbelMd() {
+        byte[] fileBytes;
+        if (Files.exists(TBEL_RULES_PATH)) {
+            try {
+                fileBytes = Files.readAllBytes(TBEL_RULES_PATH);
+            } catch (IOException e) {
+                log.error("Failed to load Default CaCert file!!! [{}]", TBEL_RULES_PATH, e);
+                throw new RuntimeException("Failed to load Default CaCert file!!!");
+            }
+        } else {
+            Path tbelMdDirectory = TBEL_RULES_PATH.getParent();
+            try (DirectoryStream<Path> stream = Files.newDirectoryStream(tbelMdDirectory)) {
+                Iterator<Path> iterator = stream.iterator();
+                if (iterator.hasNext()) {
+                    Path firstFile = iterator.next();
+                    fileBytes = Files.readAllBytes(firstFile);
+                } else {
+                    log.error("Tbel.md file not found in the directory [{}]!!!", tbelMdDirectory);
+                    throw new RuntimeException("Tbel.md  file not found in the directory!!!");
+                }
+            } catch (IOException e) {
+                log.error("Failed to load Tbel.md  file from the directory [{}]!!!", tbelMdDirectory, e);
+                throw new RuntimeException("Failed to load Tbel.md file from the directory!!!");
+            }
+        }
+        return new String(fileBytes);
+    }
 }
 
 
