@@ -31,7 +31,8 @@ import java.util.regex.Pattern;
 @Slf4j
 public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
 
-    private static final Pattern BLOCKED_TEMPLATE_PATTERN = Pattern.compile("^\\s*\\{\\{.*\\}\\}\\s*$", Pattern.DOTALL);
+    private static final Pattern JS_TEMPLATE_PATTERN = Pattern.compile("\\{\\{.*}}", Pattern.DOTALL);
+
     private static final AntiSamy xssChecker = new AntiSamy();
     private static final Policy xssPolicy;
 
@@ -62,6 +63,9 @@ public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
         if (stringValue.isEmpty()) {
             return true;
         }
+        if (JS_TEMPLATE_PATTERN.matcher(stringValue).find()) {
+            return false;
+        }
         try {
             if (xssChecker.scan(stringValue, xssPolicy).getNumberOfErrors() > 0) {
                 return false;
@@ -69,8 +73,7 @@ public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
         } catch (ScanException | PolicyException e) {
             return false;
         }
-
-        return !BLOCKED_TEMPLATE_PATTERN.matcher(stringValue).matches();
+        return true;
     }
 
 }

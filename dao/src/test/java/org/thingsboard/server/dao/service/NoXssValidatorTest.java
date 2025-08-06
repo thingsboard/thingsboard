@@ -40,6 +40,7 @@ public class NoXssValidatorTest {
             "    {{constructor.constructor('alert(1)')()}}",
             "{{}}",
             "{{{constructor.constructor('location.href=\"https://evil.com\"')()}}}",
+            "test {{constructor.constructor('location.href=\"https://evil.com\"')()}} test",
             "{{#if user}}Hello, {{user.name}}{{/if}}",
             "{{ user.name }}"
     })
