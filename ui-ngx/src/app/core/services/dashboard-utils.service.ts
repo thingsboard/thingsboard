@@ -236,6 +236,7 @@ export class DashboardUtilsService {
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
     widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    this.removeTimewindowConfigIfUnused(widget);
     if (isDefined((widget as any).title)) {
       delete (widget as any).title;
     }
@@ -350,26 +351,33 @@ export class DashboardUtilsService {
         }
       }
     }
-
-    this.removeTimewindowConfigIfUnused(widgetConfig, type);
     return widgetConfig;
   }
 
-  private removeTimewindowConfigIfUnused(widgetConfig: WidgetConfig, type: widgetType) {
-    const widgetHasTimewindow = widgetTypeHasTimewindow(type) || (type === widgetType.latest && datasourcesHasAggregation(widgetConfig.datasources));
-    if (!widgetHasTimewindow || widgetConfig.useDashboardTimewindow) {
-      delete widgetConfig.displayTimewindow;
-      delete widgetConfig.timewindow;
-      delete widgetConfig.timewindowStyle;
+  private removeTimewindowConfigIfUnused(widget: Widget) {
+    const widgetHasTimewindow = this.widgetHasTimewindow(widget);
+    if (!widgetHasTimewindow || widget.config.useDashboardTimewindow) {
+      delete widget.config.displayTimewindow;
+      delete widget.config.timewindow;
+      delete widget.config.timewindowStyle;
 
       if (!widgetHasTimewindow) {
-        delete widgetConfig.useDashboardTimewindow;
+        delete widget.config.useDashboardTimewindow;
       }
     }
   }
 
+  private widgetHasTimewindow(widget: Widget): boolean {
+    const widgetDefinition = findWidgetModelDefinition(widget);
+    if (widgetDefinition) {
+      return widgetDefinition.hasTimewindow(widget);
+    }
+    return widgetTypeHasTimewindow(widget.type)
+      || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
+  }
+
   public prepareWidgetForSaving(widget: Widget): Widget {
-    this.removeTimewindowConfigIfUnused(widget.config, widget.type);
+    this.removeTimewindowConfigIfUnused(widget);
     return widget;
   }
 
