@@ -67,13 +67,10 @@ public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
             return false;
         }
         try {
-            if (xssChecker.scan(stringValue, xssPolicy).getNumberOfErrors() > 0) {
-                return false;
-            }
+            return xssChecker.scan(stringValue, xssPolicy).getNumberOfErrors() == 0;
         } catch (ScanException | PolicyException e) {
             return false;
         }
-        return true;
     }
 
 }
