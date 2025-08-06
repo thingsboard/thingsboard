@@ -251,7 +251,6 @@ export class EntityAliasSelectComponent implements ControlValueAccessor, OnInit,
               }, 0);
             }
           } else {
-            this.entityAliasList.push(newAlias);
             this.modelValue = newAlias.id;
             this.selectEntityAliasFormGroup.get('entityAlias').patchValue(newAlias, {emitEvent: true});
             this.propagateChange(this.modelValue);

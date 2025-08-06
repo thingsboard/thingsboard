@@ -563,7 +563,7 @@
  </g><ellipse cx="504" cy="16" rx="496" ry="16" fill="#5D5C5C"/><g filter="url(#filter0_ii_2005_230043)" tb:tag="value-box">
   <path d="m380 487c0-6.627 5.373-12 12-12h216c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-216c-6.627 0-12-5.373-12-12v-56z" fill="#f3f3f3" tb:tag="value-box-background"/>
   <path d="m381.5 487c0-5.799 4.701-10.5 10.5-10.5h216c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-216c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#727171" stroke-width="3"/>
-  <text x="503.10281" y="518.07812" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
+  <text x="503.10281" y="518.07812" fill="#727171" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><path d="m336.32-5e-4s-336.32 0-336.32 167.5v820.9c0 6.628 8.9543 11.601 20 11.601h960c11.045 0 20-4.973 20-11.601v-820.9c0-167.5-330.35-167.5-330.35-167.5h-169.65zm335.35 203c-6.4433 0-11.667 3.134-11.667 7v751c0 3.866 5.2233 7 11.667 7h73.333c6.4433 0 11.667-3.134 11.667-7v-751c0-3.866-5.2233-7-11.667-7z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><defs>
   <filter id="filter0_ii_2005_230043" x="376" y="471" width="248" height="88" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse">
    <feFlood flood-opacity="0" result="BackgroundImageFix"/>

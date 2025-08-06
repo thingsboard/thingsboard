@@ -425,7 +425,7 @@
 <rect width="200" height="400" fill="#fff" tb:tag="background"/><rect x="1" y="1" width="198" height="398" stroke="#000" stroke-opacity=".87" stroke-width="2"/><g tb:tag="breaker">
   <path d="m50 100h100v198c0 1.105-0.895 2-2 2h-96c-1.1046 0-2-0.895-2-2v-198z"/>
   <path d="m51 101h98v197c0 0.552-0.448 1-1 1h-96c-0.5523 0-1-0.448-1-1v-197z" stroke="#000" stroke-opacity=".87" stroke-width="2" tb:tag="label-box"/>
-  <text x="100" y="201.65533" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan dominant-baseline="start">ON</tspan></text>
+  <text x="100" y="201.65533" fill="#000000" font-family="Roboto, sans-serif" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan dominant-baseline="start">ON</tspan></text>
   <g tb:tag="breaker-trigger">
    <rect x="24" y="100" width="152" height="40" rx="2" fill="#999"/>
    <rect x="25" y="101" width="150" height="38" rx="1" stroke="#000" stroke-opacity=".87" stroke-width="2"/>

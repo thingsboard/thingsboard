@@ -25,6 +25,7 @@
   <mat-chip-grid #chipList formControlName="entities">
     <mat-chip-row
       *ngFor="let entity of entities"
+      class="tb-chip-row-ellipsis"
       [removable]="!disabled"
       (removed)="remove(entity)">
       {{entity.name}}

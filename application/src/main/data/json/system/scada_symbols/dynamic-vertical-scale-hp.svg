@@ -579,19 +579,19 @@
     }
   ]
 }]]></tb:metadata>
-<text x="206.16602" y="43.234375" fill="#000000" font-family="Roboto" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text><text x="195.21875" y="770" fill="#000000" font-family="Roboto" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text><g stroke="#000" tb:tag="scale">
+<text x="206.16602" y="43.234375" fill="#000000" font-family="Roboto, sans-serif" font-size="56px" font-weight="400" text-anchor="middle" tb:tag="label" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">Outdoor</tspan></text><text x="195.21875" y="770" fill="#000000" font-family="Roboto, sans-serif" font-size="40px" font-weight="400" text-anchor="middle" tb:tag="units" xml:space="preserve"><tspan transform="translate(0,-144)" dominant-baseline="middle">°C</tspan></text><g stroke="#000" tb:tag="scale">
   <rect x="176.5" y="83" width="41" height="652" fill="#c8dff7" tb:tag="scaleBackground"/>
   <rect transform="scale(1,-1)" x="176.5" y="-735" width="41" height="164" fill="#ebebeb" tb:tag="lowWarningScale"/>
   <rect x="176.5" y="83.5" width="41" height="164" fill="#ebebeb" tb:tag="highWarningScale"/>
   <rect transform="scale(1,-1)" x="176.5" y="-735" width="41" height="81" fill="#666" tb:tag="lowCriticalScale"/>
   <rect x="176.5" y="83.5" width="41" height="81" fill="#666" tb:tag="highCriticalScale"/>
- </g><g fill="#666" font-family="Roboto" font-size="32px" font-weight="500" style="display: none;" tb:tag="minMaxValue">
+ </g><g fill="#666" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" style="display: none;" tb:tag="minMaxValue">
   <text x="237.48438" y="97" tb:tag="maxValue" xml:space="preserve" style=""><tspan dominant-baseline="middle">100</tspan></text>
   <text x="238.89062" y="727" tb:tag="minValue" xml:space="preserve" style=""><tspan dominant-baseline="middle">0</tspan></text>
  </g><g transform="translate(0,-180)" tb:tag="valueArrowPosition">
   <path d="m168 735-42-24v48z" fill="#666" tb:tag="valuePointer"/>
  </g><g transform="translate(0,-180)" tb:tag="valueTextPositon">
-  <text x="223.60547" y="739.125" fill="#002878" font-family="Roboto" font-size="60px" font-weight="400" tb:tag="value" xml:space="preserve"><tspan dominant-baseline="middle">26</tspan></text>
+  <text x="223.60547" y="739.125" fill="#002878" font-family="Roboto, sans-serif" font-size="60px" font-weight="400" tb:tag="value" xml:space="preserve"><tspan dominant-baseline="middle">26</tspan></text>
  </g><g transform="translate(0,-400)" style="display: none;" tb:tag="target">
   <rect transform="rotate(-45)" x="-379.76" y="636.31" width="22" height="22" fill="#dedede" stroke="#000" stroke-width="2" tb:tag="targetBackground" style=""/>
  </g><path d="m134.53 0s-134.53 0-134.53 134v656.72c0 5.3024 3.5817 9.2808 8 9.2808h384c4.418 0 8-3.9784 8-9.2808v-656.72c0-134-132.14-134-132.14-134h-67.86zm134.14 162.4c-2.5773 0-4.6667 2.5072-4.6667 5.6v600.8c0 3.0928 2.0893 5.6 4.6667 5.6h29.333c2.5773 0 4.6667-2.5072 4.6667-5.6v-600.8c0-3.0928-2.0893-5.6-4.6667-5.6z" fill="#000" fill-opacity="0" tb:tag="clickArea"/>

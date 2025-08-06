@@ -489,14 +489,13 @@
       "type": "number",
       "default": 6,
       "required": true,
-      "subLabel": "Main",
-      "divider": true,
+      "divider": false,
       "fieldSuffix": "px",
-      "condition": "return model.mainLine;",
       "min": 0,
       "max": 99,
       "step": 1,
-      "disabled": false
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "lineColor",
