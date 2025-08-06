@@ -108,7 +108,7 @@ class TbAiNodeTest {
         config = new TbAiNodeConfiguration();
 
         modelConfig = OpenAiChatModelConfig.builder()
-                .providerConfig(new OpenAiProviderConfig("test-api-key"))
+                .providerConfig(OpenAiProviderConfig.builder().apiKey("test-api-key").build())
                 .modelId("gpt-4o")
                 .temperature(0.5)
                 .topP(0.3)
