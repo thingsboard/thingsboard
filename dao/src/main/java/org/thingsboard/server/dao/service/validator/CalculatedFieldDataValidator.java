@@ -70,8 +70,8 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (maxArgumentsPerCF <= 0) {
             return;
         }
-        if (CalculatedFieldType.GEOFENCING.equals(calculatedField.getType()) && maxArgumentsPerCF < 4) {
-            throw new DataValidationException("Geofencing calculated field requires 4 arguments, but the system limit is " +
+        if (CalculatedFieldType.GEOFENCING.equals(calculatedField.getType()) && maxArgumentsPerCF < 3) {
+            throw new DataValidationException("Geofencing calculated field requires at least 3 arguments, but the system limit is " +
                                               maxArgumentsPerCF + ". Contact your administrator to increase the limit."
             );
         }

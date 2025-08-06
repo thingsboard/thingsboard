@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
+import java.util.Map;
 import java.util.Set;
 
 import static org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType.RELATION_QUERY;
@@ -32,11 +33,16 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     public static final String ALLOWED_ZONES_ARGUMENT_KEY = "allowedZones";
     public static final String RESTRICTED_ZONES_ARGUMENT_KEY = "restrictedZones";
 
-    private static final Set<String> requiredKeys = Set.of(
+    private static final Set<String> allowedKeys = Set.of(
             ENTITY_ID_LATITUDE_ARGUMENT_KEY,
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY,
             ALLOWED_ZONES_ARGUMENT_KEY,
             RESTRICTED_ZONES_ARGUMENT_KEY
+    );
+
+    private static final Set<String> requiredKeys = Set.of(
+            ENTITY_ID_LATITUDE_ARGUMENT_KEY,
+            ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
 
     @Override
@@ -47,44 +53,72 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     // TODO: update validate method in PE version.
     @Override
     public void validate() {
-        if (arguments == null || arguments.size() != 4) {
-            throw new IllegalArgumentException("Geofencing calculated field configuration must contain exactly 4 arguments: " + requiredKeys);
+        if (arguments == null) {
+            throw new IllegalArgumentException("Geofencing calculated field arguments are empty!");
         }
+
+        // Check key count
+        if (arguments.size() < 3 || arguments.size() > 4) {
+            throw new IllegalArgumentException("Geofencing calculated field must contain 3 or 4 arguments: " + allowedKeys);
+        }
+
+        // Check for unsupported argument keys
+        for (String key : arguments.keySet()) {
+            if (!allowedKeys.contains(key)) {
+                throw new IllegalArgumentException("Unsupported argument key: '" + key + "'. Allowed keys: " + allowedKeys);
+            }
+        }
+
+        // Check required fields: latitude and longitude
         for (String requiredKey : requiredKeys) {
-            Argument argument = arguments.get(requiredKey);
-            if (argument == null) {
+            if (!arguments.containsKey(requiredKey)) {
                 throw new IllegalArgumentException("Missing required argument: " + requiredKey);
+            }
+        }
+
+        // Ensure at least one of the zone types is configured
+        boolean hasAllowedZones = arguments.containsKey(ALLOWED_ZONES_ARGUMENT_KEY);
+        boolean hasRestrictedZones = arguments.containsKey(RESTRICTED_ZONES_ARGUMENT_KEY);
+
+        if (!hasAllowedZones && !hasRestrictedZones) {
+            throw new IllegalArgumentException("Geofencing calculated field must contain at least one of the following arguments: 'allowedZones' or 'restrictedZones'");
+        }
+
+        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+            String argumentKey = entry.getKey();
+            Argument argument = entry.getValue();
+            if (argument == null) {
+                throw new IllegalArgumentException("Missing required argument: " + argumentKey);
             }
             ReferencedEntityKey refEntityKey = argument.getRefEntityKey();
             if (refEntityKey == null || refEntityKey.getType() == null) {
-                throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + requiredKey);
+                throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + argumentKey);
             }
-            switch (requiredKey) {
-                case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
+
+            switch (argumentKey) {
+                case ENTITY_ID_LATITUDE_ARGUMENT_KEY,
+                     ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
                     if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
-                        throw new IllegalArgumentException("Argument: '" + requiredKey + "' must be set to " + ArgumentType.TS_LATEST + " type!");
+                        throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type TS_LATEST.");
                     }
-                    var dynamicSource = argument.getRefDynamicSource();
-                    if (dynamicSource != null) {
-                        String test = "test";
-                        throw new IllegalArgumentException("Dynamic source configuration is forbidden for '" + requiredKey + "' argument. " +
-                                                           "Only '" + ALLOWED_ZONES_ARGUMENT_KEY + "' and '" + RESTRICTED_ZONES_ARGUMENT_KEY + "' " +
-                                                           "may use dynamic source configuration.");
+                    if (argument.getRefDynamicSource() != null) {
+                        throw new IllegalArgumentException("Dynamic source is not allowed for argument: '" + argumentKey + "'.");
                     }
                 }
-                case ALLOWED_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
+                case ALLOWED_ZONES_ARGUMENT_KEY,
+                     RESTRICTED_ZONES_ARGUMENT_KEY -> {
                     if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
-                        throw new IllegalArgumentException("Argument: '" + requiredKey + "' must be set to " + ArgumentType.ATTRIBUTE + " type!");
+                        throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE.");
                     }
                     var dynamicSource = argument.getRefDynamicSource();
                     if (dynamicSource == null) {
                         continue;
                     }
                     if (!RELATION_QUERY.equals(dynamicSource)) {
-                        throw new IllegalArgumentException("Only relation query dynamic source is supported for argument: " + requiredKey);
+                        throw new IllegalArgumentException("Only relation query dynamic source is supported for argument: '" + argumentKey + "'.");
                     }
                     if (argument.getRefDynamicSourceConfiguration() == null) {
-                        throw new IllegalArgumentException("Missing dynamic source configuration for: " + requiredKey);
+                        throw new IllegalArgumentException("Missing dynamic source configuration for argument: '" + argumentKey + "'.");
                     }
                     argument.getRefDynamicSourceConfiguration().validate();
                 }

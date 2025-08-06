@@ -34,7 +34,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
     private boolean fetchLastLevelOnly;
     private EntitySearchDirection direction;
     private String relationType;
-    private List<EntityType> profiles;
+    private List<EntityType> entityTypes;
 
     @Override
     public CFArgumentDynamicSourceType getType() {
@@ -56,7 +56,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
 
     @Override
     public boolean isSimpleRelation() {
-        return maxLevel == 1 && (profiles == null || profiles.isEmpty());
+        return maxLevel == 1 && (entityTypes == null || entityTypes.isEmpty());
     }
 
     @Override
@@ -66,7 +66,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         }
         var entityRelationsQuery = new EntityRelationsQuery();
         entityRelationsQuery.setParameters(new RelationsSearchParameters(rootEntityId, direction, maxLevel, fetchLastLevelOnly));
-        entityRelationsQuery.setFilters(Collections.singletonList(new RelationEntityTypeFilter(relationType, profiles)));
+        entityRelationsQuery.setFilters(Collections.singletonList(new RelationEntityTypeFilter(relationType, entityTypes)));
         return entityRelationsQuery;
     }
 

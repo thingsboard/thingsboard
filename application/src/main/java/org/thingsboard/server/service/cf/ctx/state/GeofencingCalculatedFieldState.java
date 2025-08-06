@@ -18,6 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
@@ -31,12 +32,13 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ALLOWED_ZONES_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ALLOWED_ZONES_ARGUMENT_KEY;
 
 @Data
+@AllArgsConstructor
 public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
     private List<String> requiredArguments;
@@ -46,9 +48,8 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
     private long latestTimestamp = -1;
 
-
     public GeofencingCalculatedFieldState() {
-        this(List.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, ALLOWED_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY));
+        this(new ArrayList<>(), new HashMap<>(), false, -1);
     }
 
     public GeofencingCalculatedFieldState(List<String> argNames) {
@@ -112,8 +113,12 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
     @Override
     public ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx) {
-        List<CalculatedFieldResult> savedZonesStatesResults = updateGeofencingZonesState(ctx, false);
-        List<CalculatedFieldResult> restrictedZonesStatesResults = updateGeofencingZonesState(ctx, true);
+        double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
+        double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
+        Coordinates entityCoordinates = new Coordinates(latitude, longitude);
+
+        List<CalculatedFieldResult> savedZonesStatesResults = updateGeofencingZonesState(ctx, entityCoordinates, false);
+        List<CalculatedFieldResult> restrictedZonesStatesResults = updateGeofencingZonesState(ctx, entityCoordinates, true);
 
         List<CalculatedFieldResult> allZoneStatesResults =
                 new ArrayList<>(savedZonesStatesResults.size() + restrictedZonesStatesResults.size());
@@ -137,15 +142,15 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         }
     }
 
-    private List<CalculatedFieldResult> updateGeofencingZonesState(CalculatedFieldCtx ctx, boolean restricted) {
-        var results = new ArrayList<CalculatedFieldResult>();
-        double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
-        double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
-
-        Coordinates entityCoordinates = new Coordinates(latitude, longitude);
+    private List<CalculatedFieldResult> updateGeofencingZonesState(CalculatedFieldCtx ctx, Coordinates entityCoordinates, boolean restricted) {
         String zoneKey = restricted ? RESTRICTED_ZONES_ARGUMENT_KEY : ALLOWED_ZONES_ARGUMENT_KEY;
         GeofencingArgumentEntry zonesEntry = (GeofencingArgumentEntry) arguments.get(zoneKey);
 
+        if (zonesEntry == null) {
+            return List.of();
+        }
+
+        var results = new ArrayList<CalculatedFieldResult>();
         for (var zoneEntry : zonesEntry.getZoneStates().entrySet()) {
             GeofencingZoneState state = zoneEntry.getValue();
             String event = state.evaluate(entityCoordinates);

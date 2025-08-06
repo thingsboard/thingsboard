@@ -83,6 +83,9 @@ public class GeofencingZoneState {
 
     public String evaluate(Coordinates entityCoordinates) {
         boolean inside = perimeterDefinition.checkMatches(entityCoordinates);
+        // TODO: maybe handle this.inside == null as ENTERED or OUTSIDE.
+        //  Since if this.inside == null then we don't have a state for this zone yet
+        //  and logically say that we are OUTSIDE instead of LEFT.
         if (this.inside == null || this.inside != inside) {
             this.inside = inside;
             return inside ? GpsGeofencingEvents.ENTERED : GpsGeofencingEvents.LEFT;
