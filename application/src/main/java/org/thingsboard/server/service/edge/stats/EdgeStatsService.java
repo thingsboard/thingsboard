@@ -35,7 +35,7 @@ import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.Collections;
@@ -63,7 +63,7 @@ public class EdgeStatsService {
     private final TimeseriesService tsService;
     private final EdgeStatsCounterService statsCounterService;
     private final TopicService topicService;
-    private final Optional<TbKafkaAdmin> tbKafkaAdmin;
+    private final Optional<KafkaAdmin> kafkaAdmin;
 
     @Value("${edges.stats.ttl:30}")
     private int edgesStatsTtlDays;
@@ -81,12 +81,12 @@ public class EdgeStatsService {
         long ts = now - (now % reportIntervalMillis);
 
         Map<EdgeId, MsgCounters> countersByEdge = statsCounterService.getCounterByEdge();
-        Map<EdgeId, Long> lagByEdgeId = tbKafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
+        Map<EdgeId, Long> lagByEdgeId = kafkaAdmin.isPresent() ? getEdgeLagByEdgeId(countersByEdge) : Collections.emptyMap();
         Map<EdgeId, MsgCounters> countersByEdgeSnapshot = new HashMap<>(statsCounterService.getCounterByEdge());
         countersByEdgeSnapshot.forEach((edgeId, counters) -> {
             TenantId tenantId = counters.getTenantId();
 
-            if (tbKafkaAdmin.isPresent()) {
+            if (kafkaAdmin.isPresent()) {
                 counters.getMsgsLag().set(lagByEdgeId.getOrDefault(edgeId, 0L));
             }
             List<TsKvEntry> statsEntries = List.of(
@@ -109,7 +109,7 @@ public class EdgeStatsService {
                         e -> topicService.buildEdgeEventNotificationsTopicPartitionInfo(e.getValue().getTenantId(), e.getKey()).getTopic()
                 ));
 
-        Map<String, Long> lagByTopic = tbKafkaAdmin.get().getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));
+        Map<String, Long> lagByTopic = kafkaAdmin.get().getTotalLagForGroupsBulk(new HashSet<>(edgeToTopicMap.values()));
 
         return edgeToTopicMap.entrySet().stream()
                 .collect(Collectors.toMap(

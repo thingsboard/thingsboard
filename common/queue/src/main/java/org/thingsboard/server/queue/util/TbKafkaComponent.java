@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.queue.util;
 
-public interface TbEdgeQueueAdmin extends TbQueueAdmin {
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-    void syncEdgeNotificationsOffsets(String fatGroupId, String newGroupId);
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-}
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.METHOD})
+@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+public @interface TbKafkaComponent {}
