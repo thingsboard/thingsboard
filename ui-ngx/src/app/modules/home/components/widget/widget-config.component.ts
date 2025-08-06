@@ -372,8 +372,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.advancedSettings = this.fb.group({});
     if (widgetTypeCanHaveTimewindow(this.widgetType)) {
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
-        useDashboardTimewindow: this.widgetType !== widgetType.latest,
-        displayTimewindow: this.widgetType !== widgetType.latest,
+        useDashboardTimewindow: true,
+        displayTimewindow: true,
         timewindow: null,
         timewindowStyle: null
       }));
@@ -535,11 +535,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       );
       if (widgetTypeCanHaveTimewindow(this.widgetType)) {
         const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
-          config.useDashboardTimewindow : this.widgetType !== widgetType.latest;
+          config.useDashboardTimewindow : true;
         this.dataSettings.get('timewindowConfig').patchValue({
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
-            config.displayTimewindow : this.widgetType !== widgetType.latest,
+            config.displayTimewindow : true,
           timewindow: isDefinedAndNotNull(config.timewindow)
             ? config.timewindow
             : initModelFromDefaultTimewindow(null, this.widgetType === widgetType.latest, this.onlyHistoryTimewindow(),
