@@ -16,7 +16,11 @@
 package org.thingsboard.server.common.data.ai.provider;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.Builder;
 
+@Builder
 public record OpenAiProviderConfig(
+        String baseUrl,
+        String organizationId,
         @NotNull String apiKey
 ) implements AiProviderConfig {}
