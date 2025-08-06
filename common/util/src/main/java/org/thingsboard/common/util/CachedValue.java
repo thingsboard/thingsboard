@@ -23,8 +23,6 @@ import java.util.function.Supplier;
 
 public class CachedValue<V> {
 
-    private static final Object KEY = new Object();
-
     private final LoadingCache<Object, V> cache;
 
     public CachedValue(Supplier<V> supplier, long valueTtlMs) {
@@ -34,7 +32,7 @@ public class CachedValue<V> {
     }
 
     public V get() {
-        return cache.get(KEY);
+        return cache.get(this);
     }
 
 }
