@@ -53,7 +53,6 @@ import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_L
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PERMANENTLY_FAILED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_PUSHED;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
-import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.NETWORK_BANDWIDTH;
 
 @TbCoreComponent
 @ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
@@ -97,8 +96,7 @@ public class EdgeStatsService {
                     entry(ts, DOWNLINK_MSGS_PUSHED.getKey(), counters.getMsgsPushed().get()),
                     entry(ts, DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey(), counters.getMsgsPermanentlyFailed().get()),
                     entry(ts, DOWNLINK_MSGS_TMP_FAILED.getKey(), counters.getMsgsTmpFailed().get()),
-                    entry(ts, DOWNLINK_MSGS_LAG.getKey(), counters.getMsgsLag().get()),
-                    entry(ts, NETWORK_BANDWIDTH.getKey(), edgeStats.getNetworkBandwidth().get())
+                    entry(ts, DOWNLINK_MSGS_LAG.getKey(), counters.getMsgsLag().get())
             );
 
             log.trace("Reported Edge communication stats: {} tenantId - {}, edgeId - {}", statsEntries, tenantId, edgeId);

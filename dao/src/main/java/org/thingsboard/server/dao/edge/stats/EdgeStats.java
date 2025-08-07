@@ -18,16 +18,12 @@ package org.thingsboard.server.dao.edge.stats;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.concurrent.atomic.AtomicLong;
-
 @Data
 public class EdgeStats {
     private final MsgCounters msgCounters;
-    private final AtomicLong networkBandwidth;
 
     public EdgeStats(TenantId tenantId) {
         this.msgCounters = new MsgCounters(tenantId);
-        networkBandwidth = new AtomicLong();
     }
 
 }

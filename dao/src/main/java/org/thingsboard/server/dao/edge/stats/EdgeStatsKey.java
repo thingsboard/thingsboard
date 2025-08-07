@@ -23,8 +23,7 @@ public enum EdgeStatsKey {
     DOWNLINK_MSGS_PUSHED("downlinkMsgsPushed"),
     DOWNLINK_MSGS_PERMANENTLY_FAILED("downlinkMsgsPermanentlyFailed"),
     DOWNLINK_MSGS_TMP_FAILED("downlinkMsgsTmpFailed"),
-    DOWNLINK_MSGS_LAG("downlinkMsgsLag"),
-    NETWORK_BANDWIDTH("networkBandwidth");
+    DOWNLINK_MSGS_LAG("downlinkMsgsLag");
 
     private final String key;
 

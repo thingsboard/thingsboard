@@ -94,7 +94,6 @@ public class EdgeStatsTest {
         counters.getMsgsPermanentlyFailed().set(1);
         counters.getMsgsTmpFailed().set(0);
         counters.getMsgsLag().set(10);
-        edgeStats.getNetworkBandwidth().set(50);
 
         ConcurrentHashMap<EdgeId, EdgeStats> edgeStatsByEdge = new ConcurrentHashMap<>();
         edgeStatsByEdge.put(edgeId, edgeStats);
@@ -110,7 +109,7 @@ public class EdgeStatsTest {
 
         // then
         List<TsKvEntry> entries = captor.getValue();
-        Assertions.assertEquals(6, entries.size());
+        Assertions.assertEquals(5, entries.size());
 
         Map<String, Long> valuesByKey = entries.stream()
                 .collect(Collectors.toMap(TsKvEntry::getKey, e -> e.getLongValue().orElse(-1L)));

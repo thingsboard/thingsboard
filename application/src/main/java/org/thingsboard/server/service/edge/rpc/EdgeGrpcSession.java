@@ -202,11 +202,6 @@ public abstract class EdgeGrpcSession implements Closeable {
                             onDownlinkResponse(requestMsg.getDownlinkResponseMsg());
                         }
                     }
-                    if (requestMsg.getMsgType().equals(RequestMsgType.BANDWIDTH_TEST_RPC_MESSAGE)) {
-                        if (requestMsg.hasBandwidthTestMsg()) {
-                            handleBandwidthTestMsg(requestMsg.getBandwidthTestMsg());
-                        }
-                    }
                 }
             }
 
@@ -236,21 +231,6 @@ public abstract class EdgeGrpcSession implements Closeable {
                 }
             }
         };
-    }
-
-    private void handleBandwidthTestMsg(BandwidthTestMsg bandwidthTestMsg) {
-        long edgeTimestamp = bandwidthTestMsg.getTimestamp();
-        long cloudTimestamp = System.currentTimeMillis();
-        long rtt = cloudTimestamp - edgeTimestamp;
-
-        int payloadSizeBytes = bandwidthTestMsg.getPayload().size();
-        double rttSeconds = rtt > 0 ? (rtt / 1000.0) : 0.001;
-        double mbps = (payloadSizeBytes * 8) / (rttSeconds * 1_000_000);
-
-        long mbpsRounded = Math.round(mbps);
-
-        log.trace("[{}] Calculated RTT = {} ms, estimated bandwidth = {} mpbs", edge.getId(), rtt, mbps);
-        ctx.getStatsCounterService().ifPresent(statsCounter -> statsCounter.recordEvent(EdgeStatsKey.NETWORK_BANDWIDTH, tenantId, edge.getId(), mbpsRounded));
     }
 
     public void onConfigurationUpdate(Edge edge) {

@@ -41,7 +41,6 @@ public class EdgeStatsCounterService {
             case DOWNLINK_MSGS_PERMANENTLY_FAILED -> counters.getMsgsPermanentlyFailed().addAndGet(value);
             case DOWNLINK_MSGS_TMP_FAILED -> counters.getMsgsTmpFailed().addAndGet(value);
             case DOWNLINK_MSGS_LAG -> counters.getMsgsLag().set(value);
-            case NETWORK_BANDWIDTH -> edgeStats.getNetworkBandwidth().set(value);
         }
     }
 
@@ -50,10 +49,6 @@ public class EdgeStatsCounterService {
     }
 
     public void clear(EdgeId edgeId) {
-        edgeStatsByEdge.get(edgeId).getMsgCounters().clear();
-    }
-
-    public void remove(EdgeId edgeId) {
         edgeStatsByEdge.remove(edgeId);
     }
 
