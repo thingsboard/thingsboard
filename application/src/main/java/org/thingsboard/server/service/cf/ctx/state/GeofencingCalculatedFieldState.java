@@ -126,11 +126,35 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
                     .stream()
                     .map(zoneState -> zoneState.evaluate(entityCoordinates))
                     .collect(Collectors.toSet());
-            aggregateZoneGroupEvent(zoneEvents).ifPresent(event ->
-                    resultNode.put(zoneGroupConfig.getReportTelemetryPrefix() + "Event", event.name())
-            );
+            aggregateZoneGroupEvent(zoneEvents)
+                    .filter(geofencingEvent -> zoneGroupConfig.getReportEvents().contains(geofencingEvent))
+                    .ifPresent(event ->
+                            resultNode.put(zoneGroupConfig.getReportTelemetryPrefix() + "Event", event.name())
+                    );
         });
         return Futures.immediateFuture(List.of(new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode)));
+    }
+
+    @Override
+    public boolean isReady() {
+        return arguments.keySet().containsAll(requiredArguments) &&
+               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+    }
+
+    @Override
+    public void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize) {
+        if (!sizeExceedsLimit && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
+            arguments.clear();
+            sizeExceedsLimit = true;
+        }
+    }
+
+    // TODO: Create a new class field to not do this on each calculation.
+    private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
+        return arguments.entrySet()
+                .stream()
+                .filter(entry -> !coordinateKeys.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (GeofencingArgumentEntry) entry.getValue()));
     }
 
     private Optional<GeofencingEvent> aggregateZoneGroupEvent(Set<GeofencingEvent> zoneEvents) {
@@ -164,28 +188,6 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             return Optional.of(GeofencingEvent.INSIDE);
         }
         return Optional.empty();
-    }
-
-    @Override
-    public boolean isReady() {
-        return arguments.keySet().containsAll(requiredArguments) &&
-               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
-    }
-
-    @Override
-    public void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize) {
-        if (!sizeExceedsLimit && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
-            arguments.clear();
-            sizeExceedsLimit = true;
-        }
-    }
-
-    // TODO: Create a new class field to not do this on each calculation.
-    private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
-        return arguments.entrySet()
-                .stream()
-                .filter(entry -> !coordinateKeys.contains(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (GeofencingArgumentEntry) entry.getValue()));
     }
 
 }
