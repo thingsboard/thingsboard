@@ -20,7 +20,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.common.util.geo.PerimeterDefinition;
-import org.thingsboard.rule.engine.util.GpsGeofencingEvents;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -81,16 +81,20 @@ public class GeofencingZoneState {
         return false;
     }
 
-    public String evaluate(Coordinates entityCoordinates) {
+    public GeofencingEvent evaluate(Coordinates entityCoordinates) {
         boolean inside = perimeterDefinition.checkMatches(entityCoordinates);
-        // TODO: maybe handle this.inside == null as ENTERED or OUTSIDE.
-        //  Since if this.inside == null then we don't have a state for this zone yet
-        //  and logically say that we are OUTSIDE instead of LEFT.
-        if (this.inside == null || this.inside != inside) {
+        // Initial evaluation — no prior state
+        if (this.inside == null) {
             this.inside = inside;
-            return inside ? GpsGeofencingEvents.ENTERED : GpsGeofencingEvents.LEFT;
+            return inside ? GeofencingEvent.ENTERED : GeofencingEvent.OUTSIDE;
         }
-        return inside ? GpsGeofencingEvents.INSIDE : GpsGeofencingEvents.OUTSIDE;
+        // State changed
+        if (this.inside != inside) {
+            this.inside = inside;
+            return inside ? GeofencingEvent.ENTERED : GeofencingEvent.LEFT;
+        }
+        // State unchanged
+        return inside ? GeofencingEvent.INSIDE : GeofencingEvent.OUTSIDE;
     }
 
 }

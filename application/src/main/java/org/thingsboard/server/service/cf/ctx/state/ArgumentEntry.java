@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -61,8 +62,8 @@ public interface ArgumentEntry {
         return new TsRollingArgumentEntry(kvEntries, limit, timeWindow);
     }
 
-    static ArgumentEntry createGeofencingValueArgument(Map<EntityId, KvEntry> entityIdkvEntryMap) {
-        return new GeofencingArgumentEntry(entityIdkvEntryMap);
+    static ArgumentEntry createGeofencingValueArgument(Map<EntityId, KvEntry> entityIdkvEntryMap, GeofencingZoneGroupConfiguration zoneGroupConfiguration) {
+        return new GeofencingArgumentEntry(entityIdkvEntryMap, zoneGroupConfiguration);
     }
 
 }

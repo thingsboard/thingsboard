@@ -23,6 +23,7 @@ import lombok.Data;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
@@ -31,11 +32,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ALLOWED_ZONES_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.coordinateKeys;
 
 @Data
 @AllArgsConstructor
@@ -70,7 +73,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
         boolean stateUpdated = false;
 
-        for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
+        for (var entry : argumentValues.entrySet()) {
             String key = entry.getKey();
             ArgumentEntry newEntry = entry.getValue();
 
@@ -80,26 +83,22 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             boolean entryUpdated;
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
-                switch (key) {
-                    case ENTITY_ID_LATITUDE_ARGUMENT_KEY:
-                    case ENTITY_ID_LONGITUDE_ARGUMENT_KEY:
+                entryUpdated = switch (key) {
+                    case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
                         if (!(newEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry)) {
                             throw new IllegalArgumentException(key + " argument must be a single value argument.");
                         }
                         arguments.put(key, singleValueArgumentEntry);
-                        entryUpdated = true;
-                        break;
-                    case ALLOWED_ZONES_ARGUMENT_KEY:
-                    case RESTRICTED_ZONES_ARGUMENT_KEY:
+                        yield true;
+                    }
+                    default -> {
                         if (!(newEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
                             throw new IllegalArgumentException(key + " argument must be a geofencing argument entry.");
                         }
                         arguments.put(key, geofencingArgumentEntry);
-                        entryUpdated = true;
-                        break;
-                    default:
-                        throw new IllegalArgumentException("Unsupported argument: " + key);
-                }
+                        yield true;
+                    }
+                };
             } else {
                 entryUpdated = existingEntry.updateEntry(newEntry);
             }
@@ -111,21 +110,60 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
     }
 
 
+    // TODO: Probably returning list of CalculatedFieldResult no needed anymore,
+    //  since logic changed to use zone groups with telemetry prefix.
     @Override
     public ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx) {
         double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
 
-        List<CalculatedFieldResult> savedZonesStatesResults = updateGeofencingZonesState(ctx, entityCoordinates, false);
-        List<CalculatedFieldResult> restrictedZonesStatesResults = updateGeofencingZonesState(ctx, entityCoordinates, true);
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
+            var zoneGroupConfig = argumentEntry.getZoneGroupConfiguration();
+            Set<GeofencingEvent> zoneEvents = argumentEntry.getZoneStates()
+                    .values()
+                    .stream()
+                    .map(zoneState -> zoneState.evaluate(entityCoordinates))
+                    .collect(Collectors.toSet());
+            aggregateZoneGroupEvent(zoneEvents).ifPresent(event ->
+                    resultNode.put(zoneGroupConfig.getReportTelemetryPrefix() + "Event", event.name())
+            );
+        });
+        return Futures.immediateFuture(List.of(new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode)));
+    }
 
-        List<CalculatedFieldResult> allZoneStatesResults =
-                new ArrayList<>(savedZonesStatesResults.size() + restrictedZonesStatesResults.size());
-        allZoneStatesResults.addAll(savedZonesStatesResults);
-        allZoneStatesResults.addAll(restrictedZonesStatesResults);
+    private Optional<GeofencingEvent> aggregateZoneGroupEvent(Set<GeofencingEvent> zoneEvents) {
+        boolean hasEntered = false;
+        boolean hasLeft = false;
+        boolean hasInside = false;
+        boolean hasOutside = false;
 
-        return Futures.immediateFuture(allZoneStatesResults);
+        for (GeofencingEvent event : zoneEvents) {
+            if (event == null) {
+                continue;
+            }
+            switch (event) {
+                case ENTERED -> hasEntered = true;
+                case LEFT -> hasLeft = true;
+                case INSIDE -> hasInside = true;
+                case OUTSIDE -> hasOutside = true;
+            }
+        }
+
+        if (hasOutside && !hasInside && !hasEntered && !hasLeft) {
+            return Optional.of(GeofencingEvent.OUTSIDE);
+        }
+        if (hasLeft && !hasEntered && !hasInside) {
+            return Optional.of(GeofencingEvent.LEFT);
+        }
+        if (hasEntered && !hasLeft && !hasInside) {
+            return Optional.of(GeofencingEvent.ENTERED);
+        }
+        if (hasInside || hasEntered) {
+            return Optional.of(GeofencingEvent.INSIDE);
+        }
+        return Optional.empty();
     }
 
     @Override
@@ -142,26 +180,12 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         }
     }
 
-    private List<CalculatedFieldResult> updateGeofencingZonesState(CalculatedFieldCtx ctx, Coordinates entityCoordinates, boolean restricted) {
-        String zoneKey = restricted ? RESTRICTED_ZONES_ARGUMENT_KEY : ALLOWED_ZONES_ARGUMENT_KEY;
-        GeofencingArgumentEntry zonesEntry = (GeofencingArgumentEntry) arguments.get(zoneKey);
-
-        if (zonesEntry == null) {
-            return List.of();
-        }
-
-        var results = new ArrayList<CalculatedFieldResult>();
-        for (var zoneEntry : zonesEntry.getZoneStates().entrySet()) {
-            GeofencingZoneState state = zoneEntry.getValue();
-            String event = state.evaluate(entityCoordinates);
-            ObjectNode stateNode = JacksonUtil.newObjectNode();
-            stateNode.put("entityId", ctx.getEntityId().toString());
-            stateNode.put("zoneId", state.getZoneId().toString());
-            stateNode.put("restricted", restricted);
-            stateNode.put("event", event);
-            results.add(new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), stateNode));
-        }
-        return results;
+    // TODO: Create a new class field to not do this on each calculation.
+    private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
+        return arguments.entrySet()
+                .stream()
+                .filter(entry -> !coordinateKeys.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (GeofencingArgumentEntry) entry.getValue()));
     }
 
 }

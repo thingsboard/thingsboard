@@ -35,6 +35,8 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -95,8 +97,6 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.RESTRICTED_ZONES_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ALLOWED_ZONES_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
@@ -132,16 +132,17 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
 
         if (ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
-            // Ignoring any other arguments except ENTITY_ID_LATITUDE_ARGUMENT_KEY,
-            // ENTITY_ID_LONGITUDE_ARGUMENT_KEY, SAVE_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY.
+            var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+            var zoneGroupConfigs = configuration.getGeofencingZoneGroupConfigurations();
             for (var entry : ctx.getArguments().entrySet()) {
                 switch (entry.getKey()) {
                     case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY ->
                             argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), resolveEntityId(entityId, entry), entry.getValue()));
-                    case ALLOWED_ZONES_ARGUMENT_KEY, RESTRICTED_ZONES_ARGUMENT_KEY -> {
+                    default -> {
+                        var zoneGroupConfiguration = zoneGroupConfigs.get(entry.getKey());
                         var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
                         argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
-                                fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue()), calculatedFieldCallbackExecutor));
+                                fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue(), zoneGroupConfiguration), calculatedFieldCallbackExecutor));
                     }
                 }
             }
@@ -304,7 +305,8 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         };
     }
 
-    private ListenableFuture<ArgumentEntry> fetchGeofencingKvEntry(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument) {
+    private ListenableFuture<ArgumentEntry> fetchGeofencingKvEntry(TenantId tenantId, List<EntityId> geofencingEntities,
+                                                                   Argument argument, GeofencingZoneGroupConfiguration zoneGroupConfiguration) {
         if (argument.getRefEntityKey().getType() != ArgumentType.ATTRIBUTE) {
             throw new IllegalStateException("Unsupported argument key type: " + argument.getRefEntityKey().getType());
         }
@@ -326,7 +328,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         ListenableFuture<List<Map.Entry<EntityId, AttributeKvEntry>>> allFutures = Futures.allAsList(kvFutures);
 
         return Futures.transform(allFutures, entries -> ArgumentEntry.createGeofencingValueArgument(entries.stream()
-                        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))),
+                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue)), zoneGroupConfiguration),
                 calculatedFieldCallbackExecutor
         );
     }

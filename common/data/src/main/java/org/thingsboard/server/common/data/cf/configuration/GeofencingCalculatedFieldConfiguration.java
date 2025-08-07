@@ -17,10 +17,14 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType.RELATION_QUERY;
 
@@ -30,20 +34,13 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
 
     public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
     public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
-    public static final String ALLOWED_ZONES_ARGUMENT_KEY = "allowedZones";
-    public static final String RESTRICTED_ZONES_ARGUMENT_KEY = "restrictedZones";
 
-    private static final Set<String> allowedKeys = Set.of(
-            ENTITY_ID_LATITUDE_ARGUMENT_KEY,
-            ENTITY_ID_LONGITUDE_ARGUMENT_KEY,
-            ALLOWED_ZONES_ARGUMENT_KEY,
-            RESTRICTED_ZONES_ARGUMENT_KEY
-    );
-
-    private static final Set<String> requiredKeys = Set.of(
+    public static final Set<String> coordinateKeys = Set.of(
             ENTITY_ID_LATITUDE_ARGUMENT_KEY,
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
+
+    Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
 
     @Override
     public CalculatedFieldType getType() {
@@ -56,74 +53,100 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         if (arguments == null) {
             throw new IllegalArgumentException("Geofencing calculated field arguments are empty!");
         }
-
-        // Check key count
-        if (arguments.size() < 3 || arguments.size() > 4) {
-            throw new IllegalArgumentException("Geofencing calculated field must contain 3 or 4 arguments: " + allowedKeys);
+        if (arguments.size() < 3) {
+            throw new IllegalArgumentException("Geofencing calculated field must contain at least 3 arguments!");
         }
+        if (arguments.size() > 5) {
+            throw new IllegalArgumentException("Geofencing calculated field size exceeds limit of 5 arguments!");
+        }
+        validateCoordinateArguments();
 
-        // Check for unsupported argument keys
-        for (String key : arguments.keySet()) {
-            if (!allowedKeys.contains(key)) {
-                throw new IllegalArgumentException("Unsupported argument key: '" + key + "'. Allowed keys: " + allowedKeys);
+        Map<String, Argument> zoneGroupsArguments = getZoneGroupArguments();
+        if (zoneGroupsArguments.isEmpty()) {
+            throw new IllegalArgumentException("Geofencing calculated field must contain at least one geofencing zone group defined!");
+        }
+        validateZoneGroupAruguments(zoneGroupsArguments);
+        validateZoneGroupConfigurations(zoneGroupsArguments);
+    }
+
+    private void validateZoneGroupConfigurations(Map<String, Argument> zoneGroupsArguments) {
+        if (geofencingZoneGroupConfigurations == null) {
+            throw new IllegalArgumentException("Geofencing calculated field zone group configurations are empty!");
+        }
+        Set<String> usedPrefixes = new HashSet<>();
+        geofencingZoneGroupConfigurations.forEach((zoneGroupName, config) -> {
+            Argument zoneGroupArgument = zoneGroupsArguments.get(zoneGroupName);
+            if (zoneGroupArgument == null) {
+                throw new IllegalArgumentException("Geofencing calculated field zone group configuration is not configured for zone group: " + zoneGroupName);
             }
-        }
-
-        // Check required fields: latitude and longitude
-        for (String requiredKey : requiredKeys) {
-            if (!arguments.containsKey(requiredKey)) {
-                throw new IllegalArgumentException("Missing required argument: " + requiredKey);
+            if (config == null) {
+                throw new IllegalArgumentException("Zone group configuration is not configured for zone group: " + zoneGroupName);
             }
-        }
+            if (CollectionsUtil.isEmpty(config.getReportEvents())) {
+                throw new IllegalArgumentException("Zone group configuration report events must be specified for zone group: " + zoneGroupName);
+            }
+            String prefix = config.getReportTelemetryPrefix();
+            if (StringUtils.isBlank(prefix)) {
+                throw new IllegalArgumentException("Report telemetry prefix should be specified for zone group: " + zoneGroupName);
+            }
+            if (!usedPrefixes.add(prefix)) {
+                throw new IllegalArgumentException("Duplicate report telemetry prefix found: '" + prefix + "'. Must be unique!");
+            }
+        });
+    }
 
-        // Ensure at least one of the zone types is configured
-        boolean hasAllowedZones = arguments.containsKey(ALLOWED_ZONES_ARGUMENT_KEY);
-        boolean hasRestrictedZones = arguments.containsKey(RESTRICTED_ZONES_ARGUMENT_KEY);
-
-        if (!hasAllowedZones && !hasRestrictedZones) {
-            throw new IllegalArgumentException("Geofencing calculated field must contain at least one of the following arguments: 'allowedZones' or 'restrictedZones'");
-        }
-
-        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
-            String argumentKey = entry.getKey();
-            Argument argument = entry.getValue();
+    private void validateCoordinateArguments() {
+        for (String coordinateKey : coordinateKeys) {
+            Argument argument = arguments.get(coordinateKey);
             if (argument == null) {
-                throw new IllegalArgumentException("Missing required argument: " + argumentKey);
+                throw new IllegalArgumentException("Missing required coordinates argument: " + coordinateKey);
             }
-            ReferencedEntityKey refEntityKey = argument.getRefEntityKey();
-            if (refEntityKey == null || refEntityKey.getType() == null) {
-                throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + argumentKey);
+            ReferencedEntityKey refEntityKey = validateAndGetRefEntityKey(argument, coordinateKey);
+            if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
+                throw new IllegalArgumentException("Argument '" + coordinateKey + "' must be of type TS_LATEST.");
             }
-
-            switch (argumentKey) {
-                case ENTITY_ID_LATITUDE_ARGUMENT_KEY,
-                     ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
-                    if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
-                        throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type TS_LATEST.");
-                    }
-                    if (argument.getRefDynamicSource() != null) {
-                        throw new IllegalArgumentException("Dynamic source is not allowed for argument: '" + argumentKey + "'.");
-                    }
-                }
-                case ALLOWED_ZONES_ARGUMENT_KEY,
-                     RESTRICTED_ZONES_ARGUMENT_KEY -> {
-                    if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
-                        throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE.");
-                    }
-                    var dynamicSource = argument.getRefDynamicSource();
-                    if (dynamicSource == null) {
-                        continue;
-                    }
-                    if (!RELATION_QUERY.equals(dynamicSource)) {
-                        throw new IllegalArgumentException("Only relation query dynamic source is supported for argument: '" + argumentKey + "'.");
-                    }
-                    if (argument.getRefDynamicSourceConfiguration() == null) {
-                        throw new IllegalArgumentException("Missing dynamic source configuration for argument: '" + argumentKey + "'.");
-                    }
-                    argument.getRefDynamicSourceConfiguration().validate();
-                }
+            if (argument.getRefDynamicSource() != null) {
+                throw new IllegalArgumentException("Dynamic source is not allowed for argument: '" + coordinateKey + "'.");
             }
         }
+    }
+
+    private void validateZoneGroupAruguments(Map<String, Argument> zoneGroupsArguments) {
+        zoneGroupsArguments.forEach((argumentKey, argument) -> {
+            if (argument == null) {
+                throw new IllegalArgumentException("Zone group argument is not configured: " + argumentKey);
+            }
+            ReferencedEntityKey refEntityKey = validateAndGetRefEntityKey(argument, argumentKey);
+            if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
+                throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE.");
+            }
+            var dynamicSource = argument.getRefDynamicSource();
+            if (dynamicSource == null) {
+                return;
+            }
+            if (!RELATION_QUERY.equals(dynamicSource)) {
+                throw new IllegalArgumentException("Only relation query dynamic source is supported for argument: '" + argumentKey + "'.");
+            }
+            if (argument.getRefDynamicSourceConfiguration() == null) {
+                throw new IllegalArgumentException("Missing dynamic source configuration for argument: '" + argumentKey + "'.");
+            }
+            argument.getRefDynamicSourceConfiguration().validate();
+        });
+    }
+
+    private Map<String, Argument> getZoneGroupArguments() {
+        return arguments.entrySet()
+                .stream()
+                .filter(entry -> !coordinateKeys.contains(entry.getKey()))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+    }
+
+    private static ReferencedEntityKey validateAndGetRefEntityKey(Argument argument, String argumentKey) {
+        ReferencedEntityKey refEntityKey = argument.getRefEntityKey();
+        if (refEntityKey == null || refEntityKey.getType() == null) {
+            throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + argumentKey);
+        }
+        return refEntityKey;
     }
 
 }
