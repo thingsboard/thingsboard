@@ -742,9 +742,9 @@ redis:
     # Minumum number of idle connections that can be maintained in the pool without being closed
     minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
     # Enable/Disable PING command sent when a connection is borrowed
-    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:false}"
     # The property is used to specify whether to test the connection before returning it to the connection pool.
-    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:false}"
     # The property is used in the context of connection pooling in Redis
     testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
     # Minimum time that an idle connection should be idle before it can be evicted from the connection pool. The value is set in milliseconds
@@ -1491,6 +1491,13 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
+  stats:
+    # Enable or disable reporting of edge communication stats (true or false)
+    enabled: "${EDGES_STATS_ENABLED:true}"
+    # Time-to-live in days for stored edge communication stats in timeseries
+    ttl: "${EDGES_STATS_TTL:30}"
+    # How often to report edge communication stats in milliseconds
+    report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:600000}"
 
 # Spring doc common parameters
 springdoc:

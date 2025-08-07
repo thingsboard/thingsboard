@@ -55,12 +55,6 @@
 }
 
 :host ::ng-deep {
-  .mat-mdc-standard-chip {
-    .mdc-evolution-chip__cell--primary, .mdc-evolution-chip__action--primary, .mdc-evolution-chip__text-label {
-      overflow: hidden;
-    }
-  }
-
   .arguments-table:not(.arguments-table-with-error) {
     .mdc-data-table__row:last-child .mat-mdc-cell {
       border-bottom: none;

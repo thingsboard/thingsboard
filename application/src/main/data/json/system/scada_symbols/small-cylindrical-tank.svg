@@ -534,7 +534,7 @@
  </g><g transform="translate(-201,6)" filter="url(#filter0_ii_1694_158298)" tb:tag="value-box">
   <path d="m381 272c0-6.627 5.373-12 12-12h216c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-216c-6.627 0-12-5.373-12-12z" fill="#f3f3f3" tb:tag="value-box-background"/>
   <path d="m382.5 272c0-5.799 4.701-10.5 10.5-10.5h216c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-216c-5.799 0-10.5-4.701-10.5-10.5z" stroke="#727171" stroke-width="3"/>
-  <text x="500.74219" y="300.07812" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan dominant-baseline="middle">1660 gal</tspan></text>
+  <text x="500.74219" y="300.07812" fill="#727171" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><path d="m201.79 0s-201.79 0-201.79 100.5v492.54c0 3.9768 5.3726 6.9606 12 6.9606h576c6.627 0 12-2.9838 12-6.9606v-492.54c0-100.5-198.21-100.5-198.21-100.5h-101.79zm201.21 121.8c-3.866 0-7 1.8804-7 4.2v450.6c0 2.3196 3.134 4.2 7 4.2h44c3.866 0 7-1.8804 7-4.2v-450.6c0-2.3196-3.134-4.2-7-4.2z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><defs>
   <pattern id="pattern17033" patternTransform="translate(-79.813 574.69)" xlink:href="#liquid"/>
   <linearGradient id="paint0_linear_2901_184349" x1="600" x2=".019179" y1="110.96" y2="104.56" gradientUnits="userSpaceOnUse">
