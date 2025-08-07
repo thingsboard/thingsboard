@@ -80,7 +80,7 @@
           {{ 'entity.key' | translate }}
         </mat-header-cell>
         <mat-cell *matCellDef="let argument" class="w-1/4 xs:w-1/3">
-          <mat-chip>
+          <mat-chip class="tb-chip-row-ellipsis">
             <div tbTruncateWithTooltip class="key-text">{{ argument.refEntityKey.key }}</div>
           </mat-chip>
         </mat-cell>

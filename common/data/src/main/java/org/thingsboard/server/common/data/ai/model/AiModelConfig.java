@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
         property = "provider",
         visible = true
 )
