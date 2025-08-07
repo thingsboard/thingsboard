@@ -24,9 +24,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.server.common.data.edqs.EdqsState;
@@ -71,8 +69,7 @@ public class EntityQueryController extends BaseController {
 
     @ApiOperation(value = "Count Entities by Query", notes = ENTITY_COUNT_QUERY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/count", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/entitiesQuery/count")
     public long countEntitiesByQuery(
             @Parameter(description = "A JSON value representing the entity count query. See API call notes above for more details.")
             @RequestBody EntityCountQuery query) throws ThingsboardException {
@@ -83,8 +80,7 @@ public class EntityQueryController extends BaseController {
 
     @ApiOperation(value = "Find Entity Data by Query", notes = ENTITY_DATA_QUERY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/find", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/entitiesQuery/find")
     public PageData<EntityData> findEntityDataByQuery(
             @Parameter(description = "A JSON value representing the entity data query. See API call notes above for more details.")
             @RequestBody EntityDataQuery query) throws ThingsboardException {
@@ -95,8 +91,7 @@ public class EntityQueryController extends BaseController {
 
     @ApiOperation(value = "Find Alarms by Query", notes = ALARM_DATA_QUERY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/alarmsQuery/find", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/alarmsQuery/find")
     public PageData<AlarmData> findAlarmDataByQuery(
             @Parameter(description = "A JSON value representing the alarm data query. See API call notes above for more details.")
             @RequestBody AlarmDataQuery query) throws ThingsboardException {
@@ -112,8 +107,7 @@ public class EntityQueryController extends BaseController {
 
     @ApiOperation(value = "Count Alarms by Query (countAlarmsByQuery)", notes = "Returns the number of alarms that match the query definition.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/alarmsQuery/count", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/alarmsQuery/count")
     public long countAlarmsByQuery(@Parameter(description = "A JSON value representing the alarm count query.")
                                    @RequestBody AlarmCountQuery query) throws ThingsboardException {
         checkNotNull(query);
@@ -128,8 +122,7 @@ public class EntityQueryController extends BaseController {
     @ApiOperation(value = "Find Entity Keys by Query",
             notes = "Uses entity data query (see 'Find Entity Data by Query') to find first 100 entities. Then fetch and return all unique time-series and/or attribute keys. Used mostly for UI hints.")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/entitiesQuery/find/keys", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/entitiesQuery/find/keys")
     public DeferredResult<ResponseEntity> findEntityTimeseriesAndAttributesKeysByQuery(
             @Parameter(description = "A JSON value representing the entity data query. See API call notes above for more details.")
             @RequestBody EntityDataQuery query,

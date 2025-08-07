@@ -129,7 +129,7 @@ public class AdminController extends BaseController {
             @Parameter(description = "A string value of the key (e.g. 'general' or 'mail').")
             @PathVariable("key") String key) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
+        AdminSettings adminSettings = checkNotNull(adminSettingsService.findAdminSettingsByTenantIdAndKey(TenantId.SYS_TENANT_ID, key), "No Administration settings found for key: " + key);
         if (adminSettings.getKey().equals(MAIL_SETTINGS_KEY)) {
             ((ObjectNode) adminSettings.getJsonValue()).remove("password");
             ((ObjectNode) adminSettings.getJsonValue()).remove("refreshToken");

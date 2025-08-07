@@ -22,12 +22,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -85,8 +86,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Fetch the Device Profile object based on the provided Device Profile Id. " +
                     "The server checks that the device profile is owned by the same tenant. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/{deviceProfileId}")
     public DeviceProfile getDeviceProfileById(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId,
@@ -105,8 +105,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Fetch the Device Profile Info object based on the provided Device Profile Id. "
                     + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfo/{deviceProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfo/{deviceProfileId}")
     public DeviceProfileInfo getDeviceProfileInfoById(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
@@ -119,8 +118,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Fetch the Default Device Profile Info object. " +
                     DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfo/default", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfo/default")
     public DeviceProfileInfo getDefaultDeviceProfileInfo() throws ThingsboardException {
         return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
     }
@@ -132,8 +130,7 @@ public class DeviceProfileController extends BaseController {
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/devices/keys/timeseries", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/devices/keys/timeseries")
     public List<String> getTimeseriesKeys(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
@@ -155,8 +152,7 @@ public class DeviceProfileController extends BaseController {
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/devices/keys/attributes", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/devices/keys/attributes")
     public List<String> getAttributesKeys(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @RequestParam(name = DEVICE_PROFILE_ID, required = false) String deviceProfileIdStr) throws ThingsboardException {
@@ -180,8 +176,7 @@ public class DeviceProfileController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Device Profile entity. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/deviceProfile")
     public DeviceProfile saveDeviceProfile(
             @Parameter(description = "A JSON value representing the device profile.")
             @RequestBody DeviceProfile deviceProfile) throws Exception {
@@ -194,7 +189,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Deletes the device profile. Referencing non-existing device profile Id will cause an error. " +
                     "Can't delete the device profile if it is referenced by existing devices." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/{deviceProfileId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/deviceProfile/{deviceProfileId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteDeviceProfile(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
@@ -208,8 +203,7 @@ public class DeviceProfileController extends BaseController {
     @ApiOperation(value = "Make Device Profile Default (setDefaultDeviceProfile)",
             notes = "Marks device profile as default within a tenant scope." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfile/{deviceProfileId}/default", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/deviceProfile/{deviceProfileId}/default")
     public DeviceProfile setDefaultDeviceProfile(
             @Parameter(description = DEVICE_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_PROFILE_ID) String strDeviceProfileId) throws ThingsboardException {
@@ -224,8 +218,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a page of devices profile objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/deviceProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfiles", params = {"pageSize", "page"})
     public PageData<DeviceProfile> getDeviceProfiles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -245,8 +238,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a page of devices profile info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + DEVICE_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfileInfos", params = {"pageSize", "page"})
     public PageData<DeviceProfileInfo> getDeviceProfileInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -268,8 +260,7 @@ public class DeviceProfileController extends BaseController {
             notes = "Returns a set of unique device profile names owned by the tenant."
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/deviceProfile/names", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/deviceProfile/names")
     public List<EntityInfo> getDeviceProfileNames(
             @Parameter(description = "Flag indicating whether to retrieve exclusively the names of device profiles that are referenced by tenant's devices.")
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException {

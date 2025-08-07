@@ -57,7 +57,6 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.BRANCH_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
@@ -513,7 +512,7 @@ public class EntitiesVersionControlController extends BaseController {
                 infos.add(defaultBranch);
             }
             infos.addAll(remoteBranches.stream().filter(b -> !b.equals(defaultBranch))
-                    .map(b -> new BranchInfo(b.getName(), false)).collect(Collectors.toList()));
+                    .map(b -> new BranchInfo(b.getName(), false)).toList());
             return infos;
         }, MoreExecutors.directExecutor()));
     }

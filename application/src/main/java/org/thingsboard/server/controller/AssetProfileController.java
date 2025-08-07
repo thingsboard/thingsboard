@@ -21,12 +21,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -77,8 +78,7 @@ public class AssetProfileController extends BaseController {
             notes = "Fetch the Asset Profile object based on the provided Asset Profile Id. " +
                     "The server checks that the asset profile is owned by the same tenant. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/assetProfile/{assetProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfile/{assetProfileId}")
     public AssetProfile getAssetProfileById(
             @Parameter(description = ASSET_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId,
@@ -97,8 +97,7 @@ public class AssetProfileController extends BaseController {
             notes = "Fetch the Asset Profile Info object based on the provided Asset Profile Id. "
                     + ASSET_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assetProfileInfo/{assetProfileId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfileInfo/{assetProfileId}")
     public AssetProfileInfo getAssetProfileInfoById(
             @Parameter(description = ASSET_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId) throws ThingsboardException {
@@ -111,8 +110,7 @@ public class AssetProfileController extends BaseController {
             notes = "Fetch the Default Asset Profile Info object. " +
                     ASSET_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assetProfileInfo/default", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfileInfo/default")
     public AssetProfileInfo getDefaultAssetProfileInfo() throws ThingsboardException {
         return checkNotNull(assetProfileService.findDefaultAssetProfileInfo(getTenantId()));
     }
@@ -126,8 +124,7 @@ public class AssetProfileController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Asset Profile entity. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/assetProfile", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/assetProfile")
     public AssetProfile saveAssetProfile(
             @Parameter(description = "A JSON value representing the asset profile.")
             @RequestBody AssetProfile assetProfile) throws Exception {
@@ -140,7 +137,7 @@ public class AssetProfileController extends BaseController {
             notes = "Deletes the asset profile. Referencing non-existing asset profile Id will cause an error. " +
                     "Can't delete the asset profile if it is referenced by existing assets." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/assetProfile/{assetProfileId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/assetProfile/{assetProfileId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteAssetProfile(
             @Parameter(description = ASSET_PROFILE_ID_PARAM_DESCRIPTION)
@@ -154,8 +151,7 @@ public class AssetProfileController extends BaseController {
     @ApiOperation(value = "Make Asset Profile Default (setDefaultAssetProfile)",
             notes = "Marks asset profile as default within a tenant scope." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/assetProfile/{assetProfileId}/default", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/assetProfile/{assetProfileId}/default")
     public AssetProfile setDefaultAssetProfile(
             @Parameter(description = ASSET_PROFILE_ID_PARAM_DESCRIPTION)
             @PathVariable(ASSET_PROFILE_ID) String strAssetProfileId) throws ThingsboardException {
@@ -170,8 +166,7 @@ public class AssetProfileController extends BaseController {
             notes = "Returns a page of asset profile objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/assetProfiles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfiles", params = {"pageSize", "page"})
     public PageData<AssetProfile> getAssetProfiles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -191,8 +186,7 @@ public class AssetProfileController extends BaseController {
             notes = "Returns a page of asset profile info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + ASSET_PROFILE_INFO_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assetProfileInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfileInfos", params = {"pageSize", "page"})
     public PageData<AssetProfileInfo> getAssetProfileInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -212,8 +206,7 @@ public class AssetProfileController extends BaseController {
             notes = "Returns a set of unique asset profile names owned by the tenant."
                     + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/assetProfile/names", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/assetProfile/names")
     public List<EntityInfo> getAssetProfileNames(
             @Parameter(description = "Flag indicating whether to retrieve exclusively the names of asset profiles that are referenced by tenant's assets.")
             @RequestParam(value = "activeOnly", required = false, defaultValue = "false") boolean activeOnly) throws ThingsboardException {

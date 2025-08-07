@@ -231,8 +231,8 @@ public class AuthController extends BaseController {
                     "If token is not valid, returns '400 Bad Request'.")
     @PostMapping(value = "/noauth/resetPassword")
     public void resetPassword(@Parameter(description = "Reset password request.")
-                                 @RequestBody ResetPasswordRequest resetPasswordRequest,
-                                 HttpServletRequest request) throws ThingsboardException {
+                              @RequestBody ResetPasswordRequest resetPasswordRequest,
+                              HttpServletRequest request) throws ThingsboardException {
         String resetToken = resetPasswordRequest.getResetToken();
         String password = resetPasswordRequest.getPassword();
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);

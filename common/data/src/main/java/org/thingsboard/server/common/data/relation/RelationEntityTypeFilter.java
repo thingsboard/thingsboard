@@ -21,9 +21,6 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.List;
 
-/**
- * Created by ashvayka on 02.05.17.
- */
 @Data
 @Schema
 public class RelationEntityTypeFilter {

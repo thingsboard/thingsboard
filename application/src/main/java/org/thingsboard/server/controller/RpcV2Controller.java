@@ -25,12 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.springframework.web.server.ResponseStatusException;
@@ -122,8 +123,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @ApiResponse(responseCode = "504", description = "Timeout to process the RPC call. Most likely, device is offline."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/oneway/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/oneway/{deviceId}")
     public DeferredResult<ResponseEntity> handleOneWayDeviceRPCRequest(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable("deviceId") String deviceIdStr,
@@ -141,8 +141,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @ApiResponse(responseCode = "504", description = "Timeout to process the RPC call. Most likely, device is offline."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/twoway/{deviceId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/twoway/{deviceId}")
     public DeferredResult<ResponseEntity> handleTwoWayDeviceRPCRequest(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
             @PathVariable(DEVICE_ID) String deviceIdStr,
@@ -153,8 +152,7 @@ public class RpcV2Controller extends AbstractRpcController {
 
     @ApiOperation(value = "Get persistent RPC request", notes = "Get information about the status of the RPC call." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/persistent/{rpcId}")
     public Rpc getPersistedRpc(
             @Parameter(description = RPC_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(RPC_ID) String strRpc) throws ThingsboardException {
@@ -165,8 +163,7 @@ public class RpcV2Controller extends AbstractRpcController {
 
     @ApiOperation(value = "Get persistent RPC requests", notes = "Allows to query RPC calls for specific device using pagination." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/persistent/device/{deviceId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/persistent/device/{deviceId}")
     public DeferredResult<ResponseEntity> getPersistedRpcByDevice(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(DEVICE_ID) String strDeviceId,
@@ -220,8 +217,7 @@ public class RpcV2Controller extends AbstractRpcController {
 
     @ApiOperation(value = "Delete persistent RPC", notes = "Deletes the persistent RPC request." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/persistent/{rpcId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/persistent/{rpcId}")
     public void deleteRpc(
             @Parameter(description = RPC_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(RPC_ID) String strRpc) throws ThingsboardException {
@@ -248,4 +244,5 @@ public class RpcV2Controller extends AbstractRpcController {
             tbClusterService.pushMsgToRuleEngine(getTenantId(), rpc.getDeviceId(), msg, null);
         }
     }
+
 }
