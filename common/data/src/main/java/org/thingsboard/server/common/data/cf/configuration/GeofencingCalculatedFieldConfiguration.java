@@ -40,7 +40,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
 
-    Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
+    private Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
 
     @Override
     public CalculatedFieldType getType() {

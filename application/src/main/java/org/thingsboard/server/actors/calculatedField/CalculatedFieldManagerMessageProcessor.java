@@ -124,7 +124,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         log.debug("[{}] Processing CF actor init message.", msg.getTenantId().getId());
         initEntityProfileCache();
         initCalculatedFields();
-        // TODO: implement cache for 1:1 relations to use in the CFs that based on a relation queries?
         msg.getCallback().onSuccess();
     }
 
