@@ -55,7 +55,7 @@ public interface CalculatedFieldState {
 
     boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
 
-    ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();

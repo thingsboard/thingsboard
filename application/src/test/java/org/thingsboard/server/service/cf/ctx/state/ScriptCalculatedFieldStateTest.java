@@ -78,7 +78,7 @@ public class ScriptCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
-        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService, apiLimitService);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService, apiLimitService, null);
         ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getArgNames());
     }
@@ -125,10 +125,9 @@ public class ScriptCalculatedFieldStateTest {
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx).get();
 
-        assertThat(resultList).isNotNull().hasSize(1);
-        CalculatedFieldResult result = resultList.get(0);
+        assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());

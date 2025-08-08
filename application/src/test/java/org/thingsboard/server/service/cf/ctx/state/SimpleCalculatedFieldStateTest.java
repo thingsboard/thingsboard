@@ -42,7 +42,6 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
@@ -72,7 +71,7 @@ public class SimpleCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
-        ctx = new CalculatedFieldCtx(getCalculatedField(), null, apiLimitService);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), null, apiLimitService, null);
         ctx.init();
         state = new SimpleCalculatedFieldState(ctx.getArgNames());
     }
@@ -135,10 +134,9 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx).get();
 
-        assertThat(resultList).isNotNull().hasSize(1);
-        CalculatedFieldResult result = resultList.get(0);
+        assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
@@ -166,10 +164,9 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx).get();
 
-        assertThat(resultList).isNotNull().hasSize(1);
-        CalculatedFieldResult result = resultList.get(0);
+        assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
@@ -188,10 +185,9 @@ public class SimpleCalculatedFieldStateTest {
         output.setDecimalsByDefault(3);
         ctx.setOutput(output);
 
-        List<CalculatedFieldResult> resultList = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx).get();
 
-        assertThat(resultList).isNotNull().hasSize(1);
-        CalculatedFieldResult result = resultList.get(0);
+        assertThat(result).isNotNull();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
         assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("output", 49.546)));

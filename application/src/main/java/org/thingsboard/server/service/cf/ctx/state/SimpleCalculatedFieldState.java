@@ -52,7 +52,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         var expr = ctx.getCustomExpression().get();
 
         for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
@@ -76,7 +76,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         Object result = formatResult(expressionResult, output.getDecimalsByDefault());
         JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
 
-        return Futures.immediateFuture(List.of(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult)));
+        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
     }
 
     private Object formatResult(double expressionResult, Integer decimals) {

@@ -19,6 +19,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.util.HashSet;
@@ -40,8 +41,9 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
 
+    private boolean trackRelationToZones;
     private String zoneRelationType;
-    private boolean trackZoneRelations;
+    private EntitySearchDirection zoneRelationDirection;
     private Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
 
     @Override
@@ -50,6 +52,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     }
 
     // TODO: update validate method in PE version.
+    //  Add relation tracking configuration validation
     @Override
     public void validate() {
         if (arguments == null) {

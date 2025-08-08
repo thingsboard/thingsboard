@@ -18,6 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.common.util.JacksonUtil;
@@ -25,13 +26,15 @@ import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -112,33 +115,93 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         return stateUpdated;
     }
 
-
-    // TODO: Probably returning list of CalculatedFieldResult no needed anymore,
-    //  since logic changed to use zone groups with telemetry prefix.
     @Override
-    public ListenableFuture<List<CalculatedFieldResult>> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
 
         var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations = configuration.getGeofencingZoneGroupConfigurations();
+        if (configuration.isTrackRelationToZones()) {
+            // TODO: currently creates relation to device profile if CF created for profile)
+            return calculateWithRelations(ctx, entityCoordinates, configuration);
+        }
+        return calculateWithoutRelations(ctx, entityCoordinates, configuration);
+    }
 
+    private ListenableFuture<CalculatedFieldResult> calculateWithRelations(
+            CalculatedFieldCtx ctx,
+            Coordinates entityCoordinates,
+            GeofencingCalculatedFieldConfiguration configuration) {
+
+        var geofencingZoneGroupConfigurations = configuration.getGeofencingZoneGroupConfigurations();
+
+        Map<EntityId, GeofencingEvent> zoneEventMap = new HashMap<>();
         ObjectNode resultNode = JacksonUtil.newObjectNode();
+
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
             var zoneGroupConfig = geofencingZoneGroupConfigurations.get(argumentKey);
-            Set<GeofencingEvent> zoneEvents = argumentEntry.getZoneStates()
-                    .values()
-                    .stream()
-                    .map(zoneState -> zoneState.evaluate(entityCoordinates))
-                    .collect(Collectors.toSet());
-            aggregateZoneGroupEvent(zoneEvents)
-                    .filter(geofencingEvent -> zoneGroupConfig.getReportEvents().contains(geofencingEvent))
-                    .ifPresent(event ->
-                            resultNode.put(zoneGroupConfig.getReportTelemetryPrefix() + "Event", event.name())
-                    );
+            Set<GeofencingEvent> groupEvents = new HashSet<>();
+
+            argumentEntry.getZoneStates().forEach((zoneId, zoneState) -> {
+                GeofencingEvent event = zoneState.evaluate(entityCoordinates);
+                zoneEventMap.put(zoneId, event);
+                groupEvents.add(event);
+            });
+
+            aggregateZoneGroupEvent(groupEvents)
+                    .filter(zoneGroupConfig.getReportEvents()::contains)
+                    .ifPresent(geofencingGroupEvent ->
+                            resultNode.put(zoneGroupConfig.getReportTelemetryPrefix() + "Event", geofencingGroupEvent.name()));
         });
-        return Futures.immediateFuture(List.of(new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode)));
+
+        var result = calculationResult(ctx, resultNode);
+
+        List<ListenableFuture<Boolean>> relationFutures = zoneEventMap.entrySet().stream()
+                .filter(entry -> entry.getValue().isTransitionEvent())
+                .map(entry -> {
+                    EntityRelation relation = toRelation(entry.getKey(), ctx, configuration);
+                    return switch (entry.getValue()) {
+                        case ENTERED -> ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), relation);
+                        case LEFT -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation);
+                        default -> throw new IllegalStateException("Unexpected transition event: " + entry.getValue());
+                    };
+                })
+                .toList();
+
+        if (relationFutures.isEmpty()) {
+            return Futures.immediateFuture(result);
+        }
+
+        return Futures.whenAllComplete(relationFutures).call(() ->
+                        new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode),
+                MoreExecutors.directExecutor());
+    }
+
+    private ListenableFuture<CalculatedFieldResult> calculateWithoutRelations(
+            CalculatedFieldCtx ctx,
+            Coordinates entityCoordinates,
+            GeofencingCalculatedFieldConfiguration configuration) {
+
+        var geofencingZoneGroupConfigurations = configuration.getGeofencingZoneGroupConfigurations();
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+
+        getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
+            var zoneGroupConfig = geofencingZoneGroupConfigurations.get(argumentKey);
+            Set<GeofencingEvent> groupEvents = argumentEntry.getZoneStates().values().stream()
+                    .map(zs -> zs.evaluate(entityCoordinates))
+                    .collect(Collectors.toSet());
+            aggregateZoneGroupEvent(groupEvents)
+                    .filter(zoneGroupConfig.getReportEvents()::contains)
+                    .ifPresent(e -> resultNode.put(
+                            zoneGroupConfig.getReportTelemetryPrefix() + "Event",
+                            e.name()));
+        });
+        return Futures.immediateFuture(calculationResult(ctx, resultNode));
+    }
+
+    private CalculatedFieldResult calculationResult(CalculatedFieldCtx ctx, ObjectNode resultNode) {
+        return new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode);
     }
 
     @Override
@@ -194,6 +257,13 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             return Optional.of(GeofencingEvent.INSIDE);
         }
         return Optional.empty();
+    }
+
+    private EntityRelation toRelation(EntityId zoneId, CalculatedFieldCtx ctx, GeofencingCalculatedFieldConfiguration configuration) {
+        return switch (configuration.getZoneRelationDirection()) {
+            case TO -> new EntityRelation(zoneId, ctx.getEntityId(), configuration.getZoneRelationType());
+            case FROM -> new EntityRelation(ctx.getEntityId(), zoneId, configuration.getZoneRelationType());
+        };
     }
 
 }

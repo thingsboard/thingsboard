@@ -15,8 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import lombok.Getter;
+
+@Getter
 public enum GeofencingEvent {
 
-    ENTERED, LEFT, INSIDE, OUTSIDE;
+    ENTERED(true), LEFT(true), INSIDE(false), OUTSIDE(false);
 
+    private final boolean transitionEvent;
+
+    GeofencingEvent(boolean transitionEvent) {
+        this.transitionEvent = transitionEvent;
+    }
 }

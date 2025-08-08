@@ -321,33 +321,17 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         boolean stateSizeChecked = false;
         try {
             if (ctx.isInitialized() && state.isReady()) {
-                List<CalculatedFieldResult> calculationResults = state.performCalculation(ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
+                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
                 stateSizeChecked = true;
                 if (state.isSizeOk()) {
-                    if (calculationResults.isEmpty()) {
-                        callback.onSuccess();
+                    if (!calculationResult.isEmpty()) {
+                        cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, callback);
                     } else {
-                        TbCallback effectiveCallback = calculationResults.size() > 1 ?
-                                new MultipleTbCallback(calculationResults.size(), callback) : callback;
-                        for (CalculatedFieldResult calculationResult : calculationResults) {
-                            if (calculationResult.isEmpty()) {
-                                effectiveCallback.onSuccess();
-                            } else {
-                                cfService.pushMsgToRuleEngine(tenantId, entityId, calculationResult, cfIdList, effectiveCallback);
-                            }
-                        }
+                        callback.onSuccess();
                     }
                     if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                        if (calculationResults.isEmpty()) {
-                            systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId,
-                                    state.getArguments(), tbMsgId, tbMsgType, null, null);
-                        } else {
-                            for (CalculatedFieldResult calculationResult : calculationResults) {
-                                systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId,
-                                        state.getArguments(), tbMsgId, tbMsgType, calculationResult.getResultAsString(), null);
-                            }
-                        }
+                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.getResult().toString(), null);
                     }
                 }
             } else {

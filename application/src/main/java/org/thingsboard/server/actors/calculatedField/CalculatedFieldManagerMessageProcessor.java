@@ -136,7 +136,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     public void onFieldInitMsg(CalculatedFieldInitMsg msg) throws CalculatedFieldException {
         log.debug("[{}] Processing CF init message.", msg.getCf().getId());
         var cf = msg.getCf();
-        var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
+        var cfCtx = getCfCtx(cf);
         try {
             cfCtx.init();
         } catch (Exception e) {
@@ -297,7 +297,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
-                var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
+                var cfCtx = getCfCtx(cf);
                 try {
                     cfCtx.init();
                 } catch (Exception e) {
@@ -313,6 +313,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
+    private CalculatedFieldCtx getCfCtx(CalculatedField cf) {
+        return new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService(), systemContext.getRelationService());
+    }
+
     private void onCfUpdated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
         var oldCfCtx = calculatedFields.get(cfId);
@@ -324,7 +328,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
-                var newCfCtx = new CalculatedFieldCtx(newCf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
+                var newCfCtx = getCfCtx(newCf);
                 try {
                     newCfCtx.init();
                 } catch (Exception e) {
