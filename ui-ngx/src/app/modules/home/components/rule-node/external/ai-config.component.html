@@ -29,7 +29,7 @@
         labelText="rule-node-config.ai.model"
         (entityChanged)="onEntityChange($event)"
         [entityType]="entityType.AI_MODEL"
-        (createNew)="createModelAi('modelId')"
+        (createNew)="createModelAi($event, 'modelId')"
         formControlName="modelId">
       </tb-entity-autocomplete>
     </section>
