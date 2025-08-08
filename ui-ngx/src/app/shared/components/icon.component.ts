@@ -33,6 +33,8 @@ import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { ContentObserver } from '@angular/cdk/observers';
+import { isTbImage } from '@shared/models/resource.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 const _TbIconBase = mixinColor(
   class {
@@ -70,7 +72,7 @@ const funcIriPattern = /^url\(['"]?#(.*?)['"]?\)$/;
   host: {
     role: 'img',
     class: 'mat-icon notranslate',
-    '[attr.data-mat-icon-type]': '!_useSvgIcon ? "font" : "svg"',
+    '[attr.data-mat-icon-type]': '_useSvgIcon ? "svg" : (_useImageIcon ? null : "font")',
     '[attr.data-mat-icon-name]': '_svgName',
     '[attr.data-mat-icon-namespace]': '_svgNamespace',
     '[class.mat-icon-no-color]': 'color !== "primary" && color !== "accent" && color !== "warn"',
@@ -99,6 +101,9 @@ export class TbIconComponent extends _TbIconBase
 
   private _textElement = null;
 
+  _useImageIcon = false;
+  private _imageElement = null;
+
   private _previousPath?: string;
 
   private _elementsWithExternalReferences?: Map<Element, {name: string; value: string}[]>;
@@ -109,6 +114,7 @@ export class TbIconComponent extends _TbIconBase
               private contentObserver: ContentObserver,
               private renderer: Renderer2,
               private _iconRegistry: MatIconRegistry,
+              private imagePipe: ImagePipe,
               @Inject(MAT_ICON_LOCATION) private _location: MatIconLocation,
               private readonly _errorHandler: ErrorHandler) {
     super(elementRef);
@@ -148,16 +154,29 @@ export class TbIconComponent extends _TbIconBase
 
   private _updateIcon() {
     const useSvgIcon = isSvgIcon(this.icon);
+    const useImageIcon = isTbImage(this.icon);
     if (this._useSvgIcon !== useSvgIcon) {
       this._useSvgIcon = useSvgIcon;
       if (!this._useSvgIcon) {
         this._updateSvgIcon(undefined);
       } else {
         this._updateFontIcon(undefined);
+        this._updateImageIcon(undefined);
+      }
+    }
+    if (this._useImageIcon !== useImageIcon) {
+      this._useImageIcon = useImageIcon;
+      if (!this._useImageIcon) {
+        this._updateImageIcon(undefined);
+      } else {
+        this._updateFontIcon(undefined);
+        this._updateSvgIcon(undefined);
       }
     }
     if (this._useSvgIcon) {
       this._updateSvgIcon(this.icon);
+    } else if (this._useImageIcon) {
+      this._updateImageIcon(this.icon);
     } else {
       this._updateFontIcon(this.icon);
     }
@@ -278,4 +297,28 @@ export class TbIconComponent extends _TbIconBase
     }
   }
 
+  private _updateImageIcon(rawName: string | undefined) {
+    if (rawName) {
+      this._clearImageIcon();
+      this.imagePipe.transform(rawName, { asString: true, ignoreLoadingImage: true }).subscribe(
+        imageUrl => {
+          const imgElement = this.renderer.createElement('img');
+          this.renderer.setAttribute(imgElement, 'src', imageUrl as string);
+          const elem: HTMLElement = this._elementRef.nativeElement;
+          this.renderer.insertBefore(elem, imgElement, this._iconNameContent.nativeElement);
+          this._imageElement = imgElement;
+        }
+      );
+    } else {
+      this._clearImageIcon();
+    }
+  }
+
+  private _clearImageIcon() {
+    const elem: HTMLElement = this._elementRef.nativeElement;
+    if (this._imageElement !== null) {
+      this.renderer.removeChild(elem, this._imageElement);
+      this._imageElement = null;
+    }
+  }
 }

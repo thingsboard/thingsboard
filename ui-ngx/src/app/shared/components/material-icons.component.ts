@@ -37,7 +37,7 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { tbImageIcon } from '@shared/models/custom-menu.models';
+import { isTbImage } from '@shared/models/resource.models';
 
 @Component({
   selector: 'tb-material-icons',
@@ -129,7 +129,7 @@ export class MaterialIconsComponent extends PageComponent implements OnInit {
       map((data) => data.iconRows),
       share()
     );
-    this.isCustomIcon = tbImageIcon(this.selectedIcon)
+    this.isCustomIcon = isTbImage(this.selectedIcon)
   }
 
   clearSearch() {

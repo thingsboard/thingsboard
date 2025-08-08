@@ -16,15 +16,16 @@
 
 -->
 <div class="tb-material-icons-panel">
-  <div *ngIf="showTitle" class="tb-material-icons-title" translate>icon.icons</div>
-  @if (allowedCustomIcon) {
-    <div class="flex w-full flex-row items-center justify-end">
+  <div class="flex w-full">
+    <span *ngIf="showTitle" class="tb-material-icons-title flex-1" translate>icon.icons</span>
+    @if (allowedCustomIcon) {
       <tb-toggle-select [(ngModel)]="isCustomIcon" [ngModelOptions]="{standalone: true}" (ngModelChange)="selectedIcon = null">
         <tb-toggle-option [value]="false">{{ 'resource.system' | translate }}</tb-toggle-option>
         <tb-toggle-option [value]="true">{{ 'icon.custom' | translate }}</tb-toggle-option>
       </tb-toggle-select>
-    </div>
-  }
+      <span class="flex-1"></span>
+    }
+  </div>
   @if (!isCustomIcon) {
     <mat-form-field class="tb-material-icons-search tb-inline-field" appearance="outline" subscriptSizing="dynamic">
       <mat-icon matPrefix>search</mat-icon>

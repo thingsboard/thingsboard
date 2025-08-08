@@ -36,7 +36,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { MatButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { tbImageIcon } from '@shared/models/custom-menu.models';
+import { isTbImage } from '@shared/models/resource.models';
 
 @Component({
   selector: 'tb-material-icon-select',
@@ -201,7 +201,7 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
 
   private defineIconType(icon: string) {
     if (this.allowedCustomIcon) {
-      this.isCustomIcon = tbImageIcon(icon);
+      this.isCustomIcon = isTbImage(icon);
     }
   }
 }
