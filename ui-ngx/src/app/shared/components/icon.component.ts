@@ -304,6 +304,7 @@ export class TbIconComponent extends _TbIconBase
         imageUrl => {
           const imgElement = this.renderer.createElement('img');
           this.renderer.addClass(imgElement, 'mat-icon');
+          this.renderer.setAttribute(imgElement, 'alt', 'Image icon');
           this.renderer.setAttribute(imgElement, 'src', imageUrl as string);
           const elem: HTMLElement = this._elementRef.nativeElement;
           this.renderer.insertBefore(elem, imgElement, this._iconNameContent.nativeElement);
