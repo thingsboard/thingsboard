@@ -303,6 +303,7 @@ export class TbIconComponent extends _TbIconBase
       this.imagePipe.transform(rawName, { asString: true, ignoreLoadingImage: true }).subscribe(
         imageUrl => {
           const imgElement = this.renderer.createElement('img');
+          this.renderer.addClass(imgElement, 'mat-icon');
           this.renderer.setAttribute(imgElement, 'src', imageUrl as string);
           const elem: HTMLElement = this._elementRef.nativeElement;
           this.renderer.insertBefore(elem, imgElement, this._iconNameContent.nativeElement);
