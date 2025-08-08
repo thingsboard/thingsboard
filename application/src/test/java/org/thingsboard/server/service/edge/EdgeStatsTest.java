@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.edge.stats.EdgeStats;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -85,17 +86,19 @@ public class EdgeStatsTest {
     @Test
     public void testReportStatsSavesTelemetry() {
         // given
-        MsgCounters counters = new MsgCounters(tenantId);
+        EdgeStats edgeStats = new EdgeStats(tenantId);
+
+        MsgCounters counters = edgeStats.getMsgCounters();
         counters.getMsgsAdded().set(5);
         counters.getMsgsPushed().set(3);
         counters.getMsgsPermanentlyFailed().set(1);
         counters.getMsgsTmpFailed().set(0);
         counters.getMsgsLag().set(10);
 
-        ConcurrentHashMap<EdgeId, MsgCounters> countersByEdge = new ConcurrentHashMap<>();
-        countersByEdge.put(edgeId, counters);
+        ConcurrentHashMap<EdgeId, EdgeStats> edgeStatsByEdge = new ConcurrentHashMap<>();
+        edgeStatsByEdge.put(edgeId, edgeStats);
 
-        when(statsCounterService.getCounterByEdge()).thenReturn(countersByEdge);
+        when(statsCounterService.getEdgeStatsByEdge()).thenReturn(edgeStatsByEdge);
 
         ArgumentCaptor<List<TsKvEntry>> captor = ArgumentCaptor.forClass(List.class);
         when(tsService.save(eq(tenantId), eq(edgeId), captor.capture(), anyLong()))
@@ -124,18 +127,19 @@ public class EdgeStatsTest {
     @Test
     public void testReportStatsWithKafkaLag() {
         // given
-        MsgCounters counters = new MsgCounters(tenantId);
+        EdgeStats edgeStats = new EdgeStats(tenantId);
+
+        MsgCounters counters = edgeStats.getMsgCounters();
         counters.getMsgsAdded().set(2);
         counters.getMsgsPushed().set(2);
         counters.getMsgsPermanentlyFailed().set(0);
         counters.getMsgsTmpFailed().set(1);
         counters.getMsgsLag().set(0);
-
-        ConcurrentHashMap<EdgeId, MsgCounters> countersByEdge = new ConcurrentHashMap<>();
-        countersByEdge.put(edgeId, counters);
+        ConcurrentHashMap<EdgeId, EdgeStats> edgeStatsByEdge = new ConcurrentHashMap<>();
+        edgeStatsByEdge.put(edgeId, edgeStats);
 
         // mocks
-        when(statsCounterService.getCounterByEdge()).thenReturn(countersByEdge);
+        when(statsCounterService.getEdgeStatsByEdge()).thenReturn(edgeStatsByEdge);
 
         String topic = "edge-topic";
         TopicPartitionInfo partitionInfo = new TopicPartitionInfo(topic, tenantId, 0, false);
