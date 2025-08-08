@@ -19,7 +19,6 @@ import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfTsGeofencingArg;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
@@ -32,17 +31,14 @@ import java.util.stream.Collectors;
 public class GeofencingArgumentEntry implements ArgumentEntry {
 
     private Map<EntityId, GeofencingZoneState> zoneStates;
-    private GeofencingZoneGroupConfiguration zoneGroupConfiguration;
 
     private boolean forceResetPrevious;
 
     public GeofencingArgumentEntry() {
     }
 
-    public GeofencingArgumentEntry(Map<EntityId, KvEntry> entityIdkvEntryMap,
-                                   GeofencingZoneGroupConfiguration zoneGroupConfiguration) {
+    public GeofencingArgumentEntry(Map<EntityId, KvEntry> entityIdkvEntryMap) {
         this.zoneStates = toZones(entityIdkvEntryMap);
-        this.zoneGroupConfiguration = zoneGroupConfiguration;
     }
 
     @Override

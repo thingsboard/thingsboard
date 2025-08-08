@@ -18,8 +18,6 @@ package org.thingsboard.server.utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -30,7 +28,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntit
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingArgumentProto;
-import org.thingsboard.server.gen.transport.TransportProtos.GeofencingEventProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
@@ -48,7 +45,6 @@ import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -127,15 +123,11 @@ public class CalculatedFieldUtils {
 
 
     private static GeofencingArgumentProto toGeofencingArgumentProto(String argName, GeofencingArgumentEntry geofencingArgumentEntry) {
-        var zoneGroupConfiguration = geofencingArgumentEntry.getZoneGroupConfiguration();
         Map<EntityId, GeofencingZoneState> zoneStates = geofencingArgumentEntry.getZoneStates();
         GeofencingArgumentProto.Builder builder = GeofencingArgumentProto.newBuilder()
-                .setArgName(argName)
-                .setTelemetryPrefix(zoneGroupConfiguration.getReportTelemetryPrefix());
+                .setArgName(argName);
         zoneStates.forEach((entityId, zoneState) ->
                 builder.addZones(toGeofencingZoneProto(entityId, zoneState)));
-        zoneGroupConfiguration.getReportEvents().forEach(event ->
-                builder.addReportEvents(GeofencingEventProto.forNumber(event.getProtoNumber())));
         return builder.build();
     }
 
@@ -213,14 +205,8 @@ public class CalculatedFieldUtils {
                 .stream()
                 .map(GeofencingZoneState::new)
                 .collect(Collectors.toMap(GeofencingZoneState::getZoneId, Function.identity()));
-        List<GeofencingEvent> geofencingEvents = proto.getReportEventsList()
-                .stream()
-                .map(geofencingEventProto -> GeofencingEvent.fromProtoNumber(geofencingEventProto.getNumber()))
-                .toList();
-        var zoneGroupConfiguration = new GeofencingZoneGroupConfiguration(proto.getTelemetryPrefix(), geofencingEvents);
         GeofencingArgumentEntry geofencingArgumentEntry = new GeofencingArgumentEntry();
         geofencingArgumentEntry.setZoneStates(zoneStates);
-        geofencingArgumentEntry.setZoneGroupConfiguration(zoneGroupConfiguration);
         return geofencingArgumentEntry;
     }
 

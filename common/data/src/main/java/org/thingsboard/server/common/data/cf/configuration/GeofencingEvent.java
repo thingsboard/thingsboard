@@ -15,35 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.Getter;
-
-import java.util.Arrays;
-
-@Getter
 public enum GeofencingEvent {
 
-    ENTERED(0), LEFT(1), INSIDE(2), OUTSIDE(3);
-
-    private final int protoNumber; // Corresponds to GeofencingEvent
-
-    GeofencingEvent(int protoNumber) {
-        this.protoNumber = protoNumber;
-    }
-
-    private static final GeofencingEvent[] BY_PROTO;
-
-    static {
-        BY_PROTO = new GeofencingEvent[Arrays.stream(values()).mapToInt(GeofencingEvent::getProtoNumber).max().orElse(0) + 1];
-        for (var event : values()) {
-            BY_PROTO[event.getProtoNumber()] = event;
-        }
-    }
-
-    public static GeofencingEvent fromProtoNumber(int protoNumber) {
-        if (protoNumber < 0 || protoNumber >= BY_PROTO.length) {
-            throw new IllegalArgumentException("Invalid GeofencingEvent proto number " + protoNumber);
-        }
-        return BY_PROTO[protoNumber];
-    }
+    ENTERED, LEFT, INSIDE, OUTSIDE;
 
 }

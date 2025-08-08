@@ -908,17 +908,8 @@ message GeofencingZoneProto {
   optional bool inside = 5;
 }
 
-enum GeofencingEventProto {
-  ENTERED = 0;
-  LEFT = 1;
-  INSIDE = 2;
-  OUTSIDE = 3;
-}
-
 message GeofencingArgumentProto {
   string argName = 1;
-  string telemetryPrefix = 2;
-  repeated GeofencingEventProto reportEvents = 3;
   repeated GeofencingZoneProto zones = 4;
 }
 

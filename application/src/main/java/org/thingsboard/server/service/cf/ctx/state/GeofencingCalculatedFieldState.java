@@ -23,7 +23,9 @@ import lombok.Data;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
@@ -119,9 +121,12 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
 
+        var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations = configuration.getGeofencingZoneGroupConfigurations();
+
         ObjectNode resultNode = JacksonUtil.newObjectNode();
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
-            var zoneGroupConfig = argumentEntry.getZoneGroupConfiguration();
+            var zoneGroupConfig = geofencingZoneGroupConfigurations.get(argumentKey);
             Set<GeofencingEvent> zoneEvents = argumentEntry.getZoneStates()
                     .values()
                     .stream()

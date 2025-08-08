@@ -40,6 +40,8 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
 
+    private String zoneRelationType;
+    private boolean trackZoneRelations;
     private Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
 
     @Override
