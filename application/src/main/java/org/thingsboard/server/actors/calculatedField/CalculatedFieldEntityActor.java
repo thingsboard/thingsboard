@@ -75,8 +75,8 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
             case CF_LINKED_TELEMETRY_MSG:
                 processor.process((EntityCalculatedFieldLinkedTelemetryMsg) msg);
                 break;
-            case CF_ENTITY_CHECK_FOR_UPDATES_MSG:
-                processor.process((EntityCalculatedFieldCheckForUpdatesMsg) msg);
+            case CF_ENTITY_MARK_STATE_DIRTY_MSG:
+                processor.process((EntityCalculatedFieldMarkStateDirtyMsg) msg);
                 break;
             default:
                 return false;

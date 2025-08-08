@@ -76,7 +76,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<CalculatedFieldId, CalculatedFieldCtx> calculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new HashMap<>();
-    private final Map<CalculatedFieldId, ScheduledFuture<?>> checkForCalculatedFieldUpdateTasks = new ConcurrentHashMap<>();
+    private final Map<CalculatedFieldId, ScheduledFuture<?>> cfInvalidationScheduledTasks = new ConcurrentHashMap<>();
 
     private final CalculatedFieldProcessingService cfExecService;
     private final CalculatedFieldStateService cfStateService;
@@ -115,8 +115,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         calculatedFields.clear();
         entityIdCalculatedFields.clear();
         entityIdCalculatedFieldLinks.clear();
-        checkForCalculatedFieldUpdateTasks.values().forEach(future -> future.cancel(true));
-        checkForCalculatedFieldUpdateTasks.clear();
+        cfInvalidationScheduledTasks.values().forEach(future -> future.cancel(true));
+        cfInvalidationScheduledTasks.clear();
         ctx.stop(ctx.getSelf());
     }
 
@@ -147,7 +147,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         // We use copy on write lists to safely pass the reference to another actor for the iteration.
         // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
         entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
-        scheduleCalculatedFieldUpdateMsgIfNeeded(cfCtx);
+        scheduleCalculatedFieldInvalidationMsgIfNeeded(cfCtx);
         msg.getCallback().onSuccess();
     }
 
@@ -336,7 +336,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
                 boolean hasSchedulingConfigChanges = newCfCtx.hasSchedulingConfigChanges(oldCfCtx);
                 if (hasSchedulingConfigChanges) {
-                    cancelCfUpdateTaskIfExists(cfId, false);
+                    cancelCfScheduledInvalidationTaskIfExists(cfId, false);
                 }
 
                 List<CalculatedFieldCtx> newCfList = new CopyOnWriteArrayList<>();
@@ -379,7 +379,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             entityIdCalculatedFields.get(cfCtx.getEntityId()).remove(cfCtx);
             deleteLinks(cfCtx);
 
-            cancelCfUpdateTaskIfExists(cfId, true);
+            cancelCfScheduledInvalidationTaskIfExists(cfId, true);
 
             EntityId entityId = cfCtx.getEntityId();
             EntityType entityType = cfCtx.getEntityId().getEntityType();
@@ -404,12 +404,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
-    private void cancelCfUpdateTaskIfExists(CalculatedFieldId cfId, boolean cfDeleted) {
-        var existingTask = checkForCalculatedFieldUpdateTasks.remove(cfId);
+    private void cancelCfScheduledInvalidationTaskIfExists(CalculatedFieldId cfId, boolean cfDeleted) {
+        var existingTask = cfInvalidationScheduledTasks.remove(cfId);
         if (existingTask != null) {
             existingTask.cancel(false);
-            String reason = cfDeleted ? "removal" : "update";
-            log.debug("[{}][{}] Cancelled check for update task due to CF " + reason + "!", tenantId, cfId);
+            String reason = cfDeleted ? "deletion" : "update";
+            log.debug("[{}][{}] Cancelled scheduled invalidation task due to CF " + reason + "!", tenantId, cfId);
         }
     }
 
@@ -515,7 +515,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void initCf(CalculatedFieldCtx cfCtx, TbCallback callback, boolean forceStateReinit) {
         EntityId entityId = cfCtx.getEntityId();
         EntityType entityType = cfCtx.getEntityId().getEntityType();
-        scheduleCalculatedFieldUpdateMsgIfNeeded(cfCtx);
+        scheduleCalculatedFieldInvalidationMsgIfNeeded(cfCtx);
         if (isProfileEntity(entityType)) {
             var entityIds = entityProfileCache.getEntityIdsByProfileId(entityId);
             if (!entityIds.isEmpty()) {
@@ -533,31 +533,31 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
-    private void scheduleCalculatedFieldUpdateMsgIfNeeded(CalculatedFieldCtx cfCtx) {
+    private void scheduleCalculatedFieldInvalidationMsgIfNeeded(CalculatedFieldCtx cfCtx) {
         CalculatedField cf = cfCtx.getCalculatedField();
         CalculatedFieldConfiguration cfConfig = cf.getConfiguration();
         if (!cfConfig.isScheduledUpdateEnabled()) {
             return;
         }
-        if (checkForCalculatedFieldUpdateTasks.containsKey(cf.getId())) {
-            log.debug("[{}][{}] Check for update msg for CF is already scheduled!", tenantId, cf.getId());
+        if (cfInvalidationScheduledTasks.containsKey(cf.getId())) {
+            log.debug("[{}][{}] Scheduled invalidation task for CF already exists!", tenantId, cf.getId());
             return;
         }
         long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(cfConfig.getScheduledUpdateIntervalSec());
-        var scheduledMsg = new CalculatedFieldScheduledCheckForUpdatesMsg(tenantId, cfCtx.getCfId());
+        var scheduledMsg = new CalculatedFieldScheduledInvalidationMsg(tenantId, cfCtx.getCfId());
 
         ScheduledFuture<?> scheduledFuture = systemContext
                 .schedulePeriodicMsgWithDelay(ctx, scheduledMsg, refreshDynamicSourceInterval, refreshDynamicSourceInterval);
-        checkForCalculatedFieldUpdateTasks.put(cf.getId(), scheduledFuture);
-        log.debug("[{}][{}] Scheduled check for update msg for CF!", tenantId, cf.getId());
+        cfInvalidationScheduledTasks.put(cf.getId(), scheduledFuture);
+        log.debug("[{}][{}] Scheduled invalidation task for CF!", tenantId, cf.getId());
     }
 
-    public void onScheduledCheckForUpdatesMsg(CalculatedFieldScheduledCheckForUpdatesMsg msg) {
-        log.debug("[{}] [{}] Processing CF scheduled update msg.", tenantId, msg.getCfId());
+    public void onScheduledInvalidationMsg(CalculatedFieldScheduledInvalidationMsg msg) {
+        log.debug("[{}] [{}] Processing CF scheduled invalidation msg.", tenantId, msg.getCfId());
         CalculatedFieldCtx cfCtx = calculatedFields.get(msg.getCfId());
         if (cfCtx == null) {
-            log.debug("[{}][{}] Failed to find CF context, going to stop scheduler updates.", tenantId, msg.getCfId());
-            cancelCfUpdateTaskIfExists(msg.getCfId(), true);
+            log.debug("[{}][{}] Failed to find CF context, going to stop scheduled invalidations for CF.", tenantId, msg.getCfId());
+            cancelCfScheduledInvalidationTaskIfExists(msg.getCfId(), true);
             return;
         }
         EntityId entityId = cfCtx.getEntityId();
@@ -568,7 +568,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 var multiCallback = new MultipleTbCallback(entityIds.size(), msg.getCallback());
                 entityIds.forEach(id -> {
                     if (isMyPartition(id, multiCallback)) {
-                        updateCfWithDynamicSourceForEntity(id, cfCtx, multiCallback);
+                        InitCfInvalidationForEntity(id, msg.getCfId(), multiCallback);
                     }
                 });
             } else {
@@ -576,14 +576,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             }
         } else {
             if (isMyPartition(entityId, msg.getCallback())) {
-                updateCfWithDynamicSourceForEntity(entityId, cfCtx, msg.getCallback());
+                InitCfInvalidationForEntity(entityId, msg.getCfId(), msg.getCallback());
             }
         }
     }
 
-    private void updateCfWithDynamicSourceForEntity(EntityId entityId, CalculatedFieldCtx cfCtx, TbCallback callback) {
-        log.debug("Pushing entity dynamic source refresh CF msg to specific actor [{}]", entityId);
-        getOrCreateActor(entityId).tell(new EntityCalculatedFieldCheckForUpdatesMsg(tenantId, cfCtx, callback));
+    private void InitCfInvalidationForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {
+        log.debug("Pushing entity CF invalidation msg to specific actor [{}]", entityId);
+        getOrCreateActor(entityId).tell(new EntityCalculatedFieldMarkStateDirtyMsg(tenantId, cfId, callback));
     }
 
     private void deleteCfForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {

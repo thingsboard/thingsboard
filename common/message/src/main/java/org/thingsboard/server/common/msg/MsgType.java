@@ -152,8 +152,8 @@ public enum MsgType {
     CF_ENTITY_INIT_CF_MSG,
     CF_ENTITY_DELETE_MSG,
 
-    CF_SCHEDULED_CHECK_FOR_UPDATES_MSG,
-    CF_ENTITY_CHECK_FOR_UPDATES_MSG;
+    CF_SCHEDULED_INVALIDATION_MSG,
+    CF_ENTITY_MARK_STATE_DIRTY_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

@@ -16,22 +16,20 @@
 package org.thingsboard.server.actors.calculatedField;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
-public class EntityCalculatedFieldCheckForUpdatesMsg implements ToCalculatedFieldSystemMsg {
+public class CalculatedFieldScheduledInvalidationMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
-    private final CalculatedFieldCtx cfCtx;
-    private final TbCallback callback;
+    private final CalculatedFieldId cfId;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_ENTITY_CHECK_FOR_UPDATES_MSG;
+        return MsgType.CF_SCHEDULED_INVALIDATION_MSG;
     }
 
 }

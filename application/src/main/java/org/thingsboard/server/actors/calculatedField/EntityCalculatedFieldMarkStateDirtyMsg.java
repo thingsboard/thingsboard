@@ -20,16 +20,18 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 
 @Data
-public class CalculatedFieldScheduledCheckForUpdatesMsg implements ToCalculatedFieldSystemMsg {
+public class EntityCalculatedFieldMarkStateDirtyMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final CalculatedFieldId cfId;
+    private final TbCallback callback;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_SCHEDULED_CHECK_FOR_UPDATES_MSG;
+        return MsgType.CF_ENTITY_MARK_STATE_DIRTY_MSG;
     }
 
 }

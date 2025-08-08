@@ -35,13 +35,15 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected long latestTimestamp = -1;
 
+    private boolean dirty;
+
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
         this.arguments = new HashMap<>();
     }
 
     public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+        this(new ArrayList<>(), new HashMap<>(), false, -1, false);
     }
 
     @Override

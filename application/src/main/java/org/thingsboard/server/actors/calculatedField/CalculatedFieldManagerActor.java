@@ -91,8 +91,8 @@ public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
             case CF_LINKED_TELEMETRY_MSG:
                 processor.onLinkedTelemetryMsg((CalculatedFieldLinkedTelemetryMsg) msg);
                 break;
-            case CF_SCHEDULED_CHECK_FOR_UPDATES_MSG:
-                processor.onScheduledCheckForUpdatesMsg((CalculatedFieldScheduledCheckForUpdatesMsg) msg);
+            case CF_SCHEDULED_INVALIDATION_MSG:
+                processor.onScheduledInvalidationMsg((CalculatedFieldScheduledInvalidationMsg) msg);
                 break;
             default:
                 return false;

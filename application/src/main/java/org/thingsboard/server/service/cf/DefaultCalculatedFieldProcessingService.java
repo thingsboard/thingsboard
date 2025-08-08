@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
@@ -90,6 +91,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
@@ -132,20 +134,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
 
         if (ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
-            var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-            var zoneGroupConfigs = configuration.getGeofencingZoneGroupConfigurations();
-            for (var entry : ctx.getArguments().entrySet()) {
-                switch (entry.getKey()) {
-                    case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY ->
-                            argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), resolveEntityId(entityId, entry), entry.getValue()));
-                    default -> {
-                        var zoneGroupConfiguration = zoneGroupConfigs.get(entry.getKey());
-                        var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
-                        argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
-                                fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue(), zoneGroupConfiguration), calculatedFieldCallbackExecutor));
-                    }
-                }
-            }
+            fetchGeofencingCalculatedFieldArguments(ctx, entityId, argFutures, false);
         } else {
             for (var entry : ctx.getArguments().entrySet()) {
                 var argEntityId = resolveEntityId(entityId, entry);
@@ -156,20 +145,43 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
 
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
             var result = createStateByType(ctx);
-            result.updateState(ctx, argFutures.entrySet().stream()
-                    .collect(Collectors.toMap(
-                            Entry::getKey, // Keep the key as is
-                            entry -> {
-                                try {
-                                    // Resolve the future to get the value
-                                    return entry.getValue().get();
-                                } catch (ExecutionException | InterruptedException e) {
-                                    throw new RuntimeException("Error getting future result for key: " + entry.getKey(), e);
-                                }
-                            }
-                    )));
+            result.updateState(ctx, resolveArgumentFutures(argFutures));
             return result;
         }, calculatedFieldCallbackExecutor);
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
+        // only geofencing calculated fields supports dynamic arguments scheduled updates
+        if (!ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
+            return Map.of();
+        }
+        Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
+        fetchGeofencingCalculatedFieldArguments(ctx, entityId, argFutures, true);
+        return resolveArgumentFutures(argFutures);
+    }
+
+    private void fetchGeofencingCalculatedFieldArguments(CalculatedFieldCtx ctx, EntityId entityId, Map<String, ListenableFuture<ArgumentEntry>> argFutures, boolean dynamicArgumentsOnly) {
+        var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        var zoneGroupConfigs = configuration.getGeofencingZoneGroupConfigurations();
+        Set<Entry<String, Argument>> entries = ctx.getArguments().entrySet();
+        if (dynamicArgumentsOnly) {
+            entries = entries.stream()
+                    .filter(entry -> CFArgumentDynamicSourceType.RELATION_QUERY.equals(entry.getValue().getRefDynamicSource()))
+                    .collect(Collectors.toSet());
+        }
+        for (var entry : entries) {
+            switch (entry.getKey()) {
+                case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY ->
+                        argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), resolveEntityId(entityId, entry), entry.getValue()));
+                default -> {
+                    var zoneGroupConfiguration = zoneGroupConfigs.get(entry.getKey());
+                    var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
+                    argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
+                            fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue(), zoneGroupConfiguration), calculatedFieldCallbackExecutor));
+                }
+            }
+        }
     }
 
     @Override
@@ -180,6 +192,10 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             var argValueFuture = fetchKvEntry(tenantId, argEntityId, entry.getValue());
             argFutures.put(entry.getKey(), argValueFuture);
         }
+        return resolveArgumentFutures(argFutures);
+    }
+
+    private Map<String, ArgumentEntry> resolveArgumentFutures(Map<String, ListenableFuture<ArgumentEntry>> argFutures) {
         return argFutures.entrySet().stream()
                 .collect(Collectors.toMap(
                         Entry::getKey, // Keep the key as is

@@ -228,29 +228,16 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    public void process(EntityCalculatedFieldCheckForUpdatesMsg msg) throws CalculatedFieldException {
-        CalculatedFieldCtx cfCtx = msg.getCfCtx();
-        CalculatedFieldId cfId = cfCtx.getCfId();
-        log.debug("[{}][{}] Processing CF check for updates msg.", entityId, cfId);
-        CalculatedFieldState currentState = states.get(cfId);
-        try {
-            var stateFromDb = getStateFromDb(cfCtx);
-            if (currentState.equals(stateFromDb)) {
-                log.debug("[{}][{}] CF state is up-to-date.", entityId, cfId);
-                return;
-            }
-            states.put(cfId, stateFromDb);
-            if (stateFromDb.isSizeOk()) {
-                processStateIfReady(cfCtx, Collections.singletonList(cfId), stateFromDb, null, null, msg.getCallback());
-            } else {
-                throw new RuntimeException(cfCtx.getSizeExceedsLimitMessage());
-            }
-        } catch (Exception e) {
-            if (e instanceof CalculatedFieldException cfe) {
-                throw cfe;
-            }
-            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(entityId).cause(e).build();
+    public void process(EntityCalculatedFieldMarkStateDirtyMsg msg) throws CalculatedFieldException {
+        log.debug("[{}][{}] Processing entity CF invalidation msg.", entityId, msg.getCfId());
+        CalculatedFieldState currentState = states.get(msg.getCfId());
+        if (currentState == null) {
+            log.debug("[{}][{}] Failed to find CF state for entity.", entityId, msg.getCfId());
+        } else {
+            currentState.setDirty(true);
+            log.debug("[{}][{}] CF state marked as dirty.", entityId, msg.getCfId());
         }
+        msg.getCallback().onSuccess();
     }
 
     private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
@@ -280,6 +267,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state == null) {
             state = getOrInitState(ctx);
             justRestored = true;
+        } else if (state.isDirty()) {
+            log.debug("[{}][{}] Going to update dirty CF state.", entityId, ctx.getCfId());
+            try {
+                Map<String, ArgumentEntry> dynamicArgsFromDb = cfService.fetchDynamicArgsFromDb(ctx, entityId);
+                dynamicArgsFromDb.forEach(newArgValues::putIfAbsent);
+                state.setDirty(false);
+            } catch (Exception e) {
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
+            }
         }
         if (state.isSizeOk()) {
             if (state.updateState(ctx, newArgValues) || justRestored) {

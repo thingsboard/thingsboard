@@ -46,13 +46,14 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
     private List<String> requiredArguments;
     private Map<String, ArgumentEntry> arguments;
-
-    protected boolean sizeExceedsLimit;
+    private boolean sizeExceedsLimit;
 
     private long latestTimestamp = -1;
 
+    private boolean dirty;
+
     public GeofencingCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+        this(new ArrayList<>(), new HashMap<>(), false, -1, false);
     }
 
     public GeofencingCalculatedFieldState(List<String> argNames) {
