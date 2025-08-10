@@ -219,6 +219,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         if (executorService != null) {
             executorService.shutdownNow();
         }
+        if(zombieSessionsExecutorService != null){
+            zombieSessionsExecutorService.shutdownNow();
+        }
     }
 
     @Override
