@@ -23,6 +23,11 @@ import { AiModel } from '@shared/models/ai-model.models';
 @Component({
   selector: 'tb-ai-model-table-header',
   templateUrl: './ai-model-table-header.component.html',
+  styles: [`
+    :host {
+        width: 100%;
+    }
+  `],
   styleUrls: []
 })
 export class AiModelTableHeaderComponent extends EntityTableHeaderComponent<AiModel> {
