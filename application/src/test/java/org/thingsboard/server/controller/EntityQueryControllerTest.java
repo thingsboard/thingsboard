@@ -278,8 +278,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmCountQuery assetAlarmQuery = new AlarmCountQuery(assetTypeFilter);
 
-        Long assetAlamCount = doPostWithResponse("/api/alarmsQuery/count", assetAlarmQuery, Long.class);
-        Assert.assertEquals(assets.size(), assetAlamCount.longValue());
+        countAlarmsByQueryAndCheck(assetAlarmQuery, assets.size());
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
@@ -369,8 +368,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmCountQuery assetAlarmQuery = new AlarmCountQuery(assetTypeFilter);
 
-        Long assetAlamCount = doPostWithResponse("/api/alarmsQuery/count", assetAlarmQuery, Long.class);
-        Assert.assertEquals(10, assetAlamCount.longValue());
+        countAlarmsByQueryAndCheck(assetAlarmQuery, 10);
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
@@ -438,9 +436,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
 
-        PageData<AlarmData>  alarmPageData = doPostWithTypedResponse("/api/alarmsQuery/find", assetAlarmQuery, new TypeReference<>() {
-        });
-        Assert.assertEquals(10, alarmPageData.getTotalElements());
+        PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
         List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
 
@@ -511,9 +507,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, Collections.emptyList());
 
-        PageData<AlarmData>  alarmPageData = doPostWithTypedResponse("/api/alarmsQuery/find", assetAlarmQuery, new TypeReference<>() {
-        });
-        Assert.assertEquals(10, alarmPageData.getTotalElements());
+        PageData<AlarmData>  alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
         List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
 
@@ -1141,8 +1135,18 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         });
     }
 
+    protected PageData<AlarmData> findAlarmsByQuery(AlarmDataQuery query) throws Exception {
+        return doPostWithTypedResponse("/api/alarmsQuery/find", query, new TypeReference<>() {});
+    }
+
     protected PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, int expectedResultSize) throws Exception {
         PageData<EntityData> result = findByQuery(query);
+        assertThat(result.getTotalElements()).isEqualTo(expectedResultSize);
+        return result;
+    }
+
+    protected PageData<AlarmData> findAlarmsByQueryAndCheck(AlarmDataQuery query, int expectedResultSize) throws Exception {
+        PageData<AlarmData> result = findAlarmsByQuery(query);
         assertThat(result.getTotalElements()).isEqualTo(expectedResultSize);
         return result;
     }
@@ -1151,8 +1155,18 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         return doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
     }
 
+    protected Long countAlarmsByQuery(AlarmCountQuery countQuery) throws Exception {
+        return doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+    }
+
     protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult) throws Exception {
         Long result = countByQuery(query);
+        assertThat(result).isEqualTo(expectedResult);
+        return result;
+    }
+
+    protected Long countAlarmsByQueryAndCheck(AlarmCountQuery query, long expectedResult) throws Exception {
+        Long result = countAlarmsByQuery(query);
         assertThat(result).isEqualTo(expectedResult);
         return result;
     }
