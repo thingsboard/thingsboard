@@ -31,6 +31,17 @@ import {
 import {
   TimeseriesTableLatestKeySettingsComponent
 } from '@home/components/widget/lib/settings/cards/timeseries-table-latest-key-settings.component';
+
+import {
+  PersianTimeseriesTableWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/persian-timeseries-table/persian-timeseries-table-widget-settings.component';
+import {
+  PersianTimeseriesTableKeySettingsComponent
+} from '@home/components/widget/lib/settings/cards/persian-timeseries-table/persian-timeseries-table-key-settings.component';
+import {
+  PersianTimeseriesTableLatestKeySettingsComponent
+} from '@home/components/widget/lib/settings/cards/persian-timeseries-table/persian-timeseries-table-latest-key-settings.component';
+
 import {
   MarkdownWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/markdown-widget-settings.component';
@@ -383,6 +394,9 @@ import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
+    PersianTimeseriesTableWidgetSettingsComponent,
+    PersianTimeseriesTableKeySettingsComponent,
+    PersianTimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
@@ -522,6 +536,9 @@ import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
+    PersianTimeseriesTableWidgetSettingsComponent,
+    PersianTimeseriesTableKeySettingsComponent,
+    PersianTimeseriesTableLatestKeySettingsComponent,
     MarkdownWidgetSettingsComponent,
     LabelWidgetLabelComponent,
     LabelWidgetSettingsComponent,
