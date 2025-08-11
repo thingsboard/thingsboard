@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -56,7 +57,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
 
     @Override
     public boolean isSimpleRelation() {
-        return maxLevel == 1 && (entityTypes == null || entityTypes.isEmpty());
+        return maxLevel == 1 && CollectionsUtil.isEmpty(entityTypes);
     }
 
     @Override

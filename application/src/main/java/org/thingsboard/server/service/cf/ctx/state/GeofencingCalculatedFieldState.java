@@ -49,7 +49,7 @@ import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalc
 public class GeofencingCalculatedFieldState implements CalculatedFieldState {
 
     private List<String> requiredArguments;
-    private Map<String, ArgumentEntry> arguments;
+    Map<String, ArgumentEntry> arguments;
     private boolean sizeExceedsLimit;
 
     private long latestTimestamp = -1;
@@ -91,14 +91,16 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
                 entryUpdated = switch (key) {
                     case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
                         if (!(newEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry)) {
-                            throw new IllegalArgumentException(key + " argument must be a single value argument.");
+                            throw new IllegalArgumentException("Unsupported argument entry type for " + key + " argument: " + newEntry.getType() + ". " +
+                                                               "Only SINGLE_VALUE type is allowed.");
                         }
                         arguments.put(key, singleValueArgumentEntry);
                         yield true;
                     }
                     default -> {
                         if (!(newEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
-                            throw new IllegalArgumentException(key + " argument must be a geofencing argument entry.");
+                            throw new IllegalArgumentException("Unsupported argument entry type for " + key + " argument: " + newEntry.getType() + ". " +
+                                                               "Only GEOFENCING type is allowed.");
                         }
                         arguments.put(key, geofencingArgumentEntry);
                         yield true;

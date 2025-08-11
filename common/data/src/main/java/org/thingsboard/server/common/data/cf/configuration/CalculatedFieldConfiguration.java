@@ -66,8 +66,13 @@ public interface CalculatedFieldConfiguration {
         return false;
     }
 
-    void setScheduledUpdateIntervalSec(int scheduledUpdateIntervalSec);
+    @JsonIgnore
+    default void setScheduledUpdateIntervalSec(int scheduledUpdateIntervalSec) {
+    }
 
-    int getScheduledUpdateIntervalSec();
+    @JsonIgnore
+    default int getScheduledUpdateIntervalSec() {
+        return 0;
+    }
 
 }

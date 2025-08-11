@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 
 import java.util.UUID;
@@ -44,13 +43,11 @@ public class GeofencingZoneState {
 
     public GeofencingZoneState(EntityId zoneId, KvEntry entry) {
         this.zoneId = zoneId;
-        if (entry instanceof TsKvEntry tsKvEntry) {
-            this.ts = tsKvEntry.getTs();
-            this.version = tsKvEntry.getVersion();
-        } else if (entry instanceof AttributeKvEntry attributeKvEntry) {
-            this.ts = attributeKvEntry.getLastUpdateTs();
-            this.version = attributeKvEntry.getVersion();
+        if (!(entry instanceof AttributeKvEntry attributeKvEntry)) {
+            throw new IllegalArgumentException("Unsupported KvEntry type for geofencing zone state: " + entry.getClass().getSimpleName());
         }
+        this.ts = attributeKvEntry.getLastUpdateTs();
+        this.version = attributeKvEntry.getVersion();
         this.perimeterDefinition = JacksonUtil.fromString(entry.getJsonValue().orElseThrow(), PerimeterDefinition.class);
     }
 

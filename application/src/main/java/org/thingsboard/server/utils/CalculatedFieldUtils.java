@@ -121,7 +121,6 @@ public class CalculatedFieldUtils {
         return builder.build();
     }
 
-
     private static GeofencingArgumentProto toGeofencingArgumentProto(String argName, GeofencingArgumentEntry geofencingArgumentEntry) {
         Map<EntityId, GeofencingZoneState> zoneStates = geofencingArgumentEntry.getZoneStates();
         GeofencingArgumentProto.Builder builder = GeofencingArgumentProto.newBuilder()

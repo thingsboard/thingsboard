@@ -36,10 +36,12 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
     public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
 
-    public static final Set<String> coordinateKeys = Set.of(
+    private static final Set<String> coordinateKeys = Set.of(
             ENTITY_ID_LATITUDE_ARGUMENT_KEY,
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
+
+    private int scheduledUpdateIntervalSec;
 
     private boolean createRelationsWithMatchedZones;
     private String zoneRelationType;
@@ -49,6 +51,11 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.GEOFENCING;
+    }
+
+    @Override
+    public boolean isScheduledUpdateEnabled() {
+        return scheduledUpdateIntervalSec > 0 && arguments.values().stream().anyMatch(arg -> arg.getRefDynamicSource() != null);
     }
 
     // TODO: update validate method in PE version.
