@@ -22,6 +22,7 @@ import { DisplayColumnsPanelComponent } from '@home/components/widget/lib/displa
 import { AlarmsTableWidgetComponent } from '@home/components/widget/lib/alarm/alarms-table-widget.component';
 import { SharedHomeComponentsModule } from '@home/components/shared-home-components.module';
 import { TimeseriesTableWidgetComponent } from '@home/components/widget/lib/timeseries-table-widget.component';
+import { PersianTimeseriesTableWidgetComponent } from '@home/components/widget/lib/persian-timeseries-table/persian-timeseries-table-widget.component';
 import {
   EntitiesHierarchyWidgetComponent
 } from '@home/components/widget/lib/entity/entities-hierarchy-widget.component';
@@ -101,6 +102,7 @@ import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/pane
     EntitiesTableWidgetComponent,
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
+    PersianTimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent,
     EdgesOverviewWidgetComponent,
     DateRangeNavigatorWidgetComponent,
@@ -166,6 +168,7 @@ import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/pane
     EntitiesTableWidgetComponent,
     AlarmsTableWidgetComponent,
     TimeseriesTableWidgetComponent,
+    PersianTimeseriesTableWidgetComponent,
     EntitiesHierarchyWidgetComponent,
     EdgesOverviewWidgetComponent,
     RpcWidgetsModule,

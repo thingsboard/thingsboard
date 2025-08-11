@@ -8987,7 +8987,8 @@
             "alarm-column-error": "At least one alarm column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode",
-            "disable-sorting": "Disable sorting"
+            "disable-sorting": "Disable sorting",
+            "use-jalali-date": "Use jalali date"
         },
         "latest-chart": {
             "total": "Total",
