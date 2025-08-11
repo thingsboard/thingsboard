@@ -125,7 +125,7 @@ public class ScriptCalculatedFieldStateTest {
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();

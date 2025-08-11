@@ -43,7 +43,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.coordinateKeys;
 
 @Data
 @AllArgsConstructor
@@ -116,20 +115,20 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx) {
         double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
 
         var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        if (configuration.isTrackRelationToZones()) {
-            // TODO: currently creates relation to device profile if CF created for profile)
-            return calculateWithRelations(ctx, entityCoordinates, configuration);
+        if (configuration.isCreateRelationsWithMatchedZones()) {
+            return calculateWithRelations(entityId, ctx, entityCoordinates, configuration);
         }
         return calculateWithoutRelations(ctx, entityCoordinates, configuration);
     }
 
     private ListenableFuture<CalculatedFieldResult> calculateWithRelations(
+            EntityId entityId,
             CalculatedFieldCtx ctx,
             Coordinates entityCoordinates,
             GeofencingCalculatedFieldConfiguration configuration) {
@@ -160,7 +159,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         List<ListenableFuture<Boolean>> relationFutures = zoneEventMap.entrySet().stream()
                 .filter(entry -> entry.getValue().isTransitionEvent())
                 .map(entry -> {
-                    EntityRelation relation = toRelation(entry.getKey(), ctx, configuration);
+                    EntityRelation relation = toRelation(entry.getKey(), entityId, configuration);
                     return switch (entry.getValue()) {
                         case ENTERED -> ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), relation);
                         case LEFT -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation);
@@ -218,11 +217,10 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         }
     }
 
-    // TODO: Create a new class field to not do this on each calculation.
     private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
         return arguments.entrySet()
                 .stream()
-                .filter(entry -> !coordinateKeys.contains(entry.getKey()))
+                .filter(entry -> entry.getValue().getType().equals(ArgumentEntryType.GEOFENCING))
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> (GeofencingArgumentEntry) entry.getValue()));
     }
 
@@ -259,10 +257,10 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         return Optional.empty();
     }
 
-    private EntityRelation toRelation(EntityId zoneId, CalculatedFieldCtx ctx, GeofencingCalculatedFieldConfiguration configuration) {
+    private EntityRelation toRelation(EntityId zoneId, EntityId entityId, GeofencingCalculatedFieldConfiguration configuration) {
         return switch (configuration.getZoneRelationDirection()) {
-            case TO -> new EntityRelation(zoneId, ctx.getEntityId(), configuration.getZoneRelationType());
-            case FROM -> new EntityRelation(ctx.getEntityId(), zoneId, configuration.getZoneRelationType());
+            case TO -> new EntityRelation(zoneId, entityId, configuration.getZoneRelationType());
+            case FROM -> new EntityRelation(entityId, zoneId, configuration.getZoneRelationType());
         };
     }
 

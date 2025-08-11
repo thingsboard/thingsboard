@@ -41,7 +41,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             ENTITY_ID_LONGITUDE_ARGUMENT_KEY
     );
 
-    private boolean trackRelationToZones;
+    private boolean createRelationsWithMatchedZones;
     private String zoneRelationType;
     private EntitySearchDirection zoneRelationDirection;
     private Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
@@ -52,7 +52,6 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     }
 
     // TODO: update validate method in PE version.
-    //  Add relation tracking configuration validation
     @Override
     public void validate() {
         if (arguments == null) {
@@ -72,6 +71,19 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         }
         validateZoneGroupAruguments(zoneGroupsArguments);
         validateZoneGroupConfigurations(zoneGroupsArguments);
+        validateZoneRelationsConfiguration();
+    }
+
+    private void validateZoneRelationsConfiguration() {
+        if (!createRelationsWithMatchedZones) {
+            return;
+        }
+        if (StringUtils.isBlank(zoneRelationType)) {
+            throw new IllegalArgumentException("Zone relation type must be specified when to maintain relations with matched zones!");
+        }
+        if (zoneRelationDirection == null) {
+            throw new IllegalArgumentException("Zone relation direction must be specified to maintain relations with matched zones!");
+        }
     }
 
     private void validateZoneGroupConfigurations(Map<String, Argument> zoneGroupsArguments) {
@@ -146,7 +158,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
-    private static ReferencedEntityKey validateAndGetRefEntityKey(Argument argument, String argumentKey) {
+    private ReferencedEntityKey validateAndGetRefEntityKey(Argument argument, String argumentKey) {
         ReferencedEntityKey refEntityKey = argument.getRefEntityKey();
         if (refEntityKey == null || refEntityKey.getType() == null) {
             throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + argumentKey);

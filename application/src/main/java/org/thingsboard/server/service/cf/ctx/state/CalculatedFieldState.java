@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
@@ -47,15 +48,18 @@ public interface CalculatedFieldState {
 
     long getLatestTimestamp();
 
-    void setDirty(boolean dirty);
+    default void setDirty(boolean dirty) {
+    }
 
-    boolean isDirty();
+    default boolean isDirty() {
+        return false;
+    }
 
     void setRequiredArguments(List<String> requiredArguments);
 
     boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();
@@ -70,7 +74,6 @@ public interface CalculatedFieldState {
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
 
     default void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx) {
-        // TODO: Do we need to restrict the size of Geofencing arguments? Number of zones?
         if (entry instanceof TsRollingArgumentEntry || entry instanceof GeofencingArgumentEntry) {
             return;
         }

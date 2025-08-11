@@ -321,7 +321,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         boolean stateSizeChecked = false;
         try {
             if (ctx.isInitialized() && state.isReady()) {
-                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
+                CalculatedFieldResult calculationResult = state.performCalculation(entityId, ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
                 stateSizeChecked = true;
                 if (state.isSizeOk()) {

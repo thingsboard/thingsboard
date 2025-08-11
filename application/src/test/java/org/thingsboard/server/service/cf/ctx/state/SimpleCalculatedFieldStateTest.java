@@ -134,7 +134,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
@@ -151,7 +151,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        assertThatThrownBy(() -> state.performCalculation(ctx))
+        assertThatThrownBy(() -> state.performCalculation(ctx.getEntityId(), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Argument 'key2' is not a number.");
     }
@@ -164,7 +164,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
@@ -185,7 +185,7 @@ public class SimpleCalculatedFieldStateTest {
         output.setDecimalsByDefault(3);
         ctx.setOutput(output);
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
 
         assertThat(result).isNotNull();
         assertThat(result.getType()).isEqualTo(output.getType());
