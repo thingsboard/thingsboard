@@ -23,6 +23,7 @@ import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-m
 import { AiModel, AiRuleNodeResponseFormatTypeOnlyText, ResponseFormat } from '@shared/models/ai-model.models';
 import { deepTrim } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { jsonRequired } from '@shared/components/json-object-edit.component';
 
 @Component({
   selector: 'tb-external-node-ai-config',
@@ -36,8 +37,6 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   entityType = EntityType;
 
   responseFormat = ResponseFormat;
-
-  disabledResponseFormatType: boolean;
 
   constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
@@ -56,7 +55,7 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
       userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
       responseFormat: this.fb.group({
         type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
-        schema: [configuration?.responseFormat?.schema ?? null, [Validators.required]],
+        schema: [configuration?.responseFormat?.schema ?? null, [jsonRequired]],
       }),
       timeoutSeconds: [configuration?.timeoutSeconds ?? 60, []],
       forceAck: [configuration?.forceAck ?? true, []]
@@ -88,10 +87,10 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
         if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.TEXT) {
           this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: true});
         }
-        this.disabledResponseFormatType = true;
+        this.aiConfigForm.get('responseFormat.type').disable();
       }
     } else {
-      this.disabledResponseFormatType = false;
+      this.aiConfigForm.get('responseFormat.type').enable();
     }
   }
 

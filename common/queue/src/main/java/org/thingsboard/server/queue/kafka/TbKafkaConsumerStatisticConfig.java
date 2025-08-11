@@ -19,11 +19,11 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.queue.util.TbKafkaComponent;
 
 @Component
-@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+@TbKafkaComponent
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor

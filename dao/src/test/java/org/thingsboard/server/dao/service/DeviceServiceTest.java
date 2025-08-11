@@ -487,6 +487,17 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveDeviceWithJSInjection_thenDataValidationException() {
+        Device device = new Device();
+        device.setType("default");
+        device.setTenantId(tenantId);
+        device.setName("{{constructor.constructor('location.href=\"https://evil.com\"')()}}");
+        Assertions.assertThrows(DataValidationException.class, () -> {
+            deviceService.saveDevice(device);
+        });
+    }
+
+    @Test
     public void testSaveDeviceWithInvalidTenant() {
         Device device = new Device();
         device.setName("My device");
