@@ -71,9 +71,11 @@
           <span>
               {{ noEntitiesMatchingText | translate: {entity: searchText} }}
           </span>
-          <span>
-            <a translate (click)="createNewEntity($event, searchText)">entity.create-new-key</a>
-          </span>
+          @if (allowCreateNew) {
+            <span>
+              <a translate (click)="createNewEntity($event, searchText)">entity.create-new-key</a>
+            </span>
+          }
         </ng-template>
       </div>
     </mat-option>
