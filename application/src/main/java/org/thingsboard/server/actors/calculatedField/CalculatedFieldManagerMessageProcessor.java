@@ -64,6 +64,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 
@@ -378,33 +380,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         if (cfCtx == null) {
             log.debug("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
-        } else {
-            entityIdCalculatedFields.get(cfCtx.getEntityId()).remove(cfCtx);
-            deleteLinks(cfCtx);
-
-            cancelCfDynamicArgumentsRefreshTaskIfExists(cfId, true);
-
-            EntityId entityId = cfCtx.getEntityId();
-            EntityType entityType = cfCtx.getEntityId().getEntityType();
-            if (isProfileEntity(entityType)) {
-                var entityIds = entityProfileCache.getEntityIdsByProfileId(entityId);
-                if (!entityIds.isEmpty()) {
-                    //TODO: no need to do this if we cache all created actors and know which one belong to us;
-                    var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
-                    entityIds.forEach(id -> {
-                        if (isMyPartition(id, multiCallback)) {
-                            deleteCfForEntity(id, cfId, multiCallback);
-                        }
-                    });
-                } else {
-                    callback.onSuccess();
-                }
-            } else {
-                if (isMyPartition(entityId, callback)) {
-                    deleteCfForEntity(entityId, cfId, callback);
-                }
-            }
+            return;
         }
+        entityIdCalculatedFields.get(cfCtx.getEntityId()).remove(cfCtx);
+        deleteLinks(cfCtx);
+        cancelCfDynamicArgumentsRefreshTaskIfExists(cfId, true);
+        applyToTargetCfEntityActors(cfCtx, callback, (id, cb) -> deleteCfForEntity(id, cfId, cb));
     }
 
     private void cancelCfDynamicArgumentsRefreshTaskIfExists(CalculatedFieldId cfId, boolean cfDeleted) {
@@ -452,31 +433,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
         for (var linkProto : linksList) {
             var link = fromProto(linkProto);
-            var targetEntityId = link.entityId();
-            var targetEntityType = targetEntityId.getEntityType();
             var cf = calculatedFields.get(link.cfId());
-            if (isProfileEntity(targetEntityType)) {
-                // iterate over all entities that belong to profile and push the message for corresponding CF
-                var entityIds = entityProfileCache.getEntityIdsByProfileId(targetEntityId);
-                if (!entityIds.isEmpty()) {
-                    MultipleTbCallback multipleCallback = new MultipleTbCallback(entityIds.size(), callback);
-                    var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, multipleCallback);
-                    entityIds.forEach(entityId -> {
-                        if (isMyPartition(entityId, multipleCallback)) {
-                            log.debug("Pushing linked telemetry msg to specific actor [{}]", entityId);
-                            getOrCreateActor(entityId).tell(newMsg);
-                        }
-                    });
-                } else {
-                    callback.onSuccess();
-                }
-            } else {
-                if (isMyPartition(targetEntityId, callback)) {
-                    log.debug("Pushing linked telemetry msg to specific actor [{}]", targetEntityId);
-                    var newMsg = new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, callback);
-                    getOrCreateActor(targetEntityId).tell(newMsg);
-                }
-            }
+            applyToTargetCfEntityActors(link, callback,
+                    cb -> new EntityCalculatedFieldLinkedTelemetryMsg(tenantId, sourceEntityId, proto.getMsg(), cf, callback),
+                    this::linkedTelemetryMsgForEntity);
         }
     }
 
@@ -516,24 +476,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void initCf(CalculatedFieldCtx cfCtx, TbCallback callback, boolean forceStateReinit) {
-        EntityId entityId = cfCtx.getEntityId();
-        EntityType entityType = cfCtx.getEntityId().getEntityType();
         scheduleDynamicArgumentsRefreshTaskForCfIfNeeded(cfCtx);
-        if (isProfileEntity(entityType)) {
-            var entityIds = entityProfileCache.getEntityIdsByProfileId(entityId);
-            if (!entityIds.isEmpty()) {
-                var multiCallback = new MultipleTbCallback(entityIds.size(), callback);
-                entityIds.forEach(id -> {
-                    if (isMyPartition(id, multiCallback)) {
-                        initCfForEntity(id, cfCtx, forceStateReinit, multiCallback);
-                    }
-                });
-            } else {
-                callback.onSuccess();
-            }
-        } else if (isMyPartition(entityId, callback)) {
-            initCfForEntity(entityId, cfCtx, forceStateReinit, callback);
-        }
+        applyToTargetCfEntityActors(cfCtx, callback, (id, cb) -> initCfForEntity(id, cfCtx, forceStateReinit, cb));
     }
 
     private void scheduleDynamicArgumentsRefreshTaskForCfIfNeeded(CalculatedFieldCtx cfCtx) {
@@ -563,30 +507,17 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             cancelCfDynamicArgumentsRefreshTaskIfExists(msg.getCfId(), true);
             return;
         }
-        EntityId entityId = cfCtx.getEntityId();
-        EntityType entityType = entityId.getEntityType();
-        if (isProfileEntity(entityType)) {
-            var entityIds = entityProfileCache.getEntityIdsByProfileId(entityId);
-            if (!entityIds.isEmpty()) {
-                var multiCallback = new MultipleTbCallback(entityIds.size(), msg.getCallback());
-                entityIds.forEach(id -> {
-                    if (isMyPartition(id, multiCallback)) {
-                        dynamicArgumentsRefreshForEntity(id, msg.getCfId(), multiCallback);
-                    }
-                });
-            } else {
-                msg.getCallback().onSuccess();
-            }
-        } else {
-            if (isMyPartition(entityId, msg.getCallback())) {
-                dynamicArgumentsRefreshForEntity(entityId, msg.getCfId(), msg.getCallback());
-            }
-        }
+        applyToTargetCfEntityActors(cfCtx, msg.getCallback(), (id, cb) -> refreshDynamicArgumentsForEntity(id, msg.getCfId(), cb));
     }
 
-    private void dynamicArgumentsRefreshForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {
+    private void refreshDynamicArgumentsForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {
         log.debug("Pushing CF dynamic arguments refresh msg to specific actor [{}]", entityId);
         getOrCreateActor(entityId).tell(new EntityCalculatedFieldDynamicArgumentsRefreshMsg(tenantId, cfId, callback));
+    }
+
+    private void linkedTelemetryMsgForEntity(EntityId entityId, EntityCalculatedFieldLinkedTelemetryMsg msg) {
+        log.debug("Pushing linked telemetry msg to specific actor [{}]", entityId);
+        getOrCreateActor(entityId).tell(msg);
     }
 
     private void deleteCfForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {
@@ -653,9 +584,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             }
         });
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(pageLink -> cfDaoService.findAllCalculatedFieldLinksByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
-        cfls.forEach(link -> {
-            onLinkInitMsg(new CalculatedFieldLinkInitMsg(link.getTenantId(), link));
-        });
+        cfls.forEach(link -> onLinkInitMsg(new CalculatedFieldLinkInitMsg(link.getTenantId(), link)));
     }
 
     private void initEntityProfileCache() {
@@ -676,6 +605,51 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (Exception e) {
                 log.error("Failed to process asset record: {}", idInfo, e);
             }
+        }
+    }
+
+    private void applyToTargetCfEntityActors(CalculatedFieldCtx calculatedFieldCtx,
+                                             TbCallback callback,
+                                             BiConsumer<EntityId, TbCallback> action) {
+        if (isProfileEntity(calculatedFieldCtx.getEntityId().getEntityType())) {
+            var ids = entityProfileCache.getEntityIdsByProfileId(calculatedFieldCtx.getEntityId());
+            if (ids.isEmpty()) {
+                callback.onSuccess();
+                return;
+            }
+            var multiCallback = new MultipleTbCallback(ids.size(), callback);
+            ids.forEach(id -> {
+                if (isMyPartition(id, multiCallback)) {
+                    action.accept(id, multiCallback);
+                }
+            });
+            return;
+        }
+        if (isMyPartition(calculatedFieldCtx.getEntityId(), callback)) {
+            action.accept(calculatedFieldCtx.getEntityId(), callback);
+        }
+    }
+
+    private <M> void applyToTargetCfEntityActors(CalculatedFieldEntityCtxId link, TbCallback callback,
+                                                 Function<TbCallback, M> messageFactory, BiConsumer<EntityId, M> action) {
+        if (isProfileEntity(link.entityId().getEntityType())) {
+            var ids = entityProfileCache.getEntityIdsByProfileId(link.entityId());
+            if (ids.isEmpty()) {
+                callback.onSuccess();
+                return;
+            }
+            var multiCallback = new MultipleTbCallback(ids.size(), callback);
+            var msg = messageFactory.apply(multiCallback);
+            ids.forEach(id -> {
+                if (isMyPartition(id, multiCallback)) {
+                    action.accept(id, msg);
+                }
+            });
+            return;
+        }
+        if (isMyPartition(link.entityId(), callback)) {
+            var msg = messageFactory.apply(callback);
+            action.accept(link.entityId(), msg);
         }
     }
 
