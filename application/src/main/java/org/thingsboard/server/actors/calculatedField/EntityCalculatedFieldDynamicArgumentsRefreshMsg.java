@@ -23,7 +23,7 @@ import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 
 @Data
-public class EntityCalculatedFieldMarkStateDirtyMsg implements ToCalculatedFieldSystemMsg {
+public class EntityCalculatedFieldDynamicArgumentsRefreshMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final CalculatedFieldId cfId;
@@ -31,7 +31,7 @@ public class EntityCalculatedFieldMarkStateDirtyMsg implements ToCalculatedField
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_ENTITY_MARK_STATE_DIRTY_MSG;
+        return MsgType.CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG;
     }
 
 }

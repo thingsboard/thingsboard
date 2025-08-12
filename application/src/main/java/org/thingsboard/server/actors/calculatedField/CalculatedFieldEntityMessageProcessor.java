@@ -226,8 +226,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    public void process(EntityCalculatedFieldMarkStateDirtyMsg msg) throws CalculatedFieldException {
-        log.debug("[{}][{}] Processing entity CF invalidation msg.", entityId, msg.getCfId());
+    public void process(EntityCalculatedFieldDynamicArgumentsRefreshMsg msg) throws CalculatedFieldException {
+        log.debug("[{}][{}] Processing CF dynamic arguments refresh msg.", entityId, msg.getCfId());
         CalculatedFieldState currentState = states.get(msg.getCfId());
         if (currentState == null) {
             log.debug("[{}][{}] Failed to find CF state for entity.", entityId, msg.getCfId());

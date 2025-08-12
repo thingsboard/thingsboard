@@ -22,14 +22,14 @@ import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
 @Data
-public class CalculatedFieldScheduledInvalidationMsg implements ToCalculatedFieldSystemMsg {
+public class CalculatedFieldDynamicArgumentsRefreshMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final CalculatedFieldId cfId;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_SCHEDULED_INVALIDATION_MSG;
+        return MsgType.CF_DYNAMIC_ARGUMENTS_REFRESH_MSG;
     }
 
 }
