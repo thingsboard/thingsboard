@@ -55,12 +55,10 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         }
     }
 
-    @Override
     public boolean isSimpleRelation() {
         return maxLevel == 1 && CollectionsUtil.isEmpty(entityTypes);
     }
 
-    @Override
     public EntityRelationsQuery toEntityRelationsQuery(EntityId rootEntityId) {
         if (isSimpleRelation()) {
             throw new IllegalArgumentException("Entity relations query can't be created for a simple relation!");

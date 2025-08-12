@@ -56,7 +56,8 @@
     <!-- Device actor message processor debug -->
     <!--    <logger name="org.thingsboard.server.actors.device.DeviceActorMessageProcessor" level="DEBUG" />-->
 
-    <logger name="org.thingsboard.server.actors.calculatedField" level="TRACE" />
+    <!-- CF actors message processors trace -->
+    <!--    <logger name="org.thingsboard.server.actors.calculatedField" level="TRACE" />-->
     <logger name="com.microsoft.azure.servicebus.primitives.CoreMessageReceiver" level="OFF" />
 
     <root level="INFO">

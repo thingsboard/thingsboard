@@ -19,8 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -37,11 +35,5 @@ public interface CfArgumentDynamicSourceConfiguration {
     CFArgumentDynamicSourceType getType();
 
     default void validate() {}
-
-    @JsonIgnore
-    boolean isSimpleRelation();
-
-    @JsonIgnore
-    EntityRelationsQuery toEntityRelationsQuery(EntityId rootEntityId);
 
 }

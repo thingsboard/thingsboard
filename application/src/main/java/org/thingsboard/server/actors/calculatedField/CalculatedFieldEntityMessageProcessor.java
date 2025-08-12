@@ -302,8 +302,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             state = stateFuture.get(1, TimeUnit.MINUTES);
             state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
             states.put(ctx.getCfId(), state);
-            return state;
         }
+        return state;
     }
 
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) throws CalculatedFieldException {

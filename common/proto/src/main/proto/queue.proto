@@ -910,7 +910,7 @@ message GeofencingZoneProto {
 
 message GeofencingArgumentProto {
   string argName = 1;
-  repeated GeofencingZoneProto zones = 4;
+  repeated GeofencingZoneProto zones = 2;
 }
 
 message CalculatedFieldStateProto {
