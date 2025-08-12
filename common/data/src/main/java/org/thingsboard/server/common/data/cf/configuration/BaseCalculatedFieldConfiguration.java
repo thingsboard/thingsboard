@@ -58,14 +58,10 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         return link;
     }
 
-    // TODO: update validate method in PE version.
     @Override
     public void validate() {
-        boolean hasDynamicSourceRelationQuery = arguments.values()
-                .stream()
-                .anyMatch(arg -> CFArgumentDynamicSourceType.RELATION_QUERY.equals(arg.getRefDynamicSource()));
-        if (hasDynamicSourceRelationQuery) {
-            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support arguments with 'RELATION_QUERY' dynamic source type!");
+        if (arguments.values().stream().anyMatch(Argument::hasDynamicSource)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support dynamic source configuration!");
         }
     }
 

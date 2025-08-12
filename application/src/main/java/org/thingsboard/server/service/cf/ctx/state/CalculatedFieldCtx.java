@@ -90,7 +90,7 @@ public class CalculatedFieldCtx {
         for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
             var refId = entry.getValue().getRefEntityId();
             var refKey = entry.getValue().getRefEntityKey();
-            if (refId == null && entry.getValue().getRefDynamicSource() != null) {
+            if (refId == null && entry.getValue().hasDynamicSource()) {
                 continue;
             }
             if (refId == null || refId.equals(calculatedField.getEntityId())) {

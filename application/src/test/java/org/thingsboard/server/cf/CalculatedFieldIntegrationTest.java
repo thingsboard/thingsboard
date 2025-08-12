@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
@@ -681,7 +680,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         allowedZonesRefDynamicSourceConfiguration.setMaxLevel(1);
         allowedZonesRefDynamicSourceConfiguration.setFetchLastLevelOnly(true);
         allowedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
-        allowedZones.setRefDynamicSource(CFArgumentDynamicSourceType.RELATION_QUERY);
         allowedZones.setRefDynamicSourceConfiguration(allowedZonesRefDynamicSourceConfiguration);
 
         Argument restrictedZones = new Argument();
@@ -691,7 +689,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         restrictedZonesRefDynamicSourceConfiguration.setMaxLevel(1);
         restrictedZonesRefDynamicSourceConfiguration.setFetchLastLevelOnly(true);
         restrictedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
-        restrictedZones.setRefDynamicSource(CFArgumentDynamicSourceType.RELATION_QUERY);
         restrictedZones.setRefDynamicSourceConfiguration(restrictedZonesRefDynamicSourceConfiguration);
 
         cfg.setArguments(Map.of(

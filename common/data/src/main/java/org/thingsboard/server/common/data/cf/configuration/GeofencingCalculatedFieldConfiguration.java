@@ -27,8 +27,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType.RELATION_QUERY;
-
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
@@ -55,7 +53,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
 
     @Override
     public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateIntervalSec > 0 && arguments.values().stream().anyMatch(arg -> arg.getRefDynamicSource() != null);
+        return scheduledUpdateIntervalSec > 0 && arguments.values().stream().anyMatch(Argument::hasDynamicSource);
     }
 
     // TODO: update validate method in PE version.
@@ -66,9 +64,6 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         }
         if (arguments.size() < 3) {
             throw new IllegalArgumentException("Geofencing calculated field must contain at least 3 arguments!");
-        }
-        if (arguments.size() > 5) {
-            throw new IllegalArgumentException("Geofencing calculated field size exceeds limit of 5 arguments!");
         }
         validateCoordinateArguments();
 
@@ -129,7 +124,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
                 throw new IllegalArgumentException("Argument '" + coordinateKey + "' must be of type TS_LATEST.");
             }
-            if (argument.getRefDynamicSource() != null) {
+            if (argument.hasDynamicSource()) {
                 throw new IllegalArgumentException("Dynamic source is not allowed for argument: '" + coordinateKey + "'.");
             }
         }
@@ -144,17 +139,9 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
                 throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE.");
             }
-            var dynamicSource = argument.getRefDynamicSource();
-            if (dynamicSource == null) {
-                return;
+            if (argument.hasDynamicSource()) {
+                argument.getRefDynamicSourceConfiguration().validate();
             }
-            if (!RELATION_QUERY.equals(dynamicSource)) {
-                throw new IllegalArgumentException("Only relation query dynamic source is supported for argument: '" + argumentKey + "'.");
-            }
-            if (argument.getRefDynamicSourceConfiguration() == null) {
-                throw new IllegalArgumentException("Missing dynamic source configuration for argument: '" + argumentKey + "'.");
-            }
-            argument.getRefDynamicSourceConfiguration().validate();
         });
     }
 

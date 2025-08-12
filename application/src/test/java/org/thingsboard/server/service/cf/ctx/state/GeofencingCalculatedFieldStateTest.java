@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
@@ -323,7 +322,6 @@ public class GeofencingCalculatedFieldStateTest {
         refDynamicSourceConfiguration3.setMaxLevel(1);
         refDynamicSourceConfiguration3.setFetchLastLevelOnly(true);
         argument3.setRefEntityKey(refEntityKey3);
-        argument3.setRefDynamicSource(CFArgumentDynamicSourceType.RELATION_QUERY);
         argument3.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration3);
 
         Argument argument4 = new Argument();
@@ -334,7 +332,6 @@ public class GeofencingCalculatedFieldStateTest {
         refDynamicSourceConfiguration4.setMaxLevel(1);
         refDynamicSourceConfiguration4.setFetchLastLevelOnly(true);
         argument4.setRefEntityKey(refEntityKey4);
-        argument4.setRefDynamicSource(CFArgumentDynamicSourceType.RELATION_QUERY);
         argument4.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration4);
 
         config.setArguments(Map.of("latitude", argument1, "longitude", argument2, "allowedZones", argument3, "restrictedZones", argument4));

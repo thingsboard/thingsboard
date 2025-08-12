@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -162,7 +161,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         Set<Entry<String, Argument>> entries = ctx.getArguments().entrySet();
         if (dynamicArgumentsOnly) {
             entries = entries.stream()
-                    .filter(entry -> CFArgumentDynamicSourceType.RELATION_QUERY.equals(entry.getValue().getRefDynamicSource()))
+                    .filter(entry -> entry.getValue().hasDynamicSource())
                     .collect(Collectors.toSet());
         }
         for (var entry : entries) {
@@ -293,13 +292,13 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         if (value.getRefEntityId() != null) {
             return Futures.immediateFuture(List.of(value.getRefEntityId()));
         }
-        var refDynamicSource = value.getRefDynamicSource();
-        if (refDynamicSource == null) {
+        if (!value.hasDynamicSource()) {
             return Futures.immediateFuture(List.of(entityId));
         }
-        return switch (value.getRefDynamicSource()) {
+        var refDynamicSourceConfiguration = value.getRefDynamicSourceConfiguration();
+        return switch (refDynamicSourceConfiguration.getType()) {
             case RELATION_QUERY -> {
-                var configuration = (RelationQueryDynamicSourceConfiguration) value.getRefDynamicSourceConfiguration();
+                var configuration = (RelationQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
                 if (configuration.isSimpleRelation()) {
                     yield switch (configuration.getDirection()) {
                         case FROM ->
