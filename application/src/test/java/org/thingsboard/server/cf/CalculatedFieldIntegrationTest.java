@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.cf;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
@@ -29,22 +30,33 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CFArgumentDynamicSourceType;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
@@ -606,6 +618,139 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
     }
 
+    @Test
+    public void testGeofencingCalculatedField_SingleZonePerGroup() throws Exception {
+        // --- Arrange entities ---
+        Device device = createDevice("GF Device", "sn-geo-1");
+
+        // Allowed zone polygon (square)
+        String allowedPolygon = """
+        {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
+        """;
+        // Restricted zone polygon (square)
+        String restrictedPolygon = """
+        {"type":"POLYGON","polygonsDefinition":"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]"}
+        """;
+
+        Asset allowedZoneAsset = createAsset("Allowed Zone", null);
+        doPost("/api/plugins/telemetry/ASSET/" + allowedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygon + "}")).andExpect(status().isOk());;
+
+        Asset restrictedZoneAsset = createAsset("Restricted Zone", null);
+        doPost("/api/plugins/telemetry/ASSET/" + restrictedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"zone\":" + restrictedPolygon + "}")).andExpect(status().isOk());;
+
+        // Relations from device to zones
+        EntityRelation deviceToAllowedZoneRelation = new EntityRelation();
+        deviceToAllowedZoneRelation.setFrom(device.getId());
+        deviceToAllowedZoneRelation.setTo(allowedZoneAsset.getId());
+        deviceToAllowedZoneRelation.setType("AllowedZone");
+
+        EntityRelation deviceToRestrictedZoneRelation = new EntityRelation();
+        deviceToRestrictedZoneRelation.setFrom(device.getId());
+        deviceToRestrictedZoneRelation.setTo(restrictedZoneAsset.getId());
+        deviceToRestrictedZoneRelation.setType("RestrictedZone");
+
+        doPost("/api/relation", deviceToAllowedZoneRelation).andExpect(status().isOk());
+        doPost("/api/relation", deviceToRestrictedZoneRelation).andExpect(status().isOk());
+
+        // Initial device coordinates (inside Allowed, outside Restricted)
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"latitude\":50.4730,\"longitude\":30.5050}"));
+
+        // --- Build CF: GEOFENCING ---
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.GEOFENCING);
+        cf.setName("Geofencing CF");
+        cf.setDebugSettings(DebugSettings.off());
+
+        GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
+
+        // Coordinates: TS_LATEST on the device
+        Argument lat = new Argument();
+        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
+        Argument lon = new Argument();
+        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+
+        // Zone groups: ATTRIBUTE on specific assets (one zone per group)
+        Argument allowedZones = new Argument();
+        var allowedZonesRefDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        allowedZonesRefDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        allowedZonesRefDynamicSourceConfiguration.setRelationType("AllowedZone");
+        allowedZonesRefDynamicSourceConfiguration.setMaxLevel(1);
+        allowedZonesRefDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        allowedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        allowedZones.setRefDynamicSource(CFArgumentDynamicSourceType.RELATION_QUERY);
+        allowedZones.setRefDynamicSourceConfiguration(allowedZonesRefDynamicSourceConfiguration);
+
+        Argument restrictedZones = new Argument();
+        var restrictedZonesRefDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        restrictedZonesRefDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        restrictedZonesRefDynamicSourceConfiguration.setRelationType("RestrictedZone");
+        restrictedZonesRefDynamicSourceConfiguration.setMaxLevel(1);
+        restrictedZonesRefDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        restrictedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        restrictedZones.setRefDynamicSource(CFArgumentDynamicSourceType.RELATION_QUERY);
+        restrictedZones.setRefDynamicSourceConfiguration(restrictedZonesRefDynamicSourceConfiguration);
+
+        cfg.setArguments(Map.of(
+                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
+                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
+                "allowedZones", allowedZones,
+                "restrictedZones", restrictedZones
+        ));
+
+        // Zone group reporting config
+        List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
+
+        GeofencingZoneGroupConfiguration allowedCfg = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
+        GeofencingZoneGroupConfiguration restrictedCfg = new GeofencingZoneGroupConfiguration("restrictedZone", reportEvents);
+
+        cfg.setGeofencingZoneGroupConfigurations(Map.of(
+                "allowedZones", allowedCfg,
+                "restrictedZones", restrictedCfg
+        ));
+
+        // Output to server attributes
+        Output out = new Output();
+        out.setType(OutputType.ATTRIBUTES);
+        out.setScope(AttributeScope.SERVER_SCOPE);
+        cfg.setOutput(out);
+
+        cf.setConfiguration(cfg);
+
+        doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        // --- Assert initial evaluation (ENTERED / OUTSIDE) ---
+        await().alias("initial geofencing evaluation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent", "restrictedZoneEvent");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZoneEvent", "ENTERED")
+                            .containsEntry("restrictedZoneEvent", "OUTSIDE");
+                });
+
+        // --- Move device into Restricted zone (and outside Allowed) ---
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}"));
+
+        // --- Assert transition (LEFT / ENTERED) ---
+        await().alias("transition evaluation after movement")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent", "restrictedZoneEvent");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZoneEvent", "LEFT")
+                            .containsEntry("restrictedZoneEvent", "ENTERED");
+                });
+    }
+
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
         return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys=" + String.join(",", keys), ObjectNode.class);
     }
@@ -619,6 +764,14 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         asset.setName(name);
         asset.setAssetProfileId(assetProfileId);
         return doPost("/api/asset", asset, Asset.class);
+    }
+
+    private static Map<String, String> kv(ArrayNode attrs) {
+        Map<String, String> m = new HashMap<>();
+        for (JsonNode n : attrs) {
+            m.put(n.get("key").asText(), n.get("value").asText());
+        }
+        return m;
     }
 
 }
