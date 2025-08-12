@@ -25,6 +25,9 @@ import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.EdqsState.EdqsApiMode;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -71,8 +74,20 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     }
 
     @Override
+    protected PageData<AlarmData> findAlarmsByQueryAndCheck(AlarmDataQuery query, int expectedResultSize) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findAlarmsByQuery(query),
+                result -> result.getTotalElements() == expectedResultSize);
+    }
+
+    @Override
     protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult) {
         return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(query),
+                result -> result == expectedResult);
+    }
+
+    @Override
+    protected Long countAlarmsByQueryAndCheck(AlarmCountQuery query, long expectedResult) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countAlarmsByQuery(query),
                 result -> result == expectedResult);
     }
 
