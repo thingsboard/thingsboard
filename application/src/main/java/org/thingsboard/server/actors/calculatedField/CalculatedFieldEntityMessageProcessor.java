@@ -59,9 +59,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 
@@ -295,25 +293,17 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         CalculatedFieldState state = states.get(ctx.getCfId());
         if (state != null) {
             return state;
+        } else {
+            ListenableFuture<CalculatedFieldState> stateFuture = cfService.fetchStateFromDb(ctx, entityId);
+            // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
+            // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
+            // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
+            // but this will significantly complicate the code.
+            state = stateFuture.get(1, TimeUnit.MINUTES);
+            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
+            states.put(ctx.getCfId(), state);
+            return state;
         }
-        return updateStateFromDb(ctx);
-    }
-
-    private CalculatedFieldState updateStateFromDb(CalculatedFieldCtx ctx) throws InterruptedException, ExecutionException, TimeoutException {
-        CalculatedFieldState stateFromDb = getStateFromDb(ctx);
-        states.put(ctx.getCfId(), stateFromDb);
-        return stateFromDb;
-    }
-
-    private CalculatedFieldState getStateFromDb(CalculatedFieldCtx ctx) throws InterruptedException, ExecutionException, TimeoutException {
-        ListenableFuture<CalculatedFieldState> stateFuture = cfService.fetchStateFromDb(ctx, entityId);
-        // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
-        // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
-        // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
-        // but this will significantly complicate the code.
-        CalculatedFieldState state = stateFuture.get(1, TimeUnit.MINUTES);
-        state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
-        return state;
     }
 
     private void processStateIfReady(CalculatedFieldCtx ctx, List<CalculatedFieldId> cfIdList, CalculatedFieldState state, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) throws CalculatedFieldException {
