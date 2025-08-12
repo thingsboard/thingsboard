@@ -1179,8 +1179,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     private KeyFilter getEntityFieldStartsWithFilter(String keyName, String value) {
-        StringFilterPredicate.StringOperation operation = StringFilterPredicate.StringOperation.STARTS_WITH;
-        return getEntityFieldKeyFilter(keyName, value, operation);
+        return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.STARTS_WITH);
     }
 
     private KeyFilter getEntityFieldKeyFilter(String keyName, String value, StringFilterPredicate.StringOperation operation) {
