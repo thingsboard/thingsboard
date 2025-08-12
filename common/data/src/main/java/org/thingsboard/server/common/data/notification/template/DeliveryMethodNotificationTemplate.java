@@ -24,6 +24,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.util.List;
 
@@ -43,6 +44,7 @@ public abstract class DeliveryMethodNotificationTemplate {
 
     private boolean enabled;
     @NotEmpty
+    @NoXss
     protected String body;
 
     public DeliveryMethodNotificationTemplate(DeliveryMethodNotificationTemplate other) {
