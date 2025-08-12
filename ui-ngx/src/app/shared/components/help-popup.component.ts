@@ -17,9 +17,10 @@
 import {
   Component,
   ElementRef,
-  Input, OnChanges,
-  OnDestroy,
-  Renderer2, SimpleChanges,
+  Input,
+  OnChanges,
+  Renderer2,
+  SimpleChanges,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -38,7 +39,7 @@ import { TranslateService } from '@ngx-translate/core';
   styleUrls: ['./help-popup.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class HelpPopupComponent implements OnChanges, OnDestroy {
+export class HelpPopupComponent implements OnChanges {
 
   @ViewChild('toggleHelpButton', {read: ElementRef, static: false}) toggleHelpButton: ElementRef;
   @ViewChild('toggleHelpTextButton', {read: ElementRef, static: false}) toggleHelpTextButton: ElementRef;
@@ -93,7 +94,7 @@ export class HelpPopupComponent implements OnChanges, OnDestroy {
               private translate: TranslateService) {
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
+  ngOnChanges(_changes: SimpleChanges): void {
     if (isDefinedAndNotNull(this.triggerText)) {
       this.triggerSafeHtml = this.sanitizer.bypassSecurityTrustHtml(this.triggerText);
     } else {
@@ -124,8 +125,4 @@ export class HelpPopupComponent implements OnChanges, OnDestroy {
         this.helpPopupStyle);
     }
   }
-
-  ngOnDestroy(): void {
-  }
-
 }

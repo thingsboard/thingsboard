@@ -26,10 +26,10 @@ import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.queue.util.TbKafkaComponent;
 
 import java.time.Duration;
 import java.util.ArrayList;
@@ -44,11 +44,12 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+@TbKafkaComponent
 public class TbKafkaConsumerStatsService {
     private final Set<String> monitoredGroups = ConcurrentHashMap.newKeySet();
 
     private final TbKafkaSettings kafkaSettings;
+    private final KafkaAdmin kafkaAdmin;
     private final TbKafkaConsumerStatisticConfig statsConfig;
 
     private Consumer<String, byte[]> consumer;
@@ -77,7 +78,7 @@ public class TbKafkaConsumerStatsService {
             }
             for (String groupId : monitoredGroups) {
                 try {
-                    Map<TopicPartition, OffsetAndMetadata> groupOffsets = kafkaSettings.getAdminClient().listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata()
+                    Map<TopicPartition, OffsetAndMetadata> groupOffsets = kafkaSettings.getAdmin().getClient().listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata()
                             .get(statsConfig.getKafkaResponseTimeoutMs(), TimeUnit.MILLISECONDS);
                     Map<TopicPartition, Long> endOffsets = consumer.endOffsets(groupOffsets.keySet(), timeoutDuration);
 
@@ -159,12 +160,14 @@ public class TbKafkaConsumerStatsService {
         @Override
         public String toString() {
             return "[" +
-                    "topic=[" + topic + ']' +
-                    ", partition=[" + partition + "]" +
-                    ", committedOffset=[" + committedOffset + "]" +
-                    ", endOffset=[" + endOffset + "]" +
-                    ", lag=[" + lag + "]" +
-                    "]";
+                   "topic=[" + topic + ']' +
+                   ", partition=[" + partition + "]" +
+                   ", committedOffset=[" + committedOffset + "]" +
+                   ", endOffset=[" + endOffset + "]" +
+                   ", lag=[" + lag + "]" +
+                   "]";
         }
+
     }
+
 }

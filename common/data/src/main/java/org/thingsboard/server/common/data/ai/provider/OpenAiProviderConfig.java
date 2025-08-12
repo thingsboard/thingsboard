@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-string-items-list {
-  .mat-mdc-standard-chip {
-    .mdc-evolution-chip__cell--primary, .mat-mdc-chip-action-label {
-      overflow: hidden;
-    }
-  }
-}
+package org.thingsboard.server.common.data.ai.provider;
+
+import jakarta.validation.constraints.NotNull;
+
+public record OpenAiProviderConfig(
+        @NotNull String apiKey
+) implements AiProviderConfig {}

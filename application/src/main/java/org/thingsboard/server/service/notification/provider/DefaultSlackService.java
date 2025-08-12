@@ -15,20 +15,25 @@
  */
 package org.thingsboard.server.service.notification.provider;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.slack.api.Slack;
 import com.slack.api.methods.MethodsClient;
 import com.slack.api.methods.SlackApiRequest;
 import com.slack.api.methods.SlackApiTextResponse;
+import com.slack.api.methods.SlackFilesUploadV2Exception;
 import com.slack.api.methods.request.chat.ChatPostMessageRequest;
 import com.slack.api.methods.request.conversations.ConversationsListRequest;
+import com.slack.api.methods.request.conversations.ConversationsOpenRequest;
+import com.slack.api.methods.request.files.FilesUploadV2Request;
 import com.slack.api.methods.request.users.UsersListRequest;
 import com.slack.api.methods.response.conversations.ConversationsListResponse;
 import com.slack.api.methods.response.users.UsersListResponse;
 import com.slack.api.model.ConversationType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
@@ -36,6 +41,8 @@ import org.thingsboard.server.common.data.notification.settings.NotificationSett
 import org.thingsboard.server.common.data.notification.settings.SlackNotificationDeliveryMethodConfig;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversation;
 import org.thingsboard.server.common.data.notification.targets.slack.SlackConversationType;
+import org.thingsboard.server.common.data.notification.targets.slack.SlackFile;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 
@@ -58,11 +65,40 @@ public class DefaultSlackService implements SlackService {
 
     @Override
     public void sendMessage(TenantId tenantId, String token, String conversationId, String message) {
-        ChatPostMessageRequest request = ChatPostMessageRequest.builder()
-                .channel(conversationId)
-                .text(message)
-                .build();
-        sendRequest(token, request, MethodsClient::chatPostMessage);
+        sendMessage(tenantId, token, conversationId, message, null);
+    }
+
+    @Override
+    public void sendMessage(TenantId tenantId, String token, String conversationId, String message, List<SlackFile> files) {
+        if (CollectionsUtil.isNotEmpty(files)) {
+            if (conversationId.startsWith("U")) { // direct message
+                /*
+                 * files.uploadV2 requires an existing channel ID, while chat.postMessage auto‑opens DMs
+                 * */
+                conversationId = sendRequest(token, ConversationsOpenRequest.builder()
+                        .users(List.of(conversationId))
+                        .build(), MethodsClient::conversationsOpen).getChannel().getId();
+            }
+
+            FilesUploadV2Request request = FilesUploadV2Request.builder()
+                    .initialComment(message)
+                    .channel(conversationId)
+                    .uploadFiles(files.stream()
+                            .map(file -> FilesUploadV2Request.UploadFile.builder()
+                                    .filename(file.getName())
+                                    .title(file.getName())
+                                    .fileData(file.getData())
+                                    .build())
+                            .toList())
+                    .build();
+            sendRequest(token, request, MethodsClient::filesUploadV2);
+        } else {
+            ChatPostMessageRequest request = ChatPostMessageRequest.builder()
+                    .channel(conversationId)
+                    .text(message)
+                    .build();
+            sendRequest(token, request, MethodsClient::chatPostMessage);
+        }
     }
 
     @Override
@@ -128,22 +164,52 @@ public class DefaultSlackService implements SlackService {
         R response;
         try {
             response = method.apply(client, request);
+        } catch (SlackFilesUploadV2Exception e) {
+            if (e.getGetURLResponses() != null) {
+                e.getGetURLResponses().forEach(this::checkResponse);
+            }
+            if (e.getCompleteResponse() != null) {
+                checkResponse(e.getCompleteResponse());
+            }
+            if (e.getFileInfoResponses() != null) {
+                e.getFileInfoResponses().forEach(this::checkResponse);
+            }
+            throw new RuntimeException("Failed to upload Slack file: " + e.toString(), e);
         } catch (Exception e) {
             throw new RuntimeException(e.getMessage(), e);
         }
 
-        if (!response.isOk()) {
-            String error = response.getError();
-            if (error == null) {
-                error = "unknown error";
-            } else if (error.contains("missing_scope")) {
-                String neededScope = response.getNeeded();
-                error = "bot token scope '" + neededScope + "' is needed";
-            }
-            throw new RuntimeException("Slack API error: " + error);
+        checkResponse(response);
+        return response;
+    }
+
+
+    private void checkResponse(SlackApiTextResponse response) {
+        if (response.isOk()) {
+            return;
         }
 
-        return response;
+        String error = response.getError();
+        if (error != null) {
+            switch (error) {
+                case "missing_scope" -> {
+                    String neededScope = response.getNeeded();
+                    error = "bot token scope '" + neededScope + "' is needed";
+                }
+                case "not_in_channel" -> {
+                    error = "app needs to be added to the channel";
+                }
+                default -> {
+                    error = null;
+                }
+            }
+        }
+        if (error == null) {
+            ObjectNode responseJson = (ObjectNode) JacksonUtil.valueToTree(response);
+            responseJson.remove("httpResponseHeaders");
+            error = responseJson.toString();
+        }
+        throw new RuntimeException("Slack API error: " + error);
     }
 
 }

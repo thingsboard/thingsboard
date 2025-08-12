@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg;
+package org.thingsboard.server.service.entitiy.ai;
 
-public interface TbActorError {
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiModel;
 
-    boolean isUnrecoverable();
+public interface TbAiModelService {
+
+    AiModel save(AiModel model, User user);
+
+    boolean delete(AiModel model, User user);
 
 }

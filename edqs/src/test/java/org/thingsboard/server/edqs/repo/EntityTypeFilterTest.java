@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -36,7 +37,9 @@ import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
+import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.StringFilterPredicate;
+import org.thingsboard.server.edqs.util.RepositoryUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -61,6 +64,10 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
         addOrUpdate(new LatestTsKv(device.getId(), new BasicTsKvEntry(43, new StringDataEntry("state", "enabled")), 0L));
         addOrUpdate(new LatestTsKv(device2.getId(), new BasicTsKvEntry(43, new StringDataEntry("state", "disabled")), 0L));
         addOrUpdate(new LatestTsKv(device3.getId(), new BasicTsKvEntry(43, new BooleanDataEntry("free", true)), 0L));
+
+        addOrUpdate(new LatestTsKv(device.getId(), new BasicTsKvEntry(43, new StringDataEntry("temperature", "26.0")), 0L));
+        addOrUpdate(new LatestTsKv(device2.getId(), new BasicTsKvEntry(43, new DoubleDataEntry("temperature", 25.0)), 0L));
+        addOrUpdate(new LatestTsKv(device3.getId(), new BasicTsKvEntry(43, new DoubleDataEntry("temperature", 19.0)), 0L));
     }
 
     @After
@@ -87,6 +94,11 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
         // find asset entities
         result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.ASSET,  null),  false);
         Assert.assertEquals(0, result.getTotalElements());
+
+        // find all tenant devices with filter by temperature
+        KeyFilter tempFilter = getTemperatureFilter(NumericFilterPredicate.NumericOperation.GREATER_OR_EQUAL, 20.0);
+        result = repository.findEntityDataByQuery(tenantId, null, getEntityTypeQuery(EntityType.DEVICE,  List.of(tempFilter)), false);
+        Assert.assertEquals(2, result.getTotalElements());
     }
 
     @Test
@@ -141,6 +153,17 @@ public class EntityTypeFilterTest extends AbstractEDQTest {
         nameFilter.setPredicate(predicate);
         nameFilter.setValueType(EntityKeyValueType.STRING);
         return nameFilter;
+    }
+
+    private static KeyFilter getTemperatureFilter(NumericFilterPredicate.NumericOperation operation, Double predicateValue) {
+        KeyFilter tempFilter = new KeyFilter();
+        tempFilter.setKey(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        var predicate = new NumericFilterPredicate();
+        predicate.setOperation(operation);
+        predicate.setValue(new FilterPredicateValue<>(predicateValue));
+        tempFilter.setPredicate(predicate);
+        tempFilter.setValueType(EntityKeyValueType.NUMERIC);
+        return tempFilter;
     }
 
 }

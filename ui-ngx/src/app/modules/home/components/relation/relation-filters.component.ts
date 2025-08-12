@@ -128,7 +128,7 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
       entityTypes: [filter ? filter.entityTypes : []]
     });
     if (this.enableNotOption) {
-      formGroup.addControl('negate', this.fb.control({value: filter ? filter.negate : false, disabled: true}));
+      formGroup.addControl('negate', this.fb.control({value: filter?.negate ?? false, disabled: !filter?.relationType}));
       formGroup.get('relationType').valueChanges.pipe(
         takeUntil(this.destroy$)
       ).subscribe(value => {

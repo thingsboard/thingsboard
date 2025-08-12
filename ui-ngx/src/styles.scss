@@ -1255,6 +1255,13 @@ pre.tb-highlight {
     }
   }
 
+  .tb-chip-row-ellipsis {
+    overflow: hidden;
+    .mdc-evolution-chip__cell--primary, .mdc-evolution-chip__action--primary, .mdc-evolution-chip__text-label {
+      overflow: hidden;
+    }
+  }
+
   @media #{$mat-lt-md} {
     .mat-mdc-form-field {
       .mat-mdc-form-field-infix {
