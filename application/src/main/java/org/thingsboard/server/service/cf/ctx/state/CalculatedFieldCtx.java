@@ -60,7 +60,6 @@ public class CalculatedFieldCtx {
     private final Map<String, Argument> arguments;
     private final Map<ReferencedEntityKey, String> mainEntityArguments;
     private final Map<EntityId, Map<ReferencedEntityKey, String>> linkedEntityArguments;
-    private final Map<ReferencedEntityKey, String> dynamicEntityArguments;
     private final List<String> argNames;
     private Output output;
     private String expression;
@@ -88,13 +87,13 @@ public class CalculatedFieldCtx {
         this.arguments = configuration.getArguments();
         this.mainEntityArguments = new HashMap<>();
         this.linkedEntityArguments = new HashMap<>();
-        this.dynamicEntityArguments = new HashMap<>();
         for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
             var refId = entry.getValue().getRefEntityId();
             var refKey = entry.getValue().getRefEntityKey();
             if (refId == null && entry.getValue().getRefDynamicSource() != null) {
-                dynamicEntityArguments.put(refKey, entry.getKey());
-            } else if (refId == null || refId.equals(calculatedField.getEntityId())) {
+                continue;
+            }
+            if (refId == null || refId.equals(calculatedField.getEntityId())) {
                 mainEntityArguments.put(refKey, entry.getKey());
             } else {
                 linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());
