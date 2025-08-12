@@ -24,11 +24,11 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.util.KvProtoUtil;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingArgumentProto;
-import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
@@ -132,7 +132,9 @@ public class CalculatedFieldUtils {
 
     private static GeofencingZoneProto toGeofencingZoneProto(EntityId entityId, GeofencingZoneState zoneState) {
         GeofencingZoneProto.Builder builder = GeofencingZoneProto.newBuilder()
-                .setZoneId(toGeofencingZoneIdProto(entityId))
+                .setZoneType(ProtoUtils.toProto(entityId.getEntityType()))
+                .setZoneIdMSB(entityId.getId().getMostSignificantBits())
+                .setZoneIdLSB(entityId.getId().getLeastSignificantBits())
                 .setTs(zoneState.getTs())
                 .setVersion(zoneState.getVersion())
                 .setPerimeterDefinition(JacksonUtil.toString(zoneState.getPerimeterDefinition()));
@@ -141,15 +143,6 @@ public class CalculatedFieldUtils {
         }
         return builder.build();
     }
-
-    private static GeofencingZoneIdProto toGeofencingZoneIdProto(EntityId zoneId) {
-        return GeofencingZoneIdProto.newBuilder()
-                .setType(zoneId.getEntityType().name())
-                .setZoneIdLSB(zoneId.getId().getLeastSignificantBits())
-                .setZoneIdMSB(zoneId.getId().getMostSignificantBits())
-                .build();
-    }
-
 
     public static CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
         if (StringUtils.isEmpty(proto.getType())) {

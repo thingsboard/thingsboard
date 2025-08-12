@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 
 import java.util.UUID;
@@ -52,8 +53,7 @@ public class GeofencingZoneState {
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {
-        this.zoneId = EntityIdFactory.getByTypeAndUuid(proto.getZoneId().getType(),
-                new UUID(proto.getZoneId().getZoneIdMSB(), proto.getZoneId().getZoneIdLSB()));
+        this.zoneId = toZoneId(proto);
         this.ts = proto.getTs();
         this.version = proto.getVersion();
         this.perimeterDefinition = JacksonUtil.fromString(proto.getPerimeterDefinition(), PerimeterDefinition.class);
@@ -92,6 +92,10 @@ public class GeofencingZoneState {
         }
         // State unchanged
         return inside ? GeofencingEvent.INSIDE : GeofencingEvent.OUTSIDE;
+    }
+
+    private EntityId toZoneId(GeofencingZoneProto proto) {
+        return EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getZoneType()), new UUID(proto.getZoneIdMSB(), proto.getZoneIdLSB()));
     }
 
 }
