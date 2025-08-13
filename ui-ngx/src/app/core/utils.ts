@@ -958,3 +958,28 @@ export const unwrapModule = (module: any) : any => {
     return module;
   }
 };
+
+export const trimDefaultValues = (input: Record<string, any>, defaults: Record<string, any>): Record<string, any> => {
+  const result: Record<string, any> = {};
+
+  for (const key in input) {
+    if (!(key in defaults)) {
+      result[key] = input[key];
+    } else if (typeof defaults[key] === 'object' && defaults[key] !== null && typeof input[key] === 'object' && input[key] !== null) {
+      const subPatch = trimDefaultValues(input[key], defaults[key]);
+      if (Object.keys(subPatch).length > 0) {
+        result[key] = subPatch;
+      }
+    } else if (defaults[key] !== input[key]) {
+      result[key] = input[key];
+    }
+  }
+
+  for (const key in defaults) {
+    if (!(key in input)) {
+      delete result[key];
+    }
+  }
+
+  return result;
+}

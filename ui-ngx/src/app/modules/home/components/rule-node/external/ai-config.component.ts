@@ -51,8 +51,8 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.aiConfigForm = this.fb.group({
       modelId: [configuration?.modelId ?? null, [Validators.required]],
-      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
-      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
+      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
       responseFormat: this.fb.group({
         type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
         schema: [configuration?.responseFormat?.schema ?? null, [jsonRequired]],
