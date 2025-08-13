@@ -72,7 +72,7 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfTsGeofencingArg();
+        return new TbelCfTsGeofencingArg(zoneStates);
     }
 
     private Map<EntityId, GeofencingZoneState> toZones(Map<EntityId, KvEntry> entityIdKvEntryMap) {

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -59,6 +60,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         }
     }
 
+    @JsonIgnore
     public boolean isSimpleRelation() {
         return maxLevel == 1 && CollectionsUtil.isEmpty(entityTypes);
     }

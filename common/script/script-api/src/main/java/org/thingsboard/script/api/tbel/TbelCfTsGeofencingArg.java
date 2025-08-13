@@ -15,11 +15,18 @@
  */
 package org.thingsboard.script.api.tbel;
 
-// TODO: should I add any specific logic for this?
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+@Data
 public class TbelCfTsGeofencingArg implements TbelCfArg {
 
-    public TbelCfTsGeofencingArg() {
+    private final Object value;
 
+    @JsonCreator
+    public TbelCfTsGeofencingArg(@JsonProperty("value") Object value) {
+        this.value = value;
     }
 
     @Override
