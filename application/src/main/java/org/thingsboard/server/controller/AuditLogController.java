@@ -200,6 +200,67 @@ public class AuditLogController extends BaseController {
         return checkNotNull(auditLogService.findAuditLogsByTenantId(tenantId, actionTypes, pageLink));
     }
 
+    @ApiOperation(value = "Get all sys audit logs (getSysAuditLogs)",
+            notes = "Returns a page of audit logs for the System tenant (SYS_ADMIN scope). " + PAGE_DATA_PARAMETERS)
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/audit/sys/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<AuditLog> getSysAuditLogs(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION)
+            @RequestParam int page,
+            @Parameter(description = AUDIT_LOG_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = AUDIT_LOG_SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "entityType", "entityName", "userName", "actionType", "actionStatus"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder,
+            @Parameter(description = AUDIT_LOG_QUERY_START_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long startTime,
+            @Parameter(description = AUDIT_LOG_QUERY_END_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long endTime,
+            @Parameter(description = AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION)
+            @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
+        List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
+        return checkNotNull(auditLogService.findAuditLogsByTenantId(TenantId.SYS_TENANT_ID, actionTypes, pageLink));
+    }
+
+    @ApiOperation(value = "Get sys audit logs by entity id (getSysAuditLogsByEntityId)",
+            notes = "Returns a page of audit logs related to the actions on the targeted entity under System tenant. ")
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @RequestMapping(value = "/audit/sys/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<AuditLog> getSysAuditLogsByEntityId(
+            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "TENANT_PROFILE"))
+            @PathVariable("entityType") String strEntityType,
+            @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("entityId") String strEntityId,
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = AUDIT_LOG_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = AUDIT_LOG_SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "entityType", "entityName", "userName", "actionType", "actionStatus"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder,
+            @Parameter(description = AUDIT_LOG_QUERY_START_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long startTime,
+            @Parameter(description = AUDIT_LOG_QUERY_END_TIME_DESCRIPTION)
+            @RequestParam(required = false) Long endTime,
+            @Parameter(description = AUDIT_LOG_QUERY_ACTION_TYPES_DESCRIPTION)
+            @RequestParam(name = "actionTypes", required = false) String actionTypesStr) throws ThingsboardException {
+        checkParameter("EntityId", strEntityId);
+        checkParameter("EntityType", strEntityType);
+        TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, getStartTime(startTime), getEndTime(endTime));
+        List<ActionType> actionTypes = parseActionTypesStr(actionTypesStr);
+        return checkNotNull(auditLogService.findAuditLogsByTenantIdAndEntityId(TenantId.SYS_TENANT_ID,
+                EntityIdFactory.getByTypeAndId(strEntityType, strEntityId), actionTypes, pageLink));
+    }
+
     private List<ActionType> parseActionTypesStr(String actionTypesStr) {
         List<ActionType> result = null;
         if (StringUtils.isNoneBlank(actionTypesStr)) {

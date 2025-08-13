@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -25,9 +26,12 @@ import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
@@ -44,6 +48,7 @@ import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
@@ -77,12 +82,17 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.CREATED, 1);
 
+        awaitAuditLog("Wait for async audit log to be persisted (ADDED expected)", savedTenantProfile.getId(), ActionType.ADDED);
+
         savedTenantProfile.setName("New tenant profile");
         doPost("/api/tenantProfile", savedTenantProfile, TenantProfile.class);
         TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString(), TenantProfile.class);
         Assert.assertEquals(foundTenantProfile.getName(), savedTenantProfile.getName());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.UPDATED, 1);
+
+        awaitAuditLog("Wait for async audit log to be persisted (UPDATED expected)", savedTenantProfile.getId(), ActionType.UPDATED);
+
     }
 
     @Test
@@ -131,6 +141,8 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
     @Test
     public void testSetDefaultTenantProfile() throws Exception {
         loginSysAdmin();
+        EntityInfo oldDefaultTenantProfile = doGet("/api/tenantProfileInfo/default", EntityInfo.class);
+
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile 1");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
         TenantProfile defaultTenantProfile = doPost("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString() + "/default", TenantProfile.class);
@@ -139,6 +151,9 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Assert.assertNotNull(foundDefaultTenantProfile);
         Assert.assertEquals(savedTenantProfile.getName(), foundDefaultTenantProfile.getName());
         Assert.assertEquals(savedTenantProfile.getId(), foundDefaultTenantProfile.getId());
+
+        awaitAuditLog("Wait for async audit log to be persisted (UPDATED expected for NEW DEFAULT Tenant Profile)", savedTenantProfile.getId(), ActionType.UPDATED);
+
     }
 
     @Test
@@ -205,6 +220,8 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.DELETED, 1);
+
+        awaitAuditLog("Wait for async audit log to be persisted for deleted tenant profile", savedTenantProfile.getId(), ActionType.DELETED);
 
         doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString())
                 .andExpect(status().isNotFound())
@@ -410,5 +427,20 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
                 Mockito.isNull());
         testBroadcastEntityStateChangeEventNever(createEntityId_NULL_UUID(new Tenant()));
         Mockito.reset(tbClusterService, auditLogService);
+    }
+
+    private void awaitAuditLog(String awaitMessage, TenantProfileId tenantProfileId, ActionType expectedAction) throws Exception {
+        Awaitility.await(awaitMessage)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() ->
+                        doGetTypedWithTimePageLink(
+                                "/api/audit/sys/logs/entity/TENANT_PROFILE/" + tenantProfileId.getId() + "?",
+                                new TypeReference<PageData<AuditLog>>() {
+                                },
+                                new TimePageLink(5))
+                                .getData()
+                                .stream()
+                                .anyMatch(log -> log.getActionType() == expectedAction)
+                );
     }
 }
