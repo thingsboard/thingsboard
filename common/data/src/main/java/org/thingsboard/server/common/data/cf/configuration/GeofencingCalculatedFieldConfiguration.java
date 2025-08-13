@@ -44,7 +44,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     private boolean createRelationsWithMatchedZones;
     private String zoneRelationType;
     private EntitySearchDirection zoneRelationDirection;
-    private Map<String, ZoneGroupConfiguration> zoneGroupConfigurations;
+    private Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations;
 
     @Override
     public CalculatedFieldType getType() {
@@ -91,7 +91,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         Set<String> usedPrefixes = new HashSet<>();
 
         zoneGroupsArguments.forEach((zoneGroupName, zoneGroupArgument) -> {
-            ZoneGroupConfiguration config = zoneGroupConfigurations.get(zoneGroupName);
+            GeofencingZoneGroupConfiguration config = zoneGroupConfigurations.get(zoneGroupName);
             if (config == null) {
                 throw new IllegalArgumentException("Zone group configuration is not configured for '" + zoneGroupName + "' argument!");
             }

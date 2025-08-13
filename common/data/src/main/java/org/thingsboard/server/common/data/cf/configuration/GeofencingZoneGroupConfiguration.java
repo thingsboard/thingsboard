@@ -20,7 +20,7 @@ import lombok.Data;
 import java.util.List;
 
 @Data
-public class ZoneGroupConfiguration {
+public class GeofencingZoneGroupConfiguration {
 
     private final String reportTelemetryPrefix;
     private final List<GeofencingEvent> reportEvents;

@@ -224,8 +224,8 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -268,9 +268,9 @@ public class GeofencingCalculatedFieldConfigurationTest {
         arguments.put("allowedZones", allowedZonesArg);
         arguments.put("restrictedZones", restrictedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration("theSamePrefixTest", Arrays.asList(GeofencingEvent.values()));
-        ZoneGroupConfiguration restrictedZoneConfiguration = new ZoneGroupConfiguration("theSamePrefixTest", Arrays.asList(GeofencingEvent.values()));
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration, "restrictedZones", restrictedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("theSamePrefixTest", Arrays.asList(GeofencingEvent.values()));
+        GeofencingZoneGroupConfiguration restrictedZoneConfiguration = new GeofencingZoneGroupConfiguration("theSamePrefixTest", Arrays.asList(GeofencingEvent.values()));
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration, "restrictedZones", restrictedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -292,8 +292,8 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("someOtherZones", allowedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("someOtherZones", allowedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -315,8 +315,8 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration("allowedZone", null);
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", null);
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -340,8 +340,8 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration(reportTelemetryPrefix, Arrays.asList(GeofencingEvent.values()));
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration(reportTelemetryPrefix, Arrays.asList(GeofencingEvent.values()));
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -365,8 +365,8 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -390,8 +390,8 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        ZoneGroupConfiguration allowedZoneConfiguration = new ZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, ZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
+        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
 
         cfg.setArguments(arguments);
         cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
@@ -448,7 +448,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
         args.put("allowedZones", allowed);
         cfg.setArguments(args);
 
-        var zc = new ZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
+        var zc = new GeofencingZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
         cfg.setZoneGroupConfigurations(Map.of("allowedZones", zc));
 
         cfg.setCreateRelationsWithMatchedZones(true);

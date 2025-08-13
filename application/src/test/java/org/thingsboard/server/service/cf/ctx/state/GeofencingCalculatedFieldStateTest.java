@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.ZoneGroupConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -337,8 +337,8 @@ public class GeofencingCalculatedFieldStateTest {
         config.setArguments(Map.of("latitude", argument1, "longitude", argument2, "allowedZones", argument3, "restrictedZones", argument4));
 
         List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
-        ZoneGroupConfiguration allowedZoneGroupConfiguration = new ZoneGroupConfiguration("allowedZone", reportEvents);
-        ZoneGroupConfiguration restrictedZoneGroupConfiguration = new ZoneGroupConfiguration("restrictedZone", reportEvents);
+        GeofencingZoneGroupConfiguration allowedZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
+        GeofencingZoneGroupConfiguration restrictedZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("restrictedZone", reportEvents);
         config.setZoneGroupConfigurations(Map.of("allowedZones", allowedZoneGroupConfiguration, "restrictedZones", restrictedZoneGroupConfiguration));
 
         config.setCreateRelationsWithMatchedZones(true);
