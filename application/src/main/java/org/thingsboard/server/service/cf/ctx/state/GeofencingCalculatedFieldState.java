@@ -135,7 +135,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             Coordinates entityCoordinates,
             GeofencingCalculatedFieldConfiguration configuration) {
 
-        var geofencingZoneGroupConfigurations = configuration.getGeofencingZoneGroupConfigurations();
+        var geofencingZoneGroupConfigurations = configuration.getZoneGroupConfigurations();
 
         Map<EntityId, GeofencingEvent> zoneEventMap = new HashMap<>();
         ObjectNode resultNode = JacksonUtil.newObjectNode();
@@ -184,7 +184,7 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
             Coordinates entityCoordinates,
             GeofencingCalculatedFieldConfiguration configuration) {
 
-        var geofencingZoneGroupConfigurations = configuration.getGeofencingZoneGroupConfigurations();
+        var geofencingZoneGroupConfigurations = configuration.getZoneGroupConfigurations();
         ObjectNode resultNode = JacksonUtil.newObjectNode();
 
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {

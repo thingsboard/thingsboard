@@ -44,7 +44,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     private boolean createRelationsWithMatchedZones;
     private String zoneRelationType;
     private EntitySearchDirection zoneRelationDirection;
-    private Map<String, GeofencingZoneGroupConfiguration> geofencingZoneGroupConfigurations;
+    private Map<String, ZoneGroupConfiguration> zoneGroupConfigurations;
 
     @Override
     public CalculatedFieldType getType() {
@@ -60,13 +60,9 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     @Override
     public void validate() {
         if (arguments == null) {
-            throw new IllegalArgumentException("Geofencing calculated field arguments are empty!");
-        }
-        if (arguments.size() < 3) {
-            throw new IllegalArgumentException("Geofencing calculated field must contain at least 3 arguments!");
+            throw new IllegalArgumentException("Geofencing calculated field arguments must be specified!");
         }
         validateCoordinateArguments();
-
         Map<String, Argument> zoneGroupsArguments = getZoneGroupArguments();
         if (zoneGroupsArguments.isEmpty()) {
             throw new IllegalArgumentException("Geofencing calculated field must contain at least one geofencing zone group defined!");
@@ -81,32 +77,30 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
             return;
         }
         if (StringUtils.isBlank(zoneRelationType)) {
-            throw new IllegalArgumentException("Zone relation type must be specified when to maintain relations with matched zones!");
+            throw new IllegalArgumentException("Zone relation type must be specified to create relations with matched zones!");
         }
         if (zoneRelationDirection == null) {
-            throw new IllegalArgumentException("Zone relation direction must be specified to maintain relations with matched zones!");
+            throw new IllegalArgumentException("Zone relation direction must be specified to create relations with matched zones!");
         }
     }
 
     private void validateZoneGroupConfigurations(Map<String, Argument> zoneGroupsArguments) {
-        if (geofencingZoneGroupConfigurations == null) {
-            throw new IllegalArgumentException("Geofencing calculated field zone group configurations are empty!");
+        if (zoneGroupConfigurations == null || zoneGroupConfigurations.isEmpty()) {
+            throw new IllegalArgumentException("Zone groups configuration should be specified!");
         }
         Set<String> usedPrefixes = new HashSet<>();
-        geofencingZoneGroupConfigurations.forEach((zoneGroupName, config) -> {
-            Argument zoneGroupArgument = zoneGroupsArguments.get(zoneGroupName);
-            if (zoneGroupArgument == null) {
-                throw new IllegalArgumentException("Geofencing calculated field zone group configuration is not configured for zone group: " + zoneGroupName);
-            }
+
+        zoneGroupsArguments.forEach((zoneGroupName, zoneGroupArgument) -> {
+            ZoneGroupConfiguration config = zoneGroupConfigurations.get(zoneGroupName);
             if (config == null) {
-                throw new IllegalArgumentException("Zone group configuration is not configured for zone group: " + zoneGroupName);
+                throw new IllegalArgumentException("Zone group configuration is not configured for '" + zoneGroupName + "' argument!");
             }
             if (CollectionsUtil.isEmpty(config.getReportEvents())) {
-                throw new IllegalArgumentException("Zone group configuration report events must be specified for zone group: " + zoneGroupName);
+                throw new IllegalArgumentException("Zone group configuration report events must be specified for '" + zoneGroupName + "' argument!");
             }
             String prefix = config.getReportTelemetryPrefix();
             if (StringUtils.isBlank(prefix)) {
-                throw new IllegalArgumentException("Report telemetry prefix should be specified for zone group: " + zoneGroupName);
+                throw new IllegalArgumentException("Report telemetry prefix should be specified for '" + zoneGroupName + "' argument!");
             }
             if (!usedPrefixes.add(prefix)) {
                 throw new IllegalArgumentException("Duplicate report telemetry prefix found: '" + prefix + "'. Must be unique!");
@@ -118,26 +112,23 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         for (String coordinateKey : coordinateKeys) {
             Argument argument = arguments.get(coordinateKey);
             if (argument == null) {
-                throw new IllegalArgumentException("Missing required coordinates argument: " + coordinateKey);
+                throw new IllegalArgumentException("Missing required coordinates argument: " + coordinateKey + "!");
             }
             ReferencedEntityKey refEntityKey = validateAndGetRefEntityKey(argument, coordinateKey);
             if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
-                throw new IllegalArgumentException("Argument '" + coordinateKey + "' must be of type TS_LATEST.");
+                throw new IllegalArgumentException("Argument '" + coordinateKey + "' must be of type TS_LATEST!");
             }
             if (argument.hasDynamicSource()) {
-                throw new IllegalArgumentException("Dynamic source is not allowed for argument: '" + coordinateKey + "'.");
+                throw new IllegalArgumentException("Dynamic source is not allowed for '" + coordinateKey + "' argument!");
             }
         }
     }
 
     private void validateZoneGroupAruguments(Map<String, Argument> zoneGroupsArguments) {
         zoneGroupsArguments.forEach((argumentKey, argument) -> {
-            if (argument == null) {
-                throw new IllegalArgumentException("Zone group argument is not configured: " + argumentKey);
-            }
             ReferencedEntityKey refEntityKey = validateAndGetRefEntityKey(argument, argumentKey);
             if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
-                throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE.");
+                throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE!");
             }
             if (argument.hasDynamicSource()) {
                 argument.getRefDynamicSourceConfiguration().validate();
@@ -148,6 +139,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     private Map<String, Argument> getZoneGroupArguments() {
         return arguments.entrySet()
                 .stream()
+                .filter(entry -> entry.getValue() != null)
                 .filter(entry -> !coordinateKeys.contains(entry.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }

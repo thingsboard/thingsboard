@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -701,10 +701,10 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         // Zone group reporting config
         List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
 
-        GeofencingZoneGroupConfiguration allowedCfg = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
-        GeofencingZoneGroupConfiguration restrictedCfg = new GeofencingZoneGroupConfiguration("restrictedZone", reportEvents);
+        ZoneGroupConfiguration allowedCfg = new ZoneGroupConfiguration("allowedZone", reportEvents);
+        ZoneGroupConfiguration restrictedCfg = new ZoneGroupConfiguration("restrictedZone", reportEvents);
 
-        cfg.setGeofencingZoneGroupConfigurations(Map.of(
+        cfg.setZoneGroupConfigurations(Map.of(
                 "allowedZones", allowedCfg,
                 "restrictedZones", restrictedCfg
         ));
