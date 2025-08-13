@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,10 +57,18 @@ import {
 import { ResourcesService } from '@core/services/resources.service';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TranslateService } from '@ngx-translate/core';
-import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { DataEntry } from '@shared/models/widget.models';
+import {
+  getSourceTbUnitSymbol,
+  isNotEmptyTbUnits,
+  isTbUnitMapping,
+  TbUnit,
+  TbUnitConverter
+} from '@shared/models/unit.models';
+import { UnitService } from '@core/services/unit.service';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 
 @Component({
   selector: 'tb-liquid-level-widget',
@@ -106,8 +114,12 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   private volume: number;
   private tooltipContent: string;
-  private widgetUnits: string;
+  private widgetUnits: TbUnit;
+  private widgetUnitsSymbol: string;
+  private widgetUnitsConvertor: TbUnitConverter;
   private volumeUnits: string;
+  private tooltipUnitSymbol: string;
+  private tooltipUnitConvertor: TbUnitConverter;
 
   private capacityUnits = Object.values(CapacityUnits);
 
@@ -115,7 +127,8 @@ export class LiquidLevelWidgetComponent implements OnInit {
               private sanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
               private resourcesService: ResourcesService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private unitService: UnitService) {
   }
 
   ngOnInit(): void {
@@ -156,6 +169,12 @@ export class LiquidLevelWidgetComponent implements OnInit {
           this.widgetUnits = units;
         }
 
+        this.widgetUnitsSymbol = this.unitService.getTargetUnitSymbol(this.widgetUnits);
+        this.widgetUnitsConvertor = this.unitService.geUnitConverter(this.widgetUnits);
+
+        this.tooltipUnitSymbol = this.unitService.getTargetUnitSymbol(this.settings.tooltipUnits);
+        this.tooltipUnitConvertor = this.unitService.geUnitConverter(this.settings.tooltipUnits);
+
         this.update(true);
       }
     });
@@ -171,7 +190,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
   }
 
-  private getData(): Observable<{ svg: string; volume: number; units: string; volumeUnits: string}> {
+  private getData(): Observable<{ svg: string; volume: number; units: TbUnit; volumeUnits: string}> {
     if (this.ctx.datasources?.length) {
       const entityId: EntityId = {
         entityType: this.ctx.datasources[0].entityType,
@@ -325,7 +344,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     return of(this.settings.selectedShape);
   }
 
-  private getTankersParams(entityId: EntityId): Observable<{ volume: number; units: string; volumeUnits: string }> {
+  private getTankersParams(entityId: EntityId): Observable<{ volume: number; units: TbUnit; volumeUnits: string }> {
     const isVolumeStatic = this.settings.layout !== LevelCardLayout.absolute
       && this.settings.datasourceUnits === CapacityUnits.percent
       || this.settings.volumeSource === LiquidWidgetDataSourceType.static;
@@ -372,8 +391,8 @@ export class LiquidLevelWidgetComponent implements OnInit {
         }
 
         if (!isUnitStatic) {
-          if (isNotEmptyStr(units)) {
-            const normalizeUnits = units.normalize().trim();
+          if (isNotEmptyTbUnits(units) && !isTbUnitMapping(units)) {
+            const normalizeUnits = (units as string).normalize().trim();
             units = this.capacityUnits.find(unit => unit.normalize() === normalizeUnits);
           }
           if (isUndefinedOrNull(units) || !isNotEmptyStr(units)) {
@@ -494,7 +513,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     let value = 'N/A';
 
     if (isNumeric(data)) {
-      value = convertLiters(this.convertOutputData(percentage), this.widgetUnits as CapacityUnits, ConversionType.from)
+      value = this.widgetUnitsConvertor(convertLiters(this.convertOutputData(percentage), this.widgetUnits as CapacityUnits, ConversionType.from))
           .toFixed(this.settings.decimals || 0);
     }
     this.valueColor.update(value);
@@ -509,10 +528,10 @@ export class LiquidLevelWidgetComponent implements OnInit {
       let volume: number | string;
       if (this.widgetUnits !== CapacityUnits.percent) {
         const volumeInLiters: number = convertLiters(this.volume, this.volumeUnits as CapacityUnits, ConversionType.to);
-        volume = convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from)
+        volume = this.widgetUnitsConvertor(convertLiters(volumeInLiters, this.widgetUnits as CapacityUnits, ConversionType.from))
           .toFixed(this.settings.decimals || 0);
       } else {
-        volume = this.volume.toFixed(this.settings.decimals || 0);
+        volume = this.widgetUnitsConvertor(this.volume).toFixed(this.settings.decimals || 0);
       }
 
       const volumeTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.volumeFont),
@@ -520,7 +539,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
       container = jQueryContainerElement.find('.absolute-value-container');
       content = createAbsoluteLayout({inputValue: value, volume},
-        {valueStyle: valueTextStyle, volumeStyle: volumeTextStyle}, this.widgetUnits);
+        {valueStyle: valueTextStyle, volumeStyle: volumeTextStyle}, this.widgetUnitsSymbol);
 
     } else if (this.settings.layout === LevelCardLayout.percentage) {
       container = jQueryContainerElement.find('.percentage-value-container');
@@ -554,7 +573,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
     if (this.settings.showTooltipLevel) {
       const levelValue = typeof tooltipValue == 'number'
-          ? `${tooltipValue.toFixed(this.settings.tooltipLevelDecimals)}&nbsp;${this.settings.tooltipUnits}`
+          ? `${this.tooltipUnitConvertor(tooltipValue).toFixed(this.settings.tooltipLevelDecimals)}&nbsp;${this.tooltipUnitSymbol}`
           : 'N/A';
       content += this.createTooltipContent(
         this.ctx.translate.instant('widgets.liquid-level-card.level'),
@@ -608,8 +627,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
     const percentage = this.convertInputData(value);
     if (this.settings.tooltipUnits !== CapacityUnits.percent) {
       const liters = this.convertOutputData(percentage);
-
-      return convertLiters(liters, this.settings.tooltipUnits, ConversionType.from);
+      return convertLiters(liters, getSourceTbUnitSymbol(this.settings.tooltipUnits) as any, ConversionType.from)
     } else {
       return percentage;
     }

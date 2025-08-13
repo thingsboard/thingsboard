@@ -15,12 +15,6 @@ IF NOT "%1"=="" (
     GOTO :loop
 )
 
-if not defined fromVersion (
-    echo "--fromVersion parameter is invalid or unspecified!"
-    echo "Usage: upgrade.bat --fromVersion {VERSION}"
-    exit /b 1
-)
-
 SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
 SET SQL_DATA_FOLDER=%BASE%\data\sql
 SET jarfile=%BASE%\lib\${pkg.name}.jar

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
+import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 
@@ -30,6 +31,7 @@ public class TbAzureIotHubNodeConfiguration extends TbMqttNodeConfiguration {
         configuration.setConnectTimeoutSec(10);
         configuration.setCleanSession(true);
         configuration.setSsl(true);
+        configuration.setProtocolVersion(MqttVersion.MQTT_3_1_1);
         configuration.setCredentials(new AzureIotHubSasCredentials());
         return configuration;
     }

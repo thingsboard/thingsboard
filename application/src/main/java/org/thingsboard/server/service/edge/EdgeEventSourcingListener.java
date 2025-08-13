@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -82,6 +83,11 @@ public class EdgeEventSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
+        if (Boolean.FALSE.equals(event.getBroadcastEvent())) {
+            log.trace("Ignoring event {}", event);
+            return;
+        }
+
         try {
             if (!isValidSaveEntityEventForEdgeProcessing(event)) {
                 return;
@@ -107,7 +113,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.TENANT.equals(entityType) || EntityType.EDGE.equals(entityType)) {
+            if (EntityType.TENANT == entityType || EntityType.EDGE == entityType || EntityType.AI_MODEL == entityType) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
@@ -135,6 +141,9 @@ public class EdgeEventSourcingListener {
         if (EntityType.DEVICE.equals(event.getEntityId().getEntityType()) && ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType())) {
             return;
         }
+        if (EntityType.ALARM.equals(event.getEntityId().getEntityType())) {
+            return;
+        }
         try {
             if (event.getEntityId().getEntityType().equals(EntityType.RULE_CHAIN) && event.getEdgeId() != null && event.getActionType().equals(ActionType.ASSIGNED_TO_EDGE)) {
                 try {
@@ -159,6 +168,11 @@ public class EdgeEventSourcingListener {
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(RelationActionEvent event) {
         try {
+            TenantId tenantId = event.getTenantId();
+            if (ActionType.RELATION_DELETED.equals(event.getActionType()) && !tenantService.tenantExists(tenantId)) {
+                log.debug("[{}] Ignoring RelationActionEvent because tenant does not exist: {}", tenantId, event);
+                return;
+            }
             EntityRelation relation = event.getRelation();
             if (relation == null) {
                 log.trace("[{}] skipping RelationActionEvent event in case relation is null: {}", event.getTenantId(), event);
@@ -213,7 +227,7 @@ public class EdgeEventSourcingListener {
                     break;
                 case TENANT:
                     return !event.getCreated();
-                case API_USAGE_STATE, EDGE:
+                case API_USAGE_STATE, EDGE, AI_MODEL:
                     return false;
                 case DOMAIN:
                     if (entity instanceof Domain domain) {
@@ -249,6 +263,8 @@ public class EdgeEventSourcingListener {
     private String getBodyMsgForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return JacksonUtil.toString(entity);
+        } else if (entity instanceof CalculatedField calculatedField) {
+            return JacksonUtil.toString(calculatedField.getEntityId());
         }
         return null;
     }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -128,7 +128,7 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
       entityTypes: [filter ? filter.entityTypes : []]
     });
     if (this.enableNotOption) {
-      formGroup.addControl('negate', this.fb.control({value: filter ? filter.negate : false, disabled: true}));
+      formGroup.addControl('negate', this.fb.control({value: filter?.negate ?? false, disabled: !filter?.relationType}));
       formGroup.get('relationType').valueChanges.pipe(
         takeUntil(this.destroy$)
       ).subscribe(value => {

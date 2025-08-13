@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -121,7 +121,6 @@ import { TbJsonPipe } from '@shared/pipe/tbJson.pipe';
 import { ColorPickerDialogComponent } from '@shared/components/dialog/color-picker-dialog.component';
 import { ColorInputComponent } from '@shared/components/color-input.component';
 import { JsFuncComponent } from '@shared/components/js-func.component';
-import { JsonFormComponent } from '@shared/components/json-form/json-form.component';
 import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 import { AlertDialogComponent } from '@shared/components/dialog/alert-dialog.component';
 import { ErrorAlertDialogComponent } from '@shared/components/dialog/error-alert-dialog.component';
@@ -186,6 +185,7 @@ import { ToggleHeaderComponent, ToggleOption } from '@shared/components/toggle-h
 import { RuleChainSelectComponent } from '@shared/components/rule-chain/rule-chain-select.component';
 import { ToggleSelectComponent } from '@shared/components/toggle-select.component';
 import { UnitInputComponent } from '@shared/components/unit-input.component';
+import { UnitSettingsPanelComponent } from '@shared/components/unit-settings-panel.component';
 import { MaterialIconsComponent } from '@shared/components/material-icons.component';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbIconComponent } from '@shared/components/icon.component';
@@ -202,7 +202,7 @@ import { ImageGalleryComponent } from '@shared/components/image/image-gallery.co
 import { UploadImageDialogComponent } from '@shared/components/image/upload-image-dialog.component';
 import { ImageDialogComponent } from '@shared/components/image/image-dialog.component';
 import { ImageReferencesComponent } from '@shared/components/image/image-references.component';
-import { ImagesInUseDialogComponent } from '@shared/components/image/images-in-use-dialog.component';
+import { ResourcesInUseDialogComponent } from '@shared/components/resource/resources-in-use-dialog.component';
 import { GalleryImageInputComponent } from '@shared/components/image/gallery-image-input.component';
 import { MultipleGalleryImageInputComponent } from '@shared/components/image/multiple-gallery-image-input.component';
 import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
@@ -225,6 +225,9 @@ import { IntervalOptionsConfigPanelComponent } from '@shared/components/time/int
 import { GroupingIntervalOptionsComponent } from '@shared/components/time/aggregation/grouping-interval-options.component';
 import { JsFuncModulesComponent } from '@shared/components/js-func-modules.component';
 import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.component';
+import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
+import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
+import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -244,6 +247,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShortNumberPipe,
     ImagePipe,
     CustomTranslatePipe,
+    DurationLeftPipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -272,6 +276,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     {
       provide: MAT_AUTOCOMPLETE_DEFAULT_OPTIONS,
       useValue: {
+        hasBackdrop: true,
+        backdropClass: 'cdk-overlay-transparent-backdrop',
         hideSingleSelectionIndicator: true
       }
     },
@@ -362,7 +368,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
-    JsonFormComponent,
     ImageInputComponent,
     MultipleImageInputComponent,
     FileInputComponent,
@@ -412,6 +417,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ToggleOption,
     ToggleSelectComponent,
     UnitInputComponent,
+    UnitSettingsPanelComponent,
     StringAutocompleteComponent,
     MaterialIconsComponent,
     RuleChainSelectComponent,
@@ -427,14 +433,16 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UploadImageDialogComponent,
     ImageDialogComponent,
     ImageReferencesComponent,
-    ImagesInUseDialogComponent,
+    ResourcesInUseDialogComponent,
     GalleryImageInputComponent,
     MultipleGalleryImageInputComponent,
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
     HexInputComponent,
-    ScadaSymbolInputComponent
+    ScadaSymbolInputComponent,
+    EntityKeyAutocompleteComponent,
+    MqttVersionSelectComponent,
   ],
   imports: [
     CommonModule,
@@ -625,7 +633,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
-    JsonFormComponent,
     ImageInputComponent,
     MultipleImageInputComponent,
     FileInputComponent,
@@ -691,13 +698,15 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UploadImageDialogComponent,
     ImageDialogComponent,
     ImageReferencesComponent,
-    ImagesInUseDialogComponent,
+    ResourcesInUseDialogComponent,
     GalleryImageInputComponent,
     MultipleGalleryImageInputComponent,
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
-    ScadaSymbolInputComponent
+    ScadaSymbolInputComponent,
+    EntityKeyAutocompleteComponent,
+    MqttVersionSelectComponent,
   ]
 })
 export class SharedModule { }

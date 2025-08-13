@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,8 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
@@ -65,7 +67,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -206,46 +207,57 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_TELEMETRY, entity.getId(), (result, tenantId, entityId) -> {
             TenantProfile tenantProfile = tenantProfileCache.get(tenantId);
             long tenantTtl = TimeUnit.DAYS.toSeconds(((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration()).getDefaultStorageTtlDays());
-            tsSubscriptionService.saveAndNotify(tenantId, user.getCustomerId(), entityId, timeseries, tenantTtl, new FutureCallback<Void>() {
-                @Override
-                public void onSuccess(@Nullable Void tmp) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
-                            ActionType.TIMESERIES_UPDATED, null, timeseries);
-                }
+            tsSubscriptionService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .customerId(user.getCustomerId())
+                    .entityId(entityId)
+                    .entries(timeseries)
+                    .ttl(tenantTtl)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(@Nullable Void tmp) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
+                                    ActionType.TIMESERIES_UPDATED, null, timeseries);
+                        }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
-                            ActionType.TIMESERIES_UPDATED, BaseController.toException(t), timeseries);
-                    throw new RuntimeException(t);
-                }
-            });
+                        @Override
+                        public void onFailure(Throwable t) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null, null,
+                                    ActionType.TIMESERIES_UPDATED, BaseController.toException(t), timeseries);
+                            throw new RuntimeException(t);
+                        }
+                    })
+                    .build());
         });
     }
 
     @SneakyThrows
     private void saveAttributes(SecurityUser user, E entity, Map.Entry<BulkImportColumnType, JsonObject> kvsEntry, BulkImportColumnType kvType) {
         String scope = kvType.getKey();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(kvsEntry.getValue());
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
-            tsSubscriptionService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<>() {
+            tsSubscriptionService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(entityId)
+                    .scope(AttributeScope.valueOf(scope))
+                    .entries(attributes)
+                    .callback(new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(Void unused) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
+                                    null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
+                        }
 
-                @Override
-                public void onSuccess(Void unused) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
-                }
-
-                @Override
-                public void onFailure(Throwable throwable) {
-                    entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
-                            AttributeScope.valueOf(scope), attributes);
-                    throw new RuntimeException(throwable);
-                }
-
-            });
+                        @Override
+                        public void onFailure(Throwable throwable) {
+                            entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
+                                    null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
+                                    AttributeScope.valueOf(scope), attributes);
+                            throw new RuntimeException(throwable);
+                        }
+                    })
+                    .build());
         });
     }
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
     </div>
   </div>
   <div *ngIf="widgetConfigMode === widgetConfigModes.advanced; else basicMode" class="tb-widget-config-content">
-    <div *ngIf="widgetType !== widgetTypes.static" [class.!hidden]="selectedOption !== 'data'" class="mat-content">
+    <div *ngIf="displayData" [class.!hidden]="selectedOption !== 'data'" class="mat-content">
       <ng-container *ngTemplateOutlet="data"></ng-container>
     </div>
     <div [class.!hidden]="selectedOption !== 'appearance'" class="mat-content">
@@ -163,7 +163,9 @@
         <tb-manage-widget-actions
           [callbacks]="widgetConfigCallbacks"
           [widgetType] = "modelValue.widgetType"
+          [defaultIconColor]="widgetSettings.get('color').value"
           [actionSources]="modelValue.actionSources"
+          [additionalWidgetActionTypes]="modelValue.typeParameters?.additionalWidgetActionTypes"
           formControlName="actions">
         </tb-manage-widget-actions>
       </div>
@@ -278,11 +280,18 @@
     </div>
   </ng-template>
   <ng-template #appearance>
+    <ng-container *ngIf="!displayData && displayTimewindowConfig" [formGroup]="dataSettings">
+      <tb-timewindow-config-panel
+        [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+        formControlName="timewindowConfig">
+      </tb-timewindow-config-panel>
+    </ng-container>
     <div *ngIf="displayAppearanceDataSettings" class="tb-form-panel" [formGroup]="widgetSettings">
       <div class="tb-form-panel-title" translate>widget-config.data-settings</div>
       <div *ngIf="displayUnitsConfig" class="tb-form-row space-between">
         <div tb-hint-tooltip-icon="{{'widget-config.default-data-key-parameter-hint' | translate}}" translate>widget-config.units-by-default</div>
         <tb-unit-input
+          [supportsUnitConversion]="modelValue.typeParameters.supportsUnitConversion"
           formControlName="units">
         </tb-unit-input>
       </div>
@@ -303,6 +312,7 @@
       <tb-widget-settings
         [aliasController]="aliasController"
         [callbacks]="widgetConfigCallbacks"
+        [functionsOnly]="functionsOnly"
         [dashboard]="dashboard"
         [widget]="widget"
         [widgetConfig]="modelValue"

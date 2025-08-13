@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -185,9 +185,11 @@ export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements O
       }));
   }
 
-  prepareFormValue(formValue: any): any {
+  prepareFormValue(formValue: OtaPackage & {generateChecksum?: boolean}): any {
     if (formValue.isURL) {
       delete formValue.file;
+      delete formValue.checksumAlgorithm;
+      delete formValue.checksum;
     } else {
       delete formValue.url;
     }

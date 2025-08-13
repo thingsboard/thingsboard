@@ -1,7 +1,7 @@
 {
   "fqn": "maps_v2.route_map",
   "name": "Route Map - Google",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/route_map_google_system_widget_image.png",
   "description": "Visualize the entity trip on Google Maps. Allows to visualize location history. Use the Trip Animation widget for advanced features.",
   "descriptor": {

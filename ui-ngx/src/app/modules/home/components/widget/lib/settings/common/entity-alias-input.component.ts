@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import {
   Component,
+  DestroyRef,
   ElementRef,
   forwardRef,
   HostBinding,
@@ -35,6 +36,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { IAliasController } from '@core/api/widget-api.models';
 import { map, mergeMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-entity-alias-input',
@@ -76,12 +78,15 @@ export class EntityAliasInputComponent implements ControlValueAccessor, OnInit {
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  constructor(private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
     this.entityAliasFormControl = this.fb.control(null, this.required ? [Validators.required] : []);
-    this.entityAliasFormControl.valueChanges.subscribe(
+    this.entityAliasFormControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
 

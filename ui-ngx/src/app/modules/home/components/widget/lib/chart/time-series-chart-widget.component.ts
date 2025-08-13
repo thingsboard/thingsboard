@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -112,9 +112,6 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
         legendKey.dataKey.settings = mergeDeep<TimeSeriesChartKeySettings>({} as TimeSeriesChartKeySettings,
           timeSeriesChartKeyDefaultSettings, legendKey.dataKey.settings);
         legendKey.dataKey.hidden = legendKey.dataKey.settings.dataHiddenByDefault;
-        if (this.settings.yAxes[legendKey.dataKey.settings.yAxisId]) {
-          this.settings.yAxes[legendKey.dataKey.settings.yAxisId].show = !legendKey.dataKey.settings.dataHiddenByDefault;
-        }
       });
       this.legendKeys = this.legendKeys.filter(legendKey => legendKey.dataKey.settings.showInLegend);
       if (!this.legendKeys.length) {

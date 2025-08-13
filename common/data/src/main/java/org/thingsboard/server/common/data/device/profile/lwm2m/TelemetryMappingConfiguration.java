@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,18 @@
  */
 package org.thingsboard.server.common.data.device.profile.lwm2m;
 
-import lombok.AllArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
 
 @Data
 @NoArgsConstructor
-@AllArgsConstructor
 public class TelemetryMappingConfiguration implements Serializable {
 
     private static final long serialVersionUID = -7594999741305410419L;
@@ -35,5 +36,22 @@ public class TelemetryMappingConfiguration implements Serializable {
     private Set<String> attribute;
     private Set<String> telemetry;
     private Map<String, ObjectAttributes> attributeLwm2m;
+    private TelemetryObserveStrategy observeStrategy;
 
+    @JsonCreator
+    public TelemetryMappingConfiguration(
+            @JsonProperty("keyName") Map<String, String> keyName,
+            @JsonProperty("observe") Set<String> observe,
+            @JsonProperty("attribute") Set<String> attribute,
+            @JsonProperty("telemetry") Set<String> telemetry,
+            @JsonProperty("attributeLwm2m") Map<String, ObjectAttributes> attributeLwm2m,
+            @JsonProperty("observeStrategy") TelemetryObserveStrategy observeStrategy) {
+
+        this.keyName = keyName != null ? keyName : Collections.emptyMap();
+        this.observe = observe != null ? observe : Collections.emptySet();
+        this.attribute = attribute != null ? attribute : Collections.emptySet();
+        this.telemetry = telemetry != null ? telemetry : Collections.emptySet();
+        this.attributeLwm2m = attributeLwm2m != null ? attributeLwm2m : Collections.emptyMap();
+        this.observeStrategy = observeStrategy != null ? observeStrategy : TelemetryObserveStrategy.SINGLE;
+    }
 }

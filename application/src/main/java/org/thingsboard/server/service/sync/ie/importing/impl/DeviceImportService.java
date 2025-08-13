@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,8 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
     @Override
     protected Device prepare(EntitiesImportCtx ctx, Device device, Device old, DeviceExportData exportData, IdProvider idProvider) {
         device.setDeviceProfileId(idProvider.getInternalId(device.getDeviceProfileId()));
-        device.setFirmwareId(getOldEntityField(old, Device::getFirmwareId));
-        device.setSoftwareId(getOldEntityField(old, Device::getSoftwareId));
+        device.setFirmwareId(idProvider.getInternalId(device.getFirmwareId()));
+        device.setSoftwareId(idProvider.getInternalId(device.getSoftwareId()));
         return device;
     }
 
@@ -63,14 +63,19 @@ public class DeviceImportService extends BaseEntityImportService<DeviceId, Devic
     }
 
     @Override
-    protected Device saveOrUpdate(EntitiesImportCtx ctx, Device device, DeviceExportData exportData, IdProvider idProvider) {
+    protected Device saveOrUpdate(EntitiesImportCtx ctx, Device device, DeviceExportData exportData, IdProvider idProvider, CompareResult compareResult) {
+        Device savedDevice;
         if (exportData.getCredentials() != null && ctx.isSaveCredentials()) {
             exportData.getCredentials().setId(null);
             exportData.getCredentials().setDeviceId(null);
-            return deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
+            savedDevice = deviceService.saveDeviceWithCredentials(device, exportData.getCredentials());
         } else {
-            return deviceService.saveDevice(device);
+            savedDevice = deviceService.saveDevice(device);
         }
+        if (ctx.isFinalImportAttempt() || ctx.getCurrentImportResult().isUpdatedAllExternalIds()) {
+            importCalculatedFields(ctx, savedDevice, exportData, idProvider);
+        }
+        return savedDevice;
     }
 
     @Override

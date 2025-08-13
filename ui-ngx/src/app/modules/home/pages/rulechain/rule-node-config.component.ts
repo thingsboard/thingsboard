@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import {
   ComponentRef,
   EventEmitter,
   forwardRef,
+  HostBinding,
   Input,
   OnDestroy,
   Output,
   ViewChild,
-  ViewContainerRef
+  ViewContainerRef,
+  ViewEncapsulation
 } from '@angular/core';
 import {
   ControlValueAccessor,
@@ -52,13 +54,15 @@ import { RuleChainType } from '@shared/models/rule-chain.models';
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => RuleNodeConfigComponent),
     multi: true
-  }]
+  }],
+  encapsulation: ViewEncapsulation.None
 })
 export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy {
 
   @ViewChild('definedConfigContent', {read: ViewContainerRef, static: true}) definedConfigContainer: ViewContainerRef;
-
   @ViewChild('jsonObjectEditComponent') jsonObjectEditComponent: JsonObjectEditComponent;
+
+  @HostBinding('style.display') readonly styleDisplay = 'block';
 
   private requiredValue: boolean;
   get required(): boolean {
@@ -206,6 +210,10 @@ export class RuleNodeConfigComponent implements ControlValueAccessor, OnDestroy 
       if (this.changeSubscription) {
         this.changeSubscription.unsubscribe();
         this.changeSubscription = null;
+      }
+      if (this.changeScriptSubscription) {
+        this.changeScriptSubscription.unsubscribe();
+        this.changeScriptSubscription = null;
       }
       this.definedConfigContainer.clear();
       const component = this.ruleChainService.getRuleNodeConfigComponent(this.nodeDefinition.configDirective);

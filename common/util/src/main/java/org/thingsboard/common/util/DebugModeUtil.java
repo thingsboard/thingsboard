@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ import java.util.Set;
 
 public final class DebugModeUtil {
 
-    private static final int DEBUG_MODE_DEFAULT_DURATION_MINUTES = 15;
+    public static final int DEBUG_MODE_DEFAULT_DURATION_MINUTES = 15;
 
     private DebugModeUtil() {
     }
@@ -57,4 +57,14 @@ public final class DebugModeUtil {
             return debugSettings != null && nodeConnections != null && debugSettings.isFailuresEnabled() && nodeConnections.contains(TbNodeConnectionType.FAILURE);
         }
     }
+
+    public static boolean isDebugFailuresAvailable(HasDebugSettings debugSettingsAware) {
+        if (isDebugAllAvailable(debugSettingsAware)) {
+            return true;
+        } else {
+            var debugSettings = debugSettingsAware.getDebugSettings();
+            return debugSettings != null && debugSettings.isFailuresEnabled();
+        }
+    }
+
 }

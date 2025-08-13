@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -73,7 +75,7 @@ import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
-public class TbKafkaNodeTest {
+public class TbKafkaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5f2eac08-bd1f-4635-a6c2-437369f996cf"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("d46bb666-ecab-4d89-a28f-5abdca23ac29"));
@@ -117,8 +119,6 @@ public class TbKafkaNodeTest {
         assertThat(config.getLinger()).isEqualTo(0);
         assertThat(config.getBufferMemory()).isEqualTo(33554432);
         assertThat(config.getAcks()).isEqualTo("-1");
-        assertThat(config.getKeySerializer()).isEqualTo(StringSerializer.class.getName());
-        assertThat(config.getValueSerializer()).isEqualTo(StringSerializer.class.getName());
         assertThat(config.getOtherProperties()).isEmpty();
         assertThat(config.isAddMetadataKeyValuesAsKafkaHeaders()).isFalse();
         assertThat(config.getKafkaHeadersCharset()).isEqualTo("UTF-8");
@@ -163,8 +163,8 @@ public class TbKafkaNodeTest {
         Properties expectedProperties = new Properties();
         expectedProperties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + RULE_NODE_ID.getId() + "-" + SERVICE_ID_STR);
         expectedProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
-        expectedProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
-        expectedProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
+        expectedProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        expectedProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         expectedProperties.put(ProducerConfig.ACKS_CONFIG, config.getAcks());
         expectedProperties.put(ProducerConfig.RETRIES_CONFIG, config.getRetries());
         expectedProperties.put(ProducerConfig.BATCH_SIZE_CONFIG, config.getBatchSize());
@@ -188,7 +188,12 @@ public class TbKafkaNodeTest {
         ReflectionTestUtils.setField(node, "initError", new ThingsboardKafkaClientError(errorMsg));
 
         // WHEN
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         // THEN
@@ -212,7 +217,12 @@ public class TbKafkaNodeTest {
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         // THEN
@@ -232,7 +242,12 @@ public class TbKafkaNodeTest {
         // GIVEN
         config.setTopicPattern(topicPattern);
         config.setKeyPattern(keyPattern);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(data)
+                .build();
         String topic = TbNodeUtils.processPattern(topicPattern, msg);
         String key = TbNodeUtils.processPattern(keyPattern, msg);
 
@@ -278,7 +293,12 @@ public class TbKafkaNodeTest {
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         // THEN
@@ -303,7 +323,12 @@ public class TbKafkaNodeTest {
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         // THEN
@@ -331,7 +356,12 @@ public class TbKafkaNodeTest {
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("key", "value");
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(DEVICE_ID)
+                .copyMetaData(metaData)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
         node.onMsg(ctxMock, msg);
 
         // THEN
@@ -406,7 +436,9 @@ public class TbKafkaNodeTest {
         metaData.putValue("offset", String.valueOf(OFFSET));
         metaData.putValue("partition", String.valueOf(PARTITION));
         metaData.putValue("topic", expectedTopic);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(originalMsg, metaData);
+        TbMsg expectedMsg = originalMsg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg)
                 .usingRecursiveComparison()
                 .ignoringFields("ctx")
@@ -416,8 +448,81 @@ public class TbKafkaNodeTest {
     private void verifyOutgoingFailureMsg(String errorMsg, TbMsg actualMsg, TbMsg originalMsg) {
         TbMsgMetaData metaData = originalMsg.getMetaData();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
-        TbMsg expectedMsg = TbMsg.transformMsgMetadata(originalMsg, metaData);
+        TbMsg expectedMsg = originalMsg.transform()
+                .metaData(metaData)
+                .build();
         assertThat(actualMsg).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
     }
 
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                //config for version 0
+                Arguments.of(0,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\",\n" +
+                                "  \"keySerializer\": \"org.apache.kafka.common.serialization.StringSerializer\",\n" +
+                                "  \"valueSerializer\": \"org.apache.kafka.common.serialization.StringSerializer\"\n" +
+                                "}",
+                        true,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\"\n" +
+                                "}"
+                ),
+                //config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\"\n" +
+                                "}",
+                        false,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\"\n" +
+                                "}"
+                )
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
 }

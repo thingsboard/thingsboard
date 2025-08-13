@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,6 +46,8 @@ import java.util.stream.Collectors;
 public class MonitoringReporter {
 
     private final NotificationService notificationService;
+    private final TbClient tbClient;
+    private final MonitoringEntityService entityService;
 
     private final Map<String, Latency> latencies = new ConcurrentHashMap<>();
     private final Map<Object, AtomicInteger> failuresCounters = new ConcurrentHashMap<>();
@@ -62,7 +64,7 @@ public class MonitoringReporter {
     @Value("${monitoring.latency.reporting_asset_id}")
     private String reportingAssetId;
 
-    public void reportLatencies(TbClient tbClient) {
+    public void reportLatencies() {
         if (latencies.isEmpty()) {
             return;
         }
@@ -81,15 +83,7 @@ public class MonitoringReporter {
 
         try {
             if (StringUtils.isBlank(reportingAssetId)) {
-                String assetName = "[Monitoring] Latencies";
-                Asset monitoringAsset = tbClient.findAsset(assetName).orElseGet(() -> {
-                    Asset asset = new Asset();
-                    asset.setType("Monitoring");
-                    asset.setName(assetName);
-                    asset = tbClient.saveAsset(asset);
-                    log.info("Created monitoring asset {}", asset.getId());
-                    return asset;
-                });
+                Asset monitoringAsset = entityService.getOrCreateMonitoringAsset();
                 reportingAssetId = monitoringAsset.getId().toString();
             }
 
@@ -113,7 +107,7 @@ public class MonitoringReporter {
 
     public void serviceFailure(Object serviceKey, Throwable error) {
         if (log.isDebugEnabled()) {
-            log.error("Error occurred", error);
+            log.error("[{}] Error occurred", serviceKey, error);
         }
         int failuresCount = failuresCounters.computeIfAbsent(serviceKey, k -> new AtomicInteger()).incrementAndGet();
         ServiceFailureNotification notification = new ServiceFailureNotification(serviceKey, error, failuresCount);

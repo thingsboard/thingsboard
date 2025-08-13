@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -40,10 +40,14 @@
     </div>
   </div>
 </mat-tab>
+<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN && !isEdit"
+         label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
+  <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [entityName]="entity.name"/>
+</mat-tab>
 <mat-tab *ngIf="entity" #alarmRules="matTab"
-         label="{{'device-profile.alarm-rules-with-count' | translate:
-            {count: this.detailsForm.get('profileData.alarms').value?.length ? this.detailsForm.get('profileData.alarms').value.length : 0}
-          }}">
+         label="{{ this.detailsForm.get('profileData.alarms').value?.length
+         ? ('device-profile.alarm-rules-with-count' | translate: { count: this.detailsForm.get('profileData.alarms').value.length })
+         : 'device-profile.alarm-rules' | translate }}">
   <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
     <div formGroupName="profileData">
       <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>

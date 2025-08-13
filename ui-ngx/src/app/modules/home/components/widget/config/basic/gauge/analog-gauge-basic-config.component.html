@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -53,11 +53,12 @@
       <div translate>widget-config.units-short</div>
       <div class="flex flex-row items-center justify-start gap-2">
         <tb-unit-input
+          supportsUnitConversion
           formControlName="units">
         </tb-unit-input>
         <tb-font-settings formControlName="unitsFont"
                           disabledLineHeight
-                          [previewText]="radialGaugeWidgetConfigForm.get('units').value">
+                          [previewText]="unitsPreviewFn">
         </tb-font-settings>
         <tb-color-input asBoxInput
                         colorClearButton
@@ -73,7 +74,7 @@
       <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="valueInt" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-          <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
+          <div matSuffix class="lt-md:!hidden" translate>widget-config.digits-suffix</div>
         </mat-form-field>
         <tb-font-settings formControlName="valueFont"
                           disabledLineHeight

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import { CancelAnimationFrame } from '@core/services/raf.service';
 import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BehaviorSubject } from 'rxjs';
+import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
 import Timeout = NodeJS.Timeout;
 
 const moment = moment_;
@@ -151,7 +152,7 @@ export class TbFlot {
     }
 
     this.trackDecimals = ctx.decimals;
-    this.trackUnits = ctx.units;
+    this.trackUnits = getSourceTbUnitSymbol(ctx.units);
     this.tooltipIndividual = this.chartType === 'pie' || (isDefined(this.settings.tooltipIndividual)
       ? this.settings.tooltipIndividual : false);
     this.tooltipCumulative = isDefined(this.settings.tooltipCumulative) ? this.settings.tooltipCumulative : false;
@@ -480,7 +481,7 @@ export class TbFlot {
       }
 
       if (this.yaxis) {
-        const units = series.dataKey.units && series.dataKey.units.length ? series.dataKey.units : this.trackUnits;
+        const units = getSourceTbUnitSymbol(isNotEmptyTbUnits(series.dataKey.units) ? series.dataKey.units : this.trackUnits);
         let yaxis: TbFlotAxisOptions;
         if (keySettings.showSeparateAxis) {
           yaxis = this.createYAxis(keySettings, units);
@@ -1172,7 +1173,7 @@ export class TbFlot {
   }
 
   private formatPieTooltip(item: TbFlotPlotItem): string {
-    const units = item.series.dataKey.units && item.series.dataKey.units.length ? item.series.dataKey.units : this.trackUnits;
+    const units = getSourceTbUnitSymbol(isNotEmptyTbUnits(item.series.dataKey.units) ? item.series.dataKey.units : this.trackUnits);
     const decimals = isDefinedAndNotNull(item.series.dataKey.decimals) ? item.series.dataKey.decimals : this.trackDecimals;
     const divElement = this.seriesInfoDiv(item.series.dataKey.label, item.series.dataKey.color,
       item.datapoint[1][0][1], units, decimals, true, item.series.percent, 0,
@@ -1504,7 +1505,7 @@ export class TbFlot {
             hoverIndex,
             color: series.dataKey.color,
             label: series.dataKey.label,
-            units: series.dataKey.units,
+            units: getSourceTbUnitSymbol(series.dataKey.units),
             decimals: series.dataKey.decimals,
             tooltipValueFormatFunction: series.dataKey.tooltipValueFormatFunction,
             time: pointTime,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,9 @@ public class DefaultEntityServiceRegistry implements EntityServiceRegistry {
             entityDaoServicesMap.put(entityType, entityDaoService);
             if (EntityType.RULE_CHAIN.equals(entityType)) {
                 entityDaoServicesMap.put(EntityType.RULE_NODE, entityDaoService);
+            }
+            if (EntityType.CALCULATED_FIELD.equals(entityType)) {
+                entityDaoServicesMap.put(EntityType.CALCULATED_FIELD_LINK, entityDaoService);
             }
         });
         log.debug("Initialized EntityServiceRegistry total [{}] entries", entityDaoServicesMap.size());

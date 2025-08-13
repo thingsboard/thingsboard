@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 import {
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   EventEmitter,
   forwardRef,
   Input,
@@ -40,6 +41,7 @@ import {
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-panel.component';
 import { deepClone } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-time-series-chart-y-axis-row',
@@ -67,6 +69,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   @coerceBoolean()
   advanced = false;
 
+  @Input()
+  @coerceBoolean()
+  supportsUnitConversion = false;
+
   @Output()
   axisRemoved = new EventEmitter();
 
@@ -81,7 +87,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private destroyRef: DestroyRef) {
   }
 
   ngOnInit() {
@@ -94,10 +101,14 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       max: [null, []],
       show: [null, []]
     });
-    this.axisFormGroup.valueChanges.subscribe(
+    this.axisFormGroup.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(
       () => this.updateModel()
     );
-    this.axisFormGroup.get('show').valueChanges.subscribe(() => {
+    this.axisFormGroup.get('show').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
   }
@@ -144,17 +155,20 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        axisType: 'yAxis',
-        panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
-        axisSettings: deepClone(this.modelValue),
-        advanced: this.advanced
-      };
-      const yAxisSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartAxisSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const yAxisSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: TimeSeriesChartAxisSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          axisType: 'yAxis',
+          panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
+          axisSettings: deepClone(this.modelValue),
+          advanced: this.advanced
+        },
+        isModal: true
+      });
       yAxisSettingsPanelPopover.tbComponentRef.instance.popover = yAxisSettingsPanelPopover;
       yAxisSettingsPanelPopover.tbComponentRef.instance.axisSettingsApplied.subscribe((yAxisSettings) => {
         yAxisSettingsPanelPopover.hide();

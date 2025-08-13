@@ -1,0 +1,47 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="mapActionButton" class="tb-form-table-row">
+  <mat-form-field class="tb-inline-field tb-label-field min-w-32" style="flex: 1 1 40%" appearance="outline" subscriptSizing="dynamic">
+    <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+    <mat-icon matSuffix
+              matTooltipPosition="above"
+              matTooltipClass="tb-error-tooltip"
+              matTooltip="{{ 'widgets.maps.map-action.button-requires' | translate }}"
+              *ngIf="mapActionButton.hasError('invalidButtonConfig')"
+              class="tb-error">
+      warning
+    </mat-icon>
+  </mat-form-field>
+  <tb-material-icon-select formControlName="icon" asBoxInput iconClearButton [color]="this.mapActionButton.get('color').value"></tb-material-icon-select>
+  <tb-color-input formControlName="color" asBoxInput required></tb-color-input>
+  <tb-widget-action-settings class="min-w-32" style="flex: 1 1 60%"
+                             formControlName="action"
+                             panelTitle="{{ 'widgets.maps.map-action.map-action-button' | translate }}"
+                             [widgetType]="widgetType.latest"
+                             [additionalWidgetActionTypes]="additionalWidgetActionTypes">
+  </tb-widget-action-settings>
+  <div class="tb-form-table-row-cell-buttons w-10 min-w-10">
+    <button type="button"
+            mat-icon-button
+            (click)="buttonRemoved.emit()"
+            matTooltip="{{ 'widgets.maps.map-action.remove-action-button' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</div>

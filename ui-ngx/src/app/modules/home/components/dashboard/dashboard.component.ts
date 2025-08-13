@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,7 +41,9 @@ import {
   DashboardCallbacks,
   DashboardWidget,
   DashboardWidgets,
-  IDashboardComponent
+  IDashboardComponent,
+  maxGridsterCol,
+  maxGridsterRow
 } from '../../models/dashboard-component.models';
 import { ReplaySubject, Subject, Subscription } from 'rxjs';
 import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
@@ -231,10 +233,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       disableAutoPositionOnConflict: false,
       pushItems: false,
       swap: false,
-      maxRows: 3000,
+      maxRows: maxGridsterRow,
       minCols: this.columns ? this.columns : 24,
       setGridSize: this.setGridSize,
-      maxCols: 3000,
+      maxCols: maxGridsterCol,
       maxItemCols: 1000,
       maxItemRows: 1000,
       maxItemArea: 1000000,
@@ -245,6 +247,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemCols: 8,
       defaultItemRows: 6,
       displayGrid: this.displayGrid,
+      useTransformPositioning: false,
       resizable: {
         enabled: this.isEdit && !this.isEditingWidget,
         delayStart: 50,
@@ -253,7 +256,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       draggable: {
         enabled: this.isEdit && !this.isEditingWidget,
         delayStart: 100,
-        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
+        stop: (_, itemComponent) => {
+          (itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);
+          this.notifyGridsterOptionsChanged();
+        }
       },
       itemChangeCallback: () => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (_, itemComponent) => {
@@ -390,7 +396,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   onDashboardMouseDown($event: MouseEvent) {
     if (this.callbacks && this.callbacks.onDashboardMouseDown) {
-      if ($event) {
+      if ($event && this.isEdit) {
         $event.stopPropagation();
       }
       this.callbacks.onDashboardMouseDown($event);

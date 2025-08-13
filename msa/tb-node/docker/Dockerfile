@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2024 The Thingsboard Authors
+# Copyright © 2016-2025 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,12 +16,14 @@
 
 FROM thingsboard/openjdk17:bookworm-slim
 
-COPY start-tb-node.sh ${pkg.name}.deb /tmp/
+COPY logback.xml start-tb-node.sh ${pkg.name}.deb /tmp/
 
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-tb-node.sh /usr/bin && \
     (yes | dpkg -i /tmp/${pkg.name}.deb) && \
     rm /tmp/${pkg.name}.deb && \
+    mv /tmp/logback.xml ${pkg.installFolder}/conf && \
+    chown -R ${pkg.user}:${pkg.user} ${pkg.installFolder}/conf/logback.xml && \
     (systemctl --no-reload disable --now ${pkg.name}.service > /dev/null 2>&1 || :) && \
     chown -R ${pkg.user}:${pkg.user} /tmp && \
     chmod 555 ${pkg.installFolder}/bin/${pkg.name}.jar

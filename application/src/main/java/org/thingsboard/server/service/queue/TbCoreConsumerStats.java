@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public class TbCoreConsumerStats {
     public static final String DEVICE_ACTIVITIES = "deviceActivity";
     public static final String DEVICE_DISCONNECTS = "deviceDisconnect";
     public static final String DEVICE_INACTIVITIES = "deviceInactivity";
+    public static final String DEVICE_INACTIVITY_TIMEOUT_UPDATES = "deviceInactivityTimeoutUpdate";
 
     public static final String TO_CORE_NF_OTHER = "coreNfOther"; // normally, there is no messages when codebase is fine
     public static final String TO_CORE_NF_COMPONENT_LIFECYCLE = "coreNfCompLfcl";
@@ -65,6 +66,7 @@ public class TbCoreConsumerStats {
     private final StatsCounter deviceActivitiesCounter;
     private final StatsCounter deviceDisconnectsCounter;
     private final StatsCounter deviceInactivitiesCounter;
+    private final StatsCounter deviceInactivityTimeoutUpdatesCounter;
 
     private final StatsCounter toCoreNfOtherCounter;
     private final StatsCounter toCoreNfComponentLifecycleCounter;
@@ -95,6 +97,7 @@ public class TbCoreConsumerStats {
         this.deviceActivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_ACTIVITIES));
         this.deviceDisconnectsCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_DISCONNECTS));
         this.deviceInactivitiesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITIES));
+        this.deviceInactivityTimeoutUpdatesCounter = register(statsFactory.createStatsCounter(statsKey, DEVICE_INACTIVITY_TIMEOUT_UPDATES));
 
         // Core notification counters
         this.toCoreNfOtherCounter = register(statsFactory.createStatsCounter(statsKey, TO_CORE_NF_OTHER));
@@ -161,6 +164,11 @@ public class TbCoreConsumerStats {
     public void log(TransportProtos.DeviceInactivityProto msg) {
         totalCounter.increment();
         deviceInactivitiesCounter.increment();
+    }
+
+    public void log(TransportProtos.DeviceInactivityTimeoutUpdateProto msg) {
+        totalCounter.increment();
+        deviceInactivityTimeoutUpdatesCounter.increment();
     }
 
     public void log(TransportProtos.SubscriptionMgrMsgProto msg) {

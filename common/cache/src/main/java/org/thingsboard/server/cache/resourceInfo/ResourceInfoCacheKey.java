@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TbResourceId;
-import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
 import java.io.Serializable;
@@ -34,12 +33,11 @@ public class ResourceInfoCacheKey implements Serializable {
     @Serial
     private static final long serialVersionUID = 2100510964692846992L;
 
-    private final TenantId tenantId;
     private final TbResourceId tbResourceId;
 
     @Override
     public String toString() {
-        return tenantId + "_" + tbResourceId;
+        return tbResourceId.toString();
     }
 
 }

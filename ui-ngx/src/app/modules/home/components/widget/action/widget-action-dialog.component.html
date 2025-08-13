@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -88,12 +88,74 @@
             </mat-icon>
           </mat-form-field>
         </div>
-        <div class="tb-form-row space-between">
-          <div>{{'widget-config.icon' | translate}}</div>
-          <tb-material-icon-select asBoxInput
-                                   formControlName="icon">
-          </tb-material-icon-select>
-        </div>
+        @if (widgetActionFormGroup.get('actionSourceId').value === 'headerButton') {
+          <div class="tb-form-panel stroked">
+            <div class="tb-form-panel-title" translate>widget-config.header-button.button-settings</div>
+            <div class="tb-form-row">
+              <div class="fixed-title-width" translate>widget-config.header-button.button-type</div>
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <mat-select required formControlName="buttonType" placeholder="{{ 'widget-config.set' | translate }}">
+                  <mat-option *ngFor="let button of widgetHeaderActionButtonTypes" [value]="button">
+                    {{ widgetHeaderActionButtonTypeTranslationMap.get(widgetHeaderActionButtonType[button]) | translate }}
+                  </mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+            <div class="tb-form-row space-between">
+              <div class="flex flex-row items-center justify-start gap-2">
+                <mat-slide-toggle class="mat-slide" formControlName="showIcon">
+                </mat-slide-toggle>
+                <div translate>widget-config.icon</div>
+              </div>
+              <tb-material-icon-select asBoxInput
+                                       formControlName="icon">
+              </tb-material-icon-select>
+            </div>
+            <div class="tb-form-row space-between column-xs">
+              <div class="fixed-title-width">{{ 'widget-config.header-button.colors' | translate }}</div>
+              <div class="flex flex-row items-center justify-start gap-2">
+                <div class="tb-small-label" translate>widget-config.header-button.color</div>
+                <tb-color-input asBoxInput
+                                formControlName="buttonColor">
+                </tb-color-input>
+                <mat-divider vertical></mat-divider>
+                <div class="tb-small-label" translate>widget-config.header-button.background</div>
+                <tb-color-input asBoxInput
+                                formControlName="buttonFillColor">
+                </tb-color-input>
+                <mat-divider vertical></mat-divider>
+                <div class="tb-small-label" translate>widget-config.header-button.border</div>
+                <tb-color-input asBoxInput
+                                formControlName="buttonBorderColor">
+                </tb-color-input>
+              </div>
+            </div>
+            <div class="tb-form-panel stroked">
+              <mat-expansion-panel class="tb-settings">
+                <mat-expansion-panel-header>
+                  <mat-panel-description class="flex items-stretch justify-start" translate>
+                    widget-config.header-button.advanced-button-style
+                  </mat-panel-description>
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <tb-json-object-edit
+                    [editorStyle]="{minHeight: '100px'}"
+                    label="{{ 'widget-config.header-button.button-style' | translate }}"
+                    formControlName="customButtonStyle"
+                  ></tb-json-object-edit>
+                </ng-template>
+              </mat-expansion-panel>
+            </div>
+          </div>
+        } @else {
+          <div class="tb-form-row space-between">
+            <div>{{'widget-config.icon' | translate}}</div>
+            <tb-material-icon-select asBoxInput
+                                     formControlName="icon">
+            </tb-material-icon-select>
+          </div>
+        }
+
         <div class="tb-form-panel stroked tb-slide-toggle" *ngIf="displayShowWidgetActionForm()">
           <mat-expansion-panel class="tb-settings" [expanded]="widgetActionFormGroup.get('useShowWidgetActionFunction').value"
                                [disabled]="!widgetActionFormGroup.get('useShowWidgetActionFunction').value">
@@ -121,7 +183,8 @@
         <tb-widget-action
             formControlName="widgetAction"
             [callbacks]="data.callbacks"
-            [widgetType]="data.widgetType">
+            [widgetType]="data.widgetType"
+            [additionalWidgetActionTypes]="data.additionalWidgetActionTypes">
         </tb-widget-action>
       </div>
     </fieldset>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -85,7 +85,13 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
+        TbMsg msg = TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(new TbMsgMetaData(metaData))
+                .data("{\"key\":\"value\"}")
+                .build();
 
         Consumer<TbMsg> anyConsumer = TbMsg::getData;
         doAnswer(invocation -> {
@@ -113,7 +119,13 @@ public class DefaultRuleEngineCallServiceTest {
         metaData.put("serviceId", "core");
         metaData.put("requestUUID", requestId.toString());
         metaData.put("expirationTime", Long.toString(expTime));
-        TbMsg msg = TbMsg.newMsg(DataConstants.MAIN_QUEUE_NAME, TbMsgType.REST_API_REQUEST, TENANT_ID, new TbMsgMetaData(metaData), "{\"key\":\"value\"}");
+        TbMsg msg = TbMsg.newMsg()
+                .queueName(DataConstants.MAIN_QUEUE_NAME)
+                .type(TbMsgType.REST_API_REQUEST)
+                .originator(TENANT_ID)
+                .copyMetaData(new TbMsgMetaData(metaData))
+                .data("{\"key\":\"value\"}")
+                .build();
 
         Consumer<TbMsg> anyConsumer = TbMsg::getData;
         doAnswer(invocation -> {
@@ -132,7 +144,7 @@ public class DefaultRuleEngineCallServiceTest {
 
     private TransportProtos.RestApiCallResponseMsgProto getResponse(UUID requestId, TbMsg msg) {
         return TransportProtos.RestApiCallResponseMsgProto.newBuilder()
-                .setResponse(TbMsg.toByteString(msg))
+                .setResponseProto(TbMsg.toProto(msg))
                 .setRequestIdMSB(requestId.getMostSignificantBits())
                 .setRequestIdLSB(requestId.getLeastSignificantBits())
                 .build();

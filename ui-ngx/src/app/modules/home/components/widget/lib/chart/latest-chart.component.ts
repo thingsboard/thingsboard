@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -69,9 +69,6 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
   ctx: WidgetContext;
 
   @Input()
-  widgetTitlePanel: TemplateRef<any>;
-
-  @Input()
   callbacks: LatestChartComponentCallbacks;
 
   @Input()
@@ -98,9 +95,9 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private latestChart: TbLatestChart<LatestChartSettings>;
 
-  constructor(private imagePipe: ImagePipe,
+  constructor(public widgetComponent: WidgetComponent,
+              private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
-              private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private translate: TranslateService,
               private cd: ChangeDetectorRef) {

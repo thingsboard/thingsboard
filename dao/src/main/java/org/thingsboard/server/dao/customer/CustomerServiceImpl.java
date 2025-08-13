@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -162,7 +162,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
             }
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).created(customer.getId() == null).build());
+                    .entityId(savedCustomer.getId()).entity(savedCustomer).created(customer.getId() == null).build());
             return savedCustomer;
         } catch (Exception e) {
             handleEvictEvent(evictEvent);
@@ -184,6 +184,10 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Transactional
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        if (!force && calculatedFieldService.referencedInAnyCalculatedField(tenantId, id)) {
+            throw new DataValidationException("Can't delete customer that is referenced in calculated fields!");
+        }
+
         CustomerId customerId = (CustomerId) id;
         Customer customer = findCustomerById(tenantId, customerId);
         if (customer == null) {
@@ -209,12 +213,11 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     public Customer findOrCreatePublicCustomer(TenantId tenantId) {
         log.trace("Executing findOrCreatePublicCustomer, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
-        if (publicCustomerOpt.isPresent()) {
-            return publicCustomerOpt.get();
+        var publicCustomer = findPublicCustomer(tenantId);
+        if (publicCustomer != null) {
+            return publicCustomer;
         }
-        var publicCustomer = new Customer();
+        publicCustomer = new Customer();
         publicCustomer.setTenantId(tenantId);
         publicCustomer.setTitle(PUBLIC_CUSTOMER_TITLE);
         try {
@@ -226,13 +229,21 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
             return saveCustomer(publicCustomer, false);
         } catch (DataValidationException e) {
             if (CUSTOMER_UNIQUE_TITLE_EX_MSG.equals(e.getMessage())) {
-                publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
+                Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
                 if (publicCustomerOpt.isPresent()) {
                     return publicCustomerOpt.get();
                 }
             }
             throw new RuntimeException("Failed to create public customer.", e);
         }
+    }
+
+    @Override
+    public Customer findPublicCustomer(TenantId tenantId) {
+        log.trace("Executing findPublicCustomer, tenantId [{}]", tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Optional<Customer> publicCustomerOpt = customerDao.findPublicCustomerByTenantId(tenantId.getId());
+        return publicCustomerOpt.orElse(null);
     }
 
     @Override

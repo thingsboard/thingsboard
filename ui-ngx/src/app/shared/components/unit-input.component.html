@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,16 +15,19 @@
     limitations under the License.
 
 -->
-<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover flex-1" subscriptSizing="dynamic" style="width: 100%;">
+<mat-form-field appearance="outline" class="tb-inline-field tb-suffix-show-on-hover w-full flex-1" subscriptSizing="dynamic"
+                (click)="openUnitSettingsPopup($event)">
   <input matInput #unitInput [formControl]="unitsFormControl"
          placeholder="{{ 'widget-config.set' | translate }}"
+         [class.!pointer-events-none]="disabled"
          (focusin)="onFocus()"
-         [matAutocomplete]="unitsAutocomplete">
-  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
+         [matAutocomplete]="unitsAutocomplete"
+         [matAutocompleteDisabled]="supportsUnitConversion">
+  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid && !isUnitMapping"
           type="button"
-          class="tb-icon-24"
+          class="tb-icon-24 mr-2"
           matSuffix mat-icon-button aria-label="Clear"
-          (click)="clear()">
+          (click)="clear($event)">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
   <mat-icon matSuffix
@@ -34,14 +37,27 @@
             *ngIf="unitsFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
+  <tb-icon matSuffix
+           [color]="disabled ? null : 'primary'"
+           matTooltipPosition="above"
+           [matTooltip]="'unit.set-unit-conversion' | translate"
+           *ngIf="supportsUnitConversion && isUnitMapping" class="material-icons tb-suffix-show-always mr-2 !p-0">
+    mdi:swap-vertical-circle-outline
+  </tb-icon>
   <mat-autocomplete
     #unitsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-unit-input-autocomplete"
     panelWidth="fit-content"
-    [displayWith]="displayUnitFn">
-    <mat-option *ngFor="let unit of filteredUnits | async" [value]="unit">
-      <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
-      <span class="tb-unit-symbol" [innerHTML]="unit.symbol | highlight:searchText:true:'ig'"></span>
-    </mat-option>
+    [displayWith]="displayUnitFn.bind(this)">
+    @for (group of filteredUnits$ | async; track group[0]) {
+      <mat-optgroup [label]="'unit.measures.' + group[0] | translate">
+        @for(unit of group[1]; track unit.abbr) {
+          <mat-option [value]="unit">
+            <span class="tb-unit-name flex-1" [innerHTML]="unit.name | highlight:searchText:true:'ig'"></span>
+            <span class="tb-unit-symbol" [innerHTML]="unit.abbr | highlight:searchText:true:'ig'"></span>
+          </mat-option>
+        }
+      </mat-optgroup>
+  }
   </mat-autocomplete>
 </mat-form-field>

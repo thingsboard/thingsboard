@@ -1,7 +1,7 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200">
  <tb:metadata><![CDATA[{
   "title": "Short right drain pipe",
-  "description": "Short right drain pipe",
+  "description": "Short right drain pipe with configurable fluid and leak visualizations.",
   "searchTags": [
     "pipe",
     "drain"

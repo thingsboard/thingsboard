@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -431,7 +431,7 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
       if (isDefined(value.history.quickInterval)) {
         model.history.quickInterval = value.history.quickInterval;
       }
-      if (isDefined(value.history.fixedTimewindow)) {
+      if (isDefinedAndNotNull(value.history.fixedTimewindow)) {
         if (isDefined(value.history.fixedTimewindow.startTimeMs)) {
           model.history.fixedTimewindow.startTimeMs = value.history.fixedTimewindow.startTimeMs;
         }
@@ -1406,3 +1406,28 @@ export const calculateInterval = (startTime: number, endTime: number,
 
 export const getCurrentTimeForComparison = (timeForComparison: moment_.unitOfTime.DurationConstructor, tz?: string): moment_.Moment =>
   getCurrentTime(tz).subtract(1, timeForComparison);
+
+export const getTimePageLinkInterval = (timewindow: Timewindow): {startTime?: number; endTime?: number} => {
+  const interval: {startTime?: number; endTime?: number} = {};
+  switch (timewindow.history.historyType) {
+    case HistoryWindowType.LAST_INTERVAL:
+      const currentTime = Date.now();
+      interval.startTime = currentTime - timewindow.history.timewindowMs;
+      interval.endTime = currentTime;
+      break;
+    case HistoryWindowType.FIXED:
+      interval.startTime = timewindow.history.fixedTimewindow.startTimeMs;
+      interval.endTime = timewindow.history.fixedTimewindow.endTimeMs;
+      break;
+    case HistoryWindowType.INTERVAL:
+      const startEndTime = calculateIntervalStartEndTime(timewindow.history.quickInterval);
+      interval.startTime = startEndTime[0];
+      interval.endTime = startEndTime[1];
+      break;
+    case HistoryWindowType.FOR_ALL_TIME:
+      interval.startTime = null;
+      interval.endTime = null;
+      break;
+  }
+  return interval;
+}

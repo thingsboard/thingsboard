@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ import io.netty.handler.codec.mqtt.MqttFixedHeader;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttMessageBuilders;
 import io.netty.handler.codec.mqtt.MqttMessageIdVariableHeader;
+import io.netty.handler.codec.mqtt.MqttProperties.IntegerProperty;
+import io.netty.handler.codec.mqtt.MqttProperties.MqttPropertyType;
 import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
@@ -84,6 +86,7 @@ import org.thingsboard.server.transport.mqtt.limits.SessionLimits;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
+import org.thingsboard.server.transport.mqtt.session.SparkplugDeviceSessionContext;
 import org.thingsboard.server.transport.mqtt.session.SparkplugNodeSessionHandler;
 import org.thingsboard.server.transport.mqtt.util.ReturnCodeResolver;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType;
@@ -94,12 +97,14 @@ import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic;
 import javax.net.ssl.SSLPeerUnverifiedException;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -109,7 +114,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.amazonaws.util.StringUtils.UTF8;
 import static io.netty.handler.codec.mqtt.MqttMessageType.CONNECT;
 import static io.netty.handler.codec.mqtt.MqttMessageType.PINGRESP;
 import static io.netty.handler.codec.mqtt.MqttMessageType.SUBACK;
@@ -120,9 +124,14 @@ import static org.thingsboard.server.common.transport.service.DefaultTransportSe
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG;
 import static org.thingsboard.server.common.transport.service.DefaultTransportService.SUBSCRIBE_TO_RPC_ASYNC_MSG;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.OFFLINE;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NBIRTH;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NCMD;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.NDEATH;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.SPARKPLUG_BD_SEQUENCE_NUMBER_KEY;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProto;
-import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicUtil.parseTopicPublish;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetricUtil.getTsKvProtoFromJsonNode;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic.parseTopic;
+import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.parseTopicPublish;
 
 /**
  * @author Andrew Shvayka
@@ -444,11 +453,23 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
+    /**
+     * It may be the case that an Edge Node has many dynamic associated devices.
+     * Publish: spBv1.0/G1/DBIRTH/E1/+
+     * Publish: spBv1.0/G1/DDATA/E1/+
+     * Publish: spBv1.0/G1/DCMD/E1/+
+     * Publish: spBv1.0/G1/DDEATH/E1/+
+     * @param ctx
+     * @param topicName
+     * @param mqttMsg
+     */
+
     private void handleSparkplugPublishMsg(ChannelHandlerContext ctx, String topicName, MqttPublishMessage mqttMsg) {
         int msgId = mqttMsg.variableHeader().packetId();
         try {
             SparkplugTopic sparkplugTopic = parseTopicPublish(topicName);
-            if (sparkplugTopic.isNode()) {
+            boolean isWildcardInPublish = topicName.contains("+");
+            if (!isWildcardInPublish && sparkplugTopic.isNode()) {
                 // A node topic
                 SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
                 switch (sparkplugTopic.getType()) {
@@ -457,21 +478,28 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     case NDATA:
                         sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoNode, sparkplugTopic);
                         break;
+                    case NDEATH:
+                        if (sparkplugSessionHandler.onValidateNDEATH(sparkplugBProtoNode)) {
+                            doDisconnect();
+                            break;
+                        } else {
+                            throw new ThingsboardException(SPARKPLUG_BD_SEQUENCE_NUMBER_KEY + " of " + NDEATH.name() + " is not equals " +
+                                    SPARKPLUG_BD_SEQUENCE_NUMBER_KEY + " of " + NBIRTH.name(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                        }
                     default:
                 }
             } else {
                 // A device topic
                 SparkplugBProto.Payload sparkplugBProtoDevice = SparkplugBProto.Payload.parseFrom(ProtoMqttAdaptor.toBytes(mqttMsg.payload()));
-                switch (sparkplugTopic.getType()) {
-                    case DBIRTH:
-                    case DCMD:
-                    case DDATA:
-                        sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoDevice, sparkplugTopic);
-                        break;
-                    case DDEATH:
-                        sparkplugSessionHandler.onDeviceDisconnect(mqttMsg, sparkplugTopic.getDeviceId());
-                        break;
-                    default:
+                if (isWildcardInPublish) {
+                    for (Entry<String, SparkplugDeviceSessionContext> entry : sparkplugSessionHandler.getDevices().entrySet()) {
+                        String deviceName = entry.getKey();
+                        SparkplugTopic sparkplugTopicDevice = sparkplugTopic;
+                        sparkplugTopicDevice.updateDeviceIdPlus(deviceName);
+                        handleSparkplugPublishDeviceMsg(sparkplugTopicDevice, msgId, mqttMsg, sparkplugBProtoDevice);
+                    }
+                } else {
+                    handleSparkplugPublishDeviceMsg(sparkplugTopic, msgId, mqttMsg, sparkplugBProtoDevice);
                 }
             }
         } catch (RuntimeException e) {
@@ -481,6 +509,36 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         } catch (AdaptorException | ThingsboardException | InvalidProtocolBufferException e) {
             log.error("[{}] Failed to process publish msg [{}][{}]", sessionId, topicName, msgId, e);
             sendResponseForAdaptorErrorOrCloseContext(ctx, topicName, msgId);
+        }
+    }
+
+    /**
+     * It may be the case that an Edge Node has many dynamic associated devices.
+     * Publish: spBv1.0/G1/DBIRTH/E1/+
+     * Publish: spBv1.0/G1/DDATA/E1/+
+     * Publish: spBv1.0/G1/DCMD/E1/+
+     * Publish: spBv1.0/G1/DDEATH/E1/+
+     * @param sparkplugTopic
+     * @param msgId
+     * @param mqttMsg
+     * @throws AdaptorException
+     * @throws ThingsboardException
+     * @throws InvalidProtocolBufferException
+     */
+    private void handleSparkplugPublishDeviceMsg(SparkplugTopic sparkplugTopic, int msgId,
+                                                 MqttPublishMessage mqttMsg, SparkplugBProto.Payload sparkplugBProtoDevice)
+            throws AdaptorException, ThingsboardException, InvalidProtocolBufferException {
+        // A device topic
+        switch (sparkplugTopic.getType()) {
+            case DBIRTH:
+            case DCMD:
+            case DDATA:
+                sparkplugSessionHandler.onAttributesTelemetryProto(msgId, sparkplugBProtoDevice, sparkplugTopic);
+                break;
+            case DDEATH:
+                sparkplugSessionHandler.onDeviceDisconnect(mqttMsg, sparkplugTopic.getDeviceId());
+                break;
+            default:
         }
     }
 
@@ -606,7 +664,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void getOtaPackageCallback(ChannelHandlerContext ctx, MqttPublishMessage mqttMsg, int msgId, Matcher fwMatcher, OtaPackageType type) {
-        String payload = mqttMsg.content().toString(UTF8);
+        String payload = mqttMsg.content().toString(StandardCharsets.UTF_8);
         int chunkSize = StringUtils.isNotEmpty(payload) ? Integer.parseInt(payload) : 0;
         String requestId = fwMatcher.group("requestId");
         int chunk = Integer.parseInt(fwMatcher.group("chunk"));
@@ -762,7 +820,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             ctx.writeAndFlush(createSubAckMessage(mqttMsg.variableHeader().messageId(), Collections.singletonList(MqttReasonCodes.SubAck.NOT_AUTHORIZED.byteValue() & 0xFF)));
             return;
         }
-        log.trace("[{}] Processing subscription [{}]!", sessionId, mqttMsg.variableHeader().messageId());
+        //TODO consume the rate limit
+        log.trace("[{}][{}] Processing subscription [{}]!", deviceSessionCtx.getTenantId(), sessionId, mqttMsg.variableHeader().messageId());
         List<Integer> grantedQoSList = new ArrayList<>();
         boolean activityReported = false;
         for (MqttTopicSubscription subscription : mqttMsg.payload().topicSubscriptions()) {
@@ -772,7 +831,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 if (MqttTopics.DEVICE_PROVISION_RESPONSE_TOPIC.equals(topic)) {
                     registerSubQoS(topic, grantedQoSList, reqQoS);
                 } else {
-                    log.debug("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                    log.debug("[{}][{}] Failed to subscribe because this session is provision only [{}][{}]", deviceSessionCtx.getTenantId(), sessionId, topic, reqQoS);
                     grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.TOPIC_FILTER_INVALID));
                 }
                 activityReported = true;
@@ -785,7 +844,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
             try {
                 if (sparkplugSessionHandler != null) {
-                    sparkplugSessionHandler.handleSparkplugSubscribeMsg(grantedQoSList, subscription, reqQoS);
+                    sparkplugSessionHandler.handleSparkplugSubscribeMsg(subscription);
                     activityReported = true;
                 } else {
                     switch (topic) {
@@ -847,13 +906,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                             registerSubQoS(topic, grantedQoSList, reqQoS);
                             break;
                         default:
-                            log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS);
+                            //TODO increment an error counter if any exists
+                            log.warn("[{}][{}] Failed to subscribe because topic is not supported [{}][{}]", deviceSessionCtx.getTenantId(), sessionId, topic, reqQoS);
                             grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.TOPIC_FILTER_INVALID));
                             break;
                     }
                 }
             } catch (Exception e) {
-                log.warn("[{}] Failed to subscribe to [{}][{}]", sessionId, topic, reqQoS, e);
+                log.warn("[{}][{}] Failed to subscribe to [{}][{}]", deviceSessionCtx.getTenantId(), sessionId, topic, reqQoS, e);
                 grantedQoSList.add(ReturnCodeResolver.getSubscriptionReturnCode(deviceSessionCtx.getMqttVersion(), MqttReasonCodes.SubAck.IMPLEMENTATION_SPECIFIC_ERROR));
             }
         }
@@ -875,13 +935,22 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         registerSubQoS(topic, grantedQoSList, reqQoS);
     }
 
-    public void processAttributesRpcSubscribeSparkplugNode(List<Integer> grantedQoSList, MqttQoS reqQoS) {
+    /**
+     * 3.0.0 Edge Node Session Establishment:
+     * ncmd-subscribe
+     * [tck-id-message-flow-edge-node-ncmd-subscribe] The MQTT client associated with the Edge
+     * Node MUST subscribe to a topic of the form spBv1.0/group_id/NCMD/edge_node_id where
+     * group_id is the Sparkplug Group ID and the edge_node_id is the Sparkplug Edge Node ID for
+     * this Edge Node. It MUST subscribe on this topic with a QoS of 1.
+     */
+    public void processAttributesRpcSubscribeSparkplugNode() {
+        List<Integer> grantedQoSList = new ArrayList<>();
         transportService.process(TransportProtos.TransportToDeviceActorMsg.newBuilder()
                 .setSessionInfo(deviceSessionCtx.getSessionInfo())
                 .setSubscribeToAttributes(SUBSCRIBE_TO_ATTRIBUTE_UPDATES_ASYNC_MSG)
                 .setSubscribeToRPC(SUBSCRIBE_TO_RPC_ASYNC_MSG)
                 .build(), null);
-        registerSubQoS(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, grantedQoSList, reqQoS);
+        registerSubQoS(MqttTopics.DEVICE_ATTRIBUTES_TOPIC, grantedQoSList, AT_LEAST_ONCE);
     }
 
     public void registerSubQoS(String topic, List<Integer> grantedQoSList, MqttQoS reqQoS) {
@@ -963,7 +1032,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 unSubResults.add((short) MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
             }
         }
-        if (!activityReported) {
+        if (!activityReported && !deviceSessionCtx.isProvisionOnly()) {
             transportService.recordActivity(deviceSessionCtx.getSessionInfo());
         }
         ctx.writeAndFlush(createUnSubAckMessage(mqttMsg.variableHeader().messageId(), unSubResults));
@@ -1178,12 +1247,14 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void checkSparkplugNodeSession(MqttConnectMessage connectMessage, ChannelHandlerContext ctx, SessionMetaData sessionMetaData) {
         try {
             if (sparkplugSessionHandler == null) {
-                SparkplugTopic sparkplugTopicNode = validatedSparkplugTopicConnectedNode(connectMessage);
-                if (sparkplugTopicNode != null) {
+                SparkplugTopic sparkplugTopic = validatedSparkplugConnectedWillTopic(connectMessage);
+                if (sparkplugTopic != null) {
                     SparkplugBProto.Payload sparkplugBProtoNode = SparkplugBProto.Payload.parseFrom(connectMessage.payload().willMessageInBytes());
-                    sparkplugSessionHandler = new SparkplugNodeSessionHandler(this, deviceSessionCtx, sessionId, true, sparkplugTopicNode);
-                    sparkplugSessionHandler.onAttributesTelemetryProto(0, sparkplugBProtoNode, sparkplugTopicNode);
+                    sparkplugSessionHandler = new SparkplugNodeSessionHandler(this, deviceSessionCtx, sessionId, true, sparkplugTopic);
+                    sparkplugSessionHandler.onAttributesTelemetryProto(0, sparkplugBProtoNode, sparkplugTopic);
                     sessionMetaData.setOverwriteActivityTime(true);
+                    // ncmd-subscribe
+                    processAttributesRpcSubscribeSparkplugNode();
                 } else {
                     log.trace("[{}][{}] Failed to fetch sparkplugDevice connect:  sparkplugTopicName without SparkplugMessageType.NDEATH.", sessionId, deviceSessionCtx.getDeviceInfo().getDeviceName());
                     throw new ThingsboardException("Invalid request body", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -1196,12 +1267,33 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private SparkplugTopic validatedSparkplugTopicConnectedNode(MqttConnectMessage connectMessage) throws ThingsboardException {
+    /**
+     *  The Death Certificate topic and payload described here are not “published” as an MQTT message by a client,
+     *  but provided as parameters within the MQTT CONNECT control packet when this Sparkplug Edge Node first establishes the MQTT Client session.
+     * - NDEATH message MUST be registered as a Will Message in the MQTT CONNECT packet.
+     * -- in the MQTT CONNECT packet The NDEATH message MUST set the MQTT Will QoS to 1.
+     * -- in the MQTT CONNECT packet The NDEATH message MUST set the MQTT Will Retained flag to false.
+     * -- If the MQTT client is using MQTT v3.1.1, the Edge Node’s MQTT CONNECT packet MUST set the Clean Session flag to true.
+     * -- If the MQTT client is using MQTT v5.0, the Edge Node’s MQTT CONNECT packet MUST set the Clean Start flag to true and the Session Expiry Interval to 0
+     * @param connectMessage
+     * @return
+     * @throws ThingsboardException
+     */
+    private SparkplugTopic validatedSparkplugConnectedWillTopic(MqttConnectMessage connectMessage) throws ThingsboardException {
         if (StringUtils.isNotBlank(connectMessage.payload().willTopic())
                 && connectMessage.payload().willMessageInBytes() != null
                 && connectMessage.payload().willMessageInBytes().length > 0) {
-            SparkplugTopic sparkplugTopicNode = parseTopicPublish(connectMessage.payload().willTopic());
+            SparkplugTopic sparkplugTopicNode = parseTopic(connectMessage.payload().willTopic());
             if (NDEATH.equals(sparkplugTopicNode.getType())) {
+                if (connectMessage.variableHeader().willQos() != 1 || connectMessage.variableHeader().isWillRetain())
+                    return null;
+                if (!connectMessage.variableHeader().isCleanSession()) return null;
+                int mqttVer = connectMessage.variableHeader().version();
+                if (mqttVer == 5) {
+                    Object sessionExpiryIntervalObj = connectMessage.variableHeader().properties().isEmpty() ? null : connectMessage.variableHeader().properties().getProperty(MqttPropertyType.SESSION_EXPIRY_INTERVAL.value());
+                    Integer sessionExpiryInterval = sessionExpiryIntervalObj == null ? null : ((IntegerProperty) sessionExpiryIntervalObj).value();
+                    if (sessionExpiryInterval == null || sessionExpiryInterval != 0) return null;
+                }
                 return sparkplugTopicNode;
             }
         }
@@ -1300,18 +1392,30 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
 
     @Override
     public void onAttributeUpdate(UUID sessionId, TransportProtos.AttributeUpdateNotificationMsg notification) {
-        log.trace("[{}] Received attributes update notification to device", sessionId);
         try {
             if (sparkplugSessionHandler != null) {
-                log.trace("[{}] Received attributes update notification to sparkplug device", sessionId);
-                notification.getSharedUpdatedList().forEach(tsKvProto -> {
-                    if (sparkplugSessionHandler.getNodeBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
-                        SparkplugTopic sparkplugTopic = new SparkplugTopic(sparkplugSessionHandler.getSparkplugTopicNode(),
-                                SparkplugMessageType.NCMD);
+                log.trace("[{}] Received attributes update notification to sparkplug Edge Node", sessionId);
+                notification.getSharedUpdatedList().forEach(tsKvProtoShared -> {
+                    SparkplugMessageType messageType = NCMD;
+                    TransportProtos.TsKvProto tsKvProto = tsKvProtoShared;
+                    if ("JSON_V".equals(tsKvProtoShared.getKv().getType().name())) {
+                        try {
+                            messageType = SparkplugMessageType.parseMessageType(tsKvProtoShared.getKv().getKey());
+                            tsKvProto = getTsKvProtoFromJsonNode(JacksonUtil.toJsonNode(tsKvProtoShared.getKv().getJsonV()), tsKvProtoShared.getTs());
+                        } catch (ThingsboardException e) {
+                            messageType = null;
+                            log.error("Failed attributes update notification to sparkplug Edge Node [{}]. ", sparkplugSessionHandler.getSparkplugTopicNode().getEdgeNodeId(), e);
+                        }
+                    }
+                    if (messageType != null && messageType.isSubscribe() && messageType.isNode()
+                            && sparkplugSessionHandler.getNodeBirthMetrics().containsKey(tsKvProto.getKv().getKey())) {
+                        SparkplugTopic sparkplugTopic = new SparkplugTopic(sparkplugSessionHandler.getSparkplugTopicNode(), messageType);
                         sparkplugSessionHandler.createSparkplugMqttPublishMsg(tsKvProto,
                                         sparkplugTopic.toString(),
                                         sparkplugSessionHandler.getNodeBirthMetrics().get(tsKvProto.getKv().getKey()))
                                 .ifPresent(sparkplugSessionHandler::writeAndFlush);
+                    } else {
+                        log.trace("Failed attributes update notification to sparkplug Edge Node [{}]. ", sparkplugSessionHandler.getSparkplugTopicNode().getEdgeNodeId());
                     }
                 });
             } else {
@@ -1320,7 +1424,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 adaptor.convertToPublish(deviceSessionCtx, notification, topic).ifPresent(deviceSessionCtx.getChannel()::writeAndFlush);
             }
         } catch (Exception e) {
-            log.trace("[{}] Failed to convert device attributes update to MQTT msg", sessionId, e);
+            log.trace("[{}] Failed to convert device/Edge Node attributes update to MQTT msg", sessionId, e);
         }
     }
 
@@ -1357,7 +1461,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void onGetSessionLimitsRpc(TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.ToServerRpcRequestMsg rpcRequestMsg) {
+    private void onGetSessionLimitsRpc(TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.
+            ToServerRpcRequestMsg rpcRequestMsg) {
         var tenantProfile = context.getTenantProfileCache().get(deviceSessionCtx.getTenantId());
         DefaultTenantProfileConfiguration profile = tenantProfile.getDefaultProfileConfiguration();
 

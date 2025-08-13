@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,6 +43,7 @@ import {
   windSpeedDirectionLayoutTranslations,
   WindSpeedDirectionWidgetSettings
 } from '@home/components/widget/lib/weather/wind-speed-direction-widget.models';
+import { getSourceTbUnitSymbol, TbUnit } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-wind-speed-direction-basic-config',
@@ -272,7 +273,7 @@ export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigCom
   private _centerValuePreviewFn(): string {
     const centerValueDataKey: DataKey = this.windSpeedDirectionWidgetConfigForm.get('centerValueKey').value;
     if (centerValueDataKey) {
-      let units: string = this.widgetConfig.config.units;
+      let units: TbUnit = this.widgetConfig.config.units;
       let decimals: number = this.widgetConfig.config.decimals;
       if (isDefinedAndNotNull(centerValueDataKey?.decimals)) {
         decimals = centerValueDataKey.decimals;
@@ -280,7 +281,7 @@ export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigCom
       if (centerValueDataKey?.units) {
         units = centerValueDataKey.units;
       }
-      return formatValue(25, decimals, units, true);
+      return formatValue(25, decimals, getSourceTbUnitSymbol(units), true);
     } else {
       return '225°';
     }

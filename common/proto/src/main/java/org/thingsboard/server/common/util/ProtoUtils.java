@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,11 @@ package org.thingsboard.server.common.util;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.ApiUsageRecordKey;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Device;
@@ -31,6 +34,7 @@ import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -58,12 +62,15 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
@@ -71,12 +78,15 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
+import org.thingsboard.server.common.msg.gen.MsgProtos;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
+import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponseActorMsg;
 import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
@@ -88,9 +98,10 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceEdgeUpdateMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceNameOrTypeUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.gen.transport.TransportProtos.ApiUsageRecordKeyProto;
+import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -102,23 +113,32 @@ import static org.thingsboard.server.common.data.DataConstants.GATEWAY_PARAMETER
 @Slf4j
 public class ProtoUtils {
 
-    private static final EntityType[] entityTypeByProtoNumber;
-
-    static {
-        int arraySize = Arrays.stream(EntityType.values()).mapToInt(EntityType::getProtoNumber).max().orElse(0);
-        entityTypeByProtoNumber = new EntityType[arraySize + 1];
-        Arrays.stream(EntityType.values()).forEach(entityType -> entityTypeByProtoNumber[entityType.getProtoNumber()] = entityType);
-    }
-
     public static TransportProtos.ComponentLifecycleMsgProto toProto(ComponentLifecycleMsg msg) {
-        return TransportProtos.ComponentLifecycleMsgProto.newBuilder()
+        var builder = TransportProtos.ComponentLifecycleMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
                 .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
                 .setEntityType(toProto(msg.getEntityId().getEntityType()))
                 .setEntityIdMSB(msg.getEntityId().getId().getMostSignificantBits())
                 .setEntityIdLSB(msg.getEntityId().getId().getLeastSignificantBits())
-                .setEvent(TransportProtos.ComponentLifecycleEvent.forNumber(msg.getEvent().ordinal()))
-                .build();
+                .setEvent(toProto(msg.getEvent()));
+        if (msg.getProfileId() != null) {
+            builder.setProfileIdMSB(msg.getProfileId().getId().getMostSignificantBits());
+            builder.setProfileIdLSB(msg.getProfileId().getId().getLeastSignificantBits());
+        }
+        if (msg.getOldProfileId() != null) {
+            builder.setOldProfileIdMSB(msg.getOldProfileId().getId().getMostSignificantBits());
+            builder.setOldProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
+        }
+        if (msg.getName() != null) {
+            builder.setName(msg.getName());
+        }
+        if (msg.getOldName() != null) {
+            builder.setOldName(msg.getOldName());
+        }
+        if (msg.getInfo() != null) {
+            builder.setInfo(JacksonUtil.toString(msg.getInfo()));
+        }
+        return builder.build();
     }
 
     public static TransportProtos.EntityTypeProto toProto(EntityType entityType) {
@@ -126,17 +146,42 @@ public class ProtoUtils {
     }
 
     public static ComponentLifecycleMsg fromProto(TransportProtos.ComponentLifecycleMsgProto proto) {
-        return new ComponentLifecycleMsg(
-                TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                EntityIdFactory.getByTypeAndUuid(fromProto(proto.getEntityType()), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())),
-                ComponentLifecycleEvent.values()[proto.getEventValue()]
-        );
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(fromProto(proto.getEntityType()), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+        var builder = ComponentLifecycleMsg.builder()
+                .tenantId(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())))
+                .entityId(entityId)
+                .event(fromProto(proto.getEvent()));
+        if (!StringUtils.isEmpty(proto.getName())) {
+            builder.name(proto.getName());
+        }
+        if (!StringUtils.isEmpty(proto.getOldName())) {
+            builder.oldName(proto.getOldName());
+        }
+        if (proto.getProfileIdMSB() != 0 || proto.getProfileIdLSB() != 0) {
+            var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
+            builder.profileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getProfileIdMSB(), proto.getProfileIdLSB())));
+        }
+        if (proto.getOldProfileIdMSB() != 0 || proto.getOldProfileIdLSB() != 0) {
+            var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
+            builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
+        }
+        if (proto.hasInfo()) {
+            builder.info(JacksonUtil.toJsonNode(proto.getInfo()));
+        }
+        return builder.build();
     }
 
     public static EntityType fromProto(TransportProtos.EntityTypeProto entityType) {
-        return entityTypeByProtoNumber[entityType.getNumber()];
+        return EntityType.forProtoNumber(entityType.getNumber());
     }
 
+    public static TransportProtos.ComponentLifecycleEvent toProto(ComponentLifecycleEvent event) {
+        return TransportProtos.ComponentLifecycleEvent.forNumber(event.getProtoNumber());
+    }
+
+    public static ComponentLifecycleEvent fromProto(TransportProtos.ComponentLifecycleEvent eventProto) {
+        return ComponentLifecycleEvent.forProtoNumber(eventProto.getNumber());
+    }
 
     public static TransportProtos.ToEdgeSyncRequestMsgProto toProto(ToEdgeSyncRequest request) {
         return TransportProtos.ToEdgeSyncRequestMsgProto.newBuilder()
@@ -207,7 +252,7 @@ public class ProtoUtils {
 
     public static EdgeEvent fromProto(TransportProtos.EdgeEventMsgProto proto) {
         EdgeEvent edgeEvent = new EdgeEvent();
-        TenantId tenantId = new TenantId(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
+        TenantId tenantId = TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB()));
         edgeEvent.setTenantId(tenantId);
         edgeEvent.setType(EdgeEventType.valueOf(proto.getEntityType()));
         edgeEvent.setAction(EdgeEventActionType.valueOf(proto.getAction()));
@@ -399,6 +444,39 @@ public class ProtoUtils {
         return builder.build();
     }
 
+    public static ApiUsageRecordKeyProto toProto(ApiUsageRecordKey apiUsageRecordKey) {
+        return switch (apiUsageRecordKey) {
+            case TRANSPORT_MSG_COUNT -> ApiUsageRecordKeyProto.TRANSPORT_MSG_COUNT;
+            case TRANSPORT_DP_COUNT -> ApiUsageRecordKeyProto.TRANSPORT_DP_COUNT;
+            case STORAGE_DP_COUNT -> ApiUsageRecordKeyProto.STORAGE_DP_COUNT;
+            case RE_EXEC_COUNT -> ApiUsageRecordKeyProto.RE_EXEC_COUNT;
+            case JS_EXEC_COUNT -> ApiUsageRecordKeyProto.JS_EXEC_COUNT;
+            case TBEL_EXEC_COUNT -> ApiUsageRecordKeyProto.TBEL_EXEC_COUNT;
+            case EMAIL_EXEC_COUNT -> ApiUsageRecordKeyProto.EMAIL_EXEC_COUNT;
+            case SMS_EXEC_COUNT -> ApiUsageRecordKeyProto.SMS_EXEC_COUNT;
+            case CREATED_ALARMS_COUNT -> ApiUsageRecordKeyProto.CREATED_ALARMS_COUNT;
+            case ACTIVE_DEVICES -> ApiUsageRecordKeyProto.ACTIVE_DEVICES;
+            case INACTIVE_DEVICES -> ApiUsageRecordKeyProto.INACTIVE_DEVICES;
+        };
+    }
+
+    public static ApiUsageRecordKey fromProto(ApiUsageRecordKeyProto proto) {
+        return switch (proto) {
+            case UNRECOGNIZED -> null;
+            case TRANSPORT_MSG_COUNT -> ApiUsageRecordKey.TRANSPORT_MSG_COUNT;
+            case TRANSPORT_DP_COUNT -> ApiUsageRecordKey.TRANSPORT_DP_COUNT;
+            case STORAGE_DP_COUNT -> ApiUsageRecordKey.STORAGE_DP_COUNT;
+            case RE_EXEC_COUNT -> ApiUsageRecordKey.RE_EXEC_COUNT;
+            case JS_EXEC_COUNT -> ApiUsageRecordKey.JS_EXEC_COUNT;
+            case TBEL_EXEC_COUNT -> ApiUsageRecordKey.TBEL_EXEC_COUNT;
+            case EMAIL_EXEC_COUNT -> ApiUsageRecordKey.EMAIL_EXEC_COUNT;
+            case SMS_EXEC_COUNT -> ApiUsageRecordKey.SMS_EXEC_COUNT;
+            case CREATED_ALARMS_COUNT -> ApiUsageRecordKey.CREATED_ALARMS_COUNT;
+            case ACTIVE_DEVICES -> ApiUsageRecordKey.ACTIVE_DEVICES;
+            case INACTIVE_DEVICES -> ApiUsageRecordKey.INACTIVE_DEVICES;
+        };
+    }
+
     private static ToDeviceActorNotificationMsg fromProto(TransportProtos.DeviceAttributesEventMsgProto proto) {
         return new DeviceAttributesEventNotificationMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
@@ -444,15 +522,21 @@ public class ProtoUtils {
     }
 
     private static TransportProtos.ToDeviceRpcRequestActorMsgProto toProto(ToDeviceRpcRequestActorMsg msg) {
-        TransportProtos.ToDeviceRpcRequestMsg proto = TransportProtos.ToDeviceRpcRequestMsg.newBuilder()
+        TransportProtos.ToDeviceRpcRequestMsg.Builder builder = TransportProtos.ToDeviceRpcRequestMsg.newBuilder()
                 .setMethodName(msg.getMsg().getBody().getMethod())
                 .setParams(msg.getMsg().getBody().getParams())
                 .setExpirationTime(msg.getMsg().getExpirationTime())
                 .setRequestIdMSB(msg.getMsg().getId().getMostSignificantBits())
                 .setRequestIdLSB(msg.getMsg().getId().getLeastSignificantBits())
                 .setOneway(msg.getMsg().isOneway())
-                .setPersisted(msg.getMsg().isPersisted())
-                .build();
+                .setPersisted(msg.getMsg().isPersisted());
+        if (msg.getMsg().getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+        }
+        if (msg.getMsg().getRetries() != null) {
+            builder.setRetries(msg.getMsg().getRetries());
+        }
+        TransportProtos.ToDeviceRpcRequestMsg proto = builder.build();
 
         return TransportProtos.ToDeviceRpcRequestActorMsgProto.newBuilder()
                 .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
@@ -473,7 +557,9 @@ public class ProtoUtils {
                 toDeviceRpcRequestMsg.getOneway(),
                 toDeviceRpcRequestMsg.getExpirationTime(),
                 new ToDeviceRpcRequestBody(toDeviceRpcRequestMsg.getMethodName(), toDeviceRpcRequestMsg.getParams()),
-                toDeviceRpcRequestMsg.getPersisted(), 0, "");
+                toDeviceRpcRequestMsg.getPersisted(),
+                toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null,
+                toDeviceRpcRequestMsg.hasAdditionalInfo() ? toDeviceRpcRequestMsg.getAdditionalInfo() : null);
         return new ToDeviceRpcRequestActorMsg(proto.getServiceId(), toDeviceRpcRequest);
     }
 
@@ -627,6 +713,96 @@ public class ProtoUtils {
         return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
     }
 
+    public static BasicKvEntry basicKvEntryFromProto(TransportProtos.AttributeValueProto proto) {
+        boolean hasValue = proto.getHasV();
+        String key = proto.getKey();
+        return switch (proto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, hasValue ? proto.getBoolV() : null);
+            case LONG_V -> new LongDataEntry(key, hasValue ? proto.getLongV() : null);
+            case DOUBLE_V -> new DoubleDataEntry(key, hasValue ? proto.getDoubleV() : null);
+            case STRING_V -> new StringDataEntry(key, hasValue ? proto.getStringV() : null);
+            case JSON_V -> new JsonDataEntry(key, hasValue ? proto.getJsonV() : null);
+            default -> null;
+        };
+    }
+
+    public static BasicKvEntry fromProto(KeyValueProto proto) {
+        String key = proto.getKey();
+        return switch (proto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, proto.getBoolV());
+            case LONG_V -> new LongDataEntry(key, proto.getLongV());
+            case DOUBLE_V -> new DoubleDataEntry(key, proto.getDoubleV());
+            case STRING_V -> new StringDataEntry(key, proto.getStringV());
+            case JSON_V -> new JsonDataEntry(key, proto.getJsonV());
+            default -> null;
+        };
+    }
+
+    public static BasicKvEntry basicKvEntryFromKvEntry(KvEntry kvEntry) {
+        String key = kvEntry.getKey();
+        return switch (kvEntry.getDataType()) {
+            case BOOLEAN -> new BooleanDataEntry(key, kvEntry.getBooleanValue().orElse(null));
+            case LONG -> new LongDataEntry(key, kvEntry.getLongValue().orElse(null));
+            case DOUBLE -> new DoubleDataEntry(key, kvEntry.getDoubleValue().orElse(null));
+            case STRING -> new StringDataEntry(key, kvEntry.getStrValue().orElse(null));
+            case JSON -> new JsonDataEntry(key, kvEntry.getJsonValue().orElse(null));
+        };
+    }
+
+    public static TsKvEntry fromProto(TransportProtos.TsKvProto proto) {
+        TransportProtos.KeyValueProto kvProto = proto.getKv();
+        String key = kvProto.getKey();
+        KvEntry entry = switch (kvProto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, kvProto.getBoolV());
+            case LONG_V -> new LongDataEntry(key, kvProto.getLongV());
+            case DOUBLE_V -> new DoubleDataEntry(key, kvProto.getDoubleV());
+            case STRING_V -> new StringDataEntry(key, kvProto.getStringV());
+            case JSON_V -> new JsonDataEntry(key, kvProto.getJsonV());
+            default -> null;
+        };
+        return new BasicTsKvEntry(proto.getTs(), entry, proto.hasVersion() ? proto.getVersion() : null);
+    }
+
+    public static TransportProtos.TsKvProto toTsKvProto(TsKvEntry tsKvEntry) {
+        var builder = TransportProtos.TsKvProto.newBuilder()
+                .setTs(tsKvEntry.getTs())
+                .setKv(toKeyValueProto(tsKvEntry));
+        if (tsKvEntry.getVersion() != null) {
+            builder.setVersion(tsKvEntry.getVersion());
+        }
+        return builder.build();
+    }
+
+    public static TransportProtos.KeyValueProto toKeyValueProto(KvEntry kvEntry) {
+        TransportProtos.KeyValueProto.Builder builder = TransportProtos.KeyValueProto.newBuilder();
+        builder.setKey(kvEntry.getKey());
+        switch (kvEntry.getDataType()) {
+            case BOOLEAN:
+                builder.setType(TransportProtos.KeyValueType.BOOLEAN_V)
+                        .setBoolV(kvEntry.getBooleanValue().orElse(false));
+                break;
+            case LONG:
+                builder.setType(TransportProtos.KeyValueType.LONG_V)
+                        .setLongV(kvEntry.getLongValue().orElse(0L));
+                break;
+            case DOUBLE:
+                builder.setType(TransportProtos.KeyValueType.DOUBLE_V)
+                        .setDoubleV(kvEntry.getDoubleValue().orElse(0.0));
+                break;
+            case STRING:
+                builder.setType(TransportProtos.KeyValueType.STRING_V)
+                        .setStringV(kvEntry.getStrValue().orElse(""));
+                break;
+            case JSON:
+                builder.setType(TransportProtos.KeyValueType.JSON_V)
+                        .setJsonV(kvEntry.getJsonValue().orElse("{}"));
+                break;
+            default:
+                throw new IllegalArgumentException("Unsupported KvEntry data type: " + kvEntry.getDataType());
+        }
+        return builder.build();
+    }
+
     public static TransportProtos.DeviceProto toProto(Device device) {
         var builder = TransportProtos.DeviceProto.newBuilder()
                 .setTenantIdMSB(device.getTenantId().getId().getMostSignificantBits())
@@ -673,7 +849,7 @@ public class ProtoUtils {
     public static Device fromProto(TransportProtos.DeviceProto proto) {
         Device device = new Device(getEntityId(proto.getDeviceIdMSB(), proto.getDeviceIdLSB(), DeviceId::new));
         device.setCreatedTime(proto.getCreatedTime());
-        device.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        device.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         device.setName(proto.getDeviceName());
         device.setType(proto.getDeviceType());
         device.setDeviceProfileId(getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new));
@@ -765,7 +941,7 @@ public class ProtoUtils {
     public static DeviceProfile fromProto(TransportProtos.DeviceProfileProto proto) {
         DeviceProfile deviceProfile = new DeviceProfile(getEntityId(proto.getDeviceProfileIdMSB(), proto.getDeviceProfileIdLSB(), DeviceProfileId::new));
         deviceProfile.setCreatedTime(proto.getCreatedTime());
-        deviceProfile.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        deviceProfile.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         deviceProfile.setName(proto.getName());
         deviceProfile.setDefault(proto.getIsDefault());
         deviceProfile.setType(DeviceProfileType.valueOf(proto.getType()));
@@ -856,7 +1032,7 @@ public class ProtoUtils {
     }
 
     public static Tenant fromProto(TransportProtos.TenantProto proto) {
-        Tenant tenant = new Tenant(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        Tenant tenant = new Tenant(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         tenant.setCreatedTime(proto.getCreatedTime());
         tenant.setTenantProfileId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantProfileId::new));
         tenant.setTitle(proto.getTitle());
@@ -970,7 +1146,7 @@ public class ProtoUtils {
 
     public static TbResource fromProto(TransportProtos.TbResourceProto proto) {
         TbResource resource = new TbResource(getEntityId(proto.getResourceIdMSB(), proto.getResourceIdLSB(), TbResourceId::new));
-        resource.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::new));
+        resource.setTenantId(getEntityId(proto.getTenantIdMSB(), proto.getTenantIdLSB(), TenantId::fromUUID));
         resource.setCreatedTime(proto.getCreatedTime());
         resource.setTitle(proto.getTitle());
         resource.setResourceType(ResourceType.valueOf(proto.getResourceType()));
@@ -1019,12 +1195,14 @@ public class ProtoUtils {
                 .setTbelExecState(apiUsageState.getTbelExecState().name())
                 .setEmailExecState(apiUsageState.getEmailExecState().name())
                 .setSmsExecState(apiUsageState.getSmsExecState().name())
-                .setAlarmExecState(apiUsageState.getAlarmExecState().name()).build();
+                .setAlarmExecState(apiUsageState.getAlarmExecState().name())
+                .setVersion(apiUsageState.getVersion())
+                .build();
     }
 
     public static ApiUsageState fromProto(TransportProtos.ApiUsageStateProto proto) {
         ApiUsageState apiUsageState = new ApiUsageState(getEntityId(proto.getApiUsageStateIdMSB(), proto.getApiUsageStateIdLSB(), ApiUsageStateId::new));
-        apiUsageState.setTenantId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantId::new));
+        apiUsageState.setTenantId(getEntityId(proto.getTenantProfileIdMSB(), proto.getTenantProfileIdLSB(), TenantId::fromUUID));
         apiUsageState.setCreatedTime(proto.getCreatedTime());
         apiUsageState.setEntityId(EntityIdFactory.getByTypeAndUuid(fromProto(proto.getEntityType()), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB())));
         apiUsageState.setTransportState(ApiUsageStateValue.valueOf(proto.getTransportState()));
@@ -1035,6 +1213,7 @@ public class ProtoUtils {
         apiUsageState.setEmailExecState(ApiUsageStateValue.valueOf(proto.getEmailExecState()));
         apiUsageState.setSmsExecState(ApiUsageStateValue.valueOf(proto.getSmsExecState()));
         apiUsageState.setAlarmExecState(ApiUsageStateValue.valueOf(proto.getAlarmExecState()));
+        apiUsageState.setVersion(proto.getVersion());
         return apiUsageState;
     }
 
@@ -1181,6 +1360,21 @@ public class ProtoUtils {
             }
         }
         return builder.build();
+    }
+
+    @Deprecated(forRemoval = true, since = "4.1")
+    public static MsgProtos.TbMsgProto getTbMsgProto(TransportProtos.ToRuleEngineMsg ruleEngineMsg) throws InvalidProtocolBufferException {
+        if (ruleEngineMsg.getTbMsg().isEmpty()) {
+            return ruleEngineMsg.getTbMsgProto();
+        } else {
+            return MsgProtos.TbMsgProto.parseFrom(ruleEngineMsg.getTbMsg());
+        }
+    }
+
+    @SneakyThrows
+    @Deprecated(forRemoval = true, since = "4.1") // inline to TbMsg.fromProto(queueName, ruleEngineMsg.getTbMsgProto(), callback)
+    public static TbMsg fromTbMsgProto(String queueName, TransportProtos.ToRuleEngineMsg ruleEngineMsg, TbMsgCallback callback) {
+        return TbMsg.fromProto(queueName, getTbMsgProto(ruleEngineMsg), callback);
     }
 
     private static boolean isNotNull(Object obj) {

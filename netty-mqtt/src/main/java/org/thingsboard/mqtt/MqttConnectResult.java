@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,18 @@ package org.thingsboard.mqtt;
 
 import io.netty.channel.ChannelFuture;
 import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
+import lombok.Getter;
+import lombok.ToString;
 
+@ToString
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class MqttConnectResult {
 
+    @Getter
     private final boolean success;
+    @Getter
     private final MqttConnectReturnCode returnCode;
+    @Getter
     private final ChannelFuture closeFuture;
 
     MqttConnectResult(boolean success, MqttConnectReturnCode returnCode, ChannelFuture closeFuture) {
@@ -31,15 +37,4 @@ public final class MqttConnectResult {
         this.closeFuture = closeFuture;
     }
 
-    public boolean isSuccess() {
-        return success;
-    }
-
-    public MqttConnectReturnCode getReturnCode() {
-        return returnCode;
-    }
-
-    public ChannelFuture getCloseFuture() {
-        return closeFuture;
-    }
 }

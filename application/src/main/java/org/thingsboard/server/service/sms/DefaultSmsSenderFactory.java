@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,16 +31,12 @@ public class DefaultSmsSenderFactory implements SmsSenderFactory {
 
     @Override
     public SmsSender createSmsSender(SmsProviderConfiguration config) {
-        switch (config.getType()) {
-            case AWS_SNS:
-                return new AwsSmsSender((AwsSnsSmsProviderConfiguration)config);
-            case TWILIO:
-                return new TwilioSmsSender((TwilioSmsProviderConfiguration)config);
-            case SMPP:
-                return new SmppSmsSender((SmppSmsProviderConfiguration) config);
-            default:
-                throw new RuntimeException("Unknown SMS provider type " + config.getType());
-        }
+        return switch (config.getType()) {
+            case AWS_SNS -> new AwsSmsSender((AwsSnsSmsProviderConfiguration) config);
+            case TWILIO -> new TwilioSmsSender((TwilioSmsProviderConfiguration) config);
+            case SMPP -> new SmppSmsSender((SmppSmsProviderConfiguration) config);
+            default -> throw new RuntimeException("Unknown SMS provider type " + config.getType());
+        };
     }
 
 }

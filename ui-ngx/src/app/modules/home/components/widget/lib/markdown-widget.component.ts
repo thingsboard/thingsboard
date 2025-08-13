@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -63,6 +63,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
   @Input()
   ctx: WidgetContext;
 
+  data: FormattedData[];
+
   markdownText: string;
 
   additionalStyles: string[];
@@ -88,8 +90,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
       this.markdownClass = 'markdown-widget-' + hashCode(cssString);
       cssParser.cssPreviewNamespace = this.markdownClass;
       cssParser.testMode = false;
-      cssString = cssParser.applyNamespacing(cssString);
-      cssString = cssParser.getCSSForEditor(cssString);
+      const cssObjects = cssParser.applyNamespacing(cssString);
+      cssString = cssParser.getCSSForEditor(cssObjects);
       this.additionalStyles = [cssString];
     }
     if (isDefinedAndNotNull(this.settings.applyDefaultMarkdownStyle)) {
@@ -128,15 +130,15 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     } else {
       initialData = [];
     }
-    const data = formattedDataFormDatasourceData(initialData);
+    this.data = formattedDataFormDatasourceData(initialData);
 
-    let markdownText = this.settings.useMarkdownTextFunction ?
-      this.markdownTextFunction.pipe(map(markdownTextFunction => safeExecuteTbFunction(markdownTextFunction, [data, this.ctx]))) : this.settings.markdownTextPattern;
+    const markdownText = this.settings.useMarkdownTextFunction ?
+      this.markdownTextFunction.pipe(map(markdownTextFunction => safeExecuteTbFunction(markdownTextFunction, [this.data, this.ctx]))) : this.settings.markdownTextPattern;
     if (typeof markdownText === 'string') {
-      this.updateMarkdownText(markdownText, data);
+      this.updateMarkdownText(markdownText, this.data);
     } else {
       markdownText.subscribe((text) => {
-        this.updateMarkdownText(text, data);
+        this.updateMarkdownText(text, this.data);
       });
     }
   }
@@ -146,8 +148,8 @@ export class MarkdownWidgetComponent extends PageComponent implements OnInit {
     markdownText = createLabelFromPattern(markdownText, allData);
     if (this.markdownText !== markdownText) {
       this.markdownText = this.utils.customTranslation(markdownText, markdownText);
-      this.cd.detectChanges();
     }
+    this.cd.detectChanges();
   }
 
   markdownClick($event: MouseEvent) {

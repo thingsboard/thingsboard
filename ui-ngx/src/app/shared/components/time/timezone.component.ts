@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -151,13 +151,17 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit {
     if (this.disablePanel) {
       return;
     }
-    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    const trigger = ($event.target || $event.currentTarget) as Element;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const timezoneSelectionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimezonePanelComponent, ['bottomRight', 'leftBottom'], true, null,
-        {
+      const timezoneSelectionPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        hostView: this.viewContainerRef,
+        componentType: TimezonePanelComponent,
+        preferredPlacement: ['bottomRight', 'leftBottom'],
+        context: {
           timezone: this.modelValue,
           userTimezoneByDefault: this.userTimezoneByDefaultValue,
           localBrowserTimezonePlaceholderOnEmpty: this.localBrowserTimezonePlaceholderOnEmptyValue,
@@ -173,8 +177,9 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit {
             }
           }
         },
-        {},
-        {}, {}, false);
+        showCloseButton: false,
+        isModal: true
+      });
       timezoneSelectionPopover.tbComponentRef.instance.popoverComponent = timezoneSelectionPopover;
     }
     this.cd.detectChanges();

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.data.PowerMode;
-import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -736,7 +735,11 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     private void recordActivityInternal(TransportProtos.SessionInfoProto sessionInfo) {
-        onActivity(toSessionId(sessionInfo), sessionInfo, getCurrentTimeMillis());
+        if (sessionInfo != null) {
+            onActivity(toSessionId(sessionInfo), sessionInfo, getCurrentTimeMillis());
+        } else {
+            log.warn("Session info is missing, unable to record activity");
+        }
     }
 
     @Override
@@ -1137,7 +1140,15 @@ public class DefaultTransportService extends TransportActivityManager implements
             queueName = deviceProfile.getDefaultQueueName();
         }
 
-        TbMsg tbMsg = TbMsg.newMsg(queueName, tbMsgType, deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
+        TbMsg tbMsg = TbMsg.newMsg()
+                .queueName(queueName)
+                .type(tbMsgType)
+                .originator(deviceId)
+                .customerId(customerId)
+                .copyMetaData(metaData)
+                .data(gson.toJson(json))
+                .ruleChainId(ruleChainId)
+                .build();
         ruleEngineProducerService.sendToRuleEngine(ruleEngineMsgProducer, tenantId, tbMsg, new StatsCallback(callback, ruleEngineProducerStats));
         ruleEngineProducerStats.incrementTotal();
     }

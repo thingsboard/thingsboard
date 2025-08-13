@@ -621,32 +621,32 @@
   <g tb:tag="filter">
    <rect x="75" y="410" width="208.86" height="96.012" rx="9.8143" fill="#999"/>
    <path d="m76 419.81c0-4.868 3.9463-8.814 8.8143-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.815-8.814 8.815h-189.24c-4.868 0-8.8143-3.947-8.8143-8.815z" stroke="#999" stroke-width="2"/>
-   <text x="180.79984" y="460.00018" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Filter</tspan></text>
+   <text x="180.79984" y="460.00018" fill="#000000" font-family="Roboto, sans-serif" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Filter</tspan></text>
   </g>
   <g tb:tag="backwash">
    <path d="m75 539.7c0-5.42 4.394-9.814 9.8143-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.383c0 5.421-4.394 9.815-9.814 9.815h-189.24c-5.4203 0-9.8143-4.394-9.8143-9.815z" fill="#fff"/>
    <path d="m76 539.7c0-4.868 3.9463-8.814 8.8143-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.815-8.814 8.815h-189.24c-4.868 0-8.8143-3.947-8.8143-8.815z" stroke="#999" stroke-width="2"/>
-   <text x="183.43652" y="579.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Backwash</tspan></text>
+   <text x="183.43652" y="579.61719" fill="#000000" font-family="Roboto, sans-serif" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Backwash</tspan></text>
   </g>
   <g tb:tag="rinse">
    <path d="m75 659.58c0-5.42 4.394-9.814 9.8143-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.384c0 5.42-4.394 9.814-9.814 9.814h-189.24c-5.4203 0-9.8143-4.394-9.8143-9.814z" fill="#fff"/>
    <path d="m76 659.58c0-4.868 3.9463-8.814 8.8143-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.384c0 4.868-3.946 8.814-8.814 8.814h-189.24c-4.868 0-8.8143-3.946-8.8143-8.814z" stroke="#999" stroke-width="2"/>
-   <text x="181.64941" y="699.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Rinse</tspan></text>
+   <text x="181.64941" y="699.61719" fill="#000000" font-family="Roboto, sans-serif" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Rinse</tspan></text>
   </g>
   <g tb:tag="waste">
    <path d="m315.69 419.81c0-5.42 4.394-9.814 9.814-9.814h189.24c5.42 0 9.815 4.394 9.815 9.814v76.383c0 5.421-4.395 9.815-9.815 9.815h-189.24c-5.42 0-9.814-4.394-9.814-9.814z" fill="#fff"/>
    <path d="m316.69 419.81c0-4.868 3.946-8.814 8.814-8.814h189.24c4.868 0 8.815 3.946 8.815 8.814v76.383c0 4.869-3.947 8.815-8.815 8.815h-189.24c-4.868 0-8.814-3.946-8.814-8.814z" stroke="#999" stroke-width="2"/>
-   <text x="421.99316" y="459.75586" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Waste</tspan></text>
+   <text x="421.99316" y="459.75586" fill="#000000" font-family="Roboto, sans-serif" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Waste</tspan></text>
   </g>
   <g tb:tag="recirculate">
    <path d="m315.69 539.7c0-5.42 4.394-9.814 9.815-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.383c0 5.421-4.394 9.815-9.814 9.815h-189.24c-5.421 0-9.815-4.394-9.815-9.815z" fill="#fff"/>
    <path d="m316.69 539.7c0-4.868 3.947-8.814 8.815-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.815-8.814 8.815h-189.24c-4.868 0-8.815-3.947-8.815-8.815z" stroke="#999" stroke-width="2"/>
-   <text x="425.14062" y="579.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Recirculate</tspan></text>
+   <text x="425.14062" y="579.61719" fill="#000000" font-family="Roboto, sans-serif" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Recirculate</tspan></text>
   </g>
   <g tb:tag="closed">
    <path d="m315.69 659.58c0-5.42 4.394-9.814 9.815-9.814h189.24c5.42 0 9.814 4.394 9.814 9.814v76.383c0 5.42-4.394 9.814-9.814 9.814h-189.24c-5.421 0-9.815-4.394-9.815-9.814z" fill="#fff"/>
    <path d="m316.69 659.58c0-4.868 3.947-8.814 8.815-8.814h189.24c4.868 0 8.814 3.946 8.814 8.814v76.383c0 4.868-3.946 8.814-8.814 8.814h-189.24c-4.868 0-8.815-3.946-8.815-8.814z" stroke="#999" stroke-width="2"/>
-   <text x="422.45215" y="699.61719" fill="#000000" font-family="Roboto" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Closed</tspan></text>
+   <text x="422.45215" y="699.61719" fill="#000000" font-family="Roboto, sans-serif" font-size="28px" font-weight="500" text-anchor="middle" xml:space="preserve"><tspan dominant-baseline="middle">Closed</tspan></text>
   </g>
  </g>
 </svg>

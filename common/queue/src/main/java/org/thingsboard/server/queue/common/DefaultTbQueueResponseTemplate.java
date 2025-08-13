@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueResponseTemplate;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -43,7 +42,6 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
 
     private final TbQueueConsumer<Request> requestTemplate;
     private final TbQueueProducer<Response> responseTemplate;
-    private final ConcurrentMap<UUID, String> pendingRequests;
     private final ExecutorService loopExecutor;
     private final ScheduledExecutorService timeoutExecutor;
     private final ExecutorService callbackExecutor;
@@ -66,7 +64,6 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
                                           MessagesStats stats) {
         this.requestTemplate = requestTemplate;
         this.responseTemplate = responseTemplate;
-        this.pendingRequests = new ConcurrentHashMap<>();
         this.maxPendingRequests = maxPendingRequests;
         this.pollInterval = pollInterval;
         this.requestTimeout = requestTimeout;
@@ -77,9 +74,17 @@ public class DefaultTbQueueResponseTemplate<Request extends TbQueueMsg, Response
     }
 
     @Override
-    public void init(TbQueueHandler<Request, Response> handler) {
-        this.responseTemplate.init();
+    public void subscribe() {
         requestTemplate.subscribe();
+    }
+
+    @Override
+    public void subscribe(Set<TopicPartitionInfo> partitions) {
+        requestTemplate.subscribe(partitions);
+    }
+
+    @Override
+    public void launch(TbQueueHandler<Request, Response> handler) {
         loopExecutor.submit(() -> {
             while (!stopped) {
                 try {

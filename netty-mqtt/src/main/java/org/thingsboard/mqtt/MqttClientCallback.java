@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,6 @@ import io.netty.handler.codec.mqtt.MqttPubAckMessage;
 import io.netty.handler.codec.mqtt.MqttSubAckMessage;
 import io.netty.handler.codec.mqtt.MqttUnsubAckMessage;
 
-/**
- * Created by Valerii Sosliuk on 12/30/2017.
- */
 public interface MqttClientCallback {
 
     /**
@@ -53,4 +50,5 @@ public interface MqttClientCallback {
 
     default void onDisconnect(MqttMessage mqttDisconnectMessage) {
     }
+
 }

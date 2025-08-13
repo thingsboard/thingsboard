@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,18 +28,17 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
-import { DatePipe } from '@angular/common';
+import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
-  getDataKey,
+  createValueFormatterFromSettings,
   getSingleTsValue,
   overlayStyle,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
-import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
   batteryLevelDefaultSettings,
   BatteryLevelLayout,
@@ -137,13 +136,10 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   hasCardClickAction = false;
 
-  private decimals = 0;
-  private units = '';
+  private valueFormat: ValueFormatProcessor;
 
-  constructor(private date: DatePipe,
-              private imagePipe: ImagePipe,
+  constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
-              private widgetComponent: WidgetComponent,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
@@ -152,15 +148,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     this.ctx.$scope.batteryLevelWidget = this;
     this.settings = {...batteryLevelDefaultSettings, ...this.ctx.settings};
 
-    this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
-    const dataKey = getDataKey(this.ctx.datasources);
-    if (isDefinedAndNotNull(dataKey?.decimals)) {
-      this.decimals = dataKey.decimals;
-    }
-    if (dataKey?.units) {
-      this.units = dataKey.units;
-    }
+    this.valueFormat = createValueFormatterFromSettings(this.ctx);
 
     this.layout = this.settings.layout;
 
@@ -256,7 +244,7 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
       this.value = tsValue[1];
       this.batteryFillValue = this.parseBatteryFillValue(this.value);
-      this.valueText = formatValue(this.value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.format(this.value);
     } else {
       this.valueText = 'N/A';
     }

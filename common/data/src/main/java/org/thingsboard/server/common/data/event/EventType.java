@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,8 @@ public enum EventType {
     LC_EVENT("lc_event", "LC_EVENT"),
     STATS("stats_event", "STATS"),
     DEBUG_RULE_NODE("rule_node_debug_event", "DEBUG_RULE_NODE", true),
-    DEBUG_RULE_CHAIN("rule_chain_debug_event", "DEBUG_RULE_CHAIN", true);
+    DEBUG_RULE_CHAIN("rule_chain_debug_event", "DEBUG_RULE_CHAIN", true),
+    DEBUG_CALCULATED_FIELD("cf_debug_event", "DEBUG_CALCULATED_FIELD", true);
 
     @Getter
     private final String table;

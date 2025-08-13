@@ -17,27 +17,22 @@ The **Widget Editor** will be opened pre-populated with the content of default *
 {:copy-code}
 ```
 
- - Put the following JSON content inside the "Settings schema" tab of **Settings schema section**:
+ - Import the following JSON content inside the "Settings form" tab by clicking on 'Import form from JSON' button:
 
 ```json
-{
-    "schema": {
-        "type": "object",
-        "title": "Settings",
-        "properties": {
-            "alertContent": {
-                "title": "Alert content",
-                "type": "string",
-                "default": "Content derived from alertContent property of widget settings."
-            }
-        }
-    },
-    "form": [
-        "alertContent"
-    ]
-}
+[
+  {
+    "id": "alertContent",
+    "name": "Alert content",
+    "type": "text",
+    "default": "Content derived from alertContent property of widget settings.",
+    "fieldClass": "flex"
+  }
+]
 {:copy-code}
 ```
+
+ - Clear value of 'Settings form selector' in the "Widget settings" tab.
 
  - Put the following JavaScript code inside the "JavaScript" section:
 

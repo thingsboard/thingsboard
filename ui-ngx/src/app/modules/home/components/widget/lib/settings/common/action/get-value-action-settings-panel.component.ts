@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
@@ -35,6 +35,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetService } from '@core/http/widget.service';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-get-value-action-settings-panel',
@@ -98,12 +99,15 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
   getValueSettingsFormGroup: UntypedFormGroup;
 
+  entityType = EntityType;
+
   alarmSeverities = Object.keys(AlarmSeverity) as AlarmSeverity[];
   alarmSeverityTranslationMap = alarmSeverityTranslations;
 
   constructor(private fb: UntypedFormBuilder,
               private widgetService: WidgetService,
-              protected store: Store<AppState>) {
+              protected store: Store<AppState>,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -145,7 +149,10 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
 
     merge(this.getValueSettingsFormGroup.get('action').valueChanges,
           this.getValueSettingsFormGroup.get('dataToValue').get('type').valueChanges,
-          this.getValueSettingsFormGroup.get('executeRpc').get('requestPersistent').valueChanges).subscribe(() => {
+          this.getValueSettingsFormGroup.get('executeRpc').get('requestPersistent').valueChanges
+    ).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(() => {
       this.updateValidators();
     });
     this.updateValidators();
@@ -160,9 +167,19 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
     this.getValueSettingsApplied.emit(getValueSettings);
   }
 
+  getParseValueFunctionHelpId(): string {
+    const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
+    if (action === GetValueAction.GET_DASHBOARD_STATE_OBJECT) {
+      return 'widget/config/parse_value_get_dashboard_state_object_fn';
+    } else if (action === GetValueAction.GET_DASHBOARD_STATE) {
+      return 'widget/config/parse_value_get_dashboard_state_id_fn';
+    }
+    return 'widget/lib/rpc/parse_value_fn';
+  }
+
   private updateValidators() {
     const action: GetValueAction = this.getValueSettingsFormGroup.get('action').value;
-    const dataToValueType: DataToValueType = this.getValueSettingsFormGroup.get('dataToValue').get('type').value;
+    let dataToValueType: DataToValueType = this.getValueSettingsFormGroup.get('dataToValue').get('type').value;
 
     this.getValueSettingsFormGroup.get('defaultValue').disable({emitEvent: false});
     this.getValueSettingsFormGroup.get('executeRpc').disable({emitEvent: false});
@@ -191,6 +208,10 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
       case GetValueAction.GET_ALARM_STATUS:
         this.getValueSettingsFormGroup.get('getAlarmStatus').enable({emitEvent: false});
         break;
+      case GetValueAction.GET_DASHBOARD_STATE_OBJECT:
+        this.getValueSettingsFormGroup.get('dataToValue.type').setValue(DataToValueType.FUNCTION, {emitEvent: false});
+        dataToValueType = DataToValueType.FUNCTION;
+        break
     }
     if (action === GetValueAction.DO_NOTHING || action === GetValueAction.GET_ALARM_STATUS) {
       this.getValueSettingsFormGroup.get('dataToValue').disable({emitEvent: false});
@@ -203,6 +224,4 @@ export class GetValueActionSettingsPanelComponent extends PageComponent implemen
       }
     }
   }
-
-  protected readonly entityType = EntityType;
 }

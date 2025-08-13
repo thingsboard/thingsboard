@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,7 +80,7 @@ class ProfileState {
                     addEntityKeysFromAlarmConditionSpec(alarmRule);
                     AlarmSchedule schedule = alarmRule.getSchedule();
                     if (schedule != null) {
-                        addScheduleDynamicValues(schedule);
+                        addScheduleDynamicValues(schedule, entityKeys);
                     }
                 }));
                 if (alarm.getClearRule() != null) {
@@ -96,9 +96,9 @@ class ProfileState {
         }
     }
 
-    private void addScheduleDynamicValues(AlarmSchedule schedule) {
+    void addScheduleDynamicValues(AlarmSchedule schedule, final Set<AlarmConditionFilterKey> entityKeys) {
         DynamicValue<String> dynamicValue = schedule.getDynamicValue();
-        if (dynamicValue != null) {
+        if (dynamicValue != null && dynamicValue.getSourceAttribute() != null) {
             entityKeys.add(
                     new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE,
                             dynamicValue.getSourceAttribute())
@@ -137,13 +137,14 @@ class ProfileState {
 
     }
 
-    private void addDynamicValuesRecursively(KeyFilterPredicate predicate, Set<AlarmConditionFilterKey> entityKeys, Set<AlarmConditionFilterKey> ruleKeys) {
+    void addDynamicValuesRecursively(KeyFilterPredicate predicate, Set<AlarmConditionFilterKey> entityKeys, Set<AlarmConditionFilterKey> ruleKeys) {
         switch (predicate.getType()) {
             case STRING:
             case NUMERIC:
             case BOOLEAN:
                 DynamicValue value = ((SimpleKeyFilterPredicate) predicate).getValue().getDynamicValue();
-                if (value != null && (value.getSourceType() == DynamicValueSourceType.CURRENT_TENANT ||
+                if (value != null && value.getSourceAttribute() != null && (
+                        value.getSourceType() == DynamicValueSourceType.CURRENT_TENANT ||
                         value.getSourceType() == DynamicValueSourceType.CURRENT_CUSTOMER ||
                         value.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE)) {
                     AlarmConditionFilterKey entityKey = new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, value.getSourceAttribute());

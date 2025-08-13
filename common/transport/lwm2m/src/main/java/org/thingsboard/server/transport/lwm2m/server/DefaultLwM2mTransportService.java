@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@ package org.thingsboard.server.transport.lwm2m.server;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.californium.core.CoapResource;
+import org.eclipse.californium.core.CoapServer;
+import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.scandium.config.DtlsConfig;
 import org.eclipse.californium.scandium.dtls.cipher.CipherSuite;
@@ -58,6 +61,7 @@ import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_W
 import static org.eclipse.californium.scandium.dtls.cipher.CipherSuite.TLS_PSK_WITH_AES_128_CCM_8;
 import static org.thingsboard.server.transport.lwm2m.server.LwM2MNetworkConfig.getCoapConfig;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
+import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 @Slf4j
@@ -85,14 +89,6 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
     @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void init() {
         this.server = getLhServer();
-        /*
-         * Add a resource to the server.
-         * CoapResource ->
-         * path = FW_PACKAGE or SW_PACKAGE
-         * nameFile = "BC68JAR01A09_TO_BC68JAR01A10.bin"
-         * "coap://host:port/{path}/{token}/{nameFile}"
-         */
-        new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE);
         this.context.setServer(server);
         this.startLhServer();
     }
@@ -129,6 +125,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         /* Set securityStore with new registrationStore */
         builder.setSecurityStore(securityStore);
         builder.setRegistrationStore(registrationStore);
+        builder.setAuthorizer(authorizer);
 
 
         // Create Californium Endpoints Provider:
@@ -168,7 +165,7 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
         serverCoapConfig.setTransient(DtlsConfig.DTLS_CONNECTION_ID_LENGTH);
 
         if (config.getDtlsCidLength() != null) {
-            setDtlsConnectorConfigCidLength( serverCoapConfig, config.getDtlsCidLength());
+            setDtlsConnectorConfigCidLength(serverCoapConfig, config.getDtlsCidLength());
         }
 
         /* Create DTLS Config */
@@ -191,7 +188,18 @@ public class DefaultLwM2mTransportService implements LwM2MTransportService {
 
         // Create LWM2M server
         builder.setEndpointsProviders(endpointsBuilder.build());
-        return builder.build();
+        LeshanServer leshanServer = builder.build();
+        CoapServer coapServer = ((CaliforniumServerEndpointsProvider) (leshanServer.getEndpointsProvider()).toArray()[0]).getCoapServer();
+        if (coapServer != null) {
+            CoapResource root = (CoapResource) coapServer.getRoot();
+            if (root == null) {
+                root = new CoapResource("");
+                coapServer.add(root);
+            }
+            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, FIRMWARE_UPDATE_COAP_RESOURCE, serverCoapConfig.get(CoapConfig.PREFERRED_BLOCK_SIZE), serverCoapConfig.get(CoapConfig.MAX_RESOURCE_BODY_SIZE)));
+            root.add(new LwM2mTransportCoapResource(otaPackageDataCache, SOFTWARE_UPDATE_COAP_RESOURCE,serverCoapConfig.get(CoapConfig.PREFERRED_BLOCK_SIZE), serverCoapConfig.get(CoapConfig.MAX_RESOURCE_BODY_SIZE)));
+        }
+        return leshanServer;
     }
 
     private void setServerWithCredentials(LeshanServerBuilder builder) {

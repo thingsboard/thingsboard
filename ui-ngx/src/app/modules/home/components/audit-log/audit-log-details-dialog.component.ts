@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ export class AuditLogDetailsDialogComponent extends DialogComponent<AuditLogDeta
     let newWidth = 600;
     if (content && content.length > 0) {
       const lines = content.split('\n');
-      newHeight = 17 * lines.length + 16;
+      newHeight = 18 * lines.length + 16;
       let maxLineLength = 0;
       lines.forEach((row) => {
         const line = row.replace(/\t/g, '    ').replace(/\n/g, '');

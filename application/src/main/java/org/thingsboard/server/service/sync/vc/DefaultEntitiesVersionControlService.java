@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,7 +94,6 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.Futures.transform;
 import static org.thingsboard.server.common.data.sync.vc.VcUtils.checkBranchName;
@@ -115,9 +114,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     private final TbTransactionalCache<UUID, VersionControlTaskCacheEntry> taskCache;
     private final VersionControlExecutor executor;
 
-    @SuppressWarnings("UnstableApiUsage")
     @Override
-    public ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) throws Exception {
+    public ListenableFuture<UUID> saveEntitiesVersion(User user, VersionCreateRequest request) {
         checkBranchName(request.getBranch());
         var pendingCommit = gitServiceQueue.prepareCommit(user, request);
         DonAsynchron.withCallback(pendingCommit, commit -> {
@@ -304,6 +302,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                     .updateRelations(config.isLoadRelations())
                     .saveAttributes(config.isLoadAttributes())
                     .saveCredentials(config.isLoadCredentials())
+                    .saveCalculatedFields(config.isLoadCalculatedFields())
                     .findExistingByName(false)
                     .build());
             ctx.setFinalImportAttempt(true);
@@ -327,7 +326,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         var sw = TbStopWatch.create("before");
 
         List<EntityType> entityTypes = request.getEntityTypes().keySet().stream()
-                .sorted(exportImportService.getEntityTypeComparatorForImport()).collect(Collectors.toList());
+                .sorted(exportImportService.getEntityTypeComparatorForImport()).toList();
         for (EntityType entityType : entityTypes) {
             log.debug("[{}] Loading {} entities", ctx.getTenantId(), entityType);
             sw.startNew("Entities " + entityType.name());
@@ -362,6 +361,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                 .updateRelations(config.isLoadRelations())
                 .saveAttributes(config.isLoadAttributes())
                 .saveCredentials(config.isLoadCredentials())
+                .saveCalculatedFields(config.isLoadCalculatedFields())
                 .findExistingByName(config.isFindExistingEntityByName())
                 .build();
     }
@@ -453,7 +453,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     private VersionLoadResult onError(EntityId externalId, Throwable e) {
-        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e)));
+        return analyze(e, externalId).orElse(VersionLoadResult.error(EntityLoadError.runtimeError(e, externalId)));
     }
 
     private Optional<VersionLoadResult> analyze(Throwable e, EntityId externalId) {
@@ -471,7 +471,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, EntityId entityId, String versionId) throws Exception {
+    public ListenableFuture<EntityDataDiff> compareEntityDataToVersion(User user, EntityId entityId, String versionId) {
         HasId<EntityId> entity = exportableEntitiesService.findEntityByTenantIdAndId(user.getTenantId(), entityId);
         if (!(entity instanceof ExportableEntity)) throw new IllegalArgumentException("Unsupported entity type");
 
@@ -484,6 +484,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
                             .exportRelations(otherVersion.hasRelations())
                             .exportAttributes(otherVersion.hasAttributes())
                             .exportCredentials(otherVersion.hasCredentials())
+                            .exportCalculatedFields(otherVersion.hasCalculatedFields())
                             .build());
                     EntityExportData<?> currentVersion;
                     try {
@@ -498,12 +499,11 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     @Override
     public ListenableFuture<EntityDataInfo> getEntityDataInfo(User user, EntityId entityId, String versionId) {
         return Futures.transform(gitServiceQueue.getEntity(user.getTenantId(), versionId, entityId),
-                entity -> new EntityDataInfo(entity.hasRelations(), entity.hasAttributes(), entity.hasCredentials()), MoreExecutors.directExecutor());
+                entity -> new EntityDataInfo(entity.hasRelations(), entity.hasAttributes(), entity.hasCredentials(), entity.hasCalculatedFields()), MoreExecutors.directExecutor());
     }
 
-
     @Override
-    public ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) throws Exception {
+    public ListenableFuture<List<BranchInfo>> listBranches(TenantId tenantId) {
         return gitServiceQueue.listBranches(tenantId);
     }
 
@@ -527,6 +527,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
 
     @Override
     public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) {
+        log.debug("[{}] Deleting version control settings", tenantId);
+        repositorySettingsService.delete(tenantId);
         return gitServiceQueue.clearRepository(tenantId);
     }
 
@@ -543,7 +545,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<UUID> autoCommit(User user, EntityId entityId) throws Exception {
+    public ListenableFuture<UUID> autoCommit(User user, EntityId entityId) {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
         if (repositorySettings == null || repositorySettings.isReadOnly()) {
             return Futures.immediateFuture(null);
@@ -570,7 +572,7 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) throws Exception {
+    public ListenableFuture<UUID> autoCommit(User user, EntityType entityType, List<UUID> entityIds) {
         var repositorySettings = repositorySettingsService.get(user.getTenantId());
         if (repositorySettings == null || repositorySettings.isReadOnly()) {
             return Futures.immediateFuture(null);

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 <ng-container *ngIf="levelCardWidgetSettingsForm"  [formGroup]="levelCardWidgetSettingsForm">
   <div class="tb-form-panel no-padding no-border">
     <div class="tb-form-panel">
-      <div class="tb-form-row space-between flex flex-1 flex-col">
+      <div class="tb-form-row space-between flex flex-1 !flex-col">
         <div class="tb-flex row space-between align-center no-gap fill-width">
           <div class="fixed-title-width" translate>widgets.liquid-level-card.shape</div>
           <tb-toggle-select formControlName="tankSelectionType">
@@ -83,7 +83,7 @@
       <div class="tb-form-row space-between">
         <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.datasource-units</div>
         <tb-unit-input required style="max-width: 30%;" class="flex"
-                       [tagFilter]="unitsType.capacity"
+                       tagFilter="capacity"
                        formControlName="datasourceUnits">
         </tb-unit-input>
       </div>
@@ -99,7 +99,8 @@
           </mat-form-field>
           <tb-unit-input *ngIf="levelCardWidgetSettingsForm.get('widgetUnitsSource').value !== DataSourceType.attribute; else selectUnitsAttributes"
                          required class="flex"
-                         [tagFilter]="unitsType.capacity"
+                         supportsUnitConversion
+                         tagFilter="capacity"
                          formControlName="units">
           </tb-unit-input>
           <ng-template #selectUnitsAttributes>
@@ -155,7 +156,7 @@
           </mat-form-field>
           <tb-unit-input *ngIf="levelCardWidgetSettingsForm.get('volumeUnitsSource').value === DataSourceType.static; else selectVolumeUnitsAttributes"
                          class="flex" required
-                         [tagFilter]="unitsType.capacity"
+                         tagFilter="capacity"
                          formControlName="volumeUnits">
           </tb-unit-input>
           <ng-template #selectVolumeUnitsAttributes>
@@ -238,7 +239,8 @@
               {{ 'widgets.liquid-level-card.level' | translate }}
             </mat-slide-toggle>
             <div class="tb-flex row flex-start align-center">
-              <tb-unit-input [tagFilter]="unitsType.capacity"
+              <tb-unit-input tagFilter="capacity"
+                             supportsUnitConversion
                              required class="flex" formControlName="tooltipUnits">
               </tb-unit-input>
               <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">

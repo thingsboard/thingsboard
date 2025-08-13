@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import {
   signalStrengthLayoutTranslations
 } from '@home/components/widget/lib/indicator/signal-strength-widget.models';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-signal-strength-widget-settings',
@@ -57,7 +58,7 @@ export class SignalStrengthWidgetSettingsComponent extends WidgetSettingsCompone
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...signalStrengthDefaultSettings};
+    return signalStrengthDefaultSettings;
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -154,7 +155,7 @@ export class SignalStrengthWidgetSettingsComponent extends WidgetSettingsCompone
   }
 
   private _tooltipValuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
+    const units: string = getSourceTbUnitSymbol(this.widgetConfig.config.units);
     const decimals: number = this.widgetConfig.config.decimals;
     return formatValue(-76, decimals, units, true);
   }

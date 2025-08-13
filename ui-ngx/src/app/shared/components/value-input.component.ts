@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import {
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { Subscription } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 type Layout = 'column' | 'row';
 
@@ -68,10 +69,25 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
   valueType: ValueType;
 
   @Input()
+  allowedValueTypes: ValueType[];
+
+  @Input()
   trueLabel: string;
 
   @Input()
   falseLabel: string;
+
+  @Input()
+  @coerceBoolean()
+  shortBooleanField = false;
+
+  @Input()
+  @coerceBoolean()
+  required = true;
+
+  @Input()
+  @coerceBoolean()
+  hideJsonEdit = false;
 
   @Input()
   layout: ValueInputLayout | Layout = 'row';
@@ -109,6 +125,9 @@ export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, Contro
     }
     if (!this.falseLabel) {
       this.falseLabel = this.translate.instant('value.false');
+    }
+    if (this.allowedValueTypes?.length) {
+      this.valueTypeKeys = this.allowedValueTypes;
     }
     this._subscription = new Subscription();
     this.showValueType = !this.valueType;

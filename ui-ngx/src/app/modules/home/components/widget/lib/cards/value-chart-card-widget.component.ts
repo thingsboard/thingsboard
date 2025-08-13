@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import {
   autoDateFormat,
   backgroundStyle,
@@ -37,10 +37,9 @@ import {
   getDataKey,
   overlayStyle,
   resolveCssSize,
-  simpleDateFormat,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
-import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
   valueChartCardDefaultSettings,
   ValueChartCardLayout,
@@ -105,15 +104,12 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
   private valueKey: DataKey;
   private contentResize$: ResizeObserver;
 
-  private decimals = 0;
-  private units = '';
-
   private valueFontSize: number;
+  private valueFormat: ValueFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
-              private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
 
@@ -122,19 +118,20 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.settings = {...valueChartCardDefaultSettings, ...this.ctx.settings};
 
     if (this.showValue) {
-      this.decimals = this.ctx.decimals;
-      this.units = this.ctx.units;
+      let decimals = this.ctx.decimals ?? 0;
+      let units = this.ctx.units ?? '';
       const dataKey = getDataKey(this.ctx.datasources);
       if (dataKey?.name && this.ctx.defaultSubscription.firstDatasource?.latestDataKeys?.length) {
         const dataKeys = this.ctx.defaultSubscription.firstDatasource?.latestDataKeys;
         this.valueKey = dataKeys?.find(k => k.name === dataKey.name);
         if (isDefinedAndNotNull(this.valueKey?.decimals)) {
-          this.decimals = this.valueKey.decimals;
+          decimals = this.valueKey.decimals;
         }
         if (this.valueKey?.units) {
-          this.units = dataKey.units;
+          units = dataKey.units;
         }
       }
+      this.valueFormat = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units: units, decimals: decimals});
     }
 
     this.layout = this.settings.layout;
@@ -212,7 +209,7 @@ export class ValueChartCardWidgetComponent implements OnInit, AfterViewInit, OnD
       let value;
       if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
         value = tsValue[1];
-        this.valueText = formatValue(value, this.decimals, this.units, false);
+        this.valueText = this.valueFormat?.format(value);
       } else {
         this.valueText = 'N/A';
       }

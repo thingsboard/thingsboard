@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.JavaSerDesUtil;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
+import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger.DeduplicationStrategy;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -47,7 +48,7 @@ public class RemoteNotificationRuleProcessor implements NotificationRuleProcesso
     @Override
     public void process(NotificationRuleTrigger trigger) {
         try {
-            if (trigger.deduplicate() && deduplicationService.alreadyProcessed(trigger)) {
+            if (!DeduplicationStrategy.NONE.equals(trigger.getDeduplicationStrategy()) && deduplicationService.alreadyProcessed(trigger)) {
                 return;
             }
 

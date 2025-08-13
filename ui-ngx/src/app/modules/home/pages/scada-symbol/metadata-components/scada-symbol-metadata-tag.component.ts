@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -158,19 +158,21 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         tagFunctionControl = this.tagFormGroup.get('clickAction');
         completer = this.clickActionFunctionCompleter;
       }
-      const ctx: any = {
-        tagFunction: tagFunctionControl.value,
-        tagFunctionType,
-        tag: this.tagFormGroup.get('tag').value,
-        completer,
-        disabled: this.disabled
-      };
-      const scadaSymbolTagFunctionPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ScadaSymbolMetadataTagFunctionPanelComponent,
-        ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const scadaSymbolTagFunctionPanelPopover =  this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: ScadaSymbolMetadataTagFunctionPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          tagFunction: tagFunctionControl.value,
+          tagFunctionType,
+          tag: this.tagFormGroup.get('tag').value,
+          completer,
+          disabled: this.disabled
+        },
+        isModal: true
+      });
       scadaSymbolTagFunctionPanelPopover.tbComponentRef.instance.popover = scadaSymbolTagFunctionPanelPopover;
       scadaSymbolTagFunctionPanelPopover.tbComponentRef.instance.tagFunctionApplied.subscribe((tagFunction) => {
         scadaSymbolTagFunctionPanelPopover.hide();

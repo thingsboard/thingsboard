@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,9 +32,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 5/21/2017.
- */
 public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
 
     @Query("SELECT a FROM AlarmEntity a WHERE a.originatorId = :originatorId AND a.type = :alarmType ORDER BY a.startTs DESC")
@@ -413,5 +410,7 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
                                           @Param("alarmTypes") List<String> alarmTypes,
                                           @Param("alarmSeverities") List<String> alarmSeverities,
                                           int limit);
+
+    Page<AlarmEntity> findByTenantId(UUID tenantId, Pageable pageable);
 
 }

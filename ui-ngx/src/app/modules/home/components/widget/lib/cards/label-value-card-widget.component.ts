@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,12 +33,13 @@ import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
-  getDataKey,
+  createValueFormatterFromSettings,
   getSingleTsValue,
   iconStyle,
   overlayStyle,
   resolveCssSize,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -46,7 +47,7 @@ import {
   labelValueCardWidgetDefaultSettings,
   LabelValueCardWidgetSettings
 } from '@home/components/widget/lib/cards/label-value-card-widget.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-label-value-card-widget',
@@ -94,9 +95,7 @@ export class LabelValueCardWidgetComponent implements OnInit, AfterViewInit, OnD
   hasCardClickAction = false;
 
   private panelResize$: ResizeObserver;
-
-  private decimals = 0;
-  private units = '';
+  private valueFormat: ValueFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
@@ -108,15 +107,7 @@ export class LabelValueCardWidgetComponent implements OnInit, AfterViewInit, OnD
     this.ctx.$scope.labelValueCardWidget = this;
     this.settings = {...labelValueCardWidgetDefaultSettings, ...this.ctx.settings};
 
-    this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
-    const dataKey = getDataKey(this.ctx.datasources);
-    if (isDefinedAndNotNull(dataKey?.decimals)) {
-      this.decimals = dataKey.decimals;
-    }
-    if (dataKey?.units) {
-      this.units = dataKey.units;
-    }
+    this.valueFormat = createValueFormatterFromSettings(this.ctx);
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
@@ -167,7 +158,7 @@ export class LabelValueCardWidgetComponent implements OnInit, AfterViewInit, OnD
     let value;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       value = tsValue[1];
-      this.valueText = formatValue(value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.format(value);
     } else {
       this.valueText = 'N/A';
     }

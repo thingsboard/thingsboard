@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import {
   BehaviorSubject,
   forkJoin,
+  merge,
   Observable,
   Observer,
   of,
@@ -33,7 +34,7 @@ import {
   switchMap,
   throwError
 } from 'rxjs';
-import { catchError, delay, map, share, take } from 'rxjs/operators';
+import { catchError, debounceTime, delay, map, share, take } from 'rxjs/operators';
 import { AfterViewInit, ChangeDetectorRef, Directive, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import {
   DataToValueSettings,
@@ -53,10 +54,11 @@ import {
 import { ValueType } from '@shared/models/constants';
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { parseError } from '@shared/models/error.models';
 import { CompiledTbFunction, compileTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
+import { StateObject } from '@core/api/widget-api.models';
 
 @Directive()
 // eslint-disable-next-line @angular-eslint/directive-class-suffix
@@ -269,6 +271,8 @@ export abstract class ValueGetter<V> extends ValueAction {
         return new AlarmStatusValueGetter<V>(ctx, settings, valueType, valueObserver, simulated);
       case GetValueAction.GET_DASHBOARD_STATE:
         return new DashboardStateGetter<V>(ctx, settings, valueType, valueObserver, simulated);
+      case GetValueAction.GET_DASHBOARD_STATE_OBJECT:
+        return new DashboardStateWithParamsGetter<V>(ctx, settings, valueType, valueObserver, simulated);
     }
   }
 
@@ -637,6 +641,33 @@ export class DashboardStateGetter<V> extends ValueGetter<V> {
       return of('default');
     } else {
       return this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId;
+    }
+  }
+}
+
+export class DashboardStateWithParamsGetter<V> extends ValueGetter<V> {
+  constructor(protected ctx: WidgetContext,
+              protected settings: GetValueSettings<V>,
+              protected valueType: ValueType,
+              protected valueObserver: Partial<Observer<V>>,
+              protected simulated: boolean) {
+    super(ctx, settings, valueType, valueObserver, simulated);
+  }
+
+  protected doGetValue(): Observable<StateObject> {
+    if (this.simulated) {
+      return of({id: 'default', params: {}});
+    } else {
+      return merge(
+        this.ctx.stateController.dashboardCtrl.dashboardCtx.stateId,
+        this.ctx.stateController.dashboardCtrl.dashboardCtx.stateChanged
+      ).pipe(
+        debounceTime(10),
+        map(() => ({
+          id: this.ctx.stateController.getStateId(),
+          params: deepClone(this.ctx.stateController.getStateParams())
+        }))
+      );
     }
   }
 }

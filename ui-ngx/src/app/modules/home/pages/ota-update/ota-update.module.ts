@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,10 +20,12 @@ import { SharedModule } from '@shared/shared.module';
 import { HomeComponentsModule } from '@home/components/home-components.module';
 import { OtaUpdateRoutingModule } from '@home/pages/ota-update/ota-update-routing.module';
 import { OtaUpdateComponent } from '@home/pages/ota-update/ota-update.component';
+import { OtaUpdateTabsComponent } from '@home/pages/ota-update/ota-update-tabs.component';
 
 @NgModule({
   declarations: [
-    OtaUpdateComponent
+    OtaUpdateComponent,
+    OtaUpdateTabsComponent
   ],
   imports: [
     CommonModule,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,12 @@ package org.thingsboard.server.queue;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
-/**
- * Created by ashvayka on 05.10.18.
- */
 public interface TbQueueHandler<Request extends TbQueueMsg, Response extends TbQueueMsg> {
 
     ListenableFuture<Response> handle(Request request);
+
+    default Response constructErrorResponseMsg(Request request, Throwable cause) {
+        return null;
+    }
 
 }

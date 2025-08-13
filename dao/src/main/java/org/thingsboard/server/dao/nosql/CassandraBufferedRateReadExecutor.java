@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,9 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.util.AbstractBufferedRateExecutor;
 import org.thingsboard.server.dao.util.AsyncTaskContext;
+import org.thingsboard.server.dao.util.BufferedRateExecutorType;
 import org.thingsboard.server.dao.util.NoSqlAnyDao;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 
 /**
  * Created by ashvayka on 24.10.18.
@@ -37,8 +39,6 @@ import org.thingsboard.server.dao.util.NoSqlAnyDao;
 @Slf4j
 @NoSqlAnyDao
 public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecutor<CassandraStatementTask, TbResultSetFuture, TbResultSet> {
-
-    static final String BUFFER_NAME = "Read";
 
     public CassandraBufferedRateReadExecutor(
             @Value("${cassandra.query.buffer_size}") int queueLimit,
@@ -51,9 +51,10 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
             @Value("${cassandra.query.print_queries_freq:0}") int printQueriesFreq,
             @Autowired StatsFactory statsFactory,
             @Autowired EntityService entityService,
-            @Autowired RateLimitService rateLimitService) {
-        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq, statsFactory,
-                entityService, rateLimitService, printTenantNames);
+            @Autowired RateLimitService rateLimitService,
+            @Autowired(required = false) TbServiceInfoProvider serviceInfoProvider) {
+        super(queueLimit, concurrencyLimit, maxWaitTime, dispatcherThreads, callbackThreads, pollMs, printQueriesFreq,
+                BufferedRateExecutorType.READ, serviceInfoProvider, rateLimitService, statsFactory, entityService, printTenantNames);
     }
 
     @Scheduled(fixedDelayString = "${cassandra.query.rate_limit_print_interval_ms}")
@@ -65,11 +66,6 @@ public class CassandraBufferedRateReadExecutor extends AbstractBufferedRateExecu
     @PreDestroy
     public void stop() {
         super.stop();
-    }
-
-    @Override
-    public String getBufferName() {
-        return BUFFER_NAME;
     }
 
     @Override

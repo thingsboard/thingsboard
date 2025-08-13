@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -304,9 +304,13 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const restoreVersionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, EntityVersionRestoreComponent, 'leftTop', true, null,
-        {
+      const restoreVersionPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: EntityVersionRestoreComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: 'leftTop',
+        context: {
           versionName: this.versionName,
           versionId: this.versionId,
           externalEntityId: this.externalEntityId,
@@ -317,7 +321,10 @@ export class EntityVersionDiffComponent extends PageComponent implements OnInit,
               this.versionRestored.emit();
             }
           }
-        }, {}, {}, {}, false);
+        },
+        showCloseButton: false,
+        isModal: true
+      });
       restoreVersionPopover.tbComponentRef.instance.popoverComponent = restoreVersionPopover;
     }
   }

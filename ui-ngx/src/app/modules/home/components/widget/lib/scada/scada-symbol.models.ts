@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ import {
 import {
   createLabelFromSubscriptionEntityInfo,
   deepClone,
-  formatValue,
   guid,
   isDefinedAndNotNull,
   isFirefox,
@@ -52,12 +51,20 @@ import {
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
+  mergeDeepIgnoreArray,
+  objectHashCode,
   parseFunction
 } from '@core/utils';
 import { BehaviorSubject, forkJoin, Observable, Observer, of, Subject } from 'rxjs';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
+import {
+  ColorProcessor,
+  constantColor,
+  Font,
+  ValueFormatProcessor,
+  ValueFormatSettings
+} from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
@@ -65,10 +72,18 @@ import { catchError, map, take, takeUntil } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { MatIconRegistry } from '@angular/material/icon';
 import { RafService } from '@core/services/raf.service';
+import {
+  defaultFormPropertyValue,
+  defaultPropertyValue,
+  FormProperty,
+  FormPropertyType
+} from '@shared/models/dynamic-form.models';
+import { TbUnit } from '@shared/models/unit.models';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
-  formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
+  formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined;
+  formatValue(value: any, settings: ValueFormatSettings): string;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
   icon: (element: Element | Element[], icon: string, size?: number, color?: string, center?: boolean) => void;
@@ -76,10 +91,16 @@ export interface ScadaSymbolApi {
   cssAnimation: (element: Element) => ScadaSymbolAnimation | undefined;
   resetCssAnimation: (element: Element) => void;
   finishCssAnimation: (element: Element) => void;
+  connectorAnimation:(element: Element) => ConnectorScadaSymbolAnimation | undefined;
+  connectorAnimate:(element: Element, path: string, reversedPath: string) => ConnectorScadaSymbolAnimation;
+  resetConnectorAnimation: (element: Element) => void;
+  finishConnectorAnimation: (element: Element) => void;
   disable: (element: Element | Element[]) => void;
   enable: (element: Element | Element[]) => void;
   callAction: (event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) => void;
   setValue: (valueId: string, value: any) => void;
+  unitSymbol: (unit: TbUnit) => string;
+  convertUnitValue: (value: any, unit: TbUnit) => number;
 }
 
 export interface ScadaSymbolContext {
@@ -151,60 +172,6 @@ export interface ScadaSymbolBehaviorAction extends ScadaSymbolBehaviorBase {
 
 export type ScadaSymbolBehavior = ScadaSymbolBehaviorValue & ScadaSymbolBehaviorAction;
 
-export enum ScadaSymbolPropertyType {
-  text = 'text',
-  number = 'number',
-  switch = 'switch',
-  color = 'color',
-  color_settings = 'color_settings',
-  font = 'font',
-  units = 'units',
-  icon = 'icon'
-}
-
-export const scadaSymbolPropertyTypes = Object.keys(ScadaSymbolPropertyType) as ScadaSymbolPropertyType[];
-
-export const scadaSymbolPropertyTypeTranslations = new Map<ScadaSymbolPropertyType, string>(
-  [
-    [ScadaSymbolPropertyType.text, 'scada.property.type-text'],
-    [ScadaSymbolPropertyType.number, 'scada.property.type-number'],
-    [ScadaSymbolPropertyType.switch, 'scada.property.type-switch'],
-    [ScadaSymbolPropertyType.color, 'scada.property.type-color'],
-    [ScadaSymbolPropertyType.color_settings, 'scada.property.type-color-settings'],
-    [ScadaSymbolPropertyType.font, 'scada.property.type-font'],
-    [ScadaSymbolPropertyType.units, 'scada.property.type-units'],
-    [ScadaSymbolPropertyType.icon, 'scada.property.type-icon']
-  ]
-);
-
-export const scadaSymbolPropertyRowClasses =
-  ['column', 'column-xs', 'column-lt-md', 'align-start', 'no-border', 'no-gap', 'no-padding', 'same-padding'];
-
-export const scadaSymbolPropertyFieldClasses =
-  ['medium-width', 'flex', 'flex-xs', 'flex-lt-md'];
-
-export interface ScadaSymbolPropertyBase {
-  id: string;
-  name: string;
-  type: ScadaSymbolPropertyType;
-  default: any;
-  required?: boolean;
-  subLabel?: string;
-  divider?: boolean;
-  fieldSuffix?: string;
-  disableOnProperty?: string;
-  rowClass?: string;
-  fieldClass?: string;
-}
-
-export interface ScadaSymbolNumberProperty extends ScadaSymbolPropertyBase {
-  min?: number;
-  max?: number;
-  step?: number;
-}
-
-export type ScadaSymbolProperty = ScadaSymbolPropertyBase & ScadaSymbolNumberProperty;
-
 export interface ScadaSymbolMetadata {
   title: string;
   description?: string;
@@ -215,7 +182,7 @@ export interface ScadaSymbolMetadata {
   stateRender?: ScadaSymbolStateRenderFunction;
   tags: ScadaSymbolTag[];
   behavior: ScadaSymbolBehavior[];
-  properties: ScadaSymbolProperty[];
+  properties: FormProperty[];
 }
 
 export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
@@ -232,6 +199,8 @@ const svgPartsRegex = /(<svg.*?>)(.*)<\/svg>/gms;
 const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gms;
 
 const tbTagRegex = /tb:tag="([^"]*)"/gms;
+
+const syncTime = Date.now();
 
 const generateElementId = () => {
   const id = guid();
@@ -318,7 +287,7 @@ export const updateScadaSymbolMetadataInContent = (svgContent: string, metadata:
   const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
   const parsererror = svgDoc.getElementsByTagName('parsererror');
   if (parsererror?.length) {
-    return parsererror[0].outerHTML;
+    throw Error(parsererror[0].textContent)
   }
   updateScadaSymbolMetadataInDom(svgDoc, metadata);
   return svgDoc.documentElement.outerHTML;
@@ -507,7 +476,7 @@ export const defaultScadaSymbolObjectSettings = (metadata: ScadaSymbolMetadata):
     }
   }
   for (const property of metadata.properties) {
-    settings.properties[property.id] = property.default;
+    settings.properties[property.id] = defaultFormPropertyValue(property);
   }
   return settings;
 };
@@ -532,6 +501,7 @@ export class ScadaSymbolObject {
   private settings: ScadaSymbolObjectSettings;
   private context: ScadaSymbolContext;
   private cssAnimations: CssScadaSymbolAnimations;
+  private connectorAnimations: ScadaSymbolFlowConnectorAnimations;
 
   private svgShape: Svg;
   private box: Box;
@@ -541,6 +511,8 @@ export class ScadaSymbolObject {
   private valueSetters: {[behaviorId: string]: ValueSetter<any>} = {};
 
   private stateValueSubjects: {[id: string]: BehaviorSubject<any>} = {};
+
+  private valueProcessor: {[id: string]: ValueFormatProcessor} = {};
 
   private readonly shapeResize$: ResizeObserver;
   private readonly destroy$ = new Subject<void>();
@@ -564,7 +536,7 @@ export class ScadaSymbolObject {
     const doc: XMLDocument = new DOMParser().parseFromString(this.svgContent, 'image/svg+xml');
     this.metadata = parseScadaSymbolMetadataFromDom(doc);
     const defaults = defaultScadaSymbolObjectSettings(this.metadata);
-    this.settings = mergeDeep<ScadaSymbolObjectSettings>({} as ScadaSymbolObjectSettings,
+    this.settings = mergeDeepIgnoreArray<ScadaSymbolObjectSettings>({} as ScadaSymbolObjectSettings,
       defaults, this.inputSettings || {} as ScadaSymbolObjectSettings);
     this.prepareMetadata();
     this.prepareSvgShape(doc);
@@ -651,10 +623,11 @@ export class ScadaSymbolObject {
 
   private init() {
     this.cssAnimations = new CssScadaSymbolAnimations(this.svgShape, this.raf);
+    this.connectorAnimations = new ScadaSymbolFlowConnectorAnimations();
     this.context = {
       api: {
         generateElementId: () => generateElementId(),
-        formatValue,
+        formatValue: this.formatValue.bind(this),
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
         icon: this.setElementIcon.bind(this),
@@ -662,10 +635,16 @@ export class ScadaSymbolObject {
         cssAnimation: this.cssAnimation.bind(this),
         resetCssAnimation: this.resetCssAnimation.bind(this),
         finishCssAnimation: this.finishCssAnimation.bind(this),
+        connectorAnimation: this.connectorAnimation.bind(this),
+        connectorAnimate: this.connectorAnimate.bind(this),
+        resetConnectorAnimation: this.resetConnectorAnimation.bind(this),
+        finishConnectorAnimation: this.finishConnectorAnimation.bind(this),
         disable: this.disableElement.bind(this),
         enable: this.enableElement.bind(this),
         callAction: this.callAction.bind(this),
         setValue: this.setValue.bind(this),
+        unitSymbol: this.unitSymbol.bind(this),
+        convertUnitValue: this.convertUnitValue.bind(this),
       },
       tags: {},
       properties: {},
@@ -683,7 +662,9 @@ export class ScadaSymbolObject {
       elements.push(element);
     }
     for (const property of this.metadata.properties) {
-      this.context.properties[property.id] = this.getPropertyValue(property.id);
+      if (property.type !== FormPropertyType.htmlSection) {
+        this.context.properties[property.id] = this.getPropertyValue(this.metadata.properties, this.settings.properties, property.id);
+      }
     }
     for (const tag of this.metadata.tags) {
       if (tag.actions) {
@@ -841,6 +822,34 @@ export class ScadaSymbolObject {
     if (stateValueSubject && stateValueSubject.value !== value) {
       stateValueSubject.next(value);
     }
+  }
+
+  private unitSymbol(unit: TbUnit): string {
+    return this.ctx.unitService.getTargetUnitSymbol(unit);
+  }
+
+  private convertUnitValue(value: number, unit: TbUnit): number {
+    return this.ctx.unitService.convertUnitValue(value, unit);
+  }
+
+  private formatValue(value: any, settings: ValueFormatSettings): string;
+  private formatValue(value: any, dec?: number, units?: string, showZeroDecimals?: boolean): string | undefined;
+  private formatValue(value: any, settingsOrDec?: ValueFormatSettings | number, units?: string, showZeroDecimals?: boolean): string {
+    let valueFormatSettings: ValueFormatSettings;
+    if (typeof settingsOrDec === 'object') {
+      valueFormatSettings = deepClone(settingsOrDec);
+    } else {
+      valueFormatSettings = {
+        units,
+        decimals: settingsOrDec,
+        showZeroDecimals
+      }
+    }
+    const id = objectHashCode(valueFormatSettings) + '';
+    if (!this.valueProcessor[id]) {
+      this.valueProcessor[id] = ValueFormatProcessor.fromSettings(this.ctx.$injector, valueFormatSettings);
+    }
+    return this.valueProcessor[id].format(value);
   }
 
   private onStateValueChanged(id: string, value: any) {
@@ -1004,6 +1013,22 @@ export class ScadaSymbolObject {
     this.cssAnimations.finishAnimation(element);
   }
 
+  private connectorAnimate(element: Element, path: string, reversedPath: string): ConnectorScadaSymbolAnimation {
+    return this.connectorAnimations.animate(element, path, reversedPath);
+  }
+
+  private connectorAnimation(element: Element): ConnectorScadaSymbolAnimation | undefined {
+    return this.connectorAnimations.animation(element);
+  }
+
+  private resetConnectorAnimation(element: Element) {
+    this.connectorAnimations.resetAnimation(element);
+  }
+
+  private finishConnectorAnimation(element: Element) {
+    this.connectorAnimations.finishAnimation(element);
+  }
+
   private disableElement(e: Element | Element[]) {
     this.elements(e).forEach(element => {
       element.attr({'pointer-events': 'none'});
@@ -1020,37 +1045,105 @@ export class ScadaSymbolObject {
     return Array.isArray(element) ? element : [element];
   }
 
-  private getProperty(id: string): ScadaSymbolProperty {
-    return this.metadata.properties.find(p => p.id === id);
+  private getProperty(properties: FormProperty[], ...ids: string[]): FormProperty {
+    let found: FormProperty;
+    for (const id of ids) {
+      if (properties) {
+        found = properties.find(p => p.id === id);
+        if (found && found.type === FormPropertyType.fieldset) {
+          properties = found.properties;
+        } else {
+          properties = null;
+        }
+      } else {
+        found = null;
+      }
+    }
+    return found;
   }
 
-  private getPropertyValue(id: string): any {
-    const property = this.getProperty(id);
-    if (property) {
-      const value = this.settings.properties[id];
-      if (isDefinedAndNotNull(value)) {
-        if (property.type === ScadaSymbolPropertyType.color_settings) {
-          return ColorProcessor.fromSettings(value);
-        } else if (property.type === ScadaSymbolPropertyType.text) {
-          const result =  this.ctx.utilsService.customTranslation(value, value);
-          const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
-          return createLabelFromSubscriptionEntityInfo(entityInfo, result);
+  private getSettingsValue(settings: {[id: string]: any}, ...ids: string[]): any {
+    let found: any;
+    let properties = settings;
+    for (const id of ids) {
+      if (properties) {
+        found = properties[id];
+        if (found && typeof found === 'object') {
+          properties = found;
+        } else {
+          properties = null;
         }
-        return value;
       } else {
-        switch (property.type) {
-          case ScadaSymbolPropertyType.text:
-            return '';
-          case ScadaSymbolPropertyType.number:
-            return 0;
-          case ScadaSymbolPropertyType.color:
-            return '#000';
-          case ScadaSymbolPropertyType.color_settings:
-            return ColorProcessor.fromSettings(constantColor('#000'));
+        found = null;
+      }
+    }
+    return found;
+  }
+
+  private getPropertyValue(properties: FormProperty[], settings: {[id: string]: any}, ...ids: string[]): any {
+    const property = this.getProperty(properties, ...ids);
+    if (property) {
+      if (property.type === FormPropertyType.array) {
+        const arrayValue = [];
+        if (property.arrayItemType !== FormPropertyType.htmlSection) {
+          const settingsValue = this.getSettingsValue(settings, ...ids);
+          if (settingsValue && Array.isArray(settingsValue)) {
+            for (const settingsElement of settingsValue) {
+              let value: any;
+              if (property.arrayItemType === FormPropertyType.fieldset) {
+                const propertyValue: {[id: string]: any} = {};
+                for (const childProperty of property.properties) {
+                  if (childProperty.type !== FormPropertyType.htmlSection) {
+                    propertyValue[childProperty.id] = this.getPropertyValue(property.properties, settingsElement, childProperty.id);
+                  }
+                }
+                value = propertyValue;
+              } else {
+                value = this.convertPropertyValue(property, settingsElement);
+              }
+              arrayValue.push(value);
+            }
+          }
         }
+        return arrayValue;
+      } else if (property.type === FormPropertyType.fieldset) {
+        const propertyValue: {[id: string]: any} = {};
+        for (const childProperty of property.properties) {
+          if (childProperty.type !== FormPropertyType.htmlSection) {
+            propertyValue[childProperty.id] = this.getPropertyValue(properties, settings, ...ids, childProperty.id);
+          }
+        }
+        return propertyValue;
+      } else {
+        const value = this.getSettingsValue(settings, ...ids);
+        return this.convertPropertyValue(property, value);
       }
     } else {
       return '';
+    }
+  }
+
+  private convertPropertyValue(property: FormProperty, value: any): any {
+    if (isDefinedAndNotNull(value)) {
+      if (property.type === FormPropertyType.color_settings) {
+        return ColorProcessor.fromSettings(value);
+      } else if ([FormPropertyType.text, FormPropertyType.textarea].includes(property.type)) {
+        const result = this.ctx.utilsService.customTranslation(value, value);
+        const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
+        return createLabelFromSubscriptionEntityInfo(entityInfo, result);
+      }
+      return value;
+    } else {
+      switch (property.type) {
+        case FormPropertyType.color_settings:
+          return ColorProcessor.fromSettings(constantColor('#000'));
+        case FormPropertyType.font:
+        case FormPropertyType.units:
+        case FormPropertyType.icon:
+          return null;
+        default:
+          return defaultPropertyValue(property.type);
+      }
     }
   }
 }
@@ -1083,6 +1176,20 @@ interface ScadaSymbolAnimation {
   scale(x: number, y?: number, cx?: number, cy?: number): ScadaSymbolAnimation;
   attr(attr: string | object, value?: any): ScadaSymbolAnimation;
 
+}
+
+const scadaSymbolConnectorFlowAnimationId = 'scadaSymbolConnectorFlowAnimation';
+
+type StrokeLineCap = 'butt' | 'round '| 'square';
+
+interface ConnectorScadaSymbolAnimation {
+  play(): void;
+  stop(): void;
+  finish(): void;
+
+  flowAppearance(width: number, color: string, lineCap: StrokeLineCap, dashWidth: number, dashGap: number): ConnectorScadaSymbolAnimation;
+  duration(speed: number): ConnectorScadaSymbolAnimation;
+  direction(direction: boolean): ConnectorScadaSymbolAnimation;
 }
 
 class CssScadaSymbolAnimations {
@@ -1133,6 +1240,132 @@ class CssScadaSymbolAnimations {
     } else {
       return new CssScadaSymbolAnimation(this.svgShape, this.raf, element, duration);
     }
+  }
+}
+
+class ScadaSymbolFlowConnectorAnimations {
+  constructor() {}
+
+  public animate(element: Element, path = '', reversedPath = ''): ConnectorScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element, this.createAnimation(element, path, reversedPath));
+  }
+
+  public animation(element: Element): ConnectorScadaSymbolAnimation | undefined {
+    return element.remember(scadaSymbolConnectorFlowAnimationId);
+  }
+
+  public resetAnimation(element: Element) {
+    const animation: ConnectorScadaSymbolAnimation = element.remember(scadaSymbolConnectorFlowAnimationId);
+    if (animation) {
+      animation.stop();
+      element.remember(scadaSymbolConnectorFlowAnimationId, null);
+    }
+  }
+
+  public finishAnimation(element: Element) {
+    const animation: ConnectorScadaSymbolAnimation = element.remember(scadaSymbolConnectorFlowAnimationId);
+    if (animation) {
+      animation.finish();
+      element.remember(scadaSymbolConnectorFlowAnimationId, null);
+    }
+  }
+
+  private setupAnimation(element: Element, animation: ConnectorScadaSymbolAnimation): ConnectorScadaSymbolAnimation {
+    element.remember(scadaSymbolConnectorFlowAnimationId, animation);
+    return animation;
+  }
+
+  private checkOldAnimation(element: Element) {
+    const previousAnimation: ConnectorScadaSymbolAnimation = element.remember(scadaSymbolConnectorFlowAnimationId);
+    if (previousAnimation) {
+      previousAnimation.finish();
+    }
+  }
+
+  private createAnimation(element: Element, path: string, reversedPath: string): ConnectorScadaSymbolAnimation {
+    return new FlowConnectorAnimation(element, path, reversedPath);
+  }
+}
+
+class FlowConnectorAnimation implements ConnectorScadaSymbolAnimation {
+
+  private readonly _path: string;
+  private readonly _reversedPath: string;
+  private readonly _animation: Element;
+
+  private _duration: number = 1;
+  private _lineColor: string = '#C8DFF7';
+  private _lineWidth: number = 4;
+  private _strokeLineCap: StrokeLineCap = 'butt';
+  private _dashWidth: number = 10;
+  private _dashGap: number = 10;
+  private _direction: boolean = true;
+
+  constructor(private element: Element,
+              path: string,
+              pathReversed: string) {
+    this._path = path;
+    this._reversedPath = pathReversed;
+
+    const dashArray = `${this._dashWidth} ${this._dashGap}`;
+    const values = `${this._dashWidth + this._dashGap};0`;
+
+    this._animation = SVG(
+      `<path d="${this._path}" stroke-dasharray="${dashArray}" stroke-linecap="${this._strokeLineCap}" fill="none" stroke="${this._lineColor}" stroke-width="${this._lineWidth}">` +
+      `<animate attributeName="stroke-dashoffset" values="${values}" dur="${this._duration}s" begin="indefinite" calcMode="linear" repeatCount="indefinite"></animate></path>`
+    );
+  }
+
+  public play() {
+    if (!this.element.node.childElementCount) {
+      this.element.add(this._animation);
+    }
+    const animateElement = this.element.node.getElementsByTagName('animate')[0];
+    const offset = ((Date.now() - syncTime) % 1000) * -1;
+    (animateElement as SVGAnimationElement).beginElementAt(offset);
+  }
+
+  public stop() {
+    const animateElement = this.element.node.getElementsByTagName('animate')[0];
+    (animateElement as SVGAnimationElement)?.endElement();
+  }
+
+  public finish() {
+    this.element.findOne('path')?.remove();
+  }
+
+  public flowAppearance(width: number, color: string, linecap: StrokeLineCap, dashWidth: number, dashGap: number): this {
+    const totalLength = (this._animation.node as SVGPathElement).getTotalLength();
+    let offset = 0;
+    if ((totalLength % 100) !== 0) {
+      const clientWidth = totalLength < 100 ? 100 : this.element.node.ownerSVGElement.clientWidth;
+      const clientWidthDash = clientWidth  / (dashWidth + dashGap);
+      const totalLengthDash = totalLength / clientWidthDash;
+      offset = ((dashWidth + dashGap) - totalLengthDash) / 2;
+    }
+    this._lineColor = color;
+    this._lineWidth = width;
+    this._strokeLineCap = linecap;
+    this._dashWidth = dashWidth - offset;
+    this._dashGap = dashGap - offset;
+    const dashArray = `${this._dashWidth} ${this._dashGap}`;
+    const values = `${this._dashWidth + (this._dashGap || this._dashWidth)};0`;
+    this._animation.stroke({width, color, linecap, dasharray: dashArray});
+    this._animation.findOne('animate').attr('values', values);
+    return this;
+  }
+
+  public duration(speed: number): this {
+    this._duration = speed;
+    this._animation.findOne('animate').attr('dur', `${speed}s`);
+    return this;
+  }
+
+  public direction(direction: boolean): this {
+    this._direction = direction;
+    this._animation.attr('d', direction ? this._path : this._reversedPath);
+    return this;
   }
 }
 

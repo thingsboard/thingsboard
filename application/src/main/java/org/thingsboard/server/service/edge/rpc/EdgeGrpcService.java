@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,7 +22,6 @@ import io.grpc.Server;
 import io.grpc.netty.shaded.io.grpc.netty.NettyServerBuilder;
 import io.grpc.stub.StreamObserver;
 import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -32,6 +31,8 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -59,17 +59,18 @@ import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
+import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Collections;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -91,6 +92,8 @@ import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAS
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
+
+    private static final int DESTROY_SESSION_MAX_ATTEMPTS = 10;
 
     private final ConcurrentMap<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Lock> sessionNewEventsLocks = new ConcurrentHashMap<>();
@@ -149,10 +152,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private TbCoreQueueFactory tbCoreQueueFactory;
 
     @Autowired
-    private Optional<TbKafkaSettings> kafkaSettings;
-
-    @Autowired
-    private Optional<TbKafkaTopicConfigs> kafkaTopicConfigs;
+    private Optional<KafkaAdmin> kafkaAdmin;
 
     private Server server;
 
@@ -162,8 +162,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private ScheduledExecutorService executorService;
 
-    @PostConstruct
-    public void init() {
+    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
+    public void onStartUp() {
         log.info("Initializing Edge RPC service!");
         NettyServerBuilder builder = NettyServerBuilder.forPort(rpcPort)
                 .permitKeepAliveTime(clientMaxKeepAliveTimeSec, TimeUnit.SECONDS)
@@ -193,6 +193,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.edgeEventProcessingExecutorService = ThingsBoardExecutors.newScheduledThreadPool(schedulerPoolSize, "edge-event-check-scheduler");
         this.sendDownlinkExecutorService = ThingsBoardExecutors.newScheduledThreadPool(sendSchedulerPoolSize, "edge-send-scheduler");
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
+        this.executorService.scheduleAtFixedRate(this::destroyKafkaSessionIfDisconnectedAndConsumerActive, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
     }
 
@@ -227,8 +228,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private EdgeGrpcSession createEdgeGrpcSession(StreamObserver<ResponseMsg> outputStream) {
-        return kafkaSettings.isPresent() && kafkaTopicConfigs.isPresent()
-                ? new KafkaEdgeGrpcSession(ctx, topicService, tbCoreQueueFactory, kafkaSettings.get(), kafkaTopicConfigs.get(), outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
+        return kafkaAdmin.isPresent()
+                ? new KafkaEdgeGrpcSession(ctx, topicService, tbCoreQueueFactory, kafkaAdmin.get(), outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
                 sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession)
                 : new PostgresEdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
                 sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
@@ -262,6 +263,10 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public void updateEdge(TenantId tenantId, Edge edge) {
+        if (edge == null) {
+            log.warn("[{}] Edge is null - edge is removed and outdated notification is in process!", tenantId);
+            return;
+        }
         EdgeGrpcSession session = sessions.get(edge.getId());
         if (session != null && session.isConnected()) {
             log.debug("[{}] Updating configuration for edge [{}] [{}]", tenantId, edge.getName(), edge.getId());
@@ -276,9 +281,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null && session.isConnected()) {
             log.info("[{}] Closing and removing session for edge [{}]", tenantId, edgeId);
-            session.destroy();
+            destroySession(session);
             session.cleanUp();
-            session.close();
             sessions.remove(edgeId);
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
             newEventLock.lock();
@@ -328,6 +332,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         Edge edge = edgeGrpcSession.getEdge();
         TenantId tenantId = edge.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
+        if (sessions.containsKey(edgeId)) {
+            destroySession(sessions.get(edgeId));
+        }
         sessions.put(edgeId, edgeGrpcSession);
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
@@ -349,7 +356,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId, String requestServiceId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null) {
-            if (!session.isSyncCompleted()) {
+            if (session.isSyncInProgress()) {
                 clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, false, "Sync process is active at the moment"), requestServiceId);
             } else {
                 boolean success = false;
@@ -368,7 +375,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
         UUID requestId = request.getId();
         EdgeGrpcSession session = sessions.get(request.getEdgeId());
-        if (session != null && !session.isSyncCompleted()) {
+        if (session != null && session.isSyncInProgress()) {
             responseConsumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false, "Sync process is active at the moment"));
         } else {
             log.trace("[{}][{}] Processing sync edge request [{}], serviceId [{}]", request.getTenantId(), request.getId(), request.getEdgeId(), request.getServiceId());
@@ -404,6 +411,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void scheduleEdgeEventsCheck(EdgeGrpcSession session) {
         EdgeId edgeId = session.getEdge().getId();
         TenantId tenantId = session.getEdge().getTenantId();
+
+        cancelScheduleEdgeEventsCheck(edgeId);
+
         if (sessions.containsKey(edgeId)) {
             ScheduledFuture<?> edgeEventCheckTask = edgeEventProcessingExecutorService.schedule(() -> {
                 try {
@@ -411,25 +421,30 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                     newEventLock.lock();
                     try {
                         if (Boolean.TRUE.equals(sessionNewEvents.get(edgeId))) {
-                            log.trace("[{}][{}] Set session new events flag to false", tenantId, edgeId.getId());
+                            log.trace("[{}][{}] set session new events flag to false", tenantId, edgeId.getId());
                             sessionNewEvents.put(edgeId, false);
-                            processEdgeEventMigrationIfNeeded(session, edgeId);
                             session.processHighPriorityEvents();
-                            Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
-                                @Override
-                                public void onSuccess(Boolean newEventsAdded) {
-                                    if (Boolean.TRUE.equals(newEventsAdded)) {
-                                        sessionNewEvents.put(edgeId, true);
+                            processEdgeEventMigrationIfNeeded(session, edgeId);
+                            if (Boolean.TRUE.equals(edgeEventsMigrationProcessed.get(edgeId))) {
+                                Futures.addCallback(session.processEdgeEvents(), new FutureCallback<>() {
+                                    @Override
+                                    public void onSuccess(Boolean newEventsAdded) {
+                                        if (Boolean.TRUE.equals(newEventsAdded)) {
+                                            log.trace("[{}][{}] new events added. set session new events flag to true", tenantId, edgeId.getId());
+                                            sessionNewEvents.put(edgeId, true);
+                                        }
+                                        scheduleEdgeEventsCheck(session);
                                     }
-                                    scheduleEdgeEventsCheck(session);
-                                }
 
-                                @Override
-                                public void onFailure(Throwable t) {
-                                    log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
-                                    scheduleEdgeEventsCheck(session);
-                                }
-                            }, ctx.getGrpcCallbackExecutorService());
+                                    @Override
+                                    public void onFailure(Throwable t) {
+                                        log.warn("[{}] Failed to process edge events for edge [{}]!", tenantId, session.getEdge().getId().getId(), t);
+                                        scheduleEdgeEventsCheck(session);
+                                    }
+                                }, ctx.getGrpcCallbackExecutorService());
+                            } else {
+                                scheduleEdgeEventsCheck(session);
+                            }
                         } else {
                             scheduleEdgeEventsCheck(session);
                         }
@@ -451,14 +466,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void processEdgeEventMigrationIfNeeded(EdgeGrpcSession session, EdgeId edgeId) throws Exception {
         boolean isMigrationProcessed = edgeEventsMigrationProcessed.getOrDefault(edgeId, Boolean.FALSE);
         if (!isMigrationProcessed) {
+            log.info("Starting edge event migration for edge [{}]", edgeId.getId());
             Boolean eventsExist = session.migrateEdgeEvents().get();
             if (Boolean.TRUE.equals(eventsExist)) {
+                log.info("Migration still in progress for edge [{}]", edgeId.getId());
                 sessionNewEvents.put(edgeId, true);
                 scheduleEdgeEventsCheck(session);
             } else if (Boolean.FALSE.equals(eventsExist)) {
+                log.info("Migration completed for edge [{}]", edgeId.getId());
                 edgeEventsMigrationProcessed.put(edgeId, true);
-            } else {
-                scheduleEdgeEventsCheck(session);
             }
         }
     }
@@ -487,7 +503,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             } finally {
                 newEventLock.unlock();
             }
-            toRemove.destroy();
+            destroySession(toRemove);
             TenantId tenantId = toRemove.getEdge().getTenantId();
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
@@ -500,27 +516,57 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         edgeIdServiceIdCache.evict(edgeId);
     }
 
+    private void destroySession(EdgeGrpcSession session) {
+        try (session) {
+            for (int i = 0; i < DESTROY_SESSION_MAX_ATTEMPTS; i++) {
+                if (session.destroy()) {
+                    break;
+                } else {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ignored) {}
+                }
+            }
+        }
+    }
+
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {
         log.debug("[{}][{}] Updating long edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveAndNotify(
-                    tenantId, edgeId,
-                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new LongDataEntry(key, value))),
-                    new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .entry(new LongDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new LongDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         }
     }
 
     private void save(TenantId tenantId, EdgeId edgeId, String key, boolean value) {
         log.debug("[{}][{}] Updating boolean edge telemetry [{}] [{}]", tenantId, edgeId, key, value);
         if (persistToTelemetry) {
-            tsSubService.saveAndNotify(
-                    tenantId, edgeId,
-                    Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))),
-                    new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveTimeseries(TimeseriesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .entry(new BooleanDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         } else {
-            tsSubService.saveAttrAndNotify(tenantId, edgeId, AttributeScope.SERVER_SCOPE, key, value, new AttributeSaveCallback(tenantId, edgeId, key, value));
+            tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                    .tenantId(tenantId)
+                    .entityId(edgeId)
+                    .scope(AttributeScope.SERVER_SCOPE)
+                    .entry(new BooleanDataEntry(key, value))
+                    .callback(new AttributeSaveCallback(tenantId, edgeId, key, value))
+                    .build());
         }
     }
 
@@ -562,7 +608,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 edgeState.put(ACTIVITY_STATE, false);
                 edgeState.put(LAST_DISCONNECT_TIME, ts);
             }
-            ctx.getNotificationRuleProcessor().process(EdgeConnectionTrigger.builder()
+            ctx.getRuleProcessor().process(EdgeConnectionTrigger.builder()
                     .tenantId(tenantId)
                     .customerId(edge.getCustomerId())
                     .edgeId(edgeId)
@@ -575,10 +621,42 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 md.putValue("edgeName", edge.getName());
                 md.putValue("edgeType", edge.getType());
             }
-            TbMsg tbMsg = TbMsg.newMsg(msgType, edgeId, md, TbMsgDataType.JSON, data);
+            TbMsg tbMsg = TbMsg.newMsg()
+                    .type(msgType)
+                    .originator(edgeId)
+                    .copyMetaData(md)
+                    .dataType(TbMsgDataType.JSON)
+                    .data(data)
+                    .build();
             clusterService.pushMsgToRuleEngine(tenantId, edgeId, tbMsg, null);
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push {}", tenantId, edge.getId(), msgType, e);
+        }
+    }
+
+    private void destroyKafkaSessionIfDisconnectedAndConsumerActive() {
+        try {
+            List<EdgeId> toRemove = new ArrayList<>();
+            for (EdgeGrpcSession session : sessions.values()) {
+                if (session instanceof KafkaEdgeGrpcSession kafkaSession &&
+                    !kafkaSession.isConnected() &&
+                    kafkaSession.getConsumer() != null &&
+                    kafkaSession.getConsumer().getConsumer() != null &&
+                    !kafkaSession.getConsumer().getConsumer().isStopped()) {
+                    toRemove.add(kafkaSession.getEdge().getId());
+                }
+            }
+            for (EdgeId edgeId : toRemove) {
+                log.info("[{}] Destroying session for edge because edge is not connected", edgeId);
+                EdgeGrpcSession removed = sessions.get(edgeId);
+                if (removed instanceof KafkaEdgeGrpcSession kafkaSession) {
+                    if (kafkaSession.destroy()) {
+                        sessions.remove(edgeId);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Failed to cleanup kafka sessions", e);
         }
     }
 

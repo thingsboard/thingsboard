@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-material-icons-panel">
-  <div class="tb-material-icons-title" translate>icon.icons</div>
+  <div *ngIf="showTitle" class="tb-material-icons-title" translate>icon.icons</div>
   <mat-form-field class="tb-material-icons-search tb-inline-field" appearance="outline" subscriptSizing="dynamic">
     <mat-icon matPrefix>search</mat-icon>
     <input matInput [formControl]="searchIconControl" placeholder="{{ 'icon.search-icon' | translate }}"/>

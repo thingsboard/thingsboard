@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,8 @@ import { BehaviorSubject, merge, Observable, of, ReplaySubject, Subject, throwEr
 import { catchError, map, tap } from 'rxjs/operators';
 import {
   constructTableCssString,
+  isValidPageStepCount,
+  isValidPageStepIncrement,
   noDataMessage,
   TableCellButtonActionDescriptor,
   TableWidgetSettings
@@ -43,7 +45,7 @@ import {
 import cssjs from '@core/css/css';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { hashCode, isDefined, isNumber, parseHttpErrorMessage } from '@core/utils';
+import { hashCode, isDefined, isDefinedAndNotNull, parseHttpErrorMessage } from '@core/utils';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import {
@@ -114,7 +116,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
   private subscription: IWidgetSubscription;
   private enableFilterAction = true;
   private allowSendRequest = true;
-  private defaultPageSize = 10;
+  private defaultPageSize;
   private defaultSortOrder = '-createdTime';
   private rpcStatusFilter: RpcStatus;
   private displayDetails = true;
@@ -130,7 +132,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
   public enableStickyHeader = true;
   public enableStickyAction = true;
   public pageLink: PageLink;
-  public pageSizeOptions;
+  public pageSizeOptions = [];
   public actionCellButtonAction: PersistentTableWidgetActionDescriptor[] = [];
   public displayedColumns: string[];
   public hidePageSize = false;
@@ -207,10 +209,26 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
     this.displayedColumns = [...this.displayTableColumns];
 
     const pageSize = this.settings.defaultPageSize;
-    if (isDefined(pageSize) && isNumber(pageSize) && pageSize > 0) {
+    let pageStepIncrement = isValidPageStepIncrement(this.settings.pageStepIncrement) ? this.settings.pageStepIncrement : null;
+    let pageStepCount = isValidPageStepCount(this.settings.pageStepCount) ? this.settings.pageStepCount : null;
+
+    if (Number.isInteger(pageSize) && pageSize > 0) {
       this.defaultPageSize = pageSize;
     }
-    this.pageSizeOptions = [this.defaultPageSize, this.defaultPageSize * 2, this.defaultPageSize * 3];
+
+    if (!this.defaultPageSize) {
+      this.defaultPageSize = pageStepIncrement ?? 10;
+    }
+
+    if (!isDefinedAndNotNull(pageStepIncrement) || !isDefinedAndNotNull(pageStepCount)) {
+      pageStepIncrement = this.defaultPageSize;
+      pageStepCount = 3;
+    }
+
+    for (let i = 1; i <= pageStepCount; i++) {
+      this.pageSizeOptions.push(pageStepIncrement * i);
+    }
+
     if (this.settings.defaultSortOrder && this.settings.defaultSortOrder.length) {
       this.defaultSortOrder = this.settings.defaultSortOrder;
     }
@@ -402,7 +420,7 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
     if ($event) {
       $event.stopPropagation();
     }
-    const target = $event.target || $event.srcElement || $event.currentTarget;
+    const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();
     config.backdropClass = 'cdk-overlay-transparent-backdrop';
     config.hasBackdrop = true;

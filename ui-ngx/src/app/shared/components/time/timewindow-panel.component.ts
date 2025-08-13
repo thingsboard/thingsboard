@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  Inject,
+  InjectionToken,
+  OnDestroy,
+  OnInit,
+  Optional,
+  Output,
+  ViewContainerRef
+} from '@angular/core';
 import {
   AggregationType,
   currentHistoryTimewindow,
@@ -57,6 +67,7 @@ export interface TimewindowPanelData {
   aggregation: boolean;
   timezone: boolean;
   isEdit: boolean;
+  panelMode: boolean;
 }
 
 export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelData');
@@ -67,6 +78,9 @@ export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelDat
   styleUrls: ['./timewindow-panel.component.scss', './timewindow-form.scss']
 })
 export class TimewindowPanelComponent extends PageComponent implements OnInit, OnDestroy {
+
+  @Output()
+  changeTimewindow = new EventEmitter<Timewindow>();
 
   historyOnly = false;
 
@@ -79,6 +93,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   timezone = false;
 
   isEdit = false;
+
+  panelMode = true;
 
   timewindow: Timewindow;
 
@@ -125,7 +141,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   private destroy$ = new Subject<void>();
 
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
-              public overlayRef: OverlayRef,
+              @Optional() public overlayRef: OverlayRef,
               protected store: Store<AppState>,
               public fb: UntypedFormBuilder,
               private timeService: TimeService,
@@ -140,6 +156,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     this.aggregation = data.aggregation;
     this.timezone = data.timezone;
     this.isEdit = data.isEdit;
+    this.panelMode = data.panelMode;
 
     this.updateTimewindowAdvancedParams();
 
@@ -277,7 +294,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
           disabled: hideAggInterval
         }],
         fixedTimewindow: [{
-          value: isDefined(history?.fixedTimewindow) ? history.fixedTimewindow : null,
+          value: isDefined(history?.fixedTimewindow) && this.timewindow.selectedTab === TimewindowType.HISTORY
+            && history.historyType === HistoryWindowType.FIXED ? history.fixedTimewindow : null,
           disabled: history.hideInterval || history.hideFixedInterval
         }],
         quickInterval: [{
@@ -308,9 +326,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((timewindowMs: number) => {
         if (this.realtimeAdvancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           this.realtimeAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             this.realtimeAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('realtime.quickInterval').valueChanges.pipe(
@@ -318,9 +336,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((quickInterval: number) => {
         if (this.realtimeAdvancedParams?.quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           this.realtimeAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('realtime.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(
             this.realtimeAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.timewindowMs').valueChanges.pipe(
@@ -328,9 +346,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((timewindowMs: number) => {
         if (this.historyAdvancedParams?.lastAggIntervalsConfig?.hasOwnProperty(timewindowMs) &&
           this.historyAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             this.historyAdvancedParams.lastAggIntervalsConfig[timewindowMs].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
       this.timewindowForm.get('history.quickInterval').valueChanges.pipe(
@@ -338,9 +356,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       ).subscribe((quickInterval: number) => {
         if (this.historyAdvancedParams?.quickAggIntervalsConfig?.hasOwnProperty(quickInterval) &&
           this.historyAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval) {
-          this.timewindowForm.get('history.interval').patchValue(
+          setTimeout(() => this.timewindowForm.get('history.interval').patchValue(
             this.historyAdvancedParams.quickAggIntervalsConfig[quickInterval].defaultAggInterval, {emitEvent: false}
-          );
+          ));
         }
       });
 
@@ -356,6 +374,15 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     ).subscribe((selectedTab: TimewindowType) => {
       this.onTimewindowTypeChange(selectedTab);
     });
+
+    if (!this.panelMode) {
+      this.timewindowForm.valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(() => {
+        this.prepareTimewindowConfig();
+        this.changeTimewindow.emit(this.timewindow);
+      });
+    }
   }
 
   ngOnDestroy() {
@@ -381,7 +408,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   update() {
     this.prepareTimewindowConfig();
     this.result = this.timewindow;
-    this.overlayRef.dispose();
+    this.overlayRef?.dispose();
   }
 
   private prepareTimewindowConfig() {
@@ -413,7 +440,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private updateTimewindowForm() {
-    this.timewindowForm.patchValue(this.timewindow);
+    this.timewindowForm.patchValue(this.timewindow, {emitEvent: false});
+    this.updateValidators(this.timewindowForm.get('aggregation.type').value);
 
     if (this.timewindow.realtime.hideInterval) {
       this.timewindowForm.get('realtime.realtimeType').disable({emitEvent: false});
@@ -482,7 +510,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   cancel() {
-    this.overlayRef.dispose();
+    this.overlayRef?.dispose();
   }
 
   get minRealtimeAggInterval() {

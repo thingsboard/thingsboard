@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { Component, DestroyRef, EventEmitter, inject, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { DefaultMobilePage, defaultMobilePageMap, hideDefaultMenuItems } from '@shared/models/mobile-app.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
@@ -43,7 +43,7 @@ export class DefaultMobilePagePanelComponent implements OnInit {
   mobilePageFormGroup = this.fb.group({
     visible: [true],
     icon: [''],
-    label: [''],
+    label: ['', [Validators.pattern(/\S/), Validators.maxLength(255)]],
   });
 
   isCleanupEnabled = false;

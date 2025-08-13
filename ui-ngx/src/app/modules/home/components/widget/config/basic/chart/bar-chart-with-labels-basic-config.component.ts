@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import {
   BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-bar-chart-with-labels-basic-config',
@@ -365,7 +366,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
   }
 
   private _tooltipValuePreviewFn(): string {
-    const units: string = this.barChartWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.barChartWidgetConfigForm.get('units').value);
     const decimals: number = this.barChartWidgetConfigForm.get('decimals').value;
     return formatValue(22, decimals, units, false);
   }

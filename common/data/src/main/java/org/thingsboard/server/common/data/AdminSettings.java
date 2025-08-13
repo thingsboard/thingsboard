@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,8 +32,8 @@ public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenan
     @NoXss
     @Length(fieldName = "key")
     private String key;
-    private transient JsonNode jsonValue;
-    
+    private JsonNode jsonValue;
+
     public AdminSettings() {
         super();
     }
@@ -41,7 +41,7 @@ public class AdminSettings extends BaseData<AdminSettingsId> implements HasTenan
     public AdminSettings(AdminSettingsId id) {
         super(id);
     }
-    
+
     public AdminSettings(AdminSettings adminSettings) {
         super(adminSettings);
         this.tenantId = adminSettings.getTenantId();

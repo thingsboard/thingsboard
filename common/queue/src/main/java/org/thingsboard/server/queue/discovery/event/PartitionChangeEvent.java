@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.io.Serial;
+import java.util.Collection;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -36,12 +37,17 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     @Getter
     private final ServiceType serviceType;
     @Getter
-    private final Map<QueueKey, Set<TopicPartitionInfo>> partitionsMap;
+    private final Map<QueueKey, Set<TopicPartitionInfo>> newPartitions;
+    @Getter
+    private final Map<QueueKey, Set<TopicPartitionInfo>> oldPartitions;
 
-    public PartitionChangeEvent(Object source, ServiceType serviceType, Map<QueueKey, Set<TopicPartitionInfo>> partitionsMap) {
+    public PartitionChangeEvent(Object source, ServiceType serviceType,
+                                Map<QueueKey, Set<TopicPartitionInfo>> newPartitions,
+                                Map<QueueKey, Set<TopicPartitionInfo>> oldPartitions) {
         super(source);
         this.serviceType = serviceType;
-        this.partitionsMap = partitionsMap;
+        this.newPartitions = newPartitions;
+        this.oldPartitions = oldPartitions;
     }
 
     public Set<TopicPartitionInfo> getCorePartitions() {
@@ -52,11 +58,20 @@ public class PartitionChangeEvent extends TbApplicationEvent {
         return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME);
     }
 
-    private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {
-        return partitionsMap.entrySet()
+    public Set<TopicPartitionInfo> getPartitions() {
+        return newPartitions.values().stream().flatMap(Collection::stream).collect(Collectors.toSet());
+    }
+
+    public Set<TopicPartitionInfo> getCfPartitions() {
+        return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME);
+    }
+
+    public Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {
+        return newPartitions.entrySet()
                 .stream()
                 .filter(entry -> serviceType.equals(entry.getKey().getType()) && queueName.equals(entry.getKey().getQueueName()))
                 .flatMap(entry -> entry.getValue().stream())
                 .collect(Collectors.toSet());
     }
+
 }

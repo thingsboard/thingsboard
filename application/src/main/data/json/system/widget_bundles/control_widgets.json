@@ -12,6 +12,7 @@
     "command_button",
     "toggle_button",
     "two_segment_button",
+    "value_stepper",
     "power_button",
     "slider",
     "control_widgets.switch_control",

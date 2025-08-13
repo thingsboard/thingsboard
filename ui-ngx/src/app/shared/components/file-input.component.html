@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -51,9 +51,9 @@
     </div>
   </ng-container>
   <div class="tb-file-info-container">
-    <tb-error *ngIf="!fileName && required && requiredAsError" class="tb-file-name" error="{{ noFileText | translate }}"></tb-error>
-    <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" translate>{{ noFileText }}</div>
-    <div *ngIf="fileName" class="tb-file-name" [title]="fileName">{{ fileName }}</div>
-    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
+    <tb-error *ngIf="!fileName && required && requiredAsError" class="font-medium" error="{{ noFileText | translate }}"></tb-error>
+    <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" tbTruncateWithTooltip translate>{{ noFileText }}</div>
+    <div *ngIf="fileName" class="tb-file-name" tbTruncateWithTooltip>{{ fileName }}</div>
+    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" tbTruncateWithTooltip translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
   </div>
 </div>
