@@ -174,8 +174,6 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxArgumentsPerCF = 10;
     @Schema(example = "3600")
     private int minAllowedScheduledUpdateIntervalInSecForCF = 3600;
-    @Schema(example = "86400")
-    private int maxAllowedScheduledUpdateIntervalInSecForCF = 86400;
     @Builder.Default
     @Min(value = 1, message = "must be at least 1")
     @Schema(example = "1000")

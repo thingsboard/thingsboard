@@ -97,10 +97,10 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         if (!configuration.isScheduledUpdateEnabled()) {
             return;
         }
-        var defaultProfileConfiguration = tbTenantProfileCache.get(calculatedField.getTenantId()).getDefaultProfileConfiguration();
-        int min = defaultProfileConfiguration.getMinAllowedScheduledUpdateIntervalInSecForCF();
-        int max = defaultProfileConfiguration.getMaxAllowedScheduledUpdateIntervalInSecForCF();
-        configuration.setScheduledUpdateIntervalSec(Math.max(min, Math.min(configuration.getScheduledUpdateIntervalSec(), max)));
+        int tenantProfileMinAllowedValue = tbTenantProfileCache.get(calculatedField.getTenantId())
+                .getDefaultProfileConfiguration()
+                .getMinAllowedScheduledUpdateIntervalInSecForCF();
+        configuration.setScheduledUpdateIntervalSec(Math.max(configuration.getScheduledUpdateIntervalSec(), tenantProfileMinAllowedValue));
     }
 
     @Override
