@@ -142,7 +142,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   entityChanged = new EventEmitter<BaseData<EntityId>>();
 
   @Output()
-  createNew = new EventEmitter<void>();
+  createNew = new EventEmitter<string>();
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
@@ -451,9 +451,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     return entityType;
   }
 
-  createNewEntity($event: Event) {
+  createNewEntity($event: Event, searchText?: string) {
     $event.stopPropagation();
-    this.createNew.emit();
+    this.createNew.emit(searchText);
   }
 
   get showEntityLink(): boolean {
