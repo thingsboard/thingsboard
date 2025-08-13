@@ -18,6 +18,8 @@ package org.thingsboard.server.common.data.cf.configuration;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -27,8 +29,10 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -54,141 +58,116 @@ public class GeofencingCalculatedFieldConfigurationTest {
                 .hasMessage("Geofencing calculated field arguments must be specified!");
     }
 
-    @Test
-    void validateShouldThrowWhenLatitudeArgIsMissing() {
+    @ParameterizedTest
+    @MethodSource("missingCoordinateArgs")
+    void validateShouldThrowWhenCoordinateArgIsMissing(String missingKey, String presentKey) {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         var arguments = new HashMap<String, Argument>();
-        arguments.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, null);
-        arguments.put(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST));
+        arguments.put(missingKey, null);
+        arguments.put(presentKey, toArgument(presentKey, ArgumentType.TS_LATEST));
         cfg.setArguments(arguments);
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Missing required coordinates argument: " + ENTITY_ID_LATITUDE_ARGUMENT_KEY + "!");
+                .hasMessage("Missing required coordinates argument: " + missingKey + "!");
     }
 
-    @Test
-    void validateShouldThrowWhenLongitudeArgIsMissing() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var arguments = new HashMap<String, Argument>();
-        arguments.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST));
-        arguments.put(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, null);
-        cfg.setArguments(arguments);
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Missing required coordinates argument: " + ENTITY_ID_LONGITUDE_ARGUMENT_KEY + "!");
-    }
-
-    @Test
-    void validateShouldThrowWhenLatitudeReferenceKeyIsNull() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setArguments(Map.of(
-                ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument(null),
-                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST))
+    private static Stream<Arguments> missingCoordinateArgs() {
+        return Stream.of(
+                Arguments.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY),
+                Arguments.of(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, ENTITY_ID_LATITUDE_ARGUMENT_KEY)
         );
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Missing or invalid reference entity key for argument: " + ENTITY_ID_LATITUDE_ARGUMENT_KEY);
     }
 
-    @Test
-    void validateShouldThrowWhenLongitudeReferenceKeyIsNull() {
+    @ParameterizedTest
+    @MethodSource("nullRefKeyCoordinateArgs")
+    void validateShouldThrowWhenReferenceKeyIsNullOrTypeNull(
+            String brokenKey, Argument brokenArg, String okKey) {
+
         var cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setArguments(Map.of(
-                ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST),
-                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument(null))
-        );
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Missing or invalid reference entity key for argument: " + ENTITY_ID_LONGITUDE_ARGUMENT_KEY);
-    }
-
-    @Test
-    void validateShouldThrowWhenLatitudeReferenceKeyTypeIsNull() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setArguments(Map.of(
-                ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument(new ReferencedEntityKey("latitude", null, null)),
-                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST))
-        );
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Missing or invalid reference entity key for argument: " + ENTITY_ID_LATITUDE_ARGUMENT_KEY);
-    }
-
-    @Test
-    void validateShouldThrowWhenReferenceKeyTypeIsNull() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setArguments(Map.of(
-                ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST),
-                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument(new ReferencedEntityKey("longitude", null, null)))
-        );
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Missing or invalid reference entity key for argument: " + ENTITY_ID_LONGITUDE_ARGUMENT_KEY);
-    }
-
-    @Test
-    void validateShouldThrowWhenLatitudeArgHasWrongArgumentType() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setArguments(Map.of(
-                ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.ATTRIBUTE),
-                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST)
+                brokenKey, brokenArg,
+                okKey, toArgument(okKey, ArgumentType.TS_LATEST)
         ));
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Argument '" + ENTITY_ID_LATITUDE_ARGUMENT_KEY + "' must be of type TS_LATEST!");
+                .hasMessage("Missing or invalid reference entity key for argument: " + brokenKey);
     }
 
-    @Test
-    void validateShouldThrowWhenLongitudeArgHasWrongArgumentType() {
+    private static Stream<Arguments> nullRefKeyCoordinateArgs() {
+        return Stream.of(
+                // null ref key on latitude
+                Arguments.of(
+                        ENTITY_ID_LATITUDE_ARGUMENT_KEY,
+                        toArgument(null),
+                        ENTITY_ID_LONGITUDE_ARGUMENT_KEY
+                ),
+                // null ref key on longitude
+                Arguments.of(
+                        ENTITY_ID_LONGITUDE_ARGUMENT_KEY,
+                        toArgument(null),
+                        ENTITY_ID_LATITUDE_ARGUMENT_KEY
+                ),
+                // null type on latitude
+                Arguments.of(
+                        ENTITY_ID_LATITUDE_ARGUMENT_KEY,
+                        toArgument(new ReferencedEntityKey("latitude", null, null)),
+                        ENTITY_ID_LONGITUDE_ARGUMENT_KEY
+                ),
+                // null type on longitude
+                Arguments.of(
+                        ENTITY_ID_LONGITUDE_ARGUMENT_KEY,
+                        toArgument(new ReferencedEntityKey("longitude", null, null)),
+                        ENTITY_ID_LATITUDE_ARGUMENT_KEY
+                )
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("wrongTypeCoordinateArgs")
+    void validateShouldThrowWhenCoordinateHasWrongType(String wrongKey, String okKey) {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setArguments(Map.of(
-                ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST),
-                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.ATTRIBUTE)
+                wrongKey, toArgument(wrongKey, ArgumentType.ATTRIBUTE),
+                okKey, toArgument(okKey, ArgumentType.TS_LATEST)
         ));
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Argument '" + ENTITY_ID_LONGITUDE_ARGUMENT_KEY + "' must be of type TS_LATEST!");
+                .hasMessage("Argument '" + wrongKey + "' must be of type TS_LATEST!");
     }
 
-    @Test
-    void validateShouldThrowWhenLatitudeArgHasDynamicSource() {
+    private static Stream<Arguments> wrongTypeCoordinateArgs() {
+        return Stream.of(
+                Arguments.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY),
+                Arguments.of(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, ENTITY_ID_LATITUDE_ARGUMENT_KEY)
+        );
+    }
+
+    @ParameterizedTest
+    @MethodSource("dynamicCoordinateArgs")
+    void validateShouldThrowWhenCoordinateHasDynamicSource(String dynamicKey, String okKey) {
         var cfg = new GeofencingCalculatedFieldConfiguration();
 
-        Argument latitudeArg = toArgument("latitude", ArgumentType.TS_LATEST);
-        var refDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        latitudeArg.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration);
+        var dynamicArg = toArgument(dynamicKey, ArgumentType.TS_LATEST);
+        dynamicArg.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
 
-        Argument longitudeArg = toArgument("longitude", ArgumentType.TS_LATEST);
-
-        cfg.setArguments(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArg, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArg));
+        cfg.setArguments(Map.of(
+                dynamicKey, dynamicArg,
+                okKey, toArgument(okKey, ArgumentType.TS_LATEST)
+        ));
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Dynamic source is not allowed for '" + ENTITY_ID_LATITUDE_ARGUMENT_KEY + "' argument!");
+                .hasMessage("Dynamic source is not allowed for '" + dynamicKey + "' argument!");
     }
 
-    @Test
-    void validateShouldThrowWhenLongitudeArgHasDynamicSource() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-
-        Argument latitudeArg = toArgument("latitude", ArgumentType.TS_LATEST);
-        Argument longitudeArg = toArgument("longitude", ArgumentType.TS_LATEST);
-        var refDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        longitudeArg.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration);
-
-        cfg.setArguments(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArg, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArg));
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Dynamic source is not allowed for '" + ENTITY_ID_LONGITUDE_ARGUMENT_KEY + "' argument!");
+    private static Stream<Arguments> dynamicCoordinateArgs() {
+        return Stream.of(
+                Arguments.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY),
+                Arguments.of(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, ENTITY_ID_LATITUDE_ARGUMENT_KEY)
+        );
     }
 
     @Test
@@ -457,13 +436,34 @@ public class GeofencingCalculatedFieldConfigurationTest {
         assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
     }
 
+    @Test
+    void validateShouldPassOnMinimalValidConfig() {
+        var cfg = new GeofencingCalculatedFieldConfiguration();
+        var args = new HashMap<String, Argument>();
+        args.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST));
+        args.put(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST));
+        Argument allowed = toArgument("allowed", ArgumentType.ATTRIBUTE);
+        var refDynamicSourceConfigurationMock = mock(RelationQueryDynamicSourceConfiguration.class);
+        allowed.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
+        args.put("allowedZones", allowed);
+        cfg.setArguments(args);
+
+        var zc = new ZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
+        cfg.setZoneGroupConfigurations(Map.of("allowedZones", zc));
+
+        cfg.setCreateRelationsWithMatchedZones(true);
+        cfg.setZoneRelationType("Contains");
+        cfg.setZoneRelationDirection(EntitySearchDirection.FROM);
+
+        assertThatCode(cfg::validate).doesNotThrowAnyException();
+    }
 
     private Argument toArgument(String key, ArgumentType type) {
         var referencedEntityKey = new ReferencedEntityKey(key, type, null);
         return toArgument(referencedEntityKey);
     }
 
-    private Argument toArgument(ReferencedEntityKey referencedEntityKey) {
+    private static Argument toArgument(ReferencedEntityKey referencedEntityKey) {
         Argument argument = new Argument();
         argument.setRefEntityKey(referencedEntityKey);
         return argument;
