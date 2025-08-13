@@ -45,6 +45,9 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
 
     @Override
     public void validate() {
+        if (maxLevel < 1) {
+            throw new IllegalArgumentException("Relation query dynamic source configuration max relation level can't be less than 1!");
+        }
         if (maxLevel > 2) {
             throw new IllegalArgumentException("Relation query dynamic source configuration max relation level can't be greater than 2!");
         }

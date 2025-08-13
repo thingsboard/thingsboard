@@ -55,6 +55,18 @@ public class RelationQueryDynamicSourceConfigurationTest {
     }
 
     @Test
+    void validateShouldThrowWhenMaxLevelLessThanOne() {
+        var cfg = new RelationQueryDynamicSourceConfiguration();
+        cfg.setMaxLevel(0);
+        cfg.setDirection(EntitySearchDirection.FROM);
+        cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
+
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Relation query dynamic source configuration max relation level can't be less than 1!");
+    }
+
+    @Test
     void validateShouldThrowWhenMaxLevelGreaterThanTwo() {
         var cfg = new RelationQueryDynamicSourceConfiguration();
         cfg.setMaxLevel(3);
