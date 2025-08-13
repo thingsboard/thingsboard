@@ -24,6 +24,8 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -618,26 +620,28 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
-    public void testGeofencingCalculatedField_SingleZonePerGroup() throws Exception {
+    public void testGeofencingCalculatedField_withoutRelationsCreationAndDynamicRefresh() throws Exception {
         // --- Arrange entities ---
         Device device = createDevice("GF Device", "sn-geo-1");
 
         // Allowed zone polygon (square)
         String allowedPolygon = """
-        {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
-        """;
+                {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
+                """;
         // Restricted zone polygon (square)
         String restrictedPolygon = """
-        {"type":"POLYGON","polygonsDefinition":"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]"}
-        """;
+                {"type":"POLYGON","polygonsDefinition":"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]"}
+                """;
 
         Asset allowedZoneAsset = createAsset("Allowed Zone", null);
         doPost("/api/plugins/telemetry/ASSET/" + allowedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygon + "}")).andExpect(status().isOk());;
+                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygon + "}")).andExpect(status().isOk());
+        ;
 
         Asset restrictedZoneAsset = createAsset("Restricted Zone", null);
         doPost("/api/plugins/telemetry/ASSET/" + restrictedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
-                JacksonUtil.toJsonNode("{\"zone\":" + restrictedPolygon + "}")).andExpect(status().isOk());;
+                JacksonUtil.toJsonNode("{\"zone\":" + restrictedPolygon + "}")).andExpect(status().isOk());
+        ;
 
         // Relations from device to zones
         EntityRelation deviceToAllowedZoneRelation = new EntityRelation();
@@ -745,6 +749,153 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     Map<String, String> m = kv(attrs);
                     assertThat(m).containsEntry("allowedZoneEvent", "LEFT")
                             .containsEntry("restrictedZoneEvent", "ENTERED");
+                });
+    }
+
+    @Test
+    public void testGeofencingCalculatedField_DynamicRefresh_RebindsZoneArguments() throws Exception {
+        // --- Update min allowed scheduled update intervals for CFs ---
+        loginSysAdmin();
+        EntityInfo tenantProfileEntityInfo = doGet("/api/tenantProfileInfo/default", EntityInfo.class);
+        assertThat(tenantProfileEntityInfo).isNotNull();
+        TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + tenantProfileEntityInfo.getId().getId().toString(), TenantProfile.class);
+        assertThat(foundTenantProfile).isNotNull();
+        assertThat(foundTenantProfile.getDefaultProfileConfiguration()).isNotNull();
+        foundTenantProfile.getDefaultProfileConfiguration().setMinAllowedScheduledUpdateIntervalInSecForCF(TIMEOUT / 10);
+        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", foundTenantProfile, TenantProfile.class);
+        assertThat(savedTenantProfile).isNotNull();
+        assertThat(savedTenantProfile.getDefaultProfileConfiguration().getMinAllowedScheduledUpdateIntervalInSecForCF()).isEqualTo(TIMEOUT / 10);
+        loginTenantAdmin();
+
+        // --- Arrange entities ---
+        Device device = createDevice("GF Device dyn", "sn-geo-dyn-1");
+
+        // Allowed Zone A: covers initial point (ENTERED)
+        String allowedPolygonA = """
+                {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
+                """;
+
+        Asset allowedZoneA = createAsset("Allowed Zone A", null);
+        doPost("/api/plugins/telemetry/ASSET/" + allowedZoneA.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygonA + "}")).andExpect(status().isOk());
+
+        // Relation from device to Allowed Zone A
+        EntityRelation relAllowedA = new EntityRelation();
+        relAllowedA.setFrom(device.getId());
+        relAllowedA.setTo(allowedZoneA.getId());
+        relAllowedA.setType("AllowedZone");
+        doPost("/api/relation", relAllowedA).andExpect(status().isOk());
+
+        // Initial device coordinates: INSIDE Zone A
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"latitude\":50.4730,\"longitude\":30.5050}")).andExpect(status().isOk());
+
+        // --- Build CF: GEOFENCING with dynamic 'allowedZones' and short scheduled refresh ---
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.GEOFENCING);
+        cf.setName("Geofencing CF (dynamic refresh)");
+        cf.setDebugSettings(DebugSettings.off());
+
+        GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
+
+        // Coordinates (TS_LATEST)
+        Argument lat = new Argument();
+        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
+        Argument lon = new Argument();
+        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+
+        // Dynamic group 'allowedZones' resolved by relations (FROM device -> assets of type AllowedZone)
+        Argument allowedZones = new Argument();
+        var dyn = new RelationQueryDynamicSourceConfiguration();
+        dyn.setDirection(EntitySearchDirection.FROM);
+        dyn.setRelationType("AllowedZone");
+        dyn.setMaxLevel(1);
+        dyn.setFetchLastLevelOnly(true);
+        allowedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        allowedZones.setRefDynamicSourceConfiguration(dyn);
+
+        cfg.setArguments(Map.of(
+                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
+                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
+                "allowedZones", allowedZones
+        ));
+
+        // Report all events for the group
+        List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
+        GeofencingZoneGroupConfiguration allowedCfg = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
+        cfg.setZoneGroupConfigurations(Map.of("allowedZones", allowedCfg));
+
+        // Server attributes output
+        Output out = new Output();
+        out.setType(OutputType.ATTRIBUTES);
+        out.setScope(AttributeScope.SERVER_SCOPE);
+        cfg.setOutput(out);
+
+        // Enable scheduled refresh with a 6-second interval
+        cfg.setScheduledUpdateIntervalSec(6);
+
+        cf.setConfiguration(cfg);
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", cf, CalculatedField.class);
+        assertThat(savedCalculatedField).isNotNull();
+        assertThat(savedCalculatedField.getConfiguration().isScheduledUpdateEnabled()).isTrue();
+
+        // --- Assert initial evaluation (ENTERED) ---
+        await().alias("initial geofencing evaluation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZoneEvent", "ENTERED");
+                });
+
+        // --- Move device OUTSIDE Zone A (expect LEFT) ---
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}")).andExpect(status().isOk());
+
+        await().alias("outside zone A (LEFT)")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZoneEvent", "LEFT");
+                });
+
+        // --- Create Allowed Zone B covering the CURRENT location ---
+        String allowedPolygonB = """
+                {"type":"POLYGON","polygonsDefinition":"[[50.475500, 30.510500], [50.475500, 30.511500], [50.476500, 30.511500], [50.476500, 30.510500]]"}
+                """;
+
+        Asset allowedZoneB = createAsset("Allowed Zone B", null);
+        doPost("/api/plugins/telemetry/ASSET/" + allowedZoneB.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"zone\":" + allowedPolygonB + "}")).andExpect(status().isOk());
+
+        // Add a new relation
+        EntityRelation relAllowedB = new EntityRelation();
+        relAllowedB.setFrom(device.getId());
+        relAllowedB.setTo(allowedZoneB.getId());
+        relAllowedB.setType("AllowedZone");
+        doPost("/api/relation", relAllowedB).andExpect(status().isOk());
+
+        awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsDirty(device.getId(), savedCalculatedField.getId());
+
+        // --- Same coordinates as before, but now we expect ENTERED since a new zone is registered ---
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}")).andExpect(status().isOk());
+
+        // --- Assert dynamic refresh picks up new relation and flips event back to ENTERED on the next telemetry update ---
+        await().alias("dynamic refresh rebinds allowedZones")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(1, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZoneEvent", "ENTERED");
                 });
     }
 
