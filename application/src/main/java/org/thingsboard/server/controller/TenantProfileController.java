@@ -187,7 +187,16 @@ public class TenantProfileController extends BaseController {
             oldProfile = checkTenantProfileId(tenantProfile.getId(), Operation.WRITE);
         }
 
-        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile);
+        var user = getCurrentUser();
+        var actionType = tenantProfile.getId() == null ? org.thingsboard.server.common.data.audit.ActionType.ADDED : org.thingsboard.server.common.data.audit.ActionType.UPDATED;
+        try {
+            TenantProfile saved = tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile);
+            logEntityAction(user, org.thingsboard.server.common.data.EntityType.TENANT_PROFILE, saved, actionType);
+            return saved;
+        } catch (Exception e) {
+            logEntityAction(user, org.thingsboard.server.common.data.EntityType.TENANT_PROFILE, tenantProfile, null, actionType, e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Delete Tenant Profile (deleteTenantProfile)",
@@ -200,7 +209,14 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile profile = checkTenantProfileId(tenantProfileId, Operation.DELETE);
-        tbTenantProfileService.delete(getTenantId(), profile);
+        var user = getCurrentUser();
+        try {
+            tbTenantProfileService.delete(getTenantId(), profile);
+            logEntityAction(user, org.thingsboard.server.common.data.EntityType.TENANT_PROFILE, profile, org.thingsboard.server.common.data.audit.ActionType.DELETED);
+        } catch (Exception e) {
+            logEntityAction(user, org.thingsboard.server.common.data.EntityType.TENANT_PROFILE, profile, profile, org.thingsboard.server.common.data.audit.ActionType.DELETED, e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Make tenant profile default (setDefaultTenantProfile)",
@@ -214,8 +230,15 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile tenantProfile = checkTenantProfileId(tenantProfileId, Operation.WRITE);
-        tenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfileId);
-        return tenantProfile;
+        var user = getCurrentUser();
+        try {
+            tenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfileId);
+            logEntityAction(user, org.thingsboard.server.common.data.EntityType.TENANT_PROFILE, tenantProfile, org.thingsboard.server.common.data.audit.ActionType.UPDATED);
+            return tenantProfile;
+        } catch (Exception e) {
+            logEntityAction(user, org.thingsboard.server.common.data.EntityType.TENANT_PROFILE, tenantProfile, tenantProfile, org.thingsboard.server.common.data.audit.ActionType.UPDATED, e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Get Tenant Profiles (getTenantProfiles)", notes = "Returns a page of tenant profiles registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
