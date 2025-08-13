@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
@@ -50,7 +51,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         if (direction == null) {
             throw new IllegalArgumentException("Relation query dynamic source configuration direction must be specified!");
         }
-        if (relationType == null) {
+        if (StringUtils.isBlank(relationType)) {
             throw new IllegalArgumentException("Relation query dynamic source configuration relation type must be specified!");
         }
     }
