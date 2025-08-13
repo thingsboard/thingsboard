@@ -4,6 +4,7 @@
   "authorizationUri": "https://github.com/login/oauth/authorize",
   "scope": ["read:user","user:email"],
   "jwkSetUri": null,
+  "endSessionEndpoint": null,
   "userInfoUri": "https://api.github.com/user",
   "clientAuthenticationMethod": "BASIC",
   "userNameAttributeName": "login",

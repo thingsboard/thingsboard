@@ -5,6 +5,7 @@
   "authorizationUri": "https://accounts.google.com/o/oauth2/v2/auth",
   "scope": ["email","openid","profile"],
   "jwkSetUri": "https://www.googleapis.com/oauth2/v3/certs",
+  "endSessionEndpoint": null,
   "userInfoUri": "https://openidconnect.googleapis.com/v1/userinfo",
   "clientAuthenticationMethod": "BASIC",
   "userNameAttributeName": "email",

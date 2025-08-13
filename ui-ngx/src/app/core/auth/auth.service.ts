@@ -21,7 +21,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of, ReplaySubject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, tap } from 'rxjs/operators';
 
-import { LoginRequest, LoginResponse, PublicLoginRequest } from '@shared/models/login.models';
+import { LoginRequest, LoginResponse, LogoutResponse, PublicLoginRequest } from '@shared/models/login.models';
 import { Router, UrlTree } from '@angular/router';
 import { defaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from '../http/http-utils';
 import { UserService } from '../http/user.service';
@@ -85,11 +85,15 @@ export class AuthService {
     return AuthService.isTokenValid('jwt_token');
   }
 
-  private static clearTokenData() {
+  private static clearTokenData(oauth2TokensClear) {
     localStorage.removeItem('jwt_token');
     localStorage.removeItem('jwt_token_expiration');
     localStorage.removeItem('refresh_token');
     localStorage.removeItem('refresh_token_expiration');
+    if (oauth2TokensClear) {
+      localStorage.removeItem('oauth2_id_token');
+      localStorage.removeItem('oauth2_id_token_expiration');
+    }
   }
 
   public static getJwtToken() {
@@ -192,16 +196,26 @@ export class AuthService {
       this.redirectUrl = this.router.url;
     }
     if (!ignoreRequest) {
-      this.http.post('/api/auth/logout', null, defaultHttpOptions(true, true))
-        .subscribe(() => {
-            this.clearJwtToken();
+      this.http.post<LogoutResponse>('/api/auth/logout', null, defaultHttpOptions(true, true))
+        .subscribe((res) => {
+            if (res && (res.endSessionEndpoint != null && res.endSessionEndpoint != "")) {
+              const idToken = AuthService._storeGet('oauth2_id_token');
+              this.clearJwtToken(true);
+              let logoutUrl = res.endSessionEndpoint;
+              if (idToken) {
+                logoutUrl += `?id_token_hint=${idToken}&post_logout_redirect_uri=${encodeURIComponent(res.redirectUri || window.location.origin)}`;
+              }
+              window.location.href = logoutUrl;
+            } else {
+              this.clearJwtToken(true);
+            }
           },
           () => {
-            this.clearJwtToken();
+            this.clearJwtToken(true);
           }
         );
     } else {
-      this.clearJwtToken();
+      this.clearJwtToken(true);
     }
   }
 
@@ -299,6 +313,7 @@ export class AuthService {
       const publicId = this.utils.getQueryParam('publicId');
       const accessToken = this.utils.getQueryParam('accessToken');
       const refreshToken = this.utils.getQueryParam('refreshToken');
+      const oauth2IdToken = this.utils.getQueryParam('idToken');
       const username = this.utils.getQueryParam('username');
       const password = this.utils.getQueryParam('password');
       const loginError = this.utils.getQueryParam('loginError');
@@ -318,6 +333,9 @@ export class AuthService {
         if (refreshToken) {
           queryParamsToRemove.push('refreshToken');
         }
+        if( oauth2IdToken) {
+          queryParamsToRemove.push('idToken');
+        }
         this.utils.removeQueryParams(queryParamsToRemove);
         try {
           this.updateAndValidateToken(accessToken, 'jwt_token', false);
@@ -326,6 +344,9 @@ export class AuthService {
           } else {
             localStorage.removeItem('refresh_token');
             localStorage.removeItem('refresh_token_expiration');
+          }
+          if (oauth2IdToken) {
+            this.updateAndValidateToken(oauth2IdToken, 'oauth2_id_token', false);
           }
         } catch (e) {
           return throwError(e);
@@ -527,10 +548,10 @@ export class AuthService {
     return this.refreshTokenSubject !== null;
   }
 
-  public setUserFromJwtToken(jwtToken, refreshToken, notify): Observable<boolean> {
+  public setUserFromJwtToken(jwtToken, refreshToken, notify, oauth2TokensClear = false): Observable<boolean> {
     const authenticatedSubject = new ReplaySubject<boolean>();
     if (!jwtToken) {
-      AuthService.clearTokenData();
+      AuthService.clearTokenData(oauth2TokensClear);
       if (notify) {
         this.notifyUnauthenticated();
       }
@@ -613,8 +634,8 @@ export class AuthService {
     }
   }
 
-  private clearJwtToken() {
-    this.setUserFromJwtToken(null, null, true);
+  private clearJwtToken(oauth2TokensClear = false) {
+    this.setUserFromJwtToken(null, null, true, oauth2TokensClear);
   }
 
   private userForceFullscreen(authPayload: AuthPayload): boolean {

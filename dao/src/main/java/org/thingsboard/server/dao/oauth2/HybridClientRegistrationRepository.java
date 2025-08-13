@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Component
@@ -68,6 +69,9 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .jwkSetUri(oAuth2Client.getJwkSetUri())
                 .clientAuthenticationMethod(authMethod)
                 .redirectUri(defaultRedirectUriTemplate)
+                .providerConfigurationMetadata(
+                        Map.of("end_session_endpoint", oAuth2Client.getEndSessionEndpoint())
+                )
                 .build();
     }
 

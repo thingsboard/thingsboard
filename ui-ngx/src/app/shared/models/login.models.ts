@@ -30,3 +30,8 @@ export interface LoginResponse {
   refreshToken: string;
   scope?: Authority;
 }
+
+export interface LogoutResponse {
+  endSessionEndpoint?: string;
+  redirectUri?: string;
+}
