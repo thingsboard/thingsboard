@@ -434,7 +434,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() ->
                         doGetTypedWithTimePageLink(
-                                "/api/audit/sys/logs/entity/TENANT_PROFILE/" + tenantProfileId.getId() + "?",
+                                "/api/audit/logs/entity/TENANT_PROFILE/" + tenantProfileId.getId() + "?",
                                 new TypeReference<PageData<AuditLog>>() {
                                 },
                                 new TimePageLink(5))
