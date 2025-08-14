@@ -36,3 +36,7 @@
          label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
   <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
 </mat-tab>
+<mat-tab *ngIf="entity && !isEdit" #auditLogsTab="matTab"
+         label="{{ 'audit-log.audit-logs' | translate }}">
+  <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+</mat-tab>
