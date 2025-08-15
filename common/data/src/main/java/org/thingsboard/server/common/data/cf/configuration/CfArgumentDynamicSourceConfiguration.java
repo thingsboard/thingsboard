@@ -15,26 +15,25 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = RelationQueryDynamicSourceConfiguration.class, name = "RELATION_QUERY"),
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
+public interface CfArgumentDynamicSourceConfiguration {
 
-    @Nullable
-    private EntityId refEntityId;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
+    @JsonIgnore
+    CFArgumentDynamicSourceType getType();
 
-    private Integer limit;
-    private Long timeWindow;
-
-    public boolean hasDynamicSource() {
-        return refDynamicSourceConfiguration != null;
-    }
+    default void validate() {}
 
 }

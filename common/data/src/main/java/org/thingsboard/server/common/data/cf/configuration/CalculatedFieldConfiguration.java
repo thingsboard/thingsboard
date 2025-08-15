@@ -35,7 +35,8 @@ import java.util.Map;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT")
+        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT"),
+        @JsonSubTypes.Type(value = GeofencingCalculatedFieldConfiguration.class, name = "GEOFENCING")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {
@@ -57,5 +58,19 @@ public interface CalculatedFieldConfiguration {
     List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
 
     CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
+
+    void validate();
+
+    @JsonIgnore
+    default boolean isScheduledUpdateEnabled() {
+        return false;
+    }
+
+    default void setScheduledUpdateIntervalSec(int scheduledUpdateIntervalSec) {
+    }
+
+    default int getScheduledUpdateIntervalSec() {
+        return 0;
+    }
 
 }

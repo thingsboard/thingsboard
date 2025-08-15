@@ -13,25 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.tbel;
+package org.thingsboard.common.util.geo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+
+import java.io.Serializable;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
-)
+        property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TbelCfSingleValueArg.class, name = "SINGLE_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfTsRollingArg.class, name = "TS_ROLLING"),
-        @JsonSubTypes.Type(value = TbelCfTsGeofencingArg.class, name = "GEOFENCING_CF_ARGUMENT_VALUE"),
-})
-public interface TbelCfArg extends TbelCfObject {
+        @JsonSubTypes.Type(value = PolygonPerimeterDefinition.class, name = "POLYGON"),
+        @JsonSubTypes.Type(value = CirclePerimeterDefinition.class, name = "CIRCLE")})
+@JsonIgnoreProperties(ignoreUnknown = true)
+public interface PerimeterDefinition extends Serializable {
 
     @JsonIgnore
-    String getType();
+    PerimeterType getType();
 
+    @JsonIgnore
+    boolean checkMatches(Coordinates entityCoordinates);
 }

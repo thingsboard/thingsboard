@@ -13,28 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.script.api.tbel;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+public class TbelCfTsGeofencingArg implements TbelCfArg {
 
-    @Nullable
-    private EntityId refEntityId;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
+    private final Object value;
 
-    private Integer limit;
-    private Long timeWindow;
+    @JsonCreator
+    public TbelCfTsGeofencingArg(@JsonProperty("value") Object value) {
+        this.value = value;
+    }
 
-    public boolean hasDynamicSource() {
-        return refDynamicSourceConfiguration != null;
+    @Override
+    public String getType() {
+        return "GEOFENCING_CF_ARGUMENT_VALUE";
+    }
+
+
+    @Override
+    public long memorySize() {
+        return OBJ_SIZE;
     }
 
 }

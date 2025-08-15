@@ -1,0 +1,100 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.service.cf.ctx.state;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.geo.Coordinates;
+import org.thingsboard.common.util.geo.PerimeterDefinition;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
+
+import java.util.UUID;
+
+@Data
+public class GeofencingZoneState {
+
+    private final EntityId zoneId;
+
+    private long ts;
+    private Long version;
+    private PerimeterDefinition perimeterDefinition;
+
+    @EqualsAndHashCode.Exclude
+    private Boolean inside;
+
+    public GeofencingZoneState(EntityId zoneId, KvEntry entry) {
+        this.zoneId = zoneId;
+        if (!(entry instanceof AttributeKvEntry attributeKvEntry)) {
+            throw new IllegalArgumentException("Unsupported KvEntry type for geofencing zone state: " + entry.getClass().getSimpleName());
+        }
+        this.ts = attributeKvEntry.getLastUpdateTs();
+        this.version = attributeKvEntry.getVersion();
+        this.perimeterDefinition = JacksonUtil.fromString(entry.getJsonValue().orElseThrow(), PerimeterDefinition.class);
+    }
+
+    public GeofencingZoneState(GeofencingZoneProto proto) {
+        this.zoneId = toZoneId(proto);
+        this.ts = proto.getTs();
+        this.version = proto.getVersion();
+        this.perimeterDefinition = JacksonUtil.fromString(proto.getPerimeterDefinition(), PerimeterDefinition.class);
+        if (proto.hasInside()) {
+            this.inside = proto.getInside();
+        }
+    }
+
+    public boolean update(GeofencingZoneState newZoneState) {
+        if (newZoneState.getTs() <= this.ts) {
+            return false;
+        }
+        Long newVersion = newZoneState.getVersion();
+        if (newVersion == null || this.version == null || newVersion > this.version) {
+            this.ts = newZoneState.getTs();
+            this.version = newVersion;
+            this.perimeterDefinition = newZoneState.getPerimeterDefinition();
+            this.inside = null;
+            return true;
+        }
+        return false;
+    }
+
+    public GeofencingEvent evaluate(Coordinates entityCoordinates) {
+        boolean inside = perimeterDefinition.checkMatches(entityCoordinates);
+        // Initial evaluation — no prior state
+        if (this.inside == null) {
+            this.inside = inside;
+            return inside ? GeofencingEvent.ENTERED : GeofencingEvent.OUTSIDE;
+        }
+        // State changed
+        if (this.inside != inside) {
+            this.inside = inside;
+            return inside ? GeofencingEvent.ENTERED : GeofencingEvent.LEFT;
+        }
+        // State unchanged
+        return inside ? GeofencingEvent.INSIDE : GeofencingEvent.OUTSIDE;
+    }
+
+    private EntityId toZoneId(GeofencingZoneProto proto) {
+        return EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getZoneType()), new UUID(proto.getZoneIdMSB(), proto.getZoneIdLSB()));
+    }
+
+}

@@ -15,26 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Getter;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+@Getter
+public enum GeofencingEvent {
 
-    @Nullable
-    private EntityId refEntityId;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
+    ENTERED(true), LEFT(true), INSIDE(false), OUTSIDE(false);
 
-    private Integer limit;
-    private Long timeWindow;
+    private final boolean transitionEvent;
 
-    public boolean hasDynamicSource() {
-        return refDynamicSourceConfiguration != null;
+    GeofencingEvent(boolean transitionEvent) {
+        this.transitionEvent = transitionEvent;
     }
-
 }

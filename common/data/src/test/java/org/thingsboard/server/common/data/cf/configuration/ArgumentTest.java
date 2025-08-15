@@ -15,26 +15,24 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import lombok.Data;
-import org.springframework.lang.Nullable;
-import org.thingsboard.server.common.data.id.EntityId;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Argument {
+import org.junit.jupiter.api.Test;
 
-    @Nullable
-    private EntityId refEntityId;
-    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
-    private ReferencedEntityKey refEntityKey;
-    private String defaultValue;
+import static org.assertj.core.api.Assertions.assertThat;
 
-    private Integer limit;
-    private Long timeWindow;
+public class ArgumentTest {
 
-    public boolean hasDynamicSource() {
-        return refDynamicSourceConfiguration != null;
+    @Test
+    void validateShouldReturnFalseIfDynamicSourceConfigurationIsNull() {
+        var argument = new Argument();
+        assertThat(argument.hasDynamicSource()).isFalse();
+    }
+
+    @Test
+    void validateShouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
+        var argument = new Argument();
+        argument.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
+        assertThat(argument.hasDynamicSource()).isTrue();
     }
 
 }

@@ -58,4 +58,11 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
         return link;
     }
 
+    @Override
+    public void validate() {
+        if (arguments.values().stream().anyMatch(Argument::hasDynamicSource)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support dynamic source configuration!");
+        }
+    }
+
 }

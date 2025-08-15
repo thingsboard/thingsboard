@@ -27,6 +27,7 @@ import org.thingsboard.script.api.tbel.TbelCfCtx;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx) {
         Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
         List<Object> args = new ArrayList<>(ctx.getArgNames().size() + 1);
         args.add(new Object()); // first element is a ctx, but we will set it later;

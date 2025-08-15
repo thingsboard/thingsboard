@@ -25,8 +25,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
-
 @Data
 @AllArgsConstructor
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
@@ -92,18 +90,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         if (!sizeExceedsLimit && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
             arguments.clear();
             sizeExceedsLimit = true;
-        }
-    }
-
-    @Override
-    public void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx) {
-        if (entry instanceof TsRollingArgumentEntry) {
-            return;
-        }
-        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, singleValueArgumentEntry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
-                throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
-            }
         }
     }
 

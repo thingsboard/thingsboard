@@ -32,12 +32,16 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
@@ -48,6 +52,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -55,6 +60,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
@@ -70,6 +76,7 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
@@ -81,11 +88,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
@@ -99,6 +109,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
     private final TbClusterService clusterService;
     private final ApiLimitService apiLimitService;
     private final PartitionService partitionService;
+    private final RelationService relationService;
 
     private ListeningExecutorService calculatedFieldCallbackExecutor;
 
@@ -117,38 +128,68 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
 
     @Override
     public ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
-        for (var entry : ctx.getArguments().entrySet()) {
-            var argEntityId = entry.getValue().getRefEntityId() != null ? entry.getValue().getRefEntityId() : entityId;
-            var argValueFuture = fetchKvEntry(ctx.getTenantId(), argEntityId, entry.getValue());
-            argFutures.put(entry.getKey(), argValueFuture);
-        }
+        Map<String, ListenableFuture<ArgumentEntry>> argFutures = switch (ctx.getCalculatedField().getType()) {
+            case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false);
+            case SIMPLE, SCRIPT -> {
+                Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
+                for (var entry : ctx.getArguments().entrySet()) {
+                    var argEntityId = resolveEntityId(entityId, entry);
+                    var argValueFuture = fetchKvEntry(ctx.getTenantId(), argEntityId, entry.getValue());
+                    futures.put(entry.getKey(), argValueFuture);
+                }
+                yield futures;
+            }
+        };
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
             var result = createStateByType(ctx);
-            result.updateState(ctx, argFutures.entrySet().stream()
-                    .collect(Collectors.toMap(
-                            Entry::getKey, // Keep the key as is
-                            entry -> {
-                                try {
-                                    // Resolve the future to get the value
-                                    return entry.getValue().get();
-                                } catch (ExecutionException | InterruptedException e) {
-                                    throw new RuntimeException("Error getting future result for key: " + entry.getKey(), e);
-                                }
-                            }
-                    )));
+            result.updateState(ctx, resolveArgumentFutures(argFutures));
             return result;
         }, calculatedFieldCallbackExecutor);
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
+        // only geofencing calculated fields supports dynamic arguments scheduled updates
+        if (!ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
+            return Map.of();
+        }
+        return resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true));
+    }
+
+    private Map<String, ListenableFuture<ArgumentEntry>> fetchGeofencingCalculatedFieldArguments(CalculatedFieldCtx ctx, EntityId entityId, boolean dynamicArgumentsOnly) {
+        Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
+        Set<Entry<String, Argument>> entries = ctx.getArguments().entrySet();
+        if (dynamicArgumentsOnly) {
+            entries = entries.stream()
+                    .filter(entry -> entry.getValue().hasDynamicSource())
+                    .collect(Collectors.toSet());
+        }
+        for (var entry : entries) {
+            switch (entry.getKey()) {
+                case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY ->
+                        argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), resolveEntityId(entityId, entry), entry.getValue()));
+                default -> {
+                    var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
+                    argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
+                            fetchGeofencingKvEntry(ctx.getTenantId(), resolvedEntityIds, entry.getValue()), calculatedFieldCallbackExecutor));
+                }
+            }
+        }
+        return argFutures;
     }
 
     @Override
     public Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
         for (var entry : arguments.entrySet()) {
-            var argEntityId = entry.getValue().getRefEntityId() != null ? entry.getValue().getRefEntityId() : entityId;
+            var argEntityId = resolveEntityId(entityId, entry);
             var argValueFuture = fetchKvEntry(tenantId, argEntityId, entry.getValue());
             argFutures.put(entry.getKey(), argValueFuture);
         }
+        return resolveArgumentFutures(argFutures);
+    }
+
+    private Map<String, ArgumentEntry> resolveArgumentFutures(Map<String, ListenableFuture<ArgumentEntry>> argFutures) {
         return argFutures.entrySet().stream()
                 .collect(Collectors.toMap(
                         Entry::getKey, // Keep the key as is
@@ -241,6 +282,66 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         return builder.build();
     }
 
+
+    private EntityId resolveEntityId(EntityId entityId, Entry<String, Argument> entry) {
+        return entry.getValue().getRefEntityId() != null ? entry.getValue().getRefEntityId() : entityId;
+    }
+
+    private ListenableFuture<List<EntityId>> resolveGeofencingEntityIds(TenantId tenantId, EntityId entityId, Entry<String, Argument> entry) {
+        Argument value = entry.getValue();
+        if (value.getRefEntityId() != null) {
+            return Futures.immediateFuture(List.of(value.getRefEntityId()));
+        }
+        if (!value.hasDynamicSource()) {
+            return Futures.immediateFuture(List.of(entityId));
+        }
+        var refDynamicSourceConfiguration = value.getRefDynamicSourceConfiguration();
+        return switch (refDynamicSourceConfiguration.getType()) {
+            case RELATION_QUERY -> {
+                var configuration = (RelationQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
+                if (configuration.isSimpleRelation()) {
+                    yield switch (configuration.getDirection()) {
+                        case FROM ->
+                                Futures.transform(relationService.findByFromAndTypeAsync(tenantId, entityId, configuration.getRelationType(), RelationTypeGroup.COMMON),
+                                        configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
+                        case TO ->
+                                Futures.transform(relationService.findByToAndTypeAsync(tenantId, entityId, configuration.getRelationType(), RelationTypeGroup.COMMON),
+                                        configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
+                    };
+                }
+                yield Futures.transform(relationService.findByQuery(tenantId, configuration.toEntityRelationsQuery(entityId)),
+                        configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
+            }
+        };
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchGeofencingKvEntry(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument) {
+        if (argument.getRefEntityKey().getType() != ArgumentType.ATTRIBUTE) {
+            throw new IllegalStateException("Unsupported argument key type: " + argument.getRefEntityKey().getType());
+        }
+        List<ListenableFuture<Entry<EntityId, AttributeKvEntry>>> kvFutures = geofencingEntities.stream()
+                .map(entityId -> {
+                    var attributesFuture = attributesService.find(
+                            tenantId,
+                            entityId,
+                            argument.getRefEntityKey().getScope(),
+                            argument.getRefEntityKey().getKey()
+                    );
+                    return Futures.transform(attributesFuture, resultOpt ->
+                                    Map.entry(entityId, resultOpt.orElseGet(() ->
+                                            new BaseAttributeKvEntry(createDefaultKvEntry(argument), System.currentTimeMillis(), 0L))),
+                            calculatedFieldCallbackExecutor
+                    );
+                }).collect(Collectors.toList());
+
+        ListenableFuture<List<Entry<EntityId, AttributeKvEntry>>> allFutures = Futures.allAsList(kvFutures);
+
+        return Futures.transform(allFutures, entries -> ArgumentEntry.createGeofencingValueArgument(entries.stream()
+                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue))),
+                calculatedFieldCallbackExecutor
+        );
+    }
+
     private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
         return switch (argument.getRefEntityKey().getType()) {
             case TS_ROLLING -> fetchTsRolling(tenantId, entityId, argument);
@@ -301,6 +402,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         return switch (ctx.getCfType()) {
             case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
             case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
+            case GEOFENCING -> new GeofencingCalculatedFieldState(ctx.getArgNames());
         };
     }
 

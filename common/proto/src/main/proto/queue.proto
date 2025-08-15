@@ -896,11 +896,27 @@ message TsRollingArgumentProto {
   repeated TsDoubleValProto tsValue = 4;
 }
 
+message GeofencingZoneProto {
+  EntityTypeProto zoneType = 1;
+  int64 zoneIdMSB = 2;
+  int64 zoneIdLSB = 3;
+  int64 ts = 4;
+  string perimeterDefinition = 5;
+  int64 version = 6;
+  optional bool inside = 7;
+}
+
+message GeofencingArgumentProto {
+  string argName = 1;
+  repeated GeofencingZoneProto zones = 2;
+}
+
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   string type = 2;
   repeated SingleValueArgumentProto singleValueArguments = 3;
   repeated TsRollingArgumentProto rollingValueArguments = 4;
+  repeated GeofencingArgumentProto geofencingArguments = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
