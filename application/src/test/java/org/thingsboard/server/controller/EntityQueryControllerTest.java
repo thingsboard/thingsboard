@@ -278,8 +278,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmCountQuery assetAlarmQuery = new AlarmCountQuery(assetTypeFilter);
 
-        Long assetAlamCount = doPostWithResponse("/api/alarmsQuery/count", assetAlarmQuery, Long.class);
-        Assert.assertEquals(assets.size(), assetAlamCount.longValue());
+        countAlarmsByQueryAndCheck(assetAlarmQuery, assets.size());
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
@@ -369,8 +368,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmCountQuery assetAlarmQuery = new AlarmCountQuery(assetTypeFilter);
 
-        Long assetAlamCount = doPostWithResponse("/api/alarmsQuery/count", assetAlarmQuery, Long.class);
-        Assert.assertEquals(10, assetAlamCount.longValue());
+        countAlarmsByQueryAndCheck(assetAlarmQuery, 10);
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
@@ -438,9 +436,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
 
-        PageData<AlarmData>  alarmPageData = doPostWithTypedResponse("/api/alarmsQuery/find", assetAlarmQuery, new TypeReference<>() {
-        });
-        Assert.assertEquals(10, alarmPageData.getTotalElements());
+        PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
         List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
 
@@ -511,9 +507,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, Collections.emptyList());
 
-        PageData<AlarmData>  alarmPageData = doPostWithTypedResponse("/api/alarmsQuery/find", assetAlarmQuery, new TypeReference<>() {
-        });
-        Assert.assertEquals(10, alarmPageData.getTotalElements());
+        PageData<AlarmData>  alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
         List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
 
@@ -924,7 +918,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         List<QueueStats> queueStatsList = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             QueueStats queueStats = new QueueStats();
-            queueStats.setQueueName(StringUtils.randomAlphabetic(5));
+            queueStats.setQueueName("test" + StringUtils.randomAlphabetic(5));
             queueStats.setServiceId(StringUtils.randomAlphabetic(5));
             queueStats.setTenantId(savedTenant.getTenantId());
             queueStatsList.add(queueStatsService.save(savedTenant.getId(), queueStats));
@@ -940,8 +934,11 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"),
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "serviceId"));
+        List<KeyFilter> keyFilters = Collections.singletonList(
+                getEntityFieldStartsWithFilter("queueName", "test")
+        );
 
-        EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, null);
+        EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, keyFilters);
 
         PageData<EntityData> data = findByQueryAndCheck(query, 97);
         Assert.assertEquals(10, data.getTotalPages());
@@ -983,10 +980,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
         KeyFilter activeAlarmTimeToLongFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 30);
-        KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
-        KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
-        KeyFilter tenantOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
-        KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
+        KeyFilter tenantOwnerNameFilter = getEntityFieldEqualFilter("ownerName", TEST_TENANT_NAME);
+        KeyFilter wrongOwnerNameFilter = getEntityFieldEqualFilter("ownerName", "wrongName");
+        KeyFilter tenantOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "TENANT");
+        KeyFilter customerOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "CUSTOMER");
 
         // all devices with ownerName = TEST TENANT
         EntityCountQuery query = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
@@ -1032,10 +1029,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         filter.setDeviceNameFilter("");
 
         KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
-        KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
-        KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
-        KeyFilter tenantOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
-        KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
+        KeyFilter tenantOwnerNameFilter = getEntityFieldEqualFilter("ownerName", TEST_TENANT_NAME);
+        KeyFilter wrongOwnerNameFilter = getEntityFieldEqualFilter("ownerName", "wrongName");
+        KeyFilter tenantOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "TENANT");
+        KeyFilter customerOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "CUSTOMER");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
@@ -1141,8 +1138,18 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         });
     }
 
+    protected PageData<AlarmData> findAlarmsByQuery(AlarmDataQuery query) throws Exception {
+        return doPostWithTypedResponse("/api/alarmsQuery/find", query, new TypeReference<>() {});
+    }
+
     protected PageData<EntityData> findByQueryAndCheck(EntityDataQuery query, int expectedResultSize) throws Exception {
         PageData<EntityData> result = findByQuery(query);
+        assertThat(result.getTotalElements()).isEqualTo(expectedResultSize);
+        return result;
+    }
+
+    protected PageData<AlarmData> findAlarmsByQueryAndCheck(AlarmDataQuery query, int expectedResultSize) throws Exception {
+        PageData<AlarmData> result = findAlarmsByQuery(query);
         assertThat(result.getTotalElements()).isEqualTo(expectedResultSize);
         return result;
     }
@@ -1151,21 +1158,39 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         return doPostWithResponse("/api/entitiesQuery/count", countQuery, Long.class);
     }
 
+    protected Long countAlarmsByQuery(AlarmCountQuery countQuery) throws Exception {
+        return doPostWithResponse("/api/alarmsQuery/count", countQuery, Long.class);
+    }
+
     protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult) throws Exception {
         Long result = countByQuery(query);
         assertThat(result).isEqualTo(expectedResult);
         return result;
     }
 
-    private KeyFilter getEntityFieldStringEqualToKeyFilter(String keyName, String value) {
-        KeyFilter tenantOwnerNameFilter = new KeyFilter();
-        tenantOwnerNameFilter.setKey(new EntityKey(EntityKeyType.ENTITY_FIELD, keyName));
-        tenantOwnerNameFilter.setValueType(EntityKeyValueType.STRING);
-        StringFilterPredicate ownerNamePredicate = new StringFilterPredicate();
-        ownerNamePredicate.setValue(FilterPredicateValue.fromString(value));
-        ownerNamePredicate.setOperation(StringFilterPredicate.StringOperation.EQUAL);
-        tenantOwnerNameFilter.setPredicate(ownerNamePredicate);
-        return tenantOwnerNameFilter;
+    protected Long countAlarmsByQueryAndCheck(AlarmCountQuery query, long expectedResult) throws Exception {
+        Long result = countAlarmsByQuery(query);
+        assertThat(result).isEqualTo(expectedResult);
+        return result;
+    }
+
+    private KeyFilter getEntityFieldEqualFilter(String keyName, String value) {
+        return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.EQUAL);
+    }
+
+    private KeyFilter getEntityFieldStartsWithFilter(String keyName, String value) {
+        return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.STARTS_WITH);
+    }
+
+    private KeyFilter getEntityFieldKeyFilter(String keyName, String value, StringFilterPredicate.StringOperation operation) {
+        KeyFilter filter = new KeyFilter();
+        filter.setKey(new EntityKey(EntityKeyType.ENTITY_FIELD, keyName));
+        filter.setValueType(EntityKeyValueType.STRING);
+        StringFilterPredicate predicate = new StringFilterPredicate();
+        predicate.setValue(FilterPredicateValue.fromString(value));
+        predicate.setOperation(operation);
+        filter.setPredicate(predicate);
+        return filter;
     }
 
     private KeyFilter getServerAttributeNumericGreaterThanKeyFilter(String attribute, int value) {
