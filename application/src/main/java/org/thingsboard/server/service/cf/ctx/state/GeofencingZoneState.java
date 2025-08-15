@@ -71,8 +71,7 @@ public class GeofencingZoneState {
             this.ts = newZoneState.getTs();
             this.version = newVersion;
             this.perimeterDefinition = newZoneState.getPerimeterDefinition();
-            // TODO: should we reinitialize state if zone changed?
-            // this.inside = null;
+            this.inside = null;
             return true;
         }
         return false;

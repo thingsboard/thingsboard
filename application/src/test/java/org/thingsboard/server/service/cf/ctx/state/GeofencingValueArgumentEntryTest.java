@@ -184,6 +184,4 @@ public class GeofencingValueArgumentEntryTest {
         assertThat(geofencingArgumentEntry.isEmpty()).isTrue();
     }
 
-    // TODO: should we test to TBEL logic?
-
 }

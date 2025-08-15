@@ -160,7 +160,6 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(state.getArguments()).isEqualTo(newArgs);
     }
 
-    // TODO: write opposite test for this. See TODO in the GeofencingZoneState class.
     @Test
     void testUpdateStateWhenUpdateExistingGeofencingValueArgumentEntryWithTheSameValue() {
         state.arguments = new HashMap<>(Map.of("allowedZones", geofencingAllowedZoneArgEntry));
@@ -344,9 +343,6 @@ public class GeofencingCalculatedFieldStateTest {
         config.setCreateRelationsWithMatchedZones(true);
         config.setZoneRelationType("CurrentZone");
         config.setZoneRelationDirection(EntitySearchDirection.TO);
-
-        // TODO: Does CF possible to save with null?
-        config.setExpression("latitude + longitude");
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);
