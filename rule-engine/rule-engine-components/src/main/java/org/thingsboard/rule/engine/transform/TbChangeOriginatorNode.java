@@ -80,7 +80,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
         switch (config.getOriginatorSource()) {
             case CUSTOMER:
-                return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
+                return EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctx, msg.getOriginator());
             case TENANT:
                 return Futures.immediateFuture(ctx.getTenantId());
             case RELATED:

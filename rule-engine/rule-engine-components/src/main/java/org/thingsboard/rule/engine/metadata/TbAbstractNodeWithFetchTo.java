@@ -17,8 +17,7 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.util.concurrent.AsyncFunction;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.base.Function;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -54,12 +53,12 @@ public abstract class TbAbstractNodeWithFetchTo<C extends TbAbstractFetchToNodeC
 
     protected abstract C loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException;
 
-    protected <I extends EntityId> AsyncFunction<I, I> checkIfEntityIsPresentOrThrow(String message) {
+    protected <I extends EntityId> Function<I, I> checkIfEntityIsPresentOrThrow(String message) {
         return id -> {
             if (id == null || id.isNullUid()) {
-                return Futures.immediateFailedFuture(new NoSuchElementException(message));
+                throw new NoSuchElementException(message);
             }
-            return Futures.immediateFuture(id);
+            return id;
         };
     }
 
