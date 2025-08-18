@@ -21,11 +21,14 @@ import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
 
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent.ENTERED;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent.LEFT;
 
 public class GeofencingZoneStateTest {
 
@@ -45,18 +48,18 @@ public class GeofencingZoneStateTest {
     void evaluate_initialInside_thenInsideAgain() {
         var inside = new Coordinates(50.4730, 30.5050);
         // first evaluation: no prior state -> ENTERED
-        assertThat(state.evaluate(inside)).isEqualTo(GeofencingEvent.ENTERED);
+        assertThat(state.evaluate(inside)).isEqualTo(new GeofencingEvalResult(ENTERED, INSIDE));
         // same position again -> INSIDE (steady state)
-        assertThat(state.evaluate(inside)).isEqualTo(GeofencingEvent.INSIDE);
+        assertThat(state.evaluate(inside)).isEqualTo(new GeofencingEvalResult(null, INSIDE));
     }
 
     @Test
     void evaluate_initialOutside_thenOutsideAgain() {
         var outside = new Coordinates(50.4760, 30.5110);
         // first evaluation: no prior state -> OUTSIDE
-        assertThat(state.evaluate(outside)).isEqualTo(GeofencingEvent.OUTSIDE);
+        assertThat(state.evaluate(outside)).isEqualTo(new GeofencingEvalResult(null, OUTSIDE));
         // same position again -> OUTSIDE (steady state)
-        assertThat(state.evaluate(outside)).isEqualTo(GeofencingEvent.OUTSIDE);
+        assertThat(state.evaluate(outside)).isEqualTo(new GeofencingEvalResult(null, OUTSIDE));
     }
 
     @Test
@@ -64,11 +67,11 @@ public class GeofencingZoneStateTest {
         var inside = new Coordinates(50.4730, 30.5050);
         var outside = new Coordinates(50.4760, 30.5110);
         // enter
-        assertThat(state.evaluate(inside)).isEqualTo(GeofencingEvent.ENTERED);
+        assertThat(state.evaluate(inside)).isEqualTo(new GeofencingEvalResult(ENTERED, INSIDE));
         // leave -> LEFT
-        assertThat(state.evaluate(outside)).isEqualTo(GeofencingEvent.LEFT);
+        assertThat(state.evaluate(outside)).isEqualTo(new GeofencingEvalResult(LEFT, OUTSIDE));
         // still outside -> OUTSIDE
-        assertThat(state.evaluate(outside)).isEqualTo(GeofencingEvent.OUTSIDE);
+        assertThat(state.evaluate(outside)).isEqualTo(new GeofencingEvalResult(null, OUTSIDE));
     }
 
     @Test
@@ -76,11 +79,11 @@ public class GeofencingZoneStateTest {
         var outside = new Coordinates(50.4760, 30.5110);
         var inside = new Coordinates(50.4730, 30.5050);
         // start outside
-        assertThat(state.evaluate(outside)).isEqualTo(GeofencingEvent.OUTSIDE);
+        assertThat(state.evaluate(outside)).isEqualTo(new GeofencingEvalResult(null, OUTSIDE));
         // cross boundary -> ENTERED
-        assertThat(state.evaluate(inside)).isEqualTo(GeofencingEvent.ENTERED);
+        assertThat(state.evaluate(inside)).isEqualTo(new GeofencingEvalResult(ENTERED, INSIDE));
         // remain inside -> INSIDE
-        assertThat(state.evaluate(inside)).isEqualTo(GeofencingEvent.INSIDE);
+        assertThat(state.evaluate(inside)).isEqualTo(new GeofencingEvalResult(null, INSIDE));
     }
 
 }

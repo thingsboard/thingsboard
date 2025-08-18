@@ -15,5 +15,6 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-public sealed interface GeofencingEvent
-        permits GeofencingTransitionEvent, GeofencingPresenceStatus { }
+public enum GeofencingTransitionEvent implements GeofencingEvent {
+    ENTERED, LEFT
+}

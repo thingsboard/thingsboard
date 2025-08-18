@@ -20,9 +20,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.util.CollectionsUtil;
 
-import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -44,7 +42,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     private boolean createRelationsWithMatchedZones;
     private String zoneRelationType;
     private EntitySearchDirection zoneRelationDirection;
-    private Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations;
+    private Map<String, GeofencingReportStrategy> zoneGroupReportStrategies;
 
     @Override
     public CalculatedFieldType getType() {
@@ -56,7 +54,6 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
         return scheduledUpdateIntervalSec > 0 && arguments.values().stream().anyMatch(Argument::hasDynamicSource);
     }
 
-    // TODO: update validate method in PE version.
     @Override
     public void validate() {
         if (arguments == null) {
@@ -85,25 +82,13 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     }
 
     private void validateZoneGroupConfigurations(Map<String, Argument> zoneGroupsArguments) {
-        if (zoneGroupConfigurations == null || zoneGroupConfigurations.isEmpty()) {
+        if (zoneGroupReportStrategies == null || zoneGroupReportStrategies.isEmpty()) {
             throw new IllegalArgumentException("Zone groups configuration should be specified!");
         }
-        Set<String> usedPrefixes = new HashSet<>();
-
         zoneGroupsArguments.forEach((zoneGroupName, zoneGroupArgument) -> {
-            GeofencingZoneGroupConfiguration config = zoneGroupConfigurations.get(zoneGroupName);
-            if (config == null) {
-                throw new IllegalArgumentException("Zone group configuration is not configured for '" + zoneGroupName + "' argument!");
-            }
-            if (CollectionsUtil.isEmpty(config.getReportEvents())) {
-                throw new IllegalArgumentException("Zone group configuration report events must be specified for '" + zoneGroupName + "' argument!");
-            }
-            String prefix = config.getReportTelemetryPrefix();
-            if (StringUtils.isBlank(prefix)) {
-                throw new IllegalArgumentException("Report telemetry prefix should be specified for '" + zoneGroupName + "' argument!");
-            }
-            if (!usedPrefixes.add(prefix)) {
-                throw new IllegalArgumentException("Duplicate report telemetry prefix found: '" + prefix + "'. Must be unique!");
+            GeofencingReportStrategy geofencingReportStrategy = zoneGroupReportStrategies.get(zoneGroupName);
+            if (geofencingReportStrategy == null) {
+                throw new IllegalArgumentException("Zone group report strategy is not configured for '" + zoneGroupName + "' argument!");
             }
         });
     }

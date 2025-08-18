@@ -18,6 +18,7 @@ package org.thingsboard.server.utils;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -76,7 +77,7 @@ class CalculatedFieldUtilsTest {
         BaseAttributeKvEntry zone2PerimeterAttribute = new BaseAttributeKvEntry(zone2, System.currentTimeMillis(), 0L);
 
         GeofencingZoneState s1 = new GeofencingZoneState(z1, zone1PerimeterAttribute);
-        s1.setInside(true);
+        s1.setLastPresence(GeofencingPresenceStatus.INSIDE);
         GeofencingZoneState s2 = new GeofencingZoneState(z2, zone2PerimeterAttribute);
 
         zoneStates.put(z1, s1);
@@ -101,8 +102,8 @@ class CalculatedFieldUtilsTest {
         assertThat(fromProtoArgument).isInstanceOf(GeofencingArgumentEntry.class);
         GeofencingArgumentEntry fromProtoGeoArgument = (GeofencingArgumentEntry) fromProtoArgument;
         assertThat(fromProtoGeoArgument.getZoneStates()).hasSize(2);
-        assertThat(fromProtoGeoArgument.getZoneStates().get(z1).getInside()).isTrue();
-        assertThat(fromProtoGeoArgument.getZoneStates().get(z2).getInside()).isNull();
+        assertThat(fromProtoGeoArgument.getZoneStates().get(z1).getLastPresence()).isEqualTo(GeofencingPresenceStatus.INSIDE);
+        assertThat(fromProtoGeoArgument.getZoneStates().get(z2).getLastPresence()).isNull();
     }
 
 }

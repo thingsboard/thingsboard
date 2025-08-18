@@ -13,7 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.service.cf.ctx.state;
 
-public sealed interface GeofencingEvent
-        permits GeofencingTransitionEvent, GeofencingPresenceStatus { }
+import jakarta.annotation.Nullable;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent;
+
+public record GeofencingEvalResult(@Nullable GeofencingTransitionEvent transition,
+                                   GeofencingPresenceStatus status) {}

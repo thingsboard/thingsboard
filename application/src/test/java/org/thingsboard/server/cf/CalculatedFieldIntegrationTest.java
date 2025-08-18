@@ -33,8 +33,6 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -49,15 +47,14 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
 @DaoSqlTest
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
@@ -702,15 +699,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 "restrictedZones", restrictedZones
         ));
 
-        // Zone group reporting config
-        List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
-
-        GeofencingZoneGroupConfiguration allowedCfg = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
-        GeofencingZoneGroupConfiguration restrictedCfg = new GeofencingZoneGroupConfiguration("restrictedZone", reportEvents);
-
-        cfg.setZoneGroupConfigurations(Map.of(
-                "allowedZones", allowedCfg,
-                "restrictedZones", restrictedCfg
+        cfg.setZoneGroupReportStrategies(Map.of(
+                "allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS,
+                "restrictedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS
         ));
 
         // Output to server attributes
@@ -728,14 +719,16 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent", "restrictedZoneEvent");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
+                    ArrayNode attrs = getServerAttributes(device.getId(),
+                            "allowedZonesEvent", "allowedZonesStatus", "restrictedZonesStatus");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(3);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZoneEvent", "ENTERED")
-                            .containsEntry("restrictedZoneEvent", "OUTSIDE");
+                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
+                            .containsEntry("allowedZonesStatus", "INSIDE")
+                            .containsEntry("restrictedZonesStatus", "OUTSIDE");
                 });
 
-        // --- Move device into Restricted zone (and outside Allowed) ---
+        // --- Move the device into Restricted zone (and outside Allowed) ---
         doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
                 JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}"));
 
@@ -744,11 +737,15 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent", "restrictedZoneEvent");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
+                    ArrayNode attrs = getServerAttributes(device.getId(),
+                            "allowedZonesEvent", "allowedZonesStatus",
+                            "restrictedZonesEvent", "restrictedZonesStatus");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(4);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZoneEvent", "LEFT")
-                            .containsEntry("restrictedZoneEvent", "ENTERED");
+                    assertThat(m).containsEntry("allowedZonesEvent", "LEFT")
+                            .containsEntry("restrictedZonesEvent", "ENTERED")
+                            .containsEntry("allowedZonesStatus", "OUTSIDE")
+                            .containsEntry("restrictedZonesStatus", "INSIDE");
                 });
     }
 
@@ -821,10 +818,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 "allowedZones", allowedZones
         ));
 
-        // Report all events for the group
-        List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
-        GeofencingZoneGroupConfiguration allowedCfg = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
-        cfg.setZoneGroupConfigurations(Map.of("allowedZones", allowedCfg));
+        // Report all for the group
+        cfg.setZoneGroupReportStrategies(Map.of("allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
 
         // Server attributes output
         Output out = new Output();
@@ -845,10 +840,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZonesEvent", "allowedZonesStatus");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZoneEvent", "ENTERED");
+                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
+                            .containsEntry("allowedZonesStatus", "INSIDE");
                 });
 
         // --- Move device OUTSIDE Zone A (expect LEFT) ---
@@ -859,10 +855,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZonesEvent", "allowedZonesStatus");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZoneEvent", "LEFT");
+                    assertThat(m).containsEntry("allowedZonesEvent", "LEFT")
+                            .containsEntry("allowedZonesStatus", "OUTSIDE");
                 });
 
         // --- Create Allowed Zone B covering the CURRENT location ---
@@ -892,10 +889,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZoneEvent");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
+                    ArrayNode attrs = getServerAttributes(device.getId(), "allowedZonesEvent", "allowedZonesStatus");
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZoneEvent", "ENTERED");
+                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
+                            .containsEntry("allowedZonesStatus", "INSIDE");
                 });
     }
 

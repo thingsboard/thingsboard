@@ -15,14 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.Data;
+import lombok.Getter;
 
-import java.util.List;
+@Getter
+public enum GeofencingPresenceStatus implements GeofencingEvent {
 
-@Data
-public class GeofencingZoneGroupConfiguration {
-
-    private final String reportTelemetryPrefix;
-    private final List<GeofencingEvent> reportEvents;
+    INSIDE, OUTSIDE;
 
 }

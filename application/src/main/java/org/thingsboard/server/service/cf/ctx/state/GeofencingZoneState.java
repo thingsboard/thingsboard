@@ -20,7 +20,8 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.common.util.geo.PerimeterDefinition;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -29,6 +30,9 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
 
 @Data
 public class GeofencingZoneState {
@@ -40,7 +44,7 @@ public class GeofencingZoneState {
     private PerimeterDefinition perimeterDefinition;
 
     @EqualsAndHashCode.Exclude
-    private Boolean inside;
+    private GeofencingPresenceStatus lastPresence;
 
     public GeofencingZoneState(EntityId zoneId, KvEntry entry) {
         this.zoneId = zoneId;
@@ -58,7 +62,7 @@ public class GeofencingZoneState {
         this.version = proto.getVersion();
         this.perimeterDefinition = JacksonUtil.fromString(proto.getPerimeterDefinition(), PerimeterDefinition.class);
         if (proto.hasInside()) {
-            this.inside = proto.getInside();
+            this.lastPresence = proto.getInside() ? INSIDE : OUTSIDE;
         }
     }
 
@@ -71,26 +75,35 @@ public class GeofencingZoneState {
             this.ts = newZoneState.getTs();
             this.version = newVersion;
             this.perimeterDefinition = newZoneState.getPerimeterDefinition();
-            this.inside = null;
+            this.lastPresence = null;
             return true;
         }
         return false;
     }
 
-    public GeofencingEvent evaluate(Coordinates entityCoordinates) {
-        boolean inside = perimeterDefinition.checkMatches(entityCoordinates);
-        // Initial evaluation — no prior state
-        if (this.inside == null) {
-            this.inside = inside;
-            return inside ? GeofencingEvent.ENTERED : GeofencingEvent.OUTSIDE;
+    public GeofencingEvalResult evaluate(Coordinates entityCoordinates) {
+        boolean nowInside = perimeterDefinition.checkMatches(entityCoordinates);
+
+        GeofencingPresenceStatus status = nowInside ? INSIDE : OUTSIDE;
+
+        // first evaluation
+        if (this.lastPresence == null) {
+            this.lastPresence = status;
+            GeofencingTransitionEvent transition = null;
+            if (status == GeofencingPresenceStatus.INSIDE) {
+                transition = GeofencingTransitionEvent.ENTERED;
+            }
+            return new GeofencingEvalResult(transition, status);
         }
         // State changed
-        if (this.inside != inside) {
-            this.inside = inside;
-            return inside ? GeofencingEvent.ENTERED : GeofencingEvent.LEFT;
+        if (this.lastPresence != status) {
+            this.lastPresence = status;
+            GeofencingTransitionEvent transition = (status == GeofencingPresenceStatus.INSIDE) ?
+                    GeofencingTransitionEvent.ENTERED : GeofencingTransitionEvent.LEFT;
+            return new GeofencingEvalResult(transition, status);
         }
         // State unchanged
-        return inside ? GeofencingEvent.INSIDE : GeofencingEvent.OUTSIDE;
+        return new GeofencingEvalResult(null, status);
     }
 
     private EntityId toZoneId(GeofencingZoneProto proto) {

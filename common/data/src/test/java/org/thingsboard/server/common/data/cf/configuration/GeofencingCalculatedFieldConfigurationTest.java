@@ -26,7 +26,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Stream;
@@ -224,11 +223,11 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        Map<String, GeofencingReportStrategy> zoneGroupReportStrategies =
+                Map.of("allowedZones", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS);
 
         cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
+        cfg.setZoneGroupReportStrategies(zoneGroupReportStrategies);
 
         cfg.validate();
 
@@ -247,7 +246,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
         arguments.put("allowedZones", allowedZonesArg);
 
         cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(null);
+        cfg.setZoneGroupReportStrategies(null);
         cfg.setCreateRelationsWithMatchedZones(false);
 
         assertThatThrownBy(cfg::validate)
@@ -256,33 +255,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
     }
 
     @Test
-    void validateShouldThrowWhenReportTelemetryPrefixDuplicate() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var arguments = new HashMap<String, Argument>();
-        arguments.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST));
-        arguments.put(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST));
-        Argument allowedZonesArg = toArgument("allowedZone", ArgumentType.ATTRIBUTE);
-        Argument restrictedZonesArg = toArgument("restrictedZone", ArgumentType.ATTRIBUTE);
-        var refDynamicSourceConfigurationMock = mock(RelationQueryDynamicSourceConfiguration.class);
-        allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
-        arguments.put("allowedZones", allowedZonesArg);
-        arguments.put("restrictedZones", restrictedZonesArg);
-
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("theSamePrefixTest", Arrays.asList(GeofencingEvent.values()));
-        GeofencingZoneGroupConfiguration restrictedZoneConfiguration = new GeofencingZoneGroupConfiguration("theSamePrefixTest", Arrays.asList(GeofencingEvent.values()));
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration, "restrictedZones", restrictedZoneConfiguration);
-
-        cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
-        cfg.setCreateRelationsWithMatchedZones(false);
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Duplicate report telemetry prefix found: 'theSamePrefixTest'. Must be unique!");
-    }
-
-    @Test
-    void validateShouldThrowWhenZoneGroupArgumentConfigurationIsMissing() {
+    void validateShouldThrowWhenZoneGroupArgumentReportStrategyIsMissing() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         var arguments = new HashMap<String, Argument>();
         arguments.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST));
@@ -292,64 +265,16 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("someOtherZones", allowedZoneConfiguration);
+        Map<String, GeofencingReportStrategy> zoneGroupReportStrategies =
+                Map.of("someOtherZones", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS);
 
         cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
+        cfg.setZoneGroupReportStrategies(zoneGroupReportStrategies);
         cfg.setCreateRelationsWithMatchedZones(false);
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Zone group configuration is not configured for 'allowedZones' argument!");
-    }
-
-    @Test
-    void validateShouldThrowWhenZoneGroupConfigurationReportEventsAreNotSpecified() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var arguments = new HashMap<String, Argument>();
-        arguments.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST));
-        arguments.put(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST));
-        Argument allowedZonesArg = toArgument("allowedZone", ArgumentType.ATTRIBUTE);
-        var refDynamicSourceConfigurationMock = mock(RelationQueryDynamicSourceConfiguration.class);
-        allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
-        arguments.put("allowedZones", allowedZonesArg);
-
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", null);
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
-
-        cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
-        cfg.setCreateRelationsWithMatchedZones(false);
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Zone group configuration report events must be specified for 'allowedZones' argument!");
-    }
-
-    @ParameterizedTest
-    @NullAndEmptySource
-    @ValueSource(strings = "  ")
-    void validateShouldThrowWhenZoneGroupConfigurationTelemetryPrefixIsBlankOrNull(String reportTelemetryPrefix) {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var arguments = new HashMap<String, Argument>();
-        arguments.put(ENTITY_ID_LATITUDE_ARGUMENT_KEY, toArgument("latitude", ArgumentType.TS_LATEST));
-        arguments.put(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, toArgument("longitude", ArgumentType.TS_LATEST));
-        Argument allowedZonesArg = toArgument("allowedZone", ArgumentType.ATTRIBUTE);
-        var refDynamicSourceConfigurationMock = mock(RelationQueryDynamicSourceConfiguration.class);
-        allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
-        arguments.put("allowedZones", allowedZonesArg);
-
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration(reportTelemetryPrefix, Arrays.asList(GeofencingEvent.values()));
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
-
-        cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
-        cfg.setCreateRelationsWithMatchedZones(false);
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Report telemetry prefix should be specified for 'allowedZones' argument!");
+                .hasMessage("Zone group report strategy is not configured for 'allowedZones' argument!");
     }
 
     @ParameterizedTest
@@ -365,11 +290,11 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        Map<String, GeofencingReportStrategy> zoneGroupReportStrategies =
+                Map.of("allowedZones", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS);
 
         cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
+        cfg.setZoneGroupReportStrategies(zoneGroupReportStrategies);
         cfg.setCreateRelationsWithMatchedZones(true);
         cfg.setZoneRelationType(zoneRelationType);
         cfg.setZoneRelationDirection(EntitySearchDirection.TO);
@@ -390,11 +315,11 @@ public class GeofencingCalculatedFieldConfigurationTest {
         allowedZonesArg.setRefDynamicSourceConfiguration(refDynamicSourceConfigurationMock);
         arguments.put("allowedZones", allowedZonesArg);
 
-        GeofencingZoneGroupConfiguration allowedZoneConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", Arrays.asList(GeofencingEvent.values()));
-        Map<String, GeofencingZoneGroupConfiguration> zoneGroupConfigurations = Map.of("allowedZones", allowedZoneConfiguration);
+        Map<String, GeofencingReportStrategy> zoneGroupReportStrategies =
+                Map.of("allowedZones", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS);
 
         cfg.setArguments(arguments);
-        cfg.setZoneGroupConfigurations(zoneGroupConfigurations);
+        cfg.setZoneGroupReportStrategies(zoneGroupReportStrategies);
         cfg.setCreateRelationsWithMatchedZones(true);
         cfg.setZoneRelationType("SomeRelationType");
 
@@ -448,8 +373,9 @@ public class GeofencingCalculatedFieldConfigurationTest {
         args.put("allowedZones", allowed);
         cfg.setArguments(args);
 
-        var zc = new GeofencingZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
-        cfg.setZoneGroupConfigurations(Map.of("allowedZones", zc));
+        Map<String, GeofencingReportStrategy> zoneGroupReportStrategies =
+                Map.of("allowedZones", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS);
+        cfg.setZoneGroupReportStrategies(zoneGroupReportStrategies);
 
         cfg.setCreateRelationsWithMatchedZones(true);
         cfg.setZoneRelationType("Contains");

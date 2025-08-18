@@ -29,8 +29,6 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -47,7 +45,6 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -63,6 +60,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
 @ExtendWith(MockitoExtension.class)
 public class GeofencingCalculatedFieldStateTest {
@@ -335,10 +333,7 @@ public class GeofencingCalculatedFieldStateTest {
 
         config.setArguments(Map.of("latitude", argument1, "longitude", argument2, "allowedZones", argument3, "restrictedZones", argument4));
 
-        List<GeofencingEvent> reportEvents = Arrays.stream(GeofencingEvent.values()).toList();
-        GeofencingZoneGroupConfiguration allowedZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("allowedZone", reportEvents);
-        GeofencingZoneGroupConfiguration restrictedZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("restrictedZone", reportEvents);
-        config.setZoneGroupConfigurations(Map.of("allowedZones", allowedZoneGroupConfiguration, "restrictedZones", restrictedZoneGroupConfiguration));
+        config.setZoneGroupReportStrategies(Map.of("allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, "restrictedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
 
         config.setCreateRelationsWithMatchedZones(true);
         config.setZoneRelationType("CurrentZone");

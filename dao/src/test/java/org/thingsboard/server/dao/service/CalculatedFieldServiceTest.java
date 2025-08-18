@@ -29,8 +29,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingEvent;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingZoneGroupConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -44,7 +43,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
-import java.util.Arrays;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -127,8 +125,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         ));
 
         // Matching zone-group configuration
-        var geofencingZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
-        cfg.setZoneGroupConfigurations(Map.of("allowed", geofencingZoneGroupConfiguration));
+        cfg.setZoneGroupReportStrategies(Map.of("allowed", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
 
         // Set a scheduled interval to some value
         cfg.setScheduledUpdateIntervalSec(600);
@@ -187,8 +184,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         ));
 
         // Matching zone-group configuration
-        var geofencingZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
-        cfg.setZoneGroupConfigurations(Map.of("allowed", geofencingZoneGroupConfiguration));
+        cfg.setZoneGroupReportStrategies(Map.of("allowed", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
 
         // Enable scheduling with an interval below tenant min
         cfg.setScheduledUpdateIntervalSec(600);
@@ -248,8 +244,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         ));
 
         // Matching zone-group configuration
-        var geofencingZoneGroupConfiguration = new GeofencingZoneGroupConfiguration("gf_allowed", Arrays.asList(GeofencingEvent.values()));
-        cfg.setZoneGroupConfigurations(Map.of("allowed", geofencingZoneGroupConfiguration));
+        cfg.setZoneGroupReportStrategies(Map.of("allowed", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
 
         // Get tenant profile min.
         int min = tbTenantProfileCache.get(tenantId)

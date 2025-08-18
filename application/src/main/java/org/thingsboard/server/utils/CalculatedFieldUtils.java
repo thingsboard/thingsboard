@@ -18,6 +18,7 @@ package org.thingsboard.server.utils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -138,8 +139,8 @@ public class CalculatedFieldUtils {
                 .setTs(zoneState.getTs())
                 .setVersion(zoneState.getVersion())
                 .setPerimeterDefinition(JacksonUtil.toString(zoneState.getPerimeterDefinition()));
-        if (zoneState.getInside() != null) {
-            builder.setInside(zoneState.getInside());
+        if (zoneState.getLastPresence() != null) {
+            builder.setInside(zoneState.getLastPresence().equals(GeofencingPresenceStatus.INSIDE));
         }
         return builder.build();
     }
