@@ -83,7 +83,7 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
 
     private void validateZoneGroupConfigurations(Map<String, Argument> zoneGroupsArguments) {
         if (zoneGroupReportStrategies == null || zoneGroupReportStrategies.isEmpty()) {
-            throw new IllegalArgumentException("Zone groups configuration should be specified!");
+            throw new IllegalArgumentException("Zone groups reporting strategies should be specified!");
         }
         zoneGroupsArguments.forEach((zoneGroupName, zoneGroupArgument) -> {
             GeofencingReportStrategy geofencingReportStrategy = zoneGroupReportStrategies.get(zoneGroupName);

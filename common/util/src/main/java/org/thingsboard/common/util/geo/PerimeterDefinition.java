@@ -17,19 +17,14 @@ package org.thingsboard.common.util.geo;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 
 import java.io.Serializable;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type")
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = PolygonPerimeterDefinition.class, name = "POLYGON"),
-        @JsonSubTypes.Type(value = CirclePerimeterDefinition.class, name = "CIRCLE")})
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(using = PerimeterDefinitionDeserializer.class)
+@JsonSerialize(using = PerimeterDefinitionSerializer.class)
 public interface PerimeterDefinition extends Serializable {
 
     @JsonIgnore

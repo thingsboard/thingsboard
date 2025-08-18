@@ -73,13 +73,11 @@ public class GeofencingCalculatedFieldStateTest {
     private final SingleValueArgumentEntry latitudeArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("latitude", 50.4730), 145L);
     private final SingleValueArgumentEntry longitudeArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 6, new DoubleDataEntry("longitude", 30.5050), 165L);
 
-    private final JsonDataEntry allowedZoneDataEntry = new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}""");
+    private final JsonDataEntry allowedZoneDataEntry = new JsonDataEntry("zone", "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]");
     private final BaseAttributeKvEntry allowedZoneAttributeKvEntry = new BaseAttributeKvEntry(allowedZoneDataEntry, System.currentTimeMillis(), 0L);
     private final GeofencingArgumentEntry geofencingAllowedZoneArgEntry = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, allowedZoneAttributeKvEntry));
 
-    private final JsonDataEntry restrictedZoneDataEntry = new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]"}""");
+    private final JsonDataEntry restrictedZoneDataEntry = new JsonDataEntry("zone", "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]");
     private final BaseAttributeKvEntry restrictedZoneAttributeKvEntry = new BaseAttributeKvEntry(restrictedZoneDataEntry, System.currentTimeMillis(), 0L);
     private final GeofencingArgumentEntry geofencingRestrictedZoneArgEntry = new GeofencingArgumentEntry(Map.of(ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
@@ -219,6 +217,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(state.isReady()).isFalse();
     }
 
+    // TODO: test different reporting strategies
     @Test
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of(
@@ -241,8 +240,9 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result.getScope()).isEqualTo(output.getScope());
         assertThat(result.getResult()).isEqualTo(
                 JacksonUtil.newObjectNode()
-                        .put("allowedZoneEvent", "ENTERED")
-                        .put("restrictedZoneEvent", "OUTSIDE")
+                        .put("allowedZonesEvent", "ENTERED")
+                        .put("allowedZonesStatus", "INSIDE")
+                        .put("restrictedZonesStatus", "OUTSIDE")
         );
 
         SingleValueArgumentEntry newLatitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 50.4760), 146L);
@@ -258,8 +258,10 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2.getScope()).isEqualTo(output.getScope());
         assertThat(result2.getResult()).isEqualTo(
                 JacksonUtil.newObjectNode()
-                        .put("allowedZoneEvent", "LEFT")
-                        .put("restrictedZoneEvent", "ENTERED")
+                        .put("allowedZonesEvent", "LEFT")
+                        .put("allowedZonesStatus", "OUTSIDE")
+                        .put("restrictedZonesEvent", "ENTERED")
+                        .put("restrictedZonesStatus", "INSIDE")
         );
 
 

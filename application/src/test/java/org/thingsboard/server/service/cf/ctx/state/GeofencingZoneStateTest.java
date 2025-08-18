@@ -38,9 +38,7 @@ public class GeofencingZoneStateTest {
 
     @BeforeEach
     void setUp() {
-        String POLYGON = """
-                {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
-                """;
+        String POLYGON = "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]";
         state = new GeofencingZoneState(ZONE_ID, new BaseAttributeKvEntry(new JsonDataEntry("zone", POLYGON), 100L, 1L));
     }
 

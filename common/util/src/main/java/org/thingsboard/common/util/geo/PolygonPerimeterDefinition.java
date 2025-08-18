@@ -20,7 +20,7 @@ import lombok.Data;
 @Data
 public class PolygonPerimeterDefinition implements PerimeterDefinition {
 
-    private String polygonsDefinition;
+    private final String polygonDefinition;
 
     @Override
     public PerimeterType getType() {
@@ -29,7 +29,7 @@ public class PolygonPerimeterDefinition implements PerimeterDefinition {
 
     @Override
     public boolean checkMatches(Coordinates entityCoordinates) {
-        return GeoUtil.contains(polygonsDefinition, entityCoordinates);
+        return GeoUtil.contains(polygonDefinition, entityCoordinates);
     }
 
 }

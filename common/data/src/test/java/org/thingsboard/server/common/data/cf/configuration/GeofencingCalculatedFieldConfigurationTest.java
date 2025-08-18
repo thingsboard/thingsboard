@@ -251,7 +251,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Zone groups configuration should be specified!");
+                .hasMessage("Zone groups reporting strategies should be specified!");
     }
 
     @Test

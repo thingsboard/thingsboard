@@ -70,8 +70,8 @@ class CalculatedFieldUtilsTest {
         AssetId z1 = new AssetId(zoneId1);
         AssetId z2 = new AssetId(zoneId2);
 
-        JsonDataEntry zone1 = new JsonDataEntry("zone", "{\"type\":\"POLYGON\",\"polygonsDefinition\":\"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]\"}");
-        JsonDataEntry zone2 = new JsonDataEntry("zone", "{\"type\":\"POLYGON\",\"polygonsDefinition\":\"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]\"}");
+        JsonDataEntry zone1 = new JsonDataEntry("zone", "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]");
+        JsonDataEntry zone2 = new JsonDataEntry("zone", "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]");
 
         BaseAttributeKvEntry zone1PerimeterAttribute = new BaseAttributeKvEntry(zone1, System.currentTimeMillis(), 0L);
         BaseAttributeKvEntry zone2PerimeterAttribute = new BaseAttributeKvEntry(zone2, System.currentTimeMillis(), 0L);

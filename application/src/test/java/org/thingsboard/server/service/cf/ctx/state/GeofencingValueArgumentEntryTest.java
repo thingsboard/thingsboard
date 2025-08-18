@@ -36,12 +36,10 @@ public class GeofencingValueArgumentEntryTest {
     private final AssetId ZONE_1_ID = new AssetId(UUID.fromString("c0e3031c-7df1-45e4-9590-cfd621a4d714"));
     private final AssetId ZONE_2_ID = new AssetId(UUID.fromString("e7da6200-2096-4038-a343-ade9ea4fa3e4"));
 
-    private final JsonDataEntry allowedZoneDataEntry = new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}""");
+    private final JsonDataEntry allowedZoneDataEntry = new JsonDataEntry("zone", "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]");
     private final BaseAttributeKvEntry allowedZoneAttributeKvEntry = new BaseAttributeKvEntry(allowedZoneDataEntry, 363L, 155L);
 
-    private final JsonDataEntry restrictedZoneDataEntry = new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]"}""");
+    private final JsonDataEntry restrictedZoneDataEntry = new JsonDataEntry("zone", "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]");
     private final BaseAttributeKvEntry restrictedZoneAttributeKvEntry = new BaseAttributeKvEntry(restrictedZoneDataEntry, 363L, 155L);
 
     private GeofencingArgumentEntry entry;
@@ -72,8 +70,7 @@ public class GeofencingValueArgumentEntryTest {
 
     @Test
     void testUpdateEntryWithTheSameTs() {
-        BaseAttributeKvEntry differentValueSameTs = new BaseAttributeKvEntry(new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"}"""), 363L, 156L);
+        BaseAttributeKvEntry differentValueSameTs = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 363L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueSameTs, ZONE_2_ID, restrictedZoneAttributeKvEntry));
         assertThat(entry.updateEntry(updated)).isFalse();
     }
@@ -81,8 +78,7 @@ public class GeofencingValueArgumentEntryTest {
     @Test
     @SuppressWarnings("unchecked")
     void testUpdateEntryWhenNewVersionIsNull() {
-        BaseAttributeKvEntry differentValueNewVersionIsNull = new BaseAttributeKvEntry(new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"}"""), 364L, null);
+        BaseAttributeKvEntry differentValueNewVersionIsNull = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, null);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueNewVersionIsNull, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
         assertThat(entry.updateEntry(updated)).isTrue();
@@ -104,8 +100,7 @@ public class GeofencingValueArgumentEntryTest {
     @Test
     @SuppressWarnings("unchecked")
     void testUpdateEntryWhenNewVersionIsGreaterThanCurrent() {
-        BaseAttributeKvEntry differentValueNewVersionIsSet = new BaseAttributeKvEntry(new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"}"""), 364L, 156L);
+        BaseAttributeKvEntry differentValueNewVersionIsSet = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueNewVersionIsSet, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
         assertThat(entry.updateEntry(updated)).isTrue();
@@ -126,8 +121,7 @@ public class GeofencingValueArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenNewVersionIsLessThanCurrent() {
-        BaseAttributeKvEntry differentValueNewVersionIsSet = new BaseAttributeKvEntry(new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"}"""), 364L, 154L);
+        BaseAttributeKvEntry differentValueNewVersionIsSet = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, 154L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, differentValueNewVersionIsSet, ZONE_2_ID, restrictedZoneAttributeKvEntry));
 
         assertThat(entry.updateEntry(updated)).isFalse();
@@ -152,8 +146,7 @@ public class GeofencingValueArgumentEntryTest {
     @Test
     void testUpdateEntryWithNewZone() {
         final AssetId NEW_ZONE_ID = new AssetId(UUID.fromString("a3eacf1a-6af3-4e9f-87c4-502bb25c7dc3"));
-        BaseAttributeKvEntry newZone = new BaseAttributeKvEntry(new JsonDataEntry("zone", """
-            {"type":"POLYGON","polygonsDefinition":"[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"}"""), 364L, 156L);
+        BaseAttributeKvEntry newZone = new BaseAttributeKvEntry(new JsonDataEntry("zone", "[[50.472001, 30.504001], [50.472001, 30.506001], [50.474001, 30.506001], [50.474001, 30.504001]]"), 364L, 156L);
         var updated = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, allowedZoneAttributeKvEntry, ZONE_2_ID, restrictedZoneAttributeKvEntry, NEW_ZONE_ID, newZone));
         assertThat(entry.updateEntry(updated)).isTrue();
     }

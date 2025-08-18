@@ -622,13 +622,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         Device device = createDevice("GF Device", "sn-geo-1");
 
         // Allowed zone polygon (square)
-        String allowedPolygon = """
-                {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
-                """;
+        String allowedPolygon = "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]";
         // Restricted zone polygon (square)
-        String restrictedPolygon = """
-                {"type":"POLYGON","polygonsDefinition":"[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]"}
-                """;
+        String restrictedPolygon = "[[50.475000, 30.510000], [50.475000, 30.512000], [50.477000, 30.512000], [50.477000, 30.510000]]";
 
         Asset allowedZoneAsset = createAsset("Allowed Zone", null);
         doPost("/api/plugins/telemetry/ASSET/" + allowedZoneAsset.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
@@ -768,9 +764,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         Device device = createDevice("GF Device dyn", "sn-geo-dyn-1");
 
         // Allowed Zone A: covers initial point (ENTERED)
-        String allowedPolygonA = """
-                {"type":"POLYGON","polygonsDefinition":"[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]"}
-                """;
+        String allowedPolygonA = "[[50.472000, 30.504000], [50.472000, 30.506000], [50.474000, 30.506000], [50.474000, 30.504000]]";
 
         Asset allowedZoneA = createAsset("Allowed Zone A", null);
         doPost("/api/plugins/telemetry/ASSET/" + allowedZoneA.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,
@@ -863,9 +857,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         // --- Create Allowed Zone B covering the CURRENT location ---
-        String allowedPolygonB = """
-                {"type":"POLYGON","polygonsDefinition":"[[50.475500, 30.510500], [50.475500, 30.511500], [50.476500, 30.511500], [50.476500, 30.510500]]"}
-                """;
+        String allowedPolygonB = "[[50.475500, 30.510500], [50.475500, 30.511500], [50.476500, 30.511500], [50.476500, 30.510500]]";
 
         Asset allowedZoneB = createAsset("Allowed Zone B", null);
         doPost("/api/plugins/telemetry/ASSET/" + allowedZoneB.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE,

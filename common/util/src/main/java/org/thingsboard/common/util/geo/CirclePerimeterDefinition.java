@@ -20,10 +20,9 @@ import lombok.Data;
 @Data
 public class CirclePerimeterDefinition implements PerimeterDefinition {
 
-    private Double centerLatitude;
-    private Double centerLongitude;
-    private Double range;
-    private RangeUnit rangeUnit;
+    private final Double latitude;
+    private final Double longitude;
+    private final Double radius;
 
     @Override
     public PerimeterType getType() {
@@ -32,9 +31,8 @@ public class CirclePerimeterDefinition implements PerimeterDefinition {
 
     @Override
     public boolean checkMatches(Coordinates entityCoordinates) {
-        Coordinates perimeterCoordinates = new Coordinates(centerLatitude, centerLongitude);
-        return range > GeoUtil.distance(entityCoordinates, perimeterCoordinates, rangeUnit);
+        Coordinates perimeterCoordinates = new Coordinates(latitude, longitude);
+        return radius > GeoUtil.distance(entityCoordinates, perimeterCoordinates, RangeUnit.METER);
     }
-
 
 }
