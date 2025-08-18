@@ -5276,7 +5276,7 @@
     "add-originator-attributes-to": "Tilføj afsenders attributter til",
     "originator-attributes": "Afsenders attributter",
     "fetch-latest-telemetry-with-timestamp": "Hent seneste telemetry med tidsstempel",
-    "fetch-latest-telemetry-with-timestamp-tooltip": "Inkluderer tidsstempel i metadata, f.eks.: \"{{latestTsKeyName}}\": \"{ts:1574329385897, value:42}\"",
+    "fetch-latest-telemetry-with-timestamp-tooltip": "Inkluderer tidsstempel i metadata, f.eks.: \"{{latestTsKeyName}}\": \"{\"ts\":1574329385897, \"value\":42}\"",
     "tell-failure": "Rapportér fejl hvis attribut mangler",
     "tell-failure-tooltip": "Rapporterer fejl hvis mindst én valgt nøgle mangler.",
     "created-time": "Oprettelsestid",
