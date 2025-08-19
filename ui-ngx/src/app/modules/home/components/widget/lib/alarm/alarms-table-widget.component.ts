@@ -851,6 +851,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               content = this.defaultContent(key, contentInfo, value);
             }
             if (isDefined(content)) {
+              if (typeof content === 'object') {
+                content = JSON.stringify(content);
+              }
               content = this.utils.customTranslation(content, content);
               switch (typeof content) {
                 case 'string':
