@@ -16,14 +16,13 @@
 package org.thingsboard.server.msa.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -31,9 +30,11 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
@@ -45,14 +46,19 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.thingsboard.server.common.data.AttributeScope.SERVER_SCOPE;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultAssetProfile;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultDeviceProfile;
 import static org.thingsboard.server.msa.ui.utils.EntityPrototypes.defaultTenantAdmin;
@@ -98,13 +104,13 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         asset = testRestClient.postAsset(createAsset("Asset 1", assetProfileId));
 
         testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":25}"));
-        testRestClient.postTelemetryAttribute(device.getId(), DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"deviceTemperature\":40}"));
+        testRestClient.postTelemetryAttribute(device.getId(), SERVER_SCOPE, JacksonUtil.toJsonNode("{\"deviceTemperature\":40}"));
 
         testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperatureInF\":72.32}"));
         testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperatureInF\":72.86}"));
         testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperatureInF\":73.58}"));
 
-        testRestClient.postTelemetryAttribute(asset.getId(), DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1035}"));
+        testRestClient.postTelemetryAttribute(asset.getId(), SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1035}"));
     }
 
     @BeforeMethod
@@ -147,7 +153,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         CalculatedField savedCalculatedField = createSimpleCalculatedField();
 
         Argument savedArgument = savedCalculatedField.getConfiguration().getArguments().get("T");
-        savedArgument.setRefEntityKey(new ReferencedEntityKey("deviceTemperature", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        savedArgument.setRefEntityKey(new ReferencedEntityKey("deviceTemperature", ArgumentType.ATTRIBUTE, SERVER_SCOPE));
         testRestClient.postCalculatedField(savedCalculatedField);
 
         await().alias("update CF argument -> perform calculation with new argument").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -170,14 +176,14 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         Output savedOutput = savedCalculatedField.getConfiguration().getOutput();
         savedOutput.setType(OutputType.ATTRIBUTES);
-        savedOutput.setScope(AttributeScope.SERVER_SCOPE);
+        savedOutput.setScope(SERVER_SCOPE);
         savedOutput.setName("temperatureF");
         testRestClient.postCalculatedField(savedCalculatedField);
 
         await().alias("update CF output -> perform calculation with updated output").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    JsonNode temperatureF = testRestClient.getAttributes(device.getId(), AttributeScope.SERVER_SCOPE, "temperatureF");
+                    ArrayNode temperatureF = testRestClient.getAttributes(device.getId(), SERVER_SCOPE, "temperatureF");
                     assertThat(temperatureF).isNotNull();
                     assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("77.0");
                 });
@@ -296,7 +302,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
                     assertThat(airDensity.get("airDensity").get(0).get("value").asText()).isEqualTo("1.05");
                 });
 
-        testRestClient.postTelemetryAttribute(asset.getId(), DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1531}"));
+        testRestClient.postTelemetryAttribute(asset.getId(), SERVER_SCOPE, JacksonUtil.toJsonNode("{\"altitude\":1531}"));
 
         await().alias("create CF -> update telemetry for common entity").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -307,6 +313,112 @@ public class CalculatedFieldTest extends AbstractContainerTest {
                 });
 
         testRestClient.deleteCalculatedFieldIfExists(savedCalculatedField.getId());
+    }
+
+    @Test
+    public void testPerformSerialsOfCalculationsForGeofencingType() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId);
+
+        // Device and initial coords (inside Allowed, outside Restricted)
+        String deviceToken = "geoDeviceTokenA";
+        Device device = testRestClient.postDevice(deviceToken, createDevice("GF Device", deviceProfileId));
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"latitude\":50.4730,\"longitude\":30.5050}"));
+
+        // Create zones
+        Asset allowed = testRestClient.postAsset(createAsset("Allowed Zone", null));
+        testRestClient.postTelemetryAttribute(allowed.getId(), SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"zone\":[[50.472000,30.504000],[50.472000,30.506000],[50.474000,30.506000],[50.474000,30.504000]]}"));
+
+        Asset restricted = testRestClient.postAsset(createAsset("Restricted Zone", null));
+        testRestClient.postTelemetryAttribute(restricted.getId(), SERVER_SCOPE,
+                JacksonUtil.toJsonNode("{\"zone\":[[50.475000,30.510000],[50.475000,30.512000],[50.477000,30.512000],[50.477000,30.510000]]}"));
+
+        // Relations FROM device
+        testRestClient.postEntityRelation(new EntityRelation(device.getId(), allowed.getId(), "AllowedZone"));
+        testRestClient.postEntityRelation(new EntityRelation(device.getId(), restricted.getId(), "RestrictedZone"));
+
+        // Build CF: GEOFENCING -> attributes output
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.GEOFENCING);
+        cf.setName("Geofencing CF");
+        cf.setDebugSettings(DebugSettings.off());
+
+        GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
+
+        Argument lat = new Argument();
+        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
+        Argument lon = new Argument();
+        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+
+        // Dynamic groups via relations
+        Argument allowedArg = new Argument();
+        var dynAllowed = new RelationQueryDynamicSourceConfiguration();
+        dynAllowed.setDirection(EntitySearchDirection.FROM);
+        dynAllowed.setRelationType("AllowedZone");
+        dynAllowed.setMaxLevel(1);
+        dynAllowed.setFetchLastLevelOnly(true);
+        allowedArg.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, SERVER_SCOPE));
+        allowedArg.setRefDynamicSourceConfiguration(dynAllowed);
+
+        Argument restrictedArg = new Argument();
+        var dynRestricted = new RelationQueryDynamicSourceConfiguration();
+        dynRestricted.setDirection(EntitySearchDirection.FROM);
+        dynRestricted.setRelationType("RestrictedZone");
+        dynRestricted.setMaxLevel(1);
+        dynRestricted.setFetchLastLevelOnly(true);
+        restrictedArg.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, SERVER_SCOPE));
+        restrictedArg.setRefDynamicSourceConfiguration(dynRestricted);
+
+        cfg.setArguments(Map.of(
+                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
+                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
+                "allowedZones", allowedArg,
+                "restrictedZones", restrictedArg
+        ));
+        cfg.setZoneGroupReportStrategies(Map.of(
+                "allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS,
+                "restrictedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS
+        ));
+        Output out = new Output();
+        out.setType(OutputType.ATTRIBUTES);
+        out.setScope(SERVER_SCOPE);
+        cfg.setOutput(out);
+        cf.setConfiguration(cfg);
+
+        CalculatedField saved = testRestClient.postCalculatedField(cf);
+
+        // Initial ENTERED/INSIDE and OUTSIDE
+        await().alias("initial geofencing evaluation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = testRestClient.getAttributes(device.getId(), SERVER_SCOPE,
+                            "allowedZonesEvent,allowedZonesStatus,restrictedZonesStatus");
+                    assertThat(attrs).isNotNull().hasSize(3);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
+                            .containsEntry("allowedZonesStatus", "INSIDE")
+                            .containsEntry("restrictedZonesStatus", "OUTSIDE");
+                });
+
+        // Move device into Restricted zone -> expect LEFT/ENTERED and statuses flipped
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"latitude\":50.4760,\"longitude\":30.5110}"));
+
+        await().alias("transition after movement").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs = testRestClient.getAttributes(device.getId(), SERVER_SCOPE,
+                            "allowedZonesEvent,allowedZonesStatus,restrictedZonesEvent,restrictedZonesStatus");
+                    assertThat(attrs).isNotNull().hasSize(4);
+                    Map<String, String> m = kv(attrs);
+                    assertThat(m).containsEntry("allowedZonesEvent", "LEFT")
+                            .containsEntry("allowedZonesStatus", "OUTSIDE")
+                            .containsEntry("restrictedZonesEvent", "ENTERED")
+                            .containsEntry("restrictedZonesStatus", "INSIDE");
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(saved.getId());
     }
 
     private CalculatedField createSimpleCalculatedField() {
@@ -356,7 +468,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         Argument argument1 = new Argument();
         argument1.setRefEntityId(asset.getId());
-        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE);
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("altitude", ArgumentType.ATTRIBUTE, SERVER_SCOPE);
         argument1.setRefEntityKey(refEntityKey1);
         Argument argument2 = new Argument();
         ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("temperatureInF", ArgumentType.TS_ROLLING, null);
@@ -394,6 +506,14 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         asset.setName(name);
         asset.setAssetProfileId(assetProfileId);
         return asset;
+    }
+
+    private static Map<String, String> kv(ArrayNode attrs) {
+        Map<String, String> m = new HashMap<>();
+        for (JsonNode n : attrs) {
+            m.put(n.get("key").asText(), n.get("value").asText());
+        }
+        return m;
     }
 
 }
