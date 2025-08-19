@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -217,7 +218,6 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(state.isReady()).isFalse();
     }
 
-    // TODO: test different reporting strategies
     @Test
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of(
@@ -264,6 +264,147 @@ public class GeofencingCalculatedFieldStateTest {
                         .put("restrictedZonesStatus", "INSIDE")
         );
 
+        // Check relations are created and deleted correctly for both iterations.
+        ArgumentCaptor<EntityRelation> saveCaptor = ArgumentCaptor.forClass(EntityRelation.class);
+        verify(relationService, times(2)).saveRelationAsync(eq(ctx.getTenantId()), saveCaptor.capture());
+        List<EntityRelation> saveValues = saveCaptor.getAllValues();
+        assertThat(saveValues).hasSize(2);
+
+        EntityRelation relationFromFirstIteration = saveValues.get(0);
+        assertThat(relationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
+        assertThat(relationFromFirstIteration.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(relationFromFirstIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+
+        EntityRelation relationFromSecondIteration = saveValues.get(1);
+        assertThat(relationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
+        assertThat(relationFromSecondIteration.getFrom()).isEqualTo(ZONE_2_ID);
+        assertThat(relationFromSecondIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+
+        ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
+        verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
+        EntityRelation leftRelation = deleteCaptor.getValue();
+        assertThat(leftRelation.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(leftRelation.getTo()).isEqualTo(ctx.getEntityId());
+    }
+
+    @Test
+    void testPerformCalculationWithOnlyTransitionEventsReportingStrategy() throws ExecutionException, InterruptedException {
+        state.arguments = new HashMap<>(Map.of(
+                ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
+                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
+                "allowedZones", geofencingAllowedZoneArgEntry,
+                "restrictedZones", geofencingRestrictedZoneArgEntry
+        ));
+
+        Output output = ctx.getOutput();
+
+        var calculatedFieldConfig = getCalculatedFieldConfig(GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_ONLY);
+
+        ctx.setCalculatedField(getCalculatedField(calculatedFieldConfig));
+        ctx.init();
+
+        var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+
+        when(relationService.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
+        when(relationService.deleteRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
+
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
+
+        assertThat(result).isNotNull();
+        assertThat(result.getType()).isEqualTo(output.getType());
+        assertThat(result.getScope()).isEqualTo(output.getScope());
+        assertThat(result.getResult()).isEqualTo(
+                JacksonUtil.newObjectNode().put("allowedZonesEvent", "ENTERED")
+        );
+
+        SingleValueArgumentEntry newLatitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 50.4760), 146L);
+        SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
+
+        // move the device to new coordinates → leaves allowed, enters restricted
+        state.updateState(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude));
+
+        CalculatedFieldResult result2 = state.performCalculation(ctx.getEntityId(), ctx).get();
+
+        assertThat(result2).isNotNull();
+        assertThat(result2.getType()).isEqualTo(output.getType());
+        assertThat(result2.getScope()).isEqualTo(output.getScope());
+        assertThat(result2.getResult()).isEqualTo(
+                JacksonUtil.newObjectNode()
+                        .put("allowedZonesEvent", "LEFT")
+                        .put("restrictedZonesEvent", "ENTERED")
+        );
+
+        // Check relations are created and deleted correctly for both iterations.
+        ArgumentCaptor<EntityRelation> saveCaptor = ArgumentCaptor.forClass(EntityRelation.class);
+        verify(relationService, times(2)).saveRelationAsync(eq(ctx.getTenantId()), saveCaptor.capture());
+        List<EntityRelation> saveValues = saveCaptor.getAllValues();
+        assertThat(saveValues).hasSize(2);
+
+        EntityRelation relationFromFirstIteration = saveValues.get(0);
+        assertThat(relationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
+        assertThat(relationFromFirstIteration.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(relationFromFirstIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+
+        EntityRelation relationFromSecondIteration = saveValues.get(1);
+        assertThat(relationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
+        assertThat(relationFromSecondIteration.getFrom()).isEqualTo(ZONE_2_ID);
+        assertThat(relationFromSecondIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+
+        ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
+        verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
+        EntityRelation leftRelation = deleteCaptor.getValue();
+        assertThat(leftRelation.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(leftRelation.getTo()).isEqualTo(ctx.getEntityId());
+    }
+
+    @Test
+    void testPerformCalculationWithOnlyPresenceStatusReportingStrategy() throws ExecutionException, InterruptedException {
+        state.arguments = new HashMap<>(Map.of(
+                ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
+                ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
+                "allowedZones", geofencingAllowedZoneArgEntry,
+                "restrictedZones", geofencingRestrictedZoneArgEntry
+        ));
+
+        Output output = ctx.getOutput();
+
+        var calculatedFieldConfig = getCalculatedFieldConfig(GeofencingReportStrategy.REPORT_PRESENCE_STATUS_ONLY);
+
+        ctx.setCalculatedField(getCalculatedField(calculatedFieldConfig));
+        ctx.init();
+
+        var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+
+        when(relationService.saveRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
+        when(relationService.deleteRelationAsync(any(), any())).thenReturn(Futures.immediateFuture(true));
+
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
+
+        assertThat(result).isNotNull();
+        assertThat(result.getType()).isEqualTo(output.getType());
+        assertThat(result.getScope()).isEqualTo(output.getScope());
+        assertThat(result.getResult()).isEqualTo(
+                JacksonUtil.newObjectNode()
+                        .put("allowedZonesStatus", "INSIDE")
+                        .put("restrictedZonesStatus", "OUTSIDE")
+        );
+
+        SingleValueArgumentEntry newLatitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 50.4760), 146L);
+        SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
+
+        // move the device to new coordinates → leaves allowed, enters restricted
+        state.updateState(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude));
+
+        CalculatedFieldResult result2 = state.performCalculation(ctx.getEntityId(), ctx).get();
+
+        assertThat(result2).isNotNull();
+        assertThat(result2.getType()).isEqualTo(output.getType());
+        assertThat(result2.getScope()).isEqualTo(output.getScope());
+        assertThat(result2.getResult()).isEqualTo(
+                JacksonUtil.newObjectNode()
+                        .put("allowedZonesStatus", "OUTSIDE")
+                        .put("restrictedZonesStatus", "INSIDE")
+        );
 
         // Check relations are created and deleted correctly for both iterations.
         ArgumentCaptor<EntityRelation> saveCaptor = ArgumentCaptor.forClass(EntityRelation.class);
@@ -289,18 +430,22 @@ public class GeofencingCalculatedFieldStateTest {
     }
 
     private CalculatedField getCalculatedField() {
+        return getCalculatedField(getCalculatedFieldConfig(REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
+    }
+
+    private CalculatedField getCalculatedField(CalculatedFieldConfiguration configuration) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(TENANT_ID);
         calculatedField.setEntityId(DEVICE_ID);
         calculatedField.setType(CalculatedFieldType.GEOFENCING);
         calculatedField.setName("Test Geofencing Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(getCalculatedFieldConfig());
+        calculatedField.setConfiguration(configuration);
         calculatedField.setVersion(1L);
         return calculatedField;
     }
 
-    private CalculatedFieldConfiguration getCalculatedFieldConfig() {
+    private CalculatedFieldConfiguration getCalculatedFieldConfig(GeofencingReportStrategy reportStrategy) {
         var config = new GeofencingCalculatedFieldConfiguration();
 
         Argument argument1 = new Argument();
@@ -335,7 +480,7 @@ public class GeofencingCalculatedFieldStateTest {
 
         config.setArguments(Map.of("latitude", argument1, "longitude", argument2, "allowedZones", argument3, "restrictedZones", argument4));
 
-        config.setZoneGroupReportStrategies(Map.of("allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, "restrictedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
+        config.setZoneGroupReportStrategies(Map.of("allowedZones", reportStrategy, "restrictedZones", reportStrategy));
 
         config.setCreateRelationsWithMatchedZones(true);
         config.setZoneRelationType("CurrentZone");

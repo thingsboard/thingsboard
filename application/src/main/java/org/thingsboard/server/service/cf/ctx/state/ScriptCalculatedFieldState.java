@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
@@ -38,6 +39,7 @@ import java.util.Map;
 @Data
 @Slf4j
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
     public ScriptCalculatedFieldState(List<String> requiredArguments) {
@@ -47,10 +49,6 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SCRIPT;
-    }
-
-    @Override
-    protected void validateNewEntry(ArgumentEntry newEntry) {
     }
 
     @Override

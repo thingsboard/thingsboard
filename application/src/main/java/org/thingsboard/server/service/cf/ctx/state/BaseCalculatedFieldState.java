@@ -93,7 +93,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         }
     }
 
-    protected abstract void validateNewEntry(ArgumentEntry newEntry);
+    protected void validateNewEntry(ArgumentEntry newEntry) {}
 
     private void updateLastUpdateTimestamp(ArgumentEntry entry) {
         long newTs = this.latestTimestamp;

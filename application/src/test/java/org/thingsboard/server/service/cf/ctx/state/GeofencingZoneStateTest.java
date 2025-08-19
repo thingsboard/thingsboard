@@ -84,4 +84,84 @@ public class GeofencingZoneStateTest {
         assertThat(state.evaluate(inside)).isEqualTo(new GeofencingEvalResult(null, INSIDE));
     }
 
+    @Test
+    void update_withNewerVersion_updatesState_andResetsPresence() {
+        // arrange: establish a prior presence to ensure it’s reset on update
+        var inside = new Coordinates(50.4730, 30.5050);
+        assertThat(state.evaluate(inside)).isNotNull(); // sets lastPresence internally
+
+        String NEW_POLYGON = "[[50.470000, 30.502000], [50.470000, 30.503000], [50.471000, 30.503000], [50.471000, 30.502000]]";
+        GeofencingZoneState newer = new GeofencingZoneState(
+                ZONE_ID,
+                new BaseAttributeKvEntry(new JsonDataEntry("zone", NEW_POLYGON), 200L, 2L)
+        );
+
+        // act
+        boolean changed = state.update(newer);
+
+        // assert
+        assertThat(changed).isTrue();
+        assertThat(state.getTs()).isEqualTo(200L);
+        assertThat(state.getVersion()).isEqualTo(2L);
+        assertThat(state.getPerimeterDefinition()).isNotNull();
+        assertThat(state.getLastPresence()).isNull(); // must be reset on successful update
+    }
+
+    @Test
+    void update_withEqualVersion_doesNothing() {
+        // arrange: same version (1L) but different ts/polygon should still be ignored
+        String SOME_POLYGON = "[[50.472500, 30.504500], [50.472500, 30.505500], [50.473500, 30.505500], [50.473500, 30.504500]]";
+        GeofencingZoneState sameVersion = new GeofencingZoneState(
+                ZONE_ID,
+                new BaseAttributeKvEntry(new JsonDataEntry("zone", SOME_POLYGON), 300L, 1L)
+        );
+
+        // act
+        boolean changed = state.update(sameVersion);
+
+        // assert: nothing changes
+        assertThat(changed).isFalse();
+        assertThat(state.getTs()).isEqualTo(100L);
+        assertThat(state.getVersion()).isEqualTo(1L);
+    }
+
+    @Test
+    void update_withNullNewVersion_alwaysApplies_andCopiesNull() {
+        // arrange: the implementation updates if newVersion == null
+        String OTHER_POLYGON = "[[50.471000, 30.506000], [50.471000, 30.507000], [50.472000, 30.507000], [50.472000, 30.506000]]";
+        GeofencingZoneState nullVersion = new GeofencingZoneState(
+                ZONE_ID,
+                new BaseAttributeKvEntry(new JsonDataEntry("zone", OTHER_POLYGON), 400L, null)
+        );
+
+        // act
+        boolean changed = state.update(nullVersion);
+
+        // assert: applied and version copied as null
+        assertThat(changed).isTrue();
+        assertThat(state.getTs()).isEqualTo(400L);
+        assertThat(state.getVersion()).isNull();
+        assertThat(state.getLastPresence()).isNull();
+    }
+
+    @Test
+    void update_withNewVersionWhenExistingIsNull_alwaysApplies_andCopiesNew() {
+        // arrange: the implementation updates if newVersion == null
+        String OTHER_POLYGON = "[[50.471000, 30.506000], [50.471000, 30.507000], [50.472000, 30.507000], [50.472000, 30.506000]]";
+        GeofencingZoneState newVersion = new GeofencingZoneState(
+                ZONE_ID,
+                new BaseAttributeKvEntry(new JsonDataEntry("zone", OTHER_POLYGON), 400L, 2L)
+        );
+        state.setVersion(null);
+
+        // act
+        boolean changed = state.update(newVersion);
+
+        // assert: applied and version copied as null
+        assertThat(changed).isTrue();
+        assertThat(state.getTs()).isEqualTo(400L);
+        assertThat(state.getVersion()).isEqualTo(2);
+        assertThat(state.getLastPresence()).isNull();
+    }
+
 }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
@@ -34,6 +35,7 @@ import java.util.Map;
 
 @Data
 @NoArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
     public SimpleCalculatedFieldState(List<String> requiredArguments) {

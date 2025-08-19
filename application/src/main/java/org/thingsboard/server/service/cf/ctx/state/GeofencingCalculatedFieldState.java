@@ -19,8 +19,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -30,8 +30,6 @@ import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionE
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
-import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -45,24 +43,18 @@ import static org.thingsboard.server.common.data.cf.configuration.GeofencingPres
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
 
 @Data
-@AllArgsConstructor
-public class GeofencingCalculatedFieldState implements CalculatedFieldState {
-
-    private List<String> requiredArguments;
-    Map<String, ArgumentEntry> arguments;
-    private boolean sizeExceedsLimit;
-
-    private long latestTimestamp = -1;
+@EqualsAndHashCode(callSuper = true)
+public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
     private boolean dirty;
 
     public GeofencingCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1, false);
+        super(new ArrayList<>(), new HashMap<>(), false, -1);
+        this.dirty = false;
     }
 
     public GeofencingCalculatedFieldState(List<String> argNames) {
-        this.requiredArguments = argNames;
-        this.arguments = new HashMap<>();
+        super(argNames);
     }
 
     @Override
@@ -128,21 +120,6 @@ public class GeofencingCalculatedFieldState implements CalculatedFieldState {
         }
         return calculateWithoutRelations(ctx, entityCoordinates, configuration);
     }
-
-    @Override
-    public boolean isReady() {
-        return arguments.keySet().containsAll(requiredArguments) &&
-               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
-    }
-
-    @Override
-    public void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize) {
-        if (!sizeExceedsLimit && maxStateSize > 0 && CalculatedFieldUtils.toProto(ctxId, this).getSerializedSize() > maxStateSize) {
-            arguments.clear();
-            sizeExceedsLimit = true;
-        }
-    }
-
 
     private ListenableFuture<CalculatedFieldResult> calculateWithRelations(
             EntityId entityId,
