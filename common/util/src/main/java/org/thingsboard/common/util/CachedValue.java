@@ -13,18 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.common.util;
 
-public interface TbQueueAdmin {
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 
-    default void createTopicIfNotExists(String topic) {
-        createTopicIfNotExists(topic, null, false);
+import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
+
+public class CachedValue<V> {
+
+    private final LoadingCache<Object, V> cache;
+
+    public CachedValue(Supplier<V> supplier, long valueTtlMs) {
+        this.cache = Caffeine.newBuilder()
+                .expireAfterWrite(valueTtlMs, TimeUnit.MILLISECONDS)
+                .build(__ -> supplier.get());
     }
 
-    void createTopicIfNotExists(String topic, String properties, boolean force);
-
-    void destroy();
-
-    void deleteTopic(String topic);
+    public V get() {
+        return cache.get(this);
+    }
 
 }
