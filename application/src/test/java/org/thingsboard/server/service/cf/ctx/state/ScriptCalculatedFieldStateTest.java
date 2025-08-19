@@ -20,7 +20,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
@@ -60,7 +60,7 @@ public class ScriptCalculatedFieldStateTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5512071d-5abc-411d-a907-4cdb6539c2eb"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("5bc010ae-bcfd-46c8-98b9-8ee8c8955a76"));
 
-    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("assetHumidity", 43.0), 122L);
+    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("assetHumidity", 86.0), 122L);
     private final TsRollingArgumentEntry deviceTemperatureArgEntry = createRollingArgEntry();
 
     private final long ts = System.currentTimeMillis();
@@ -71,7 +71,7 @@ public class ScriptCalculatedFieldStateTest {
     @Autowired
     private TbelInvokeService tbelInvokeService;
 
-    @MockBean
+    @MockitoBean
     private ApiLimitService apiLimitService;
 
     @BeforeEach
@@ -134,6 +134,22 @@ public class ScriptCalculatedFieldStateTest {
     }
 
     @Test
+    void testPerformCalculationWithLongEntry() throws ExecutionException, InterruptedException {
+        state.arguments = new HashMap<>(Map.of(
+                "deviceTemperature", deviceTemperatureArgEntry,
+                "assetHumidity", new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new LongDataEntry("a", 45L), 10L)
+        ));
+
+        CalculatedFieldResult result = state.performCalculation(ctx).get();
+
+        assertThat(result).isNotNull();
+        Output output = getCalculatedFieldConfig().getOutput();
+        assertThat(result.getType()).isEqualTo(output.getType());
+        assertThat(result.getScope()).isEqualTo(output.getScope());
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("maxDeviceTemperature", 17.0, "assetHumidity", 22.5)));
+    }
+
+    @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
     }
@@ -193,7 +209,7 @@ public class ScriptCalculatedFieldStateTest {
 
         config.setArguments(Map.of("deviceTemperature", argument1, "assetHumidity", argument2));
 
-        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity}");
+        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity / 2 }");
 
         Output output = new Output();
         output.setType(OutputType.ATTRIBUTES);
