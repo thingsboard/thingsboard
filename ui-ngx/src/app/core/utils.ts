@@ -27,7 +27,8 @@ import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import {
   CompiledTbFunction,
-  compileTbFunction, GenericFunction,
+  compileTbFunction,
+  GenericFunction,
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
@@ -191,6 +192,23 @@ export function deleteNullProperties(obj: any) {
     } else if (Array.isArray(obj[propName])) {
       (obj[propName] as any[]).forEach((elem) => {
         deleteNullProperties(elem);
+      });
+    }
+  });
+}
+
+export function deleteFalseProperties(obj: Record<string, any>): void  {
+  if (isUndefinedOrNull(obj)) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === false || isUndefinedOrNull(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteFalseProperties(obj[propName]);
+    } else if (Array.isArray(obj[propName])) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteFalseProperties(elem);
       });
     }
   });
@@ -773,6 +791,33 @@ export function deepTrim<T>(obj: T): T {
   }, (Array.isArray(obj) ? [] : {}) as T);
 }
 
+export function deepClean<T extends Record<string, any> | any[]>(obj: T, {
+  cleanKeys = []
+} = {}): T {
+  return _.transform(obj, (result, value, key) => {
+    if (cleanKeys.includes(key)) {
+      return;
+    }
+    if (Array.isArray(value) || isLiteralObject(value)) {
+      value = deepClean(value, {cleanKeys});
+    }
+    if(isLiteralObject(value) && isEmpty(value)) {
+      return;
+    }
+    if (Array.isArray(value) && !value.length) {
+      return;
+    }
+    if (value === undefined || value === null || value === '' || Number.isNaN(value)) {
+      return;
+    }
+
+    if (Array.isArray(result)) {
+      return result.push(value);
+    }
+    result[key] = value;
+  });
+}
+
 export function generateSecret(length?: number): string {
   if (isUndefined(length) || length == null) {
     length = 1;
@@ -958,3 +1003,28 @@ export const unwrapModule = (module: any) : any => {
     return module;
   }
 };
+
+export const trimDefaultValues = (input: Record<string, any>, defaults: Record<string, any>): Record<string, any> => {
+  const result: Record<string, any> = {};
+
+  for (const key in input) {
+    if (!(key in defaults)) {
+      result[key] = input[key];
+    } else if (typeof defaults[key] === 'object' && defaults[key] !== null && typeof input[key] === 'object' && input[key] !== null) {
+      const subPatch = trimDefaultValues(input[key], defaults[key]);
+      if (Object.keys(subPatch).length > 0) {
+        result[key] = subPatch;
+      }
+    } else if (defaults[key] !== input[key]) {
+      result[key] = input[key];
+    }
+  }
+
+  for (const key in defaults) {
+    if (!(key in input)) {
+      delete result[key];
+    }
+  }
+
+  return result;
+}

@@ -193,10 +193,9 @@ class TbAiNodeTest {
     }
 
     static Stream<Arguments> invalidSystemPrompts() {
-        String tooLongString = "a".repeat(10_001);
+        String tooLongString = "a".repeat(500_001);
         return Stream.of(
                 Arguments.of(""),
-                Arguments.of("   "),
                 Arguments.of(tooLongString)
         );
     }
@@ -213,12 +212,17 @@ class TbAiNodeTest {
     }
 
     static Stream<Arguments> validSystemPrompts() {
-        String longString = "a".repeat(10_000);
+        String longString = "a".repeat(500_000);
         return Stream.of(
                 Arguments.of((String) null),
                 Arguments.of("a"),
                 Arguments.of("Test system prompt"),
-                Arguments.of(longString)
+                Arguments.of(longString),
+                Arguments.of("""
+                        first sentence
+                        
+                        second sentence
+                        """)
         );
     }
 
@@ -239,7 +243,7 @@ class TbAiNodeTest {
     }
 
     static Stream<Arguments> invalidUserPrompts() {
-        String tooLongString = "a".repeat(10_001);
+        String tooLongString = "a".repeat(500_001);
         return Stream.of(
                 Arguments.of((String) null),
                 Arguments.of(""),
@@ -260,11 +264,16 @@ class TbAiNodeTest {
     }
 
     static Stream<Arguments> validUserPrompts() {
-        String longString = "a".repeat(10_000);
+        String longString = "a".repeat(500_000);
         return Stream.of(
                 Arguments.of("a"),
                 Arguments.of("Test user prompt"),
-                Arguments.of(longString)
+                Arguments.of(longString),
+                Arguments.of("""
+                        first sentence
+                        
+                        second sentence
+                        """)
         );
     }
 

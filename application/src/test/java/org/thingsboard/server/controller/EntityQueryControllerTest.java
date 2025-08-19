@@ -918,7 +918,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         List<QueueStats> queueStatsList = new ArrayList<>();
         for (int i = 0; i < 97; i++) {
             QueueStats queueStats = new QueueStats();
-            queueStats.setQueueName(StringUtils.randomAlphabetic(5));
+            queueStats.setQueueName("test" + StringUtils.randomAlphabetic(5));
             queueStats.setServiceId(StringUtils.randomAlphabetic(5));
             queueStats.setTenantId(savedTenant.getTenantId());
             queueStatsList.add(queueStatsService.save(savedTenant.getId(), queueStats));
@@ -934,8 +934,11 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
         List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"),
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "serviceId"));
+        List<KeyFilter> keyFilters = Collections.singletonList(
+                getEntityFieldStartsWithFilter("queueName", "test")
+        );
 
-        EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, null);
+        EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, keyFilters);
 
         PageData<EntityData> data = findByQueryAndCheck(query, 97);
         Assert.assertEquals(10, data.getTotalPages());
@@ -977,10 +980,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
         KeyFilter activeAlarmTimeToLongFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 30);
-        KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
-        KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
-        KeyFilter tenantOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
-        KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
+        KeyFilter tenantOwnerNameFilter = getEntityFieldEqualFilter("ownerName", TEST_TENANT_NAME);
+        KeyFilter wrongOwnerNameFilter = getEntityFieldEqualFilter("ownerName", "wrongName");
+        KeyFilter tenantOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "TENANT");
+        KeyFilter customerOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "CUSTOMER");
 
         // all devices with ownerName = TEST TENANT
         EntityCountQuery query = new EntityCountQuery(filter, List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
@@ -1026,10 +1029,10 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         filter.setDeviceNameFilter("");
 
         KeyFilter activeAlarmTimeFilter = getServerAttributeNumericGreaterThanKeyFilter("alarmActiveTime", 5);
-        KeyFilter tenantOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", TEST_TENANT_NAME);
-        KeyFilter wrongOwnerNameFilter = getEntityFieldStringEqualToKeyFilter("ownerName", "wrongName");
-        KeyFilter tenantOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "TENANT");
-        KeyFilter customerOwnerTypeFilter = getEntityFieldStringEqualToKeyFilter("ownerType", "CUSTOMER");
+        KeyFilter tenantOwnerNameFilter = getEntityFieldEqualFilter("ownerName", TEST_TENANT_NAME);
+        KeyFilter wrongOwnerNameFilter = getEntityFieldEqualFilter("ownerName", "wrongName");
+        KeyFilter tenantOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "TENANT");
+        KeyFilter customerOwnerTypeFilter = getEntityFieldEqualFilter("ownerType", "CUSTOMER");
 
         EntityDataSortOrder sortOrder = new EntityDataSortOrder(
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC
@@ -1171,15 +1174,23 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         return result;
     }
 
-    private KeyFilter getEntityFieldStringEqualToKeyFilter(String keyName, String value) {
-        KeyFilter tenantOwnerNameFilter = new KeyFilter();
-        tenantOwnerNameFilter.setKey(new EntityKey(EntityKeyType.ENTITY_FIELD, keyName));
-        tenantOwnerNameFilter.setValueType(EntityKeyValueType.STRING);
-        StringFilterPredicate ownerNamePredicate = new StringFilterPredicate();
-        ownerNamePredicate.setValue(FilterPredicateValue.fromString(value));
-        ownerNamePredicate.setOperation(StringFilterPredicate.StringOperation.EQUAL);
-        tenantOwnerNameFilter.setPredicate(ownerNamePredicate);
-        return tenantOwnerNameFilter;
+    private KeyFilter getEntityFieldEqualFilter(String keyName, String value) {
+        return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.EQUAL);
+    }
+
+    private KeyFilter getEntityFieldStartsWithFilter(String keyName, String value) {
+        return getEntityFieldKeyFilter(keyName, value, StringFilterPredicate.StringOperation.STARTS_WITH);
+    }
+
+    private KeyFilter getEntityFieldKeyFilter(String keyName, String value, StringFilterPredicate.StringOperation operation) {
+        KeyFilter filter = new KeyFilter();
+        filter.setKey(new EntityKey(EntityKeyType.ENTITY_FIELD, keyName));
+        filter.setValueType(EntityKeyValueType.STRING);
+        StringFilterPredicate predicate = new StringFilterPredicate();
+        predicate.setValue(FilterPredicateValue.fromString(value));
+        predicate.setOperation(operation);
+        filter.setPredicate(predicate);
+        return filter;
     }
 
     private KeyFilter getServerAttributeNumericGreaterThanKeyFilter(String attribute, int value) {

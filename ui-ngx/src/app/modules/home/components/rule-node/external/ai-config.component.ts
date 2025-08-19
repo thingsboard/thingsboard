@@ -51,8 +51,8 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.aiConfigForm = this.fb.group({
       modelId: [configuration?.modelId ?? null, [Validators.required]],
-      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
-      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
+      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
       responseFormat: this.fb.group({
         type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
         schema: [configuration?.responseFormat?.schema ?? null, [jsonRequired]],
@@ -98,12 +98,13 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
   }
 
-  createModelAi(formControl: string) {
+  createModelAi(name: string, formControl: string) {
     this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        isAdd: true
+        isAdd: true,
+        name
       }
     }).afterClosed()
       .subscribe((model) => {
