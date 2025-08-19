@@ -55,7 +55,12 @@ import { MatTabsModule } from '@angular/material/tabs';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MAT_TOOLTIP_DEFAULT_OPTIONS, MatTooltipModule } from '@angular/material/tooltip';
 import { MatListModule } from '@angular/material/list';
-import { DatetimeAdapter, MatDatetimepickerModule, MatNativeDatetimeModule } from '@mat-datetimepicker/core';
+import {
+  DatetimeAdapter,
+  MAT_DATETIME_FORMATS,
+  MatDatetimepickerModule,
+  MatNativeDatetimeModule
+} from '@mat-datetimepicker/core';
 import { NgxDaterangepickerMd } from 'ngx-daterangepicker-material';
 import { GridsterModule } from 'angular-gridster2';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
@@ -150,7 +155,7 @@ import { WidgetsBundleSearchComponent } from '@shared/components/widgets-bundle-
 import { SelectableColumnsPipe } from '@shared/pipe/selectable-columns.pipe';
 import { QuickTimeIntervalComponent } from '@shared/components/time/quick-time-interval.component';
 import { OtaPackageAutocompleteComponent } from '@shared/components/ota-package/ota-package-autocomplete.component';
-import { MAT_DATE_LOCALE } from '@angular/material/core';
+import {DateAdapter, MAT_DATE_LOCALE} from '@angular/material/core';
 import { CopyButtonComponent } from '@shared/components/button/copy-button.component';
 import { TogglePasswordComponent } from '@shared/components/button/toggle-password.component';
 import { WidgetButtonToggleComponent } from '@shared/components/button/widget-button-toggle.component';
@@ -228,6 +233,8 @@ import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.
 import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
+import {JALALI_DATETIME_FORMATS} from "@shared/adapter/jalali-datetime-adapter/jalali-datetime-formats";
+import {JalaliDatetimeAdapter} from "@shared/adapter/jalali-datetime-adapter/jalali-datetime-adapter";
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -287,7 +294,10 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         disableTooltipInteractivity: true
       }
     },
-    CountryData
+    CountryData,
+    { provide: MAT_DATE_LOCALE, useValue: 'fa-IR' },
+    { provide: MAT_DATETIME_FORMATS, useValue: JALALI_DATETIME_FORMATS },
+    { provide: DatetimeAdapter, useClass: JalaliDatetimeAdapter }
   ],
   declarations: [
     FooterComponent,
@@ -505,7 +515,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         useFactory: MarkedOptionsFactory,
         deps: [MarkedOptionsService]
       }
-    })
+    }),
   ],
   exports: [
     FooterComponent,

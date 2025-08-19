@@ -67,6 +67,8 @@ import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { fromEvent } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
+import moment from 'moment-jalaali';
+
 // @dynamic
 @Component({
   selector: 'tb-timewindow',
@@ -366,7 +368,10 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       } else {
         const startString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.startTimeMs, 'yyyy-MM-dd HH:mm:ss');
         const endString = this.datePipe.transform(this.innerValue.history.fixedTimewindow.endTimeMs, 'yyyy-MM-dd HH:mm:ss');
-        this.innerValue.displayValue += this.translate.instant('timewindow.period', {startTime: startString, endTime: endString});
+        const startStringJalali = moment(startString).format('jYYYY/jMM/jDD HH:mm:ss');
+        const endStringJalali = moment(endString).format('jYYYY/jMM/jDD HH:mm:ss');
+        // this.innerValue.displayValue += this.translate.instant('timewindow.period', {startTime: startString, endTime: endString});
+        this.innerValue.displayValue += this.translate.instant('timewindow.period', {startTime: startStringJalali, endTime: endStringJalali});
       }
     }
     if (isDefinedAndNotNull(this.innerValue.timezone) && this.innerValue.timezone !== '') {

@@ -24,9 +24,32 @@ $mat-datetimepicker-selected-today-box-shadow-width: 1px;
   $primary-color: mat.m2-get-color-from-palette($primary);
   $primary-contrast: mat.m2-get-color-from-palette($primary, default-contrast);
 
+  th {
+    font-family: Vazirmatn, 'Roboto', sans-serif;
+  }
+
   .mat-datetimepicker-calendar-header {
     background-color: $primary-color;
     color: $primary-contrast;
+    font-family: Vazirmatn, 'Roboto', sans-serif;
+    //font-size: 21px;
+  }
+
+  .mat-datetimepicker-calendar-header .mat-datetimepicker-calendar-header-date-time {
+    font-size: 21px;
+  }
+
+  .mat-datetimepicker-calendar-content {
+    font-family: Vazirmatn, 'Roboto', sans-serif;
+  }
+
+  .mat-datetimepicker-calendar-table-header {
+    //direction: rtl;
+    font-family: Vazirmatn, 'Roboto', sans-serif;
+  }
+
+  .mat-datetimepicker-calendar-body-cell {
+     font-family: Vazirmatn, 'Roboto', sans-serif;
   }
 
   .mat-datetimepicker-calendar-body-cell-content {
