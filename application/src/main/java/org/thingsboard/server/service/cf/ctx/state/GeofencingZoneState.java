@@ -23,13 +23,10 @@ import org.thingsboard.common.util.geo.PerimeterDefinition;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
-
-import java.util.UUID;
 
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
@@ -57,7 +54,7 @@ public class GeofencingZoneState {
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {
-        this.zoneId = toZoneId(proto);
+        this.zoneId = ProtoUtils.fromProto(proto.getZoneId());
         this.ts = proto.getTs();
         this.version = proto.getVersion();
         this.perimeterDefinition = JacksonUtil.fromString(proto.getPerimeterDefinition(), PerimeterDefinition.class);
@@ -104,10 +101,6 @@ public class GeofencingZoneState {
         }
         // State unchanged
         return new GeofencingEvalResult(null, status);
-    }
-
-    private EntityId toZoneId(GeofencingZoneProto proto) {
-        return EntityIdFactory.getByTypeAndUuid(ProtoUtils.fromProto(proto.getZoneType()), new UUID(proto.getZoneIdMSB(), proto.getZoneIdLSB()));
     }
 
 }

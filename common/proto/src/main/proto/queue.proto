@@ -82,6 +82,12 @@ enum ApiUsageRecordKeyProto {
   INACTIVE_DEVICES     = 10;
 }
 
+message EntityIdProto {
+  EntityTypeProto entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+}
+
 /**
  * Service Discovery Data Structures;
  */
@@ -897,13 +903,11 @@ message TsRollingArgumentProto {
 }
 
 message GeofencingZoneProto {
-  EntityTypeProto zoneType = 1;
-  int64 zoneIdMSB = 2;
-  int64 zoneIdLSB = 3;
-  int64 ts = 4;
-  string perimeterDefinition = 5;
-  int64 version = 6;
-  optional bool inside = 7;
+  EntityIdProto zoneId = 1;
+  int64 ts = 2;
+  string perimeterDefinition = 3;
+  int64 version = 4;
+  optional bool inside = 5;
 }
 
 message GeofencingArgumentProto {

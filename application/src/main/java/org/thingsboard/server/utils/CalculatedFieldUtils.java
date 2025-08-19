@@ -133,9 +133,7 @@ public class CalculatedFieldUtils {
 
     private static GeofencingZoneProto toGeofencingZoneProto(EntityId entityId, GeofencingZoneState zoneState) {
         GeofencingZoneProto.Builder builder = GeofencingZoneProto.newBuilder()
-                .setZoneType(ProtoUtils.toProto(entityId.getEntityType()))
-                .setZoneIdMSB(entityId.getId().getMostSignificantBits())
-                .setZoneIdLSB(entityId.getId().getLeastSignificantBits())
+                .setZoneId(ProtoUtils.toProto(entityId))
                 .setTs(zoneState.getTs())
                 .setVersion(zoneState.getVersion())
                 .setPerimeterDefinition(JacksonUtil.toString(zoneState.getPerimeterDefinition()));

@@ -1377,6 +1377,18 @@ public class ProtoUtils {
         return TbMsg.fromProto(queueName, getTbMsgProto(ruleEngineMsg), callback);
     }
 
+    public static TransportProtos.EntityIdProto toProto(EntityId entityId) {
+        return TransportProtos.EntityIdProto.newBuilder()
+                .setEntityType(toProto(entityId.getEntityType()))
+                .setEntityIdMSB(getMsb(entityId))
+                .setEntityIdLSB(getLsb(entityId))
+                .build();
+    }
+
+    public static EntityId fromProto(TransportProtos.EntityIdProto entityIdProto) {
+        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getEntityType()), new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB()));
+    }
+
     private static boolean isNotNull(Object obj) {
         return obj != null;
     }
