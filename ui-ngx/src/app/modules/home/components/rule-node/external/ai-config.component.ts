@@ -74,11 +74,12 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     }
   }
 
-  protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+  protected prepareOutputConfig(): RuleNodeConfiguration {
+    const config = this.configForm().getRawValue();
     if (!this.aiConfigForm.get('systemPrompt').value) {
-      delete configuration.systemPrompt;
+      delete config.systemPrompt;
     }
-    return deepTrim(configuration);
+    return deepTrim(config);
   }
 
   onEntityChange($event: AiModel) {
