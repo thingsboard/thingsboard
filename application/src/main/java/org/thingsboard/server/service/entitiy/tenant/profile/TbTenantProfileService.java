@@ -25,4 +25,6 @@ public interface TbTenantProfileService {
     TenantProfile save(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile, User user) throws ThingsboardException;
 
     void delete(TenantId tenantId, TenantProfile tenantProfile, User user) throws ThingsboardException;
+
+    TenantProfile setDefaultTenantProfile(TenantId tenantId, TenantProfile tenantProfile, User user) throws ThingsboardException;
 }
