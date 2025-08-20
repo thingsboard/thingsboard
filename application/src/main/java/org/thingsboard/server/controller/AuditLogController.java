@@ -139,7 +139,7 @@ public class AuditLogController extends BaseController {
                     "Basically, this API call is used to get the full lifecycle of some specific entity. " +
                     "For example to see when a device was created, updated, assigned to some customer, or even deleted from the system. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs/entity/{entityType}/{entityId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogsByEntityId(
@@ -174,7 +174,7 @@ public class AuditLogController extends BaseController {
     @ApiOperation(value = "Get all audit logs (getAuditLogs)",
             notes = "Returns a page of audit logs related to all entities in the scope of the current user's Tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/audit/logs", params = {"pageSize", "page"}, method = RequestMethod.GET)
     @ResponseBody
     public PageData<AuditLog> getAuditLogs(
