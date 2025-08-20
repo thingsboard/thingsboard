@@ -116,7 +116,7 @@ public class SwaggerConfiguration {
     private String appVersion;
     @Value("${swagger.group_name:thingsboard}")
     private String groupName;
-    @Value("${swagger.doc_expansion:none}")
+    @Value("${swagger.doc_expansion:list}")
     private String docExpansion;
 
     @Bean
