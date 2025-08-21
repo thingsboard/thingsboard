@@ -148,12 +148,13 @@ export class MobileBundleDialogComponent extends DialogComponent<MobileBundleDia
     }
   }
 
-  createApplication(formControl: string, platformType: PlatformType) {
+  createApplication(name: string, formControl: string, platformType: PlatformType) {
     this.dialog.open<MobileAppDialogComponent, MobileAppDialogData, MobileApp>(MobileAppDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        platformType
+        platformType,
+        name
       }
     }).afterClosed()
       .subscribe((app) => {
