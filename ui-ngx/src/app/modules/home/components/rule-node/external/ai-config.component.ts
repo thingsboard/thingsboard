@@ -79,6 +79,9 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     if (!this.aiConfigForm.get('systemPrompt').value) {
       delete config.systemPrompt;
     }
+    if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.JSON_SCHEMA) {
+      delete config.responseFormat.schema;
+    }
     return deepTrim(config);
   }
 
@@ -88,10 +91,10 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
         if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.TEXT) {
           this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: true});
         }
-        this.aiConfigForm.get('responseFormat.type').disable();
+        this.aiConfigForm.get('responseFormat.type').disable({emitEvent: false});
       }
     } else {
-      this.aiConfigForm.get('responseFormat.type').enable();
+      this.aiConfigForm.get('responseFormat.type').enable({emitEvent: false});
     }
   }
 
