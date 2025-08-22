@@ -127,6 +127,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
       authorizationUri: [entity?.authorizationUri ? entity.authorizationUri : '',
         [Validators.required, Validators.pattern(this.URL_REGEXP)]],
       jwkSetUri: [entity?.jwkSetUri ? entity.jwkSetUri : '', Validators.pattern(this.URL_REGEXP)],
+      endSessionEndpoint: [entity?.endSessionEndpoint ? entity.endSessionEndpoint : '', Validators.pattern(this.URL_REGEXP)],
       userInfoUri: [entity?.userInfoUri ? entity.userInfoUri : '', [Validators.pattern(this.URL_REGEXP)]],
       clientAuthenticationMethod: [entity?.clientAuthenticationMethod ?
         entity.clientAuthenticationMethod : ClientAuthenticationMethod.POST, Validators.required],
@@ -156,6 +157,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
       scope: entity.scope,
       authorizationUri: entity.authorizationUri,
       jwkSetUri: entity.jwkSetUri,
+      endSessionEndpoint: entity.endSessionEndpoint,
       userInfoUri: entity.userInfoUri,
       clientAuthenticationMethod: entity.clientAuthenticationMethod,
       loginButtonLabel: entity.loginButtonLabel,

@@ -156,7 +156,7 @@ public abstract class AbstractOAuth2ClientMapper {
         }
 
         try {
-            SecurityUser securityUser = new SecurityUser(user, true, principal);
+            SecurityUser securityUser = new SecurityUser(user, true, principal, oAuth2Client.getUuidId());
             return (SecurityUser) new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities()).getPrincipal();
         } catch (Exception e) {
             log.error("Can't get or create security user from oauth2 user", e);

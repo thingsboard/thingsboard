@@ -164,6 +164,7 @@ public class JwtTokenFactoryTest {
         securityUser.setLastName("B");
         securityUser.setUserPrincipal(new UserPrincipal(UserPrincipal.Type.USER_NAME, securityUser.getEmail()));
         securityUser.setCustomerId(new CustomerId(UUID.randomUUID()));
+        securityUser.setSsoId(UUID.randomUUID());
         return securityUser;
     }
 

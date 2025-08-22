@@ -5,6 +5,7 @@
   "authorizationUri": "https://appleid.apple.com/auth/authorize?response_mode=form_post",
   "scope": ["email","openid","name"],
   "jwkSetUri": "https://appleid.apple.com/auth/keys",
+  "endSessionEndpoint": null,
   "userInfoUri": null,
   "clientAuthenticationMethod": "POST",
   "userNameAttributeName": "email",

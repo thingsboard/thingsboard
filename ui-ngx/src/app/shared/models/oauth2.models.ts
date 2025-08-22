@@ -96,6 +96,7 @@ export interface OAuth2Client extends BaseData<OAuth2ClientId>, HasTenantId {
   userInfoUri?: string;
   userNameAttributeName: string;
   jwkSetUri?: string;
+  endSessionEndpoint?: string;
   clientAuthenticationMethod: ClientAuthenticationMethod;
   loginButtonLabel: string;
   loginButtonIcon?: string;

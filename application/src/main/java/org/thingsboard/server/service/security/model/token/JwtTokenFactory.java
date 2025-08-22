@@ -31,6 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.JwtToken;
+import org.thingsboard.server.common.data.security.model.OauthJwtPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -70,6 +72,7 @@ public class JwtTokenFactory {
     private static final String TENANT_ID = "tenantId";
     private static final String CUSTOMER_ID = "customerId";
     private static final String SESSION_ID = "sessionId";
+    private static final String SSO_ID = "ssoId";
 
     @Lazy
     private final JwtSettingsService jwtSettingsService;
@@ -131,6 +134,10 @@ public class JwtTokenFactory {
         if (claims.get(SESSION_ID, String.class) != null) {
             securityUser.setSessionId(claims.get(SESSION_ID, String.class));
         }
+        String ssoId = claims.get(SSO_ID, String.class);
+        if(ssoId != null){
+            securityUser.setSsoId(UUID.fromString(ssoId));
+        }
 
         UserPrincipal principal;
         if (securityUser.getAuthority() != Authority.PRE_VERIFICATION_TOKEN) {
@@ -176,6 +183,10 @@ public class JwtTokenFactory {
         if (claims.get(SESSION_ID, String.class) != null) {
             securityUser.setSessionId(claims.get(SESSION_ID, String.class));
         }
+        String ssoId = claims.get(SSO_ID, String.class);
+        if(ssoId != null){
+            securityUser.setSsoId(UUID.fromString(ssoId));
+        }
         return securityUser;
     }
 
@@ -208,6 +219,11 @@ public class JwtTokenFactory {
             claimsBuilder.add(SESSION_ID, securityUser.getSessionId());
         }
 
+        var ssoId = securityUser.getSsoId();
+        if(ssoId != null){
+            claimsBuilder.add(SSO_ID, ssoId.toString());
+        }
+
         ZonedDateTime currentTime = ZonedDateTime.now();
 
         claimsBuilder.expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()));
@@ -236,6 +252,13 @@ public class JwtTokenFactory {
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
         return new JwtPair(accessToken.getToken(), refreshToken.getToken());
+    }
+
+    public OauthJwtPair createOpenIdTokenPair(SecurityUser securityUser, OidcIdToken idToken) {
+        securityUser.setSessionId(UUID.randomUUID().toString());
+        JwtToken accessToken = createAccessJwtToken(securityUser);
+        JwtToken refreshToken = createRefreshToken(securityUser);
+        return new OauthJwtPair(accessToken.getToken(), refreshToken.getToken(), idToken.getTokenValue());
     }
 
     private SecretKey getSecretKey(boolean forceReload) {

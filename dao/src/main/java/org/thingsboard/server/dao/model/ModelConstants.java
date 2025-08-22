@@ -498,6 +498,7 @@ public class ModelConstants {
     public static final String OAUTH2_USER_INFO_URI_PROPERTY = "user_info_uri";
     public static final String OAUTH2_USER_NAME_ATTRIBUTE_NAME_PROPERTY = "user_name_attribute_name";
     public static final String OAUTH2_JWK_SET_URI_PROPERTY = "jwk_set_uri";
+    public static final String OAUTH2_END_SESSION_ENDPOINT = "end_session_endpoint";
     public static final String OAUTH2_CLIENT_AUTHENTICATION_METHOD_PROPERTY = "client_authentication_method";
     public static final String OAUTH2_LOGIN_BUTTON_LABEL_PROPERTY = "login_button_label";
     public static final String OAUTH2_LOGIN_BUTTON_ICON_PROPERTY = "login_button_icon";

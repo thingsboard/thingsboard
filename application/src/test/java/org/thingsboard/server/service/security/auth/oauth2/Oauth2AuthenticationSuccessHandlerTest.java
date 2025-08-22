@@ -19,13 +19,18 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.core.oidc.OidcIdToken;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.model.JwtPair;
+import org.thingsboard.server.common.data.security.model.OauthJwtPair;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 
+import java.time.Instant;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.UUID;
 
 import static org.junit.Assert.assertEquals;
@@ -42,12 +47,25 @@ public class Oauth2AuthenticationSuccessHandlerTest extends AbstractControllerTe
     private JwtTokenFactory jwtTokenFactory;
 
     private SecurityUser securityUser;
+    private SecurityUser ssoIdSecurityUser;
+    private OidcIdToken idToken;
 
     @Before
     public void before() {
         UserId userId = new UserId(UUID.randomUUID());
         securityUser = new SecurityUser(userId);
         when(jwtTokenFactory.createTokenPair(eq(securityUser))).thenReturn(new JwtPair("testAccessToken", "testRefreshToken"));
+
+        Instant issuedAt = Instant.now();
+        Map<String, Object> claims = new HashMap<>();
+        claims.put("sub", "test-subject");
+        claims.put("iss", "test-issuer");
+
+        idToken = new OidcIdToken("idToken", issuedAt, issuedAt.plusSeconds(3600), claims);
+        ssoIdSecurityUser = new SecurityUser(userId);
+        ssoIdSecurityUser.setSsoId(UUID.randomUUID());
+        when(jwtTokenFactory.createOpenIdTokenPair(eq(ssoIdSecurityUser), eq(idToken))).thenReturn(new OauthJwtPair("testAccessToken", "testRefreshToken", "testIdToken"));
+
     }
 
     @Test
@@ -63,6 +81,22 @@ public class Oauth2AuthenticationSuccessHandlerTest extends AbstractControllerTe
 
         redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithParams, jwtPair);
         expectedUrl = urlWithParams + "&accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken();
+        assertEquals(expectedUrl, redirectUrl);
+    }
+
+    @Test
+    public void testGetRedirectUrlForOauthLogoutConfiguredUser() {
+        OauthJwtPair jwtPair = jwtTokenFactory.createOpenIdTokenPair(ssoIdSecurityUser, idToken);
+
+        String urlWithoutParams = "http://localhost:8080/dashboardGroups/3fa13530-6597-11ed-bd76-8bd591f0ec3e";
+        String urlWithParams = "http://localhost:8080/dashboardGroups/3fa13530-6597-11ed-bd76-8bd591f0ec3e?state=someState&page=1";
+
+        String redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithoutParams, jwtPair);
+        String expectedUrl = urlWithoutParams + "/?accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken() + "&idToken=" + jwtPair.getIdToken();
+        assertEquals(expectedUrl, redirectUrl);
+
+        redirectUrl = oauth2AuthenticationSuccessHandler.getRedirectUrl(urlWithParams, jwtPair);
+        expectedUrl = urlWithParams + "&accessToken=" + jwtPair.getToken() + "&refreshToken=" + jwtPair.getRefreshToken() + "&idToken=" + jwtPair.getIdToken();
         assertEquals(expectedUrl, redirectUrl);
     }
 }
