@@ -186,7 +186,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private CompletableFuture<List<Content>> getContentsFromResourceIds(TbContext ctx) {
         List<CompletableFuture<Content>> contentFutures = new ArrayList<>(resourceIds.size());
         for (TbResourceId resourceId : resourceIds) {
-            CompletableFuture<Content> f = ctx.getResourceDataCache()
+            CompletableFuture<Content> f = ctx.getTbResourceDataCache()
                     .getResourceData(ctx.getTenantId(), resourceId)
                     .thenApply(bytes -> new TextContent(new String(bytes, StandardCharsets.UTF_8)));
             contentFutures.add(f);

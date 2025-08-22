@@ -22,8 +22,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -34,12 +32,12 @@ import java.util.concurrent.TimeUnit;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class DefaultResourceDataCache implements ResourceDataCache {
+public class DefaultTbResourceDataCache implements TbResourceDataCache {
 
     private final ResourceService resourceService;
     private final JpaExecutorService executorService;
 
-    @Value("${cache.tbResourceData.maxSize:10000}")
+    @Value("${cache.tbResourceData.maxSize:100000}")
     private int cacheMaxSize;
     @Value("${cache.tbResourceData.timeToLiveInMinutes:44640}")
     private int cacheValueTtl;
@@ -55,22 +53,21 @@ public class DefaultResourceDataCache implements ResourceDataCache {
                     try {
                         return resourceService.getResourceData(key.tenantId, key.resourceId);
                     } catch (Exception e) {
-                        log.error("Failed to retrieve resource data by id [{}], tenant id [{}]", key.resourceId, key.tenantId, e);
+                        log.error("Failed to retrieve resource data by id [{}], tenant id [{}]", key.resourceId(), key.tenantId(), e);
                         return null;
                     }
                 }, executor));
     }
 
+    @Override
     public CompletableFuture<byte[]> getResourceData(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Retrieving resource data by id [{}], tenant id [{}] from cache", resourceId, tenantId);
         return cache.get(new ResourceDataKey(tenantId, resourceId));
     }
 
-    @TransactionalEventListener(classes = ResourceInfoEvictEvent.class)
-    public void handleEvictEvent(ResourceInfoEvictEvent event) {
-        TenantId tenantId = event.getTenantId();
-        TbResourceId resourceId = event.getResourceId();
-        cache.synchronous().invalidate(new ResourceDataKey(tenantId, resourceId));
+    @Override
+    public void evictResourceData(TenantId tenantId, TbResourceId resourceId) {
+        cache.asMap().remove(new ResourceDataKey(tenantId, resourceId));
         log.trace("Evicted resource data with id [{}], tenant id [{}]", resourceId, tenantId);
     }
 

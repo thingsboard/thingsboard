@@ -533,6 +533,13 @@ message ResourceCacheInvalidateMsg {
   repeated ImageCacheKeyProto keys = 3;
 }
 
+message ResourceDataCacheInvalidateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 resourceIdMSB = 3;
+  int64 resourceIdLSB = 4;
+}
+
 message ImageCacheKeyProto {
   optional string resourceKey = 1;
   optional string publicResourceKey = 2;
@@ -1678,6 +1685,7 @@ message ToCoreNotificationMsg {
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12 [deprecated = true];
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
   ToEdqsCoreServiceMsg toEdqsCoreServiceMsg = 17;
+  ResourceDataCacheInvalidateMsg resourceDataCacheInvalidateMsg = 18;
   RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 

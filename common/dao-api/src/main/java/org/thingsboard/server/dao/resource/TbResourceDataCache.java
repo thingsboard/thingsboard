@@ -20,8 +20,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface ResourceDataCache {
+public interface TbResourceDataCache {
 
     CompletableFuture<byte[]> getResourceData(TenantId tenantId, TbResourceId resourceId);
 
+    void evictResourceData(TenantId tenantId, TbResourceId resourceId);
 }

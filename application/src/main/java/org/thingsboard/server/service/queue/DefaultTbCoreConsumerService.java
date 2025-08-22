@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.rule.trigger.NotificationRuleTrigger;
@@ -55,6 +56,7 @@ import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.resource.ImageCacheKey;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.DeviceStateServiceMsgProto;
@@ -146,6 +148,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final TbCoreQueueFactory queueFactory;
     private final TbImageService imageService;
+    private final TbResourceDataCache tbResourceDataCache;
     private final RuleEngineCallService ruleEngineCallService;
     private final EdqsService edqsService;
     private final TbCoreConsumerStats stats;
@@ -176,6 +179,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor,
                                         TbImageService imageService,
+                                        TbResourceDataCache tbResourceDataCache,
                                         RuleEngineCallService ruleEngineCallService,
                                         CalculatedFieldCache calculatedFieldCache,
                                         EdqsService edqsService) {
@@ -192,6 +196,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.notificationSchedulerService = notificationSchedulerService;
         this.notificationRuleProcessor = notificationRuleProcessor;
         this.imageService = imageService;
+        this.tbResourceDataCache = tbResourceDataCache;
         this.ruleEngineCallService = ruleEngineCallService;
         this.queueFactory = tbCoreQueueFactory;
         this.edqsService = edqsService;
@@ -396,6 +401,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
+        } else if (toCoreNotification.hasResourceDataCacheInvalidateMsg()) {
+            forwardToResourceDataCache(toCoreNotification.getResourceDataCacheInvalidateMsg(), callback);
         } else if (toCoreNotification.hasToEdqsCoreServiceMsg()) {
             edqsService.processSystemMsg(JacksonUtil.fromBytes(toCoreNotification.getToEdqsCoreServiceMsg().getValue().toByteArray(), ToCoreEdqsMsg.class));
             callback.onSuccess();
@@ -514,6 +521,13 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 return ImageCacheKey.forPublicImage(cacheKeyProto.getPublicResourceKey());
             }
         }).forEach(imageService::evictETags);
+        callback.onSuccess();
+    }
+
+    private void forwardToResourceDataCache(TransportProtos.ResourceDataCacheInvalidateMsg msg, TbCallback callback) {
+        var tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        var resourceId = new TbResourceId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        tbResourceDataCache.evictResourceData(tenantId, resourceId);
         callback.onSuccess();
     }
 
