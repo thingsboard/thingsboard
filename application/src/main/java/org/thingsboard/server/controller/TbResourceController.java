@@ -272,6 +272,8 @@ public class TbResourceController extends BaseController {
                                                        @RequestParam int pageSize,
                                                        @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                        @RequestParam int page,
+                                                       @Parameter(description = RESOURCE_TYPE, schema = @Schema(allowableValues = {"LWM2M_MODEL", "JKS", "PKCS_12", "JS_MODULE"}))
+                                                       @RequestParam(required = false) String resourceType,
                                                        @Parameter(description = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                        @RequestParam(required = false) String textSearch,
                                                        @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "title", "resourceType", "tenantId"}))
@@ -281,7 +283,7 @@ public class TbResourceController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(getTenantId())
-                .resourceTypes(EnumSet.allOf(ResourceType.class))
+                .resourceTypes(StringUtils.isNotEmpty(resourceType) ? Set.of(ResourceType.valueOf(resourceType)) : EnumSet.allOf(ResourceType.class))
                 .build();
         return checkNotNull(resourceService.findTenantResourcesByTenantId(filter, pageLink));
     }

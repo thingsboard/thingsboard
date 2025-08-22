@@ -78,6 +78,7 @@ import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.ResourceDataCache;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -307,6 +308,8 @@ public interface TbContext {
     EntityViewService getEntityViewService();
 
     ResourceService getResourceService();
+
+    ResourceDataCache getResourceDataCache();
 
     OtaPackageService getOtaPackageService();
 

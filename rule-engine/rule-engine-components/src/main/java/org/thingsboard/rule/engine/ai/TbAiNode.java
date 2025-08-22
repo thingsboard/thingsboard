@@ -19,7 +19,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
@@ -37,15 +39,18 @@ import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbResponseFormatType;
@@ -77,6 +82,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     private String systemPrompt;
     private String userPrompt;
+    private List<TbResourceId> resourceIds;
     private ResponseFormat responseFormat;
     private int timeoutSeconds;
     private AiModelId modelId;
@@ -114,6 +120,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
+        resourceIds = config.getResourceIds();
         timeoutSeconds = config.getTimeoutSeconds();
         super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
     }
@@ -127,11 +134,30 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var ackedMsg = ackIfNeeded(ctx, msg);
 
+        if (resourceIds == null || resourceIds.isEmpty()) {
+            buildAndSendRequest(ctx, ackedMsg, UserMessage.from(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
+        } else {
+            CompletableFuture<List<Content>> futureContents = getContentsFromResourceIds(ctx);
+            futureContents.whenComplete((contents, err) -> {
+                if (err != null) {
+                    tellFailure(ctx, ackedMsg, err);
+                    return;
+                }
+                contents.add(new TextContent(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
+                UserMessage userMessage = UserMessage.from(contents);
+                buildAndSendRequest(ctx, ackedMsg, userMessage);
+            });
+        }
+    }
+
+    private void buildAndSendRequest(TbContext ctx, TbMsg ackedMsg, UserMessage userMessage) {
         List<ChatMessage> chatMessages = new ArrayList<>(2);
-        if (systemPrompt != null) {
+
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
             chatMessages.add(SystemMessage.from(TbNodeUtils.processPattern(systemPrompt, ackedMsg)));
         }
-        chatMessages.add(UserMessage.from(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
+
+         chatMessages.add(userMessage);
 
         var chatRequest = ChatRequest.builder()
                 .messages(chatMessages)
@@ -155,6 +181,18 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 tellFailure(ctx, ackedMsg, t);
             }
         }, directExecutor());
+    }
+
+    private CompletableFuture<List<Content>> getContentsFromResourceIds(TbContext ctx) {
+        List<CompletableFuture<Content>> contentFutures = new ArrayList<>(resourceIds.size());
+        for (TbResourceId resourceId : resourceIds) {
+            CompletableFuture<Content> f = ctx.getResourceDataCache()
+                    .getResourceData(ctx.getTenantId(), resourceId)
+                    .thenApply(bytes -> new TextContent(new String(bytes, StandardCharsets.UTF_8)));
+            contentFutures.add(f);
+        }
+        return CompletableFuture.allOf(contentFutures.toArray(CompletableFuture[]::new))
+                .thenApply(v -> contentFutures.stream().map(CompletableFuture::join).toList());
     }
 
     private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
@@ -197,6 +235,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         super.destroy();
         systemPrompt = null;
         userPrompt = null;
+        resourceIds = null;
         responseFormat = null;
         modelId = null;
     }
