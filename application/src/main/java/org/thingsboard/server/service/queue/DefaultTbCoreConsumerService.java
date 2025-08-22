@@ -402,7 +402,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
         } else if (toCoreNotification.hasResourceDataCacheInvalidateMsg()) {
-            forwardToResourceDataCache(toCoreNotification.getResourceDataCacheInvalidateMsg(), callback);
+            forwardToTbResourceDataCache(toCoreNotification.getResourceDataCacheInvalidateMsg(), callback);
         } else if (toCoreNotification.hasToEdqsCoreServiceMsg()) {
             edqsService.processSystemMsg(JacksonUtil.fromBytes(toCoreNotification.getToEdqsCoreServiceMsg().getValue().toByteArray(), ToCoreEdqsMsg.class));
             callback.onSuccess();
@@ -524,7 +524,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         callback.onSuccess();
     }
 
-    private void forwardToResourceDataCache(TransportProtos.ResourceDataCacheInvalidateMsg msg, TbCallback callback) {
+    private void forwardToTbResourceDataCache(TransportProtos.ResourceDataCacheInvalidateMsg msg, TbCallback callback) {
         var tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
         var resourceId = new TbResourceId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
         tbResourceDataCache.evictResourceData(tenantId, resourceId);

@@ -49,6 +49,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -188,11 +189,16 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         for (TbResourceId resourceId : resourceIds) {
             CompletableFuture<Content> f = ctx.getTbResourceDataCache()
                     .getResourceData(ctx.getTenantId(), resourceId)
-                    .thenApply(bytes -> new TextContent(new String(bytes, StandardCharsets.UTF_8)));
+                    .thenApply(bytes -> {
+                        if (bytes == null || bytes.length == 0) {
+                            return null;
+                        }
+                        return new TextContent(new String(bytes, StandardCharsets.UTF_8));
+                    });
             contentFutures.add(f);
         }
         return CompletableFuture.allOf(contentFutures.toArray(CompletableFuture[]::new))
-                .thenApply(v -> contentFutures.stream().map(CompletableFuture::join).toList());
+                .thenApply(v -> contentFutures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList());
     }
 
     private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {

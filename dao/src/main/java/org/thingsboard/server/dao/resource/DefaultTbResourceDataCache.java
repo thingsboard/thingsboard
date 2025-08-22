@@ -49,14 +49,7 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
                 .maximumSize(cacheMaxSize)
                 .expireAfterAccess(cacheValueTtl, TimeUnit.MINUTES)
                 .executor(executorService)
-                .buildAsync((key, executor) -> CompletableFuture.supplyAsync(() -> {
-                    try {
-                        return resourceService.getResourceData(key.tenantId, key.resourceId);
-                    } catch (Exception e) {
-                        log.error("Failed to retrieve resource data by id [{}], tenant id [{}]", key.resourceId(), key.tenantId(), e);
-                        return null;
-                    }
-                }, executor));
+                .buildAsync((key, executor) -> CompletableFuture.supplyAsync(() -> resourceService.getResourceData(key.tenantId(), key.resourceId()), executor));
     }
 
     @Override
