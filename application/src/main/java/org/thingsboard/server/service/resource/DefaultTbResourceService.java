@@ -69,7 +69,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     private final ImageService imageService;
     private final TbImageService tbImageService;
     private final AccessControlService accessControlService;
-    private final TbResourceDataCache resourceDataCache;
+    private final TbResourceDataCache tbResourceDataCache;
     private final TbClusterService clusterService;
 
     @Override
@@ -198,7 +198,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     }
 
     private void evictResourceDataCache(TenantId tenantId, TbResourceId resourceId) {
-        resourceDataCache.evictResourceData(tenantId, resourceId);
+        tbResourceDataCache.evictResourceData(tenantId, resourceId);
         clusterService.broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
                 .setResourceDataCacheInvalidateMsg(TransportProtos.ResourceDataCacheInvalidateMsg.newBuilder()
                         .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
