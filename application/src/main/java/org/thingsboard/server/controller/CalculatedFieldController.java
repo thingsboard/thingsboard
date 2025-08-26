@@ -213,8 +213,7 @@ public class CalculatedFieldController extends BaseController {
             @RequestBody JsonNode inputParams) {
         String expression = inputParams.get("expression").asText();
         Map<String, TbelCfArg> arguments = Objects.requireNonNullElse(
-                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<>() {
-                }),
+                JacksonUtil.convertValue(inputParams.get("arguments"), new TypeReference<>() {}),
                 Collections.emptyMap()
         );
 
@@ -289,8 +288,7 @@ public class CalculatedFieldController extends BaseController {
                         return;
                     }
                     case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                    default ->
-                            throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
+                    default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
                 }
             }
         }

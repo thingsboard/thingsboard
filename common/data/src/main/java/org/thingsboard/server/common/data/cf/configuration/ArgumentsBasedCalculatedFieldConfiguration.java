@@ -14,8 +14,6 @@ public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFi
 
     Output getOutput();
 
-    void validate();
-
     @JsonIgnore
     default boolean isScheduledUpdateEnabled() {
         return false;

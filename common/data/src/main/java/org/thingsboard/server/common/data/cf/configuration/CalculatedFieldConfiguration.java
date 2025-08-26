@@ -44,6 +44,8 @@ public interface CalculatedFieldConfiguration {
     @JsonIgnore
     CalculatedFieldType getType();
 
+    void validate();
+
     @JsonIgnore
     default List<EntityId> getReferencedEntities() {
         return Collections.emptyList();

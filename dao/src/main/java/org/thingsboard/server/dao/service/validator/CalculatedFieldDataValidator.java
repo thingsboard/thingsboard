@@ -82,15 +82,10 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     }
 
     private void validateCalculatedFieldConfiguration(CalculatedField calculatedField) {
-        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
-            if (configuration.getArguments().containsKey("ctx")) {
-                throw new DataValidationException("Argument name 'ctx' is reserved and cannot be used.");
-            }
-            try {
-                configuration.validate();
-            } catch (IllegalArgumentException e) {
-                throw new DataValidationException(e.getMessage(), e);
-            }
+        try {
+            calculatedField.getConfiguration().validate();
+        } catch (IllegalArgumentException e) {
+            throw new DataValidationException(e.getMessage(), e);
         }
     }
 
