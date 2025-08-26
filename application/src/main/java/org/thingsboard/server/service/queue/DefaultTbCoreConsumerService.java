@@ -401,8 +401,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             callback.onSuccess();
         } else if (toCoreNotification.hasResourceCacheInvalidateMsg()) {
             forwardToResourceService(toCoreNotification.getResourceCacheInvalidateMsg(), callback);
-        } else if (toCoreNotification.hasResourceDataCacheInvalidateMsg()) {
-            forwardToTbResourceDataCache(toCoreNotification.getResourceDataCacheInvalidateMsg(), callback);
         } else if (toCoreNotification.hasToEdqsCoreServiceMsg()) {
             edqsService.processSystemMsg(JacksonUtil.fromBytes(toCoreNotification.getToEdqsCoreServiceMsg().getValue().toByteArray(), ToCoreEdqsMsg.class));
             callback.onSuccess();
@@ -514,6 +512,12 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
 
     private void forwardToResourceService(TransportProtos.ResourceCacheInvalidateMsg msg, TbCallback callback) {
         var tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
+        if (msg.getResourceIdMSB() != 0 && msg.getResourceIdLSB() != 0) {
+            var resourceId = new TbResourceId(new UUID(msg.getResourceIdMSB(), msg.getResourceIdLSB()));
+            tbResourceDataCache.evictResourceData(tenantId, resourceId);
+            callback.onSuccess();
+            return;
+        }
         msg.getKeysList().stream().map(cacheKeyProto -> {
             if (cacheKeyProto.hasResourceKey()) {
                 return ImageCacheKey.forImage(tenantId, cacheKeyProto.getResourceKey());
@@ -521,13 +525,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 return ImageCacheKey.forPublicImage(cacheKeyProto.getPublicResourceKey());
             }
         }).forEach(imageService::evictETags);
-        callback.onSuccess();
-    }
-
-    private void forwardToTbResourceDataCache(TransportProtos.ResourceDataCacheInvalidateMsg msg, TbCallback callback) {
-        var tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
-        var resourceId = new TbResourceId(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
-        tbResourceDataCache.evictResourceData(tenantId, resourceId);
         callback.onSuccess();
     }
 

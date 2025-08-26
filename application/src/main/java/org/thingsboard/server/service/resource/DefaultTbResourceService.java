@@ -200,7 +200,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     private void evictResourceDataCache(TenantId tenantId, TbResourceId resourceId) {
         tbResourceDataCache.evictResourceData(tenantId, resourceId);
         clusterService.broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
-                .setResourceDataCacheInvalidateMsg(TransportProtos.ResourceDataCacheInvalidateMsg.newBuilder()
+                .setResourceCacheInvalidateMsg(TransportProtos.ResourceCacheInvalidateMsg.newBuilder()
                         .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                         .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                         .setResourceIdMSB(resourceId.getId().getMostSignificantBits())

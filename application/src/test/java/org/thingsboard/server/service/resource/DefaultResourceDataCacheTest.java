@@ -22,12 +22,13 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.controller.AbstractControllerTest;
-import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.clearInvocations;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 
@@ -38,7 +39,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
     private ResourceService resourceService;
     @Autowired
     private TbResourceService tbResourceService;
-    @Autowired
+    @MockitoSpyBean
     private TbResourceDataCache resourceDataCache;
 
     @Test
@@ -53,6 +54,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
         byte[] data = "This is a test prompt for AI request.".getBytes();
         resource.setData(data);
         TbResourceInfo savedResource = tbResourceService.save(resource);
+        verify(resourceDataCache, timeout(2000).times(2)).evictResourceData(tenantId, savedResource.getId());
 
         byte[] cachedData = resourceDataCache.getResourceData(tenantId, savedResource.getId()).get();
         assertThat(cachedData).isEqualTo(data);
