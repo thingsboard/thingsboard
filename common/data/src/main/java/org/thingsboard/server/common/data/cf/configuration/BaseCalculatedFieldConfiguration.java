@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
-public abstract class BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public abstract class BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
     protected Map<String, Argument> arguments;
     protected String expression;

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -93,14 +94,15 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     private void updatedSchedulingConfiguration(CalculatedField calculatedField) {
-        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-        if (!configuration.isScheduledUpdateEnabled()) {
-            return;
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
+            if (!configuration.isScheduledUpdateEnabled()) {
+                return;
+            }
+            int tenantProfileMinAllowedValue = tbTenantProfileCache.get(calculatedField.getTenantId())
+                    .getDefaultProfileConfiguration()
+                    .getMinAllowedScheduledUpdateIntervalInSecForCF();
+            configuration.setScheduledUpdateIntervalSec(Math.max(configuration.getScheduledUpdateIntervalSec(), tenantProfileMinAllowedValue));
         }
-        int tenantProfileMinAllowedValue = tbTenantProfileCache.get(calculatedField.getTenantId())
-                .getDefaultProfileConfiguration()
-                .getMinAllowedScheduledUpdateIntervalInSecForCF();
-        configuration.setScheduledUpdateIntervalSec(Math.max(configuration.getScheduledUpdateIntervalSec(), tenantProfileMinAllowedValue));
     }
 
     @Override

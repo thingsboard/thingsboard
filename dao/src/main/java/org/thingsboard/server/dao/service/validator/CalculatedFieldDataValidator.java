@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -72,23 +72,25 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         }
         if (CalculatedFieldType.GEOFENCING.equals(calculatedField.getType()) && maxArgumentsPerCF < 3) {
             throw new DataValidationException("Geofencing calculated field requires at least 3 arguments, but the system limit is " +
-                                              maxArgumentsPerCF + ". Contact your administrator to increase the limit."
+                    maxArgumentsPerCF + ". Contact your administrator to increase the limit."
             );
         }
-        if (calculatedField.getConfiguration().getArguments().size() > maxArgumentsPerCF) {
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration
+                && configuration.getArguments().size() > maxArgumentsPerCF) {
             throw new DataValidationException("Calculated field arguments limit reached!");
         }
     }
 
     private void validateCalculatedFieldConfiguration(CalculatedField calculatedField) {
-        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-        if (configuration.getArguments().containsKey("ctx")) {
-            throw new DataValidationException("Argument name 'ctx' is reserved and cannot be used.");
-        }
-        try {
-            configuration.validate();
-        } catch (IllegalArgumentException e) {
-            throw new DataValidationException(e.getMessage(), e);
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
+            if (configuration.getArguments().containsKey("ctx")) {
+                throw new DataValidationException("Argument name 'ctx' is reserved and cannot be used.");
+            }
+            try {
+                configuration.validate();
+            } catch (IllegalArgumentException e) {
+                throw new DataValidationException(e.getMessage(), e);
+            }
         }
     }
 

@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
     public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
     public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";

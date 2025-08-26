@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -482,7 +482,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void scheduleDynamicArgumentsRefreshTaskForCfIfNeeded(CalculatedFieldCtx cfCtx) {
         CalculatedField cf = cfCtx.getCalculatedField();
-        CalculatedFieldConfiguration cfConfig = cf.getConfiguration();
+        if (!(cf.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration cfConfig)) {
+            return;
+        }
         if (!cfConfig.isScheduledUpdateEnabled()) {
             return;
         }
