@@ -109,8 +109,6 @@ public class RelationQueryDynamicSourceConfigurationTest {
     void isSimpleRelationTrueWhenLevelIsOneAndEntityTypesEmptyOrNull(List<EntityType> entityTypes) {
         var cfg = new RelationQueryDynamicSourceConfiguration();
         cfg.setMaxLevel(1);
-        cfg.setEntityTypes(entityTypes);
-
         assertThat(cfg.isSimpleRelation()).isTrue();
     }
 
@@ -118,17 +116,6 @@ public class RelationQueryDynamicSourceConfigurationTest {
     void isSimpleRelationFalseWhenMaxLevelNotOne() {
         var cfg = new RelationQueryDynamicSourceConfiguration();
         cfg.setMaxLevel(2);
-        cfg.setEntityTypes(null);
-
-        assertThat(cfg.isSimpleRelation()).isFalse();
-    }
-
-    @Test
-    void isSimpleRelationFalseWhenEntityTypesProvided() {
-        var cfg = new RelationQueryDynamicSourceConfiguration();
-        cfg.setMaxLevel(1);
-        cfg.setEntityTypes(List.of(EntityType.DEVICE));
-
         assertThat(cfg.isSimpleRelation()).isFalse();
     }
 
@@ -140,7 +127,6 @@ public class RelationQueryDynamicSourceConfigurationTest {
         cfg.setFetchLastLevelOnly(false);
         cfg.setDirection(EntitySearchDirection.FROM);
         cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
-        cfg.setEntityTypes(entityTypes);
 
         assertThatThrownBy(() -> cfg.toEntityRelationsQuery(rootEntityId))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -154,7 +140,6 @@ public class RelationQueryDynamicSourceConfigurationTest {
         cfg.setFetchLastLevelOnly(true);
         cfg.setDirection(EntitySearchDirection.TO);
         cfg.setRelationType(EntityRelation.MANAGES_TYPE);
-        cfg.setEntityTypes(List.of(EntityType.DEVICE, EntityType.ASSET));
 
         var query = cfg.toEntityRelationsQuery(rootEntityId);
 
@@ -170,7 +155,6 @@ public class RelationQueryDynamicSourceConfigurationTest {
         assertThat(query.getFilters().get(0)).isInstanceOf(RelationEntityTypeFilter.class);
         RelationEntityTypeFilter filter = query.getFilters().get(0);
         assertThat(filter.getRelationType()).isEqualTo(EntityRelation.MANAGES_TYPE);
-        assertThat(filter.getEntityTypes()).containsExactly(EntityType.DEVICE, EntityType.ASSET);
     }
 
     @Test
@@ -206,7 +190,6 @@ public class RelationQueryDynamicSourceConfigurationTest {
         cfg.setFetchLastLevelOnly(false);
         cfg.setDirection(EntitySearchDirection.FROM);
         cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
-        cfg.setEntityTypes(List.of(EntityType.DEVICE));
 
         assertThatCode(cfg::validate).doesNotThrowAnyException();
     }

@@ -37,7 +37,6 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
     private boolean fetchLastLevelOnly;
     private EntitySearchDirection direction;
     private String relationType;
-    private List<EntityType> entityTypes;
 
     @Override
     public CFArgumentDynamicSourceType getType() {
@@ -62,7 +61,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
 
     @JsonIgnore
     public boolean isSimpleRelation() {
-        return maxLevel == 1 && CollectionsUtil.isEmpty(entityTypes);
+        return maxLevel == 1;
     }
 
     public EntityRelationsQuery toEntityRelationsQuery(EntityId rootEntityId) {
@@ -71,7 +70,7 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         }
         var entityRelationsQuery = new EntityRelationsQuery();
         entityRelationsQuery.setParameters(new RelationsSearchParameters(rootEntityId, direction, maxLevel, fetchLastLevelOnly));
-        entityRelationsQuery.setFilters(Collections.singletonList(new RelationEntityTypeFilter(relationType, entityTypes)));
+        entityRelationsQuery.setFilters(Collections.singletonList(new RelationEntityTypeFilter(relationType, Collections.emptyList())));
         return entityRelationsQuery;
     }
 

@@ -15,10 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import java.util.Map;
+public interface ScheduleSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+    boolean isScheduledUpdateEnabled();
 
-    Map<String, Argument> getArguments();
+    int getScheduledUpdateIntervalSec();
 
+    void setScheduledUpdateIntervalSec(int interval);
 }

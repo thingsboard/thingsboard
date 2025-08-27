@@ -26,8 +26,10 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScheduleSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -87,8 +89,9 @@ public class CalculatedFieldCtx {
         this.mainEntityArguments = new HashMap<>();
         this.linkedEntityArguments = new HashMap<>();
         this.argNames = new ArrayList<>();
-        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
-            this.arguments.putAll(configuration.getArguments());
+        this.output = calculatedField.getConfiguration().getOutput();
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+            this.arguments.putAll(argBasedConfig.getArguments());
             for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
                 var refId = entry.getValue().getRefEntityId();
                 var refKey = entry.getValue().getRefEntityKey();
@@ -102,9 +105,10 @@ public class CalculatedFieldCtx {
                 }
             }
             this.argNames.addAll(arguments.keySet());
-            this.output = configuration.getOutput();
-            this.expression = configuration.getExpression();
-            this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isUseLatestTs();
+            if (argBasedConfig instanceof ExpressionBasedCalculatedFieldConfiguration expressionBasedConfig) {
+                this.expression = expressionBasedConfig.getExpression();
+                this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) argBasedConfig).isUseLatestTs();
+            }
         }
         this.tbelInvokeService = tbelInvokeService;
         this.relationService = relationService;
@@ -319,8 +323,8 @@ public class CalculatedFieldCtx {
     }
 
     public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
-        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration thisConfig
-                && other.calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration otherConfig) {
+        if (calculatedField.getConfiguration() instanceof ScheduleSupportedCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof ScheduleSupportedCalculatedFieldConfiguration otherConfig) {
             boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
             boolean refreshIntervalChanged = thisConfig.getScheduledUpdateIntervalSec() != otherConfig.getScheduledUpdateIntervalSec();
             return refreshTriggerChanged || refreshIntervalChanged;

@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import java.util.Map;
+public interface ExpressionBasedCalculatedFieldConfiguration extends ArgumentsBasedCalculatedFieldConfiguration {
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+    String getExpression();
 
-    Map<String, Argument> getArguments();
+    void setExpression(String expression);
 
 }

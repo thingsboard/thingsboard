@@ -25,15 +25,14 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
-import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -59,9 +58,9 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
 @ExtendWith(MockitoExtension.class)
 public class GeofencingCalculatedFieldStateTest {
@@ -273,12 +272,12 @@ public class GeofencingCalculatedFieldStateTest {
         EntityRelation relationFromFirstIteration = saveValues.get(0);
         assertThat(relationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
         assertThat(relationFromFirstIteration.getFrom()).isEqualTo(ZONE_1_ID);
-        assertThat(relationFromFirstIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+        assertThat(relationFromFirstIteration.getType()).isEqualTo("CurrentZone");
 
         EntityRelation relationFromSecondIteration = saveValues.get(1);
         assertThat(relationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
         assertThat(relationFromSecondIteration.getFrom()).isEqualTo(ZONE_2_ID);
-        assertThat(relationFromSecondIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+        assertThat(relationFromSecondIteration.getType()).isEqualTo("CurrentZone");
 
         ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
         verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
@@ -343,12 +342,12 @@ public class GeofencingCalculatedFieldStateTest {
         EntityRelation relationFromFirstIteration = saveValues.get(0);
         assertThat(relationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
         assertThat(relationFromFirstIteration.getFrom()).isEqualTo(ZONE_1_ID);
-        assertThat(relationFromFirstIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+        assertThat(relationFromFirstIteration.getType()).isEqualTo("CurrentZone");
 
         EntityRelation relationFromSecondIteration = saveValues.get(1);
         assertThat(relationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
         assertThat(relationFromSecondIteration.getFrom()).isEqualTo(ZONE_2_ID);
-        assertThat(relationFromSecondIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+        assertThat(relationFromSecondIteration.getType()).isEqualTo("CurrentZone");
 
         ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
         verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
@@ -415,12 +414,12 @@ public class GeofencingCalculatedFieldStateTest {
         EntityRelation relationFromFirstIteration = saveValues.get(0);
         assertThat(relationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
         assertThat(relationFromFirstIteration.getFrom()).isEqualTo(ZONE_1_ID);
-        assertThat(relationFromFirstIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+        assertThat(relationFromFirstIteration.getType()).isEqualTo("CurrentZone");
 
         EntityRelation relationFromSecondIteration = saveValues.get(1);
         assertThat(relationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
         assertThat(relationFromSecondIteration.getFrom()).isEqualTo(ZONE_2_ID);
-        assertThat(relationFromSecondIteration.getType()).isEqualTo(configuration.getZoneRelationType());
+        assertThat(relationFromSecondIteration.getType()).isEqualTo("CurrentZone");
 
         ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
         verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
@@ -448,43 +447,31 @@ public class GeofencingCalculatedFieldStateTest {
     private CalculatedFieldConfiguration getCalculatedFieldConfig(GeofencingReportStrategy reportStrategy) {
         var config = new GeofencingCalculatedFieldConfiguration();
 
-        Argument argument1 = new Argument();
-        argument1.setRefEntityId(DEVICE_ID);
-        var refEntityKey1 = new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null);
-        argument1.setRefEntityKey(refEntityKey1);
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        entityCoordinates.setRefEntityId(DEVICE_ID);
+        config.setEntityCoordinates(entityCoordinates);
 
-        Argument argument2 = new Argument();
-        argument2.setRefEntityId(DEVICE_ID);
-        var refEntityKey2 = new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null);
-        argument2.setRefEntityKey(refEntityKey2);
+        ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", reportStrategy, true);
+        var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.TO);
+        allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
+        allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
+        allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
+        allowedZonesGroup.setRelationType("CurrentZone");
+        allowedZonesGroup.setDirection(EntitySearchDirection.TO);
 
-        Argument argument3 = new Argument();
-        var refEntityKey3 = new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, null);
-        var refDynamicSourceConfiguration3 = new RelationQueryDynamicSourceConfiguration();
-        refDynamicSourceConfiguration3.setDirection(EntitySearchDirection.TO);
-        refDynamicSourceConfiguration3.setRelationType("AllowedZone");
-        refDynamicSourceConfiguration3.setMaxLevel(1);
-        refDynamicSourceConfiguration3.setFetchLastLevelOnly(true);
-        argument3.setRefEntityKey(refEntityKey3);
-        argument3.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration3);
+        ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("restrictedZones", "zone", reportStrategy, true);
+        var restrictedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        restrictedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.TO);
+        restrictedZoneDynamicSourceConfiguration.setRelationType("RestrictedZone");
+        restrictedZoneDynamicSourceConfiguration.setMaxLevel(1);
+        restrictedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        restrictedZonesGroup.setRefDynamicSourceConfiguration(restrictedZoneDynamicSourceConfiguration);
+        restrictedZonesGroup.setRelationType("CurrentZone");
+        restrictedZonesGroup.setDirection(EntitySearchDirection.TO);
 
-        Argument argument4 = new Argument();
-        var refEntityKey4 = new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, null);
-        var refDynamicSourceConfiguration4 = new RelationQueryDynamicSourceConfiguration();
-        refDynamicSourceConfiguration4.setDirection(EntitySearchDirection.TO);
-        refDynamicSourceConfiguration4.setRelationType("RestrictedZone");
-        refDynamicSourceConfiguration4.setMaxLevel(1);
-        refDynamicSourceConfiguration4.setFetchLastLevelOnly(true);
-        argument4.setRefEntityKey(refEntityKey4);
-        argument4.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration4);
-
-        config.setArguments(Map.of("latitude", argument1, "longitude", argument2, "allowedZones", argument3, "restrictedZones", argument4));
-
-        config.setZoneGroupReportStrategies(Map.of("allowedZones", reportStrategy, "restrictedZones", reportStrategy));
-
-        config.setCreateRelationsWithMatchedZones(true);
-        config.setZoneRelationType("CurrentZone");
-        config.setZoneRelationDirection(EntitySearchDirection.TO);
+        config.setZoneGroups(List.of(allowedZonesGroup, restrictedZonesGroup));
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);

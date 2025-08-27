@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
-public abstract class BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
+public abstract class BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration {
 
     protected Map<String, Argument> arguments;
     protected String expression;
@@ -39,23 +39,6 @@ public abstract class BaseCalculatedFieldConfiguration implements ArgumentsBased
                 .map(Argument::getRefEntityId)
                 .filter(Objects::nonNull)
                 .collect(Collectors.toList());
-    }
-
-    @Override
-    public List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
-        return getReferencedEntities().stream()
-                .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
-                .map(referencedEntityId -> buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
-        CalculatedFieldLink link = new CalculatedFieldLink();
-        link.setTenantId(tenantId);
-        link.setEntityId(referencedEntityId);
-        link.setCalculatedFieldId(calculatedFieldId);
-        return link;
     }
 
     @Override

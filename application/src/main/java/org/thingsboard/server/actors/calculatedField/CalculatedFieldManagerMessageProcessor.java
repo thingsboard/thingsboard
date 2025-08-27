@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ScheduleSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -482,17 +482,17 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void scheduleDynamicArgumentsRefreshTaskForCfIfNeeded(CalculatedFieldCtx cfCtx) {
         CalculatedField cf = cfCtx.getCalculatedField();
-        if (!(cf.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration cfConfig)) {
+        if (!(cf.getConfiguration() instanceof ScheduleSupportedCalculatedFieldConfiguration scheduledCfConfig)) {
             return;
         }
-        if (!cfConfig.isScheduledUpdateEnabled()) {
+        if (!scheduledCfConfig.isScheduledUpdateEnabled()) {
             return;
         }
         if (cfDynamicArgumentsRefreshTasks.containsKey(cf.getId())) {
             log.debug("[{}][{}] Dynamic arguments refresh task for CF already exists!", tenantId, cf.getId());
             return;
         }
-        long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(cfConfig.getScheduledUpdateIntervalSec());
+        long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(scheduledCfConfig.getScheduledUpdateIntervalSec());
         var scheduledMsg = new CalculatedFieldDynamicArgumentsRefreshMsg(tenantId, cfCtx.getCfId());
 
         ScheduledFuture<?> scheduledFuture = systemContext

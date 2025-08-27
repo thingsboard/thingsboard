@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -44,6 +45,8 @@ public interface CalculatedFieldConfiguration {
     @JsonIgnore
     CalculatedFieldType getType();
 
+    Output getOutput();
+
     void validate();
 
     @JsonIgnore
@@ -51,8 +54,19 @@ public interface CalculatedFieldConfiguration {
         return Collections.emptyList();
     }
 
-    CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
+    default CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
+        CalculatedFieldLink link = new CalculatedFieldLink();
+        link.setTenantId(tenantId);
+        link.setEntityId(referencedEntityId);
+        link.setCalculatedFieldId(calculatedFieldId);
+        return link;
+    }
 
-    List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
+    default List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
+        return getReferencedEntities().stream()
+                .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
+                .map(referencedEntityId -> buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId))
+                .collect(Collectors.toList());
+    }
 
 }

@@ -37,6 +37,8 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
@@ -52,6 +54,7 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -71,17 +74,17 @@ public class CalculatedFieldTest extends AbstractContainerTest {
     private final String deviceToken = "zmzURIVRsq3lvnTP2XBE";
 
     private final String exampleScript = "var avgTemperature = temperature.mean(); // Get average temperature\n" +
-            "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
-            "\n" +
-            "  // Estimate air pressure based on altitude\n" +
-            "  var pressure = 101325 * Math.pow((1 - 2.25577e-5 * altitude), 5.25588);\n" +
-            "\n" +
-            "  // Air density formula\n" +
-            "  var airDensity = pressure / (287.05 * temperatureK);\n" +
-            "\n" +
-            "  return {\n" +
-            "    \"airDensity\": toFixed(airDensity, 2)\n" +
-            "  };";
+                                         "  var temperatureK = (avgTemperature - 32) * (5 / 9) + 273.15; // Convert Fahrenheit to Kelvin\n" +
+                                         "\n" +
+                                         "  // Estimate air pressure based on altitude\n" +
+                                         "  var pressure = 101325 * Math.pow((1 - 2.25577e-5 * altitude), 5.25588);\n" +
+                                         "\n" +
+                                         "  // Air density formula\n" +
+                                         "  var airDensity = pressure / (287.05 * temperatureK);\n" +
+                                         "\n" +
+                                         "  return {\n" +
+                                         "    \"airDensity\": toFixed(airDensity, 2)\n" +
+                                         "  };";
 
     private TenantId tenantId;
     private UserId tenantAdminId;
@@ -152,8 +155,9 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.getAndSetUserToken(tenantAdminId);
 
         CalculatedField savedCalculatedField = createSimpleCalculatedField();
+        assertThat(savedCalculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration).isTrue();
 
-        Argument savedArgument = savedCalculatedField.getConfiguration().getArguments().get("T");
+        Argument savedArgument = ((SimpleCalculatedFieldConfiguration) savedCalculatedField.getConfiguration()).getArguments().get("T");
         savedArgument.setRefEntityKey(new ReferencedEntityKey("deviceTemperature", ArgumentType.ATTRIBUTE, SERVER_SCOPE));
         testRestClient.postCalculatedField(savedCalculatedField);
 
@@ -200,9 +204,10 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.getAndSetUserToken(tenantAdminId);
 
         CalculatedField savedCalculatedField = createSimpleCalculatedField();
+        assertThat(savedCalculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration).isTrue();
 
         savedCalculatedField.setName("F to C");
-        savedCalculatedField.getConfiguration().setExpression("(T - 32) / 1.8");
+        ((SimpleCalculatedFieldConfiguration) savedCalculatedField.getConfiguration()).setExpression("(T - 32) / 1.8");
         testRestClient.postCalculatedField(savedCalculatedField);
 
         await().alias("update CF expression -> perform calculation with new expression").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -357,40 +362,28 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
-        Argument lat = new Argument();
-        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
-        Argument lon = new Argument();
-        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        cfg.setEntityCoordinates(entityCoordinates);
 
         // Dynamic groups via relations
-        Argument allowedArg = new Argument();
-        var dynAllowed = new RelationQueryDynamicSourceConfiguration();
-        dynAllowed.setDirection(EntitySearchDirection.FROM);
-        dynAllowed.setRelationType("AllowedZone");
-        dynAllowed.setMaxLevel(1);
-        dynAllowed.setFetchLastLevelOnly(true);
-        allowedArg.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, SERVER_SCOPE));
-        allowedArg.setRefDynamicSourceConfiguration(dynAllowed);
+        ZoneGroupConfiguration allowedZoneGroupConfiguration = new ZoneGroupConfiguration("allowedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var allowedDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        allowedDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        allowedDynamicSourceConfiguration.setMaxLevel(1);
+        allowedDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        allowedDynamicSourceConfiguration.setRelationType("AllowedZone");
+        allowedZoneGroupConfiguration.setRefDynamicSourceConfiguration(allowedDynamicSourceConfiguration);
 
-        Argument restrictedArg = new Argument();
-        var dynRestricted = new RelationQueryDynamicSourceConfiguration();
-        dynRestricted.setDirection(EntitySearchDirection.FROM);
-        dynRestricted.setRelationType("RestrictedZone");
-        dynRestricted.setMaxLevel(1);
-        dynRestricted.setFetchLastLevelOnly(true);
-        restrictedArg.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, SERVER_SCOPE));
-        restrictedArg.setRefDynamicSourceConfiguration(dynRestricted);
+        ZoneGroupConfiguration restrictedZoneGroupConfiguration = new ZoneGroupConfiguration("restrictedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var restrictedDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        restrictedDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        restrictedDynamicSourceConfiguration.setMaxLevel(1);
+        restrictedDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        restrictedDynamicSourceConfiguration.setRelationType("RestrictedZone");
+        restrictedZoneGroupConfiguration.setRefDynamicSourceConfiguration(restrictedDynamicSourceConfiguration);
 
-        cfg.setArguments(Map.of(
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
-                "allowedZones", allowedArg,
-                "restrictedZones", restrictedArg
-        ));
-        cfg.setZoneGroupReportStrategies(Map.of(
-                "allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS,
-                "restrictedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS
-        ));
+        cfg.setZoneGroups(List.of(allowedZoneGroupConfiguration, restrictedZoneGroupConfiguration));
+
         Output out = new Output();
         out.setType(OutputType.ATTRIBUTES);
         out.setScope(SERVER_SCOPE);

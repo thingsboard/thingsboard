@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -35,10 +36,11 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
 
@@ -115,75 +117,60 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
 
         var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        if (configuration.isCreateRelationsWithMatchedZones()) {
-            return calculateWithRelations(entityId, ctx, entityCoordinates, configuration);
-        }
-        return calculateWithoutRelations(ctx, entityCoordinates, configuration);
+        // TODO: refactor
+        return calculate(entityId, ctx, entityCoordinates, configuration);
     }
 
-    private ListenableFuture<CalculatedFieldResult> calculateWithRelations(
+    private ListenableFuture<CalculatedFieldResult> calculate(
             EntityId entityId,
             CalculatedFieldCtx ctx,
             Coordinates entityCoordinates,
             GeofencingCalculatedFieldConfiguration configuration) {
 
-        var zoneGroupReportStrategies = configuration.getZoneGroupReportStrategies();
+        Map<String, ZoneGroupConfiguration> zoneGroups = configuration
+                .getZoneGroups()
+                .stream()
+                .collect(Collectors.toMap(ZoneGroupConfiguration::getName, Function.identity()));
+
         ObjectNode resultNode = JacksonUtil.newObjectNode();
         List<ListenableFuture<Boolean>> relationFutures = new ArrayList<>();
 
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
-            GeofencingReportStrategy geofencingReportStrategy = zoneGroupReportStrategies.get(argumentKey);
-            List<GeofencingEvalResult> zoneResults = new ArrayList<>();
+            ZoneGroupConfiguration zoneGroupConfiguration = zoneGroups.get(argumentKey);
+            if (zoneGroupConfiguration.isCreateRelationsWithMatchedZones()) {
+                List<GeofencingEvalResult> zoneResults = new ArrayList<>();
 
-            argumentEntry.getZoneStates().forEach((zoneId, zoneState) -> {
-                GeofencingEvalResult eval = zoneState.evaluate(entityCoordinates);
-                zoneResults.add(eval);
+                argumentEntry.getZoneStates().forEach((zoneId, zoneState) -> {
+                    GeofencingEvalResult eval = zoneState.evaluate(entityCoordinates);
+                    zoneResults.add(eval);
 
-                GeofencingTransitionEvent transitionEvent = eval.transition();
-                if (transitionEvent == null) {
-                    return;
-                }
-                EntityRelation relation = toRelation(zoneId, entityId, configuration);
-                ListenableFuture<Boolean> f = switch (transitionEvent) {
-                    case ENTERED -> ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), relation);
-                    case LEFT -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation);
-                };
-                relationFutures.add(f);
-            });
-            updateResultNode(argumentKey, zoneResults, geofencingReportStrategy, resultNode);
+                    GeofencingTransitionEvent transitionEvent = eval.transition();
+                    if (transitionEvent == null) {
+                        return;
+                    }
+                    EntityRelation relation = toRelation(zoneId, entityId, zoneGroupConfiguration);
+                    ListenableFuture<Boolean> f = switch (transitionEvent) {
+                        case ENTERED -> ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), relation);
+                        case LEFT -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation);
+                    };
+                    relationFutures.add(f);
+                });
+                updateResultNode(argumentKey, zoneResults, zoneGroupConfiguration.getReportStrategy(), resultNode);
+            } else {
+                List<GeofencingEvalResult> zoneResults = argumentEntry.getZoneStates().values().stream()
+                        .map(zs -> zs.evaluate(entityCoordinates))
+                        .toList();
+                updateResultNode(argumentKey, zoneResults, zoneGroupConfiguration.getReportStrategy(), resultNode);
+            }
         });
 
-        var result = calculationResult(ctx, resultNode);
+        var result = new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode);
         if (relationFutures.isEmpty()) {
             return Futures.immediateFuture(result);
         }
         return Futures.whenAllComplete(relationFutures)
                 .call(() -> new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode),
                         MoreExecutors.directExecutor());
-    }
-
-    private ListenableFuture<CalculatedFieldResult> calculateWithoutRelations(
-            CalculatedFieldCtx ctx,
-            Coordinates entityCoordinates,
-            GeofencingCalculatedFieldConfiguration configuration) {
-
-        var zoneGroupReportStrategies = configuration.getZoneGroupReportStrategies();
-        ObjectNode resultNode = JacksonUtil.newObjectNode();
-
-        getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
-            var geofencingReportStrategy = zoneGroupReportStrategies.get(argumentKey);
-
-            List<GeofencingEvalResult> zoneResults = argumentEntry.getZoneStates().values().stream()
-                    .map(zs -> zs.evaluate(entityCoordinates))
-                    .toList();
-
-            updateResultNode(argumentKey, zoneResults, geofencingReportStrategy, resultNode);
-        });
-        return Futures.immediateFuture(calculationResult(ctx, resultNode));
-    }
-
-    private CalculatedFieldResult calculationResult(CalculatedFieldCtx ctx, ObjectNode resultNode) {
-        return new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode);
     }
 
     private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
@@ -226,10 +213,10 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         return new GeofencingEvalResult(transition, nowInside ? INSIDE : OUTSIDE);
     }
 
-    private EntityRelation toRelation(EntityId zoneId, EntityId entityId, GeofencingCalculatedFieldConfiguration configuration) {
-        return switch (configuration.getZoneRelationDirection()) {
-            case TO -> new EntityRelation(zoneId, entityId, configuration.getZoneRelationType());
-            case FROM -> new EntityRelation(entityId, zoneId, configuration.getZoneRelationType());
+    private EntityRelation toRelation(EntityId zoneId, EntityId entityId, ZoneGroupConfiguration configuration) {
+        return switch (configuration.getDirection()) {
+            case TO -> new EntityRelation(zoneId, entityId, configuration.getRelationType());
+            case FROM -> new EntityRelation(entityId, zoneId, configuration.getRelationType());
         };
     }
 

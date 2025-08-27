@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
@@ -39,6 +40,8 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,6 +51,7 @@ import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +59,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
 @DaoSqlTest
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
@@ -131,7 +137,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("86.0");
                 });
 
-        Argument savedArgument = savedCalculatedField.getConfiguration().getArguments().get("T");
+        Argument savedArgument = ((SimpleCalculatedFieldConfiguration) savedCalculatedField.getConfiguration()).getArguments().get("T");
         savedArgument.setRefEntityKey(new ReferencedEntityKey("deviceTemperature", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
@@ -143,7 +149,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("104.0");
                 });
 
-        savedCalculatedField.getConfiguration().setExpression("1.8 * T + 32");
+        ((SimpleCalculatedFieldConfiguration) savedCalculatedField.getConfiguration()).setExpression("1.8 * T + 32");
         savedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
 
         await().alias("update CF expression -> perform calculation with new expression").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -664,41 +670,27 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
         // Coordinates: TS_LATEST on the device
-        Argument lat = new Argument();
-        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
-        Argument lon = new Argument();
-        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone groups: ATTRIBUTE on specific assets (one zone per group)
-        Argument allowedZones = new Argument();
-        var allowedZonesRefDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        allowedZonesRefDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        allowedZonesRefDynamicSourceConfiguration.setRelationType("AllowedZone");
-        allowedZonesRefDynamicSourceConfiguration.setMaxLevel(1);
-        allowedZonesRefDynamicSourceConfiguration.setFetchLastLevelOnly(true);
-        allowedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
-        allowedZones.setRefDynamicSourceConfiguration(allowedZonesRefDynamicSourceConfiguration);
+        ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
+        allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
+        allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
 
-        Argument restrictedZones = new Argument();
-        var restrictedZonesRefDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        restrictedZonesRefDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        restrictedZonesRefDynamicSourceConfiguration.setRelationType("RestrictedZone");
-        restrictedZonesRefDynamicSourceConfiguration.setMaxLevel(1);
-        restrictedZonesRefDynamicSourceConfiguration.setFetchLastLevelOnly(true);
-        restrictedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
-        restrictedZones.setRefDynamicSourceConfiguration(restrictedZonesRefDynamicSourceConfiguration);
+        ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("restrictedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var restrictedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        restrictedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        restrictedZoneDynamicSourceConfiguration.setRelationType("RestrictedZone");
+        restrictedZoneDynamicSourceConfiguration.setMaxLevel(1);
+        restrictedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        restrictedZonesGroup.setRefDynamicSourceConfiguration(restrictedZoneDynamicSourceConfiguration);
 
-        cfg.setArguments(Map.of(
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
-                "allowedZones", allowedZones,
-                "restrictedZones", restrictedZones
-        ));
-
-        cfg.setZoneGroupReportStrategies(Map.of(
-                "allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS,
-                "restrictedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS
-        ));
+        cfg.setZoneGroups(List.of(allowedZonesGroup, restrictedZonesGroup));
 
         // Output to server attributes
         Output out = new Output();
@@ -789,31 +781,16 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cf.setDebugSettings(DebugSettings.off());
 
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
+        cfg.setEntityCoordinates(new EntityCoordinates(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY));
 
-        // Coordinates (TS_LATEST)
-        Argument lat = new Argument();
-        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
-        Argument lon = new Argument();
-        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
-
-        // Dynamic group 'allowedZones' resolved by relations (FROM device -> assets of type AllowedZone)
-        Argument allowedZones = new Argument();
-        var dyn = new RelationQueryDynamicSourceConfiguration();
-        dyn.setDirection(EntitySearchDirection.FROM);
-        dyn.setRelationType("AllowedZone");
-        dyn.setMaxLevel(1);
-        dyn.setFetchLastLevelOnly(true);
-        allowedZones.setRefEntityKey(new ReferencedEntityKey("zone", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
-        allowedZones.setRefDynamicSourceConfiguration(dyn);
-
-        cfg.setArguments(Map.of(
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
-                "allowedZones", allowedZones
-        ));
-
-        // Report all for the group
-        cfg.setZoneGroupReportStrategies(Map.of("allowedZones", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
+        var allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
+        allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
+        allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
+        cfg.setZoneGroups(List.of(allowedZonesGroup));
 
         // Server attributes output
         Output out = new Output();
@@ -827,7 +804,10 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cf.setConfiguration(cfg);
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", cf, CalculatedField.class);
         assertThat(savedCalculatedField).isNotNull();
-        assertThat(savedCalculatedField.getConfiguration().isScheduledUpdateEnabled()).isTrue();
+        CalculatedFieldConfiguration configuration = savedCalculatedField.getConfiguration();
+        assertThat(configuration).isInstanceOf(GeofencingCalculatedFieldConfiguration.class);
+        var geofencingConfiguration = (GeofencingCalculatedFieldConfiguration) configuration;
+        assertThat(geofencingConfiguration.isScheduledUpdateEnabled()).isTrue();
 
         // --- Assert initial evaluation (ENTERED) ---
         await().alias("initial geofencing evaluation")

@@ -13,12 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
-import java.util.Map;
-
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
-
-    Map<String, Argument> getArguments();
+// TODO: add tests
+public class ZoneGroupConfigurationTest {
 
 }

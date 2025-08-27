@@ -15,34 +15,26 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
+public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduleSupportedCalculatedFieldConfiguration {
 
-    public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
-    public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
-
-    private static final Set<String> coordinateKeys = Set.of(
-            ENTITY_ID_LATITUDE_ARGUMENT_KEY,
-            ENTITY_ID_LONGITUDE_ARGUMENT_KEY
-    );
-
+    private EntityCoordinates entityCoordinates;
+    private List<ZoneGroupConfiguration> zoneGroups;
     private int scheduledUpdateIntervalSec;
 
-    private boolean createRelationsWithMatchedZones;
-    private String zoneRelationType;
-    private EntitySearchDirection zoneRelationDirection;
-    private Map<String, GeofencingReportStrategy> zoneGroupReportStrategies;
+    private Output output;
 
     @Override
     public CalculatedFieldType getType() {
@@ -50,91 +42,39 @@ public class GeofencingCalculatedFieldConfiguration extends BaseCalculatedFieldC
     }
 
     @Override
+    @JsonIgnore
+    public Map<String, Argument> getArguments() {
+        Map<String, Argument> args = new HashMap<>(entityCoordinates.toArguments());
+        zoneGroups.forEach(zg -> args.put(zg.getName(), zg.toArgument()));
+        return args;
+    }
+
+    @Override
+    public Output getOutput() {
+        return output;
+    }
+
+    @Override
     public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateIntervalSec > 0 && arguments.values().stream().anyMatch(Argument::hasDynamicSource);
+        return scheduledUpdateIntervalSec > 0 && zoneGroups.stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
     }
 
     @Override
     public void validate() {
-        if (arguments == null) {
-            throw new IllegalArgumentException("Geofencing calculated field arguments must be specified!");
+        if (entityCoordinates == null) {
+            throw new IllegalArgumentException("Geofencing calculated field entity coordinates must be specified!");
         }
-        validateCoordinateArguments();
-        Map<String, Argument> zoneGroupsArguments = getZoneGroupArguments();
-        if (zoneGroupsArguments.isEmpty()) {
+        if (zoneGroups == null || zoneGroups.isEmpty()) {
             throw new IllegalArgumentException("Geofencing calculated field must contain at least one geofencing zone group defined!");
         }
-        validateZoneGroupAruguments(zoneGroupsArguments);
-        validateZoneGroupConfigurations(zoneGroupsArguments);
-        validateZoneRelationsConfiguration();
-    }
-
-    private void validateZoneRelationsConfiguration() {
-        if (!createRelationsWithMatchedZones) {
-            return;
-        }
-        if (StringUtils.isBlank(zoneRelationType)) {
-            throw new IllegalArgumentException("Zone relation type must be specified to create relations with matched zones!");
-        }
-        if (zoneRelationDirection == null) {
-            throw new IllegalArgumentException("Zone relation direction must be specified to create relations with matched zones!");
-        }
-    }
-
-    private void validateZoneGroupConfigurations(Map<String, Argument> zoneGroupsArguments) {
-        if (zoneGroupReportStrategies == null || zoneGroupReportStrategies.isEmpty()) {
-            throw new IllegalArgumentException("Zone groups reporting strategies should be specified!");
-        }
-        zoneGroupsArguments.forEach((zoneGroupName, zoneGroupArgument) -> {
-            GeofencingReportStrategy geofencingReportStrategy = zoneGroupReportStrategies.get(zoneGroupName);
-            if (geofencingReportStrategy == null) {
-                throw new IllegalArgumentException("Zone group report strategy is not configured for '" + zoneGroupName + "' argument!");
+        entityCoordinates.validate();
+        Set<String> seen = new HashSet<>();
+        for (var zg : zoneGroups) {
+            if (!seen.add(zg.getName())) {
+                throw new IllegalArgumentException("Geofencing calculated field zone group name must be unique!");
             }
-        });
-    }
-
-    private void validateCoordinateArguments() {
-        for (String coordinateKey : coordinateKeys) {
-            Argument argument = arguments.get(coordinateKey);
-            if (argument == null) {
-                throw new IllegalArgumentException("Missing required coordinates argument: " + coordinateKey + "!");
-            }
-            ReferencedEntityKey refEntityKey = validateAndGetRefEntityKey(argument, coordinateKey);
-            if (!ArgumentType.TS_LATEST.equals(refEntityKey.getType())) {
-                throw new IllegalArgumentException("Argument '" + coordinateKey + "' must be of type TS_LATEST!");
-            }
-            if (argument.hasDynamicSource()) {
-                throw new IllegalArgumentException("Dynamic source is not allowed for '" + coordinateKey + "' argument!");
-            }
+            zg.validate();
         }
-    }
-
-    private void validateZoneGroupAruguments(Map<String, Argument> zoneGroupsArguments) {
-        zoneGroupsArguments.forEach((argumentKey, argument) -> {
-            ReferencedEntityKey refEntityKey = validateAndGetRefEntityKey(argument, argumentKey);
-            if (!ArgumentType.ATTRIBUTE.equals(refEntityKey.getType())) {
-                throw new IllegalArgumentException("Argument '" + argumentKey + "' must be of type ATTRIBUTE!");
-            }
-            if (argument.hasDynamicSource()) {
-                argument.getRefDynamicSourceConfiguration().validate();
-            }
-        });
-    }
-
-    private Map<String, Argument> getZoneGroupArguments() {
-        return arguments.entrySet()
-                .stream()
-                .filter(entry -> entry.getValue() != null)
-                .filter(entry -> !coordinateKeys.contains(entry.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    }
-
-    private ReferencedEntityKey validateAndGetRefEntityKey(Argument argument, String argumentKey) {
-        ReferencedEntityKey refEntityKey = argument.getRefEntityKey();
-        if (refEntityKey == null || refEntityKey.getType() == null) {
-            throw new IllegalArgumentException("Missing or invalid reference entity key for argument: " + argumentKey);
-        }
-        return refEntityKey;
     }
 
 }

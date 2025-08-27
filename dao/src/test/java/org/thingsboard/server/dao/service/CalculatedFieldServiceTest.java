@@ -29,12 +29,13 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -43,10 +44,12 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
 @DaoSqlTest
 public class CalculatedFieldServiceTest extends AbstractServiceTest {
@@ -105,27 +108,14 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
         // Coordinates: TS_LATEST, no dynamic source
-        Argument lat = new Argument();
-        lat.setRefEntityId(device.getId());
-        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
-
-        Argument lon = new Argument();
-        lon.setRefEntityId(device.getId());
-        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        entityCoordinates.setRefEntityId(device.getId());
+        cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — no DYNAMIC configuration, so no scheduling even if the scheduled interval is set
-        Argument allowed = new Argument();
-        lat.setRefEntityId(device.getId());
-        allowed.setRefEntityKey(new ReferencedEntityKey("allowed", ArgumentType.ATTRIBUTE, null));
-
-        cfg.setArguments(Map.of(
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
-                "allowed", allowed
-        ));
-
-        // Matching zone-group configuration
-        cfg.setZoneGroupReportStrategies(Map.of("allowed", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
+        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        zoneGroupConfiguration.setRefEntityId(device.getId());
+        cfg.setZoneGroups(List.of(zoneGroupConfiguration));
 
         // Set a scheduled interval to some value
         cfg.setScheduledUpdateIntervalSec(600);
@@ -141,9 +131,14 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         CalculatedField saved = calculatedFieldService.save(cf);
 
+        assertThat(saved).isNotNull();
+        assertThat(saved.getConfiguration()).isInstanceOf(GeofencingCalculatedFieldConfiguration.class);
+
+        var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
+
         // Assert: the interval is saved, but scheduling is not enabled
-        int savedInterval = saved.getConfiguration().getScheduledUpdateIntervalSec();
-        boolean scheduledUpdateEnabled = saved.getConfiguration().isScheduledUpdateEnabled();
+        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateIntervalSec();
+        boolean scheduledUpdateEnabled = geofencingCalculatedFieldConfiguration.isScheduledUpdateEnabled();
 
         assertThat(savedInterval).isEqualTo(600);
         assertThat(scheduledUpdateEnabled).isFalse();
@@ -160,31 +155,18 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
         // Coordinates: TS_LATEST, no dynamic source
-        Argument lat = new Argument();
-        lat.setRefEntityId(device.getId());
-        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
-
-        Argument lon = new Argument();
-        lon.setRefEntityId(device.getId());
-        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        entityCoordinates.setRefEntityId(device.getId());
+        cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
-        Argument allowed = new Argument();
-        allowed.setRefEntityKey(new ReferencedEntityKey("allowed", ArgumentType.ATTRIBUTE, null));
+        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var dynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         dynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         dynamicSourceConfiguration.setMaxLevel(1);
         dynamicSourceConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
-        allowed.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
-
-        cfg.setArguments(Map.of(
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
-                "allowed", allowed
-        ));
-
-        // Matching zone-group configuration
-        cfg.setZoneGroupReportStrategies(Map.of("allowed", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
+        cfg.setZoneGroups(List.of(zoneGroupConfiguration));
 
         // Enable scheduling with an interval below tenant min
         cfg.setScheduledUpdateIntervalSec(600);
@@ -200,8 +182,13 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         CalculatedField saved = calculatedFieldService.save(cf);
 
+        assertThat(saved).isNotNull();
+        assertThat(saved.getConfiguration()).isInstanceOf(GeofencingCalculatedFieldConfiguration.class);
+
+        var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
+
         // Assert: the interval is clamped up to tenant profile min
-        int savedInterval = saved.getConfiguration().getScheduledUpdateIntervalSec();
+        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateIntervalSec();
 
          int min = tbTenantProfileCache.get(tenantId)
                  .getDefaultProfileConfiguration()
@@ -220,31 +207,18 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
         // Coordinates: TS_LATEST, no dynamic source
-        Argument lat = new Argument();
-        lat.setRefEntityId(device.getId());
-        lat.setRefEntityKey(new ReferencedEntityKey("latitude", ArgumentType.TS_LATEST, null));
-
-        Argument lon = new Argument();
-        lon.setRefEntityId(device.getId());
-        lon.setRefEntityKey(new ReferencedEntityKey("longitude", ArgumentType.TS_LATEST, null));
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        entityCoordinates.setRefEntityId(device.getId());
+        cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
-        Argument allowed = new Argument();
-        allowed.setRefEntityKey(new ReferencedEntityKey("allowed", ArgumentType.ATTRIBUTE, null));
+        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var dynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         dynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         dynamicSourceConfiguration.setMaxLevel(1);
         dynamicSourceConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
-        allowed.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
-
-        cfg.setArguments(Map.of(
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LATITUDE_ARGUMENT_KEY, lat,
-                GeofencingCalculatedFieldConfiguration.ENTITY_ID_LONGITUDE_ARGUMENT_KEY, lon,
-                "allowed", allowed
-        ));
-
-        // Matching zone-group configuration
-        cfg.setZoneGroupReportStrategies(Map.of("allowed", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS));
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
+        cfg.setZoneGroups(List.of(zoneGroupConfiguration));
 
         // Get tenant profile min.
         int min = tbTenantProfileCache.get(tenantId)
@@ -267,8 +241,13 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         CalculatedField saved = calculatedFieldService.save(cf);
 
+        assertThat(saved).isNotNull();
+        assertThat(saved.getConfiguration()).isInstanceOf(GeofencingCalculatedFieldConfiguration.class);
+
+        var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
+
         // Assert: the interval is clamped up to tenant profile min (or stays >= original if already >= min)
-        int savedInterval = saved.getConfiguration().getScheduledUpdateIntervalSec();
+        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateIntervalSec();
         assertThat(savedInterval).isEqualTo(valueFromConfig);
 
         calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
