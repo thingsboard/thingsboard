@@ -15,17 +15,30 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class ScriptCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
+import java.util.Map;
 
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SCRIPT;
+public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+
+    Map<String, Argument> getArguments();
+
+    String getExpression();
+
+    void setExpression(String expression);
+
+    Output getOutput();
+
+    @JsonIgnore
+    default boolean isScheduledUpdateEnabled() {
+        return false;
+    }
+
+    default void setScheduledUpdateIntervalSec(int scheduledUpdateIntervalSec) {
+    }
+
+    default int getScheduledUpdateIntervalSec() {
+        return 0;
     }
 
 }

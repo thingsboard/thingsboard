@@ -44,6 +44,7 @@ import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -278,18 +279,19 @@ public class CalculatedFieldController extends BaseController {
     }
 
     private void checkReferencedEntities(CalculatedFieldConfiguration calculatedFieldConfig) throws ThingsboardException {
-        List<EntityId> referencedEntityIds = calculatedFieldConfig.getReferencedEntities();
-        for (EntityId referencedEntityId : referencedEntityIds) {
-            EntityType entityType = referencedEntityId.getEntityType();
-            switch (entityType) {
-                case TENANT -> {
-                    return;
+        if (calculatedFieldConfig instanceof ArgumentsBasedCalculatedFieldConfiguration config) {
+            List<EntityId> referencedEntityIds = config.getReferencedEntities();
+            for (EntityId referencedEntityId : referencedEntityIds) {
+                EntityType entityType = referencedEntityId.getEntityType();
+                switch (entityType) {
+                    case TENANT -> {
+                        return;
+                    }
+                    case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
+                    default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
                 }
-                case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
-
     }
 
 }

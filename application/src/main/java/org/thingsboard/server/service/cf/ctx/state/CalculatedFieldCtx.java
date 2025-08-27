@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
@@ -83,26 +83,29 @@ public class CalculatedFieldCtx {
         this.tenantId = calculatedField.getTenantId();
         this.entityId = calculatedField.getEntityId();
         this.cfType = calculatedField.getType();
-        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-        this.arguments = configuration.getArguments();
+        this.arguments = new HashMap<>();
         this.mainEntityArguments = new HashMap<>();
         this.linkedEntityArguments = new HashMap<>();
-        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
-            var refId = entry.getValue().getRefEntityId();
-            var refKey = entry.getValue().getRefEntityKey();
-            if (refId == null && entry.getValue().hasDynamicSource()) {
-                continue;
+        this.argNames = new ArrayList<>();
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
+            this.arguments.putAll(configuration.getArguments());
+            for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+                var refId = entry.getValue().getRefEntityId();
+                var refKey = entry.getValue().getRefEntityKey();
+                if (refId == null && entry.getValue().hasDynamicSource()) {
+                    continue;
+                }
+                if (refId == null || refId.equals(calculatedField.getEntityId())) {
+                    mainEntityArguments.put(refKey, entry.getKey());
+                } else {
+                    linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());
+                }
             }
-            if (refId == null || refId.equals(calculatedField.getEntityId())) {
-                mainEntityArguments.put(refKey, entry.getKey());
-            } else {
-                linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());
-            }
+            this.argNames.addAll(arguments.keySet());
+            this.output = configuration.getOutput();
+            this.expression = configuration.getExpression();
+            this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isUseLatestTs();
         }
-        this.argNames = new ArrayList<>(arguments.keySet());
-        this.output = configuration.getOutput();
-        this.expression = configuration.getExpression();
-        this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isUseLatestTs();
         this.tbelInvokeService = tbelInvokeService;
         this.relationService = relationService;
 
@@ -316,11 +319,13 @@ public class CalculatedFieldCtx {
     }
 
     public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
-        CalculatedFieldConfiguration thisConfig = calculatedField.getConfiguration();
-        CalculatedFieldConfiguration otherConfig = other.calculatedField.getConfiguration();
-        boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
-        boolean refreshIntervalChanged = thisConfig.getScheduledUpdateIntervalSec() != otherConfig.getScheduledUpdateIntervalSec();
-        return refreshTriggerChanged || refreshIntervalChanged;
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration otherConfig) {
+            boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
+            boolean refreshIntervalChanged = thisConfig.getScheduledUpdateIntervalSec() != otherConfig.getScheduledUpdateIntervalSec();
+            return refreshTriggerChanged || refreshIntervalChanged;
+        }
+        return false;
     }
 
     public String getSizeExceedsLimitMessage() {

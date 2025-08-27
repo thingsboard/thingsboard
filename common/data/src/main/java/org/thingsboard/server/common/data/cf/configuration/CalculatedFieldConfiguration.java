@@ -25,8 +25,8 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -44,33 +44,15 @@ public interface CalculatedFieldConfiguration {
     @JsonIgnore
     CalculatedFieldType getType();
 
-    Map<String, Argument> getArguments();
-
-    String getExpression();
-
-    void setExpression(String expression);
-
-    Output getOutput();
-
-    @JsonIgnore
-    List<EntityId> getReferencedEntities();
-
-    List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
-
-    CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
-
     void validate();
 
     @JsonIgnore
-    default boolean isScheduledUpdateEnabled() {
-        return false;
+    default List<EntityId> getReferencedEntities() {
+        return Collections.emptyList();
     }
 
-    default void setScheduledUpdateIntervalSec(int scheduledUpdateIntervalSec) {
-    }
+    CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
 
-    default int getScheduledUpdateIntervalSec() {
-        return 0;
-    }
+    List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
 
 }

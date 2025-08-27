@@ -27,7 +27,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
-public abstract class BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public abstract class BaseCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
     protected Map<String, Argument> arguments;
     protected String expression;
@@ -60,6 +60,9 @@ public abstract class BaseCalculatedFieldConfiguration implements CalculatedFiel
 
     @Override
     public void validate() {
+        if (arguments.containsKey("ctx")) {
+            throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
+        }
         if (arguments.values().stream().anyMatch(Argument::hasDynamicSource)) {
             throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support dynamic source configuration!");
         }
