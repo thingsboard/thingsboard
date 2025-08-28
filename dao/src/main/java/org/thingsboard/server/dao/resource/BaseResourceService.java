@@ -364,6 +364,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
         if (success) {
             resourceDao.removeById(tenantId, resourceId.getId());
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
         }
 
