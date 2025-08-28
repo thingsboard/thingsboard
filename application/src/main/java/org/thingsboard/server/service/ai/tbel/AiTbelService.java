@@ -13,10 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.server.service.ai.tbel;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OpenAiTbelProviderConfig {}
+import com.fasterxml.jackson.databind.JsonNode;
+
+public interface AiTbelService {
+    /**
+     * Analyze TBEL script via AI and return structured diff result.
+     *
+     * @return JsonNode containing:
+     *  - updated msg with comments if changed,
+     *  - or "unchanged",
+     *  - or error info.
+     */
+    JsonNode verifyScript(String script, String scriptType, String[] argNames,
+                          String msgType, String msgJson, String metadataJson);
+}

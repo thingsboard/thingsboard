@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChat
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.OpenAiTbelChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
@@ -63,6 +64,21 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     public ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig) {
         return OpenAiChatModel.builder()
                 .apiKey(chatModelConfig.providerConfig().apiKey())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .frequencyPenalty(chatModelConfig.frequencyPenalty())
+                .presencePenalty(chatModelConfig.presencePenalty())
+                .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
+                .build();
+    }
+    @Override
+    public ChatModel configureChatModel(OpenAiTbelChatModelConfig chatModelConfig) {
+        return OpenAiChatModel.builder()
+                .apiKey(chatModelConfig.providerConfig().apiKey())
+                .baseUrl(chatModelConfig.providerConfig().baseUrl())
                 .modelName(chatModelConfig.modelId())
                 .temperature(chatModelConfig.temperature())
                 .topP(chatModelConfig.topP())

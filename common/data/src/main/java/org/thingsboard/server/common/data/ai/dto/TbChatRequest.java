@@ -60,6 +60,38 @@ public record TbChatRequest(
                 .build();
     }
 
+    public ChatRequest toLangChainChatTbelRequest() {
+        String finalSystemMessage = systemMessage;
+
+        if (chatModelConfig.supportsJsonMode()) {
+            if (finalSystemMessage == null) {
+                finalSystemMessage = "Return ONLY in JSON format.";
+            } else if (!finalSystemMessage.toLowerCase().contains("json")) {
+                finalSystemMessage += " Return ONLY in JSON format.";
+            }
+        }
+
+        List<ChatMessage> messages = new ArrayList<>(2);
+        if (finalSystemMessage != null) {
+            messages.add(SystemMessage.from(finalSystemMessage));
+        }
+
+        List<Content> langChainContents = userMessage.contents().stream()
+                .map(TbContent::toLangChainContent)
+                .toList();
+
+        messages.add(UserMessage.from(langChainContents));
+
+        ChatRequest.Builder builder = ChatRequest.builder()
+                .messages(messages);
+
+        if (chatModelConfig.supportsJsonMode()) {
+            builder.responseFormat(dev.langchain4j.model.chat.request.ResponseFormat.JSON);
+        }
+
+        return builder.build();
+    }
+
     private List<ChatMessage> getLangChainMessages() {
         List<ChatMessage> messages = new ArrayList<>(2);
 
