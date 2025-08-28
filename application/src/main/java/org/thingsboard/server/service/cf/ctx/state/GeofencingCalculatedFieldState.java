@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -39,12 +40,13 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
-import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
 import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
 @Data
+@Slf4j
 @EqualsAndHashCode(callSuper = true)
 public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
@@ -116,18 +118,8 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
 
-        var configuration = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        // TODO: refactor
-        return calculate(entityId, ctx, entityCoordinates, configuration);
-    }
-
-    private ListenableFuture<CalculatedFieldResult> calculate(
-            EntityId entityId,
-            CalculatedFieldCtx ctx,
-            Coordinates entityCoordinates,
-            GeofencingCalculatedFieldConfiguration configuration) {
-
-        Map<String, ZoneGroupConfiguration> zoneGroups = configuration
+        var geofencingCfg = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        Map<String, ZoneGroupConfiguration> zoneGroups = geofencingCfg
                 .getZoneGroups()
                 .stream()
                 .collect(Collectors.toMap(ZoneGroupConfiguration::getName, Function.identity()));
@@ -136,41 +128,40 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         List<ListenableFuture<Boolean>> relationFutures = new ArrayList<>();
 
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
-            ZoneGroupConfiguration zoneGroupConfiguration = zoneGroups.get(argumentKey);
-            if (zoneGroupConfiguration.isCreateRelationsWithMatchedZones()) {
-                List<GeofencingEvalResult> zoneResults = new ArrayList<>();
-
-                argumentEntry.getZoneStates().forEach((zoneId, zoneState) -> {
-                    GeofencingEvalResult eval = zoneState.evaluate(entityCoordinates);
-                    zoneResults.add(eval);
-
+            ZoneGroupConfiguration zoneGroupCfg = zoneGroups.get(argumentKey);
+            if (zoneGroupCfg == null) {
+                log.error("[{}][{}] Zone group config is missing for the {}", entityId, ctx.getCalculatedField().getId(), argumentKey);
+                return;
+            }
+            boolean createRelationsWithMatchedZones = zoneGroupCfg.isCreateRelationsWithMatchedZones();
+            List<GeofencingEvalResult> zoneResults = new ArrayList<>(argumentEntry.getZoneStates().size());
+            argumentEntry.getZoneStates().forEach((zoneId, zoneState) -> {
+                GeofencingEvalResult eval = zoneState.evaluate(entityCoordinates);
+                zoneResults.add(eval);
+                if (createRelationsWithMatchedZones) {
                     GeofencingTransitionEvent transitionEvent = eval.transition();
                     if (transitionEvent == null) {
                         return;
                     }
-                    EntityRelation relation = toRelation(zoneId, entityId, zoneGroupConfiguration);
+                    EntityRelation relation = switch (zoneGroupCfg.getDirection()) {
+                        case TO -> new EntityRelation(zoneId, entityId, zoneGroupCfg.getRelationType());
+                        case FROM -> new EntityRelation(entityId, zoneId, zoneGroupCfg.getRelationType());
+                    };
                     ListenableFuture<Boolean> f = switch (transitionEvent) {
                         case ENTERED -> ctx.getRelationService().saveRelationAsync(ctx.getTenantId(), relation);
                         case LEFT -> ctx.getRelationService().deleteRelationAsync(ctx.getTenantId(), relation);
                     };
                     relationFutures.add(f);
-                });
-                updateResultNode(argumentKey, zoneResults, zoneGroupConfiguration.getReportStrategy(), resultNode);
-            } else {
-                List<GeofencingEvalResult> zoneResults = argumentEntry.getZoneStates().values().stream()
-                        .map(zs -> zs.evaluate(entityCoordinates))
-                        .toList();
-                updateResultNode(argumentKey, zoneResults, zoneGroupConfiguration.getReportStrategy(), resultNode);
-            }
+                }
+            });
+            updateResultNode(argumentKey, zoneResults, zoneGroupCfg.getReportStrategy(), resultNode);
         });
 
         var result = new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode);
         if (relationFutures.isEmpty()) {
             return Futures.immediateFuture(result);
         }
-        return Futures.whenAllComplete(relationFutures)
-                .call(() -> new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode),
-                        MoreExecutors.directExecutor());
+        return Futures.whenAllComplete(relationFutures).call(() -> result, MoreExecutors.directExecutor());
     }
 
     private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
@@ -194,12 +185,6 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         }
     }
 
-    private void addTransitionEventIfExists(ObjectNode resultNode, GeofencingEvalResult aggregationResult, String eventKey) {
-        if (aggregationResult.transition() != null) {
-            resultNode.put(eventKey, aggregationResult.transition().name());
-        }
-    }
-
     private GeofencingEvalResult aggregateZoneGroup(List<GeofencingEvalResult> zoneResults) {
         boolean nowInside = zoneResults.stream().anyMatch(r -> INSIDE.equals(r.status()));
         boolean prevInside = zoneResults.stream()
@@ -213,11 +198,10 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         return new GeofencingEvalResult(transition, nowInside ? INSIDE : OUTSIDE);
     }
 
-    private EntityRelation toRelation(EntityId zoneId, EntityId entityId, ZoneGroupConfiguration configuration) {
-        return switch (configuration.getDirection()) {
-            case TO -> new EntityRelation(zoneId, entityId, configuration.getRelationType());
-            case FROM -> new EntityRelation(entityId, zoneId, configuration.getRelationType());
-        };
+    private void addTransitionEventIfExists(ObjectNode resultNode, GeofencingEvalResult aggregationResult, String eventKey) {
+        if (aggregationResult.transition() != null) {
+            resultNode.put(eventKey, aggregationResult.transition().name());
+        }
     }
 
 }
