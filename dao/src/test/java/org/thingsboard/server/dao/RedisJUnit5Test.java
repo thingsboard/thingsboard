@@ -33,7 +33,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 public class RedisJUnit5Test {
 
     @Container
-    private static final GenericContainer REDIS = new GenericContainer("bitnami/valkey:8.0")
+    private static final GenericContainer REDIS = new GenericContainer("bitnamilegacy/valkey:8.0")
             .withEnv("ALLOW_EMPTY_PASSWORD","yes")
             .withLogConsumer(s -> log.error(((OutputFrame) s).getUtf8String().trim()))
             .withExposedPorts(6379);
