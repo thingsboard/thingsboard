@@ -41,6 +41,7 @@ import { deepTrim } from '@core/utils';
 export interface AIModelDialogData {
   AIModel?: AiModel;
   isAdd?: boolean;
+  name?: string;
 }
 
 @Component({
@@ -110,6 +111,10 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
         maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration?.maxOutputTokens : null, [Validators.min(1)]]
       })
     });
+
+    if (this.data.name) {
+      this.aiModelForms.get('name').patchValue(this.data.name, {emitEvent: false});
+    }
 
     this.aiModelForms.get('configuration.provider').valueChanges.pipe(
       takeUntilDestroyed()
