@@ -677,8 +677,8 @@ cache:
     systemImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_SYSTEM_BROWSER_TTL:0}" # Browser cache TTL for system images in minutes. 0 means the cache is disabled
     tenantImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_TENANT_BROWSER_TTL:0}" # Browser cache TTL for tenant images in minutes. 0 means the cache is disabled
   tbResourceData:
-    timeToLiveInMinutes: "${CACHE_SPECS_CLAIM_DEVICES_TTL:44640}" # TB resource data cache TTL
-    maxSize: "${CACHE_SPECS_CLAIM_DEVICES_MAX_SIZE:100000}" # 0 means the cache is disabled
+    timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_DATA_TTL:44640}" # TB resource data cache TTL
+    maxSize: "${CACHE_SPECS_RESOURCE_DATA_MAX_SIZE:100000}" # 0 means the cache is disabled
 
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
