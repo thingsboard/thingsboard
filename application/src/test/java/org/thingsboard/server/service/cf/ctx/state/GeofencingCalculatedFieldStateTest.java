@@ -448,7 +448,6 @@ public class GeofencingCalculatedFieldStateTest {
         var config = new GeofencingCalculatedFieldConfiguration();
 
         EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
-        entityCoordinates.setRefEntityId(DEVICE_ID);
         config.setEntityCoordinates(entityCoordinates);
 
         ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", reportStrategy, true);

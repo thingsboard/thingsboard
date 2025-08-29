@@ -1379,14 +1379,14 @@ public class ProtoUtils {
 
     public static TransportProtos.EntityIdProto toProto(EntityId entityId) {
         return TransportProtos.EntityIdProto.newBuilder()
-                .setEntityType(toProto(entityId.getEntityType()))
                 .setEntityIdMSB(getMsb(entityId))
                 .setEntityIdLSB(getLsb(entityId))
+                .setType(toProto(entityId.getEntityType()))
                 .build();
     }
 
     public static EntityId fromProto(TransportProtos.EntityIdProto entityIdProto) {
-        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getEntityType()), new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB()));
+        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getType()), new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB()));
     }
 
     private static boolean isNotNull(Object obj) {

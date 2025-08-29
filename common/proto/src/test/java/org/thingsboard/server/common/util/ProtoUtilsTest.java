@@ -357,7 +357,7 @@ class ProtoUtilsTest {
         // toProto
         TransportProtos.EntityIdProto proto = ProtoUtils.toProto(original);
         assertThat(proto).isNotNull();
-        assertThat(proto.getEntityType().getNumber()).isEqualTo(entityType.getProtoNumber());
+        assertThat(proto.getType().getNumber()).isEqualTo(entityType.getProtoNumber());
         assertThat(proto.getEntityIdMSB()).isEqualTo(uuid.getMostSignificantBits());
         assertThat(proto.getEntityIdLSB()).isEqualTo(uuid.getLeastSignificantBits());
 

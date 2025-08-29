@@ -20,15 +20,17 @@ import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
+import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 @Data
-public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduleSupportedCalculatedFieldConfiguration {
+public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
 
     private EntityCoordinates entityCoordinates;
     private List<ZoneGroupConfiguration> zoneGroups;
@@ -47,6 +49,11 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         Map<String, Argument> args = new HashMap<>(entityCoordinates.toArguments());
         zoneGroups.forEach(zg -> args.put(zg.getName(), zg.toArgument()));
         return args;
+    }
+
+    @Override
+    public List<EntityId> getReferencedEntities() {
+        return zoneGroups.stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();
     }
 
     @Override

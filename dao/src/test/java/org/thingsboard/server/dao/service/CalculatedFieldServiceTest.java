@@ -109,7 +109,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Coordinates: TS_LATEST, no dynamic source
         EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
-        entityCoordinates.setRefEntityId(device.getId());
         cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — no DYNAMIC configuration, so no scheduling even if the scheduled interval is set
@@ -156,7 +155,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Coordinates: TS_LATEST, no dynamic source
         EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
-        entityCoordinates.setRefEntityId(device.getId());
         cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
@@ -208,7 +206,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Coordinates: TS_LATEST, no dynamic source
         EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
-        entityCoordinates.setRefEntityId(device.getId());
         cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled

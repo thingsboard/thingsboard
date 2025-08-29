@@ -321,7 +321,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         callback.onSuccess();
                     }
                     if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.getResult().toString(), null);
+                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.toStringOrElseNull(), null);
                     }
                 }
             } else {

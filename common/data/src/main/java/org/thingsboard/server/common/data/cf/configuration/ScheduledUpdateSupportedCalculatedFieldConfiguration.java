@@ -17,7 +17,7 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-public interface ScheduleSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
     @JsonIgnore
     boolean isScheduledUpdateEnabled();

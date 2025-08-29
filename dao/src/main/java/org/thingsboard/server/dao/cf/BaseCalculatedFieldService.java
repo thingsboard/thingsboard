@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.ScheduleSupportedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -94,7 +94,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     private void updatedSchedulingConfiguration(CalculatedField calculatedField) {
-        if (calculatedField.getConfiguration() instanceof ScheduleSupportedCalculatedFieldConfiguration configuration) {
+        if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration configuration) {
             if (!configuration.isScheduledUpdateEnabled()) {
                 return;
             }

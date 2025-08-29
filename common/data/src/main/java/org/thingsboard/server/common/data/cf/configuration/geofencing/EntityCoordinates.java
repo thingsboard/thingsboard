@@ -35,9 +35,6 @@ public class EntityCoordinates {
     private final String latitudeKeyName;
     private final String longitudeKeyName;
 
-    @Nullable
-    private EntityId refEntityId;
-
     public void validate() {
         if (StringUtils.isBlank(latitudeKeyName)) {
             throw new IllegalArgumentException("Entity coordinates latitude key name must be specified!");
@@ -56,7 +53,6 @@ public class EntityCoordinates {
 
     private Argument toArgument(String keyName) {
         var argument = new Argument();
-        argument.setRefEntityId(refEntityId);
         argument.setRefEntityKey(new ReferencedEntityKey(keyName, ArgumentType.TS_LATEST, null));
         return argument;
     }

@@ -29,9 +29,9 @@ public class PerimeterDefinitionSerializer extends JsonSerializer<PerimeterDefin
     public void serialize(PerimeterDefinition value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         if (value instanceof CirclePerimeterDefinition c) {
             gen.writeStartObject();
-            gen.writeNumberField("latitude",  c.getLatitude());
+            gen.writeNumberField("latitude", c.getLatitude());
             gen.writeNumberField("longitude", c.getLongitude());
-            gen.writeNumberField("radius",    c.getRadius());
+            gen.writeNumberField("radius", c.getRadius());
             gen.writeEndObject();
             return;
         }

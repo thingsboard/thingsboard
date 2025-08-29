@@ -83,9 +83,9 @@ enum ApiUsageRecordKeyProto {
 }
 
 message EntityIdProto {
-  EntityTypeProto entityType = 1;
-  int64 entityIdMSB = 2;
-  int64 entityIdLSB = 3;
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto type = 4;
 }
 
 /**

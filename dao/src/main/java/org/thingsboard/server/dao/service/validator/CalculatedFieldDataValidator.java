@@ -66,17 +66,14 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     }
 
     private void validateNumberOfArgumentsPerCF(TenantId tenantId, CalculatedField calculatedField) {
+        if (!(calculatedField instanceof ArgumentsBasedCalculatedFieldConfiguration argumentsBasedCfg)) {
+            return;
+        }
         long maxArgumentsPerCF = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxArgumentsPerCF);
         if (maxArgumentsPerCF <= 0) {
             return;
         }
-        if (CalculatedFieldType.GEOFENCING.equals(calculatedField.getType()) && maxArgumentsPerCF < 3) {
-            throw new DataValidationException("Geofencing calculated field requires at least 3 arguments, but the system limit is " +
-                    maxArgumentsPerCF + ". Contact your administrator to increase the limit."
-            );
-        }
-        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration
-                && configuration.getArguments().size() > maxArgumentsPerCF) {
+        if (argumentsBasedCfg.getArguments().size() > maxArgumentsPerCF) {
             throw new DataValidationException("Calculated field arguments limit reached!");
         }
     }
