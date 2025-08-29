@@ -24,6 +24,7 @@
     "cards.html_value_card",
     "cards.markdown_card",
     "cards.simple_card",
-    "unread_notifications"
+    "unread_notifications",
+    "api_usage"
   ]
 }
