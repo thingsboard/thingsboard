@@ -25,9 +25,11 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -36,6 +38,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -64,6 +67,7 @@ public class CalculatedFieldCtx {
     private String expression;
     private boolean useLatestTs;
     private TbelInvokeService tbelInvokeService;
+    private RelationService relationService;
     private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
     private ThreadLocal<Expression> customExpression;
 
@@ -73,31 +77,40 @@ public class CalculatedFieldCtx {
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
 
-    public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService) {
+    public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService, RelationService relationService) {
         this.calculatedField = calculatedField;
 
         this.cfId = calculatedField.getId();
         this.tenantId = calculatedField.getTenantId();
         this.entityId = calculatedField.getEntityId();
         this.cfType = calculatedField.getType();
-        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-        this.arguments = configuration.getArguments();
+        this.arguments = new HashMap<>();
         this.mainEntityArguments = new HashMap<>();
         this.linkedEntityArguments = new HashMap<>();
-        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
-            var refId = entry.getValue().getRefEntityId();
-            var refKey = entry.getValue().getRefEntityKey();
-            if (refId == null || refId.equals(calculatedField.getEntityId())) {
-                mainEntityArguments.put(refKey, entry.getKey());
-            } else {
-                linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());
+        this.argNames = new ArrayList<>();
+        this.output = calculatedField.getConfiguration().getOutput();
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+            this.arguments.putAll(argBasedConfig.getArguments());
+            for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+                var refId = entry.getValue().getRefEntityId();
+                var refKey = entry.getValue().getRefEntityKey();
+                if (refId == null && entry.getValue().hasDynamicSource()) {
+                    continue;
+                }
+                if (refId == null || refId.equals(calculatedField.getEntityId())) {
+                    mainEntityArguments.put(refKey, entry.getKey());
+                } else {
+                    linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>()).put(refKey, entry.getKey());
+                }
+            }
+            this.argNames.addAll(arguments.keySet());
+            if (argBasedConfig instanceof ExpressionBasedCalculatedFieldConfiguration expressionBasedConfig) {
+                this.expression = expressionBasedConfig.getExpression();
+                this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) argBasedConfig).isUseLatestTs();
             }
         }
-        this.argNames = new ArrayList<>(arguments.keySet());
-        this.output = configuration.getOutput();
-        this.expression = configuration.getExpression();
-        this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isUseLatestTs();
         this.tbelInvokeService = tbelInvokeService;
+        this.relationService = relationService;
 
         this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
@@ -105,25 +118,29 @@ public class CalculatedFieldCtx {
     }
 
     public void init() {
-        if (CalculatedFieldType.SCRIPT.equals(cfType)) {
-            try {
-                this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
-                initialized = true;
-            } catch (Exception e) {
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+        switch (cfType) {
+            case SCRIPT -> {
+                try {
+                    this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+                    initialized = true;
+                } catch (Exception e) {
+                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+                }
             }
-        } else {
-            if (isValidExpression(expression)) {
-                this.customExpression = ThreadLocal.withInitial(() ->
-                        new ExpressionBuilder(expression)
-                                .functions(userDefinedFunctions)
-                                .implicitMultiplication(true)
-                                .variables(this.arguments.keySet())
-                                .build()
-                );
-                initialized = true;
-            } else {
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            case GEOFENCING -> initialized = true;
+            case SIMPLE -> {
+                if (isValidExpression(expression)) {
+                    this.customExpression = ThreadLocal.withInitial(() ->
+                            new ExpressionBuilder(expression)
+                                    .functions(userDefinedFunctions)
+                                    .implicitMultiplication(true)
+                                    .variables(this.arguments.keySet())
+                                    .build()
+                    );
+                    initialized = true;
+                } else {
+                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+                }
             }
         }
     }
@@ -302,6 +319,16 @@ public class CalculatedFieldCtx {
         boolean typeChanged = !cfType.equals(other.cfType);
         boolean argumentsChanged = !arguments.equals(other.arguments);
         return typeChanged || argumentsChanged;
+    }
+
+    public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration otherConfig) {
+            boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
+            boolean refreshIntervalChanged = thisConfig.getScheduledUpdateIntervalSec() != otherConfig.getScheduledUpdateIntervalSec();
+            return refreshTriggerChanged || refreshIntervalChanged;
+        }
+        return false;
     }
 
     public String getSizeExceedsLimitMessage() {

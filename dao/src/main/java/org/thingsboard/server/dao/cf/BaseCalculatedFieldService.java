@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -78,6 +79,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             TenantId tenantId = calculatedField.getTenantId();
             log.trace("Executing save calculated field, [{}]", calculatedField);
             updateDebugSettings(tenantId, calculatedField, System.currentTimeMillis());
+            updatedSchedulingConfiguration(calculatedField);
             CalculatedField savedCalculatedField = calculatedFieldDao.save(tenantId, calculatedField);
             createOrUpdateCalculatedFieldLink(tenantId, savedCalculatedField);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCalculatedField.getTenantId()).entityId(savedCalculatedField.getId())
@@ -88,6 +90,18 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
                     "calculated_field_unq_key", "Calculated Field with such name is already in exists!",
                     "calculated_field_external_id_unq_key", "Calculated Field with such external id already exists!");
             throw e;
+        }
+    }
+
+    private void updatedSchedulingConfiguration(CalculatedField calculatedField) {
+        if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration configuration) {
+            if (!configuration.isScheduledUpdateEnabled()) {
+                return;
+            }
+            int tenantProfileMinAllowedValue = tbTenantProfileCache.get(calculatedField.getTenantId())
+                    .getDefaultProfileConfiguration()
+                    .getMinAllowedScheduledUpdateIntervalInSecForCF();
+            configuration.setScheduledUpdateIntervalSec(Math.max(configuration.getScheduledUpdateIntervalSec(), tenantProfileMinAllowedValue));
         }
     }
 

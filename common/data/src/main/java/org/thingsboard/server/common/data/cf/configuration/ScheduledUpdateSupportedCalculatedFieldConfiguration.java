@@ -13,7 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf;
+package org.thingsboard.server.common.data.cf.configuration;
 
-public interface CalculatedFieldInitService {
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
+public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+
+    @JsonIgnore
+    boolean isScheduledUpdateEnabled();
+
+    int getScheduledUpdateIntervalSec();
+
+    void setScheduledUpdateIntervalSec(int interval);
 }
