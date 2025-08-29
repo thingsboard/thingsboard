@@ -24,9 +24,6 @@ import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldInitProfileEntityMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 
 /**
@@ -69,15 +66,6 @@ public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
                 break;
             case CF_CACHE_INIT_MSG:
                 processor.onCacheInitMsg((CalculatedFieldCacheInitMsg) msg);
-                break;
-            case CF_INIT_PROFILE_ENTITY_MSG:
-                processor.onProfileEntityMsg((CalculatedFieldInitProfileEntityMsg) msg);
-                break;
-            case CF_INIT_MSG:
-                processor.onFieldInitMsg((CalculatedFieldInitMsg) msg);
-                break;
-            case CF_LINK_INIT_MSG:
-                processor.onLinkInitMsg((CalculatedFieldLinkInitMsg) msg);
                 break;
             case CF_STATE_RESTORE_MSG:
                 processor.onStateRestoreMsg((CalculatedFieldStateRestoreMsg) msg);
