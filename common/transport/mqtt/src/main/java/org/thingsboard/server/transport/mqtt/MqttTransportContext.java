@@ -88,20 +88,30 @@ public class MqttTransportContext extends TransportContext {
     @Value("${transport.mqtt.proxy_enabled:false}")
     private boolean proxyEnabled;
 
-    private final AtomicInteger connectionsCounter = new AtomicInteger();
+    private final AtomicInteger connectionsActiveCounterMQTT = new AtomicInteger();
+    private final AtomicInteger connectionsActiveCounterMQTTS = new AtomicInteger();
 
     @PostConstruct
     public void init() {
         super.init();
-        transportService.createGaugeStats("openConnections", connectionsCounter);
+        transportService.createGaugeStats("connections_active", connectionsActiveCounterMQTT, "protocol", "MQTT");
+        transportService.createGaugeStats("connections_active", connectionsActiveCounterMQTTS, "protocol", "MQTTS");
     }
 
-    public void channelRegistered() {
-        connectionsCounter.incrementAndGet();
+    public void channelRegistered(boolean isSSL) {
+        if  (isSSL) {
+            connectionsActiveCounterMQTTS.incrementAndGet();
+        } else {
+            connectionsActiveCounterMQTT.incrementAndGet();
+        }
     }
 
-    public void channelUnregistered() {
-        connectionsCounter.decrementAndGet();
+    public void channelUnregistered(boolean isSSL) {
+        if  (isSSL) {
+            connectionsActiveCounterMQTTS.decrementAndGet();
+        } else {
+            connectionsActiveCounterMQTT.decrementAndGet();
+        }
     }
 
     public boolean checkAddress(InetSocketAddress address) {

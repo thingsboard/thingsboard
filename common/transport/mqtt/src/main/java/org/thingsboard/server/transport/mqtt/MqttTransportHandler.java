@@ -180,16 +180,20 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         this.rpcAwaitingAck = new ConcurrentHashMap<>();
     }
 
+    boolean isSSL() {
+        return sslHandler != null;
+    }
+
     @Override
     public void channelRegistered(ChannelHandlerContext ctx) throws Exception {
         super.channelRegistered(ctx);
-        context.channelRegistered();
+        context.channelRegistered(isSSL());
     }
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
         super.channelUnregistered(ctx);
-        context.channelUnregistered();
+        context.channelUnregistered(isSSL());
     }
 
     @Override
