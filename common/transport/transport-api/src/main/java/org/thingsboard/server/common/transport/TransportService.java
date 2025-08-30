@@ -161,5 +161,5 @@ public interface TransportService {
 
     boolean hasSession(SessionInfoProto sessionInfo);
 
-    void createGaugeStats(String openConnections, AtomicInteger connectionsCounter);
+    void createGaugeStats(String openConnections, AtomicInteger connectionsCounter, String... tags);
 }
