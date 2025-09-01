@@ -26,7 +26,7 @@ public enum ResourceType {
     JS_MODULE("application/javascript", true, true),
     IMAGE(null, true, true),
     DASHBOARD("application/json", true, true),
-    AI_PROMPT(null, false, true);
+    TEXT(null, false, true);
 
     @Getter
     private final String mediaType;

@@ -49,7 +49,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
         TbResource resource = new TbResource();
         resource.setTenantId(tenantId);
         resource.setTitle("File for AI request");
-        resource.setResourceType(ResourceType.AI_PROMPT);
+        resource.setResourceType(ResourceType.TEXT);
         resource.setFileName("myTestJson.json");
         byte[] data = "This is a test prompt for AI request.".getBytes();
         resource.setData(data);

@@ -87,7 +87,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             }
             TbResourceInfo savedResource = new TbResourceInfo(resourceService.saveResource(resource));
             logEntityActionService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
-            evictResourceDataCache(tenantId, savedResource.getId());
+            evictResourceDataCache(savedResource.getTenantId(), savedResource.getId());
             return savedResource;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), new TbResourceInfo(resource), actionType, user, e);
