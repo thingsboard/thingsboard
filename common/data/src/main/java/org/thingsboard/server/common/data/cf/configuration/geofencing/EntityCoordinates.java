@@ -17,12 +17,10 @@ package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 
 import lombok.Data;
-import org.springframework.lang.Nullable;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.Map;
 

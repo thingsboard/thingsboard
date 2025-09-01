@@ -310,7 +310,7 @@ public class CalculatedFieldCtx {
     }
 
     public boolean hasOtherSignificantChanges(CalculatedFieldCtx other) {
-        boolean expressionChanged = !expression.equals(other.expression);
+        boolean expressionChanged = calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !expression.equals(other.expression);
         boolean outputChanged = !output.equals(other.output);
         return expressionChanged || outputChanged;
     }
