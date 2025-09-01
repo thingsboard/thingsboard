@@ -160,7 +160,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         for (var entry : entries) {
             switch (entry.getKey()) {
                 case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY ->
-                        argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), resolveEntityId(entityId, entry), entry.getValue()));
+                        argFutures.put(entry.getKey(), fetchKvEntry(ctx.getTenantId(), entityId, entry.getValue()));
                 default -> {
                     var resolvedEntityIdsFuture = resolveGeofencingEntityIds(ctx.getTenantId(), entityId, entry);
                     argFutures.put(entry.getKey(), Futures.transformAsync(resolvedEntityIdsFuture, resolvedEntityIds ->
@@ -175,6 +175,9 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
     public Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
         for (var entry : arguments.entrySet()) {
+            if (entry.getValue().hasDynamicSource()) {
+                continue;
+            }
             var argEntityId = resolveEntityId(entityId, entry);
             var argValueFuture = fetchKvEntry(tenantId, argEntityId, entry.getValue());
             argFutures.put(entry.getKey(), argValueFuture);
@@ -330,7 +333,7 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
         ListenableFuture<List<Entry<EntityId, AttributeKvEntry>>> allFutures = Futures.allAsList(kvFutures);
 
         return Futures.transform(allFutures, entries -> ArgumentEntry.createGeofencingValueArgument(entries.stream()
-                        .collect(Collectors.toMap(Entry::getKey, Entry::getValue))), MoreExecutors.directExecutor());
+                .collect(Collectors.toMap(Entry::getKey, Entry::getValue))), MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<ArgumentEntry> fetchKvEntry(TenantId tenantId, EntityId entityId, Argument argument) {
