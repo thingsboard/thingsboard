@@ -300,6 +300,7 @@ public class ImageController extends BaseController {
         tbImageService.putETag(cacheKey, descriptor.getEtag());
         var result = ResponseEntity.ok()
                 .header("Content-Type", descriptor.getMediaType())
+                .header("Content-Security-Policy", "default-src 'none'")
                 .eTag(descriptor.getEtag());
         if (!cacheKey.isPublic()) {
             result
