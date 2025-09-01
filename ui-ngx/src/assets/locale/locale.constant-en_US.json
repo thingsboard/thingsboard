@@ -1347,6 +1347,7 @@
         "mobile-order": "Dashboard order in mobile application",
         "mobile-hide": "Hide dashboard in mobile application",
         "update-image": "Update dashboard image",
+        "update-dashboard": "Update the dashboard",
         "take-screenshot": "Take screenshot",
         "select-widget-title": "Select widget",
         "select-widget-value": "{{title}}: select widget",

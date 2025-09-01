@@ -45,6 +45,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   publicLink: string;
   assignedCustomersText: string;
   entityType = EntityType;
+  currentFileName: string = '';
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -84,6 +85,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
       {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : null],
+        fileContent: [null],
         mobileHide: [entity ? entity.mobileHide : false],
         mobileOrder: [entity ? entity.mobileOrder : null, [Validators.pattern(/^-?[0-9]+$/)]],
         configuration: this.fb.group(
@@ -101,9 +103,11 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
   }
 
   updateForm(entity: Dashboard) {
+    this.currentFileName = '';
     this.updateFields(entity);
     this.entityForm.patchValue({title: entity.title});
     this.entityForm.patchValue({image: entity.image});
+    this.entityForm.patchValue({fileContent: entity.fileContent || null});
     this.entityForm.patchValue({mobileHide: entity.mobileHide});
     this.entityForm.patchValue({mobileOrder: entity.mobileOrder});
     this.entityForm.patchValue({configuration: {description: entity.configuration ? entity.configuration.description : ''}});
@@ -141,6 +145,16 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
     if (entity && !isEqual(entity, {})) {
       this.assignedCustomersText = getDashboardAssignedCustomersText(entity);
       this.publicLink = this.dashboardService.getPublicDashboardLink(entity);
+    }
+  }
+
+  loadDataFromJsonContent(content: string): any {
+    try {
+      const importData = JSON.parse(content);
+      return importData ? importData['configuration'] : importData;
+    } catch (err) {
+      this.store.dispatch(new ActionNotificationShow({message: err.message, type: 'error'}));
+      return null;
     }
   }
 }

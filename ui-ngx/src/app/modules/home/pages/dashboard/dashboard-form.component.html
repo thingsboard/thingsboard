@@ -144,6 +144,19 @@
                                 formControlName="image">
         </tb-gallery-image-input>
       </div>
+
+      <div class="tb-form-panel stroked gap-2" [class.!hidden]="!isEdit">
+        <div class="tb-form-panel-title" translate>dashboard.update-dashboard</div>
+        <tb-file-input [contentConvertFunction]="loadDataFromJsonContent"
+                       [existingFileName]="currentFileName"
+                       (fileNameChanged)="currentFileName = $event"
+                       formControlName="fileContent"
+
+                       dropLabel="{{ 'import.drop-json-file-or' | translate }}"
+                       accept=".json,application/json"
+                       allowedExtensions="json">
+        </tb-file-input>
+      </div>
     </fieldset>
   </form>
 </div>

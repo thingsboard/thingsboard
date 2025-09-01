@@ -110,7 +110,7 @@ export class DashboardsTableConfigResolver  {
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
 
     this.config.loadEntity = id => this.dashboardService.getDashboard(id.id);
-    this.config.saveEntity = dashboard => this.saveAndAssignDashboard(dashboard as DashboardSetup);
+    this.config.saveEntity = dashboard => this.saveAndAssignDashboard(this.dashboardContentModification(dashboard) as DashboardSetup);
     this.config.onEntityAction = action => this.onDashboardAction(action);
     this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' ||
       this.config.componentsData.dashboardScope === 'edge_customer_user');
@@ -177,6 +177,20 @@ export class DashboardsTableConfigResolver  {
         return this.config;
       })
     );
+  }
+
+  private dashboardContentModification(dashboard: Dashboard): Dashboard{
+    if(dashboard.fileContent != undefined){
+      const { description, ...dashboardContent } = dashboard.fileContent;
+
+      dashboard.configuration = {
+        ...dashboard.configuration,
+        ...dashboardContent
+      }
+    }
+    delete dashboard.fileContent;
+
+    return dashboard;
   }
 
   configureColumns(dashboardScope: string): Array<EntityTableColumn<DashboardInfo>> {
