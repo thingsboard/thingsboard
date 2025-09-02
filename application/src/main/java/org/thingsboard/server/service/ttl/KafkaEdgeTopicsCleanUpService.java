@@ -30,9 +30,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
+import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.time.Instant;
@@ -57,7 +55,7 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
     private final TenantService tenantService;
     private final EdgeService edgeService;
     private final AttributesService attributesService;
-    private final TbKafkaAdmin kafkaAdmin;
+    private final KafkaAdmin kafkaAdmin;
 
     @Value("${sql.ttl.edge_events.edge_events_ttl:2628000}")
     private long ttlSeconds;
@@ -67,13 +65,13 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
 
     public KafkaEdgeTopicsCleanUpService(PartitionService partitionService, EdgeService edgeService,
                                          TenantService tenantService, AttributesService attributesService,
-                                         TopicService topicService, TbKafkaSettings kafkaSettings, TbKafkaTopicConfigs kafkaTopicConfigs) {
+                                         TopicService topicService, KafkaAdmin kafkaAdmin) {
         super(partitionService);
         this.topicService = topicService;
         this.tenantService = tenantService;
         this.edgeService = edgeService;
         this.attributesService = attributesService;
-        this.kafkaAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getEdgeEventConfigs());
+        this.kafkaAdmin = kafkaAdmin;
     }
 
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.edge_events.execution_interval_ms})}", fixedDelayString = "${sql.ttl.edge_events.execution_interval_ms}")
@@ -82,8 +80,8 @@ public class KafkaEdgeTopicsCleanUpService extends AbstractCleanUpService {
             return;
         }
 
-        Set<String> topics = kafkaAdmin.getAllTopics();
-        if (topics == null || topics.isEmpty()) {
+        Set<String> topics = kafkaAdmin.listTopics();
+        if (topics.isEmpty()) {
             return;
         }
 

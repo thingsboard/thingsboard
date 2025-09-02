@@ -65,7 +65,7 @@
                    [style.min-width]="(entityDatasource.countCellButtonAction * 48) + 'px'">
                 <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                   <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
-                  <button mat-icon-button [disabled]="isLoading$ | async"
+                  <button mat-icon-button
                           *ngIf="actionDescriptor.icon"
                           matTooltip="{{ actionDescriptor.displayName }}"
                           matTooltipPosition="above"
@@ -83,7 +83,6 @@
                 <mat-menu #cellActionsMenu="matMenu" xPosition="before">
                   <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                     <button mat-menu-item *ngIf="actionDescriptor.icon"
-                            [disabled]="isLoading$ | async"
                             (click)="onActionButtonClick($event, entity, actionDescriptor)">
                       <tb-icon matMenuItemIcon>{{actionDescriptor.icon}}</tb-icon>
                       <span>{{ actionDescriptor.displayName }}</span>

@@ -25,6 +25,7 @@ export interface WidgetModelDefinition<T = any> {
   prepareExportInfo(dashboard: Dashboard, widget: Widget): T;
   updateFromExportInfo(widget: Widget, entityAliases: EntityAliases, filters: Filters, info: T): void;
   datasources(widget: Widget): Datasource[];
+  hasTimewindow(widget: Widget): boolean;
 }
 
 const widgetModelRegistry: WidgetModelDefinition[] = [

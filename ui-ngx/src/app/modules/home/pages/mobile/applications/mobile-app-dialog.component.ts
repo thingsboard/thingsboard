@@ -29,6 +29,7 @@ import { MobileAppService } from '@core/http/mobile-app.service';
 
 export interface MobileAppDialogData {
   platformType: PlatformType;
+  name?: string
 }
 
 @Component({
@@ -55,6 +56,9 @@ export class MobileAppDialogComponent extends DialogComponent<MobileAppDialogCom
   ngAfterViewInit(): void {
     setTimeout(() => {
       this.mobileAppComponent.entityForm.markAsDirty();
+      if (this.data.name) {
+        this.mobileAppComponent.entityForm.get('title').patchValue(this.data.name, {emitEvent: false});
+      }
       this.mobileAppComponent.entityForm.patchValue({platformType: this.data.platformType});
       this.mobileAppComponent.entityForm.get('platformType').disable({emitEvent: false});
       this.mobileAppComponent.isEdit = true;

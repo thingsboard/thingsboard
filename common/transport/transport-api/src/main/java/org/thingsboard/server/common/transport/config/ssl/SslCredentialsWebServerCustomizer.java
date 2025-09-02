@@ -59,6 +59,7 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
     public void customize(ConfigurableServletWebServerFactory factory) {
         SslCredentials sslCredentials = this.httpServerSslCredentialsConfig.getCredentials();
         Ssl ssl = serverProperties.getSsl();
+        ssl.setBundle("default");
         ssl.setKeyAlias(sslCredentials.getKeyAlias());
         ssl.setKeyPassword(sslCredentials.getKeyPassword());
         factory.setSsl(ssl);

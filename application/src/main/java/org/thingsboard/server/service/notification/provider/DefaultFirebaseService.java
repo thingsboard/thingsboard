@@ -140,8 +140,10 @@ public class DefaultFirebaseService implements FirebaseService {
         }
 
         public void destroy() {
-            app.delete();
-            app = null;
+            if (app != null) {
+                app.delete();
+                app = null;
+            }
             messaging = null;
             log.debug("[{}] Destroyed FirebaseContext", key);
         }

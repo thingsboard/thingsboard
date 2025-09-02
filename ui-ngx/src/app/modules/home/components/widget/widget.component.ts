@@ -38,6 +38,7 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
+  MobileImageResult,
   Widget,
   WidgetAction,
   WidgetActionDescriptor,
@@ -126,6 +127,7 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
+import { addDiagnosticChain } from '@angular/compiler-cli/src/ngtsc/diagnostics';
 
 @Component({
   selector: 'tb-widget',
@@ -1222,11 +1224,15 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
     switch (type) {
       case WidgetMobileActionType.takePictureFromGallery:
       case WidgetMobileActionType.takePhoto:
+      case WidgetMobileActionType.takeScreenshot:
+        argsObservable = of([mobileAction.saveToGallery]);
+        break;
       case WidgetMobileActionType.scanQrCode:
       case WidgetMobileActionType.getLocation:
-      case WidgetMobileActionType.takeScreenshot:
-      case WidgetMobileActionType.deviceProvision:
         argsObservable = of([]);
+        break;
+      case WidgetMobileActionType.deviceProvision:
+        argsObservable = of([mobileAction.provisionType]);
         break;
       case WidgetMobileActionType.mapDirection:
       case WidgetMobileActionType.mapLocation:
@@ -1297,6 +1303,10 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                     case WidgetMobileActionType.takePhoto:
                     case WidgetMobileActionType.takeScreenshot:
                       const imageUrl = actionResult.imageUrl;
+                      if (!additionalParams) {
+                        additionalParams = {};
+                      }
+                      additionalParams.imageInfo = actionResult.imageInfo;
                       if (isNotEmptyTbFunction(mobileAction.processImageFunction)) {
                         compileTbFunction(this.http, mobileAction.processImageFunction, 'imageUrl', '$event', 'widgetContext', 'entityId',
                           'entityName', 'additionalParams', 'entityLabel').subscribe(
@@ -1420,6 +1430,23 @@ export class WidgetComponent extends PageComponent implements OnInit, OnChanges,
                       }
                     );
                   }
+                }
+              } else if (!this.mobileService.isMobileApp()) {
+                if (isNotEmptyTbFunction(mobileAction.handleNonMobileFallbackFunction)) {
+                  compileTbFunction(this.http, mobileAction.handleNonMobileFallbackFunction, '$event', 'widgetContext',).subscribe(
+                    {
+                      next: (compiled) => {
+                        try {
+                          compiled.execute($event, this.widgetContext);
+                        } catch (e) {
+                          console.error(e);
+                        }
+                      },
+                      error: (err) => {
+                        console.error(err);
+                      }
+                    }
+                  );
                 }
               }
             }

@@ -31,7 +31,7 @@ import java.util.concurrent.TimeUnit;
 public class AbstractRedisClusterContainer {
 
     static final String NODES = "127.0.0.1:6371,127.0.0.1:6372,127.0.0.1:6373,127.0.0.1:6374,127.0.0.1:6375,127.0.0.1:6376";
-    static final String IMAGE = "bitnami/valkey-cluster:8.0";
+    static final String IMAGE = "bitnamilegacy/valkey-cluster:8.0";
     static final Map<String,String> ENVS = Map.of(
             "VALKEY_CLUSTER_ANNOUNCE_IP", "127.0.0.1",
             "VALKEY_CLUSTER_DYNAMIC_IPS", "no",

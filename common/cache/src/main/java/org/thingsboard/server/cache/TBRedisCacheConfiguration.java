@@ -79,10 +79,10 @@ public abstract class TBRedisCacheConfiguration {
     @Value("${redis.pool_config.minIdle:16}")
     private int minIdle;
 
-    @Value("${redis.pool_config.testOnBorrow:true}")
+    @Value("${redis.pool_config.testOnBorrow:false}")
     private boolean testOnBorrow;
 
-    @Value("${redis.pool_config.testOnReturn:true}")
+    @Value("${redis.pool_config.testOnReturn:false}")
     private boolean testOnReturn;
 
     @Value("${redis.pool_config.testWhileIdle:true}")

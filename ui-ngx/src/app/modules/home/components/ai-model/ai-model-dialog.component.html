@@ -59,7 +59,7 @@
             @if (providerFieldsList.includes('personalAccessToken')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>ai-models.personal-access-token</mat-label>
-                <input type="password" required matInput formControlName="personalAccessToken">
+                <input type="password" required matInput formControlName="personalAccessToken" autocomplete="new-password">
                 <tb-toggle-password matSuffix></tb-toggle-password>
                 <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('personalAccessToken').hasError('required')">
                   {{ 'ai-models.personal-access-token-required' | translate }}
@@ -115,7 +115,7 @@
             @if (providerFieldsList.includes('apiKey')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>ai-models.api-key</mat-label>
-                <input type="password" required matInput formControlName="apiKey">
+                <input type="password" required matInput formControlName="apiKey" autocomplete="new-password">
                 <tb-toggle-password matSuffix></tb-toggle-password>
                 <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('apiKey').hasError('required')">
                   {{ 'ai-models.api-key-required' | translate }}
@@ -143,7 +143,7 @@
             @if (providerFieldsList.includes('secretAccessKey')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>ai-models.secret-access-key</mat-label>
-                <input type="password" required matInput formControlName="secretAccessKey">
+                <input type="password" required matInput formControlName="secretAccessKey" autocomplete="new-password">
                 <tb-toggle-password matSuffix></tb-toggle-password>
                 <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('secretAccessKey').hasError('required')">
                   {{ 'ai-models.secret-access-key-required' | translate }}

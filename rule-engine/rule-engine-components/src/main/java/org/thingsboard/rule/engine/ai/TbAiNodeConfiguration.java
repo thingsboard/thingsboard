@@ -34,12 +34,11 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @NotNull
     private AiModelId modelId;
 
-    @Pattern(regexp = ".*\\S.*", message = "must not be blank")
-    @Length(min = 1, max = 10000)
+    @Length(min = 1, max = 500_000)
     private String systemPrompt;
 
     @NotBlank
-    @Length(min = 1, max = 10000)
+    @Length(min = 1, max = 500_000)
     private String userPrompt;
 
     @NotNull

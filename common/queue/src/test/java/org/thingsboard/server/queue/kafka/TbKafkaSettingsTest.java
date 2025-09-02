@@ -28,7 +28,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 
-@SpringBootTest(classes = TbKafkaSettings.class)
+@SpringBootTest(classes = {TbKafkaSettings.class, KafkaAdmin.class})
 @TestPropertySource(properties = {
         "queue.type=kafka",
         "queue.kafka.bootstrap.servers=localhost:9092",

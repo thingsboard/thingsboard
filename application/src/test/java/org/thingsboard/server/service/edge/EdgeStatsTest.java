@@ -33,7 +33,7 @@ import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
+import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.service.edge.stats.EdgeStatsService;
 
 import java.util.List;
@@ -141,7 +141,7 @@ public class EdgeStatsTest {
         TopicPartitionInfo partitionInfo = new TopicPartitionInfo(topic, tenantId, 0, false);
         when(topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId)).thenReturn(partitionInfo);
 
-        TbKafkaAdmin kafkaAdmin = mock(TbKafkaAdmin.class);
+        KafkaAdmin kafkaAdmin = mock(KafkaAdmin.class);
         when(kafkaAdmin.getTotalLagForGroupsBulk(Set.of(topic)))
                 .thenReturn(Map.of(topic, 15L));
 
