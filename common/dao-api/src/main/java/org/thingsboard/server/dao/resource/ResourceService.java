@@ -90,4 +90,6 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource createOrUpdateSystemResource(ResourceType resourceType, ResourceSubType resourceSubType, String resourceKey, byte[] data);
 
+    List<TbResourceInfo> findTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds);
+
 }

@@ -55,9 +55,11 @@ import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -261,6 +263,21 @@ public class TbResourceController extends BaseController {
         } else {
             return checkNotNull(resourceService.findAllTenantResourcesByTenantId(filter.build(), pageLink));
         }
+    }
+
+    @ApiOperation(value = "Get Tenant Resource Infos (getTenantResourcesByIds)")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/resource/tenant", params = {"resourceIds"})
+    public List<TbResourceInfo> getTenantResourcesByIds(
+            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("strResourceIds") String[] strResourceIds) throws ThingsboardException {
+        checkArrayParameter("resourceIds", strResourceIds);
+        SecurityUser user = getCurrentUser();
+        List<TbResourceId> resourceIds = new ArrayList<>();
+        for (String strResourceId : strResourceIds) {
+            resourceIds.add(new TbResourceId(toUUID(strResourceId)));
+        }
+        return resourceService.findTenantResourcesByIds(user.getTenantId(), resourceIds);
     }
 
     @ApiOperation(value = "Get All Resource Infos (getAllResources)",

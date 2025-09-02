@@ -51,7 +51,9 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbResponseFormatType;
@@ -118,10 +120,15 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             // LangChain4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
             responseFormat = config.getResponseFormat().toLangChainResponseFormat();
         }
+        if (config.getResourceIds() != null && !config.getResourceIds().isEmpty()) {
+            resourceIds = new ArrayList<>(config.getResourceIds().size());
+            for (UUID resourceId : config.getResourceIds()) {
+                resourceIds.add(new TbResourceId(resourceId));
+            }
+        }
 
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
-        resourceIds = config.getResourceIds();
         timeoutSeconds = config.getTimeoutSeconds();
         super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
     }
@@ -135,18 +142,20 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     public void onMsg(TbContext ctx, TbMsg msg) {
         var ackedMsg = ackIfNeeded(ctx, msg);
 
-        if (resourceIds == null || resourceIds.isEmpty()) {
+        if (resourceIds == null) {
             buildAndSendRequest(ctx, ackedMsg, UserMessage.from(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
         } else {
-            CompletableFuture<List<Content>> futureContents = getContentsFromResourceIds(ctx);
-            futureContents.whenComplete((contents, err) -> {
+            CompletableFuture<List<byte[]>> resourcesFuture = loadResources(ctx);
+            resourcesFuture.whenComplete((resources, err) -> {
                 if (err != null) {
                     tellFailure(ctx, ackedMsg, err);
                     return;
                 }
+                List<Content> contents = resources.stream()
+                        .map(bytes -> new TextContent(new String(bytes, StandardCharsets.UTF_8)))
+                        .collect(Collectors.toList());
                 contents.add(new TextContent(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
-                UserMessage userMessage = UserMessage.from(contents);
-                buildAndSendRequest(ctx, ackedMsg, userMessage);
+                buildAndSendRequest(ctx, ackedMsg, UserMessage.from(contents));
             });
         }
     }
@@ -184,21 +193,15 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         }, directExecutor());
     }
 
-    private CompletableFuture<List<Content>> getContentsFromResourceIds(TbContext ctx) {
-        List<CompletableFuture<Content>> contentFutures = new ArrayList<>(resourceIds.size());
+    private CompletableFuture<List<byte[]>> loadResources(TbContext ctx) {
+        List<CompletableFuture<byte[]>> resourceFutures = new ArrayList<>(resourceIds.size());
         for (TbResourceId resourceId : resourceIds) {
-            CompletableFuture<Content> f = ctx.getTbResourceDataCache()
-                    .getResourceData(ctx.getTenantId(), resourceId)
-                    .thenApply(bytes -> {
-                        if (bytes == null || bytes.length == 0) {
-                            return null;
-                        }
-                        return new TextContent(new String(bytes, StandardCharsets.UTF_8));
-                    });
-            contentFutures.add(f);
+            CompletableFuture<byte[]> f = ctx.getTbResourceDataCache()
+                    .getResourceData(ctx.getTenantId(), resourceId);
+            resourceFutures.add(f);
         }
-        return CompletableFuture.allOf(contentFutures.toArray(CompletableFuture[]::new))
-                .thenApply(v -> contentFutures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList());
+        return CompletableFuture.allOf(resourceFutures.toArray(CompletableFuture[]::new))
+                .thenApply(v -> resourceFutures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList());
     }
 
     private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {

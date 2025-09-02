@@ -23,10 +23,10 @@ import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.id.AiModelId;
-import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.validation.Length;
 
 import java.util.List;
+import java.util.UUID;
 
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbJsonResponseFormat;
 
@@ -43,7 +43,7 @@ public class TbAiNodeConfiguration implements NodeConfiguration<TbAiNodeConfigur
     @Length(min = 1, max = 500_000)
     private String userPrompt;
 
-    private List<TbResourceId> resourceIds;
+    private List<UUID> resourceIds;
 
     @NotNull
     @Valid
