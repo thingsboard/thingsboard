@@ -24,9 +24,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-/**
- * Created by mshvayka on 04.09.18.
- */
 @Data
 public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetTelemetryNodeConfiguration> {
 
@@ -66,4 +63,5 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
         configuration.setLimit(MAX_FETCH_SIZE);
         return configuration;
     }
+
 }
