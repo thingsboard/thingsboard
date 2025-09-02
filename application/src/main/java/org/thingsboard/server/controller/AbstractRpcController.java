@@ -49,9 +49,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Created by ashvayka on 22.03.18.
- */
 @TbCoreComponent
 @Slf4j
 public abstract class AbstractRpcController extends BaseController {
@@ -79,7 +76,7 @@ public abstract class AbstractRpcController extends BaseController {
             long expTime = rpcRequestBody.has(DataConstants.EXPIRATION_TIME) ? rpcRequestBody.get(DataConstants.EXPIRATION_TIME).asLong() : System.currentTimeMillis() + Math.max(minTimeout, timeout);
             UUID rpcRequestUUID = rpcRequestBody.has("requestUUID") ? UUID.fromString(rpcRequestBody.get("requestUUID").asText()) : UUID.randomUUID();
             boolean persisted = rpcRequestBody.has(DataConstants.PERSISTENT) && rpcRequestBody.get(DataConstants.PERSISTENT).asBoolean();
-            String additionalInfo =  JacksonUtil.toString(rpcRequestBody.get(DataConstants.ADDITIONAL_INFO));
+            String additionalInfo = JacksonUtil.toString(rpcRequestBody.get(DataConstants.ADDITIONAL_INFO));
             Integer retries = rpcRequestBody.has(DataConstants.RETRIES) ? rpcRequestBody.get(DataConstants.RETRIES).asInt() : null;
             accessValidator.validate(currentUser, Operation.RPC_CALL, deviceId, new HttpValidationCallback(response, new FutureCallback<>() {
                 @Override
@@ -172,6 +169,5 @@ public abstract class AbstractRpcController extends BaseController {
                 method,
                 params);
     }
-
 
 }
