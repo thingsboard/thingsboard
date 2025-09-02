@@ -195,7 +195,6 @@ export interface Dashboard extends DashboardInfo {
   configuration?: DashboardConfiguration;
   dialogRef?: MatDialogRef<any>;
   resources?: Array<any>;
-  fileContent?: DashboardConfiguration;
 }
 
 export interface HomeDashboard extends Dashboard {

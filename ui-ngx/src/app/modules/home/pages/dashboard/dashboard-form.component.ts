@@ -31,7 +31,7 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isEqual } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
-import {PageLink} from "@shared/models/page/page-link";
+import { PageLink } from "@shared/models/page/page-link";
 
 @Component({
   selector: 'tb-dashboard-form',
@@ -118,7 +118,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard, PageLink,
 
   onPublicLinkCopied($event) {
     this.store.dispatch(new ActionNotificationShow(
-     {
+      {
         message: this.translate.instant('dashboard.public-link-copied-message'),
         type: 'success',
         duration: 750,
