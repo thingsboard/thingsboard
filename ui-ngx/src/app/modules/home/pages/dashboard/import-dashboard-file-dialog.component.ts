@@ -45,7 +45,7 @@ export class ImportDashboardFileDialogComponent extends DialogComponent<ImportDa
               @Inject(MAT_DIALOG_DATA) public data: DashboardInfoDialogData,
               private dashboardService: DashboardService,
               protected dialogRef: MatDialogRef<ImportDashboardFileDialogComponent>,
-              public fb: FormBuilder) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.dashboard = data.dashboard;
   }
