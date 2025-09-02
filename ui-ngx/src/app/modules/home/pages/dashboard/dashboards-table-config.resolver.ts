@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
+import {Injectable} from '@angular/core';
 
-import { ActivatedRouteSnapshot, Router } from '@angular/router';
+import {ActivatedRouteSnapshot, Router} from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -26,20 +26,20 @@ import {
   GroupActionDescriptor,
   HeaderActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
-import { TranslateService } from '@ngx-translate/core';
-import { DatePipe } from '@angular/common';
-import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityAction } from '@home/models/entity/entity-component.models';
-import { forkJoin, Observable, of } from 'rxjs';
-import { select, Store } from '@ngrx/store';
-import { selectAuthUser } from '@core/auth/auth.selectors';
-import { map, mergeMap, take, tap } from 'rxjs/operators';
-import { AppState } from '@core/core.state';
-import { Authority } from '@app/shared/models/authority.enum';
-import { CustomerService } from '@core/http/customer.service';
-import { Customer } from '@app/shared/models/customer.model';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogService } from '@core/services/dialog.service';
+import {TranslateService} from '@ngx-translate/core';
+import {DatePipe} from '@angular/common';
+import {EntityType, entityTypeResources, entityTypeTranslations} from '@shared/models/entity-type.models';
+import {EntityAction} from '@home/models/entity/entity-component.models';
+import {forkJoin, Observable, of} from 'rxjs';
+import {select, Store} from '@ngrx/store';
+import {selectAuthUser} from '@core/auth/auth.selectors';
+import {map, mergeMap, take, tap} from 'rxjs/operators';
+import {AppState} from '@core/core.state';
+import {Authority} from '@app/shared/models/authority.enum';
+import {CustomerService} from '@core/http/customer.service';
+import {Customer} from '@app/shared/models/customer.model';
+import {MatDialog} from '@angular/material/dialog';
+import {DialogService} from '@core/services/dialog.service';
 import {
   AddEntitiesToCustomerDialogComponent,
   AddEntitiesToCustomerDialogData
@@ -52,8 +52,8 @@ import {
   isCurrentPublicDashboardCustomer,
   isPublicDashboard
 } from '@app/shared/models/dashboard.models';
-import { DashboardService } from '@app/core/http/dashboard.service';
-import { DashboardFormComponent } from '@modules/home/pages/dashboard/dashboard-form.component';
+import {DashboardService} from '@app/core/http/dashboard.service';
+import {DashboardFormComponent} from '@modules/home/pages/dashboard/dashboard-form.component';
 import {
   ManageDashboardCustomersActionType,
   ManageDashboardCustomersDialogComponent,
@@ -63,25 +63,30 @@ import {
   MakeDashboardPublicDialogComponent,
   MakeDashboardPublicDialogData
 } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
-import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
-import { ImportExportService } from '@shared/import-export/import-export.service';
-import { EdgeService } from '@core/http/edge.service';
+import {DashboardTabsComponent} from '@home/pages/dashboard/dashboard-tabs.component';
+import {ImportExportService} from '@shared/import-export/import-export.service';
+import {EdgeService} from '@core/http/edge.service';
 import {
   AddEntitiesToEdgeDialogComponent,
   AddEntitiesToEdgeDialogData
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
-import { HomeDialogsService } from '@home/dialogs/home-dialogs.service';
-import { Widget } from '@shared/models/widget.models';
-import { EntityAliases } from '@shared/models/alias.models';
+import {HomeDialogsService} from '@home/dialogs/home-dialogs.service';
+import {Widget} from '@shared/models/widget.models';
+import {EntityAliases} from '@shared/models/alias.models';
 import {
   EntityAliasesDialogComponent,
   EntityAliasesDialogData
 } from '@home/components/alias/entity-aliases-dialog.component';
+import {
+  DashboardInfoDialogData,
+  ImportDashboardFileDialogComponent
+} from "@home/pages/dashboard/import-dashboard-file-dialog.component";
+import {PageLink} from "@shared/models/page/page-link";
 
 @Injectable()
-export class DashboardsTableConfigResolver  {
+export class DashboardsTableConfigResolver {
 
-  private readonly config: EntityTableConfig<DashboardInfo | Dashboard> = new EntityTableConfig<DashboardInfo | Dashboard>();
+  private readonly config: EntityTableConfig<Dashboard, PageLink, DashboardInfo> = new EntityTableConfig<Dashboard, PageLink, DashboardInfo>();
 
   constructor(private store: Store<AppState>,
               private dashboardService: DashboardService,
@@ -110,7 +115,7 @@ export class DashboardsTableConfigResolver  {
     this.config.deleteEntitiesContent = () => this.translate.instant('dashboard.delete-dashboards-text');
 
     this.config.loadEntity = id => this.dashboardService.getDashboard(id.id);
-    this.config.saveEntity = dashboard => this.saveAndAssignDashboard(this.dashboardContentModification(dashboard) as DashboardSetup);
+    this.config.saveEntity = dashboard => this.saveAndAssignDashboard(dashboard as DashboardSetup);
     this.config.onEntityAction = action => this.onDashboardAction(action);
     this.config.detailsReadonly = () => (this.config.componentsData.dashboardScope === 'customer_user' ||
       this.config.componentsData.dashboardScope === 'edge_customer_user');
@@ -177,20 +182,6 @@ export class DashboardsTableConfigResolver  {
         return this.config;
       })
     );
-  }
-
-  private dashboardContentModification(dashboard: Dashboard): Dashboard{
-    if(dashboard.fileContent != undefined){
-      const { description, ...dashboardContent } = dashboard.fileContent;
-
-      dashboard.configuration = {
-        ...dashboard.configuration,
-        ...dashboardContent
-      }
-    }
-    delete dashboard.fileContent;
-
-    return dashboard;
   }
 
   configureColumns(dashboardScope: string): Array<EntityTableColumn<DashboardInfo>> {
@@ -389,7 +380,7 @@ export class DashboardsTableConfigResolver  {
     return actions;
   }
 
-  openDashboard($event: Event, dashboard: DashboardInfo) {
+  openDashboard($event: Event, dashboard: Dashboard) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -436,11 +427,25 @@ export class DashboardsTableConfigResolver  {
       ));
   }
 
-  exportDashboard($event: Event, dashboard: DashboardInfo) {
+  exportDashboard($event: Event, dashboard: Dashboard) {
     if ($event) {
       $event.stopPropagation();
     }
     this.importExport.exportDashboard(dashboard.id.id);
+  }
+
+  importDashboardFile($event: Event, dashboard: Dashboard) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    return this.dialog.open<ImportDashboardFileDialogComponent, DashboardInfoDialogData,
+      boolean>(ImportDashboardFileDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        dashboard
+      }
+    }).afterClosed();
   }
 
   addDashboardsToCustomer($event: Event) {
@@ -463,7 +468,7 @@ export class DashboardsTableConfigResolver  {
       });
   }
 
-  makePublic($event: Event, dashboard: DashboardInfo) {
+  makePublic($event: Event, dashboard: Dashboard) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -484,7 +489,7 @@ export class DashboardsTableConfigResolver  {
     );
   }
 
-  makePrivate($event: Event, dashboard: DashboardInfo) {
+  makePrivate($event: Event, dashboard: Dashboard) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -506,7 +511,7 @@ export class DashboardsTableConfigResolver  {
     );
   }
 
-  manageAssignedCustomers($event: Event, dashboard: DashboardInfo) {
+  manageAssignedCustomers($event: Event, dashboard: Dashboard) {
     const assignedCustomersIds = dashboard.assignedCustomers ?
       dashboard.assignedCustomers.map(customerInfo => customerInfo.customerId.id) : [];
     this.showManageAssignedCustomersDialog($event, [dashboard.id.id], 'manage', assignedCustomersIds);
@@ -543,7 +548,7 @@ export class DashboardsTableConfigResolver  {
       });
   }
 
-  unassignFromCustomer($event: Event, dashboard: DashboardInfo, customerId: string) {
+  unassignFromCustomer($event: Event, dashboard: Dashboard, customerId: string) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -593,13 +598,16 @@ export class DashboardsTableConfigResolver  {
     );
   }
 
-  onDashboardAction(action: EntityAction<DashboardInfo>): boolean {
+  onDashboardAction(action: EntityAction<Dashboard>): boolean {
     switch (action.action) {
       case 'open':
         this.openDashboard(action.event, action.entity);
         return true;
       case 'export':
         this.exportDashboard(action.event, action.entity);
+        return true;
+      case 'import':
+        this.importDashboardFile(action.event, action.entity);
         return true;
       case 'makePublic':
         this.makePublic(action.event, action.entity);

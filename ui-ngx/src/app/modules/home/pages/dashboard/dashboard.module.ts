@@ -24,13 +24,15 @@ import { DashboardRoutingModule } from './dashboard-routing.module';
 import { MakeDashboardPublicDialogComponent } from '@modules/home/pages/dashboard/make-dashboard-public-dialog.component';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { DashboardTabsComponent } from '@home/pages/dashboard/dashboard-tabs.component';
+import {ImportDashboardFileDialogComponent} from "@home/pages/dashboard/import-dashboard-file-dialog.component";
 
 @NgModule({
   declarations: [
     DashboardFormComponent,
     DashboardTabsComponent,
     ManageDashboardCustomersDialogComponent,
-    MakeDashboardPublicDialogComponent
+    MakeDashboardPublicDialogComponent,
+    ImportDashboardFileDialogComponent
   ],
   imports: [
     CommonModule,

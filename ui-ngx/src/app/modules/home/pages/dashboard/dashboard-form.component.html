@@ -30,6 +30,12 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'import')"
+          [class.!hidden]="isEdit || dashboardScope !== 'tenant'">
+    {{'dashboard.import' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
           [class.!hidden]="isEdit || dashboardScope !== 'tenant' || isPublic(entity)">
     {{'dashboard.make-public' | translate }}
@@ -143,19 +149,6 @@
                                 label="{{'dashboard.image' | translate}}"
                                 formControlName="image">
         </tb-gallery-image-input>
-      </div>
-
-      <div class="tb-form-panel stroked gap-2" [class.!hidden]="!isEdit">
-        <div class="tb-form-panel-title" translate>dashboard.update-dashboard</div>
-        <tb-file-input [contentConvertFunction]="loadDataFromJsonContent"
-                       [existingFileName]="currentFileName"
-                       (fileNameChanged)="currentFileName = $event"
-                       formControlName="fileContent"
-
-                       dropLabel="{{ 'import.drop-json-file-or' | translate }}"
-                       accept=".json,application/json"
-                       allowedExtensions="json">
-        </tb-file-input>
       </div>
     </fieldset>
   </form>
