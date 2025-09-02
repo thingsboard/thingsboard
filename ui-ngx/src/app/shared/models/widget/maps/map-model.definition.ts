@@ -17,13 +17,18 @@
 import { EntityAliases, EntityAliasInfo, getEntityAliasId } from '@shared/models/alias.models';
 import { FilterInfo, Filters, getFilterId } from '@shared/models/query/query.models';
 import { Dashboard } from '@shared/models/dashboard.models';
-import { Datasource, DatasourceType, Widget } from '@shared/models/widget.models';
+import { DataKey, Datasource, datasourcesHasAggregation, DatasourceType, Widget } from '@shared/models/widget.models';
 import {
+  additionalMapDataSourcesToDatasources,
   BaseMapSettings,
+  CirclesDataLayerSettings,
   MapDataLayerSettings,
+  MapDataLayerType,
   MapDataSourceSettings,
   mapDataSourceSettingsToDatasource,
-  MapType
+  MapType,
+  MarkersDataLayerSettings,
+  PolygonsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { WidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
 
@@ -124,6 +129,27 @@ export const MapModelDefinition: WidgetModelDefinition<MapDatasourcesInfo> = {
       datasources.push(...getMapDataLayersDatasources(settings.additionalDataSources));
     }
     return datasources;
+  },
+  hasTimewindow(widget: Widget): boolean {
+    const settings: BaseMapSettings = widget.config.settings as BaseMapSettings;
+    if (settings.trips?.length) {
+      return true;
+    } else {
+      const datasources: Datasource[] = [];
+      if (settings.markers?.length) {
+        datasources.push(...getMapLatestDataLayersDatasources(settings.markers, 'markers'));
+      }
+      if (settings.polygons?.length) {
+        datasources.push(...getMapLatestDataLayersDatasources(settings.polygons, 'polygons'));
+      }
+      if (settings.circles?.length) {
+        datasources.push(...getMapLatestDataLayersDatasources(settings.circles, 'circles'));
+      }
+      if (settings.additionalDataSources?.length) {
+        datasources.push(...additionalMapDataSourcesToDatasources(settings.additionalDataSources));
+      }
+      return datasourcesHasAggregation(datasources);
+    }
   }
 };
 
@@ -222,4 +248,41 @@ const getMapDataLayersDatasources = (settings: MapDataLayerSettings[] | MapDataS
     }
   });
   return datasources;
+};
+
+const getMapLatestDataLayersDatasources = (settings: MapDataLayerSettings[],
+                                     dataLayerType: MapDataLayerType): Datasource[] => {
+  const datasources: Datasource[] = [];
+  settings.forEach((dsSettings) => {
+    const dataKeys: DataKey[] = getMapLatestDataLayerDatasourceDataKeys(dsSettings, dataLayerType);
+    const datasource: Datasource = mapDataSourceSettingsToDatasource(dsSettings);
+    datasource.dataKeys.push(...dataKeys);
+    datasources.push(datasource);
+    if ((dsSettings).additionalDataSources?.length) {
+      (dsSettings).additionalDataSources.forEach((ds) => {
+        const additionalDatasource: Datasource = mapDataSourceSettingsToDatasource(ds);
+        additionalDatasource.dataKeys.push(...dataKeys);
+        datasources.push(additionalDatasource);
+      });
+    }
+  });
+  return datasources;
+};
+
+const getMapLatestDataLayerDatasourceDataKeys = (settings: MapDataLayerSettings,
+                                           dataLayerType: MapDataLayerType): DataKey[] => {
+  const dataKeys = settings.additionalDataKeys || [];
+  switch (dataLayerType) {
+    case 'markers':
+      const markersSettings = settings as MarkersDataLayerSettings;
+      dataKeys.push(markersSettings.xKey, markersSettings.yKey);
+      break;
+    case 'polygons':
+      dataKeys.push((settings as PolygonsDataLayerSettings).polygonKey);
+      break;
+    case 'circles':
+      dataKeys.push((settings as CirclesDataLayerSettings).circleKey);
+      break;
+  }
+  return dataKeys;
 };

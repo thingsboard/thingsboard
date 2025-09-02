@@ -953,7 +953,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         });
 
-        EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter);
+        EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter, keyFilters);
         countByQueryAndCheck(countQuery, 97);
     }
 

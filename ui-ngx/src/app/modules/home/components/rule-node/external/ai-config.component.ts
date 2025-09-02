@@ -80,11 +80,15 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     }
   }
 
-  protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+  protected prepareOutputConfig(): RuleNodeConfiguration {
+    const config = this.configForm().getRawValue();
     if (!this.aiConfigForm.get('systemPrompt').value) {
-      delete configuration.systemPrompt;
+      delete config.systemPrompt;
     }
-    return deepTrim(configuration);
+    if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.JSON_SCHEMA) {
+      delete config.responseFormat.schema;
+    }
+    return deepTrim(config);
   }
 
   onEntityChange($event: AiModel) {
@@ -93,10 +97,10 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
         if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.TEXT) {
           this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: true});
         }
-        this.aiConfigForm.get('responseFormat.type').disable();
+        this.aiConfigForm.get('responseFormat.type').disable({emitEvent: false});
       }
     } else {
-      this.aiConfigForm.get('responseFormat.type').enable();
+      this.aiConfigForm.get('responseFormat.type').enable({emitEvent: false});
     }
   }
 
@@ -104,12 +108,13 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
   }
 
-  createModelAi(formControl: string) {
+  createModelAi(name: string, formControl: string) {
     this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        isAdd: true
+        isAdd: true,
+        name
       }
     }).afterClosed()
       .subscribe((model) => {
