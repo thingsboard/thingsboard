@@ -35,6 +35,7 @@ import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { ContentObserver } from '@angular/cdk/observers';
 import { isTbImage } from '@shared/models/resource.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const _TbIconBase = mixinColor(
   class {
@@ -115,6 +116,7 @@ export class TbIconComponent extends _TbIconBase
               private renderer: Renderer2,
               private _iconRegistry: MatIconRegistry,
               private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               @Inject(MAT_ICON_LOCATION) private _location: MatIconLocation,
               private readonly _errorHandler: ErrorHandler) {
     super(elementRef);
@@ -302,18 +304,41 @@ export class TbIconComponent extends _TbIconBase
       this._clearImageIcon();
       this.imagePipe.transform(rawName, { asString: true, ignoreLoadingImage: true }).subscribe(
         imageUrl => {
-          const imgElement = this.renderer.createElement('img');
-          this.renderer.addClass(imgElement, 'mat-icon');
-          this.renderer.setAttribute(imgElement, 'alt', 'Image icon');
-          this.renderer.setAttribute(imgElement, 'src', imageUrl as string);
-          const elem: HTMLElement = this._elementRef.nativeElement;
-          this.renderer.insertBefore(elem, imgElement, this._iconNameContent.nativeElement);
-          this._imageElement = imgElement;
+          const urlStr = imageUrl as string;
+          const isSvg = rawName?.endsWith('.svg');
+          if (isSvg) {
+            const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(urlStr);
+            this._iconRegistry
+              .getSvgIconFromUrl(safeUrl)
+              .pipe(take(1))
+              .subscribe({
+                next: (svg) => {
+                  this.renderer.insertBefore(this._elementRef.nativeElement, svg, this._iconNameContent.nativeElement);
+                  this._imageElement = svg;
+                },
+                error: (err: Error) => {
+                  console.log('err', err)
+                  this._setImageElement(urlStr);
+                }
+              });
+          } else {
+            this._setImageElement(urlStr);
+          }
         }
       );
     } else {
       this._clearImageIcon();
     }
+  }
+
+  private _setImageElement(urlStr: string) {
+    const imgElement = this.renderer.createElement('img');
+    this.renderer.addClass(imgElement, 'mat-icon');
+    this.renderer.setAttribute(imgElement, 'alt', 'Image icon');
+    this.renderer.setAttribute(imgElement, 'src', urlStr);
+    const elem: HTMLElement = this._elementRef.nativeElement;
+    this.renderer.insertBefore(elem, imgElement, this._iconNameContent.nativeElement);
+    this._imageElement = imgElement;
   }
 
   private _clearImageIcon() {
