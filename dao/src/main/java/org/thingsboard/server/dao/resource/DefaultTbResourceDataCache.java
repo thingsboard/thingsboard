@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -41,7 +42,7 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
     private int cacheMaxSize;
     @Value("${cache.tbResourceData.timeToLiveInMinutes:44640}")
     private int cacheValueTtl;
-    private AsyncLoadingCache<ResourceDataKey, byte[]> cache;
+    private AsyncLoadingCache<ResourceDataKey, TbResourceDataInfo> cache;
 
     @PostConstruct
     private void init() {
@@ -49,19 +50,19 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
                 .maximumSize(cacheMaxSize)
                 .expireAfterAccess(cacheValueTtl, TimeUnit.MINUTES)
                 .executor(executorService)
-                .buildAsync((key, executor) -> CompletableFuture.supplyAsync(() -> resourceService.getResourceData(key.tenantId(), key.resourceId()), executor));
+                .buildAsync((key, executor) -> CompletableFuture.supplyAsync(() -> resourceService.getResourceDataInfo(key.tenantId(), key.resourceId()), executor));
     }
 
     @Override
-    public CompletableFuture<byte[]> getResourceData(TenantId tenantId, TbResourceId resourceId) {
-        log.trace("Retrieving resource data by id [{}], tenant id [{}] from cache", resourceId, tenantId);
+    public CompletableFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+        log.trace("Retrieving resource data info by id [{}], tenant id [{}] from cache", resourceId, tenantId);
         return cache.get(new ResourceDataKey(tenantId, resourceId));
     }
 
     @Override
     public void evictResourceData(TenantId tenantId, TbResourceId resourceId) {
         cache.asMap().remove(new ResourceDataKey(tenantId, resourceId));
-        log.trace("Evicted resource data with id [{}], tenant id [{}]", resourceId, tenantId);
+        log.trace("Evicted resource data info with id [{}], tenant id [{}]", resourceId, tenantId);
     }
 
     record ResourceDataKey (TenantId tenantId, TbResourceId resourceId) {}

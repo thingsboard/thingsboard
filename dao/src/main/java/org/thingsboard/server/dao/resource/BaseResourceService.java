@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
@@ -204,6 +205,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public byte[] getResourceData(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing getResourceData [{}] [{}]", tenantId, resourceId);
         return resourceDao.getResourceData(tenantId, resourceId);
+    }
+
+    @Override
+    public TbResourceDataInfo getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+        log.trace("Executing getResourceDataInfo [{}] [{}]", tenantId, resourceId);
+        return resourceDao.getResourceDataInfo(tenantId, resourceId);
     }
 
     @Override

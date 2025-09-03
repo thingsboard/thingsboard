@@ -13,17 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.resource;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.TbResourceDataInfo;
-import org.thingsboard.server.common.data.id.TbResourceId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.util.concurrent.CompletableFuture;
-
-public interface TbResourceDataCache {
-
-    CompletableFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId);
-
-    void evictResourceData(TenantId tenantId, TbResourceId resourceId);
+@Data
+@EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+public class GeneralFileDescriptor {
+    private String mediaType;
 }
