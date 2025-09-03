@@ -2269,6 +2269,8 @@ public class RestClient implements Closeable {
     }
 
     public PageData<DomainInfo> getTenantDomainInfos(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
                 baseURL + "/api/domain/infos?" + getUrlParams(pageLink),
                 HttpMethod.GET,
@@ -2303,6 +2305,8 @@ public class RestClient implements Closeable {
     }
 
     public PageData<MobileApp> getTenantMobileApps(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
                 baseURL + "/api/mobile/app?" + getUrlParams(pageLink),
                 HttpMethod.GET,
@@ -2333,6 +2337,8 @@ public class RestClient implements Closeable {
     }
 
     public PageData<MobileAppBundleInfo> getTenantMobileBundleInfos(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
                 baseURL + "/api/mobile/bundle/infos?" + getUrlParams(pageLink),
                 HttpMethod.GET,
