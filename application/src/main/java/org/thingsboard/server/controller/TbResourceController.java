@@ -267,12 +267,12 @@ public class TbResourceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Tenant Resource Infos (getTenantResourcesByIds)")
+    @ApiOperation(value = "Get Tenant Resource Infos by ids (getTenantResourcesByIds)")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/resource/tenant", params = {"resourceIds"})
     public List<TbResourceInfo> getTenantResourcesByIds(
             @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam("strResourceIds") String[] strResourceIds) throws ThingsboardException {
+            @RequestParam("resourceIds") String[] strResourceIds) throws ThingsboardException {
         checkArrayParameter("resourceIds", strResourceIds);
         SecurityUser user = getCurrentUser();
         List<TbResourceId> resourceIds = new ArrayList<>();
