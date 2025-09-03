@@ -799,7 +799,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cfg.setOutput(out);
 
         // Enable scheduled refresh with a 6-second interval
-        cfg.setScheduledUpdateIntervalSec(6);
+        cfg.setScheduledUpdateInterval(6);
+        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         cf.setConfiguration(cfg);
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", cf, CalculatedField.class);

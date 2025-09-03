@@ -17,6 +17,8 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -25,6 +27,7 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupC
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -33,6 +36,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration.SUPPORTED_TIME_UNITS;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
@@ -123,9 +127,49 @@ public class GeofencingCalculatedFieldConfigurationTest {
     }
 
     @Test
+    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSpecified() {
+        var cfg = new GeofencingCalculatedFieldConfiguration();
+        cfg.setScheduledUpdateInterval(60);
+        var zg = new ZoneGroupConfiguration("allowedZones", "perimeter", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        zg.setRefDynamicSourceConfiguration(mock(RelationQueryDynamicSourceConfiguration.class));
+        cfg.setZoneGroups(List.of(zg));
+        cfg.setTimeUnit(null);
+
+        assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
+
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Scheduled update time unit should be specified!");
+    }
+
+    @ParameterizedTest
+    @EnumSource(TimeUnit.class)
+    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSupported(TimeUnit timeUnit) {
+        var cfg = new GeofencingCalculatedFieldConfiguration();
+        cfg.setScheduledUpdateInterval(60);
+        var zg = new ZoneGroupConfiguration("allowedZones", "perimeter", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        zg.setRefDynamicSourceConfiguration(mock(RelationQueryDynamicSourceConfiguration.class));
+        cfg.setZoneGroups(List.of(zg));
+        cfg.setEntityCoordinates(mock(EntityCoordinates.class));
+        cfg.setTimeUnit(timeUnit);
+
+        assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
+
+        if (SUPPORTED_TIME_UNITS.contains(timeUnit)) {
+            assertThatCode(cfg::validate).doesNotThrowAnyException();
+            return;
+        }
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Unsupported scheduled update time unit: " + timeUnit +
+                            ". Allowed: " + SUPPORTED_TIME_UNITS);
+    }
+
+
+    @Test
     void scheduledUpdateDisabledWhenIntervalIsZero() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setScheduledUpdateIntervalSec(0);
+        cfg.setScheduledUpdateInterval(0);
         assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
     }
 
@@ -135,17 +179,18 @@ public class GeofencingCalculatedFieldConfigurationTest {
         var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
         when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(false);
         cfg.setZoneGroups(List.of(zoneGroupConfigurationMock));
-        cfg.setScheduledUpdateIntervalSec(60);
+        cfg.setScheduledUpdateInterval(60);
         assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
     }
 
     @Test
     void scheduledUpdateEnabledWhenIntervalIsGreaterThanZeroAndDynamicArgumentsPresent() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
+        cfg.setTimeUnit(TimeUnit.SECONDS);
         var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
         when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(true);
         cfg.setZoneGroups(List.of(zoneGroupConfigurationMock));
-        cfg.setScheduledUpdateIntervalSec(60);
+        cfg.setScheduledUpdateInterval(60);
         assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
     }
 

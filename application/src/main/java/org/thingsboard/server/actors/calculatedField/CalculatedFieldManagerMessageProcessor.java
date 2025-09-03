@@ -60,7 +60,6 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
 
@@ -454,7 +453,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.debug("[{}][{}] Dynamic arguments refresh task for CF already exists!", tenantId, cf.getId());
             return;
         }
-        long refreshDynamicSourceInterval = TimeUnit.SECONDS.toMillis(scheduledCfConfig.getScheduledUpdateIntervalSec());
+        long refreshDynamicSourceInterval = scheduledCfConfig.getTimeUnit().toMillis(scheduledCfConfig.getScheduledUpdateInterval());
         var scheduledMsg = new CalculatedFieldDynamicArgumentsRefreshMsg(tenantId, cfCtx.getCfId());
 
         ScheduledFuture<?> scheduledFuture = systemContext

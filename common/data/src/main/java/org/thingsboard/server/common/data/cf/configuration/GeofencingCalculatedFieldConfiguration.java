@@ -28,13 +28,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
 
     private EntityCoordinates entityCoordinates;
     private List<ZoneGroupConfiguration> zoneGroups;
-    private int scheduledUpdateIntervalSec;
+    private int scheduledUpdateInterval;
+    private TimeUnit timeUnit;
 
     private Output output;
 
@@ -63,11 +65,12 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateIntervalSec > 0 && zoneGroups.stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
+        return scheduledUpdateInterval > 0 && zoneGroups.stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
     }
 
     @Override
     public void validate() {
+        ScheduledUpdateSupportedCalculatedFieldConfiguration.super.validate();
         if (entityCoordinates == null) {
             throw new IllegalArgumentException("Geofencing calculated field entity coordinates must be specified!");
         }

@@ -38,6 +38,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -98,10 +99,15 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             if (!configuration.isScheduledUpdateEnabled()) {
                 return;
             }
-            int tenantProfileMinAllowedValue = tbTenantProfileCache.get(calculatedField.getTenantId())
+            TimeUnit timeUnit = configuration.getTimeUnit();
+            long intervalInSeconds = timeUnit.toSeconds(configuration.getScheduledUpdateInterval());
+            int tenantProfileMinAllowedSecValue = tbTenantProfileCache.get(calculatedField.getTenantId())
                     .getDefaultProfileConfiguration()
                     .getMinAllowedScheduledUpdateIntervalInSecForCF();
-            configuration.setScheduledUpdateIntervalSec(Math.max(configuration.getScheduledUpdateIntervalSec(), tenantProfileMinAllowedValue));
+            if (intervalInSeconds < tenantProfileMinAllowedSecValue) {
+                configuration.setScheduledUpdateInterval(tenantProfileMinAllowedSecValue);
+                configuration.setTimeUnit(TimeUnit.SECONDS);
+            }
         }
     }
 

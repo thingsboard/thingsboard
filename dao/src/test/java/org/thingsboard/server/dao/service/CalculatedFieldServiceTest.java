@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,7 +118,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         cfg.setZoneGroups(List.of(zoneGroupConfiguration));
 
         // Set a scheduled interval to some value
-        cfg.setScheduledUpdateIntervalSec(600);
+        cfg.setScheduledUpdateInterval(600);
+        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();
@@ -136,7 +138,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
 
         // Assert: the interval is saved, but scheduling is not enabled
-        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateIntervalSec();
+        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateInterval();
         boolean scheduledUpdateEnabled = geofencingCalculatedFieldConfiguration.isScheduledUpdateEnabled();
 
         assertThat(savedInterval).isEqualTo(600);
@@ -167,7 +169,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         cfg.setZoneGroups(List.of(zoneGroupConfiguration));
 
         // Enable scheduling with an interval below tenant min
-        cfg.setScheduledUpdateIntervalSec(600);
+        cfg.setScheduledUpdateInterval(600);
+        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();
@@ -186,7 +189,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
 
         // Assert: the interval is clamped up to tenant profile min
-        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateIntervalSec();
+        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateInterval();
 
          int min = tbTenantProfileCache.get(tenantId)
                  .getDefaultProfileConfiguration()
@@ -225,7 +228,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Enable scheduling with an interval greater than tenant min
         int valueFromConfig = min + 100;
-        cfg.setScheduledUpdateIntervalSec(valueFromConfig);
+        cfg.setScheduledUpdateInterval(valueFromConfig);
+        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();
@@ -244,7 +248,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
 
         // Assert: the interval is clamped up to tenant profile min (or stays >= original if already >= min)
-        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateIntervalSec();
+        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateInterval();
         assertThat(savedInterval).isEqualTo(valueFromConfig);
 
         calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
