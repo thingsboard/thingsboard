@@ -105,8 +105,7 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
 
     this.currentState = this.ctx.stateController.getStateId();
     this.ctx.stateController.stateId().subscribe((state) => {
-      // @ts-ignore
-      this.ctx.dashboardWidget.updateCustomHeaderActions();
+      this.ctx.updateParamsFromData(true);
       this.currentState = state;
       this.cd.markForCheck();
     });

@@ -39,7 +39,7 @@ import {
   ApiUsageSettingsContext
 } from "@home/components/widget/lib/settings/cards/api-usage-settings.component.models";
 import { deepClone } from "@core/utils";
-import { Observable } from "rxjs";
+import { Observable, of } from "rxjs";
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
@@ -81,12 +81,16 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
     };
   }
 
+  protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
+    settingsForm.setControl('dataKeys', this.prepareDataKeysFormArray(settings?.dataKeys), {emitEvent: false});
+  }
+
   dataKeysFormArray(): UntypedFormArray {
     return this.apiUsageWidgetSettingsForm.get('dataKeys') as UntypedFormArray;
   }
 
-  trackByDataKey(index: number, dataKeyControl: AbstractControl): any {
-    return dataKeyControl;
+  trackByDataKey(index: number): any {
+    return index;
   }
 
   get dragEnabled(): boolean {
@@ -112,7 +116,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
       current: null
     };
     const dataKeysArray = this.apiUsageWidgetSettingsForm.get('dataKeys') as UntypedFormArray;
-    const dataKeyControl = this.fb.control(dataKey, [this.mapDataKeyValidator()]);
+    const dataKeyControl = this.fb.control(dataKey, [this.apiUsageDataKeyValidator()]);
     dataKeysArray.push(dataKeyControl);
   }
 
@@ -122,6 +126,16 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
   protected defaultSettings(): WidgetSettings {
     return apiUsageDefaultSettings;
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return {
+      dsEntityAliasId: settings?.dsEntityAliasId,
+      dataKeys: settings?.dataKeys,
+      targetDashboardState: settings?.targetDashboardState,
+      background: settings?.background,
+      padding: settings.padding
+    };
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -138,7 +152,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
     const dataKeysControls: Array<AbstractControl> = [];
     if (dataKeys) {
       dataKeys.forEach((dataLayer) => {
-        dataKeysControls.push(this.fb.control(dataLayer, [this.mapDataKeyValidator()]));
+        dataKeysControls.push(this.fb.control(dataLayer, [this.apiUsageDataKeyValidator()]));
       });
     }
     return this.fb.array(dataKeysControls);
@@ -151,7 +165,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
   protected updateValidators() {
   }
 
-  mapDataKeyValidator = (): ValidatorFn => {
+  apiUsageDataKeyValidator = (): ValidatorFn => {
     return (control: AbstractControl): ValidationErrors | null => {
       const value: ApiUsageDataKeysSettings = control.value;
       if (!value?.label || !value?.current || !value?.maxLimit || !value?.status) {
@@ -189,5 +203,9 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
   private generateDataKey(key: DataKey): DataKey {
     return this.callbacks.generateDataKey(key.name, key.type, null, false, null);
+  }
+
+  fetchDashboardStates(searchText?: string): Observable<Array<string>> {
+    return of(this.callbacks.fetchDashboardStates(searchText));
   }
 }

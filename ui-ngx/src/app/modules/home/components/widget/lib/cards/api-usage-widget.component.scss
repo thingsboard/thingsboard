@@ -85,6 +85,7 @@ $warning-color: #FAA405;
           flex-direction: row;
           align-items: center;
           justify-content: space-between;
+          gap: 8px;
           padding: 5px 16px;
           .api-item-title {
             display: flex;

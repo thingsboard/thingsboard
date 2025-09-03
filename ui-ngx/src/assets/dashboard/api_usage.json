@@ -1484,18 +1484,7 @@
                     "titleStyle": null,
                     "configMode": "basic",
                     "actions": {
-                        "headerButton": [
-                            {
-                                "name": "{i18n:api-usage.view-details}",
-                                "icon": "insert_chart",
-                                "type": "openDashboardState",
-                                "targetDashboardStateId": "transport",
-                                "setEntityId": false,
-                                "stateEntityParamName": null,
-                                "openRightLayout": false,
-                                "id": "6ef12f6a-0266-25cf-6ca5-5dcb772252c6"
-                            }
-                        ]
+                        "headerButton": []
                     },
                     "showTitleIcon": false,
                     "titleIcon": "thermostat",
@@ -1868,18 +1857,7 @@
                     "titleStyle": null,
                     "configMode": "basic",
                     "actions": {
-                        "headerButton": [
-                            {
-                                "name": "{i18n:api-usage.view-details}",
-                                "icon": "insert_chart",
-                                "type": "openDashboardState",
-                                "targetDashboardStateId": "transport",
-                                "setEntityId": false,
-                                "stateEntityParamName": null,
-                                "openRightLayout": false,
-                                "id": "6ef12f6a-0266-25cf-6ca5-5dcb772252c6"
-                            }
-                        ]
+                        "headerButton": []
                     },
                     "showTitleIcon": false,
                     "titleIcon": "thermostat",
@@ -2298,16 +2276,6 @@
                                 "stateEntityParamName": null,
                                 "openRightLayout": false,
                                 "id": "f9f08190-9ed9-d802-5b7a-c57ff84b5648"
-                            },
-                            {
-                                "name": "{i18n:api-usage.view-details}",
-                                "icon": "insert_chart",
-                                "type": "openDashboardState",
-                                "targetDashboardStateId": "rule_engine_execution",
-                                "setEntityId": false,
-                                "stateEntityParamName": null,
-                                "openRightLayout": false,
-                                "id": "1aec196b-44ba-ddf4-c4dc-c3f60c1eb6fc"
                             }
                         ]
                     },
@@ -2718,18 +2686,7 @@
                     "titleStyle": null,
                     "configMode": "basic",
                     "actions": {
-                        "headerButton": [
-                            {
-                                "name": "{i18n:api-usage.view-details}",
-                                "icon": "insert_chart",
-                                "type": "openDashboardState",
-                                "targetDashboardStateId": "telemetry_persistence",
-                                "setEntityId": false,
-                                "stateEntityParamName": null,
-                                "openRightLayout": false,
-                                "id": "16707efb-e572-bd02-c219-55fc1b0f672a"
-                            }
-                        ]
+                        "headerButton": []
                     },
                     "showTitleIcon": false,
                     "titleIcon": "thermostat",
@@ -5408,9 +5365,9 @@
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
-                                "type": "updateDashboardState",
+                                "type": "openDashboardState",
                                 "targetDashboardStateId": "rule_engine_statistics",
-                                "setEntityId": false,
+                                "setEntityId": true,
                                 "stateEntityParamName": null,
                                 "openRightLayout": false,
                                 "openInSeparateDialog": false,
@@ -5835,9 +5792,9 @@
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
-                                "type": "updateDashboardState",
+                                "type": "openDashboardState",
                                 "targetDashboardStateId": "rule_engine_statistics",
-                                "setEntityId": false,
+                                "setEntityId": true,
                                 "stateEntityParamName": null,
                                 "openRightLayout": false,
                                 "openInSeparateDialog": false,
@@ -6272,9 +6229,9 @@
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
-                                "type": "updateDashboardState",
+                                "type": "openDashboardState",
                                 "targetDashboardStateId": "rule_engine_statistics",
-                                "setEntityId": false,
+                                "setEntityId": true,
                                 "stateEntityParamName": null,
                                 "openRightLayout": false,
                                 "openInSeparateDialog": false,
@@ -13275,7 +13232,7 @@
                                     "padding": "0 16px"
                                 },
                                 "useShowWidgetActionFunction": true,
-                                "showWidgetActionFunction": "console.log(widgetContext.stateController.getStateId(), widgetContext.settings.targetDashboardState)\nreturn widgetContext.stateController.getStateId() !== widgetContext.settings.targetDashboardState && widgetContext.settings.targetDashboardState;",
+                                "showWidgetActionFunction": "return widgetContext.stateController.getStateId() !== widgetContext.settings.targetDashboardState && widgetContext.settings.targetDashboardState;",
                                 "type": "custom",
                                 "customFunction": "const state = widgetContext.settings.targetDashboardState?.length ? widgetContext.settings.targetDashboardState : 'default';\nwidgetContext.stateController.updateState(state, widgetContext.stateController.getStateParams(), false);",
                                 "openInSeparateDialog": false,
@@ -13340,25 +13297,33 @@
                                 "sizeX": 7,
                                 "sizeY": 5,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "d0a10a8f-8f48-f9d6-8306-d12af9b49690": {
                                 "sizeX": 7,
                                 "sizeY": 5,
                                 "row": 0,
-                                "col": 7
+                                "col": 7,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "4544080d-9b6f-b592-9cd4-0e0335d33857": {
                                 "sizeX": 7,
                                 "sizeY": 5,
                                 "row": 5,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "5d0f2f57-499d-1324-8e1b-cfbc0b3149d2": {
                                 "sizeX": 7,
                                 "sizeY": 5,
                                 "row": 5,
-                                "col": 7
+                                "col": 7,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13390,19 +13355,25 @@
                                 "sizeX": 24,
                                 "sizeY": 5,
                                 "row": 7,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "fa938580-33db-f1b3-fafc-bc3e3784ad57": {
                                 "sizeX": 12,
                                 "sizeY": 7,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "2ee89893-4e38-5331-95b7-3fd4f310c5a7": {
                                 "sizeX": 12,
                                 "sizeY": 7,
                                 "row": 0,
-                                "col": 12
+                                "col": 12,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13434,7 +13405,9 @@
                                 "sizeX": 24,
                                 "sizeY": 39,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 4
                             }
                         },
                         "gridSettings": {
@@ -13463,19 +13436,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "fb155957-1af4-233e-e2fb-09e648e75d6e": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "4817e33b-87be-5be3-eaca-ca68a2eb4e0c": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13536,19 +13515,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "79056202-c92b-1dae-ce49-318ec52e2d3b": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "966ffee7-ba0d-8e54-f903-e8d015ca8cd2": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13609,19 +13594,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "84fbe63a-bcb6-7bc1-8af0-46b3b1ee5adc": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "43a2b982-6c02-d9bd-71ee-34e8e6cf8893": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13682,19 +13673,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "a43598d1-7bfd-f329-ee61-c343f34f069f": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "3ebd62a8-dcb7-c96b-8571-e61084248f5b": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13755,19 +13752,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "a1b5731c-e3b3-8cfb-7c50-3abcdce891d2": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "efc8d4e9-dee2-b677-c378-c1a666543bf4": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13828,19 +13831,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "1249d3e2-6b3a-4e4a-65e9-6ed22959871e": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "c2f2da29-741d-54f6-5f1d-6f6ae616ea02": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13901,19 +13910,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "b12fb875-89fe-af4c-b344-bf4178de419f": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "0b00099d-d131-3e8b-97ce-c4b8d7bcab1f": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -13974,19 +13989,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "ab5518c1-34d6-7e17-04b4-6520496d5fe1": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "2e7326ac-98d3-e68c-b7cf-948118a3f140": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {
@@ -14047,19 +14068,25 @@
                                 "sizeX": 12,
                                 "sizeY": 4,
                                 "row": 0,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "e0fe9887-d61c-7813-05a7-f60811e5c5bf": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 0
+                                "col": 0,
+                                "resizable": true,
+                                "mobileHeight": 6
                             },
                             "99a40c35-c232-16c5-c42f-3cc80ddb9243": {
                                 "sizeX": 6,
                                 "sizeY": 4,
                                 "row": 4,
-                                "col": 6
+                                "col": 6,
+                                "resizable": true,
+                                "mobileHeight": 6
                             }
                         },
                         "gridSettings": {

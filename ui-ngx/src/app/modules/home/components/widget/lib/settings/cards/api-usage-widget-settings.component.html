@@ -72,11 +72,14 @@
     <ng-template #noDataLayers>
       <span class="tb-prompt flex items-center justify-center">{{ 'widgets.api-usage.no-key' | translate }}</span>
     </ng-template>
-
-    <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-      <mat-label translate>widgets.api-usage.target-dashboard-state</mat-label>
-      <input matInput formControlName="targetDashboardState" placeholder="{{ 'widget-config.set' | translate }}">
-    </mat-form-field>
+    <tb-string-autocomplete [fetchOptionsFn]="fetchDashboardStates.bind(this)"
+                            additionalClass="tb-suffix-show-on-hover"
+                            appearance="outline"
+                            panelWidth=""
+                            label="{{ 'widgets.api-usage.target-dashboard-state' | translate }}"
+                            style="flex: 1"
+                            formControlName="targetDashboardState">
+    </tb-string-autocomplete>
   </div>
 
   <div class="tb-form-panel">

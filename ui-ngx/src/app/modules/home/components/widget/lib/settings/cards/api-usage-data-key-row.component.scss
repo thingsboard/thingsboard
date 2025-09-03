@@ -18,7 +18,7 @@
 .tb-form-table-row.tb-api-usage-data-key-row {
 
   .tb-source-field {
-    flex: 1 1 50%;
+    flex: 1 1 25%;
     display: flex;
     gap: 12px;
     .tb-label-field {
@@ -26,8 +26,15 @@
     }
   }
 
+  .tb-data-key-fields {
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 50%;
+  }
+
   .tb-data-key-field {
-    flex: 1 1 25%;
+    flex: 1;
     min-width: 0;
   }
 
@@ -39,20 +46,11 @@
   @media #{$mat-lt-lg} {
     .tb-source-field {
       flex-direction: column;
-      flex: 1 1 30%;
+      flex: 1 1 50%;
     }
-    .tb-data-key-field{
-      flex: 1 1 35%;
-    }
-  }
-  @media screen and (min-width: 450px) and (max-width: 599px) {
-    .tb-source-field {
-      flex-direction: row;
-    }
-  }
-  @media #{$mat-xs} {
-    .tb-data-key-field {
-      display: none;
+    .tb-data-key-fields{
+      flex-direction: column;
+      flex: 1 1 50%;
     }
   }
 }

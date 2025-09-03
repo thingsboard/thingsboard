@@ -39,6 +39,7 @@ import {
   ApiUsageDataKeysSettings,
   ApiUsageSettingsContext
 } from "@home/components/widget/lib/settings/cards/api-usage-settings.component.models";
+import { Observable, of } from "rxjs";
 
 @Component({
   selector: 'tb-api-usage-data-key-row',
@@ -147,5 +148,9 @@ export class ApiUsageDataKeyRowComponent implements ControlValueAccessor, OnInit
   private updateModel() {
     this.modelValue = {...this.modelValue, ...this.dataKeyFormGroup.value};
     this.propagateChange(this.modelValue);
+  }
+
+  fetchDashboardStates(searchText?: string): Observable<Array<string>> {
+    return of(this.context.callbacks.fetchDashboardStates(searchText));
   }
 }
