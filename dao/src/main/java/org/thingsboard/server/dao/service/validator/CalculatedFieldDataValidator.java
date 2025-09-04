@@ -18,15 +18,18 @@ package org.thingsboard.server.dao.service.validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Component
 public class CalculatedFieldDataValidator extends DataValidator<CalculatedField> {
@@ -38,10 +41,22 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     private ApiLimitService apiLimitService;
 
     @Override
-    protected void validateCreate(TenantId tenantId, CalculatedField calculatedField) {
-        validateNumberOfCFsPerEntity(tenantId, calculatedField.getEntityId());
+    protected void validateDataImpl(TenantId tenantId, CalculatedField calculatedField) {
         validateNumberOfArgumentsPerCF(tenantId, calculatedField);
         validateCalculatedFieldConfiguration(calculatedField);
+        validateSchedulingConfiguration(tenantId, calculatedField);
+        validateRelationQuerySourceArguments(tenantId, calculatedField);
+    }
+
+    @Override
+    protected void validateCreate(TenantId tenantId, CalculatedField calculatedField) {
+        long maxCFsPerEntity = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxCalculatedFieldsPerEntity);
+        if (maxCFsPerEntity <= 0) {
+            return;
+        }
+        if (calculatedFieldDao.countCFByEntityId(tenantId, calculatedField.getEntityId()) >= maxCFsPerEntity) {
+            throw new DataValidationException("Calculated fields per entity limit reached!");
+        }
     }
 
     @Override
@@ -50,19 +65,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (old == null) {
             throw new DataValidationException("Can't update non existing calculated field!");
         }
-        validateNumberOfArgumentsPerCF(tenantId, calculatedField);
-        validateCalculatedFieldConfiguration(calculatedField);
         return old;
-    }
-
-    private void validateNumberOfCFsPerEntity(TenantId tenantId, EntityId entityId) {
-        long maxCFsPerEntity = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxCalculatedFieldsPerEntity);
-        if (maxCFsPerEntity <= 0) {
-            return;
-        }
-        if (calculatedFieldDao.countCFByEntityId(tenantId, entityId) >= maxCFsPerEntity) {
-            throw new DataValidationException("Calculated fields per entity limit reached!");
-        }
     }
 
     private void validateNumberOfArgumentsPerCF(TenantId tenantId, CalculatedField calculatedField) {
@@ -79,8 +82,37 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
     }
 
     private void validateCalculatedFieldConfiguration(CalculatedField calculatedField) {
+        wrapAsDataValidation(calculatedField.getConfiguration()::validate);
+    }
+
+    private void validateSchedulingConfiguration(TenantId tenantId, CalculatedField calculatedField) {
+        if (!(calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledUpdateCfg)
+            || !scheduledUpdateCfg.isScheduledUpdateEnabled()) {
+            return;
+        }
+        long minAllowedScheduledUpdateInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedScheduledUpdateIntervalInSecForCF);
+        wrapAsDataValidation(() -> scheduledUpdateCfg.validate(minAllowedScheduledUpdateInterval));
+    }
+
+    private void validateRelationQuerySourceArguments(TenantId tenantId, CalculatedField calculatedField) {
+        if (!(calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argumentsBasedCfg)) {
+            return;
+        }
+        Map<String, RelationQueryDynamicSourceConfiguration> relationQueryBasedArguments = argumentsBasedCfg.getArguments().entrySet()
+                .stream()
+                .filter(entry -> entry.getValue().hasDynamicSource())
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (RelationQueryDynamicSourceConfiguration) entry.getValue().getRefDynamicSourceConfiguration()));
+        if (relationQueryBasedArguments.isEmpty()) {
+            return;
+        }
+        int maxRelationLevel = (int) apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelationLevelPerCfArgument);
+        relationQueryBasedArguments.forEach((argumentName, relationQueryDynamicSourceConfiguration) ->
+                wrapAsDataValidation(() -> relationQueryDynamicSourceConfiguration.validateMaxRelationLevel(argumentName, maxRelationLevel)));
+    }
+
+    private static void wrapAsDataValidation(Runnable validation) {
         try {
-            calculatedField.getConfiguration().validate();
+            validation.run();
         } catch (IllegalArgumentException e) {
             throw new DataValidationException(e.getMessage(), e);
         }

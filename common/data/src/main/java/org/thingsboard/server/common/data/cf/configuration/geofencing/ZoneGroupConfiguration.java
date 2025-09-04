@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.lang.Nullable;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -22,12 +23,12 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CfArgumentDynamicSourceConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class ZoneGroupConfiguration {
 
     @Nullable
@@ -64,6 +65,9 @@ public class ZoneGroupConfiguration {
         }
         if (direction == null) {
             throw new IllegalArgumentException("Relation direction must be specified for '" + name + "' zone group!");
+        }
+        if (hasDynamicSource()) {
+            refDynamicSourceConfiguration.validate();
         }
     }
 

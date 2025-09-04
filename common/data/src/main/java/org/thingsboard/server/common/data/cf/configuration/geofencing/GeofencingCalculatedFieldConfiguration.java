@@ -13,13 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
-import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.HashMap;
@@ -70,7 +72,6 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public void validate() {
-        ScheduledUpdateSupportedCalculatedFieldConfiguration.super.validate();
         if (entityCoordinates == null) {
             throw new IllegalArgumentException("Geofencing calculated field entity coordinates must be specified!");
         }

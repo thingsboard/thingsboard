@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Data
@@ -76,17 +75,10 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
     }
 
     private Map<EntityId, GeofencingZoneState> toZones(Map<EntityId, KvEntry> entityIdKvEntryMap) {
-        return entityIdKvEntryMap.entrySet().stream().map(entry -> {
-            try {
-                if (entry.getValue().getJsonValue().isEmpty()) {
-                    return null;
-                }
-                return Map.entry(entry.getKey(), new GeofencingZoneState(entry.getKey(), entry.getValue()));
-            } catch (Exception e) {
-                log.error("Failed to parse geofencing zone perimeter for entity id: {}", entry.getKey(), e);
-                return null;
-            }
-        }).filter(Objects::nonNull).collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return entityIdKvEntryMap.entrySet().stream()
+                .filter(entry -> entry.getValue().getJsonValue().isPresent())
+                .collect(Collectors.toMap(Map.Entry::getKey,
+                        entry -> new GeofencingZoneState(entry.getKey(), entry.getValue())));
     }
 
     private boolean updateZone(Map.Entry<EntityId, GeofencingZoneState> zoneEntry) {

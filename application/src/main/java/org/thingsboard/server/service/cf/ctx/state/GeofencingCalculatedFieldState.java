@@ -24,10 +24,11 @@ import lombok.EqualsAndHashCode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldException;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -40,10 +41,10 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.INSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.OUTSIDE;
 
 @Data
 @Slf4j
@@ -130,8 +131,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
             ZoneGroupConfiguration zoneGroupCfg = zoneGroups.get(argumentKey);
             if (zoneGroupCfg == null) {
-                log.error("[{}][{}] Zone group config is missing for the {}", entityId, ctx.getCalculatedField().getId(), argumentKey);
-                return;
+                throw new RuntimeException("Zone group configuration is missing for the: " + entityId);
             }
             boolean createRelationsWithMatchedZones = zoneGroupCfg.isCreateRelationsWithMatchedZones();
             List<GeofencingEvalResult> zoneResults = new ArrayList<>(argumentEntry.getZoneStates().size());

@@ -28,13 +28,13 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -50,7 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
 @DaoSqlTest
 public class CalculatedFieldServiceTest extends AbstractServiceTest {
@@ -148,7 +148,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveGeofencingCalculatedField_shouldClampScheduledIntervalToTenantMin() {
+    public void testSaveGeofencingCalculatedField_shouldThrowWhenScheduledIntervalIsLessThanMinAllowedIntervalInTenantProfile() {
         // Arrange a device
         Device device = createTestDevice();
 
@@ -181,22 +181,47 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         cf.setConfigurationVersion(0);
         cf.setConfiguration(cfg);
 
-        CalculatedField saved = calculatedFieldService.save(cf);
+        assertThatThrownBy(() -> calculatedFieldService.save(cf))
+                .isInstanceOf(DataValidationException.class)
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Scheduled update interval is less than configured " +
+                                        "minimum allowed interval in tenant profile: ");
+    }
 
-        assertThat(saved).isNotNull();
-        assertThat(saved.getConfiguration()).isInstanceOf(GeofencingCalculatedFieldConfiguration.class);
+    @Test
+    public void testSaveGeofencingCalculatedField_shouldThrowWhenRelationLevelIsGreaterThanMaxAllowedRelationLevelInTenantProfile() {
+        // Arrange a device
+        Device device = createTestDevice();
 
-        var geofencingCalculatedFieldConfiguration = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
+        // Build a valid Geofencing configuration
+        GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
-        // Assert: the interval is clamped up to tenant profile min
-        int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateInterval();
+        // Coordinates: TS_LATEST, no dynamic source
+        EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
+        cfg.setEntityCoordinates(entityCoordinates);
 
-         int min = tbTenantProfileCache.get(tenantId)
-                 .getDefaultProfileConfiguration()
-                 .getMinAllowedScheduledUpdateIntervalInSecForCF();
-         assertThat(savedInterval).isEqualTo(min);
+        // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
+        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var dynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
+        dynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
+        dynamicSourceConfiguration.setMaxLevel(Integer.MAX_VALUE);
+        dynamicSourceConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
+        cfg.setZoneGroups(List.of(zoneGroupConfiguration));
 
-        calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
+        // Create & save Calculated Field
+        CalculatedField cf = new CalculatedField();
+        cf.setTenantId(tenantId);
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.GEOFENCING);
+        cf.setName("GF clamp test");
+        cf.setConfigurationVersion(0);
+        cf.setConfiguration(cfg);
+
+        assertThatThrownBy(() -> calculatedFieldService.save(cf))
+                .isInstanceOf(DataValidationException.class)
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessageStartingWith("Max relation level is greater than configured maximum allowed relation level in tenant profile");
     }
 
     @Test

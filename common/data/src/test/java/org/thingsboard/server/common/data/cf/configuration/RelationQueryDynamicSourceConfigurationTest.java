@@ -67,15 +67,34 @@ public class RelationQueryDynamicSourceConfigurationTest {
     }
 
     @Test
-    void validateShouldThrowWhenMaxLevelGreaterThanTwo() {
+    void validateShouldThrowWhenMaxLevelGreaterThanMaxAllowedLevelFromTenantProfile() {
+        int maxAllowedRelationLevel = 2;
+        int argumentMaxRelationLevel = 3;
+
         var cfg = new RelationQueryDynamicSourceConfiguration();
-        cfg.setMaxLevel(3);
+        cfg.setMaxLevel(argumentMaxRelationLevel);
         cfg.setDirection(EntitySearchDirection.FROM);
         cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
 
-        assertThatThrownBy(cfg::validate)
+        String testRelationArgument = "testRelationArgument";
+        assertThatThrownBy(() -> cfg.validateMaxRelationLevel(testRelationArgument, maxAllowedRelationLevel))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Relation query dynamic source configuration max relation level can't be greater than 2!");
+                .hasMessage("Max relation level is greater than configured " +
+                            "maximum allowed relation level in tenant profile: " + maxAllowedRelationLevel + " for argument: " + testRelationArgument);
+    }
+
+    @Test
+    void validateShouldPassValidationWhenMaxLevelLessThanMaxAllowedLevelFromTenantProfile() {
+        int maxAllowedRelationLevel = 5;
+        int argumentMaxRelationLevel = 2;
+
+        var cfg = new RelationQueryDynamicSourceConfiguration();
+        cfg.setMaxLevel(argumentMaxRelationLevel);
+        cfg.setDirection(EntitySearchDirection.FROM);
+        cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
+
+        String testRelationArgument = "testRelationArgument";
+        assertThatCode(() -> cfg.validateMaxRelationLevel(testRelationArgument, maxAllowedRelationLevel)).doesNotThrowAnyException();
     }
 
     @Test

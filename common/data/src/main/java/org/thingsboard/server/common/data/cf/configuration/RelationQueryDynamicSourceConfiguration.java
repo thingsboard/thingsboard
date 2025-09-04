@@ -17,7 +17,6 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -25,7 +24,6 @@ import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.util.Collections;
 import java.util.List;
@@ -48,9 +46,6 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
         if (maxLevel < 1) {
             throw new IllegalArgumentException("Relation query dynamic source configuration max relation level can't be less than 1!");
         }
-        if (maxLevel > 2) {
-            throw new IllegalArgumentException("Relation query dynamic source configuration max relation level can't be greater than 2!");
-        }
         if (direction == null) {
             throw new IllegalArgumentException("Relation query dynamic source configuration direction must be specified!");
         }
@@ -62,6 +57,13 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
     @JsonIgnore
     public boolean isSimpleRelation() {
         return maxLevel == 1;
+    }
+
+    public void validateMaxRelationLevel(String argumentName, int maxAllowedRelationLevel) {
+        if (maxLevel > maxAllowedRelationLevel) {
+            throw new IllegalArgumentException("Max relation level is greater than configured " +
+                                               "maximum allowed relation level in tenant profile: " + maxAllowedRelationLevel + " for argument: " + argumentName);
+        }
     }
 
     public EntityRelationsQuery toEntityRelationsQuery(EntityId rootEntityId) {

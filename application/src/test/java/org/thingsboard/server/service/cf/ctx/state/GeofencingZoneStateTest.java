@@ -25,10 +25,10 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.INSIDE;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus.OUTSIDE;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent.ENTERED;
-import static org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent.LEFT;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.INSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.OUTSIDE;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent.ENTERED;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent.LEFT;
 
 public class GeofencingZoneStateTest {
 

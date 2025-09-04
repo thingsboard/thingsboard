@@ -20,11 +20,29 @@ UPDATE tenant_profile
 SET profile_data = jsonb_set(
         profile_data,
         '{configuration}',
-        (profile_data -> 'configuration') || '{
-          "minAllowedScheduledUpdateIntervalInSecForCF": 3600
-        }'::jsonb,
+        (profile_data -> 'configuration')
+            || jsonb_strip_nulls(
+                jsonb_build_object(
+                        'minAllowedScheduledUpdateIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(3600)
+                            END,
+                        'maxRelationLevelPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(10)
+                            END
+                )
+               ),
         false
                    )
-WHERE (profile_data -> 'configuration' -> 'minAllowedScheduledUpdateIntervalInSecForCF') IS NULL;
+WHERE NOT (
+    (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+    );
 
 -- UPDATE TENANT PROFILE CONFIGURATION END

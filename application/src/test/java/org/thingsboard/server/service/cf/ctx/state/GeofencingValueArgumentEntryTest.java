@@ -171,10 +171,11 @@ public class GeofencingValueArgumentEntryTest {
     }
 
     @Test
-    void testNotParsableToPerimeterJsonKvEntryResultInEmptyArgument() {
+    void testNotParsableToPerimeterJsonKvEntryResultInExceptionTrowed() {
         BaseAttributeKvEntry invalidZoneEntry = new BaseAttributeKvEntry(new JsonDataEntry("zone", "\"{}\""), 363L, 155L);
-        GeofencingArgumentEntry geofencingArgumentEntry = new GeofencingArgumentEntry(Map.of(ZONE_1_ID, invalidZoneEntry));
-        assertThat(geofencingArgumentEntry.isEmpty()).isTrue();
+        assertThatThrownBy(() -> new GeofencingArgumentEntry(Map.of(ZONE_1_ID, invalidZoneEntry)))
+                .isExactlyInstanceOf(IllegalArgumentException.class)
+                .hasMessage("The given string value cannot be transformed to Json object: \"{}\"");
     }
 
 }

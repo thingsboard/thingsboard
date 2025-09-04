@@ -38,11 +38,7 @@ public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends Ca
 
     void setTimeUnit(TimeUnit timeUnit);
 
-    @Override
-    default void validate() {
-        if (!isScheduledUpdateEnabled()) {
-            return;
-        }
+    default void validate(long minAllowedScheduledUpdateInterval) {
         var timeUnit = getTimeUnit();
         if (timeUnit == null) {
             throw new IllegalArgumentException("Scheduled update time unit should be specified!");
@@ -50,6 +46,10 @@ public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends Ca
         if (!SUPPORTED_TIME_UNITS.contains(timeUnit)) {
             throw new IllegalArgumentException("Unsupported scheduled update time unit: " + timeUnit +
                                                ". Allowed: " + SUPPORTED_TIME_UNITS);
+        }
+        if (timeUnit.toSeconds(getScheduledUpdateInterval()) < minAllowedScheduledUpdateInterval) {
+            throw new IllegalArgumentException("Scheduled update interval is less than configured " +
+                                               "minimum allowed interval in tenant profile: " + minAllowedScheduledUpdateInterval);
         }
     }
 }

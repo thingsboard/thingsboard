@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
-import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 
 import java.util.List;
 import java.util.Map;
@@ -36,7 +35,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration.SUPPORTED_TIME_UNITS;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
@@ -125,46 +123,6 @@ public class GeofencingCalculatedFieldConfigurationTest {
         verify(zoneGroupConfigurationA).validate();
         verify(zoneGroupConfigurationB, never()).validate();
     }
-
-    @Test
-    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSpecified() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setScheduledUpdateInterval(60);
-        var zg = new ZoneGroupConfiguration("allowedZones", "perimeter", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        zg.setRefDynamicSourceConfiguration(mock(RelationQueryDynamicSourceConfiguration.class));
-        cfg.setZoneGroups(List.of(zg));
-        cfg.setTimeUnit(null);
-
-        assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Scheduled update time unit should be specified!");
-    }
-
-    @ParameterizedTest
-    @EnumSource(TimeUnit.class)
-    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSupported(TimeUnit timeUnit) {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setScheduledUpdateInterval(60);
-        var zg = new ZoneGroupConfiguration("allowedZones", "perimeter", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        zg.setRefDynamicSourceConfiguration(mock(RelationQueryDynamicSourceConfiguration.class));
-        cfg.setZoneGroups(List.of(zg));
-        cfg.setEntityCoordinates(mock(EntityCoordinates.class));
-        cfg.setTimeUnit(timeUnit);
-
-        assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
-
-        if (SUPPORTED_TIME_UNITS.contains(timeUnit)) {
-            assertThatCode(cfg::validate).doesNotThrowAnyException();
-            return;
-        }
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Unsupported scheduled update time unit: " + timeUnit +
-                            ". Allowed: " + SUPPORTED_TIME_UNITS);
-    }
-
 
     @Test
     void scheduledUpdateDisabledWhenIntervalIsZero() {

@@ -16,8 +16,9 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import jakarta.annotation.Nullable;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingPresenceStatus;
-import org.thingsboard.server.common.data.cf.configuration.GeofencingTransitionEvent;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent;
 
 public record GeofencingEvalResult(@Nullable GeofencingTransitionEvent transition,
-                                   GeofencingPresenceStatus status) {}
+                                   GeofencingPresenceStatus status) {
+}
