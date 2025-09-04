@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -91,9 +91,15 @@
   <div [formGroup]="propertiesFormGroup" class="tb-form-row space-between overflow-auto" [class]="propertyRow.rowClass">
     <mat-slide-toggle *ngIf="propertyRow.switch && propertyRow.switch.visible"
                       class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
-      {{ propertyRow.label | customTranslate }}
+      <div tb-hint-tooltip-icon="{{ propertyRow.hint | customTranslate }}">
+        {{ propertyRow.label | customTranslate }}
+      </div>
     </mat-slide-toggle>
-    <div *ngIf="!propertyRow.switch" class="fixed-title-width fixed-title-height">{{ propertyRow.label | customTranslate }}</div>
+    <div *ngIf="!propertyRow.switch" class="fixed-title-width fixed-title-height">
+      <div tb-hint-tooltip-icon="{{ propertyRow.hint | customTranslate }}">
+        {{ propertyRow.label | customTranslate }}
+      </div>
+    </div>
     <div *ngIf="propertyRow.properties.length" class="tb-flex" [class]="propertyRow.propertiesRowClass">
       <ng-container *ngFor="let property of propertyRow.properties">
         <ng-container *ngIf="property.visible">
@@ -123,6 +129,7 @@
           <tb-unit-input *ngIf="property.type === FormPropertyType.units"
                          [class]="property.fieldClass"
                          [required]="property.required"
+                         [supportsUnitConversion]="property.supportsUnitConversion"
                          formControlName="{{ property.id }}"></tb-unit-input>
           <tb-material-icon-select *ngIf="property.type === FormPropertyType.icon"
                                    [required]="property.required"

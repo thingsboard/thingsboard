@@ -1,7 +1,7 @@
 {
   "fqn": "maps_v2.route_map_openstreetmap",
   "name": "Route Map - OpenStreet",
-  "deprecated": false,
+  "deprecated": true,
   "image": "tb-image;/api/images/system/route_map_openstreet_system_widget_image.png",
   "description": "Visualize the entity trip on OpenStreetMap. Allows to visualize location history. Use the Trip Animation widget for advanced features.",
   "descriptor": {

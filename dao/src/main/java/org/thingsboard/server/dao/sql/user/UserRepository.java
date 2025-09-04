@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,18 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.UserFields;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -71,4 +74,8 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     Long countByTenantId(UUID tenantId);
 
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.UserFields(u.id, u.createdTime, u.tenantId," +
+            "u.customerId, u.version, u.firstName, u.lastName, u.email, u.phone, u.additionalInfo) " +
+            "FROM UserEntity u WHERE u.id > :id ORDER BY u.id")
+    List<UserFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

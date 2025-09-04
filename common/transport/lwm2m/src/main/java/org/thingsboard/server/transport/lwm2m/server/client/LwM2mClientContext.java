@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,9 +39,6 @@ public interface LwM2mClientContext {
     void unregister(LwM2mClient client, Registration registration) throws LwM2MClientStateException;
 
     Collection<LwM2mClient> getLwM2mClients();
-
-    //TODO: replace UUID with DeviceProfileId
-    Lwm2mDeviceProfileTransportConfiguration getProfile(UUID profileUuId);
 
     Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration);
 

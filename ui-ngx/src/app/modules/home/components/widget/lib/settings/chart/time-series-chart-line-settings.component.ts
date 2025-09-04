@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { merge } from 'rxjs';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-config.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
 import {
   chartLabelPositions,
   chartLabelPositionTranslations,
@@ -42,6 +42,7 @@ import {
   chartShapeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { getSourceTbUnitSymbol, isNotEmptyTbUnits } from '@shared/models/unit.models';
 
 @Component({
   selector: 'tb-time-series-chart-line-settings',
@@ -215,9 +216,9 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
   private _pointLabelPreviewFn(): string {
     const dataKey = this.dataKeyConfigComponent.modelValue;
     const widgetConfig = this.dataKeyConfigComponent.widgetConfig;
-    const units = dataKey.units && dataKey.units.length ? dataKey.units : widgetConfig.config.units;
+    const units = isNotEmptyTbUnits(dataKey.units) ? dataKey.units : widgetConfig.config.units;
     const decimals = isDefinedAndNotNull(dataKey.decimals) ? dataKey.decimals :
       (isDefinedAndNotNull(widgetConfig.config.decimals) ? widgetConfig.config.decimals : 2);
-    return formatValue(22, decimals, units, false);
+    return formatValue(22, decimals, getSourceTbUnitSymbol(units), false);
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -468,49 +468,51 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
       const resizable = item.resize;
 
-      this.heightValue = resizable.height;
-      this.widthValue = resizable.width;
+      if (resizable) {
+        this.heightValue = resizable.height;
+        this.widthValue = resizable.width;
 
-      const setItemHeight = resizable.setItemHeight.bind(resizable);
-      const setItemWidth = resizable.setItemWidth.bind(resizable);
-      resizable.setItemHeight = (height) => {
-        setItemHeight(height);
-        this.heightValue = height;
-        if (this.preserveAspectRatio) {
-          setItemWidth(height * this.aspectRatio);
-        }
-      };
-      resizable.setItemWidth = (width) => {
-        setItemWidth(width);
-        this.widthValue = width;
-        if (this.preserveAspectRatio) {
-          setItemHeight(width / this.aspectRatio);
-        }
-      };
-
-      Object.defineProperty(resizable, 'height', {
-        get: () => this.heightValue,
-        set: v => {
-          if (this.heightValue !== v) {
-            if (this.preserveAspectRatio) {
-              this.widthValue = v * this.aspectRatio;
-            }
-            this.heightValue = v;
+        const setItemHeight = resizable.setItemHeight.bind(resizable);
+        const setItemWidth = resizable.setItemWidth.bind(resizable);
+        resizable.setItemHeight = (height) => {
+          setItemHeight(height);
+          this.heightValue = height;
+          if (this.preserveAspectRatio) {
+            setItemWidth(height * this.aspectRatio);
           }
-        }
-      });
-
-      Object.defineProperty(resizable, 'width', {
-        get: () => this.widthValue,
-        set: v => {
-          if (this.widthValue !== v) {
-            if (this.preserveAspectRatio) {
-              this.heightValue = v / this.aspectRatio;
-            }
-            this.widthValue = v;
+        };
+        resizable.setItemWidth = (width) => {
+          setItemWidth(width);
+          this.widthValue = width;
+          if (this.preserveAspectRatio) {
+            setItemHeight(width / this.aspectRatio);
           }
-        }
-      });
+        };
+
+        Object.defineProperty(resizable, 'height', {
+          get: () => this.heightValue,
+          set: v => {
+            if (this.heightValue !== v) {
+              if (this.preserveAspectRatio) {
+                this.widthValue = v * this.aspectRatio;
+              }
+              this.heightValue = v;
+            }
+          }
+        });
+
+        Object.defineProperty(resizable, 'width', {
+          get: () => this.widthValue,
+          set: v => {
+            if (this.widthValue !== v) {
+              if (this.preserveAspectRatio) {
+                this.heightValue = v / this.aspectRatio;
+              }
+              this.widthValue = v;
+            }
+          }
+        });
+      }
       this.preserveAspectRatioApplied = true;
     }
   }

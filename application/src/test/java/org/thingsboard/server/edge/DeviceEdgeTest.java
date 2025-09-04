@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -489,6 +489,68 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
+    public void testSendOutdatedAttributeToCloud() throws Exception {
+        long ts = System.currentTimeMillis() - TimeUnit.DAYS.toMillis(1);
+        Device device = saveDeviceOnCloudAndVerifyDeliveryToEdge();
+
+        edgeImitator.expectResponsesAmount(1);
+
+        ObjectNode attributesNode = JacksonUtil.newObjectNode();
+        String originalValue = "original_value";
+        attributesNode.put("test_attr", originalValue);
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getId() + "/attributes/SERVER_SCOPE", attributesNode);
+
+        // Wait before device attributes saved to database
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/attributes/" + DataConstants.SERVER_SCOPE;
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
+                    return actualKeys != null && !actualKeys.isEmpty() && actualKeys.contains("test_attr");
+                });
+
+        JsonObject attributesData = new JsonObject();
+        // incorrect msg, will not be saved, because of ts is lower than for already existing
+        String attributesKey = "test_attr";
+        String attributeValueIncorrect = "test_value";
+        // correct msg, will be saved, no ts issue
+        String attributeKey2 = "test_attr2";
+        String attributeValue2Correct = "test_value2";
+        attributesData.addProperty(attributesKey, attributeValueIncorrect);
+        attributesData.addProperty(attributeKey2, attributeValue2Correct);
+        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
+        EntityDataProto.Builder entityDataBuilder = EntityDataProto.newBuilder();
+        entityDataBuilder.setEntityType(device.getId().getEntityType().name());
+        entityDataBuilder.setEntityIdMSB(device.getId().getId().getMostSignificantBits());
+        entityDataBuilder.setEntityIdLSB(device.getId().getId().getLeastSignificantBits());
+        entityDataBuilder.setAttributesUpdatedMsg(JsonConverter.convertToAttributesProto(attributesData));
+        entityDataBuilder.setPostAttributeScope(DataConstants.SERVER_SCOPE);
+        entityDataBuilder.setAttributeTs(ts);
+
+        uplinkMsgBuilder.addEntityData(entityDataBuilder.build());
+
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        String attributeValuesUrl = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/values/attributes/" + DataConstants.SERVER_SCOPE;
+        List<Map<String, String>> attributes = doGetAsyncTyped(attributeValuesUrl, new TypeReference<>() {
+        });
+
+        Optional<Map<String, String>> customAttributeOpt = getAttributeByKey(attributesKey, attributes);
+        Assert.assertTrue(customAttributeOpt.isPresent());
+        Map<String, String> customAttribute = customAttributeOpt.get();
+        Assert.assertNotEquals(attributeValueIncorrect, customAttribute.get("value"));
+        Assert.assertEquals(originalValue, customAttribute.get("value"));
+
+        customAttributeOpt = getAttributeByKey(attributeKey2, attributes);
+        Assert.assertTrue(customAttributeOpt.isPresent());
+        customAttribute = customAttributeOpt.get();
+        Assert.assertEquals(attributeValue2Correct, customAttribute.get("value"));
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + device.getId().getId() + "/SERVER_SCOPE?keys=" + attributesKey, String.class);
+    }
+
+    @Test
     public void testSendDeviceToCloudWithNameThatAlreadyExistsOnCloud() throws Exception {
         String deviceOnCloudName = StringUtils.randomAlphanumeric(15);
         Device deviceOnCloud = saveDevice(deviceOnCloudName, DEFAULT_DEVICE_TYPE);
@@ -531,8 +593,10 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendDeviceToCloud() throws Exception {
-        Device deviceMsg = buildDeviceForUplinkMsg("Edge Device 2", "test");
+        String deviceName = "Edge Device 2";
+        Device deviceMsg = buildDeviceForUplinkMsg(deviceName, "test");
 
+        // create device on edge
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         DeviceUpdateMsg.Builder deviceUpdateMsgBuilder = DeviceUpdateMsg.newBuilder();
         deviceUpdateMsgBuilder.setIdMSB(deviceMsg.getUuidId().getMostSignificantBits());
@@ -547,7 +611,25 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
 
         Device device = doGet("/api/device/" + deviceMsg.getId().getId(), Device.class);
         Assert.assertNotNull(device);
-        Assert.assertEquals("Edge Device 2", device.getName());
+        Assert.assertEquals(deviceName, device.getName());
+
+        // update device on edge
+        deviceMsg.setName(deviceName + " Updated");
+        uplinkMsgBuilder = UplinkMsg.newBuilder();
+        deviceUpdateMsgBuilder = DeviceUpdateMsg.newBuilder();
+        deviceUpdateMsgBuilder.setIdMSB(deviceMsg.getUuidId().getMostSignificantBits());
+        deviceUpdateMsgBuilder.setIdLSB(deviceMsg.getUuidId().getLeastSignificantBits());
+        deviceUpdateMsgBuilder.setEntity(JacksonUtil.toString(deviceMsg));
+        deviceUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE);
+        uplinkMsgBuilder.addDeviceUpdateMsg(deviceUpdateMsgBuilder.build());
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        device = doGet("/api/device/" + deviceMsg.getId().getId(), Device.class);
+        Assert.assertNotNull(device);
+        Assert.assertEquals(deviceName + " Updated", device.getName());
     }
 
     @Test

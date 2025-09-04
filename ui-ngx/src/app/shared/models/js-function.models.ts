@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -141,7 +141,7 @@ export const loadModuleMarkdownSourceCode = (http: HttpClient, translate: Transl
   let sourceCode = `<div class="flex flex-col !pl-4"><h6>${resource.title}</h6><small>${translate.instant('js-func.source-code')}</small></div>\n\n`;
   return loadFunctionModuleSource(http, resource.link).pipe(
     map((source) => {
-      sourceCode += '```javascript\n{:code-style="margin-left: -16px; margin-right: -16px;"}\n' +  source + '\n```';
+      sourceCode += '```javascript\n{:code-style="margin-left: -16px; margin-right: -16px; max-height: 65vh;"}\n' +  source + '\n```';
       return sourceCode;
     }),
     catchError(err => {

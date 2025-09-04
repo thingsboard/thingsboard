@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,7 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected Dashboard saveOrUpdate(EntitiesImportCtx ctx, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider) {
+    protected Dashboard saveOrUpdate(EntitiesImportCtx ctx, Dashboard dashboard, EntityExportData<Dashboard> exportData, IdProvider idProvider, CompareResult compareResult) {
         var tenantId = ctx.getTenantId();
 
         Set<ShortCustomerInfo> assignedCustomers = Optional.ofNullable(dashboard.getAssignedCustomers()).orElse(Collections.emptySet()).stream()
@@ -116,8 +116,8 @@ public class DashboardImportService extends BaseEntityImportService<DashboardId,
     }
 
     @Override
-    protected boolean compare(EntitiesImportCtx ctx, EntityExportData<Dashboard> exportData, Dashboard prepared, Dashboard existing) {
-        return super.compare(ctx, exportData, prepared, existing) || !prepared.getConfiguration().equals(existing.getConfiguration());
+    protected boolean isUpdateNeeded(EntitiesImportCtx ctx, EntityExportData<Dashboard> exportData, Dashboard prepared, Dashboard existing) {
+        return super.isUpdateNeeded(ctx, exportData, prepared, existing) || !prepared.getConfiguration().equals(existing.getConfiguration());
     }
 
     @Override

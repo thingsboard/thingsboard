@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -172,7 +172,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             var saved = dashboardDao.save(tenantId, dashboard);
             publishEvictEvent(new DashboardTitleEvictEvent(saved.getId()));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                    .entityId(saved.getId()).created(dashboard.getId() == null).build());
+                    .entityId(saved.getId()).entity(saved).created(dashboard.getId() == null).build());
             if (dashboard.getId() == null) {
                 countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
             }

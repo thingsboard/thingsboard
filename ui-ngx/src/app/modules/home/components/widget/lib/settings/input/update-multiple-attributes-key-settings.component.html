@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,108 +21,113 @@
   </mat-slide-toggle>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value" class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-        <mat-label translate>widgets.input-widgets.datakey-type</mat-label>
-        <mat-select formControlName="dataKeyType">
-          <mat-option [value]="'server'">
-            {{ 'widgets.input-widgets.datakey-type-server' | translate }}
-          </mat-option>
-          <mat-option [value]="'shared'">
-            {{ 'widgets.input-widgets.datakey-type-shared' | translate }}
-          </mat-option>
-          <mat-option [value]="'timeseries'">
-            {{ 'widgets.input-widgets.datakey-type-timeseries' | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-        <mat-label translate>widgets.input-widgets.datakey-value-type</mat-label>
-        <mat-select formControlName="dataKeyValueType">
-          <mat-option [value]="'string'">
-            {{ 'widgets.input-widgets.datakey-value-type-string' | translate }}
-          </mat-option>
-          <mat-option [value]="'double'">
-            {{ 'widgets.input-widgets.datakey-value-type-double' | translate }}
-          </mat-option>
-          <mat-option [value]="'integer'">
-            {{ 'widgets.input-widgets.datakey-value-type-integer' | translate }}
-          </mat-option>
-          <mat-option [value]="'booleanCheckbox'">
-            {{ 'widgets.input-widgets.datakey-value-type-boolean-checkbox' | translate }}
-          </mat-option>
-          <mat-option [value]="'booleanSwitch'">
-            {{ 'widgets.input-widgets.datakey-value-type-boolean-switch' | translate }}
-          </mat-option>
-          <mat-option [value]="'dateTime'">
-            {{ 'widgets.input-widgets.datakey-value-type-date-time' | translate }}
-          </mat-option>
-          <mat-option [value]="'date'">
-            {{ 'widgets.input-widgets.datakey-value-type-date' | translate }}
-          </mat-option>
-          <mat-option [value]="'time'">
-            {{ 'widgets.input-widgets.datakey-value-type-time' | translate }}
-          </mat-option>
-          <mat-option [value]="'select'">
-            {{ 'widgets.input-widgets.datakey-value-type-select' | translate }}
-          </mat-option>
-          <mat-option [value]="'JSON'">
-            {{ 'widgets.input-widgets.datakey-value-type-json' | translate }}
-          </mat-option>
-          <mat-option [value]="'color'">
-            {{ 'widgets.input-widgets.datakey-value-type-color' | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </section>
-    <mat-checkbox formControlName="required" style="margin-bottom: 8px;">
-      {{ 'widgets.input-widgets.value-is-required' | translate }}
-    </mat-checkbox>
-    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-        <mat-label translate>widgets.input-widgets.ability-to-edit-attribute</mat-label>
-        <mat-select formControlName="isEditable">
-          <mat-option [value]="'editable'">
-            {{ 'widgets.input-widgets.ability-to-edit-attribute-editable' | translate }}
-          </mat-option>
-          <mat-option [value]="'disabled'">
-            {{ 'widgets.input-widgets.ability-to-edit-attribute-disabled' | translate }}
-          </mat-option>
-          <mat-option [value]="'readonly'">
-            {{ 'widgets.input-widgets.ability-to-edit-attribute-readonly' | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-        <mat-label translate>widgets.input-widgets.disable-on-datakey-name</mat-label>
-        <input matInput formControlName="disabledOnDataKey">
-      </mat-form-field>
-    </section>
-    <section *ngIf="!['booleanSwitch', 'booleanCheckbox'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
-             class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-        <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
-        <mat-select formControlName="appearance">
-          <mat-option [value]="'fill'">
-            {{ 'widgets.input-widgets.appearance-fill' | translate }}
-          </mat-option>
-          <mat-option [value]="'outline'">
-            {{ 'widgets.input-widgets.appearance-outline' | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
-        <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
-        <mat-select formControlName="subscriptSizing">
-          <mat-option [value]="'fixed'">
-            {{ 'widgets.input-widgets.subscript-sizing-fixed' | translate }}
-          </mat-option>
-          <mat-option [value]="'dynamic'">
-            {{ 'widgets.input-widgets.subscript-sizing-dynamic' | translate }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </section>
+    <div class="flex flex-col">
+      <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-label translate>widgets.input-widgets.datakey-type</mat-label>
+          <mat-select formControlName="dataKeyType">
+            <mat-option [value]="'server'">
+              {{ 'widgets.input-widgets.datakey-type-server' | translate }}
+            </mat-option>
+            <mat-option [value]="'shared'">
+              {{ 'widgets.input-widgets.datakey-type-shared' | translate }}
+            </mat-option>
+            <mat-option [value]="'timeseries'">
+              {{ 'widgets.input-widgets.datakey-type-timeseries' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-label translate>widgets.input-widgets.datakey-value-type</mat-label>
+          <mat-select formControlName="dataKeyValueType">
+            <mat-option [value]="'string'">
+              {{ 'widgets.input-widgets.datakey-value-type-string' | translate }}
+            </mat-option>
+            <mat-option [value]="'double'">
+              {{ 'widgets.input-widgets.datakey-value-type-double' | translate }}
+            </mat-option>
+            <mat-option [value]="'integer'">
+              {{ 'widgets.input-widgets.datakey-value-type-integer' | translate }}
+            </mat-option>
+            <mat-option [value]="'booleanCheckbox'">
+              {{ 'widgets.input-widgets.datakey-value-type-boolean-checkbox' | translate }}
+            </mat-option>
+            <mat-option [value]="'booleanSwitch'">
+              {{ 'widgets.input-widgets.datakey-value-type-boolean-switch' | translate }}
+            </mat-option>
+            <mat-option [value]="'dateTime'">
+              {{ 'widgets.input-widgets.datakey-value-type-date-time' | translate }}
+            </mat-option>
+            <mat-option [value]="'date'">
+              {{ 'widgets.input-widgets.datakey-value-type-date' | translate }}
+            </mat-option>
+            <mat-option [value]="'time'">
+              {{ 'widgets.input-widgets.datakey-value-type-time' | translate }}
+            </mat-option>
+            <mat-option [value]="'select'">
+              {{ 'widgets.input-widgets.datakey-value-type-select' | translate }}
+            </mat-option>
+            <mat-option [value]="'radio'">
+              {{ 'widgets.input-widgets.datakey-value-type-radio' | translate }}
+            </mat-option>
+            <mat-option [value]="'JSON'">
+              {{ 'widgets.input-widgets.datakey-value-type-json' | translate }}
+            </mat-option>
+            <mat-option [value]="'color'">
+              {{ 'widgets.input-widgets.datakey-value-type-color' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </section>
+      <mat-checkbox formControlName="required" style="margin-bottom: 8px;">
+        {{ 'widgets.input-widgets.value-is-required' | translate }}
+      </mat-checkbox>
+      <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-label translate>widgets.input-widgets.ability-to-edit-attribute</mat-label>
+          <mat-select formControlName="isEditable">
+            <mat-option [value]="'editable'">
+              {{ 'widgets.input-widgets.ability-to-edit-attribute-editable' | translate }}
+            </mat-option>
+            <mat-option [value]="'disabled'">
+              {{ 'widgets.input-widgets.ability-to-edit-attribute-disabled' | translate }}
+            </mat-option>
+            <mat-option [value]="'readonly'">
+              {{ 'widgets.input-widgets.ability-to-edit-attribute-readonly' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('isEditable').value !== 'editable'" class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-label translate>widgets.input-widgets.disable-on-datakey-name</mat-label>
+          <input matInput formControlName="disabledOnDataKey">
+        </mat-form-field>
+      </section>
+      <section *ngIf="!['booleanSwitch', 'booleanCheckbox', 'radio'].includes(updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value)"
+               class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-label translate>widgets.input-widgets.field-appearance</mat-label>
+          <mat-select formControlName="appearance">
+            <mat-option [value]="'fill'">
+              {{ 'widgets.input-widgets.appearance-fill' | translate }}
+            </mat-option>
+            <mat-option [value]="'outline'">
+              {{ 'widgets.input-widgets.appearance-outline' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block flex-full xs:max-h-50% gt-xs:max-w-50%">
+          <mat-label translate>widgets.input-widgets.subscript-sizing</mat-label>
+          <mat-select formControlName="subscriptSizing">
+            <mat-option [value]="'fixed'">
+              {{ 'widgets.input-widgets.subscript-sizing-fixed' | translate }}
+            </mat-option>
+            <mat-option [value]="'dynamic'">
+              {{ 'widgets.input-widgets.subscript-sizing-dynamic' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </section>
+    </div>
   </fieldset>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'booleanSwitch'" class="fields-group">
@@ -140,8 +145,10 @@
     </mat-form-field>
   </fieldset>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
-                             updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'select'" class="fields-group">
-    <legend class="group-title" translate>widgets.input-widgets.select-options</legend>
+                             (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'select' && updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'radio')" class="fields-group">
+    <legend class="group-title">
+      {{ (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'select' ? 'widgets.input-widgets.select-options' : 'widgets.input-widgets.radio-options') | translate }}
+    </legend>
     <div class="flex flex-col">
       <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
            (cdkDropListDropped)="selectOptionDrop($event)">
@@ -155,18 +162,51 @@
         </div>
       </div>
       <div *ngIf="!selectOptionsFormArray().controls.length">
-            <span translate
-                  class="tb-prompt flex items-center justify-center">widgets.input-widgets.no-select-options</span>
+            <span class="tb-prompt flex items-center justify-center">
+              {{ (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'select' ? 'widgets.input-widgets.no-select-options' : 'widgets.input-widgets.no-radio-options') | translate }}
+            </span>
       </div>
       <div style="padding-top: 16px;">
         <button mat-raised-button color="primary"
                 type="button"
                 (click)="addSelectOption()">
-          <span translate>widgets.input-widgets.add-select-option</span>
+          <span>
+            {{ (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value === 'select' ? 'widgets.input-widgets.add-select-option' : 'widgets.input-widgets.add-radio-option') | translate }}
+          </span>
         </button>
       </div>
     </div>
   </fieldset>
+  <div class="tb-form-panel mb-3.5"
+       [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
+       updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'radio'">
+    <div class="tb-form-panel-title" translate>widgets.input-widgets.radio-button-settings</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.input-widgets.color' | translate }}</div>
+      <tb-color-input asBoxInput
+                      formControlName="radioColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.input-widgets.columns' | translate }}</div>
+      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="radioColumns" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.input-widgets.radio-label-position' | translate }}</div>
+      <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="radioLabelPosition">
+          <mat-option [value]="'after'">
+            {{ 'widgets.input-widgets.radio-label-position-after' | translate }}
+          </mat-option>
+          <mat-option [value]="'before'">
+            {{ 'widgets.input-widgets.radio-label-position-before' | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+  </div>
   <fieldset [class.!hidden]="updateMultipleAttributesKeySettingsForm.get('dataKeyHidden').value ||
                              (updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'integer' &&
                              updateMultipleAttributesKeySettingsForm.get('dataKeyValueType').value !== 'double')" class="fields-group">

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -70,6 +70,9 @@ import {
 import { CssSizeInputComponent } from '@home/components/widget/lib/settings/common/css-size-input.component';
 import { WidgetActionComponent } from '@home/components/widget/lib/settings/common/action/widget-action.component';
 import {
+  MapItemTooltipsComponent
+} from '@home/components/widget/lib/settings/common/action/map-item-tooltips.component';
+import {
   CustomActionPrettyResourcesTabsComponent
 } from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
 import {
@@ -102,7 +105,7 @@ import {
 import {
   TimeSeriesChartThresholdRowComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-row.component';
-import { DataKeyInputComponent } from '@home/components/widget/lib/settings/common/data-key-input.component';
+import { DataKeyInputComponent } from '@home/components/widget/lib/settings/common/key/data-key-input.component';
 import { EntityAliasInputComponent } from '@home/components/widget/lib/settings/common/entity-alias-input.component';
 import {
   TimeSeriesChartThresholdSettingsPanelComponent
@@ -183,6 +186,87 @@ import {
 import {
   DynamicFormArrayComponent
 } from '@home/components/widget/lib/settings/common/dynamic-form/dynamic-form-array.component';
+import { MapSettingsComponent } from '@home/components/widget/lib/settings/common/map/map-settings.component';
+import { MapLayersComponent } from '@home/components/widget/lib/settings/common/map/map-layers.component';
+import { MapLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-layer-row.component';
+import {
+  MapLayerSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
+import { MapDataLayersComponent } from '@home/components/widget/lib/settings/common/map/map-data-layers.component';
+import { MapDataLayerRowComponent } from '@home/components/widget/lib/settings/common/map/map-data-layer-row.component';
+import {
+  EntityAliasSelectComponent
+} from '@home/components/widget/lib/settings/common/alias/entity-alias-select.component';
+import {
+  MapDataLayerDialogComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-layer-dialog.component';
+import { FilterSelectComponent } from '@home/components/widget/lib/settings/common/filter/filter-select.component';
+import { DataKeysComponent } from '@home/components/widget/lib/settings/common/key/data-keys.component';
+import {
+  DataKeyConfigDialogComponent
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import { DataKeyConfigComponent } from '@home/components/widget/lib/settings/common/key/data-key-config.component';
+import { WidgetSettingsComponent } from '@home/components/widget/lib/settings/common/widget/widget-settings.component';
+import {
+  DataLayerColorSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-color-settings.component';
+import {
+  DataLayerColorSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-color-settings-panel.component';
+import {
+  MarkerImageSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-image-settings.component';
+import {
+  MarkerImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/marker-image-settings-panel.component';
+import {
+  DataLayerPatternSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/data-layer-pattern-settings.component';
+import {
+  MarkerShapeSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-shape-settings.component';
+import { MarkerShapesComponent } from '@home/components/widget/lib/settings/common/map/marker-shapes.component';
+import {
+  MarkerClusteringSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/marker-clustering-settings.component';
+import { AdditionalMapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/additional-map-data-sources.component';
+import {
+  AdditionalMapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/additional-map-data-source-row.component';
+import {
+  ImageMapSourceSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/image-map-source-settings.component';
+import {
+  MapTooltipTagActionsComponent
+} from '@home/components/widget/lib/settings/common/map/map-tooltip-tag-actions.component';
+import {
+  MapActionButtonsSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/map-action-buttons-settings.component';
+import {
+  MapActionButtonRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-action-button-row.component';
+import {
+  TripTimelineSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/trip-timeline-settings.component';
+import {
+  MarkerIconShapesComponent
+} from '@home/components/widget/lib/settings/common/map/marker-icon-shapes.component';
+import { MapDataSourcesComponent } from '@home/components/widget/lib/settings/common/map/map-data-sources.component';
+import {
+  MapDataSourceRowComponent
+} from '@home/components/widget/lib/settings/common/map/map-data-source-row.component';
+import {
+  ShapeFillImageSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings.component';
+import {
+  ShapeFillImageSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-image-settings-panel.component';
+import {
+  ShapeFillStripeSettingsComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings.component';
+import {
+  ShapeFillStripeSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings-panel.component';
 
 @NgModule({
   declarations: [
@@ -214,6 +298,7 @@ import {
     SetValueActionSettingsComponent,
     SetValueActionSettingsPanelComponent,
     WidgetActionComponent,
+    MapItemTooltipsComponent,
     CustomActionPrettyResourcesTabsComponent,
     CustomActionPrettyEditorComponent,
     MobileActionEditorComponent,
@@ -252,7 +337,42 @@ import {
     DynamicFormSelectItemsComponent,
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
-    DynamicFormArrayComponent
+    DynamicFormArrayComponent,
+    MapLayerSettingsPanelComponent,
+    MapLayerRowComponent,
+    MapLayersComponent,
+    ImageMapSourceSettingsComponent,
+    DataLayerColorSettingsComponent,
+    DataLayerColorSettingsPanelComponent,
+    MapTooltipTagActionsComponent,
+    MapActionButtonsSettingsComponent,
+    MapActionButtonRowComponent,
+    DataLayerPatternSettingsComponent,
+    MarkerShapeSettingsComponent,
+    MarkerShapesComponent,
+    MarkerIconShapesComponent,
+    MarkerImageSettingsComponent,
+    MarkerImageSettingsPanelComponent,
+    MarkerClusteringSettingsComponent,
+    ShapeFillStripeSettingsComponent,
+    ShapeFillStripeSettingsPanelComponent,
+    ShapeFillImageSettingsComponent,
+    ShapeFillImageSettingsPanelComponent,
+    MapDataLayerDialogComponent,
+    MapDataLayerRowComponent,
+    MapDataLayersComponent,
+    MapDataSourceRowComponent,
+    MapDataSourcesComponent,
+    AdditionalMapDataSourceRowComponent,
+    AdditionalMapDataSourcesComponent,
+    TripTimelineSettingsComponent,
+    MapSettingsComponent,
+    EntityAliasSelectComponent,
+    FilterSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigDialogComponent,
+    DataKeyConfigComponent,
+    WidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -326,7 +446,14 @@ import {
     DynamicFormSelectItemsComponent,
     DynamicFormSelectItemRowComponent,
     DynamicFormComponent,
-    DynamicFormArrayComponent
+    DynamicFormArrayComponent,
+    MapSettingsComponent,
+    EntityAliasSelectComponent,
+    FilterSelectComponent,
+    DataKeysComponent,
+    DataKeyConfigDialogComponent,
+    DataKeyConfigComponent,
+    WidgetSettingsComponent
   ],
   providers: [
     ColorSettingsComponentService,

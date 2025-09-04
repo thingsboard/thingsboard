@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -138,6 +138,18 @@ const processLocationFunction: TbFunction =
   '    }, 100);\n' +
   '}';
 
+const provisionSuccessFunction: TbFunction =
+  '// Function body to handle device provision success. \n' +
+  '// - deviceName - name of device that was successfully provisioned.\n' +
+  '\n' +
+  'showDeviceProvisionSuccess(deviceName);\n' +
+  '\n' +
+  'function showDeviceProvisionSuccess(deviceName) {\n' +
+  '    setTimeout(function() {\n' +
+  '        widgetContext.showSuccessToast(`Device ` + deviceName + ` was successfully provisioned`).subscribe();\n' +
+  '    }, 100);\n' +
+  '}\n';
+
 const handleEmptyResultFunctionTemplate: TbFunction =
   '// Optional function body to handle empty result. \n' +
   '// Usually this happens when user cancels the action (for ex. by pressing phone back button). \n\n' +
@@ -145,7 +157,7 @@ const handleEmptyResultFunctionTemplate: TbFunction =
   '\n' +
   'function showEmptyResultDialog(message) {\n' +
   '    setTimeout(function() {\n' +
-  '        widgetContext.dialogs.alert(\'Empty result\', message).subscribe();\n' +
+  '        widgetContext.showInfoToast(message).subscribe();\n' +
   '    }, 100);\n' +
   '}\n';
 
@@ -158,6 +170,14 @@ const handleErrorFunctionTemplate: TbFunction =
   '    setTimeout(function() {\n' +
   '        widgetContext.dialogs.alert(title, error).subscribe();\n' +
   '    }, 100);\n' +
+  '}\n';
+
+const handleNonMobileFallbackFunctionTemplate: TbFunction =
+  '// Optional function body to handle non-mobile fallback \n' +
+  'showFallbackToast();\n' +
+  '\n' +
+  'function showFallbackToast(title, error) {\n' +
+  '    widgetContext.showWarnToast(\'This action is only available in the mobile application.\');\n' +
   '}\n';
 
 const getLocationFunctionTemplate: TbFunction =
@@ -241,6 +261,8 @@ export const getDefaultProcessQrCodeFunction = () => processQrCodeFunction;
 
 export const getDefaultProcessLocationFunction = () => processLocationFunction;
 
+export const getDefaultProvisionSuccessFunction = () => provisionSuccessFunction;
+
 export const getDefaultGetLocationFunction = () => getLocationFunctionTemplate;
 
 export const getDefaultGetPhoneNumberFunction = () => getPhoneNumberFunctionTemplate;
@@ -271,6 +293,9 @@ export const getDefaultHandleEmptyResultFunction = (type: WidgetMobileActionType
       break;
     case WidgetMobileActionType.takeScreenshot:
       message = 'Take screenshot action was cancelled!';
+      break;
+    case WidgetMobileActionType.deviceProvision:
+      message = 'Device provision was not invoked!';
       break;
   }
   return handleEmptyResultFunctionTemplate.replace('--MESSAGE--', message);
@@ -303,6 +328,11 @@ export const getDefaultHandleErrorFunction = (type: WidgetMobileActionType): TbF
     case WidgetMobileActionType.takeScreenshot:
       title = 'Failed to take screenshot';
       break;
+    case WidgetMobileActionType.deviceProvision:
+      title = 'Failed to make device provision';
+      break;
   }
   return handleErrorFunctionTemplate.replace('--TITLE--', title);
 };
+
+export const getDefaultHandleNonMobileFallBackFunction = () => handleNonMobileFallbackFunctionTemplate;

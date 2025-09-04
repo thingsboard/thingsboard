@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -101,7 +101,8 @@
       [validationArgs]="[]"
       [editorCompleter]="customPrettyActionEditorCompleter"
       functionTitle="{{ 'widget-action.custom-pretty-function' | translate }}"
-      helpId="widget/action/custom_pretty_action_fn">
+      [helpId]="helpId"
+      [helpPopupStyle]="{width: '900px'}">
     </tb-js-func>
   </mat-tab>
 </mat-tab-group>

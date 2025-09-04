@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,32 +28,30 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      <div class="flex flex-1 flex-col">
-        <tb-toggle-select *ngIf="enableImportFromContent"
-                          class="flex-1"
-                          formControlName="importType">
-          <tb-toggle-option value="file">{{ importFileLabel | translate }}</tb-toggle-option>
-          <tb-toggle-option value="content">{{ importContentLabel | translate }}</tb-toggle-option>
-        </tb-toggle-select>
-        <tb-file-input *ngIf="importFormGroup.get('importType').value === 'file'"
-          [contentConvertFunction]="loadDataFromJsonContent"
-          [existingFileName]="currentFileName"
-          (fileNameChanged)="currentFileName = $event"
-          formControlName="fileContent"
-          required
-          label="{{importFileLabel | translate}}"
-          dropLabel="{{ 'import.drop-json-file-or' | translate }}"
-          accept=".json,application/json"
-          allowedExtensions="json">
-        </tb-file-input>
-        <tb-json-object-edit *ngIf="importFormGroup.get('importType').value === 'content'"
-          formControlName="jsonContent"
-          jsonRequired
-          label="{{ importContentLabel | translate }}">
-        </tb-json-object-edit>
-      </div>
-    </fieldset>
+    <div class="flex flex-1 flex-col">
+      <tb-toggle-select *ngIf="enableImportFromContent"
+                        class="flex-1"
+                        formControlName="importType">
+        <tb-toggle-option value="file">{{ importFileLabel | translate }}</tb-toggle-option>
+        <tb-toggle-option value="content">{{ importContentLabel | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+      <tb-file-input *ngIf="importFormGroup.get('importType').value === 'file'"
+        [contentConvertFunction]="loadDataFromJsonContent"
+        [existingFileName]="currentFileName"
+        (fileNameChanged)="currentFileName = $event"
+        formControlName="fileContent"
+        required
+        label="{{importFileLabel | translate}}"
+        dropLabel="{{ 'import.drop-json-file-or' | translate }}"
+        accept=".json,application/json"
+        allowedExtensions="json">
+      </tb-file-input>
+      <tb-json-object-edit *ngIf="importFormGroup.get('importType').value === 'content'"
+        formControlName="jsonContent"
+        jsonRequired
+        label="{{ importContentLabel | translate }}">
+      </tb-json-object-edit>
+    </div>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"

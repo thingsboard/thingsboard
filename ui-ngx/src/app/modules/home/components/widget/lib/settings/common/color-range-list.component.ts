@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import { deepClone, isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
 export function advancedRangeValidator(control: AbstractControl): ValidationErrors | null {
@@ -84,6 +84,10 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   @Input()
   datasource: Datasource;
+
+  @Input()
+  @coerceBoolean()
+  simpleRange = false;
 
   @Input()
   @coerceBoolean()
@@ -133,7 +137,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   writeValue(value: any): void {
     if (value) {
       let rangeList: ColorRangeSettings = {};
-      if (isUndefined(value?.advancedMode) && value?.length) {
+      if (this.simpleRange || (isUndefined(value?.advancedMode) && value?.length)) {
         rangeList.advancedMode = false;
         rangeList.range = value;
       } else {
@@ -229,7 +233,11 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   }
 
   updateModel() {
-    this.propagateChange(this.colorRangeListFormGroup.value);
+    if (this.simpleRange) {
+      this.propagateChange(this.colorRangeListFormGroup.get('range').value);
+    } else {
+      this.propagateChange(this.colorRangeListFormGroup.value);
+    }
   }
 
 }

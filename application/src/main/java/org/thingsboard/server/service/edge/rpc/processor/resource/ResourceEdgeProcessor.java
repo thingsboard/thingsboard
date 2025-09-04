@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.resource;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -32,16 +32,15 @@ import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
-import org.thingsboard.server.service.edge.rpc.constructor.resource.ResourceMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.resource.ResourceMsgConstructorFactory;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.UUID;
 
 @Slf4j
-public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implements ResourceProcessor {
-
-    @Autowired
-    private ResourceMsgConstructorFactory resourceMsgConstructorFactory;
+@Component
+@TbCoreComponent
+public class ResourceEdgeProcessor extends BaseResourceProcessor implements ResourceProcessor {
 
     @Override
     public ListenableFuture<Void> processResourceMsgFromEdge(TenantId tenantId, Edge edge, ResourceUpdateMsg resourceUpdateMsg) {
@@ -75,23 +74,22 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
     }
 
     @Override
-    public DownlinkMsg convertResourceEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         TbResourceId tbResourceId = new TbResourceId(edgeEvent.getEntityId());
-        var msgConstructor = (ResourceMsgConstructor) resourceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 TbResource tbResource = edgeCtx.getResourceService().findResourceById(edgeEvent.getTenantId(), tbResourceId);
                 if (tbResource != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    ResourceUpdateMsg resourceUpdateMsg = msgConstructor.constructResourceUpdatedMsg(msgType, tbResource);
-                    return resourceUpdateMsg != null ? DownlinkMsg.newBuilder()
+                    ResourceUpdateMsg resourceUpdateMsg = EdgeMsgConstructorUtils.constructResourceUpdatedMsg(msgType, tbResource);
+                    return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addResourceUpdateMsg(resourceUpdateMsg)
-                            .build() : null;
+                            .build();
                 }
             }
             case DELETED -> {
-                ResourceUpdateMsg resourceUpdateMsg = msgConstructor.constructResourceDeleteMsg(tbResourceId);
+                ResourceUpdateMsg resourceUpdateMsg = EdgeMsgConstructorUtils.constructResourceDeleteMsg(tbResourceId);
                 return DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addResourceUpdateMsg(resourceUpdateMsg)
@@ -99,6 +97,11 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
             }
         }
         return null;
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.TB_RESOURCE;
     }
 
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,8 +28,11 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
+import org.thingsboard.server.dao.edge.stats.EdgeStatsKey;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -41,6 +44,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
 
     private final EdgeEventDao edgeEventDao;
     private final ApplicationEventPublisher eventPublisher;
+    private final Optional<EdgeStatsCounterService> statsCounterService;
 
     private ExecutorService edgeEventExecutor;
 
@@ -64,6 +68,7 @@ public class PostgresEdgeEventService extends BaseEdgeEventService {
         Futures.addCallback(saveFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(Void result) {
+                statsCounterService.ifPresent(statsCounterService -> statsCounterService.recordEvent(EdgeStatsKey.DOWNLINK_MSGS_ADDED, edgeEvent.getTenantId(), edgeEvent.getEdgeId(), 1));
                 eventPublisher.publishEvent(SaveEntityEvent.builder()
                         .tenantId(edgeEvent.getTenantId())
                         .entityId(edgeEvent.getEdgeId())

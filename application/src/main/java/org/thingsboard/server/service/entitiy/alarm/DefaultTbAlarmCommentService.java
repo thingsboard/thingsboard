@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
 @Service
 @AllArgsConstructor
-public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService{
+public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService {
 
     @Autowired
     private AlarmCommentService alarmCommentService;
@@ -68,4 +68,5 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
             throw new ThingsboardException("System comment could not be deleted", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
+
 }

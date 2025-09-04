@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="mat-padding flex flex-col" [formGroup]="entityForm">
+<section class="mat-padding tb-form-panel outlined" [formGroup]="entityForm">
   <mat-form-field appearance="outline" subscriptSizing="dynamic">
     <mat-label translate>mobile.mobile-package</mat-label>
     <input matInput required formControlName="pkgName">
@@ -36,6 +36,14 @@
     </mat-error>
     <mat-error *ngIf="entityForm.get('pkgName').hasError('pattern')">
       {{ 'mobile.mobile-package-pattern' | translate }}
+    </mat-error>
+  </mat-form-field>
+  <mat-form-field appearance="outline" subscriptSizing="dynamic">
+    <mat-label translate>mobile.mobile-package-title</mat-label>
+    <input matInput formControlName="title">
+    <mat-hint></mat-hint>
+    <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+      {{ 'mobile.mobile-package-title-max-length' | translate }}
     </mat-error>
   </mat-form-field>
   <mat-form-field appearance="outline" class="flex">
@@ -107,7 +115,7 @@
           <mat-label translate>mobile.latest-version</mat-label>
           <input matInput formControlName="latestVersion">
           <mat-hint> </mat-hint>
-          <mat-error *ngIf="entityForm.get('versionInfo.minVersion').hasError('pattern')">
+          <mat-error *ngIf="entityForm.get('versionInfo.latestVersion').hasError('pattern')">
             {{ 'mobile.invalid-version-pattern' | translate }}
           </mat-error>
         </mat-form-field>
@@ -130,7 +138,7 @@
         <mat-label>{{
             (entityForm.get('platformType').value === PlatformType.ANDROID ? 'mobile.google-play-link' : 'mobile.app-store-link') | translate
           }}</mat-label>
-        <input matInput [required]="entityForm.get('status').value === 'PUBLISHED'" formControlName="storeLink">
+        <input matInput [required]="entityForm.get('status').value === MobileAppStatus.PUBLISHED" formControlName="storeLink">
         <tb-copy-button
           matSuffix
           miniButton="false"
@@ -148,7 +156,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.ANDROID">
         <mat-label translate>mobile.sha256-certificate-fingerprints</mat-label>
-        <input matInput [required]="entityForm.get('status').value !== MobileAppStatus.DRAFT" formControlName="sha256CertFingerprints">
+        <input matInput [required]="entityForm.get('status').value === MobileAppStatus.PUBLISHED" formControlName="sha256CertFingerprints">
         <tb-copy-button
           matSuffix
           miniButton="false"
@@ -166,7 +174,7 @@
       </mat-form-field>
       <mat-form-field appearance="outline" *ngIf="entityForm.get('platformType').value === PlatformType.IOS">
         <mat-label translate>mobile.app-id</mat-label>
-        <input matInput [required]="entityForm.get('status').value !== MobileAppStatus.DRAFT" formControlName="appId">
+        <input matInput [required]="entityForm.get('status').value === MobileAppStatus.PUBLISHED" formControlName="appId">
         <tb-copy-button
           matSuffix
           miniButton="false"

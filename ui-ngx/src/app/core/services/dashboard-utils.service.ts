@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,12 +31,14 @@ import {
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
-  GridSettings, LayoutType,
+  GridSettings,
+  LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
 import {
   Datasource,
+  datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   defaultLegendConfig,
@@ -48,7 +50,8 @@ import {
   WidgetConfigMode,
   WidgetSize,
   widgetType,
-  WidgetTypeDescriptor
+  WidgetTypeDescriptor,
+  widgetTypeHasTimewindow
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
@@ -61,6 +64,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
 import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
+import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
 
 @Injectable({
   providedIn: 'root'
@@ -232,6 +236,7 @@ export class DashboardUtilsService {
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
     widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    this.removeTimewindowConfigIfUnused(widget);
     if (isDefined((widget as any).title)) {
       delete (widget as any).title;
     }
@@ -292,8 +297,11 @@ export class DashboardUtilsService {
     }
     widgetConfig.datasources = this.validateAndUpdateDatasources(widgetConfig.datasources);
     if (type === widgetType.latest) {
-      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
-      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, onlyHistoryTimewindow, this.timeService);
+      if (datasourcesHasAggregation(widgetConfig.datasources)) {
+        const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
+        widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true,
+          onlyHistoryTimewindow, this.timeService, false);
+      }
     } else if (type === widgetType.rpc) {
       if (widgetConfig.targetDeviceAliasIds && widgetConfig.targetDeviceAliasIds.length) {
         widgetConfig.targetDevice = {
@@ -346,6 +354,33 @@ export class DashboardUtilsService {
     return widgetConfig;
   }
 
+  private removeTimewindowConfigIfUnused(widget: Widget) {
+    const widgetHasTimewindow = this.widgetHasTimewindow(widget);
+    if (!widgetHasTimewindow || widget.config.useDashboardTimewindow) {
+      delete widget.config.displayTimewindow;
+      delete widget.config.timewindow;
+      delete widget.config.timewindowStyle;
+
+      if (!widgetHasTimewindow) {
+        delete widget.config.useDashboardTimewindow;
+      }
+    }
+  }
+
+  private widgetHasTimewindow(widget: Widget): boolean {
+    const widgetDefinition = findWidgetModelDefinition(widget);
+    if (widgetDefinition) {
+      return widgetDefinition.hasTimewindow(widget);
+    }
+    return widgetTypeHasTimewindow(widget.type)
+      || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
+  }
+
+  public prepareWidgetForSaving(widget: Widget): Widget {
+    this.removeTimewindowConfigIfUnused(widget);
+    return widget;
+  }
+
   public prepareWidgetForScadaLayout(widget: Widget, isScada: boolean): Widget {
     const config = widget.config;
     config.showTitle = false;
@@ -396,6 +431,14 @@ export class DashboardUtilsService {
       });
     });
     return datasources;
+  }
+
+  public getWidgetDatasources(widget: Widget): Datasource[] {
+    const widgetDefinition = findWidgetModelDefinition(widget);
+    if (widgetDefinition) {
+      return widgetDefinition.datasources(widget);
+    }
+    return this.validateAndUpdateDatasources(widget.config.datasources);
   }
 
   public createDefaultLayoutData(): DashboardLayout {

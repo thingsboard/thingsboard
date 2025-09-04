@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,10 +45,14 @@ import org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdate
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateResult;
 import org.thingsboard.server.transport.lwm2m.server.ota.software.SoftwareUpdateState;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
@@ -202,15 +206,15 @@ public class LwM2MTransportUtil {
     }
 
     public static Object getJsonPrimitiveValue(JsonPrimitive value) {
-        if(value.isString()) {
+        if (value.isString()) {
             return value.getAsString();
-        } else if (value.isNumber()){
+        } else if (value.isNumber()) {
             try {
                 return Integer.valueOf(value.toString());
             } catch (NumberFormatException i) {
                 try {
                     return Long.valueOf(value.toString());
-                } catch (NumberFormatException l){
+                } catch (NumberFormatException l) {
                     if (value.getAsFloat() >= Float.MIN_VALUE && value.getAsFloat() <= Float.MAX_VALUE) {
                         return value.getAsFloat();
                     } else {
@@ -218,7 +222,7 @@ public class LwM2MTransportUtil {
                     }
                 }
             }
-        } else if (value.isBoolean()){
+        } else if (value.isBoolean()) {
             return value.getAsBoolean();
         } else {
             return null;
@@ -241,7 +245,7 @@ public class LwM2MTransportUtil {
         if (value instanceof JsonElement) {
             return convertMultiResourceValuesFromJson((JsonElement) value, type, versionedId);
         } else if (value instanceof Map) {
-            JsonElement valueConvert =  convertToJsonObject((Map<String, ?>) value);
+            JsonElement valueConvert = convertToJsonObject((Map<String, ?>) value);
             return convertMultiResourceValuesFromJson(valueConvert, type, versionedId);
         } else {
             return null;
@@ -392,5 +396,64 @@ public class LwM2MTransportUtil {
         } else {
             serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
         }
+    }
+
+    public static int calculateSzx(int size) {
+        if (size < 16 || size > 1024 || (size & (size - 1)) != 0) {
+            throw new IllegalArgumentException("Size must be a power of 2 between 16 and 1024.");
+        }
+        return (int) (Math.log(size / 16) / Math.log(2));
+    }
+
+    public static ConcurrentHashMap<Integer, String[]> groupByObjectIdVersionedIds(Set<String> targetIds) {
+        return targetIds.stream()
+                .collect(Collectors.groupingBy(
+                        id -> new LwM2mPath(fromVersionedIdToObjectId(id)).getObjectId(),
+                        ConcurrentHashMap::new,
+                        Collectors.collectingAndThen(
+                                Collectors.toList(),
+                                list -> list.toArray(new String[0])
+                        )
+                ));
+    }
+
+    public static boolean areArraysStringEqual(String[] oldValue, String[] newValue) {
+        if (oldValue == null || newValue == null) return false;
+        if (oldValue.length != newValue.length) return false;
+        String[] sorted1 = oldValue.clone();
+        String[] sorted2 = newValue.clone();
+        Arrays.sort(sorted1);
+        Arrays.sort(sorted2);
+        return Arrays.equals(sorted1, sorted2);
+    }
+
+    public static ConcurrentHashMap<Integer, String[]> deepCopyConcurrentMap(Map<Integer, String[]> original) {
+        return original.isEmpty() ? new ConcurrentHashMap<>() : original.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue() != null ? entry.getValue().clone() : null,
+                        (v1, v2) -> v1, // merge function in case of duplicate keys
+                        ConcurrentHashMap::new
+                ));
+    }
+
+    public static boolean areMapsEqual(Map<Integer, String[]> m1, Map<Integer, String[]> m2) {
+        if (m1.size() != m2.size()) return false;
+        for (Integer key : m1.keySet()) {
+            if (!m2.containsKey(key)) return false;
+
+            String[] arr1 = m1.get(key);
+            String[] arr2 = m2.get(key);
+
+            if (arr1 == null || arr2 == null) {
+                if (arr1 != arr2) return false;
+                String[] sorted1 = arr1.clone();
+                String[] sorted2 = arr2.clone();
+                Arrays.sort(sorted1);
+                Arrays.sort(sorted2);
+                if (!Arrays.equals(sorted1, sorted2)) return false;
+            }
+        }
+        return true;
     }
 }

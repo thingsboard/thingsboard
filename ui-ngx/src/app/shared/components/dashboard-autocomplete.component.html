@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,7 +31,9 @@
          [required]="required"
          [matAutocomplete]="dashboardAutocomplete"
          [class.!hidden]="useDashboardLink && disabled && selectDashboardFormGroup.get('dashboard').value">
-  <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled" aria-label="Open device profile" [routerLink]=dashboardURL>
+  <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled"
+     [attr.aria-label]="'dashboard.open-dashboard' | translate"
+     [routerLink]=dashboardURL>
     {{ displayDashboardFn(selectDashboardFormGroup.get('dashboard').value) | customTranslate }}
   </a>
   <button *ngIf="selectDashboardFormGroup.get('dashboard').value && !disabled"

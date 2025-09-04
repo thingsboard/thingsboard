@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,19 +21,22 @@ import {
   Component,
   EventEmitter,
   Input,
-  OnInit
+  OnInit,
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { SECOND } from '@shared/models/time/time.models';
+import { MINUTE, SECOND } from '@shared/models/time/time.models';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { of, shareReplay, timer } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs/operators';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-entity-debug-settings-panel',
@@ -48,13 +51,12 @@ import { distinctUntilChanged, map, startWith, switchMap, takeWhile } from 'rxjs
 })
 export class EntityDebugSettingsPanelComponent extends PageComponent implements OnInit {
 
-  @Input() popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>;
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
-  @Input() entityLabel: string;
+  @Input() entityType: EntityType;
   @Input() allEnabledUntil = 0;
-  @Input() maxDebugModeDuration: number;
-  @Input() debugLimitsConfiguration: string;
+  @Input() maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
+  @Input() additionalActionConfig: AdditionalDebugActionConfig;
 
   onFailuresControl = this.fb.control(false);
   debugAllControl = this.fb.control(false);
@@ -62,6 +64,7 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   maxMessagesCount: string;
   maxTimeFrameDuration: number;
   initialAllEnabled: boolean;
+  entityLabel: string;
 
   isDebugAllActive$ = this.debugAllControl.valueChanges.pipe(
     startWith(this.debugAllControl.value),
@@ -82,7 +85,8 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   onSettingsApplied = new EventEmitter<EntityDebugSettings>();
 
   constructor(private fb: FormBuilder,
-              private cd: ChangeDetectorRef) {
+              private cd: ChangeDetectorRef,
+              private popover: TbPopoverComponent<EntityDebugSettingsPanelComponent>) {
     super();
 
     this.debugAllControl.valueChanges.pipe(
@@ -99,15 +103,17 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   }
 
   ngOnInit(): void {
-    this.maxMessagesCount = this.debugLimitsConfiguration?.split(':')[0];
-    this.maxTimeFrameDuration = parseInt(this.debugLimitsConfiguration?.split(':')[1]) * SECOND;
+    const debugLimitsConfiguration = this.getByEntityTypeDebugLimit(this.entityType);
+    this.maxMessagesCount = debugLimitsConfiguration?.split(':')[0];
+    this.maxTimeFrameDuration = parseInt(debugLimitsConfiguration?.split(':')[1]) * SECOND;
     this.onFailuresControl.patchValue(this.failuresEnabled);
     this.debugAllControl.patchValue(this.allEnabled);
     this.initialAllEnabled = this.allEnabled || this.allEnabledUntil > new Date().getTime();
+    this.entityLabel = entityTypeTranslations.has(this.entityType) ? entityTypeTranslations.get(this.entityType).type : 'debug-settings.entity';
   }
 
   onCancel(): void {
-    this.popover?.hide();
+    this.popover.hide();
   }
 
   onApply(): void {
@@ -132,5 +138,14 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
     this.debugAllControl.markAsDirty();
     this.allEnabledUntil = 0;
     this.cd.markForCheck();
+  }
+
+  private getByEntityTypeDebugLimit(entityType: EntityType): string {
+    switch (entityType) {
+      case EntityType.RULE_NODE:
+        return getCurrentAuthState(this.store).ruleChainDebugPerTenantLimitsConfiguration;
+      case EntityType.CALCULATED_FIELD:
+        return getCurrentAuthState(this.store).calculatedFieldDebugPerTenantLimitsConfiguration;
+    }
   }
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,8 +39,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
@@ -73,7 +75,7 @@ import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
-public class TbKafkaNodeTest {
+public class TbKafkaNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5f2eac08-bd1f-4635-a6c2-437369f996cf"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("d46bb666-ecab-4d89-a28f-5abdca23ac29"));
@@ -117,8 +119,6 @@ public class TbKafkaNodeTest {
         assertThat(config.getLinger()).isEqualTo(0);
         assertThat(config.getBufferMemory()).isEqualTo(33554432);
         assertThat(config.getAcks()).isEqualTo("-1");
-        assertThat(config.getKeySerializer()).isEqualTo(StringSerializer.class.getName());
-        assertThat(config.getValueSerializer()).isEqualTo(StringSerializer.class.getName());
         assertThat(config.getOtherProperties()).isEmpty();
         assertThat(config.isAddMetadataKeyValuesAsKafkaHeaders()).isFalse();
         assertThat(config.getKafkaHeadersCharset()).isEqualTo("UTF-8");
@@ -163,8 +163,8 @@ public class TbKafkaNodeTest {
         Properties expectedProperties = new Properties();
         expectedProperties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + RULE_NODE_ID.getId() + "-" + SERVICE_ID_STR);
         expectedProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
-        expectedProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
-        expectedProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
+        expectedProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
+        expectedProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
         expectedProperties.put(ProducerConfig.ACKS_CONFIG, config.getAcks());
         expectedProperties.put(ProducerConfig.RETRIES_CONFIG, config.getRetries());
         expectedProperties.put(ProducerConfig.BATCH_SIZE_CONFIG, config.getBatchSize());
@@ -454,4 +454,75 @@ public class TbKafkaNodeTest {
         assertThat(actualMsg).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
     }
 
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                //config for version 0
+                Arguments.of(0,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\",\n" +
+                                "  \"keySerializer\": \"org.apache.kafka.common.serialization.StringSerializer\",\n" +
+                                "  \"valueSerializer\": \"org.apache.kafka.common.serialization.StringSerializer\"\n" +
+                                "}",
+                        true,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\"\n" +
+                                "}"
+                ),
+                //config for version 1 with upgrade from version 0
+                Arguments.of(1,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\"\n" +
+                                "}",
+                        false,
+                        "{\n" +
+                                "  \"topicPattern\": \"test-topic\",\n" +
+                                "  \"keyPattern\": \"test-key\",\n" +
+                                "  \"bootstrapServers\": \"localhost:9092\",\n" +
+                                "  \"retries\": 0,\n" +
+                                "  \"batchSize\": 16384,\n" +
+                                "  \"linger\": 0,\n" +
+                                "  \"bufferMemory\": 33554432,\n" +
+                                "  \"acks\": \"-1\",\n" +
+                                "  \"otherProperties\": {},\n" +
+                                "  \"addMetadataKeyValuesAsKafkaHeaders\": false,\n" +
+                                "  \"kafkaHeadersCharset\": \"UTF-8\"\n" +
+                                "}"
+                )
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
 }

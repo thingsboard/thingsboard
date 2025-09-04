@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -337,8 +338,8 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        if (!force && entityViewService.existsByTenantIdAndEntityId(tenantId, id)) {
-            throw new DataValidationException("Can't delete device that has entity views!");
+        if (!force && (entityViewService.existsByTenantIdAndEntityId(tenantId, id) || calculatedFieldService.referencedInAnyCalculatedField(tenantId, id))) {
+            throw new DataValidationException("Can't delete device that has entity views or is referenced in calculated fields!");
         }
 
         Device device = deviceDao.findById(tenantId, id.getId());
@@ -387,12 +388,36 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(PageLink pageLink) {
+        log.trace("Executing findProfileEntityIdInfos, pageLink [{}]", pageLink);
+        validatePageLink(pageLink);
+        return deviceDao.findProfileEntityIdInfos(pageLink);
+    }
+
+    @Override
+    public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findProfileEntityIdInfosByTenantId, tenantId[{}], pageLink [{}]", tenantId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return deviceDao.findProfileEntityIdInfosByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public PageData<Device> findDevicesByTenantIdAndType(TenantId tenantId, String type, PageLink pageLink) {
         log.trace("Executing findDevicesByTenantIdAndType, tenantId [{}], type [{}], pageLink [{}]", tenantId, type, pageLink);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateString(type, t -> "Incorrect type " + t);
         validatePageLink(pageLink);
         return deviceDao.findDevicesByTenantIdAndType(tenantId.getId(), type, pageLink);
+    }
+
+    @Override
+    public PageData<DeviceId> findDeviceIdsByTenantIdAndDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
+        log.trace("Executing findDeviceIdsByTenantIdAndType, tenantId [{}], deviceProfileId [{}], pageLink [{}]", tenantId, deviceProfileId, pageLink);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
+        validatePageLink(pageLink);
+        return deviceDao.findDeviceIdsByTenantIdAndDeviceProfileId(tenantId.getId(), deviceProfileId.getId(), pageLink);
     }
 
     @Override

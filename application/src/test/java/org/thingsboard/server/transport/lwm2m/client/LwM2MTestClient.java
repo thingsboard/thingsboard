@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -116,7 +116,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INST
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.setDtlsConnectorConfigCidLength;
 
 
@@ -126,6 +126,7 @@ public class LwM2MTestClient {
 
     private final ScheduledExecutorService executor;
     private final String endpoint;
+    private final String[] modelResources;
     private LeshanClient leshanClient;
     private SimpleLwM2MDevice lwM2MDevice;
     private FwLwM2MDevice fwLwM2MDevice;
@@ -143,14 +144,28 @@ public class LwM2MTestClient {
     public void init(Security security, Security securityBs, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
                      LwM2mClientContext clientContext, Integer cIdLength, boolean queueMode,
-                     boolean supportFormatOnly_SenMLJSON_SenMLCBOR) throws InvalidDDFFileException, IOException {
+                     boolean supportFormatOnly_SenMLJSON_SenMLCBOR, Integer value3_0_9) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
-        List<ObjectModel> models = new ArrayList<>();
-        for (String resourceName : resources) {
+
+        List<ObjectModel> models = ObjectLoader.loadAllDefault();
+        for (String resourceName : lwm2mClientResources) {
             models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
         }
+        if (this.modelResources != null) {
+            List<ObjectModel> modelsRes = new ArrayList<>();
+            for (String resourceName : this.modelResources) {
+                modelsRes.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
+            }
+            Set<Integer> idsToRemove = new HashSet<>();
+            for (ObjectModel model : modelsRes) {
+                idsToRemove.add(model.id);
+            }
+            models.removeIf(model -> idsToRemove.contains(model.id));
+            models.addAll(modelsRes);
+        }
+
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         if (securityBs != null && security != null) {
@@ -182,7 +197,7 @@ public class LwM2MTestClient {
             initializer.setInstancesForObject(SERVER, lwm2mServer);
         }
 
-        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
+        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor, value3_0_9));
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
         initializer.setInstancesForObject(SOFTWARE_MANAGEMENT, swLwM2MDevice = new SwLwM2MDevice());
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
@@ -455,6 +470,12 @@ public class LwM2MTestClient {
                 this.awaitClientAfterStartConnectLw();
             }
             lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
+        }
+    }
+
+    public void stop(boolean deregister) {
+        if (leshanClient != null) {
+            leshanClient.stop(deregister);
         }
     }
 

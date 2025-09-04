@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,7 +61,6 @@ import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_ED
                 "<br><code>ALARM</code><br><br>" +
                 "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported message type arrived. " +
                 "In case successful storage edge event to database message will be routed via <b>Success</b> route.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodePushToEdgeConfig",
         icon = "cloud_download",
         ruleChainTypes = RuleChainType.CORE

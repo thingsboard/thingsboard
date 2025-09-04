@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ import {
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
 import { WindowMessage } from '@shared/models/window-message.model';
-import { deepClone, guid, isDefined, isDefinedAndNotNull, isEqual, isNotEmptyStr } from '@app/core/utils';
+import { deepClone, guid, isDefined, isDefinedAndNotNull, isNotEmptyStr } from '@app/core/utils';
 import {
   DashboardContext,
   DashboardPageInitData,
@@ -119,7 +119,8 @@ import {
 } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 import {
   ManageDashboardStatesDialogComponent,
-  ManageDashboardStatesDialogData
+  ManageDashboardStatesDialogData,
+  ManageDashboardStatesDialogResult
 } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { AuthState } from '@app/core/auth/auth.models';
@@ -964,17 +965,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       $event.stopPropagation();
     }
     this.dialog.open<ManageDashboardStatesDialogComponent, ManageDashboardStatesDialogData,
-      {states: {[id: string]: DashboardState}; widgets: {[id: string]: Widget}}>(ManageDashboardStatesDialogComponent, {
+      ManageDashboardStatesDialogResult>(ManageDashboardStatesDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         states: deepClone(this.dashboard.configuration.states),
-        widgets: deepClone(this.dashboard.configuration.widgets) as {[id: string]: Widget}
+        widgets: this.dashboard.configuration.widgets as {[id: string]: Widget}
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
-        if (!isEqual(result.widgets, this.dashboard.configuration.widgets)) {
-          this.dashboard.configuration.widgets = result.widgets;
+        if (result.addWidgets) {
+          Object.assign(this.dashboard.configuration.widgets, result.addWidgets);
         }
         if (result.states) {
           this.updateStates(result.states);
@@ -1118,6 +1119,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.dashboardCtx.aliasController.dashboardStateChanged();
         this.isRightLayoutOpened = openRightLayout ? true : false;
         this.updateLayouts(layoutsData);
+        this.cd.markForCheck();
       }
       setTimeout(() => {
         this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
@@ -1321,6 +1323,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   private addWidgetToDashboard(widget: Widget) {
+    this.dashboardUtils.prepareWidgetForSaving(widget);
     if (this.addingLayoutCtx) {
       this.addWidgetToLayout(widget, this.addingLayoutCtx.id);
       this.addingLayoutCtx = null;
@@ -1335,8 +1338,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addWidgetFromType(widget: WidgetInfo) {
     this.onAddWidgetClosed();
-    this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe(
-      (widgetTypeInfo) => {
+    this.widgetComponentService.getWidgetInfo(widget.typeFullFqn).subscribe({
+      next: (widgetTypeInfo) => {
         const config: WidgetConfig = this.dashboardUtils.widgetConfigFromWidgetType(widgetTypeInfo);
         if (!config.title) {
           config.title = 'New ' + widgetTypeInfo.widgetName;
@@ -1389,8 +1392,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
             }
           });
         }
+      },
+      error: (errorData) => {
+        const errorMessages: string[] = errorData.errorMessages;
+        this.dialogService.alert(this.translate.instant('widget.widget-type-load-error'),
+          errorMessages.join('<br>').replace(/\n/g, '<br>'));
       }
-    );
+    });
   }
 
   onRevertWidgetEdit() {
@@ -1403,7 +1411,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   saveWidget() {
     this.editWidgetComponent.widgetFormGroup.markAsPristine();
-    const widget = deepClone(this.editingWidget);
+    const widget = this.dashboardUtils.prepareWidgetForSaving(deepClone(this.editingWidget));
     const widgetLayout = deepClone(this.editingWidgetLayout);
     const id = this.editingWidgetOriginal.id;
     this.dashboardConfiguration.widgets[id] = widget;

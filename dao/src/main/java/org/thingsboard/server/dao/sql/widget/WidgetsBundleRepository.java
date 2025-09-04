@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
+import org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 
@@ -139,4 +142,8 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
 
     @Query(nativeQuery = true, value = "SELECT * FROM widgets_bundle wb WHERE wb.image = :imageLink limit :lmt")
     List<WidgetsBundleEntity> findByImageUrl(@Param("imageLink") String imageLink, @Param("lmt") int lmt);
+
+    @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields(w.id, w.createdTime, w.tenantId," +
+            "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
+    List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
 }

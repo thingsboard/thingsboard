@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,10 +47,10 @@ export class EditorPanelComponent implements OnInit {
   tinyMceOptions: Partial<EditorOptions> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
-    plugins: ['lists'],
+    plugins: ['link', 'table', 'image', 'imagetools', 'lists', 'fullscreen'],
     menubar: 'edit insert view format',
     toolbar: ['fontfamily fontsize | bold italic underline strikethrough forecolor backcolor',
-      'alignleft aligncenter alignright alignjustify | bullist'],
+      'alignleft aligncenter alignright alignjustify | bullist | link table image | fullscreen'],
     toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,

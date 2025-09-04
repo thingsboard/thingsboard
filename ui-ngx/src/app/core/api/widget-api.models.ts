@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,7 +23,9 @@ import {
   DatasourceType,
   KeyInfo,
   LegendConfig,
-  LegendData, TargetDevice, WidgetAction,
+  LegendData,
+  TargetDevice,
+  WidgetAction,
   WidgetActionDescriptor,
   widgetType
 } from '@shared/models/widget.models';
@@ -63,6 +65,8 @@ import { PersistentRpc } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { MatDialogRef } from '@angular/material/dialog';
+import { TbUnit } from '@shared/models/unit.models';
+import { UnitService } from '@core/services/unit.service';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -90,10 +94,17 @@ export interface IWidgetUtils {
   getEntityDetailsPageURL: (id: string, entityType: EntityType) => string;
 }
 
+export interface PlaceMapItemActionData {
+  action: WidgetAction | WidgetActionDescriptor;
+  additionalParams?: any;
+  afterPlaceItemCallback: ($event: Event, descriptor: WidgetAction, entityId?: EntityId, entityName?: string,
+                           additionalParams?: any, entityLabel?: string) => void;
+}
+
 export interface WidgetActionsApi {
   actionDescriptorsBySourceId: {[sourceId: string]: Array<WidgetActionDescriptor>};
   getActionDescriptors: (actionSourceId: string) => Array<WidgetActionDescriptor>;
-  handleWidgetAction: ($event: Event, descriptor: WidgetActionDescriptor,
+  handleWidgetAction: ($event: Event, descriptor: WidgetAction,
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
   onWidgetAction: ($event: Event, action: WidgetAction) => void;
   elementClick: ($event: Event) => void;
@@ -106,6 +117,7 @@ export interface WidgetActionsApi {
                                 hideDashboardToolbar?: boolean, preferredPlacement?: PopoverPlacement,
                                 hideOnClickOutside?: boolean, popoverWidth?: string,
                                 popoverHeight?: string, popoverStyle?: { [klass: string]: any }) => void;
+  placeMapItem: (action: PlaceMapItemActionData) => void;
 }
 
 export interface AliasInfo {
@@ -223,6 +235,7 @@ export class WidgetSubscriptionContext {
   utils: UtilsService;
   dashboardUtils: DashboardUtilsService;
   raf: RafService;
+  unitService: UnitService;
   widgetUtils: IWidgetUtils;
   getServerTimeDiff: () => Observable<number>;
 }
@@ -275,7 +288,7 @@ export interface WidgetSubscriptionOptions {
   timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
   decimals?: number;
-  units?: string;
+  units?: TbUnit;
   callbacks?: WidgetSubscriptionCallbacks;
 }
 

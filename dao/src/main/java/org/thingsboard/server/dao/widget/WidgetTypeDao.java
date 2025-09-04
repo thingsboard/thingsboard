@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.ImageContainerDao;
+import org.thingsboard.server.dao.ResourceContainerDao;
 
 import java.util.List;
 import java.util.UUID;
@@ -35,7 +36,7 @@ import java.util.UUID;
 /**
  * The Interface WidgetTypeDao.
  */
-public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo> {
+public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo>, ResourceContainerDao<WidgetTypeInfo> {
 
     /**
      * Save or update widget type object
@@ -55,6 +56,8 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     WidgetType findWidgetTypeById(TenantId tenantId, UUID widgetTypeId);
 
     boolean existsByTenantIdAndId(TenantId tenantId, UUID widgetTypeId);
+
+    WidgetTypeInfo findWidgetTypeInfoById(TenantId tenantId, UUID widgetTypeId);
 
     PageData<WidgetTypeInfo> findSystemWidgetTypes(WidgetTypeFilter widgetTypeFilter, PageLink pageLink);
 
@@ -94,8 +97,6 @@ public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityD
     WidgetType findByTenantIdAndFqn(UUID tenantId, String fqn);
 
     WidgetTypeDetails findDetailsByTenantIdAndFqn(UUID tenantId, String fqn);
-
-    List<String> findWidgetTypesNamesByTenantIdAndResourceLink(UUID tenantId, String link);
 
     List<WidgetTypeId> findWidgetTypeIdsByTenantIdAndFqns(UUID tenantId, List<String> widgetFqns);
 

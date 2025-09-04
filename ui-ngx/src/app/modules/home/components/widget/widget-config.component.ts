@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,6 +38,7 @@ import {
   TargetDevice,
   targetDeviceValid,
   Widget,
+  widgetTypeCanHaveTimewindow,
   WidgetConfigMode,
   widgetType
 } from '@shared/models/widget.models';
@@ -53,7 +54,7 @@ import {
   Validators
 } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { deepClone, genNextLabel, isDefined, isObject } from '@app/core/utils';
+import { deepClone, genNextLabel, isDefined, isDefinedAndNotNull, isObject } from '@app/core/utils';
 import { alarmFields, AlarmSearchStatus } from '@shared/models/alarm.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { EntityAlias } from '@shared/models/alias.models';
@@ -79,11 +80,13 @@ import { Filter, singleEntityFilterFromDeviceId } from '@shared/models/query/que
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { defaultFormProperties, FormProperty } from '@shared/models/dynamic-form.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { WidgetService } from '@core/http/widget.service';
+import { TimeService } from '@core/services/time.service';
+import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -201,10 +204,12 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   constructor(protected store: Store<AppState>,
               private utils: UtilsService,
               private entityService: EntityService,
+              public timeService: TimeService,
               private dialog: MatDialog,
               public translate: TranslateService,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
+              private widgetService: WidgetService,
               private destroyRef: DestroyRef) {
     super(store);
   }
@@ -322,7 +327,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   private buildHeader() {
     this.headerOptions.length = 0;
-    if (this.widgetType !== widgetType.static) {
+    if (this.displayData) {
       this.headerOptions.push(
         {
           name: this.translate.instant('widget-config.data'),
@@ -365,16 +370,16 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     this.dataSettings = this.fb.group({});
     this.targetDeviceSettings = this.fb.group({});
     this.advancedSettings = this.fb.group({});
-    if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+    if (widgetTypeCanHaveTimewindow(this.widgetType)) {
       this.dataSettings.addControl('timewindowConfig', this.fb.control({
         useDashboardTimewindow: true,
         displayTimewindow: true,
         timewindow: null,
         timewindowStyle: null
       }));
-      if (this.widgetType === widgetType.alarm) {
-        this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
-      }
+    }
+    if (this.widgetType === widgetType.alarm) {
+      this.dataSettings.addControl('alarmFilterConfig', this.fb.control(null));
     }
     if (this.modelValue.isDataEnabled) {
       if (this.widgetType !== widgetType.rpc &&
@@ -435,7 +440,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   }
 
   private setupBasicModeConfig(isAdd = false) {
-    const componentType = basicWidgetConfigComponentsMap[this.modelValue.basicModeDirective];
+    const componentType = this.widgetService.getBasicWidgetSettingsComponentBySelector(this.modelValue.basicModeDirective);
     if (!componentType) {
       this.basicModeDirectiveError = this.translate.instant('widget-config.settings-component-not-found',
         {selector: this.modelValue.basicModeDirective});
@@ -528,14 +533,17 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         },
         {emitEvent: false}
       );
-      if (this.widgetType === widgetType.timeseries || this.widgetType === widgetType.alarm || this.widgetType === widgetType.latest) {
+      if (widgetTypeCanHaveTimewindow(this.widgetType)) {
         const useDashboardTimewindow = isDefined(config.useDashboardTimewindow) ?
           config.useDashboardTimewindow : true;
         this.dataSettings.get('timewindowConfig').patchValue({
           useDashboardTimewindow,
           displayTimewindow: isDefined(config.displayTimewindow) ?
             config.displayTimewindow : true,
-          timewindow: config.timewindow,
+          timewindow: isDefinedAndNotNull(config.timewindow)
+            ? config.timewindow
+            : initModelFromDefaultTimewindow(null, this.widgetType === widgetType.latest, this.onlyHistoryTimewindow(),
+              this.timeService, this.widgetType === widgetType.timeseries),
           timewindowStyle: config.timewindowStyle
         }, {emitEvent: false});
       }
@@ -708,6 +716,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   public get useDefinedBasicModeDirective(): boolean {
     return this.modelValue?.basicModeDirective?.length && !this.basicModeDirectiveError;
+  }
+
+  public get displayData(): boolean {
+    return !this.modelValue?.typeParameters?.hideDataTab && this.widgetType !== widgetType.static;
   }
 
   public get displayAppearance(): boolean {

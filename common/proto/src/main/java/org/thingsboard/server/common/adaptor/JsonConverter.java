@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -56,14 +56,11 @@ import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceX509Ce
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.function.Consumer;
-import java.util.stream.Collectors;
 
 public class JsonConverter {
 
@@ -539,11 +536,13 @@ public class JsonConverter {
         return result;
     }
 
-    public static Set<AttributeKvEntry> convertToAttributes(JsonElement element) {
-        Set<AttributeKvEntry> result = new HashSet<>();
+    public static List<AttributeKvEntry> convertToAttributes(JsonElement element) {
         long ts = System.currentTimeMillis();
-        result.addAll(parseValues(element.getAsJsonObject()).stream().map(kv -> new BaseAttributeKvEntry(kv, ts)).collect(Collectors.toList()));
-        return result;
+        return convertToAttributes(element, ts);
+    }
+
+    public static List<AttributeKvEntry> convertToAttributes(JsonElement element, long ts) {
+        return parseValues(element.getAsJsonObject()).stream().<AttributeKvEntry>map(kv -> new BaseAttributeKvEntry(kv, ts)).toList();
     }
 
     private static List<KvEntry> parseValues(JsonObject valuesObject) {
@@ -702,4 +701,5 @@ public class JsonConverter {
             return "";
         }
     }
+
 }

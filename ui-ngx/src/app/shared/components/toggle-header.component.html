@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,7 +41,16 @@
                            [name]="name"
                            [(ngModel)]="value"
                            (ngModelChange)="valueChange.emit(value)">
-    <mat-button-toggle *ngFor="let option of options; trackBy: trackByHeaderOption" [value]="option.value" [disabled]="disabled">{{ option.name }}</mat-button-toggle>
+    <mat-button-toggle *ngFor="let option of options; trackBy: trackByHeaderOption" [value]="option.value" [disabled]="disabled" [class.tb-toggle-button-error]="(option.error$ | async) && value !== option.value">
+      {{ option.name }}
+      <mat-icon matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="(option.error$ | async)"
+                *ngIf="(option.error$ | async) && value !== option.value"
+                class="tb-error tb-error-icon">
+        warning
+      </mat-icon>
+    </mat-button-toggle>
   </mat-button-toggle-group>
 </div>
 <button mat-icon-button

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,13 +32,7 @@ public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationT
     public void testWithNoSecConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
         String clientEndpoint = CLIENT_ENDPOINT_NO_SEC;
         LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, false);
-    }
-    @Test
-    public void testWithNoSecQueueModeConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC + "_QueueMode";
-        LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        super.basicTestConnectionObserveTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, true);
+        super.basicTestConnectionObserveSingleTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, false, false);
     }
 
     // Bootstrap + Lwm2m

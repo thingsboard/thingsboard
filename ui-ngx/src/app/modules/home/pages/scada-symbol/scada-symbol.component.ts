@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -79,6 +79,7 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { WidgetService } from '@core/http/widget.service';
+import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -213,32 +214,36 @@ export class ScadaSymbolComponent extends PageComponent
         this.editObjectCallbacks.tagsUpdated(tags);
       }
       const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
-      const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
-      const file = createFileFromContent(scadaSymbolContent, this.symbolData.imageResource.fileName,
-        this.symbolData.imageResource.descriptor.mediaType);
-      const type = imageResourceType(this.symbolData.imageResource);
-      let imageInfoObservable =
-        this.imageService.updateImage(type, this.symbolData.imageResource.resourceKey, file);
-      if (metadata.title !== this.symbolData.imageResource.title) {
-        imageInfoObservable = imageInfoObservable.pipe(
-          switchMap(imageInfo => {
-            imageInfo.title = metadata.title;
-            return this.imageService.updateImageInfo(imageInfo);
-          })
-        );
-      }
-      imageInfoObservable.pipe(
-        switchMap(imageInfo => this.imageService.getImageString(
+      try {
+        const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
+        const file = createFileFromContent(scadaSymbolContent, this.symbolData.imageResource.fileName,
+          this.symbolData.imageResource.descriptor.mediaType);
+        const type = imageResourceType(this.symbolData.imageResource);
+        let imageInfoObservable =
+          this.imageService.updateImage(type, this.symbolData.imageResource.resourceKey, file);
+        if (metadata.title !== this.symbolData.imageResource.title) {
+          imageInfoObservable = imageInfoObservable.pipe(
+            switchMap(imageInfo => {
+              imageInfo.title = metadata.title;
+              return this.imageService.updateImageInfo(imageInfo);
+            })
+          );
+        }
+        imageInfoObservable.pipe(
+          switchMap(imageInfo => this.imageService.getImageString(
             `${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(imageInfo.resourceKey)}`).pipe(
-              map(content => ({
-                imageResource: imageInfo,
-                scadaSymbolContent: content
-              }))
+            map(content => ({
+              imageResource: imageInfo,
+              scadaSymbolContent: content
+            }))
           ))
-      ).subscribe(data => {
-        this.init(data);
-        this.updateBreadcrumbs.emit();
-      });
+        ).subscribe(data => {
+          this.init(data);
+          this.updateBreadcrumbs.emit();
+        });
+      } catch (e) {
+        this.store.dispatch(new ActionNotificationShow({ message: e.message, type: 'error' }));
+      }
     }
   }
 
@@ -248,43 +253,47 @@ export class ScadaSymbolComponent extends PageComponent
 
   enterPreviewMode() {
     this.previewMetadata = this.scadaSymbolFormGroup.get('metadata').value;
-    this.symbolData.scadaSymbolContent = this.prepareScadaSymbolContent(this.previewMetadata);
-    this.previewScadaSymbolObjectSettings = {
-      behavior: {},
-      properties: {}
-    };
-    this.scadaPreviewFormGroup.patchValue({
-      scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings
-    }, {emitEvent: false});
-    this.scadaPreviewFormGroup.markAsPristine();
-    const settings: ScadaSymbolWidgetSettings = {...scadaSymbolWidgetDefaultSettings,
-      ...{
+    try {
+      this.symbolData.scadaSymbolContent = this.prepareScadaSymbolContent(this.previewMetadata);
+      this.previewScadaSymbolObjectSettings = {
+        behavior: {},
+        properties: {}
+      };
+      this.scadaPreviewFormGroup.patchValue({
+        scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings
+      }, {emitEvent: false});
+      this.scadaPreviewFormGroup.markAsPristine();
+      const settings: ScadaSymbolWidgetSettings = {...scadaSymbolWidgetDefaultSettings,
+        ...{
           simulated: true,
           scadaSymbolUrl: null,
           scadaSymbolContent: this.symbolData.scadaSymbolContent,
           scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings,
           padding: '0',
           background: colorBackground('rgba(0,0,0,0)')
-         }
-    };
-    this.previewWidget = {
-      typeFullFqn: 'system.scada_symbol',
-      type: widgetType.rpc,
-      sizeX: this.previewMetadata.widgetSizeX || 3,
-      sizeY: this.previewMetadata.widgetSizeY || 3,
-      row: 0,
-      col: 0,
-      config: {
-        settings,
-        showTitle: false,
-        dropShadow: false,
-        padding: '0',
-        margin: '0',
-        backgroundColor: 'rgba(0,0,0,0)'
-      }
-    };
-    this.previewWidgets = [this.previewWidget];
-    this.previewMode = true;
+        }
+      };
+      this.previewWidget = {
+        typeFullFqn: 'system.scada_symbol',
+        type: widgetType.rpc,
+        sizeX: this.previewMetadata.widgetSizeX || 3,
+        sizeY: this.previewMetadata.widgetSizeY || 3,
+        row: 0,
+        col: 0,
+        config: {
+          settings,
+          showTitle: false,
+          dropShadow: false,
+          padding: '0',
+          margin: '0',
+          backgroundColor: 'rgba(0,0,0,0)'
+        }
+      };
+      this.previewWidgets = [this.previewWidget];
+      this.previewMode = true;
+    } catch (e) {
+      this.store.dispatch(new ActionNotificationShow({ message: e.message, type: 'error' }));
+    }
   }
 
   exitPreviewMode() {
@@ -374,19 +383,23 @@ export class ScadaSymbolComponent extends PageComponent
       metadata = parseScadaSymbolMetadataFromContent(this.origSymbolData.scadaSymbolContent);
     }
     const linkElement = document.createElement('a');
-    const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
-    const blob = new Blob([scadaSymbolContent], { type: this.symbolData.imageResource.descriptor.mediaType });
-    const url = URL.createObjectURL(blob);
-    linkElement.setAttribute('href', url);
-    linkElement.setAttribute('download', this.symbolData.imageResource.fileName);
-    const clickEvent = new MouseEvent('click',
-      {
-        view: window,
-        bubbles: true,
-        cancelable: false
-      }
-    );
-    linkElement.dispatchEvent(clickEvent);
+    try {
+      const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
+      const blob = new Blob([scadaSymbolContent], { type: this.symbolData.imageResource.descriptor.mediaType });
+      const url = URL.createObjectURL(blob);
+      linkElement.setAttribute('href', url);
+      linkElement.setAttribute('download', this.symbolData.imageResource.fileName);
+      const clickEvent = new MouseEvent('click',
+        {
+          view: window,
+          bubbles: true,
+          cancelable: false
+        }
+      );
+      linkElement.dispatchEvent(clickEvent);
+    } catch (e) {
+      this.store.dispatch(new ActionNotificationShow({ message: e.message, type: 'error' }));
+    }
   }
 
   createWidget() {

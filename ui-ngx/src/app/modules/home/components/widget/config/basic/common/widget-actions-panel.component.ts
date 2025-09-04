@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -122,7 +122,9 @@ export class WidgetActionsPanelComponent implements ControlValueAccessor, OnInit
         widgetTitle: this.widgetConfigComponent.modelValue.widgetName,
         callbacks: this.widgetConfigComponent.widgetConfigCallbacks,
         actionsData,
-        widgetType: this.widgetConfigComponent.widgetType
+        widgetType: this.widgetConfigComponent.widgetType,
+        defaultIconColor: this.widgetConfigComponent.widgetSettings.get('color').value,
+        additionalWidgetActionTypes: this.widgetConfigComponent.modelValue.typeParameters.additionalWidgetActionTypes
       }
     }).afterClosed().subscribe(
       (res) => {

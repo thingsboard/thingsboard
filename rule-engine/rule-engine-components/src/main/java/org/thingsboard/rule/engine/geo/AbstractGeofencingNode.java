@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,11 @@ import com.google.gson.JsonParser;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContext;
 import org.locationtech.spatial4j.context.jts.JtsSpatialContextFactory;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.geo.Coordinates;
+import org.thingsboard.common.util.geo.GeoUtil;
+import org.thingsboard.common.util.geo.Perimeter;
+import org.thingsboard.common.util.geo.PerimeterType;
+import org.thingsboard.common.util.geo.RangeUnit;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -74,7 +79,7 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
         } else if (perimeter.getPerimeterType() == PerimeterType.POLYGON) {
             return GeoUtil.contains(perimeter.getPolygonsDefinition(), new Coordinates(latitude, longitude));
         } else {
-            throw new TbNodeException("Unsupported perimeter type: " + perimeter.getPerimeterType()  + "!");
+            throw new TbNodeException("Unsupported perimeter type: " + perimeter.getPerimeterType() + "!");
         }
     }
 

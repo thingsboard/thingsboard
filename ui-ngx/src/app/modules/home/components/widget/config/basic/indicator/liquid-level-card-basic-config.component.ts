@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -56,7 +56,7 @@ import {
   ShapesTranslations,
   updatedFormSettingsValidators
 } from '@home/components/widget/lib/indicator/liquid-level-widget.models';
-import { UnitsType } from '@shared/models/unit.models';
+import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageCardsSelectComponent } from '@home/components/widget/lib/settings/common/image-cards-select.component';
 import { map, share, tap } from 'rxjs/operators';
@@ -66,7 +66,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'liquid-level-card-basic-config',
+  selector: 'tb-liquid-level-card-basic-config',
   templateUrl: './liquid-level-card-basic-config.component.html',
   styleUrls: ['../basic-config.scss']
 })
@@ -115,8 +115,6 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   shapes = Object.values(Shapes) as Shapes[];
   shapesImageMap: Map<Shapes, string> = new Map();
   ShapesTranslationMap = ShapesTranslations;
-
-  unitsType = UnitsType;
 
   levelCardWidgetConfigForm: FormGroup;
 
@@ -357,13 +355,13 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   }
 
   private _valuePreviewFn(): string {
-    const units: string = this.levelCardWidgetConfigForm.get('units').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetConfigForm.get('units').value);
     const decimals: number = this.levelCardWidgetConfigForm.get('decimals').value;
     return formatValue(22, decimals, units, true);
   }
 
   private _tooltipValuePreviewFn() {
-    const units: string = this.levelCardWidgetConfigForm.get('tooltipUnits').value;
+    const units: string = getSourceTbUnitSymbol(this.levelCardWidgetConfigForm.get('tooltipUnits').value);
     const decimals: number = this.levelCardWidgetConfigForm.get('tooltipLevelDecimals').value;
     return formatValue(32, decimals, units, true);
   }
@@ -372,7 +370,7 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
     const value = this.levelCardWidgetConfigForm.get('volumeConstant').value;
     const datasourceUnits = this.levelCardWidgetConfigForm.get('datasourceUnits').value;
     const decimals: number = this.widgetConfig.config.decimals;
-    let units: string = this.widgetConfig.config.units;
+    let units = getSourceTbUnitSymbol(this.widgetConfig.config.units);
 
     if (datasourceUnits !== CapacityUnits.percent) {
       units = datasourceUnits;

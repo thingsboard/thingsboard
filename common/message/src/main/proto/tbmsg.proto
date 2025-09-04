@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -59,8 +59,8 @@ message TbMsgProto {
     string data = 14;
 
     int64 ts = 15;
-    // Will be removed in 3.4. Moved to processing context
-    int32 ruleNodeExecCounter = 16;
+
+    // ruleNodeExecCounter (16) was removed in 4.1
 
     int64 customerIdMSB = 17;
     int64 customerIdLSB = 18;
@@ -70,4 +70,11 @@ message TbMsgProto {
     int64 correlationIdMSB = 20;
     int64 correlationIdLSB = 21;
     int32 partition = 22;
+
+    repeated CalculatedFieldIdProto calculatedFields = 23;
+}
+
+message CalculatedFieldIdProto {
+    int64 calculatedFieldIdMSB = 1;
+    int64 calculatedFieldIdLSB = 2;
 }

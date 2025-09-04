@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -28,6 +28,12 @@
       <div class="fixed-title-width" translate>dynamic-form.property.name</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.behavior.hint</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="hint" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
     <div class="tb-form-row">
@@ -110,7 +116,7 @@
             <div class="fixed-title-width" translate>dynamic-form.property.disable-on-property</div>
             <mat-form-field  class="flex" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="disableOnProperty" placeholder="{{ 'widget-config.set' | translate }}">
-                <mat-option [value]="null"></mat-option>
+                <mat-option [value]="null">{{ 'dynamic-form.property.disable-on-property-none' | translate }}</mat-option>
                 <mat-option *ngFor="let prop of booleanPropertyIds" [value]="prop">
                   {{ prop }}
                 </mat-option>
@@ -380,6 +386,11 @@
         </mat-radio-button>
       </mat-radio-group>
     </div>
+    <div *ngIf="propertyItemType === FormPropertyType.units" class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="supportsUnitConversion">
+        {{ 'dynamic-form.property.support-unit-conversion' | translate }}
+      </mat-slide-toggle>
+    </div>
     <div *ngIf="isPropertyTypeAllowedForRow(propertyItemType)" class="tb-form-row space-between">
       <div class="fixed-title-width" translate>dynamic-form.property.default-value</div>
       <mat-form-field  *ngIf="[FormPropertyType.text, FormPropertyType.password].includes(propertyItemType)"
@@ -412,6 +423,7 @@
                         disabledLineHeight>
       </tb-font-settings>
       <tb-unit-input *ngIf="propertyItemType === FormPropertyType.units"
+                     [supportsUnitConversion]="propertyFormGroup.get('supportsUnitConversion').value"
                      formControlName="default"></tb-unit-input>
       <tb-value-input *ngIf="propertyItemType === FormPropertyType.switch"
                       [valueType]="ValueType.BOOLEAN"

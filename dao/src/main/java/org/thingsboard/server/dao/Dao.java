@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.dao;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.edqs.fields.EntityFields;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Collection;
@@ -45,6 +46,12 @@ public interface Dao<T> {
 
     List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
 
-    default EntityType getEntityType() { return null; }
+    default List<? extends EntityFields> findNextBatch(UUID id, int batchSize) {
+        throw new UnsupportedOperationException();
+    }
+
+    default EntityType getEntityType() {
+        return null;
+    }
 
 }

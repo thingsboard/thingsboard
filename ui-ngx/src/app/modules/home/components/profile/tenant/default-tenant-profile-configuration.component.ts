@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -114,11 +114,20 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
       maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
       wsUpdatesPerSessionRateLimit: [null, []],
-      cassandraQueryTenantRateLimitsConfiguration: [null, []],
+      cassandraWriteQueryTenantCoreRateLimits: [null, []],
+      cassandraReadQueryTenantCoreRateLimits: [null, []],
+      cassandraWriteQueryTenantRuleEngineRateLimits: [null, []],
+      cassandraReadQueryTenantRuleEngineRateLimits: [null, []],
       edgeEventRateLimits: [null, []],
       edgeEventRateLimitsPerEdge: [null, []],
       edgeUplinkMessagesRateLimits: [null, []],
-      edgeUplinkMessagesRateLimitsPerEdge: [null, []]
+      edgeUplinkMessagesRateLimitsPerEdge: [null, []],
+      maxCalculatedFieldsPerEntity: [null, [Validators.required, Validators.min(0)]],
+      maxArgumentsPerCF: [null, [Validators.required, Validators.min(0)]],
+      maxDataPointsPerRollingArg: [null, [Validators.required, Validators.min(0)]],
+      maxStateSizeInKBytes: [null, [Validators.required, Validators.min(0)]],
+      calculatedFieldDebugEventsRateLimit: [null, []],
+      maxSingleValueArgumentSizeInKBytes: [null, [Validators.required, Validators.min(0)]],
     });
 
     this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(

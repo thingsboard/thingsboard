@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -33,35 +33,9 @@
     <ng-container *ngIf="!widgetComponent.widgetContext?.embedTitlePanel">
       <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
     </ng-container>
-    <div *ngIf="widget.showWidgetActions"
-         class="tb-widget-actions"
-         [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel && (widget.showTitle||widget.hasAggregation))}"
-         (mousedown)="$event.stopPropagation()">
-      <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
-              type="button"
-              [class.!hidden]="isEdit"
-              (click)="action.onAction($event)"
-              matTooltip="{{ action.displayName }}"
-              matTooltipPosition="above">
-        <tb-icon>{{ action.icon }}</tb-icon>
-      </button>
-      <button mat-icon-button *ngFor="let action of widget.widgetActions"
-              type="button"
-              [class.!hidden]="isEdit || !action.show"
-              (click)="action.onAction($event)"
-              matTooltip="{{ action.name | translate }}"
-              matTooltipPosition="above">
-        <tb-icon>{{ action.icon }}</tb-icon>
-      </button>
-      <button mat-icon-button
-              type="button"
-              [class.!hidden]="isEdit || !widget.enableFullscreen"
-              (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen; updateEditWidgetActionsTooltipState()"
-              matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
-              matTooltipPosition="above">
-        <tb-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</tb-icon>
-      </button>
-    </div>
+    <ng-container *ngIf="!widgetComponent.widgetContext?.embedActionsPanel">
+      <ng-container *ngTemplateOutlet="widgetHeaderActionsPanel"></ng-container>
+    </ng-container>
   </div>
   <div class="tb-widget-content" [class.tb-no-interaction]="disableWidgetInteraction">
     <tb-widget #widgetComponent
@@ -70,7 +44,8 @@
                [isEdit]="isEdit"
                [isPreview]="isPreview"
                [isMobile]="isMobile"
-               [widgetTitlePanel]="widgetTitlePanel">
+               [widgetTitlePanel]="widgetTitlePanel"
+               [widgetHeaderActionsPanel]="widgetHeaderActionsPanel">
     </tb-widget>
   </div>
 </div>
@@ -102,4 +77,104 @@
                    (ngModelChange)="widgetComponent.onTimewindowChanged($event)">
     </tb-timewindow>
   </div>
+</ng-template>
+
+<ng-template #widgetHeaderActionsPanel let-absolute="absolute">
+  <div *ngIf="widget.showWidgetActions"
+       class="tb-widget-actions"
+       [class.tb-widget-actions-absolute]="widgetActionAbsolute(widgetComponent, absolute)"
+       (mousedown)="$event.stopPropagation()">
+    <div class="flex items-center">
+      @for (action of widget.customHeaderActions; track action.name; let last = $last) {
+        <ng-container *ngTemplateOutlet="widgetHeaderActionButton; context:{ action, last }"></ng-container>
+      }
+    </div>
+
+    <button mat-icon-button *ngFor="let action of widget.widgetActions"
+            type="button"
+            [class.!hidden]="isEdit || !action.show"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.name | translate }}"
+            matTooltipPosition="above">
+      <tb-icon>{{ action.icon }}</tb-icon>
+    </button>
+    <button mat-icon-button
+            type="button"
+            [class.!hidden]="isEdit || !widget.enableFullscreen"
+            (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen; updateEditWidgetActionsTooltipState()"
+            matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
+            matTooltipPosition="above">
+      <tb-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</tb-icon>
+    </button>
+  </div>
+</ng-template>
+
+<ng-template #widgetHeaderActionButton let-action="action" let-last="last">
+@switch (action.buttonType) {
+  @case (widgetHeaderActionButtonType.miniFab) {
+    <button mat-mini-fab
+            [style]="action.customButtonStyle"
+            [class.!hidden]="isEdit"
+            [class.mr-2]="!last"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon>{{ action.icon }}</tb-icon>
+    </button>
+  }
+  @case (widgetHeaderActionButtonType.basic) {
+    <button [class.!hidden]="isEdit" mat-button
+            [class.mr-2]="!last"
+            [style]="action.customButtonStyle"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon matButtonIcon *ngIf="action.showIcon">{{ action.icon }}</tb-icon>
+      <span>{{ action.displayName }}</span>
+    </button>
+  }
+  @case (widgetHeaderActionButtonType.raised) {
+    <button [class.!hidden]="isEdit" mat-raised-button
+            [class.mr-2]="!last"
+            [style]="action.customButtonStyle"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon matButtonIcon *ngIf="action.showIcon">{{ action.icon }}</tb-icon>
+      <span>{{ action.displayName }}</span>
+    </button>
+  }
+  @case (widgetHeaderActionButtonType.stroked) {
+    <button [class.!hidden]="isEdit" mat-stroked-button
+            [class.mr-2]="!last"
+            [style]="action.customButtonStyle"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon matButtonIcon *ngIf="action.showIcon">{{ action.icon }}</tb-icon>
+      <span>{{ action.displayName }}</span>
+    </button>
+  }
+  @case (widgetHeaderActionButtonType.flat) {
+    <button [class.!hidden]="isEdit" mat-flat-button
+            [class.mr-2]="!last"
+            [style]="action.customButtonStyle"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon matButtonIcon *ngIf="action.showIcon">{{ action.icon }}</tb-icon>
+      <span>{{ action.displayName }}</span>
+    </button>
+  }
+  @default {
+    <button mat-icon-button
+            [style]="action.customButtonStyle"
+            [class.!hidden]="isEdit"
+            (click)="action.onAction($event)"
+            matTooltip="{{ action.displayName }}"
+            matTooltipPosition="above">
+      <tb-icon>{{ action.icon }}</tb-icon>
+    </button>
+  }
+}
 </ng-template>

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,13 +18,13 @@
 <section class="flex flex-row items-center justify-between" style="margin: 0 10px 4px; min-height: 36px">
   <div style="font-weight: 500; letter-spacing: .25px" translate>notification.notification</div>
   <button mat-button color="primary"
-          *ngIf="(notifications$ | async).length"
+          *ngIf="(notifications$ | async)?.length"
           (click)="markAsAllRead($event)">
     {{ 'notification.mark-all-as-read' | translate }}
   </button>
 </section>
 <mat-divider></mat-divider>
-<ng-container *ngIf="loadNotification; else loadingNotification">
+<ng-container *ngIf="notifications$ | async; else loadingNotification">
   <div *ngIf="(notifications$ | async).length; else emptyNotification" style="overflow: auto">
     <section style="min-height: 100px; overflow: auto; padding: 6px 0;">
       <div *ngFor="let notification of (notifications$ | async); let last = last; trackBy: trackById">

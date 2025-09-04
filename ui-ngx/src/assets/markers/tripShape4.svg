@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <path d="M 4.47621,17.6524 4.52498,17.5 4.47621,17.3476 0.788173,5.82249 32.551,17.5 0.788173,29.1775 Z" />
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M 5.04976,17.4998 1.57615,28.3548 31.1018,17.4998 1.57615,6.64476 Z m -1.04996,0 -3.688034,11.5251 c -0.126878,0.3965 0.258016,0.7653 0.648745,0.6217 L 32.7233,17.9691 c 0.4367,-0.1606 0.4367,-0.7781 0,-0.9386 L 0.960511,5.35298 C 0.569782,5.20933 0.184888,5.57816 0.311766,5.97465 Z" style="filter:url(#stroke-filter)" />
+  <defs>
+    <filter
+      id="stroke-filter"
+      style="color-interpolation-filters:sRGB"
+      x="0" y="0" width="1" height="1">
+      <feColorMatrix values="0.6 0 0 0 0 0 0.6 0 0 0 0 0 0.6 0 0 0 0 0 1 0" />
+    </filter>
+  </defs>
+</svg>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,7 +45,6 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
                 " a key selected in the configuration, it will be ignored. If delete operation is completed successfully, " +
                 " rule node will send the \"Attributes Deleted\" event to the root chain of the message originator and " +
                 " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
 )
@@ -77,6 +76,9 @@ public class TbMsgDeleteAttributesNode implements TbNode {
                     .scope(scope)
                     .keys(keysToDelete)
                     .notifyDevice(checkNotifyDevice(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY), scope))
+                    .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
+                    .tbMsgId(msg.getId())
+                    .tbMsgType(msg.getInternalType())
                     .callback(config.isSendAttributesDeletedNotification() ?
                             new AttributesDeleteNodeCallback(ctx, msg, scope.name(), keysToDelete) :
                             new TelemetryNodeCallback(ctx, msg))

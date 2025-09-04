@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
   </mat-form-field>
   <mat-form-field class="mat-block">
     <mat-label translate>admin.aws-secret-access-key</mat-label>
-    <input required type="password" matInput formControlName="secretAccessKey">
+    <input required type="password" matInput formControlName="secretAccessKey" autocomplete="new-password">
     <tb-toggle-password matSuffix></tb-toggle-password>
     <mat-error *ngIf="awsSnsProviderConfigurationFormGroup.get('secretAccessKey').hasError('required')">
       {{ 'admin.aws-secret-access-key-required' | translate }}

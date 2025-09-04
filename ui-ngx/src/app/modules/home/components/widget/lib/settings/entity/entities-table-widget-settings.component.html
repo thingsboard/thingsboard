@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -92,9 +92,51 @@
       {{ 'widgets.table.display-pagination' | translate }}
     </mat-slide-toggle>
     <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width !min-w-30">{{ 'widgets.table.page-step-settings' | translate }}</div>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="tb-small-label" translate>widgets.table.page-step-increment</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
+                 placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(entitiesTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-increment-format-message') | translate"
+                    *ngIf="entitiesTableWidgetSettingsForm.get('pageStepIncrement').invalid
+                    && entitiesTableWidgetSettingsForm.get('pageStepIncrement').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+        <mat-divider vertical class="xs:hidden"></mat-divider>
+        <div class="tb-small-label" translate>widgets.table.page-step-count</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
+                 placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="(entitiesTableWidgetSettingsForm.get('pageStepCount').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-count-format-message') | translate"
+                    *ngIf="entitiesTableWidgetSettingsForm.get('pageStepCount').invalid
+                    && entitiesTableWidgetSettingsForm.get('pageStepCount').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
       <div translate>widgets.table.default-page-size</div>
-      <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-        <input matInput formControlName="defaultPageSize" type="number" min="1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
+            {{ size }}
+          </mat-option>
+        </mat-select>
       </mat-form-field>
     </div>
   </div>

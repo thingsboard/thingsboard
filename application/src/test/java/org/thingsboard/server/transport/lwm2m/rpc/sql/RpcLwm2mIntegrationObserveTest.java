@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.server.registration.Registration;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserveTest;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceUpdateResult;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
@@ -41,7 +41,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
 @Slf4j
-public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationObserveTest {
+public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest {
 
     @Before
     public void setupObserveTest() throws Exception {
@@ -80,7 +80,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(10000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
+                .updateAttrTelemetry(Mockito.any(ResourceUpdateResult.class), eq(null));
     }
 
     /**
@@ -95,7 +95,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(10000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
+                .updateAttrTelemetry(Mockito.any(ResourceUpdateResult.class), eq(null));
     }
 
     /**
@@ -328,7 +328,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
         int cntUpdate = 10;
         verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
-                .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
+                .updateAttrTelemetry(Mockito.any(ResourceUpdateResult.class), eq(null));
     }
 
     private void sendRpcObserveWithWithTwoResource(String expectedId_1, String expectedId_2) throws Exception {

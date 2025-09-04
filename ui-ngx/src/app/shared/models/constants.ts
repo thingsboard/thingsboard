@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -113,6 +113,7 @@ export const HelpLinks = {
     ruleNodeOriginatorTelemetry: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#originator-telemetry`,
     ruleNodeCustomerAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#customer-attributes`,
     ruleNodeCustomerDetails: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#customer-details`,
+    ruleNodeFetchDeviceCredentials: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#fetch-device-credentials`,
     ruleNodeDeviceAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#device-attributes`,
     ruleNodeRelatedAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#related-attributes`,
     ruleNodeTenantAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/enrichment-nodes/#tenant-attributes`,
@@ -120,23 +121,29 @@ export const HelpLinks = {
     ruleNodeChangeOriginator: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#change-originator`,
     ruleNodeTransformMsg: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#script-transformation-node`,
     ruleNodeMsgToEmail: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#to-email-node`,
-    ruleNodeAssignToCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#assign-to-customer-node`,
-    ruleNodeUnassignFromCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/transformation-nodes/#unassign-from-customer-node`,
+    ruleNodeAssignToCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#assign-to-customer-node`,
+    ruleNodeUnassignFromCustomer: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#unassign-from-customer-node`,
+    ruleNodeCalculatedFields: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#calculated-fields-node`,
     ruleNodeClearAlarm: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#clear-alarm-node`,
     ruleNodeCreateAlarm: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#create-alarm-node`,
+    ruleNodeCopyToView: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#copy-to-view-node`,
     ruleNodeCreateRelation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#create-relation-node`,
     ruleNodeDeleteRelation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delete-relation-node`,
-    ruleNodeMsgDelay: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delay-node`,
+    ruleNodeDeviceState: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#device-state-node`,
+    ruleNodeMessageCount: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#message-count-node`,
+    ruleNodeMsgDelay: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delay-node-deprecated`,
     ruleNodeMsgGenerator: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#generator-node`,
     ruleNodeGpsGeofencingEvents: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#gps-geofencing-events-node`,
     ruleNodeLog: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#log-node`,
     ruleNodeRpcCallReply: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#rpc-call-reply-node`,
     ruleNodeRpcCallRequest: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#rpc-call-request-node`,
     ruleNodeSaveAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#save-attributes-node`,
+    ruleNodeDeleteAttributes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#delete-attributes-node`,
     ruleNodeSaveTimeseries: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#save-timeseries-node`,
-    ruleNodeSaveToCustomTable: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table`,
+    ruleNodeSaveToCustomTable: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table-node`,
     ruleNodeRuleChain: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#rule-chain-node`,
     ruleNodeOutputNode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#output-node`,
+    ruleNodeAiRequest: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#ai-request-node`,
     ruleNodeAwsLambda: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-lambda-node`,
     ruleNodeAwsSns: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-sns-node`,
     ruleNodeAwsSqs: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node`,
@@ -152,6 +159,7 @@ export const HelpLinks = {
     ruleNodeRestCallReply: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#rest-call-reply-node`,
     ruleNodePushToCloud: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#push-to-cloud`,
     ruleNodePushToEdge: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#push-to-edge`,
+    ruleNodeDeviceProfile: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#device-profile-node`,
     ruleNodeAcknowledge: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#acknowledge-node`,
     ruleNodeCheckpoint: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#checkpoint-node`,
     ruleNodeSendNotification: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#send-notification-node`,
@@ -192,10 +200,15 @@ export const HelpLinks = {
     scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
     scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/`,
     scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`,
+    scadaSymbolDevConnectorAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#connectorscadasymbolanimation`,
     domains: `${helpBaseUrl}/docs${docPlatformPrefix}/domains`,
     mobileApplication: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/applications/`,
     mobileBundle: `${helpBaseUrl}/docs${docPlatformPrefix}/mobile-center/mobile-center/`,
     mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
+    calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/calculated-fields/`,
+    aiModels: `${helpBaseUrl}/docs${docPlatformPrefix}/ai-models`,
+    timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
+    trendzSettings: `${helpBaseUrl}/docs/trendz/`
   }
 };
 /* eslint-enable max-len */

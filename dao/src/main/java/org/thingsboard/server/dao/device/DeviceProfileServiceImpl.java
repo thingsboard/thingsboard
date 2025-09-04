@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -180,13 +180,12 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         try {
             imageService.replaceBase64WithImageUrl(deviceProfile, "device profile");
             savedDeviceProfile = deviceProfileDao.saveAndFlush(deviceProfile.getTenantId(), deviceProfile);
+
             publishEvictEvent(new DeviceProfileEvictEvent(savedDeviceProfile.getTenantId(), savedDeviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, savedDeviceProfile.getId(), savedDeviceProfile.isDefault(),
                     oldDeviceProfile != null ? oldDeviceProfile.getProvisionDeviceKey() : null, savedDeviceProfile));
-            if (publishSaveEvent) {
-                eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId()).entityId(savedDeviceProfile.getId())
-                        .entity(savedDeviceProfile).oldEntity(oldDeviceProfile).created(oldDeviceProfile == null).build());
-            }
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDeviceProfile.getTenantId()).entityId(savedDeviceProfile.getId())
+                    .entity(savedDeviceProfile).oldEntity(oldDeviceProfile).created(oldDeviceProfile == null).broadcastEvent(publishSaveEvent).build());
         } catch (Exception t) {
             handleEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     oldDeviceProfile != null ? oldDeviceProfile.getName() : null, null, deviceProfile.isDefault(),

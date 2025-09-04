@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,24 @@
 package org.thingsboard.script.api;
 
 import lombok.Getter;
+import org.thingsboard.common.util.RecoveryAware;
 
+import java.io.Serial;
 import java.util.UUID;
 
-public class TbScriptException extends RuntimeException {
+public class TbScriptException extends RuntimeException implements RecoveryAware {
+
+    @Serial
     private static final long serialVersionUID = -1958193538782818284L;
 
-    public static enum ErrorCode {COMPILATION, TIMEOUT, RUNTIME, OTHER}
+    public enum ErrorCode {
+
+        COMPILATION,
+        TIMEOUT,
+        RUNTIME,
+        OTHER
+
+    }
 
     @Getter
     private final UUID scriptId;
@@ -37,4 +48,10 @@ public class TbScriptException extends RuntimeException {
         this.errorCode = errorCode;
         this.body = body;
     }
+
+    @Override
+    public boolean isUnrecoverable() {
+        return errorCode == ErrorCode.COMPILATION;
+    }
+
 }

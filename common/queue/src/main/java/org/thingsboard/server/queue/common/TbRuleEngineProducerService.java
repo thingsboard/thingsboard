@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class TbRuleEngineProducerService {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
         }
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
-                .setTbMsg(TbMsg.toByteString(tbMsg))
+                .setTbMsgProto(TbMsg.toProto(tbMsg))
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
                 .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
         producer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);

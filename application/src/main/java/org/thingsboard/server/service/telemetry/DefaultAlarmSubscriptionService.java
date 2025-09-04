@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.telemetry;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -115,7 +116,7 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
+    public boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
         AlarmApiCallResult result = alarmService.delAlarm(tenantId, alarmId);
         onAlarmDeleted(result);
         return result.isSuccessful();
@@ -169,6 +170,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     @Override
     public Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
         return alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, type);
+    }
+
+    @Override
+    public FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type) {
+        return alarmService.findLatestActiveByOriginatorAndTypeAsync(tenantId, originator, type);
     }
 
     @Override

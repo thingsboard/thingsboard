@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import { EdgesOverviewWidgetComponent } from '@home/components/widget/lib/edges-
 import { JsonInputWidgetComponent } from '@home/components/widget/lib/json-input-widget.component';
 import { QrCodeWidgetComponent } from '@home/components/widget/lib/qrcode-widget.component';
 import { MarkdownWidgetComponent } from '@home/components/widget/lib/markdown-widget.component';
-import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps/dialogs/select-entity-dialog.component';
+import { SelectEntityDialogComponent } from '@home/components/widget/lib/maps-legacy/dialogs/select-entity-dialog.component';
 import { HomePageWidgetsModule } from '@home/components/widget/lib/home-page/home-page-widgets.module';
 import { WIDGET_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { FlotWidgetComponent } from '@home/components/widget/lib/flot-widget.component';
@@ -88,6 +88,12 @@ import {
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/button/two-segment-button-widget.component';
+import { ValueStepperWidgetComponent } from '@home/components/widget/lib/rpc/value-stepper-widget.component';
+import { MapWidgetComponent } from '@home/components/widget/lib/maps/map-widget.component';
+import {
+  SelectMapEntityPanelComponent
+} from '@home/components/widget/lib/maps/panels/select-map-entity-panel.component';
+import { MapTimelinePanelComponent } from '@home/components/widget/lib/maps/panels/map-timeline-panel.component';
 
 @NgModule({
   declarations: [
@@ -128,6 +134,7 @@ import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/but
     TwoSegmentButtonWidgetComponent,
     CommandButtonWidgetComponent,
     PowerButtonWidgetComponent,
+    ValueStepperWidgetComponent,
     SliderWidgetComponent,
     ToggleButtonWidgetComponent,
     TimeSeriesChartWidgetComponent,
@@ -141,7 +148,10 @@ import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/but
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
     NotificationTypeFilterPanelComponent,
-    ScadaSymbolWidgetComponent
+    ScadaSymbolWidgetComponent,
+    SelectMapEntityPanelComponent,
+    MapTimelinePanelComponent,
+    MapWidgetComponent
   ],
   imports: [
     CommonModule,
@@ -190,6 +200,7 @@ import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/but
     TwoSegmentButtonWidgetComponent,
     CommandButtonWidgetComponent,
     PowerButtonWidgetComponent,
+    ValueStepperWidgetComponent,
     SliderWidgetComponent,
     ToggleButtonWidgetComponent,
     TimeSeriesChartWidgetComponent,
@@ -202,7 +213,8 @@ import { TwoSegmentButtonWidgetComponent } from '@home/components/widget/lib/but
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
     NotificationTypeFilterPanelComponent,
-    ScadaSymbolWidgetComponent
+    ScadaSymbolWidgetComponent,
+    MapWidgetComponent
   ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule},

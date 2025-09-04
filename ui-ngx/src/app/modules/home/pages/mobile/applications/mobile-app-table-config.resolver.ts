@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -83,6 +83,7 @@ export class MobileAppTableConfigResolver  {
           onAction: (_$event, entity) => entity.pkgName,
           type: CellActionDescriptorType.COPY_BUTTON
         }),
+      new EntityTableColumn<MobileApp>('title', 'mobile.mobile-package-title', '20%'),
       new EntityTableColumn<MobileApp>('appSecret', 'mobile.application-secret', '15%',
         (entity) => this.truncatePipe.transform(entity.appSecret, true, 10, '…'), () => ({}),
         true, () => ({}), () => undefined, false,

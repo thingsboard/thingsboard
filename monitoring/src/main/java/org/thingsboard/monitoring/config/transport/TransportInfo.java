@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,16 +20,15 @@ import lombok.Data;
 @Data
 public class TransportInfo {
 
-    private final TransportType transportType;
-    private final String baseUrl;
-    private final String queue;
+    private final TransportType type;
+    private final TransportMonitoringTarget target;
 
     @Override
     public String toString() {
-        if (queue.equals("Main")) {
-            return String.format("*%s* (%s)", transportType.getName(), baseUrl);
+        if (target.getQueue().equals("Main")) {
+            return String.format("*%s* (%s)", type.getName(), target.getBaseUrl());
         } else {
-            return String.format("*%s* (%s) _%s_", transportType.getName(), baseUrl, queue);
+            return String.format("*%s* (%s) _%s_", type.getName(), target.getBaseUrl(), target.getQueue());
         }
     }
 

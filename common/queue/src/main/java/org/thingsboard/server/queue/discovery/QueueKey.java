@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,12 @@ public class QueueKey {
     public QueueKey(ServiceType type) {
         this.type = type;
         this.queueName = DataConstants.MAIN_QUEUE_NAME;
+        this.tenantId = TenantId.SYS_TENANT_ID;
+    }
+
+    public QueueKey(ServiceType type, String queueName) {
+        this.type = type;
+        this.queueName = queueName;
         this.tenantId = TenantId.SYS_TENANT_ID;
     }
 

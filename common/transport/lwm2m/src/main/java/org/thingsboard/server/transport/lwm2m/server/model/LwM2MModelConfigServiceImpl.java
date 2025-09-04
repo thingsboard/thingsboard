@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 import org.thingsboard.server.transport.lwm2m.server.downlink.DownlinkRequestCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.LwM2mDownlinkMsgHandler;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllObserveCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelAllRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MCancelObserveRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MObserveCallback;
@@ -35,6 +37,10 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadCallbac
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MReadRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MCancelObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2MModelConfigStore;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
@@ -42,9 +48,14 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.COMPOSITE_BY_OBJECT;
+import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.SINGLE;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.deepCopyConcurrentMap;
 
 @Slf4j
 @Service
@@ -92,6 +103,7 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
         LwM2MModelConfig modelConfig = currentModelConfigs.get(endpoint);
         if (modelConfig == null || modelConfig.isEmpty()) {
             modelConfig = newModelConfig;
+            log.warn("sendUpdates: [{}]", modelConfig);
             currentModelConfigs.put(endpoint, modelConfig);
         } else {
             modelConfig.merge(newModelConfig);
@@ -153,33 +165,104 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
             );
         });
 
-        Set<String> toObserve = modelConfig.getToObserve();
-        toObserve.forEach(id -> {
-            TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(id)
-                    .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
-            downlinkMsgHandler.sendObserveRequest(lwM2mClient, request,
-                    createDownlinkProxyCallback(() -> {
-                        toObserve.remove(id);
-                        if (modelConfig.isEmpty()) {
-                            modelStore.remove(endpoint);
-                        }
-                    }, new TbLwM2MObserveCallback(uplinkMsgHandler, logService, lwM2mClient, id))
-            );
-        });
+        // update observe
+        if (!modelConfig.getObserveStrategyOld().equals(modelConfig.getObserveStrategyNew())
+            || !modelConfig.getToCancelObserve().isEmpty() || !modelConfig.getToObserve().isEmpty()) {
+            this.doSendCancelObserve(lwM2mClient, modelConfig);
+        }
+    }
 
-        Set<String> toCancelObserve = modelConfig.getToCancelObserve();
-        toCancelObserve.forEach(id -> {
-            TbLwM2MCancelObserveRequest request = TbLwM2MCancelObserveRequest.builder().versionedId(id)
+    private void doSendCancelObserve(LwM2mClient lwM2mClient, LwM2MModelConfig modelConfig) {
+        String endpoint = lwM2mClient.getEndpoint();
+        if (SINGLE.equals(modelConfig.getObserveStrategyOld()) && SINGLE.equals(modelConfig.getObserveStrategyNew())) {
+            Set<String> toCancelObserveClone = ConcurrentHashMap.newKeySet();
+            toCancelObserveClone.addAll(modelConfig.getToCancelObserve());
+            toCancelObserveClone.forEach(id -> {
+                TbLwM2MCancelObserveRequest request = TbLwM2MCancelObserveRequest.builder().versionedId(id)
+                        .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
+                downlinkMsgHandler.sendCancelObserveRequest(lwM2mClient, request,
+                        createDownlinkProxyCallback(() -> {
+                            modelConfig.getToCancelObserve().remove(id);
+                            if (modelConfig.isEmpty()) {
+                                modelStore.remove(endpoint);
+                            }
+                        }, new TbLwM2MCancelObserveCallback(logService, lwM2mClient, id))
+                );
+            });
+            this.doSendObserve(lwM2mClient, modelConfig);
+        } else  if (COMPOSITE_BY_OBJECT.equals(modelConfig.getObserveStrategyOld()) && COMPOSITE_BY_OBJECT.equals(modelConfig.getObserveStrategyNew())) {
+            Map<Integer, String[]> toObserveByObjectToCancelClone = deepCopyConcurrentMap(modelConfig.getToObserveByObjectToCancel());
+            toObserveByObjectToCancelClone.forEach((key, ersionedIds) -> {
+                TbLwM2MCancelObserveCompositeRequest request = TbLwM2MCancelObserveCompositeRequest.builder().versionedIds(ersionedIds)
+                        .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
+                downlinkMsgHandler.sendCancelObserveCompositeRequest(lwM2mClient, request,
+                        createDownlinkProxyCallback(() -> {
+                            modelConfig.getToObserveByObjectToCancel().remove(key);
+                            if (modelConfig.isEmpty()) {
+                                modelStore.remove(endpoint);
+                            }
+                        }, new TbLwM2MCancelObserveCompositeCallback(logService, lwM2mClient, ersionedIds))
+                );
+            });
+            this.doSendObserve(lwM2mClient, modelConfig);
+        } else {
+            // cancelAll - response - ok
+            TbLwM2MCancelAllRequest request = TbLwM2MCancelAllRequest.builder()
                     .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
-            downlinkMsgHandler.sendCancelObserveRequest(lwM2mClient, request,
+            downlinkMsgHandler.sendCancelObserveAllRequest(lwM2mClient, request,
                     createDownlinkProxyCallback(() -> {
-                        toCancelObserve.remove(id);
+                        modelConfig.getToCancelObserve().clear();
+                        modelStore.remove(endpoint);
+                        this.doSendObserve(lwM2mClient, modelConfig);
+                    }, new TbLwM2MCancelAllObserveCallback(logService, lwM2mClient))
+            );
+        }
+    }
+
+    private void doSendObserve (LwM2mClient lwM2mClient, LwM2MModelConfig modelConfig) {
+        String endpoint = lwM2mClient.getEndpoint();
+        if (SINGLE.equals(modelConfig.getObserveStrategyNew())) {
+            Set<String> toObserveClone = ConcurrentHashMap.newKeySet();
+            toObserveClone.addAll(modelConfig.getToObserve());
+            toObserveClone.forEach(id -> {
+                TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(id)
+                        .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
+                downlinkMsgHandler.sendObserveRequest(lwM2mClient, request,
+                        createDownlinkProxyCallback(() -> {
+                            modelConfig.getToObserve().remove(id);
+                            if (modelConfig.isEmpty()) {
+                                modelStore.remove(endpoint);
+                            }
+                        }, new TbLwM2MObserveCallback(uplinkMsgHandler, logService, lwM2mClient, id))
+                );
+            });
+        } else if (COMPOSITE_BY_OBJECT.equals(modelConfig.getObserveStrategyNew())){
+            Map<Integer, String[]> toObserveByObjectClone = deepCopyConcurrentMap(modelConfig.getToObserveByObject());
+            toObserveByObjectClone.forEach((key, ersionedIds) -> {
+                TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(ersionedIds)
+                        .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
+                downlinkMsgHandler.sendObserveCompositeRequest(lwM2mClient, request,
+                        createDownlinkProxyCallback(() -> {
+                            modelConfig.getToObserveByObject().remove(key);
+                            if (modelConfig.isEmpty()) {
+                                modelStore.remove(endpoint);
+                            }
+                        }, new TbLwM2MObserveCompositeCallback(uplinkMsgHandler, logService, lwM2mClient, ersionedIds))
+                );
+            });
+        } else { // COMPOSITE_ALL
+            String [] versionedIds = modelConfig.getToObserve().toArray(new String[0]);
+            TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(versionedIds)
+                    .timeout(clientContext.getRequestTimeout(lwM2mClient)).build();
+            downlinkMsgHandler.sendObserveCompositeRequest(lwM2mClient, request,
+                    createDownlinkProxyCallback(() -> {
+                        modelConfig.getToObserve().clear();
                         if (modelConfig.isEmpty()) {
                             modelStore.remove(endpoint);
                         }
-                    }, new TbLwM2MCancelObserveCallback(logService, lwM2mClient, id))
+                    }, new TbLwM2MObserveCompositeCallback(uplinkMsgHandler, logService, lwM2mClient, versionedIds))
             );
-        });
+        }
     }
 
     private <R, T> DownlinkRequestCallback<R, T> createDownlinkProxyCallback(Runnable processRemove, DownlinkRequestCallback<R, T> callback) {
@@ -222,6 +305,7 @@ public class LwM2MModelConfigServiceImpl implements LwM2MModelConfigService {
     @Override
     public void removeUpdates(String endpoint) {
         currentModelConfigs.remove(endpoint);
+        modelStore.remove(endpoint);
     }
 
     @PreDestroy

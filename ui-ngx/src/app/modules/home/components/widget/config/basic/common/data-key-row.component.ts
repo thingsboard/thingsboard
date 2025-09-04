@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,12 +41,12 @@ import { MatDialog } from '@angular/material/dialog';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKey, DataKeyConfigMode, DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { merge } from 'rxjs';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
-} from '@home/components/widget/config/data-key-config-dialog.component';
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
 import { deepClone } from '@core/utils';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -78,7 +78,7 @@ export const dataKeyRowValidator = (control: AbstractControl): ValidationErrors 
 @Component({
   selector: 'tb-data-key-row',
   templateUrl: './data-key-row.component.html',
-  styleUrls: ['./data-key-row.component.scss', '../../data-keys.component.scss'],
+  styleUrls: ['./data-key-row.component.scss', '../../../lib/settings/common/key/data-keys.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -225,6 +225,10 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.hasAdditionalLatestDataKeys && this.keyRowFormGroup.get('latest').value === true;
   }
 
+  get supportsUnitConversion(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.supportsUnitConversion ?? false;
+  }
+
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
@@ -337,7 +341,8 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
           hideDataKeyLabel: this.hideDataKeyLabel,
           hideDataKeyColor: this.hideDataKeyColor,
           hideDataKeyUnits: this.hideDataKeyUnits || !this.displayUnitsOrDigits,
-          hideDataKeyDecimals: this.hideDataKeyDecimals || !this.displayUnitsOrDigits
+          hideDataKeyDecimals: this.hideDataKeyDecimals || !this.displayUnitsOrDigits,
+          supportsUnitConversion: this.supportsUnitConversion
         }
       }).afterClosed().subscribe((updatedDataKey) => {
       if (updatedDataKey) {

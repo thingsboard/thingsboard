@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class WidgetTypeController extends AutoCommitController {
             @PathVariable("widgetTypeId") String strWidgetTypeId) throws ThingsboardException {
         checkParameter("widgetTypeId", strWidgetTypeId);
         WidgetTypeId widgetTypeId = new WidgetTypeId(toUUID(strWidgetTypeId));
-        return new WidgetTypeInfo(checkWidgetTypeId(widgetTypeId, Operation.READ));
+        return checkWidgetTypeInfoId(widgetTypeId, Operation.READ);
     }
 
     @ApiOperation(value = "Create Or Update Widget Type (saveWidgetType)",

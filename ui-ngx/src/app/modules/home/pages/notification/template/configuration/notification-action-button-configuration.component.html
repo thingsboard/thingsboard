@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,6 +61,12 @@
           <mat-error
             *ngIf="actionButtonConfigForm.get('link').hasError('required')">
             {{ 'notification.link-required' | translate }}
+          </mat-error>
+          <mat-error
+            *ngIf="actionButtonConfigForm.get('link').hasError('maxlength')">
+            {{ 'notification.link-max-length' | translate :
+                {length: actionButtonConfigForm.get('link').getError('maxlength').requiredLength}
+            }}
           </mat-error>
         </mat-form-field>
         <ng-template #dashboardSelector>

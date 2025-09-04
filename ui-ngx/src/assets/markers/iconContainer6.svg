@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34" class="marker-color" fill="#307FE5">
+  <rect x="2" y="2" width="30" height="30" rx="4" mask="url(#rect-mask)" fill="#fff" fill-opacity="1" filter="url(#shadow-filter)"></rect>
+  <rect x="2" y="2" width="30" height="30" rx="4" mask="url(#icon-mask)" fill="#fff"></rect>
+  <rect x="2" y="2" width="30" height="30" mask="url(#icon-mask-2)"></rect>
+  <mask id="rect-mask" class="rect-mask-exclude">
+    <rect width="100%" height="100%" fill="#fff"></rect>
+  </mask>
+  <mask id="icon-mask" class="icon-mask-exclude">
+    <g class="marker-icon-container" transform="translate(17,17)">
+      <rect width="100%" height="100%" fill="#fff" transform="translate(-17,-17)"></rect>
+    </g>
+  </mask>
+  <mask id="icon-mask-2" class="icon-mask-overlay">
+    <g class="marker-icon-container" transform="translate(17,17)">
+      <rect width="100%" height="100%" fill="#000" transform="translate(-17,-17)"></rect>
+    </g>
+  </mask>
+  <defs>
+    <filter id="shadow-filter" x="-.085714" y="-.085714" width="1.1714" height="1.1714" style="color-interpolation-filters:sRGB">
+      <feFlood flood-color="rgb(0,0,0)" flood-opacity=".49804" result="flood"/>
+      <feComposite in="flood" in2="SourceGraphic" operator="in" result="composite1"/>
+      <feGaussianBlur in="composite1" result="blur" stdDeviation="1"/>
+      <feOffset dx="0" dy="0" result="offset"/>
+      <feComposite in="SourceGraphic" in2="offset" result="composite2"/>
+    </filter>
+  </defs>
+</svg>

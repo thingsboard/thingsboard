@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,7 @@ import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
 import org.eclipse.jgit.errors.LargeObjectException;
+import org.eclipse.jgit.errors.RepositoryNotFoundException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -94,6 +95,10 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.eclipse.jgit.api.ListBranchCommand.ListMode;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NODELETE;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_NONFASTFORWARD;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_OTHER_REASON;
+import static org.eclipse.jgit.transport.RemoteRefUpdate.Status.REJECTED_REMOTE_CHANGED;
 
 @Slf4j
 public class GitRepository {
@@ -143,22 +148,31 @@ public class GitRepository {
     }
 
     public static GitRepository openOrClone(Path directory, RepositorySettings settings, boolean fetch) throws IOException, GitAPIException {
-        GitRepository repository;
         if (GitRepository.exists(directory.toString())) {
-            repository = GitRepository.open(directory.toFile(), settings);
-            if (fetch) {
-                repository.fetch();
-            }
-        } else {
-            FileUtils.deleteDirectory(directory.toFile());
-            Files.createDirectories(directory);
-            if (settings.isLocalOnly()) {
-                repository = GitRepository.create(settings, directory.toFile());
-            } else {
-                repository = GitRepository.clone(settings, directory.toFile());
+            try {
+                GitRepository repository = GitRepository.open(directory.toFile(), settings);
+                if (fetch) {
+                    repository.fetch();
+                }
+                return repository;
+            } catch (RepositoryNotFoundException e) {
+                log.warn("{} not a git repository, reinitializing", directory);
+            } catch (org.eclipse.jgit.errors.TransportException | org.eclipse.jgit.api.errors.TransportException e) {
+                if (StringUtils.containsIgnoreCase(e.getMessage(), "missing commit")) {
+                    log.warn("Couldn't fetch {} due to {}, reinitializing", directory, e.getMessage());
+                } else {
+                    throw e;
+                }
             }
         }
-        return repository;
+
+        FileUtils.deleteDirectory(directory.toFile());
+        Files.createDirectories(directory);
+        if (settings.isLocalOnly()) {
+            return GitRepository.create(settings, directory.toFile());
+        } else {
+            return GitRepository.clone(settings, directory.toFile());
+        }
     }
 
     public static void test(RepositorySettings settings, File directory) throws Exception {
@@ -358,8 +372,10 @@ public class GitRepository {
         result.forEach(pushResult -> {
             for (RemoteRefUpdate update : pushResult.getRemoteUpdates()) {
                 RemoteRefUpdate.Status status = update.getStatus();
-                if (status != RemoteRefUpdate.Status.OK && status != RemoteRefUpdate.Status.UP_TO_DATE) {
-                    throw new RuntimeException("Failed to push changes: " + Optional.ofNullable(update.getMessage()).orElseGet(status::name));
+                if (status == REJECTED_NONFASTFORWARD || status == REJECTED_NODELETE ||
+                        status == REJECTED_REMOTE_CHANGED || status == REJECTED_OTHER_REASON) {
+                    throw new RuntimeException("Remote repository answered with error: " +
+                            Optional.ofNullable(update.getMessage()).orElseGet(status::name));
                 }
             }
         });
@@ -444,7 +460,7 @@ public class GitRepository {
         }
         ObjectId result = git.getRepository().resolve(rev);
         if (result == null) {
-            throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
+            throw new IllegalArgumentException("Failed to resolve '" + rev + "'");
         }
         return result;
     }

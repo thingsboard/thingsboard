@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,7 +44,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
@@ -63,7 +62,6 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
         nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +
                 "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration. \n" +
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views",
-        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy"
 )
@@ -116,14 +114,13 @@ public class TbCopyAttributesToEntityViewNode implements TbNode {
                                                     .build());
                                         }
                                     } else {
-                                        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
-                                        List<AttributeKvEntry> filteredAttributes =
-                                                attributes.stream().filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).collect(Collectors.toList());
+                                        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData())).stream()
+                                                .filter(attr -> attributeContainsInEntityView(scope, attr.getKey(), entityView)).toList();
                                         ctx.getTelemetryService().saveAttributes(AttributesSaveRequest.builder()
                                                 .tenantId(ctx.getTenantId())
                                                 .entityId(entityView.getId())
                                                 .scope(scope)
-                                                .entries(filteredAttributes)
+                                                .entries(attributes)
                                                 .callback(getFutureCallback(ctx, msg, entityView))
                                                 .build());
                                     }

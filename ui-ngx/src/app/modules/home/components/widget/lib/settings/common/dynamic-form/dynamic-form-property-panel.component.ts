@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -104,6 +104,7 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
       {
         id: [this.property.id, [Validators.required]],
         name: [this.property.name, [Validators.required]],
+        hint: [this.property.hint, []],
         group: [this.property.group, []],
         type: [this.property.type, [Validators.required]],
         arrayItemType: [this.property.arrayItemType, [Validators.required]],
@@ -132,7 +133,8 @@ export class DynamicFormPropertyPanelComponent implements OnInit {
         allowClear: [this.property.allowClear || true, []],
         dateTimeType: [this.property.dateTimeType || 'datetime', []],
         htmlContent: [this.property.htmlContent || '', []],
-        htmlClassList: [this.property.htmlClassList || [], []]
+        htmlClassList: [this.property.htmlClassList || [], []],
+        supportsUnitConversion: [this.property.supportsUnitConversion ?? false]
       }
     );
     if (this.disabled) {

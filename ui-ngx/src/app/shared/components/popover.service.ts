@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,12 +24,19 @@ import {
   Type,
   ViewContainerRef
 } from '@angular/core';
-import { PopoverPreferredPlacement, PopoverWithTrigger } from '@shared/components/popover.models';
+import {
+  defaultPopoverConfig,
+  DisplayPopoverConfig,
+  DisplayPopoverWithComponentRefConfig,
+  PopoverPreferredPlacement,
+  PopoverWithTrigger
+} from '@shared/components/popover.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentType } from '@angular/cdk/portal';
 import { HELP_MARKDOWN_COMPONENT_TOKEN } from '@shared/components/tokens';
 import { CdkOverlayOrigin } from '@angular/cdk/overlay';
 import { Observable } from 'rxjs';
+import { mergeDeep } from '@core/utils';
 
 @Injectable()
 export class TbPopoverService {
@@ -58,57 +65,108 @@ export class TbPopoverService {
     return hostView.createComponent(TbPopoverComponent);
   }
 
+  displayPopover<T>(config: DisplayPopoverConfig<T>): TbPopoverComponent<T>;
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
-                    componentType: Type<T>, preferredPlacement: PopoverPreferredPlacement = 'top',
-                    hideOnClickOutside = true, injector?: Injector, context?: any, overlayStyle: any = {},
-                    popoverStyle: any = {}, style?: any,
-                    showCloseButton = true, visibleFn: (visible: boolean) => void = () => {},
-                    popoverContentStyle: any = {}): TbPopoverComponent<T> {
-    const componentRef = this.createPopoverRef(hostView);
-    return this.displayPopoverWithComponentRef(componentRef, trigger, renderer, componentType, preferredPlacement, hideOnClickOutside,
-      injector, context, overlayStyle, popoverStyle, style, showCloseButton, visibleFn, popoverContentStyle);
+                    componentType: Type<T>, preferredPlacement: PopoverPreferredPlacement,
+                    hideOnClickOutside: boolean, injector?: Injector, context?: any, overlayStyle?: any,
+                    popoverStyle?: any, style?: any,
+                    showCloseButton?: boolean, visibleFn?: (visible: boolean) => void,
+                    popoverContentStyle?: any): TbPopoverComponent<T>;
+  displayPopover<T>(config: Element | DisplayPopoverConfig<T>, renderer?: Renderer2, hostView?: ViewContainerRef,
+                    componentType?: Type<T>, preferredPlacement?: PopoverPreferredPlacement,
+                    hideOnClickOutside?: boolean, injector?: Injector, context?: any, overlayStyle?: any,
+                    popoverStyle?: any, style?: any,
+                    showCloseButton?: boolean, visibleFn?: (visible: boolean) => void,
+                    popoverContentStyle?: any): TbPopoverComponent<T> {
+    if (!(config instanceof Element) && 'trigger' in config && 'renderer' in config && 'componentType' in config) {
+      const componentRef = this.createPopoverRef(config.hostView);
+      return this.displayPopoverWithComponentRef<T>({ ...config, componentRef })
+    } else if (config instanceof Element) {
+      const componentRef = this.createPopoverRef(hostView);
+      return this.displayPopoverWithComponentRef<T>(componentRef, config, renderer, componentType, preferredPlacement, hideOnClickOutside,
+        injector, context, overlayStyle, popoverStyle, style, showCloseButton, visibleFn, popoverContentStyle);
+    } else {
+      throw new Error("Invalid configuration provided for displayPopover");
+    }
   }
 
+  displayPopoverWithComponentRef<T>(config: DisplayPopoverWithComponentRefConfig<T>): TbPopoverComponent<T>;
   displayPopoverWithComponentRef<T>(componentRef: ComponentRef<TbPopoverComponent>, trigger: Element, renderer: Renderer2,
-                                    componentType: Type<T>, preferredPlacement: PopoverPreferredPlacement = 'top',
-                                    hideOnClickOutside = true, injector?: Injector, context?: any, overlayStyle: any = {},
-                                    popoverStyle: any = {}, style?: any, showCloseButton = true,
-                                    visibleFn: (visible: boolean) => void = () => {},
+                                    componentType: Type<T>, preferredPlacement: PopoverPreferredPlacement,
+                                    hideOnClickOutside: boolean, injector?: Injector, context?: any, overlayStyle?: any,
+                                    popoverStyle?: any, style?: any, showCloseButton?: boolean,
+                                    visibleFn?: (visible: boolean) => void, popoverContentStyle?: any): TbPopoverComponent<T>;
+  displayPopoverWithComponentRef<T>(config: ComponentRef<TbPopoverComponent> | DisplayPopoverWithComponentRefConfig<T>,
+                                    trigger?: Element, renderer?: Renderer2, componentType?: Type<T>,
+                                    preferredPlacement?: PopoverPreferredPlacement, hideOnClickOutside?: boolean,
+                                    injector?: Injector, context?: any, overlayStyle?: any,
+                                    popoverStyle?: any, style?: any, showCloseButton?: boolean,
+                                    visibleFn?: (visible: boolean) => void,
                                     popoverContentStyle: any = {}): TbPopoverComponent<T> {
-    const component = componentRef.instance;
+    let popoverConfig: DisplayPopoverWithComponentRefConfig<T>;
+    if (!(config instanceof ComponentRef) && 'trigger' in config && 'renderer' in config && 'componentType' in config) {
+      popoverConfig = config;
+    } else if(config instanceof ComponentRef) {
+      popoverConfig = {
+        componentRef: config,
+        trigger,
+        renderer,
+        componentType,
+        preferredPlacement,
+        hideOnClickOutside,
+        injector,
+        context,
+        overlayStyle,
+        popoverStyle,
+        style,
+        showCloseButton,
+        visibleFn,
+        popoverContentStyle
+      }
+    } else {
+      throw new Error("Invalid configuration provided for displayPopoverWithComponentRef");
+    }
+    popoverConfig = mergeDeep({} as any, defaultPopoverConfig, popoverConfig);
+    return this._displayPopoverWithComponentRef(popoverConfig);
+  }
+
+
+  private _displayPopoverWithComponentRef<T>(conf: DisplayPopoverWithComponentRefConfig<T>): TbPopoverComponent<T> {
+    const component = conf.componentRef.instance;
     this.popoverWithTriggers.push({
-      trigger,
+      trigger: conf.trigger,
       popoverComponent: component
     });
-    renderer.removeChild(
-      renderer.parentNode(trigger),
-      componentRef.location.nativeElement
+    conf.renderer.removeChild(
+      conf.renderer.parentNode(conf.trigger),
+      conf.componentRef.location.nativeElement
     );
-    const originElementRef = new ElementRef(trigger);
+    const originElementRef = new ElementRef(conf.trigger);
     component.setOverlayOrigin(new CdkOverlayOrigin(originElementRef));
-    component.tbPlacement = preferredPlacement;
-    component.tbComponent = componentType;
-    component.tbComponentInjector = injector;
-    component.tbComponentContext = context;
-    component.tbOverlayStyle = overlayStyle;
-    component.tbPopoverInnerStyle = popoverStyle;
-    component.tbPopoverInnerContentStyle = popoverContentStyle;
-    component.tbComponentStyle = style;
-    component.tbHideOnClickOutside = hideOnClickOutside;
-    component.tbShowCloseButton = showCloseButton;
+    component.tbPlacement = conf.preferredPlacement;
+    component.tbComponent = conf.componentType;
+    component.tbComponentInjector = conf.injector;
+    component.tbComponentContext = conf.context;
+    component.tbOverlayStyle = conf.overlayStyle;
+    component.tbModal = conf.isModal;
+    component.tbPopoverInnerStyle = conf.popoverStyle;
+    component.tbPopoverInnerContentStyle = conf.popoverContentStyle;
+    component.tbComponentStyle = conf.style;
+    component.tbHideOnClickOutside = conf.hideOnClickOutside;
+    component.tbShowCloseButton = conf.showCloseButton;
     component.tbVisibleChange.subscribe((visible: boolean) => {
       if (!visible) {
-        componentRef.destroy();
+        conf.componentRef.destroy();
       }
     });
     component.tbDestroy.subscribe(() => {
       this.removePopoverByComponent(component);
     });
     component.tbHideStart.subscribe(() => {
-      visibleFn(false);
+      conf.visibleFn(false);
     });
     component.show();
-    visibleFn(true);
+    conf.visibleFn(true);
     return component;
   }
 

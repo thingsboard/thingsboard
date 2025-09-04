@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -38,7 +39,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
         boolean assetNameUpdated = false;
         assetCreationLock.lock();
         try {
-            Asset asset = constructAssetFromUpdateMsg(tenantId, assetId, assetUpdateMsg);
+            Asset asset = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
             if (asset == null) {
                 throw new RuntimeException("[{" + tenantId + "}] assetUpdateMsg {" + assetUpdateMsg + " } cannot be converted to asset");
             }
@@ -73,8 +74,6 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
         }
         return Pair.of(created, assetNameUpdated);
     }
-
-    protected abstract Asset constructAssetFromUpdateMsg(TenantId tenantId, AssetId assetId, AssetUpdateMsg assetUpdateMsg);
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg);
 

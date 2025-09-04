@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,21 +19,23 @@ import {
   Component,
   ElementRef,
   forwardRef,
+  HostBinding,
   Input,
   OnDestroy,
   OnInit,
-  ViewChild
+  ViewChild,
+  ViewEncapsulation
 } from '@angular/core';
 import {
+  AbstractControl,
   ControlValueAccessor,
-  UntypedFormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  Validator,
-  AbstractControl, ValidationErrors
+  UntypedFormControl,
+  ValidationErrors,
+  Validator
 } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -48,6 +50,7 @@ export const jsonRequired = (control: AbstractControl): ValidationErrors | null 
   selector: 'tb-json-object-edit',
   templateUrl: './json-object-edit.component.html',
   styleUrls: ['./json-object-edit.component.scss'],
+  encapsulation: ViewEncapsulation.None,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -62,6 +65,8 @@ export const jsonRequired = (control: AbstractControl): ValidationErrors | null 
   ]
 })
 export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {
+
+  @HostBinding('style.position') position = 'relative';
 
   @ViewChild('jsonEditor', {static: true})
   jsonEditorElmRef: ElementRef;

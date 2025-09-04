@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import java.io.Serializable;
         @Type(value = RateLimitsNotificationRuleTriggerConfig.class, name = "RATE_LIMITS"),
         @Type(value = EdgeConnectionNotificationRuleTriggerConfig.class, name = "EDGE_CONNECTION"),
         @Type(value = EdgeCommunicationFailureNotificationRuleTriggerConfig.class, name = "EDGE_COMMUNICATION_FAILURE"),
-        @Type(value = TaskProcessingFailureNotificationRuleTriggerConfig.class, name = "TASK_PROCESSING_FAILURE")
+        @Type(value = TaskProcessingFailureNotificationRuleTriggerConfig.class, name = "TASK_PROCESSING_FAILURE"),
+        @Type(value = ResourcesShortageNotificationRuleTriggerConfig.class, name = "RESOURCES_SHORTAGE")
 })
 public interface NotificationRuleTriggerConfig extends Serializable {
 

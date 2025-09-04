@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,9 +62,7 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Schema(description = "Version of rule node configuration. ", example = "0")
     private int configurationVersion;
     @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = JsonNode.class)
-    private transient JsonNode configuration;
-    @JsonIgnore
-    private byte[] configurationBytes;
+    private JsonNode configuration;
 
     private RuleNodeId externalId;
 
@@ -90,14 +88,6 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Override
     public String getName() {
         return name;
-    }
-
-    public JsonNode getConfiguration() {
-        return BaseDataWithAdditionalInfo.getJson(() -> configuration, () -> configurationBytes);
-    }
-
-    public void setConfiguration(JsonNode data) {
-        setJson(data, json -> this.configuration = json, bytes -> this.configurationBytes = bytes);
     }
 
     @Schema(description = "JSON object with the Rule Node Id. " +

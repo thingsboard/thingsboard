@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 import { AuthUser, User } from '@shared/models/user.model';
 import { UserSettings } from '@shared/models/user-settings.models';
+import { TrendzSettings } from '@shared/models/trendz-settings.models';
 
 export interface SysParamsState {
   userTokenAccessEnabled: boolean;
@@ -28,7 +29,11 @@ export interface SysParamsState {
   userSettings: UserSettings;
   maxResourceSize: number;
   maxDebugModeDurationMinutes: number;
+  maxDataPointsPerRollingArg: number;
+  maxArgumentsPerCF: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
+  calculatedFieldDebugPerTenantLimitsConfiguration?: string;
+  trendzSettings: TrendzSettings;
 }
 
 export interface SysParams extends SysParamsState {

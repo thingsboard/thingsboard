@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,10 +18,9 @@ package org.thingsboard.server.service.edge.rpc.processor.relation;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -34,8 +33,8 @@ import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructor;
-import org.thingsboard.server.service.edge.rpc.constructor.relation.RelationMsgConstructorFactory;
+import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -43,10 +42,9 @@ import java.util.List;
 import java.util.Set;
 
 @Slf4j
-public abstract class RelationEdgeProcessor extends BaseRelationProcessor implements RelationProcessor {
-
-    @Autowired
-    private RelationMsgConstructorFactory relationMsgConstructorFactory;
+@Component
+@TbCoreComponent
+public class RelationEdgeProcessor extends BaseRelationProcessor implements RelationProcessor {
 
     @Override
     public ListenableFuture<Void> processRelationMsgFromEdge(TenantId tenantId, Edge edge, RelationUpdateMsg relationUpdateMsg) {
@@ -60,18 +58,7 @@ public abstract class RelationEdgeProcessor extends BaseRelationProcessor implem
     }
 
     @Override
-    public DownlinkMsg convertRelationEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        EntityRelation entityRelation = JacksonUtil.convertValue(edgeEvent.getBody(), EntityRelation.class);
-        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-        RelationUpdateMsg relationUpdateMsg = ((RelationMsgConstructor) relationMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                .constructRelationUpdatedMsg(msgType, entityRelation);
-        return DownlinkMsg.newBuilder()
-                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                .addRelationUpdateMsg(relationUpdateMsg)
-                .build();
-    }
-
-    public ListenableFuture<Void> processRelationNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
+    public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
         EntityRelation relation = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityRelation.class);
         if (relation == null) {
             return Futures.immediateFuture(null);
@@ -95,6 +82,22 @@ public abstract class RelationEdgeProcessor extends BaseRelationProcessor implem
                     JacksonUtil.valueToTree(relation)));
         }
         return Futures.transform(Futures.allAsList(futures), voids -> null, dbCallbackExecutorService);
+    }
+
+    @Override
+    public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
+        EntityRelation entityRelation = JacksonUtil.convertValue(edgeEvent.getBody(), EntityRelation.class);
+        UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
+        RelationUpdateMsg relationUpdateMsg = EdgeMsgConstructorUtils.constructRelationUpdatedMsg(msgType, entityRelation);
+        return DownlinkMsg.newBuilder()
+                .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                .addRelationUpdateMsg(relationUpdateMsg)
+                .build();
+    }
+
+    @Override
+    public EdgeEventType getEdgeEventType() {
+        return EdgeEventType.RELATION;
     }
 
 }

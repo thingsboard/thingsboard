@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -25,7 +25,7 @@ import {
 import { Observable, of } from 'rxjs';
 import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
-import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
+import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { DashboardInfo } from '@app/shared/models/dashboard.models';
 import { DashboardService } from '@core/http/dashboard.service';
@@ -39,6 +39,7 @@ import { getEntityDetailsPageURL } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AuthUser } from '@shared/models/user.model';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
   selector: 'tb-dashboard-autocomplete',
@@ -50,7 +51,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     multi: true
   }]
 })
-export class DashboardAutocompleteComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class DashboardAutocompleteComponent implements ControlValueAccessor, OnInit {
 
   private dirty = false;
 
@@ -103,6 +104,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
   disabled: boolean;
 
   @ViewChild('dashboardInput', {static: true}) dashboardInput: ElementRef;
+  @ViewChild('dashboardInput', {read: MatAutocompleteTrigger, static: true}) dashboardAutocomplete: MatAutocompleteTrigger;
 
   filteredDashboards: Observable<Array<DashboardInfo>>;
 
@@ -151,14 +153,9 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
           this.updateView(modelValue);
         }),
         map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
-        distinctUntilChanged(),
         switchMap(name => this.fetchDashboards(name) ),
         share()
       );
-  }
-
-  ngAfterViewInit(): void {
-    // this.selectFirstDashboardIfNeeded();
   }
 
   selectFirstDashboardIfNeeded(): void {
@@ -183,6 +180,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     this.disabled = isDisabled;
     if (this.disabled) {
       this.selectDashboardFormGroup.disable({emitEvent: false});
+      this.dashboardAutocomplete.closePanel();
     } else {
       this.selectDashboardFormGroup.enable({emitEvent: false});
     }
@@ -192,15 +190,22 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     this.searchText = '';
     if (value != null) {
       if (typeof value === 'string') {
-        this.dashboardService.getDashboardInfo(value).subscribe(
-          (dashboard) => {
+        this.dashboardService.getDashboardInfo(value, {ignoreLoading: true, ignoreErrors: true}).subscribe({
+          next: (dashboard) => {
             this.modelValue = this.useIdValue ? dashboard.id.id : dashboard;
             if (this.useDashboardLink) {
               this.dashboardURL = getEntityDetailsPageURL(this.modelValue as string, EntityType.DASHBOARD);
             }
             this.selectDashboardFormGroup.get('dashboard').patchValue(dashboard, {emitEvent: false});
+          },
+          error: () => {
+            this.modelValue = null;
+            this.selectDashboardFormGroup.get('dashboard').patchValue('', {emitEvent: false});
+            if (this.required) {
+              this.propagateChange(this.modelValue);
+            }
           }
-        );
+        });
       } else {
         this.modelValue = this.useIdValue ? value.id.id : value;
         this.selectDashboardFormGroup.get('dashboard').patchValue(value, {emitEvent: false});

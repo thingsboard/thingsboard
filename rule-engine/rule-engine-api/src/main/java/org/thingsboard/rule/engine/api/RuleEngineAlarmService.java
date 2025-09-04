@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -41,9 +42,6 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 
 import java.util.Collection;
 
-/**
- * Created by ashvayka on 02.04.18.
- */
 public interface RuleEngineAlarmService {
 
     /*
@@ -70,13 +68,15 @@ public interface RuleEngineAlarmService {
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
 
     // Other API
-    Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
+    boolean deleteAlarm(TenantId tenantId, AlarmId alarmId);
 
     ListenableFuture<Alarm> findAlarmByIdAsync(TenantId tenantId, AlarmId alarmId);
 
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 
@@ -99,4 +99,5 @@ public interface RuleEngineAlarmService {
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId, AlarmDataQuery query, Collection<EntityId> orderedEntityIds);
 
     PageData<EntitySubtype> findAlarmTypesByTenantId(TenantId tenantId, PageLink pageLink);
+
 }

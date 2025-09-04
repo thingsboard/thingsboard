@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -87,6 +87,7 @@ export type PropertyConditionFunction = (property: FormProperty, model: any) => 
 export interface FormPropertyBase {
   id: string;
   name: string;
+  hint?: string;
   group?: string;
   type: FormPropertyType;
   default: any;
@@ -162,8 +163,13 @@ export interface FormHtmlSection extends FormPropertyBase {
   htmlContent?: string;
 }
 
+export interface FormUnitProperty extends FormPropertyBase {
+  supportsUnitConversion?: boolean;
+}
+
 export type FormProperty = FormPropertyBase & FormTextareaProperty & FormNumberProperty & FormSelectProperty & FormRadiosProperty
-  & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection;
+  & FormDateTimeProperty & FormJavascriptProperty & FormMarkdownProperty & FormFieldSetProperty & FormArrayProperty & FormHtmlSection
+  & FormUnitProperty;
 
 export const cleanupFormProperties = (properties: FormProperty[]): FormProperty[] => {
   for (const property of properties) {
@@ -181,14 +187,14 @@ export const cleanupFormProperty = (property: FormProperty): FormProperty => {
   if (property.type !== FormPropertyType.textarea) {
     delete property.rows;
   }
-  if (property.type !== FormPropertyType.fieldset) {
-    delete property.properties;
-  } else if (property.properties?.length) {
-    property.properties = cleanupFormProperties(property.properties);
-  }
   if (property.type !== FormPropertyType.array) {
     delete property.arrayItemName;
     delete property.arrayItemType;
+  }
+  if (property.type !== FormPropertyType.fieldset && property.arrayItemType !== FormPropertyType.fieldset) {
+    delete property.properties;
+  } else if (property.properties?.length) {
+    property.properties = cleanupFormProperties(property.properties);
   }
   if (property.type !== FormPropertyType.select) {
     delete property.multiple;
@@ -212,6 +218,9 @@ export const cleanupFormProperty = (property: FormProperty): FormProperty => {
   if (property.type !== FormPropertyType.htmlSection) {
     delete property.htmlClassList;
     delete property.htmlContent;
+  }
+  if (property.type !== FormPropertyType.units) {
+    delete property.supportsUnitConversion;
   }
   for (const key of Object.keys(property)) {
     const val = property[key];
@@ -237,6 +246,7 @@ export interface FormPropertyContainerBase {
 }
 
 export interface FormPropertyRow extends FormPropertyContainerBase {
+  hint?: string;
   properties?: FormProperty[];
   switch?: FormProperty;
   rowClass?: string;
@@ -276,9 +286,9 @@ export const toPropertyGroups = (properties: FormProperty[],
                                  customTranslate: CustomTranslatePipe,
                                  sanitizer: DomSanitizer): FormPropertyGroup[] => {
   const groups: {title: string, properties: FormProperty[]}[] = [];
-  for (let property of properties) {
+  for (const property of properties) {
     if (!property.group) {
-      let group = groups.length ? groups[groups.length - 1] : null;
+      const group = groups.length ? groups[groups.length - 1] : null;
       if (group && !group.title) {
         group.properties.push(property);
       } else {
@@ -311,7 +321,7 @@ const toPropertyContainers = (properties: FormProperty[],
                               customTranslate: CustomTranslatePipe,
                               sanitizer: DomSanitizer): FormPropertyContainer[] => {
   const result: FormPropertyContainer[] = [];
-  for (let property of properties) {
+  for (const property of properties) {
     if (property.type === FormPropertyType.array) {
       const propertyArray: FormPropertyArray = {
         property,
@@ -362,6 +372,7 @@ const toPropertyContainers = (properties: FormProperty[],
       if (!propertyRow) {
         propertyRow = {
           label: property.name,
+          hint: property.hint,
           type: FormPropertyContainerType.row,
           properties: [],
           rowClass: property.rowClass,
@@ -382,7 +393,7 @@ const toPropertyContainers = (properties: FormProperty[],
       }
     }
   }
-  for (let container of result.filter(c =>
+  for (const container of result.filter(c =>
     c.type === FormPropertyContainerType.row && !c.switch && c.properties?.length === 1)) {
     const property = container.properties[0];
     if (isInputFieldPropertyType(property.type)) {

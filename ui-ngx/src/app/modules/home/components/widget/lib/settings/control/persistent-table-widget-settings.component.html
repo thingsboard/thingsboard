@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -43,15 +43,60 @@
       <mat-slide-toggle formControlName="allowDelete">
         {{ 'widgets.persistent-table.allow-delete-request' | translate }}
       </mat-slide-toggle>
-      <section class="flex flex-col gap-2 gt-xs:flex-row gt-xs:items-center gt-xs:justify-start">
-        <mat-slide-toggle class="flex-1" formControlName="displayPagination">
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>widgets.table.pagination</div>
+        <mat-slide-toggle class="mat-slide" formControlName="displayPagination">
           {{ 'widgets.table.display-pagination' | translate }}
         </mat-slide-toggle>
-        <mat-form-field class="mat-block flex-1">
-          <mat-label translate>widgets.table.default-page-size</mat-label>
-          <input matInput type="number" min="1" step="1" formControlName="defaultPageSize">
-        </mat-form-field>
-      </section>
+        <div class="tb-form-row space-between column-xs">
+          <div class="fixed-title-width !min-w-30">{{ 'widgets.table.page-step-settings' | translate }}</div>
+          <div class="flex flex-row items-center justify-start gap-2">
+            <div class="tb-small-label" translate>widgets.table.page-step-increment</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="pageStepIncrement" type="number" min="1" step="1" required
+                     placeholder="{{ 'widget-config.set' | translate }}">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="(persistentTableWidgetSettingsForm.get('pageStepIncrement').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-increment-format-message') | translate"
+                        *ngIf="persistentTableWidgetSettingsForm.get('pageStepIncrement').invalid
+                        && persistentTableWidgetSettingsForm.get('pageStepIncrement').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+            <mat-divider vertical class="xs:hidden"></mat-divider>
+            <div class="tb-small-label" translate>widgets.table.page-step-count</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="pageStepCount" type="number" min="1" max="100" step="1" required
+                     placeholder="{{ 'widget-config.set' | translate }}">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="(persistentTableWidgetSettingsForm.get('pageStepCount').hasError('required')
+                                     ? 'widgets.value-source.value-required'
+                                     : 'widgets.table.page-step-count-format-message') | translate"
+                        *ngIf="persistentTableWidgetSettingsForm.get('pageStepCount').invalid
+                        && persistentTableWidgetSettingsForm.get('pageStepCount').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-row space-between column-xs">
+          <div translate>widgets.table.default-page-size</div>
+          <mat-form-field appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="defaultPageSize" placeholder="{{ 'widget-config.set' | translate }}">
+              <mat-option *ngFor="let size of pageStepSizeValues" [value]="size">
+                {{ size }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+      </div>
       <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.table.default-sort-order</mat-label>
         <input matInput formControlName="defaultSortOrder">

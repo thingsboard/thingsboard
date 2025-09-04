@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,19 +27,20 @@ import {
   ViewChild
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
   ComponentStyle,
+  createValueFormatterFromSettings,
   DateFormatProcessor,
-  getDataKey,
   getLabel,
   getSingleTsValue,
   iconStyle,
   overlayStyle,
   resolveCssSize,
-  textStyle
+  textStyle,
+  ValueFormatProcessor
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
@@ -100,8 +101,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   private panelResize$: ResizeObserver;
 
   private horizontal = false;
-  private decimals = 0;
-  private units = '';
+  private valueFormat: ValueFormatProcessor;
 
   constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
@@ -116,15 +116,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.ctx.$scope.valueCardWidget = this;
     this.settings = {...valueCardDefaultSettings(this.horizontal), ...this.ctx.settings};
 
-    this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
-    const dataKey = getDataKey(this.ctx.datasources);
-    if (isDefinedAndNotNull(dataKey?.decimals)) {
-      this.decimals = dataKey.decimals;
-    }
-    if (dataKey?.units) {
-      this.units = dataKey.units;
-    }
+    this.valueFormat = createValueFormatterFromSettings(this.ctx);
 
     this.layout = this.settings.layout;
 
@@ -187,7 +179,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       ts = tsValue[0];
       value = tsValue[1];
-      this.valueText = formatValue(value, this.decimals, this.units, false);
+      this.valueText = this.valueFormat.format(value);
     } else {
       this.valueText = 'N/A';
     }

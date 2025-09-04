@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -689,7 +689,7 @@ pre.tb-highlight {
     }
   }
 
-  mat-toolbar.mat-mdc-table-toolbar:not(.mat-primary), .mat-mdc-cell, .mat-expansion-panel-header {
+  mat-toolbar.mat-mdc-table-toolbar:not(.mat-primary), .mat-mdc-cell, .mat-expansion-panel-header, mat-card-header.mat-mdc-card-header {
     button.mat-mdc-icon-button {
       .mat-icon {
         color: rgba(0, 0, 0, .54);
@@ -1255,6 +1255,13 @@ pre.tb-highlight {
     }
   }
 
+  .tb-chip-row-ellipsis {
+    overflow: hidden;
+    .mdc-evolution-chip__cell--primary, .mdc-evolution-chip__action--primary, .mdc-evolution-chip__text-label {
+      overflow: hidden;
+    }
+  }
+
   @media #{$mat-lt-md} {
     .mat-mdc-form-field {
       .mat-mdc-form-field-infix {
@@ -1290,6 +1297,12 @@ pre.tb-highlight {
 
     &:disabled {
       background: rgba(0, 0, 0, 0.06);
+    }
+  }
+
+  &.tox-fullscreen {
+    mat-sidenav.tb-site-sidenav {
+      z-index: 1;
     }
   }
 }

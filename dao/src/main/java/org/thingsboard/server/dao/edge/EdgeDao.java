@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,11 +35,13 @@ import java.util.UUID;
  * The Interface EdgeDao.
  *
  */
-public interface EdgeDao extends Dao<Edge>, TenantEntityDao {
+public interface EdgeDao extends Dao<Edge>, TenantEntityDao<Edge> {
 
     Edge save(TenantId tenantId, Edge edge);
 
     EdgeInfo findEdgeInfoById(TenantId tenantId, UUID edgeId);
+
+    PageData<Edge> findActiveEdges(PageLink pageLink);
 
     PageData<EdgeId> findEdgeIdsByTenantId(UUID tenantId, PageLink pageLink);
 

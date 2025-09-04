@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,26 +15,20 @@
  */
 package org.thingsboard.server.service.install.update;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
-import org.thingsboard.server.common.data.query.DynamicValue;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
-import org.thingsboard.server.service.install.InstallScripts;
+import org.thingsboard.server.service.install.DbUpgradeExecutorService;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
@@ -44,27 +38,21 @@ import java.util.concurrent.ExecutionException;
 @Service
 @Profile("install")
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultDataUpdateService implements DataUpdateService {
 
     private static final int MAX_PENDING_SAVE_RULE_NODE_FUTURES = 256;
     private static final int DEFAULT_PAGE_SIZE = 1024;
 
-    @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
-    private ComponentDiscoveryService componentDiscoveryService;
-
-    @Autowired
-    JpaExecutorService jpaExecutorService;
-
-    @Autowired
-    private InstallScripts installScripts;
+    private final RuleChainService ruleChainService;
+    private final ComponentDiscoveryService componentDiscoveryService;
+    private final DbUpgradeExecutorService executorService;
 
     @Override
     public void updateData() throws Exception {
         log.info("Updating data ...");
         //TODO: should be cleaned after each release
+
         log.info("Data updated.");
     }
 
@@ -111,7 +99,7 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     ruleNodeId, ruleNodeType, fromVersion, toVersion);
             try {
                 TbNodeUpgradeUtils.upgradeConfigurationAndVersion(ruleNode, ruleNodeClassInfo);
-                saveFutures.add(jpaExecutorService.submit(() -> {
+                saveFutures.add(executorService.submit(() -> {
                     ruleChainService.saveRuleNode(TenantId.SYS_TENANT_ID, ruleNode);
                     log.debug("Successfully upgrade rule node with id: {} type: {} fromVersion: {} toVersion: {}",
                             ruleNodeId, ruleNodeType, fromVersion, toVersion);
@@ -134,60 +122,6 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 ruleChainService.findAllRuleNodeIdsByTypeAndVersionLessThan(type, toVersion, pageLink), DEFAULT_PAGE_SIZE
         ).forEach(ruleNodeIds::add);
         return ruleNodeIds;
-    }
-
-    boolean convertDeviceProfileForVersion330(JsonNode profileData) {
-        boolean isUpdated = false;
-        if (profileData.has("alarms") && !profileData.get("alarms").isNull()) {
-            JsonNode alarms = profileData.get("alarms");
-            for (JsonNode alarm : alarms) {
-                if (alarm.has("createRules")) {
-                    JsonNode createRules = alarm.get("createRules");
-                    for (AlarmSeverity severity : AlarmSeverity.values()) {
-                        if (createRules.has(severity.name())) {
-                            JsonNode spec = createRules.get(severity.name()).get("condition").get("spec");
-                            if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
-                                isUpdated = true;
-                            }
-                        }
-                    }
-                }
-                if (alarm.has("clearRule") && !alarm.get("clearRule").isNull()) {
-                    JsonNode spec = alarm.get("clearRule").get("condition").get("spec");
-                    if (convertDeviceProfileAlarmRulesForVersion330(spec)) {
-                        isUpdated = true;
-                    }
-                }
-            }
-        }
-        return isUpdated;
-    }
-
-    boolean convertDeviceProfileAlarmRulesForVersion330(JsonNode spec) {
-        if (spec != null) {
-            if (spec.has("type") && spec.get("type").asText().equals("DURATION")) {
-                if (spec.has("value")) {
-                    long value = spec.get("value").asLong();
-                    var predicate = new FilterPredicateValue<>(
-                            value, null, new DynamicValue<>(null, null, false)
-                    );
-                    ((ObjectNode) spec).remove("value");
-                    ((ObjectNode) spec).putPOJO("predicate", predicate);
-                    return true;
-                }
-            } else if (spec.has("type") && spec.get("type").asText().equals("REPEATING")) {
-                if (spec.has("count")) {
-                    int count = spec.get("count").asInt();
-                    var predicate = new FilterPredicateValue<>(
-                            count, null, new DynamicValue<>(null, null, false)
-                    );
-                    ((ObjectNode) spec).remove("count");
-                    ((ObjectNode) spec).putPOJO("predicate", predicate);
-                    return true;
-                }
-            }
-        }
-        return false;
     }
 
     public static boolean getEnv(String name, boolean defaultValue) {

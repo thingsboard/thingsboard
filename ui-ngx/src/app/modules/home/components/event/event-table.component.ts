@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @Input()
   debugEventTypes: Array<DebugEventType>;
+
+  @Input()
+  hideClearEventAction: boolean = false;
 
   activeValue = false;
   dirtyValue = false;
@@ -147,12 +150,13 @@ export class EventTableComponent implements OnInit, AfterViewInit, OnDestroy {
       this.cd,
       this.store,
       this.functionTestButtonLabel,
-      this.debugEventSelected
+      this.debugEventSelected,
+      this.hideClearEventAction
     );
   }
 
   ngAfterViewInit() {
-    this.isEmptyData$ = this.entitiesTable.dataSource.isEmpty().subscribe(value => this.eventTableConfig.hideClearEventAction = value);
+    this.isEmptyData$ = this.entitiesTable.dataSource.isEmpty().subscribe(value => this.eventTableConfig.hideClearEventAction = value || this.hideClearEventAction);
   }
 
   ngOnDestroy() {

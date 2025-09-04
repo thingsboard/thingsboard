@@ -62,7 +62,7 @@
     },
     {
       "tag": "value-text",
-      "stateRenderFunction": "var valueTextFont = ctx.properties.valueTextFont;\nvar valueTextColor = ctx.properties.valueTextColor;\nvar units = ctx.properties.valueUnits ? ctx.properties.units : null;\nvar currentVolume = ctx.values.temperature;\nvar decimals = Math.floor(ctx.properties.temperatureStep) === ctx.properties.temperatureStep;\nvar valueText = ctx.api.formatValue(currentVolume, decimals ? 0 : 1, units, !decimals);\nctx.api.font(element, valueTextFont, valueTextColor);\nctx.api.text(element, valueText);",
+      "stateRenderFunction": "var valueTextFont = ctx.properties.valueTextFont;\nvar valueTextColor = ctx.properties.valueTextColor;\nvar currentVolume = ctx.values.temperature;\nvar decimals = Math.floor(ctx.properties.temperatureStep) === ctx.properties.temperatureStep;\nvar valueText = ctx.api.formatValue(currentVolume, {units: ctx.properties.units, decimals: decimals ? 0 : 1, ignoreUnitSymbol: !ctx.properties.valueUnits});\nctx.api.font(element, valueTextFont, valueTextColor);\nctx.api.text(element, valueText);",
       "actions": null
     },
     {
@@ -366,80 +366,49 @@
       "name": "{i18n:scada.symbol.colors}",
       "type": "color",
       "default": "#FFFFFF",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.running}",
       "divider": true,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "stoppedColor",
       "name": "{i18n:scada.symbol.colors}",
       "type": "color",
       "default": "#666666",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.stopped}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "warningColor",
       "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#FAA405",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.warning}",
       "divider": true,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "criticalColor",
       "name": "{i18n:scada.symbol.alarm-colors}",
       "type": "color",
       "default": "#D12730",
-      "required": null,
       "subLabel": "{i18n:scada.symbol.critical}",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "minTemperature",
       "name": "{i18n:scada.symbol.temperature}",
       "type": "number",
       "default": 10,
-      "required": null,
       "subLabel": "Min",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
       "rowClass": "column-xs",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "maxTemperature",
@@ -448,14 +417,9 @@
       "default": 45,
       "required": true,
       "subLabel": "Max",
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": 1
+      "step": 1,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "temperatureStep",
@@ -463,31 +427,17 @@
       "type": "number",
       "default": 1,
       "required": true,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": 0.5
+      "step": 0.5,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueTextColor",
       "name": "{i18n:scada.symbol.value-text}",
       "type": "color",
       "default": "#002878",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueTextFont",
@@ -500,64 +450,33 @@
         "weight": "500",
         "style": "normal"
       },
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueUnits",
       "name": "{i18n:scada.symbol.value-units}",
       "type": "switch",
       "default": false,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "units",
       "name": "{i18n:scada.symbol.value-units}",
       "type": "units",
       "default": "°C",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "supportsUnitConversion": true,
+      "disabled": false,
+      "visible": true
     },
     {
       "id": "valueBoxBackground",
       "name": "{i18n:scada.symbol.value-box-background}",
       "type": "color",
       "default": "#FFFFFF",
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
+      "disabled": false,
+      "visible": true
     }
   ]
 }]]></tb:metadata>
@@ -570,7 +489,7 @@
   <rect x="1" y="1" width="798" height="542" rx="31" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
   <rect x="80" y="72.001" width="180" height="128" rx="8"/>
   <rect x="81" y="73.001" width="178" height="126" rx="7" stroke="#000" stroke-opacity=".87" stroke-width="2" tb:tag="value-box-background"/>
-  <text x="170.51953" y="139.75" dominant-baseline="middle" fill="#002878" font-family="Roboto" font-size="40px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan>27</tspan></text>
+  <text x="170.51953" y="139.75" dominant-baseline="middle" fill="#002878" font-family="Roboto, sans-serif" font-size="40px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan>27</tspan></text>
   <ellipse cx="542" cy="284" rx="180" ry="180" fill="#fff"/>
   <path d="m720.5 284c0 98.583-79.918 178.5-178.5 178.5s-178.5-79.918-178.5-178.5 79.918-178.5 178.5-178.5 178.5 79.918 178.5 178.5z" stroke="#000" stroke-opacity=".12" stroke-width="2.9985"/>
   <g clip-path="url(#clip1_3215_7169)">
@@ -587,7 +506,7 @@
    <path d="m722 284c0 99.411-80.589 180-180 180s-180-80.589-180-180 80.589-180 180-180 180 80.589 180 180zm-331.96 0c0 83.926 68.035 151.96 151.96 151.96s151.96-68.035 151.96-151.96-68.035-151.96-151.96-151.96-151.96 68.035-151.96 151.96z"/>
   </mask>
   <path d="m722 284c0 99.411-80.589 180-180 180s-180-80.589-180-180 80.589-180 180-180 180 80.589 180 180zm-331.96 0c0 83.926 68.035 151.96 151.96 151.96s151.96-68.035 151.96-151.96-68.035-151.96-151.96-151.96-151.96 68.035-151.96 151.96z" fill="#DEDEDE" mask="url(#path-29-inside-1_3215_7169)" stroke="#000" stroke-opacity=".87" stroke-width="4" tb:tag="circle-background"/>
- </g><path d="m269.06 0s-269.06 0-269.06 100.5v492.54c0 3.9768 7.1636 6.9606 16 6.9606h768c8.836 0 16-2.9838 16-6.9606v-492.54c0-100.5-264.28-100.5-264.28-100.5h-135.72zm268.28 121.8c-5.1548 0-9.3332 1.8804-9.3332 4.2v450.6c0 2.3196 4.1788 4.2 9.3332 4.2h58.664c5.1548 0 9.3332-1.8804 9.3332-4.2v-450.6c0-2.3196-4.1788-4.2-9.3332-4.2z" fill="#000" fill-opacity="0" style="stroke-width:2.4495" tb:tag="clickArea"/><g tb:tag="levelUpButton">
+ </g><path d="m269.06 0s-269.06 0-269.06 100.5v492.54c0 3.9768 7.1636 6.9606 16 6.9606h768c8.836 0 16-2.9838 16-6.9606v-492.54c0-100.5-264.28-100.5-264.28-100.5h-135.72zm268.28 121.8c-5.1548 0-9.3332 1.8804-9.3332 4.2v450.6c0 2.3196 4.1788 4.2 9.3332 4.2h58.664c5.1548 0 9.3332-1.8804 9.3332-4.2v-450.6c0-2.3196-4.1788-4.2-9.3332-4.2z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><g tb:tag="levelUpButton">
   <path d="m164 290.19c0 5.42-4.394 9.814-9.815 9.814h-68.371c-5.4203 0-9.8143-4.394-9.8143-9.814v-68.373c0-5.421 4.394-9.815 9.8143-9.815h68.371c5.421 0 9.815 4.394 9.815 9.815z"/>
   <path d="m163 290.19c0 4.868-3.947 8.814-8.815 8.814h-68.371c-4.868 0-8.8143-3.946-8.8143-8.814v-68.373c0-4.868 3.9463-8.815 8.8143-8.815h68.371c4.868 0 8.815 3.947 8.815 8.815z" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
   <path d="m135.92 263.33c0.89 0 1.336-1.077 0.707-1.706l-15.921-15.921c-0.39-0.39-1.023-0.39-1.413 0l-15.921 15.921c-0.629 0.629-0.183 1.706 0.707 1.706z" fill="#000" fill-opacity=".87"/>

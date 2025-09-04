@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -85,17 +85,20 @@ export class TimeSeriesChartAxisSettingsButtonComponent implements OnInit, Contr
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        axisSettings: this.modelValue,
-        axisType: this.axisType,
-        panelTitle: this.panelTitle,
-        advanced: this.advanced
-      };
-      const axisSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartAxisSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+      const axisSettingsPanelPopover = this.popoverService.displayPopover({
+        trigger,
+        renderer: this.renderer,
+        componentType: TimeSeriesChartAxisSettingsPanelComponent,
+        hostView: this.viewContainerRef,
+        preferredPlacement: ['leftOnly', 'leftTopOnly', 'leftBottomOnly'],
+        context: {
+          axisSettings: this.modelValue,
+          axisType: this.axisType,
+          panelTitle: this.panelTitle,
+          advanced: this.advanced
+        },
+        isModal: true
+      });
       axisSettingsPanelPopover.tbComponentRef.instance.popover = axisSettingsPanelPopover;
       axisSettingsPanelPopover.tbComponentRef.instance.axisSettingsApplied.subscribe((axisSettings) => {
         axisSettingsPanelPopover.hide();

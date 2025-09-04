@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,12 +25,13 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
 import { Renderer2 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { formatValue, isDefinedAndNotNull, isNumeric, mergeDeep } from '@core/utils';
+import { isDefinedAndNotNull, isNumeric, mergeDeep } from '@core/utils';
 import { DataKey } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams } from 'echarts/types/dist/shared';
 import { SVG, Svg } from '@svgdotjs/svg.js';
 import { toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
+import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
 export abstract class TbLatestChart<S extends LatestChartSettings> {
 
@@ -38,8 +39,7 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
 
   protected readonly settings: S;
 
-  protected readonly decimals: number;
-  protected readonly units: string;
+  protected valueFormatter: ValueFormatProcessor;
 
   protected total = 0;
   protected totalText = 'N/A';
@@ -64,11 +64,8 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
       this.defaultSettings(),
       this.inputSettings as S);
 
-    this.decimals = this.ctx.decimals;
-    this.units = this.ctx.units;
-
     this.initSettings();
-
+    this.prepareValueFormat();
     this.setupData();
 
     this.onResize();
@@ -78,6 +75,15 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
       });
       this.shapeResize$.observe(this.chartElement);
     }
+  }
+
+  private prepareValueFormat() {
+    const units = this.ctx.units;
+
+    if (this.settings.showTooltip) {
+      this.settings.tooltipValueFormater = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units, decimals: this.settings.tooltipValueDecimals});
+    }
+    this.valueFormatter = ValueFormatProcessor.fromSettings(this.ctx.$injector, {units, decimals: this.ctx.decimals});
   }
 
   private setupData(): void {
@@ -223,40 +229,42 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
   }
 
   protected updateSeriesData(initial = false) {
-    this.total = 0;
-    this.totalText = 'N/A';
-    let hasValue = false;
-    for (const dataItem of this.dataItems) {
-      if (dataItem.enabled && dataItem.hasValue) {
-        hasValue = true;
-        this.total += dataItem.value;
-      }
-      if (this.settings.showLegend) {
-        const legendItem = this.legendItems.find(item => item.dataKey === dataItem.dataKey);
-        if (dataItem.hasValue) {
-          legendItem.hasValue = true;
-          legendItem.value = formatValue(dataItem.value, this.decimals, this.units, false);
-        } else {
-          legendItem.hasValue = false;
-          legendItem.value = '--';
+    if (!this.latestChart.isDisposed()) {
+      this.total = 0;
+      this.totalText = 'N/A';
+      let hasValue = false;
+      for (const dataItem of this.dataItems) {
+        if (dataItem.enabled && dataItem.hasValue) {
+          hasValue = true;
+          this.total += dataItem.value;
+        }
+        if (this.settings.showLegend) {
+          const legendItem = this.legendItems.find(item => item.dataKey === dataItem.dataKey);
+          if (dataItem.hasValue) {
+            legendItem.hasValue = true;
+            legendItem.value = this.valueFormatter.format(dataItem.value);
+          } else {
+            legendItem.hasValue = false;
+            legendItem.value = '--';
+          }
         }
       }
-    }
-    if (this.settings.showTotal || this.settings.showLegend) {
-      if (hasValue) {
-        this.totalText = formatValue(this.total, this.decimals, this.units, false);
-        if (this.settings.showLegend && !this.settings.showTotal) {
-          this.legendItems[this.legendItems.length - 1].hasValue = true;
-          this.legendItems[this.legendItems.length - 1].value = this.totalText;
+      if (this.settings.showTotal || this.settings.showLegend) {
+        if (hasValue) {
+          this.totalText = this.valueFormatter.format(this.total);
+          if (this.settings.showLegend && !this.settings.showTotal) {
+            this.legendItems[this.legendItems.length - 1].hasValue = true;
+            this.legendItems[this.legendItems.length - 1].value = this.totalText;
+          }
+        } else if (this.settings.showLegend && !this.settings.showTotal) {
+          this.legendItems[this.legendItems.length - 1].hasValue = false;
+          this.legendItems[this.legendItems.length - 1].value = '--';
         }
-      } else if (this.settings.showLegend && !this.settings.showTotal) {
-        this.legendItems[this.legendItems.length - 1].hasValue = false;
-        this.legendItems[this.legendItems.length - 1].value = '--';
       }
+      this.doUpdateSeriesData();
+      this.latestChart.setOption(this.latestChartOption);
+      this.afterUpdateSeriesData(initial);
     }
-    this.doUpdateSeriesData();
-    this.latestChart.setOption(this.latestChartOption);
-    this.afterUpdateSeriesData(initial);
   }
 
   private drawChart() {
@@ -270,11 +278,10 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
     this.latestChartOption = {
       tooltip: {
         trigger: this.settings.showTooltip ? 'item' : 'none',
-        confine: false,
-        appendTo: 'body',
+        confine: true,
         formatter: (params: CallbackDataParams) =>
           this.settings.showTooltip
-            ? latestChartTooltipFormatter(this.renderer, this.settings, params, this.units, this.total, this.dataItems)
+            ? latestChartTooltipFormatter(this.renderer, this.settings, params, this.total, this.dataItems)
             : undefined,
         padding: [4, 8],
         backgroundColor: this.settings.tooltipBackgroundColor,

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,17 +15,15 @@
     limitations under the License.
 
 -->
-<div class="flex max-w-sm flex-col gap-3 p-2">
+<div class="flex w-96 flex-col gap-3 p-2">
   <div class="tb-form-panel-title" translate>debug-settings.label</div>
-  <div class="hint-container">
-    <div class="tb-form-hint tb-primary-fill tb-flex center">
-      @if (debugLimitsConfiguration) {
-        {{ 'debug-settings.hint.main-limited' | translate: { entity: entityLabel ?? ('debug-settings.entity' | translate), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
-      } @else {
-        {{ 'debug-settings.hint.main' | translate }}
-      }
+  @if (maxMessagesCount) {
+    <div class="hint-container">
+      <div class="tb-form-hint tb-primary-fill tb-flex center">
+        {{ 'debug-settings.hint.main-limited' | translate: { entity: (entityLabel | translate | lowercase), msg: maxMessagesCount, time: (maxTimeFrameDuration | milliSecondsToTimeString: true : true) } }}
+      </div>
     </div>
-  </div>
+  }
   <div class="flex flex-col gap-3">
     <mat-slide-toggle class="mat-slide" [formControl]="onFailuresControl">
       <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.on-failure' | translate }}">
@@ -33,12 +31,12 @@
       </div>
     </mat-slide-toggle>
     <div class="align-center flex justify-between">
-      <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl">
+      <mat-slide-toggle class="mat-slide" [formControl]="debugAllControl" (change)="debugAllControl.markAsTouched()">
         <div tb-hint-tooltip-icon="{{ 'debug-settings.hint.all-messages' | translate }}">
-          {{ 'debug-settings.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
+          {{ 'debug-settings.all-messages' | translate: { time: (isDebugAllActive$ | async) && !allEnabled && debugAllControl.untouched ? (allEnabledUntil | durationLeft) : (maxDebugModeDuration | milliSecondsToTimeString: true : true) } }}
         </div>
       </mat-slide-toggle>
-      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled"
+      <button mat-icon-button *ngIf="(isDebugAllActive$ | async) && !allEnabled && debugAllControl.untouched"
               class="tb-mat-20"
               matTooltip="{{ 'action.reset' | translate }}"
               matTooltipPosition="above"
@@ -48,20 +46,32 @@
       </button>
     </div>
   </div>
-  <div class="flex justify-end">
-    <button mat-button
-            color="primary"
-            type="button"
-            (click)="onCancel()">
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async) || !onFailuresControl.dirty && !debugAllControl.dirty"
-            (click)="onApply()">
-      {{ 'action.apply' | translate }}
-    </button>
+  <div class="flex justify-between">
+    <div>
+      @if (additionalActionConfig) {
+        <button mat-button
+                color="primary"
+                type="button"
+                (click)="onCancel(); additionalActionConfig.action()">
+          {{ additionalActionConfig.title }}
+        </button>
+      }
+    </div>
+    <div class="flex gap-2">
+      <button mat-button
+              color="primary"
+              type="button"
+              (click)="onCancel()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async) || !onFailuresControl.dirty && !debugAllControl.dirty"
+              (click)="onApply()">
+        {{ 'action.apply' | translate }}
+      </button>
+    </div>
   </div>
 </div>
 

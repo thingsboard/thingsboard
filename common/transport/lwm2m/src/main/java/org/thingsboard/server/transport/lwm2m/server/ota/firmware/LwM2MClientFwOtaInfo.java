@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,9 @@ import lombok.ToString;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.lwm2m.server.ota.LwM2MClientOtaInfo;
 
+import static org.thingsboard.server.transport.lwm2m.server.ota.firmware.FirmwareUpdateResult.UPDATE_SUCCESSFULLY;
+
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 @NoArgsConstructor
@@ -43,6 +46,11 @@ public class LwM2MClientFwOtaInfo extends LwM2MClientOtaInfo<LwM2MFirmwareUpdate
 
     public void update(FirmwareUpdateResult result) {
         this.result = result;
+
+        if (result.getCode() > UPDATE_SUCCESSFULLY.getCode()) {
+            failedPackageId = getPackageId(targetName, targetVersion);
+        }
+
         switch (result) {
             case INITIAL:
                 break;
@@ -50,7 +58,6 @@ public class LwM2MClientFwOtaInfo extends LwM2MClientOtaInfo<LwM2MFirmwareUpdate
                 retryAttempts = 0;
                 break;
             default:
-                failedPackageId = getPackageId(targetName, targetVersion);
                 break;
         }
     }

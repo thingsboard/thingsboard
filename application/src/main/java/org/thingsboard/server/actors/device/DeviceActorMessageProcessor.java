@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,8 +126,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     final TenantId tenantId;
     final DeviceId deviceId;
     final LinkedHashMapRemoveEldest<UUID, SessionInfoMetaData> sessions;
-    private final Map<UUID, SessionInfo> attributeSubscriptions;
-    private final Map<UUID, SessionInfo> rpcSubscriptions;
+    final Map<UUID, SessionInfo> attributeSubscriptions;
+    final Map<UUID, SessionInfo> rpcSubscriptions;
     private final Map<Integer, ToDeviceRpcRequestMetadata> toDeviceRpcPendingMap;
     private final boolean rpcSequential;
     private final RpcSubmitStrategy rpcSubmitStrategy;
@@ -270,8 +270,17 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         rpc.setExpirationTime(request.getExpirationTime());
         rpc.setRequest(JacksonUtil.valueToTree(request));
         rpc.setStatus(status);
-        rpc.setAdditionalInfo(JacksonUtil.toJsonNode(request.getAdditionalInfo()));
+        rpc.setAdditionalInfo(getAdditionalInfo(request));
         systemContext.getTbRpcService().save(tenantId, rpc);
+    }
+
+    private JsonNode getAdditionalInfo(ToDeviceRpcRequest request) {
+        try {
+            return JacksonUtil.toJsonNode(request.getAdditionalInfo());
+        } catch (IllegalArgumentException e) {
+            log.debug("Failed to parse additional info [{}]", request.getAdditionalInfo());
+            return JacksonUtil.valueToTree(request.getAdditionalInfo());
+        }
     }
 
     private ToDeviceRpcRequestMsg createToDeviceRpcRequestMsg(ToDeviceRpcRequest request) {
@@ -865,6 +874,8 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     }
 
     private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {
+        attributeSubscriptions.remove(sessionId);
+        rpcSubscriptions.remove(sessionId);
         notifyTransportAboutClosedSession(sessionId, sessionMd, TransportSessionCloseReason.MAX_CONCURRENT_SESSIONS_LIMIT_REACHED);
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,14 +36,16 @@ import {
   ResourcesService
 } from '@core/services/resources.service';
 import {
-  IWidgetSettingsComponent, migrateWidgetTypeToDynamicForms,
+  IWidgetSettingsComponent,
+  migrateWidgetTypeToDynamicForms,
   Widget,
   widgetActionSources,
+  WidgetActionType,
   WidgetControllerDescriptor,
   WidgetType
 } from '@shared/models/widget.models';
 import { catchError, map, mergeMap, switchMap, tap } from 'rxjs/operators';
-import { isFunction, isUndefined } from '@core/utils';
+import { isDefinedAndNotNull, isFunction, isUndefined } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { DynamicWidgetComponent } from '@home/components/widget/dynamic-widget.component';
 import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
@@ -58,8 +60,6 @@ import tinycolor from 'tinycolor2';
 import moment from 'moment';
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
-import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
-import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { compileTbFunction, TbFunction } from '@shared/models/js-function.models';
 import { HttpClient } from '@angular/common/http';
@@ -186,7 +186,7 @@ export class WidgetComponentService {
           (window as any).TbCanvasDigitalGauge = mod.TbCanvasDigitalGauge;
         }))
       );
-      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps/map-widget2')).pipe(
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/maps-legacy/map-widget2')).pipe(
         tap((mod) => {
           (window as any).TbMapWidgetV2 = mod.TbMapWidgetV2;
         }))
@@ -243,7 +243,11 @@ export class WidgetComponentService {
     if (widgetInfo) {
       return widgetInfo;
     } else {
-      return {} as WidgetInfo;
+      return {
+        typeParameters: {
+          hideDataTab: true
+        }
+      } as WidgetInfo;
     }
   }
 
@@ -437,17 +441,17 @@ export class WidgetComponentService {
       basicDirectives.push(widgetInfo.basicModeDirective);
     }
 
-    this.expandSettingComponentMap(widgetSettingsComponentsMap, directives, modulesWithComponents);
-    this.expandSettingComponentMap(basicWidgetConfigComponentsMap, basicDirectives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putWidgetSettingsComponentToMap.bind(this.widgetService), directives, modulesWithComponents);
+    this.expandSettingComponentMap(this.widgetService.putBasicWidgetSettingsComponentToMap.bind(this.widgetService), basicDirectives, modulesWithComponents);
   }
 
-  private expandSettingComponentMap(settingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>},
+  private expandSettingComponentMap(putComponentToMap: (selector: string, comp: Type<IWidgetSettingsComponent | IBasicWidgetConfigComponent>) => void,
                                     directives: string[], modulesWithComponents: ModulesWithComponents): void {
     if (directives.length) {
       directives.forEach(selector => {
         const compType = componentTypeBySelector(modulesWithComponents, selector);
         if (compType) {
-          settingsComponentsMap[selector] = compType;
+          putComponentToMap(selector, compType);
         }
       });
     }
@@ -631,8 +635,14 @@ export class WidgetComponentService {
         if (isUndefined(result.typeParameters.embedTitlePanel)) {
           result.typeParameters.embedTitlePanel = false;
         }
+        if (isUndefined(result.typeParameters.embedActionsPanel)) {
+          result.typeParameters.embedActionsPanel = false;
+        }
         if (isUndefined(result.typeParameters.overflowVisible)) {
           result.typeParameters.overflowVisible = false;
+        }
+        if (isUndefined(result.typeParameters.hideDataTab)) {
+          result.typeParameters.hideDataTab = false;
         }
         if (isUndefined(result.typeParameters.hideDataSettings)) {
           result.typeParameters.hideDataSettings = false;
@@ -651,6 +661,16 @@ export class WidgetComponentService {
         }
         if (isUndefined(result.typeParameters.targetDeviceOptional)) {
           result.typeParameters.targetDeviceOptional = false;
+        }
+        if (isUndefined(result.typeParameters.supportsUnitConversion)) {
+          result.typeParameters.supportsUnitConversion = false;
+        }
+        if (isDefinedAndNotNull(result.typeParameters.additionalWidgetActionTypes)) {
+          if (Array.isArray(result.typeParameters.additionalWidgetActionTypes)) {
+            result.typeParameters.additionalWidgetActionTypes = result.typeParameters.additionalWidgetActionTypes.filter(type => WidgetActionType[type]);
+          } else {
+            result.typeParameters.additionalWidgetActionTypes = null;
+          }
         }
         if (isFunction(widgetTypeInstance.actionSources)) {
           result.actionSources = widgetTypeInstance.actionSources();

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,9 +37,10 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import {
   BackgroundSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/background-settings-panel.component';
-import { Observable, of } from 'rxjs';
+import { Observable, of, pipe } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
+import { tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-background-settings',
@@ -106,14 +107,17 @@ export class BackgroundSettingsComponent implements OnInit, ControlValueAccessor
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
-      const ctx: any = {
-        backgroundSettings: this.modelValue
-      };
-     const backgroundSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, BackgroundSettingsPanelComponent, ['left'], true, null,
-        ctx,
-        {},
-        {}, {}, true);
+     const backgroundSettingsPanelPopover = this.popoverService.displayPopover({
+       trigger,
+       renderer: this.renderer,
+       componentType: BackgroundSettingsPanelComponent,
+       hostView: this.viewContainerRef,
+       preferredPlacement: 'left',
+       context: {
+         backgroundSettings: this.modelValue
+       },
+       isModal: true
+     });
       backgroundSettingsPanelPopover.tbComponentRef.instance.popover = backgroundSettingsPanelPopover;
       backgroundSettingsPanelPopover.tbComponentRef.instance.backgroundSettingsApplied.subscribe((backgroundSettings) => {
         backgroundSettingsPanelPopover.hide();

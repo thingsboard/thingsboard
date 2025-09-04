@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -67,7 +67,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "instance " + OBJECT_INSTANCE_ID_0 + " already exists";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        assertEquals(actual, expected);
     }
 
     /**
@@ -84,7 +84,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         assertEquals(ResponseCode.BAD_REQUEST.getName(), rpcActualResult.get("result").asText());
         String expected = "Path " + expectedPath + ". Object must be Multiple !";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        assertEquals(actual, expected);
     }
 
     /**
@@ -122,7 +122,7 @@ public class RpcLwm2mIntegrationCreateTest extends AbstractRpcLwM2MIntegrationTe
         LwM2mPath expectedPathId = new LwM2mPath(expectedObjectId);
         String expected = "Specified object id " + expectedPathId.getObjectId() + " absent in the list supported objects of the client or is security object!";
         String actual = rpcActualResult.get("error").asText();
-        assertTrue(actual.equals(expected));
+        assertEquals(actual, expected);
     }
 
     private String sendRPCreateById(String path, String value) throws Exception {

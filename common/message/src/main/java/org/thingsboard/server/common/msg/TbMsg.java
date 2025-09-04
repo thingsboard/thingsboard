@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -31,11 +32,14 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.gen.MsgProtos;
+import org.thingsboard.server.common.msg.gen.MsgProtos.TbMsgProto;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.io.Serializable;
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * Created by ashvayka on 13.01.18.
@@ -63,6 +67,8 @@ public final class TbMsg implements Serializable {
 
     private final UUID correlationId;
     private final Integer partition;
+
+    private final List<CalculatedFieldId> previousCalculatedFieldIds;
 
     @Getter(value = AccessLevel.NONE)
     @JsonIgnore
@@ -112,7 +118,7 @@ public final class TbMsg implements Serializable {
     }
 
     private TbMsg(String queueName, UUID id, long ts, TbMsgType internalType, String type, EntityId originator, CustomerId customerId, TbMsgMetaData metaData, TbMsgDataType dataType, String data,
-                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, UUID correlationId, Integer partition, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
+                  RuleChainId ruleChainId, RuleNodeId ruleNodeId, UUID correlationId, Integer partition, List<CalculatedFieldId> previousCalculatedFieldIds, TbMsgProcessingCtx ctx, TbMsgCallback callback) {
         this.id = id != null ? id : UUID.randomUUID();
         this.queueName = queueName;
         if (ts > 0) {
@@ -139,16 +145,15 @@ public final class TbMsg implements Serializable {
         this.ruleNodeId = ruleNodeId;
         this.correlationId = correlationId;
         this.partition = partition;
+        this.previousCalculatedFieldIds = previousCalculatedFieldIds != null
+                ? new CopyOnWriteArrayList<>(previousCalculatedFieldIds)
+                : new CopyOnWriteArrayList<>();
         this.ctx = ctx != null ? ctx : new TbMsgProcessingCtx();
         this.callback = Objects.requireNonNullElse(callback, TbMsgCallback.EMPTY);
     }
 
-    public static ByteString toByteString(TbMsg msg) {
-        return ByteString.copyFrom(toByteArray(msg));
-    }
-
-    public static byte[] toByteArray(TbMsg msg) {
-        MsgProtos.TbMsgProto.Builder builder = MsgProtos.TbMsgProto.newBuilder();
+    public static TbMsgProto toProto(TbMsg msg) {
+        TbMsgProto.Builder builder = TbMsgProto.newBuilder();
         builder.setId(msg.getId().toString());
         builder.setTs(msg.getTs());
         builder.setType(msg.getType());
@@ -186,48 +191,66 @@ public final class TbMsg implements Serializable {
             builder.setPartition(msg.getPartition());
         }
 
+        if (msg.getPreviousCalculatedFieldIds() != null) {
+            for (CalculatedFieldId calculatedFieldId : msg.getPreviousCalculatedFieldIds()) {
+                MsgProtos.CalculatedFieldIdProto calculatedFieldIdProto = MsgProtos.CalculatedFieldIdProto.newBuilder()
+                        .setCalculatedFieldIdMSB(calculatedFieldId.getId().getMostSignificantBits())
+                        .setCalculatedFieldIdLSB(calculatedFieldId.getId().getLeastSignificantBits())
+                        .build();
+                builder.addCalculatedFields(calculatedFieldIdProto);
+            }
+        }
+
         builder.setCtx(msg.ctx.toProto());
-        return builder.build().toByteArray();
+        return builder.build();
     }
 
-    public static TbMsg fromBytes(String queueName, byte[] data, TbMsgCallback callback) {
+    @Deprecated(forRemoval = true, since = "4.1") // to be removed in 4.2
+    public static TbMsg fromProto(String queueName, TbMsgProto proto, ByteString data, TbMsgCallback callback) {
         try {
-            MsgProtos.TbMsgProto proto = MsgProtos.TbMsgProto.parseFrom(data);
-            TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
-            EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
-            CustomerId customerId = null;
-            RuleChainId ruleChainId = null;
-            RuleNodeId ruleNodeId = null;
-            UUID correlationId = null;
-            Integer partition = null;
-            if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
-                customerId = new CustomerId(new UUID(proto.getCustomerIdMSB(), proto.getCustomerIdLSB()));
+            if (!data.isEmpty()) {
+                proto = TbMsgProto.parseFrom(data);
             }
-            if (proto.getRuleChainIdMSB() != 0L && proto.getRuleChainIdLSB() != 0L) {
-                ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
-            }
-            if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
-                ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
-            }
-            if (proto.getCorrelationIdMSB() != 0L && proto.getCorrelationIdLSB() != 0L) {
-                correlationId = new UUID(proto.getCorrelationIdMSB(), proto.getCorrelationIdLSB());
-                partition = proto.getPartition();
-            }
-
-            TbMsgProcessingCtx ctx;
-            if (proto.hasCtx()) {
-                ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
-            } else {
-                // Backward compatibility with unprocessed messages fetched from queue after update.
-                ctx = new TbMsgProcessingCtx(proto.getRuleNodeExecCounter());
-            }
-
-            TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
-            return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
-                    metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, correlationId, partition, ctx, callback);
         } catch (InvalidProtocolBufferException e) {
             throw new IllegalStateException("Could not parse protobuf for TbMsg", e);
         }
+        return fromProto(queueName, proto, callback);
+    }
+
+    public static TbMsg fromProto(String queueName, TbMsgProto proto, TbMsgCallback callback) {
+        TbMsgMetaData metaData = new TbMsgMetaData(proto.getMetaData().getDataMap());
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(proto.getEntityType(), new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+        CustomerId customerId = null;
+        RuleChainId ruleChainId = null;
+        RuleNodeId ruleNodeId = null;
+        UUID correlationId = null;
+        Integer partition = null;
+        List<CalculatedFieldId> calculatedFieldIds = new CopyOnWriteArrayList<>();
+        if (proto.getCustomerIdMSB() != 0L && proto.getCustomerIdLSB() != 0L) {
+            customerId = new CustomerId(new UUID(proto.getCustomerIdMSB(), proto.getCustomerIdLSB()));
+        }
+        if (proto.getRuleChainIdMSB() != 0L && proto.getRuleChainIdLSB() != 0L) {
+            ruleChainId = new RuleChainId(new UUID(proto.getRuleChainIdMSB(), proto.getRuleChainIdLSB()));
+        }
+        if (proto.getRuleNodeIdMSB() != 0L && proto.getRuleNodeIdLSB() != 0L) {
+            ruleNodeId = new RuleNodeId(new UUID(proto.getRuleNodeIdMSB(), proto.getRuleNodeIdLSB()));
+        }
+        if (proto.getCorrelationIdMSB() != 0L && proto.getCorrelationIdLSB() != 0L) {
+            correlationId = new UUID(proto.getCorrelationIdMSB(), proto.getCorrelationIdLSB());
+            partition = proto.getPartition();
+        }
+
+        for (MsgProtos.CalculatedFieldIdProto cfIdProto : proto.getCalculatedFieldsList()) {
+            CalculatedFieldId calculatedFieldId = new CalculatedFieldId(new UUID(
+                    cfIdProto.getCalculatedFieldIdMSB(),
+                    cfIdProto.getCalculatedFieldIdLSB()
+            ));
+            calculatedFieldIds.add(calculatedFieldId);
+        }
+        TbMsgProcessingCtx ctx = TbMsgProcessingCtx.fromProto(proto.getCtx());
+        TbMsgDataType dataType = TbMsgDataType.values()[proto.getDataType()];
+        return new TbMsg(queueName, UUID.fromString(proto.getId()), proto.getTs(), null, proto.getType(), entityId, customerId,
+                metaData, dataType, proto.getData(), ruleChainId, ruleNodeId, correlationId, partition, calculatedFieldIds, ctx, callback);
     }
 
     public int getAndIncrementRuleNodeCounter() {
@@ -249,6 +272,7 @@ public final class TbMsg implements Serializable {
 
     /**
      * Checks if the message is still valid for processing. May be invalid if the message pack is timed-out or canceled.
+     *
      * @return 'true' if message is valid for processing, 'false' otherwise.
      */
     public boolean isValid() {
@@ -343,6 +367,7 @@ public final class TbMsg implements Serializable {
         protected RuleNodeId ruleNodeId;
         protected UUID correlationId;
         protected Integer partition;
+        protected List<CalculatedFieldId> previousCalculatedFieldIds;
         protected TbMsgProcessingCtx ctx;
         protected TbMsgCallback callback;
 
@@ -363,6 +388,7 @@ public final class TbMsg implements Serializable {
             this.ruleNodeId = tbMsg.ruleNodeId;
             this.correlationId = tbMsg.correlationId;
             this.partition = tbMsg.partition;
+            this.previousCalculatedFieldIds = tbMsg.previousCalculatedFieldIds;
             this.ctx = tbMsg.ctx;
             this.callback = tbMsg.callback;
         }
@@ -385,8 +411,7 @@ public final class TbMsg implements Serializable {
         /**
          * <p><strong>Deprecated:</strong> This should only be used when you need to specify a custom message type that doesn't exist in the {@link TbMsgType} enum.
          * Prefer using {@link #type(TbMsgType)} instead.
-         *
-         * */
+         */
         @Deprecated
         public TbMsgBuilder type(String type) {
             this.type = type;
@@ -454,6 +479,11 @@ public final class TbMsg implements Serializable {
             return this;
         }
 
+        public TbMsgBuilder previousCalculatedFieldIds(List<CalculatedFieldId> previousCalculatedFieldIds) {
+            this.previousCalculatedFieldIds = new CopyOnWriteArrayList<>(previousCalculatedFieldIds);
+            return this;
+        }
+
         public TbMsgBuilder ctx(TbMsgProcessingCtx ctx) {
             this.ctx = ctx;
             return this;
@@ -465,16 +495,16 @@ public final class TbMsg implements Serializable {
         }
 
         public TbMsg build() {
-            return new TbMsg(queueName, id, ts, internalType, type, originator, customerId, metaData, dataType, data, ruleChainId, ruleNodeId, correlationId, partition, ctx, callback);
+            return new TbMsg(queueName, id, ts, internalType, type, originator, customerId, metaData, dataType, data, ruleChainId, ruleNodeId, correlationId, partition, previousCalculatedFieldIds, ctx, callback);
         }
 
         public String toString() {
             return "TbMsg.TbMsgBuilder(queueName=" + this.queueName + ", id=" + this.id + ", ts=" + this.ts +
-                    ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
-                    ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
-                    ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
-                    ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", ctx=" + this.ctx +
-                    ", callback=" + this.callback + ")";
+                   ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
+                   ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
+                   ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
+                   ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", previousCalculatedFields=" + this.previousCalculatedFieldIds +
+                   ", ctx=" + this.ctx + ", callback=" + this.callback + ")";
         }
 
     }

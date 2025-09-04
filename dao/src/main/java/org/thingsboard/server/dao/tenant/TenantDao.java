@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,20 +30,8 @@ public interface TenantDao extends Dao<Tenant> {
 
     TenantInfo findTenantInfoById(TenantId tenantId, UUID id);
 
-    /**
-     * Save or update tenant object
-     *
-     * @param tenant the tenant object
-     * @return saved tenant object
-     */
     Tenant save(TenantId tenantId, Tenant tenant);
-    
-    /**
-     * Find tenants by page link.
-     * 
-     * @param pageLink the page link
-     * @return the list of tenant objects
-     */
+
     PageData<Tenant> findTenants(TenantId tenantId, PageLink pageLink);
 
     PageData<TenantInfo> findTenantInfos(TenantId tenantId, PageLink pageLink);
@@ -51,4 +39,7 @@ public interface TenantDao extends Dao<Tenant> {
     PageData<TenantId> findTenantsIds(PageLink pageLink);
 
     List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId);
+
+    Tenant findTenantByName(TenantId tenantId, String name);
+
 }

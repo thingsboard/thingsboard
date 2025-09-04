@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsCompositeKey;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.UserSettingsEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.user.UserSettingsDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -34,7 +36,7 @@ import java.util.List;
 @Slf4j
 @Component
 @SqlDao
-public class JpaUserSettingsDao extends JpaAbstractDaoListeningExecutorService implements UserSettingsDao {
+public class JpaUserSettingsDao implements UserSettingsDao, TenantEntityDao<UserSettings> {
 
     @Autowired
     private UserSettingsRepository userSettingsRepository;
@@ -64,6 +66,11 @@ public class JpaUserSettingsDao extends JpaAbstractDaoListeningExecutorService i
     public List<UserSettings> findByTypeAndPath(TenantId tenantId, UserSettingsType type, String... path) {
         log.trace("findByTypeAndPath [{}][{}][{}]", tenantId, type, path);
         return DaoUtil.convertDataList(userSettingsRepository.findByTypeAndPathExisting(type.name(), path));
+    }
+
+    @Override
+    public PageData<UserSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(userSettingsRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
 }

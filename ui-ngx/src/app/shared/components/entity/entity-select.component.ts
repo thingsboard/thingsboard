@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatFormFieldAppearance } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-select',
@@ -57,6 +58,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
   @Input()
   additionEntityTypes: {[entityType in string]: string} = {};
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   displayEntityTypeSelect: boolean;
 

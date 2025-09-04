@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2024 The Thingsboard Authors
+/// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -37,6 +37,8 @@ import { OAuth2Module } from '@home/pages/admin/oauth2/oauth2.module';
 import { JsLibraryTableHeaderComponent } from '@home/pages/admin/resource/js-library-table-header.component';
 import { JsResourceComponent } from '@home/pages/admin/resource/js-resource.component';
 import { NgxFlowModule } from '@flowjs/ngx-flow';
+import { TrendzSettingsComponent } from '@home/pages/admin/trendz-settings.component';
+import { ResourceLibraryTabsComponent } from '@home/pages/admin/resource/resource-library-tabs.component';
 
 @NgModule({
   declarations:
@@ -49,13 +51,15 @@ import { NgxFlowModule } from '@flowjs/ngx-flow';
       HomeSettingsComponent,
       ResourcesLibraryComponent,
       ResourceTabsComponent,
+      ResourceLibraryTabsComponent,
       ResourcesTableHeaderComponent,
       JsResourceComponent,
       JsLibraryTableHeaderComponent,
       QueueComponent,
       RepositoryAdminSettingsComponent,
       AutoCommitAdminSettingsComponent,
-      TwoFactorAuthSettingsComponent
+      TwoFactorAuthSettingsComponent,
+      TrendzSettingsComponent
     ],
   imports: [
     CommonModule,

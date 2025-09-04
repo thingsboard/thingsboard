@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2024 The Thingsboard Authors
+    Copyright © 2016-2025 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -17,9 +17,9 @@
 -->
 <fieldset class="tb-help-popup-button-container" *ngIf="!textMode">
   <div #toggleHelpButton
+       class="tb-toggle-help-popup-button"
        matTooltip="{{ helpIconTooltip }}"
        matTooltipPosition="above"
-       style="border-radius: 50%"
        (click)="toggleHelp()">
     <button mat-icon-button
             [disabled]="disabled()"
@@ -34,8 +34,9 @@
     </button>
   </div>
 </fieldset>
-<fieldset class="tb-help-popup-button-container" [class.hint-button]="hintMode" *ngIf="textMode">
+<fieldset class="tb-help-popup-button-container" *ngIf="textMode">
   <div #toggleHelpTextButton
+       class="tb-toggle-help-popup-text-button"
        (click)="toggleHelp()">
     <button mat-button
             [disabled]="disabled()"

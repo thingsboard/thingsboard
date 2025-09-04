@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2024 The Thingsboard Authors
+ * Copyright © 2016-2025 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,12 +88,6 @@ class AlarmRuleState {
     }
 
     public boolean validateAttrUpdate(Set<AlarmConditionFilterKey> changedKeys) {
-        //If the attribute was updated, but no new telemetry arrived - we ignore this until new telemetry is there.
-        for (AlarmConditionFilterKey key : entityKeys) {
-            if (key.getType().equals(AlarmConditionKeyType.TIME_SERIES)) {
-                return false;
-            }
-        }
         for (AlarmConditionFilterKey key : changedKeys) {
             if (entityKeys.contains(key)) {
                 return true;
