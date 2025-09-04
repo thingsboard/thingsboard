@@ -21,6 +21,8 @@ import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingEvalResult;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 
 import java.util.UUID;
 

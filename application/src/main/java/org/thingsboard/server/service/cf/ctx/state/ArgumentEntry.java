@@ -22,6 +22,7 @@ import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 
 import java.util.List;
 import java.util.Map;
