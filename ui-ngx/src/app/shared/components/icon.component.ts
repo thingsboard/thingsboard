@@ -305,7 +305,7 @@ export class TbIconComponent extends _TbIconBase
       this.imagePipe.transform(rawName, { asString: true, ignoreLoadingImage: true }).subscribe(
         imageUrl => {
           const urlStr = imageUrl as string;
-          const isSvg = rawName?.endsWith('.svg');
+          const isSvg = urlStr?.startsWith('data:image/svg+xml') || urlStr?.endsWith('.svg');
           if (isSvg) {
             const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(urlStr);
             this._iconRegistry
@@ -316,10 +316,7 @@ export class TbIconComponent extends _TbIconBase
                   this.renderer.insertBefore(this._elementRef.nativeElement, svg, this._iconNameContent.nativeElement);
                   this._imageElement = svg;
                 },
-                error: (err: Error) => {
-                  console.log('err', err)
-                  this._setImageElement(urlStr);
-                }
+                error: () => this._setImageElement(urlStr)
               });
           } else {
             this._setImageElement(urlStr);
@@ -336,8 +333,7 @@ export class TbIconComponent extends _TbIconBase
     this.renderer.addClass(imgElement, 'mat-icon');
     this.renderer.setAttribute(imgElement, 'alt', 'Image icon');
     this.renderer.setAttribute(imgElement, 'src', urlStr);
-    const elem: HTMLElement = this._elementRef.nativeElement;
-    this.renderer.insertBefore(elem, imgElement, this._iconNameContent.nativeElement);
+    this.renderer.insertBefore(this._elementRef.nativeElement, imgElement, this._iconNameContent.nativeElement);
     this._imageElement = imgElement;
   }
 
