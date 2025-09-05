@@ -19,11 +19,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.ImageContent;
+import dev.langchain4j.data.message.PdfFileContent;
 import dev.langchain4j.data.message.SystemMessage;
+import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.request.ResponseFormat;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -33,24 +38,34 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
+import org.thingsboard.server.common.data.GeneralFileDescriptor;
+import org.thingsboard.server.common.data.ResourceType;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbResponseFormatType;
 import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
+@Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
         name = "AI request",
@@ -77,6 +92,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     private String systemPrompt;
     private String userPrompt;
+    private List<TbResourceId> resourceIds;
     private ResponseFormat responseFormat;
     private int timeoutSeconds;
     private AiModelId modelId;
@@ -111,6 +127,12 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             // LangChain4j AnthropicChatModel rejects requests with non-null ResponseFormat even if ResponseFormatType is TEXT
             responseFormat = config.getResponseFormat().toLangChainResponseFormat();
         }
+        if (config.getResourceIds() != null && !config.getResourceIds().isEmpty()) {
+            resourceIds = new ArrayList<>(config.getResourceIds().size());
+            for (UUID resourceId : config.getResourceIds()) {
+                resourceIds.add(new TbResourceId(resourceId));
+            }
+        }
 
         systemPrompt = config.getSystemPrompt();
         userPrompt = config.getUserPrompt();
@@ -126,12 +148,29 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         var ackedMsg = ackIfNeeded(ctx, msg);
+        final String userPrompt = TbNodeUtils.processPattern(this.userPrompt, ackedMsg);
 
+        if (resourceIds == null) {
+            buildAndSendRequest(ctx, ackedMsg, UserMessage.from(userPrompt));
+        } else {
+            loadResources(ctx)
+                    .thenApply(resources -> buildContents(userPrompt, resources))
+                    .thenAccept(contents -> buildAndSendRequest(ctx, ackedMsg, UserMessage.from(contents)))
+                    .exceptionally(err -> {
+                        tellFailure(ctx, ackedMsg, err);
+                        return null;
+                    });
+        }
+    }
+
+    private void buildAndSendRequest(TbContext ctx, TbMsg ackedMsg, UserMessage userMessage) {
         List<ChatMessage> chatMessages = new ArrayList<>(2);
-        if (systemPrompt != null) {
+
+        if (systemPrompt != null && !systemPrompt.isBlank()) {
             chatMessages.add(SystemMessage.from(TbNodeUtils.processPattern(systemPrompt, ackedMsg)));
         }
-        chatMessages.add(UserMessage.from(TbNodeUtils.processPattern(userPrompt, ackedMsg)));
+
+         chatMessages.add(userMessage);
 
         var chatRequest = ChatRequest.builder()
                 .messages(chatMessages)
@@ -155,6 +194,17 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 tellFailure(ctx, ackedMsg, t);
             }
         }, directExecutor());
+    }
+
+    private CompletableFuture<List<TbResourceDataInfo>> loadResources(TbContext ctx) {
+        List<CompletableFuture<TbResourceDataInfo>> resourceFutures = new ArrayList<>(resourceIds.size());
+        for (TbResourceId resourceId : resourceIds) {
+            CompletableFuture<TbResourceDataInfo> f = ctx.getTbResourceDataCache()
+                    .getResourceDataInfo(ctx.getTenantId(), resourceId);
+            resourceFutures.add(f);
+        }
+        return CompletableFuture.allOf(resourceFutures.toArray(CompletableFuture[]::new))
+                .thenApply(v -> resourceFutures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList());
     }
 
     private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
@@ -192,11 +242,56 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         return JacksonUtil.newObjectNode().put("response", response).toString();
     }
 
+    private List<Content> buildContents(String userPrompt, List<TbResourceDataInfo> resources) {
+        List<Content> contents = new ArrayList<>();
+        contents.add(new TextContent(userPrompt));
+
+        for (TbResourceDataInfo resource : resources) {
+            toContent(resource).ifPresent(contents::add);
+        }
+        return contents;
+    }
+
+    private Optional<Content> toContent(TbResourceDataInfo resource) {
+        if (!ResourceType.GENERAL.name().equals(resource.getResourceType())) {
+            log.warn("Unsupported resource type: {}", resource.getResourceType());
+            return Optional.empty();
+        }
+        if (resource.getDescriptor() == null) {
+            log.warn("Missing descriptor for resource {}", resource.getResourceType());
+            return Optional.empty();
+        }
+
+        GeneralFileDescriptor descriptor =
+                JacksonUtil.treeToValue(resource.getDescriptor(), GeneralFileDescriptor.class);
+
+        String mediaType = descriptor.getMediaType();
+        byte[] data = resource.getData();
+        if (mediaType == null) {
+            log.warn("Missing mediaType for resource {}", resource.getDescriptor());
+            return Optional.empty();
+        }
+
+        if (mediaType.startsWith("text/")) {
+            return Optional.of(new TextContent(new String(data, StandardCharsets.UTF_8)));
+        }
+        if (mediaType.startsWith("image/")) {
+            return Optional.of(new ImageContent(Base64.getEncoder().encodeToString(data), mediaType));
+        }
+        if (mediaType.equals("application/pdf")) {
+            return Optional.of(new PdfFileContent(Base64.getEncoder().encodeToString(data), mediaType));
+        }
+
+        log.warn("Unsupported media type: {} for resource", resource.getDescriptor());
+        return Optional.empty();
+    }
+
     @Override
     public void destroy() {
         super.destroy();
         systemPrompt = null;
         userPrompt = null;
+        resourceIds = null;
         responseFormat = null;
         modelId = null;
     }

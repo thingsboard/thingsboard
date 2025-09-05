@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
@@ -207,6 +208,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public TbResourceDataInfo getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+        log.trace("Executing getResourceDataInfo [{}] [{}]", tenantId, resourceId);
+        return resourceDao.getResourceDataInfo(tenantId, resourceId);
+    }
+
+    @Override
     public ResourceExportData exportResource(TbResourceInfo resourceInfo) {
         byte[] data = getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
         return ResourceExportData.builder()
@@ -364,6 +371,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
         if (success) {
             resourceDao.removeById(tenantId, resourceId.getId());
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
         }
 
@@ -661,6 +669,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         resource.setData(data);
         log.info("{} system resource {}", (resource.getId() == null ? "Creating" : "Updating"), resourceKey);
         return saveResource(resource);
+    }
+
+    @Override
+    public List<TbResourceInfo> findTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
+        log.trace("Executing findTenantResourcesByIds, tenantId [{}], resourceIds [{}]", tenantId, resourceIds);
+        return resourceInfoDao.findTenantResourcesByIds(tenantId, resourceIds);
     }
 
     @Override

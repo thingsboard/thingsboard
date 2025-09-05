@@ -15,24 +15,18 @@
  */
 package org.thingsboard.server.common.data;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@RequiredArgsConstructor
-public enum ResourceType {
-    LWM2M_MODEL("application/xml", false, false),
-    JKS("application/x-java-keystore", false, false),
-    PKCS_12("application/x-pkcs12", false, false),
-    JS_MODULE("application/javascript", true, true),
-    IMAGE(null, true, true),
-    DASHBOARD("application/json", true, true),
-    GENERAL(null, false, true);
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TbResourceDataInfo {
 
-    @Getter
-    private final String mediaType;
-    @Getter
-    private final boolean customerAccess;
-    @Getter
-    private final boolean updatable;
+    private byte[] data;
+    private String resourceType;
+    private JsonNode descriptor;
 
 }

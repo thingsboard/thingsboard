@@ -38,6 +38,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.GeneralFileDescriptor;
+import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -55,9 +57,11 @@ import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
@@ -263,6 +267,21 @@ public class TbResourceController extends BaseController {
         }
     }
 
+    @ApiOperation(value = "Get Tenant Resource Infos by ids (getTenantResourcesByIds)")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/resource/tenant", params = {"resourceIds"})
+    public List<TbResourceInfo> getTenantResourcesByIds(
+            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("resourceIds") String[] strResourceIds) throws ThingsboardException {
+        checkArrayParameter("resourceIds", strResourceIds);
+        SecurityUser user = getCurrentUser();
+        List<TbResourceId> resourceIds = new ArrayList<>();
+        for (String strResourceId : strResourceIds) {
+            resourceIds.add(new TbResourceId(toUUID(strResourceId)));
+        }
+        return resourceService.findTenantResourcesByIds(user.getTenantId(), resourceIds);
+    }
+
     @ApiOperation(value = "Get All Resource Infos (getAllResources)",
             notes = "Returns a page of Resource Info objects owned by tenant. " +
                     PAGE_DATA_PARAMETERS + RESOURCE_INFO_DESCRIPTION + TENANT_AUTHORITY_PARAGRAPH)
@@ -272,6 +291,8 @@ public class TbResourceController extends BaseController {
                                                        @RequestParam int pageSize,
                                                        @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                        @RequestParam int page,
+                                                       @Parameter(description = RESOURCE_TYPE, schema = @Schema(allowableValues = {"LWM2M_MODEL", "JKS", "PKCS_12", "JS_MODULE", "GENERAL"}))
+                                                       @RequestParam(required = false) String resourceType,
                                                        @Parameter(description = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                        @RequestParam(required = false) String textSearch,
                                                        @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "title", "resourceType", "tenantId"}))
@@ -281,7 +302,7 @@ public class TbResourceController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(getTenantId())
-                .resourceTypes(EnumSet.allOf(ResourceType.class))
+                .resourceTypes(StringUtils.isNotEmpty(resourceType) ? Set.of(ResourceType.valueOf(resourceType)) : EnumSet.allOf(ResourceType.class))
                 .build();
         return checkNotNull(resourceService.findTenantResourcesByTenantId(filter, pageLink));
     }
