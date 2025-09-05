@@ -37,6 +37,10 @@
           [disabled]="disabled"
           #matButton
           (click)="openIconPopup($event, matButton)">
-    <tb-icon matButtonIcon>{{materialIconFormGroup.get('icon').value}}</tb-icon>
+    @if (!isCustomIcon) {
+      <tb-icon matButtonIcon>{{materialIconFormGroup.get('icon').value}}</tb-icon>
+    } @else {
+      <img class="mat-icon" alt="icon" [src]="materialIconFormGroup.get('icon').value | image | async">
+    }
   </button>
 </ng-template>
