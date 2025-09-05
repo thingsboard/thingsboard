@@ -22,7 +22,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
 import {
-  Dashboard,
+  Dashboard, DashboardInfo,
   getDashboardAssignedCustomersText,
   isCurrentPublicDashboardCustomer,
   isPublicDashboard
@@ -31,13 +31,14 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { isEqual } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
+import { PageLink } from "@shared/models/page/page-link";
 
 @Component({
   selector: 'tb-dashboard-form',
   templateUrl: './dashboard-form.component.html',
   styleUrls: ['./dashboard-form.component.scss']
 })
-export class DashboardFormComponent extends EntityComponent<Dashboard> {
+export class DashboardFormComponent extends EntityComponent<Dashboard, PageLink, DashboardInfo> {
 
   dashboardScope: 'tenant' | 'customer' | 'customer_user' | 'edge';
   customerId: string;
@@ -117,7 +118,7 @@ export class DashboardFormComponent extends EntityComponent<Dashboard> {
 
   onPublicLinkCopied($event) {
     this.store.dispatch(new ActionNotificationShow(
-     {
+      {
         message: this.translate.instant('dashboard.public-link-copied-message'),
         type: 'success',
         duration: 750,
