@@ -21,41 +21,99 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 
 public class CoapAdaptorUtils {
 
+    private static final String ATTRIBUTES = "attributes";
+
     public static TransportProtos.GetAttributeRequestMsg toGetAttributeRequestMsg(Request inbound) throws AdaptorException {
-        List<String> queryElements = inbound.getOptions().getUriQuery();
+        List<String> queryParameters = inbound.getOptions().getUriQuery();
+        List<String> uriPaths = inbound.getOptions().getUriPath();
+
+        String scope = extractScope(uriPaths);
+
         TransportProtos.GetAttributeRequestMsg.Builder result = TransportProtos.GetAttributeRequestMsg.newBuilder();
-        if (queryElements != null && queryElements.size() > 0) {
-            Set<String> clientKeys = toKeys(queryElements, "clientKeys");
-            Set<String> sharedKeys = toKeys(queryElements, "sharedKeys");
-            if (clientKeys != null) {
-                result.addAllClientAttributeNames(clientKeys);
-            }
-            if (sharedKeys != null) {
-                result.addAllSharedAttributeNames(sharedKeys);
-            }
+        result.setAddClient(false);
+        result.setAddShared(false);
+        if (scope == null) {
+            processNotScopedRequest(queryParameters, result);
+        } else {
+            processScopedRequest(scope, queryParameters, result);
         }
+
         result.setOnlyShared(false);
         return result.build();
     }
 
-    private static Set<String> toKeys(List<String> queryElements, String attributeName) throws AdaptorException {
-        String keys = null;
-        for (String queryElement : queryElements) {
-            String[] queryItem = queryElement.split("=");
-            if (queryItem.length == 2 && queryItem[0].equals(attributeName)) {
-                keys = queryItem[1];
+    private static String extractScope(List<String> uriPaths) {
+        String lastPath = uriPaths.get(uriPaths.size() - 1);
+        return ATTRIBUTES.equals(lastPath) ? null : lastPath;
+    }
+
+    private static void processNotScopedRequest(List<String> queryParameters, TransportProtos.GetAttributeRequestMsg.Builder result) {
+        if (queryParameters != null && !queryParameters.isEmpty()) {
+            boolean addClient = false;
+            boolean addShared = false;
+            Set<String> clientKeys = extractKeys(queryParameters, "clientKeys");
+            Set<String> sharedKeys = extractKeys(queryParameters, "sharedKeys");
+
+            if (clientKeys != null) {
+                result.addAllClientAttributeNames(clientKeys);
+                addClient = true;
+            }
+            if (sharedKeys != null) {
+                result.addAllSharedAttributeNames(sharedKeys);
+                addShared = true;
+            }
+            result.setAddClient(addClient);
+            result.setAddShared(addShared);
+        } else {
+            result.setAddClient(true);
+            result.setAddShared(true);
+        }
+    }
+
+    private static void processScopedRequest(String scope, List<String> queryParameters, TransportProtos.GetAttributeRequestMsg.Builder result) throws AdaptorException {
+        switch (scope) {
+            case "client":
+                result.setAddClient(true);
+                addKeysFromQuery(queryParameters, result::addAllClientAttributeNames);
+                break;
+            case "shared":
+                result.setAddShared(true);
+                addKeysFromQuery(queryParameters, result::addAllSharedAttributeNames);
+                break;
+            default:
+                throw new AdaptorException("Unsupported scope: " + scope);
+        }
+    }
+
+    private static void addKeysFromQuery(List<String> queryParameters, Consumer<Collection<String>> keyConsumer) {
+        if (queryParameters != null && !queryParameters.isEmpty()) {
+            Set<String> keys = extractKeys(queryParameters, "keys");
+            if (keys != null) {
+                keyConsumer.accept(keys);
             }
         }
-        if (keys != null && !StringUtils.isEmpty(keys)) {
-            return new HashSet<>(Arrays.asList(keys.split(",")));
-        } else {
-            return null;
-        }
+    }
+
+    private static Set<String> extractKeys(List<String> queryParameters, String attributeName) {
+        return queryParameters.stream()
+                .filter(query -> isValidQueryItem(query, attributeName))
+                .map(query -> query.split("=")[1])
+                .filter(keys -> !StringUtils.isEmpty(keys))
+                .findFirst()
+                .map(keys -> new HashSet<>(Arrays.asList(keys.split(","))))
+                .orElse(null);
+    }
+
+    private static boolean isValidQueryItem(String query, String attributeName) {
+        String[] queryParts = query.split("=");
+        return queryParts.length == 2 && queryParts[0].equals(attributeName);
     }
 }
