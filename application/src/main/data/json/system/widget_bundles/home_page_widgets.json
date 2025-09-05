@@ -13,6 +13,7 @@
     "home_page_widgets.quick_links",
     "home_page_widgets.documentation_links",
     "home_page_widgets.dashboards",
-    "home_page_widgets.usage_info"
+    "home_page_widgets.usage_info",
+    "api_usage"
   ]
 }
