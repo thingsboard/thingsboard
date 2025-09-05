@@ -86,7 +86,7 @@
       </button>
     </div>
   } @else {
-    <tb-gallery-image-input class="min-w-[520px]"
+    <tb-gallery-image-input [style.width]="iconsPanelWidth"
                             [(ngModel)]="selectedIcon">
     </tb-gallery-image-input>
     <div class="tb-material-icons-panel-buttons">
