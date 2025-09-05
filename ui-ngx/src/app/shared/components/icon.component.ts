@@ -33,6 +33,9 @@ import { Subscription } from 'rxjs';
 import { take } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { ContentObserver } from '@angular/cdk/observers';
+import { isTbImage } from '@shared/models/resource.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const _TbIconBase = mixinColor(
   class {
@@ -70,7 +73,7 @@ const funcIriPattern = /^url\(['"]?#(.*?)['"]?\)$/;
   host: {
     role: 'img',
     class: 'mat-icon notranslate',
-    '[attr.data-mat-icon-type]': '!_useSvgIcon ? "font" : "svg"',
+    '[attr.data-mat-icon-type]': '_useSvgIcon ? "svg" : (_useImageIcon ? null : "font")',
     '[attr.data-mat-icon-name]': '_svgName',
     '[attr.data-mat-icon-namespace]': '_svgNamespace',
     '[class.mat-icon-no-color]': 'color !== "primary" && color !== "accent" && color !== "warn"',
@@ -99,6 +102,9 @@ export class TbIconComponent extends _TbIconBase
 
   private _textElement = null;
 
+  _useImageIcon = false;
+  private _imageElement = null;
+
   private _previousPath?: string;
 
   private _elementsWithExternalReferences?: Map<Element, {name: string; value: string}[]>;
@@ -109,6 +115,8 @@ export class TbIconComponent extends _TbIconBase
               private contentObserver: ContentObserver,
               private renderer: Renderer2,
               private _iconRegistry: MatIconRegistry,
+              private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
               @Inject(MAT_ICON_LOCATION) private _location: MatIconLocation,
               private readonly _errorHandler: ErrorHandler) {
     super(elementRef);
@@ -148,16 +156,29 @@ export class TbIconComponent extends _TbIconBase
 
   private _updateIcon() {
     const useSvgIcon = isSvgIcon(this.icon);
+    const useImageIcon = isTbImage(this.icon);
     if (this._useSvgIcon !== useSvgIcon) {
       this._useSvgIcon = useSvgIcon;
       if (!this._useSvgIcon) {
         this._updateSvgIcon(undefined);
       } else {
         this._updateFontIcon(undefined);
+        this._updateImageIcon(undefined);
+      }
+    }
+    if (this._useImageIcon !== useImageIcon) {
+      this._useImageIcon = useImageIcon;
+      if (!this._useImageIcon) {
+        this._updateImageIcon(undefined);
+      } else {
+        this._updateFontIcon(undefined);
+        this._updateSvgIcon(undefined);
       }
     }
     if (this._useSvgIcon) {
       this._updateSvgIcon(this.icon);
+    } else if (this._useImageIcon) {
+      this._updateImageIcon(this.icon);
     } else {
       this._updateFontIcon(this.icon);
     }
@@ -278,4 +299,49 @@ export class TbIconComponent extends _TbIconBase
     }
   }
 
+  private _updateImageIcon(rawName: string | undefined) {
+    if (rawName) {
+      this._clearImageIcon();
+      this.imagePipe.transform(rawName, { asString: true, ignoreLoadingImage: true }).subscribe(
+        imageUrl => {
+          const urlStr = imageUrl as string;
+          const isSvg = urlStr?.startsWith('data:image/svg+xml') || urlStr?.endsWith('.svg');
+          if (isSvg) {
+            const safeUrl = this.sanitizer.bypassSecurityTrustResourceUrl(urlStr);
+            this._iconRegistry
+              .getSvgIconFromUrl(safeUrl)
+              .pipe(take(1))
+              .subscribe({
+                next: (svg) => {
+                  this.renderer.insertBefore(this._elementRef.nativeElement, svg, this._iconNameContent.nativeElement);
+                  this._imageElement = svg;
+                },
+                error: () => this._setImageElement(urlStr)
+              });
+          } else {
+            this._setImageElement(urlStr);
+          }
+        }
+      );
+    } else {
+      this._clearImageIcon();
+    }
+  }
+
+  private _setImageElement(urlStr: string) {
+    const imgElement = this.renderer.createElement('img');
+    this.renderer.addClass(imgElement, 'mat-icon');
+    this.renderer.setAttribute(imgElement, 'alt', 'Image icon');
+    this.renderer.setAttribute(imgElement, 'src', urlStr);
+    this.renderer.insertBefore(this._elementRef.nativeElement, imgElement, this._iconNameContent.nativeElement);
+    this._imageElement = imgElement;
+  }
+
+  private _clearImageIcon() {
+    const elem: HTMLElement = this._elementRef.nativeElement;
+    if (this._imageElement !== null) {
+      this.renderer.removeChild(elem, this._imageElement);
+      this._imageElement = null;
+    }
+  }
 }
