@@ -42,8 +42,9 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
       <div align="center">
         <p>Provision, monitor and control your IoT entities in secure way using rich server-side APIs. Define relations between your devices, assets, customers or any other entities.</p>
       </div>
+      <br>
       <div align="center">
-        <a href="https://thingsboard.io/docs/user-guide/entities-and-relations/">Read more 🡪</a>
+        <a href="https://thingsboard.io/docs/user-guide/entities-and-relations/">Read more ➜</a>
       </div>
       <br>
     </td>
@@ -56,8 +57,9 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
       <div align="center">
         <p>Collect and store telemetry data in scalable and fault-tolerant way. Visualize your data with built-in or custom widgets and flexible dashboards. Share dashboards with your customers.</p>
       </div>
+      <br>
       <div align="center">
-        <a href="https://thingsboard.io/iot-data-visualization/">Read more 🡪</a>
+        <a href="https://thingsboard.io/iot-data-visualization/">Read more ➜</a>
       </div>
       <br>
     </td>
@@ -72,12 +74,13 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
       <div align="center">
         <p>Monitor and control your industrial processes in real time with SCADA. Use SCADA symbols on dashboards to create and manage any workflow, offering full flexibility to design and oversee operations according to your requirements.</p>
       </div>
+      <br>
       <div align="center">
-        <a href="https://thingsboard.io/use-cases/scada/">Read more 🡪</a>
+        <a href="https://thingsboard.io/use-cases/scada/">Read more ➜</a>
       </div>
       <br>
     </td>
-    <td width="50%">
+    <td width="50%" valign="top">
       <br>
       <div align="center">
         <img src="https://github.com/user-attachments/assets/c23dcc9b-aeba-40ef-9973-49b953fc1257" alt="Process and React" width="378" />
@@ -87,8 +90,9 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
         <p>Define data processing rule chains. Transform and normalize your device data. Raise alarms on incoming telemetry events, attribute updates, device inactivity and user actions.<br></p>
       </div>
       <br>
+      <br>
       <div align="center">
-        <a href="https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/">Read more 🡪</a>
+        <a href="https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/">Read more ➜</a>
       </div>
       <br>
     </td>
@@ -99,11 +103,11 @@ Check out our [Getting Started guide](https://thingsboard.io/docs/getting-starte
 
 ThingsBoard allows you to create complex [Rule Chains](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/) to process data from your devices and match your application specific use cases.
 
-[![IoT Rule Engine](https://github.com/user-attachments/assets/ccc048a8-5aa3-44dc-abd4-c20d1d833102 "IoT Rule Engine")](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
+[![IoT Rule Engine](https://github.com/user-attachments/assets/43d21dc9-0e18-4f1b-8f9a-b72004e12f07 "IoT Rule Engine")](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
 
 <div align="center">
 
-[**Read more about Rule Engine 🡪**](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
+[**Read more about Rule Engine ➜**](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
 
 </div>
 
@@ -113,27 +117,27 @@ ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that 
 
 [**Smart energy**](https://thingsboard.io/use-cases/smart-energy/)
 
-[![Smart energy](https://github.com/user-attachments/assets/7952d0f1-2ba4-4989-bfc9-75b40de6ea3f "Smart energy")](https://thingsboard.io/use-cases/smart-energy/)
+[![Smart energy](https://github.com/user-attachments/assets/2a0abf13-6dc5-4f5e-9c30-1aea1d39af1e "Smart energy")](https://thingsboard.io/use-cases/smart-energy/)
 
 [**SCADA swimming pool**](https://thingsboard.io/use-cases/scada/)
 
-[![SCADA Swimming pool](https://github.com/user-attachments/assets/b357c129-ea72-4b64-9dfe-ac25011603b6 "SCADA Swimming pool")](https://thingsboard.io/use-cases/scada/)
+[![SCADA Swimming pool](https://github.com/user-attachments/assets/68fd9e29-99f1-4c16-8c4c-476f4ccb20c0 "SCADA Swimming pool")](https://thingsboard.io/use-cases/scada/)
 
 [**Fleet tracking**](https://thingsboard.io/use-cases/fleet-tracking/)
 
-[![Fleet tracking](https://github.com/user-attachments/assets/80b63841-40c9-4db9-bec2-6a400dc6e58d "Fleet tracking")](https://thingsboard.io/use-cases/fleet-tracking/)
+[![Fleet tracking](https://github.com/user-attachments/assets/9e8938ba-ee0c-4599-9494-d74b7de8a63d "Fleet tracking")](https://thingsboard.io/use-cases/fleet-tracking/)
 
 [**Smart farming**](https://thingsboard.io/use-cases/smart-farming/)
 
-[![Smart farming](https://github.com/user-attachments/assets/8fe84ad6-6ea4-4cb1-bc31-6cd5c20c357b "Smart farming")](https://thingsboard.io/use-cases/smart-farming/)
+[![Smart farming](https://github.com/user-attachments/assets/56b84c99-ef24-44e5-a903-b925b7f9d142 "Smart farming")](https://thingsboard.io/use-cases/smart-farming/)
 
 [**Smart metering**](https://thingsboard.io/smart-metering/)
 
-[![Smart metering](https://github.com/user-attachments/assets/564e5ed0-afad-452c-a16c-6270b468ebdc "Smart metering")](https://thingsboard.io/smart-metering/)
+[![Smart metering](https://github.com/user-attachments/assets/adc05e3d-397c-48ef-bed6-535bbd698455 "Smart metering")](https://thingsboard.io/smart-metering/)
 
 <div align="center">
 
-[**Check more of our use cases 🡪**](https://thingsboard.io/iot-use-cases/)
+[**Check more of our use cases ➜**](https://thingsboard.io/iot-use-cases/)
 
 </div>
 
