@@ -63,8 +63,6 @@ import java.util.NoSuchElementException;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbResponseFormatType;
@@ -101,7 +99,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private ResponseFormat responseFormat;
     private int timeoutSeconds;
     private AiModelId modelId;
-    private ExecutorService aiMessageExecutor;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -146,17 +143,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
         super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
-        startExecutor();
-    }
-
-    private void startExecutor() {
-        aiMessageExecutor = Executors.newCachedThreadPool();
-    }
-
-    private void stopExecutor() {
-        if (aiMessageExecutor != null) {
-            aiMessageExecutor.shutdownNow();
-        }
     }
 
     private static boolean isJsonModeConfigured(TbAiNodeConfiguration config) {
@@ -175,7 +161,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                         : Futures.transform(
                         loadResources(ctx),
                         resources -> UserMessage.from(buildContents(userPrompt, resources)),
-                        aiMessageExecutor
+                        ctx.getDbCallbackExecutor()
                 );
 
         Futures.addCallback(
@@ -315,7 +301,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     @Override
     public void destroy() {
         super.destroy();
-        stopExecutor();
         systemPrompt = null;
         userPrompt = null;
         resourceIds = null;
