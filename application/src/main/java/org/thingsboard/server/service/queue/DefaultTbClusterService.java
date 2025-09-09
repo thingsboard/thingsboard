@@ -449,26 +449,7 @@ public class DefaultTbClusterService implements TbClusterService {
             ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceUpdateMsg(resourceUpdateMsg).build();
             broadcast(transportMsg, DataConstants.LWM2M_TRANSPORT_NAME, callback);
         }
-        broadcastEntityStateChangeEvent(resource.getTenantId(), resource.getId(), ComponentLifecycleEvent.UPDATED);
-
-//        TransportProtos.ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = TransportProtos.ResourceCacheInvalidateMsg.newBuilder()
-//                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-//                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-//                .setResourceIdMSB(resourceId.getId().getMostSignificantBits())
-//                .setResourceIdLSB(resourceId.getId().getLeastSignificantBits()).build();
-//        broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
-//                .setResourceCacheInvalidateMsg(resourceCacheInvalidateMsg)
-//                .build());
-//
-//        Set<String> tbRuleEngineServices = partitionService.getAllServiceIds(ServiceType.TB_RULE_ENGINE);
-//        ToRuleEngineNotificationMsg msg = ToRuleEngineNotificationMsg.newBuilder().setResourceCacheInvalidateMsg(resourceCacheInvalidateMsg).build();
-//        TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineProducer = producerProvider.getRuleEngineNotificationsMsgProducer();
-//
-//        for (String serviceId : tbRuleEngineServices) {
-//            TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
-//            toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(resource.getUuidId(), msg), null);
-//            toRuleEngineNfs.incrementAndGet();
-//        }
+        broadcastEntityStateChangeEvent(tenantId, resourceId, ComponentLifecycleEvent.UPDATED);
     }
 
     @Override
