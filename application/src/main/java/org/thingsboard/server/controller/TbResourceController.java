@@ -67,6 +67,7 @@ import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.LWM2M_OBJECT_DESCRIPTION;
@@ -272,12 +273,11 @@ public class TbResourceController extends BaseController {
     @GetMapping(value = "/resource/tenant", params = {"resourceIds"})
     public List<TbResourceInfo> getTenantResourcesByIds(
             @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam("resourceIds") String[] strResourceIds) throws ThingsboardException {
-        checkArrayParameter("resourceIds", strResourceIds);
+            @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         List<TbResourceId> resourceIds = new ArrayList<>();
-        for (String strResourceId : strResourceIds) {
-            resourceIds.add(new TbResourceId(toUUID(strResourceId)));
+        for (UUID resourceId : resourceUuids) {
+            resourceIds.add(new TbResourceId(resourceId));
         }
         return resourceService.findTenantResourcesByIds(user.getTenantId(), resourceIds);
     }
@@ -291,8 +291,6 @@ public class TbResourceController extends BaseController {
                                                        @RequestParam int pageSize,
                                                        @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                        @RequestParam int page,
-                                                       @Parameter(description = RESOURCE_TYPE, schema = @Schema(allowableValues = {"LWM2M_MODEL", "JKS", "PKCS_12", "JS_MODULE", "GENERAL"}))
-                                                       @RequestParam(required = false) String resourceType,
                                                        @Parameter(description = RESOURCE_TEXT_SEARCH_DESCRIPTION)
                                                        @RequestParam(required = false) String textSearch,
                                                        @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "title", "resourceType", "tenantId"}))
@@ -302,7 +300,7 @@ public class TbResourceController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         TbResourceInfoFilter filter = TbResourceInfoFilter.builder()
                 .tenantId(getTenantId())
-                .resourceTypes(StringUtils.isNotEmpty(resourceType) ? Set.of(ResourceType.valueOf(resourceType)) : EnumSet.allOf(ResourceType.class))
+                .resourceTypes(EnumSet.allOf(ResourceType.class))
                 .build();
         return checkNotNull(resourceService.findTenantResourcesByTenantId(filter, pageLink));
     }

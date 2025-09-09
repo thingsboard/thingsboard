@@ -15,15 +15,14 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.google.common.util.concurrent.FluentFuture;
 import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.concurrent.CompletableFuture;
-
 public interface TbResourceDataCache {
 
-    CompletableFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId);
+    FluentFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId);
 
     void evictResourceData(TenantId tenantId, TbResourceId resourceId);
 }

@@ -531,8 +531,6 @@ message ResourceCacheInvalidateMsg {
   int64 tenantIdMSB = 1;
   int64 tenantIdLSB = 2;
   repeated ImageCacheKeyProto keys = 3;
-  int64 resourceIdMSB = 4;
-  int64 resourceIdLSB = 5;
 }
 
 message ImageCacheKeyProto {

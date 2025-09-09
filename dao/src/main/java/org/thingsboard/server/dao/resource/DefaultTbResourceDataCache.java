@@ -17,11 +17,13 @@ package org.thingsboard.server.dao.resource;
 
 import com.github.benmanes.caffeine.cache.AsyncLoadingCache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.util.concurrent.FluentFuture;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,9 +56,9 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
     }
 
     @Override
-    public CompletableFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+    public FluentFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Retrieving resource data info by id [{}], tenant id [{}] from cache", resourceId, tenantId);
-        return cache.get(new ResourceDataKey(tenantId, resourceId));
+        return DonAsynchron.toFluentFuture(cache.get(new ResourceDataKey(tenantId, resourceId)));
     }
 
     @Override

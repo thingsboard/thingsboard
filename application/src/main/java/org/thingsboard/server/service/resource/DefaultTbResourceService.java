@@ -18,7 +18,6 @@ package org.thingsboard.server.service.resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
@@ -37,8 +36,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
-import org.thingsboard.server.dao.resource.TbResourceDataCache;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -69,8 +66,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     private final ImageService imageService;
     private final TbImageService tbImageService;
     private final AccessControlService accessControlService;
-    private final TbResourceDataCache tbResourceDataCache;
-    private final TbClusterService clusterService;
 
     @Override
     public TbResourceInfo save(TbResource resource, SecurityUser user) throws ThingsboardException {
@@ -87,7 +82,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             }
             TbResourceInfo savedResource = new TbResourceInfo(resourceService.saveResource(resource));
             logEntityActionService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
-            evictResourceDataCache(savedResource.getTenantId(), savedResource.getId());
             return savedResource;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), new TbResourceInfo(resource), actionType, user, e);
@@ -108,7 +102,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             if (result.isSuccess()) {
                 logEntityActionService.logEntityAction(tenantId, resourceId, tbResource, actionType, user, resourceId.toString());
             }
-            evictResourceDataCache(tenantId, resourceId);
             return result;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
@@ -195,17 +188,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             comparator = Comparator.comparingLong(LwM2mObject::getId);
         }
         return "DESC".equals(sortOrder) ? comparator.reversed() : comparator;
-    }
-
-    private void evictResourceDataCache(TenantId tenantId, TbResourceId resourceId) {
-        tbResourceDataCache.evictResourceData(tenantId, resourceId);
-        clusterService.broadcastToCore(TransportProtos.ToCoreNotificationMsg.newBuilder()
-                .setResourceCacheInvalidateMsg(TransportProtos.ResourceCacheInvalidateMsg.newBuilder()
-                        .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                        .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                        .setResourceIdMSB(resourceId.getId().getMostSignificantBits())
-                        .setResourceIdLSB(resourceId.getId().getLeastSignificantBits()).build())
-                .build());
     }
 
 }

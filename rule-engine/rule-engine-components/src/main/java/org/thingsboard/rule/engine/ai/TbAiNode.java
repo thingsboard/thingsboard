@@ -18,6 +18,9 @@ package org.thingsboard.rule.engine.ai;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.Content;
 import dev.langchain4j.data.message.ImageContent;
@@ -54,12 +57,14 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Base64;
+import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
-import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.rule.engine.ai.TbResponseFormat.TbResponseFormatType;
@@ -92,10 +97,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     private String systemPrompt;
     private String userPrompt;
-    private List<TbResourceId> resourceIds;
+    private Set<TbResourceId> resourceIds;
     private ResponseFormat responseFormat;
     private int timeoutSeconds;
     private AiModelId modelId;
+    private ExecutorService aiMessageExecutor;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -128,9 +134,11 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             responseFormat = config.getResponseFormat().toLangChainResponseFormat();
         }
         if (config.getResourceIds() != null && !config.getResourceIds().isEmpty()) {
-            resourceIds = new ArrayList<>(config.getResourceIds().size());
+            resourceIds = new HashSet<>(config.getResourceIds().size());
             for (UUID resourceId : config.getResourceIds()) {
-                resourceIds.add(new TbResourceId(resourceId));
+                TbResourceId tbResourceId = new TbResourceId(resourceId);
+                ctx.checkTenantEntity(tbResourceId);
+                resourceIds.add(tbResourceId);
             }
         }
 
@@ -138,6 +146,17 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         userPrompt = config.getUserPrompt();
         timeoutSeconds = config.getTimeoutSeconds();
         super.forceAck = config.isForceAck() || super.forceAck; // force ack if node config says so, or if env variable (super.forceAck) says so
+        startExecutor();
+    }
+
+    private void startExecutor() {
+        aiMessageExecutor = Executors.newCachedThreadPool();
+    }
+
+    private void stopExecutor() {
+        if (aiMessageExecutor != null) {
+            aiMessageExecutor.shutdownNow();
+        }
     }
 
     private static boolean isJsonModeConfigured(TbAiNodeConfiguration config) {
@@ -153,13 +172,20 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         if (resourceIds == null) {
             buildAndSendRequest(ctx, ackedMsg, UserMessage.from(userPrompt));
         } else {
-            loadResources(ctx)
-                    .thenApply(resources -> buildContents(userPrompt, resources))
-                    .thenAccept(contents -> buildAndSendRequest(ctx, ackedMsg, UserMessage.from(contents)))
-                    .exceptionally(err -> {
-                        tellFailure(ctx, ackedMsg, err);
-                        return null;
-                    });
+            ListenableFuture<List<Content>> contentFuture = Futures.transform(loadResources(ctx), resources -> buildContents(userPrompt, resources),
+                    aiMessageExecutor);
+            Futures.addCallback(contentFuture, new FutureCallback<>() {
+                        @Override
+                        public void onSuccess(List<Content> contents) {
+                            buildAndSendRequest(ctx, ackedMsg, UserMessage.from(contents));
+                        }
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            tellFailure(ctx, ackedMsg, t);
+                        }
+                    },
+                    MoreExecutors.directExecutor());
         }
     }
 
@@ -194,17 +220,6 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
                 tellFailure(ctx, ackedMsg, t);
             }
         }, directExecutor());
-    }
-
-    private CompletableFuture<List<TbResourceDataInfo>> loadResources(TbContext ctx) {
-        List<CompletableFuture<TbResourceDataInfo>> resourceFutures = new ArrayList<>(resourceIds.size());
-        for (TbResourceId resourceId : resourceIds) {
-            CompletableFuture<TbResourceDataInfo> f = ctx.getTbResourceDataCache()
-                    .getResourceDataInfo(ctx.getTenantId(), resourceId);
-            resourceFutures.add(f);
-        }
-        return CompletableFuture.allOf(resourceFutures.toArray(CompletableFuture[]::new))
-                .thenApply(v -> resourceFutures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList());
     }
 
     private <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(TbContext ctx, ChatRequest chatRequest) {
@@ -242,24 +257,32 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         return JacksonUtil.newObjectNode().put("response", response).toString();
     }
 
+    private ListenableFuture<List<TbResourceDataInfo>> loadResources(TbContext ctx) {
+        List<ListenableFuture<TbResourceDataInfo>> resourceFutures = new ArrayList<>(resourceIds.size());
+        for (TbResourceId resourceId : resourceIds) {
+            ListenableFuture<TbResourceDataInfo> f = ctx.getTbResourceDataCache()
+                    .getResourceDataInfo(ctx.getTenantId(), resourceId);
+            resourceFutures.add(f);
+        }
+        return Futures.allAsList(resourceFutures);
+    }
+
     private List<Content> buildContents(String userPrompt, List<TbResourceDataInfo> resources) {
         List<Content> contents = new ArrayList<>();
         contents.add(new TextContent(userPrompt));
 
         for (TbResourceDataInfo resource : resources) {
-            toContent(resource).ifPresent(contents::add);
+            contents.add(toContent(resource));
         }
         return contents;
     }
 
-    private Optional<Content> toContent(TbResourceDataInfo resource) {
+    private Content toContent(TbResourceDataInfo resource) {
         if (!ResourceType.GENERAL.name().equals(resource.getResourceType())) {
-            log.warn("Unsupported resource type: {}", resource.getResourceType());
-            return Optional.empty();
+            throw new RuntimeException("Unsupported resource type: " + resource.getResourceType());
         }
         if (resource.getDescriptor() == null) {
-            log.warn("Missing descriptor for resource {}", resource.getResourceType());
-            return Optional.empty();
+            throw new RuntimeException("Missing descriptor for resource " + resource.getResourceType());
         }
 
         GeneralFileDescriptor descriptor =
@@ -268,27 +291,25 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         String mediaType = descriptor.getMediaType();
         byte[] data = resource.getData();
         if (mediaType == null) {
-            log.warn("Missing mediaType for resource {}", resource.getDescriptor());
-            return Optional.empty();
+            throw new RuntimeException("Missing mediaType for resource " + resource.getDescriptor());
         }
-
         if (mediaType.startsWith("text/")) {
-            return Optional.of(new TextContent(new String(data, StandardCharsets.UTF_8)));
-        }
-        if (mediaType.startsWith("image/")) {
-            return Optional.of(new ImageContent(Base64.getEncoder().encodeToString(data), mediaType));
+            return new TextContent(new String(data, StandardCharsets.UTF_8));
         }
         if (mediaType.equals("application/pdf")) {
-            return Optional.of(new PdfFileContent(Base64.getEncoder().encodeToString(data), mediaType));
+            return new PdfFileContent(Base64.getEncoder().encodeToString(data), mediaType);
         }
-
-        log.warn("Unsupported media type: {} for resource", resource.getDescriptor());
-        return Optional.empty();
+        if (mediaType.startsWith("image/")) {
+            return new ImageContent(Base64.getEncoder().encodeToString(data), mediaType);
+        }
+        log.debug("Trying to create text content for {}", resource.getDescriptor());
+        return new TextContent(new String(data, StandardCharsets.UTF_8));
     }
 
     @Override
     public void destroy() {
         super.destroy();
+        stopExecutor();
         systemPrompt = null;
         userPrompt = null;
         resourceIds = null;

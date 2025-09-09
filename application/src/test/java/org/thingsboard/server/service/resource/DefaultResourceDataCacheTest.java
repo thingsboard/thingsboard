@@ -59,7 +59,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
         byte[] data = "This is a test prompt for AI request.".getBytes();
         resource.setData(data);
         TbResourceInfo savedResource = tbResourceService.save(resource);
-        verify(resourceDataCache, timeout(2000).times(2)).evictResourceData(tenantId, savedResource.getId());
+        verify(resourceDataCache, timeout(2000).times(1)).evictResourceData(tenantId, savedResource.getId());
 
         TbResourceDataInfo cachedData = resourceDataCache.getResourceDataInfo(tenantId, savedResource.getId()).get();
         assertThat(cachedData.getData()).isEqualTo(data);
@@ -76,6 +76,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
         // delete resource, check cache
         TbResource resourceById = resourceService.findResourceById(tenantId, savedResource.getId());
         tbResourceService.delete(resourceById, true, null);
+        verify(resourceDataCache, timeout(2000).times(2)).evictResourceData(tenantId, savedResource.getId());
         TbResourceDataInfo cachedDataAfterDeletion = resourceDataCache.getResourceDataInfo(tenantId, savedResource.getId()).get();
         assertThat(cachedDataAfterDeletion).isEqualTo(null);
     }
