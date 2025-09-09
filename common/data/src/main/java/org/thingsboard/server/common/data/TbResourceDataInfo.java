@@ -26,7 +26,6 @@ import lombok.NoArgsConstructor;
 public class TbResourceDataInfo {
 
     private byte[] data;
-    private String resourceType;
     private JsonNode descriptor;
 
 }

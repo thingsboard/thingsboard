@@ -714,7 +714,7 @@ class TbAiNodeTest {
 
         // WHEN-THEN
         TbResource tbResource = buildGeneralResource("Text resource content for AI request.".getBytes(), "text/plain");
-        TbResourceDataInfo resourceDataInfo = new TbResourceDataInfo(tbResource.getData(), GENERAL.name(), null);
+        TbResourceDataInfo resourceDataInfo = new TbResourceDataInfo(tbResource.getData(), null);
 
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId)))).willReturn(tbResource);
         given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(resourceDataInfo)));
@@ -746,7 +746,7 @@ class TbAiNodeTest {
 
         // WHEN-THEN
         TbResource tbResource = buildGeneralResource("Text resource content for AI request.".getBytes(), "text/plain");
-        TbResourceDataInfo resourceDataInfo = new TbResourceDataInfo(tbResource.getData(), GENERAL.name(), JacksonUtil.newObjectNode());
+        TbResourceDataInfo resourceDataInfo = new TbResourceDataInfo(tbResource.getData(), JacksonUtil.newObjectNode());
 
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId)))).willReturn(tbResource);
         given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(resourceDataInfo)));

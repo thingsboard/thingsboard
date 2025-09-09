@@ -102,6 +102,6 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
     @Query("SELECT r.id FROM TbResourceInfoEntity r WHERE r.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.common.data.TbResourceDataInfo(r.data, r.resourceType, r.descriptor) FROM TbResourceEntity r WHERE r.id = :id")
+    @Query("SELECT new org.thingsboard.server.common.data.TbResourceDataInfo(r.data, r.descriptor) FROM TbResourceEntity r WHERE r.id = :id")
     TbResourceDataInfo getDataInfoById(UUID id);
 }

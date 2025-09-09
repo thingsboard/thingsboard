@@ -155,14 +155,14 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         var ackedMsg = ackIfNeeded(ctx, msg);
-        final String userPrompt = TbNodeUtils.processPattern(this.userPrompt, ackedMsg);
+        final String processedUserPrompt = TbNodeUtils.processPattern(this.userPrompt, ackedMsg);
 
         final ListenableFuture<UserMessage> userMessageFuture =
                 resourceIds == null
-                        ? Futures.immediateFuture(UserMessage.from(userPrompt))
+                        ? Futures.immediateFuture(UserMessage.from(processedUserPrompt))
                         : Futures.transform(
                         loadResources(ctx),
-                        resources -> UserMessage.from(buildContents(userPrompt, resources)),
+                        resources -> UserMessage.from(buildContents(processedUserPrompt, resources)),
                         ctx.getDbCallbackExecutor()
                 );
 

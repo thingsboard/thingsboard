@@ -266,8 +266,8 @@ public class TbResourceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Resource Infos by ids (getTenantResourcesByIds)")
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource", params = {"resourceIds"})
     public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
             @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))

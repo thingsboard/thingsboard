@@ -63,7 +63,6 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
 
         TbResourceDataInfo cachedData = resourceDataCache.getResourceDataInfoAsync(tenantId, savedResource.getId()).get();
         assertThat(cachedData.getData()).isEqualTo(data);
-        assertThat(ResourceType.valueOf(cachedData.getResourceType())).isEqualTo(ResourceType.GENERAL);
         assertThat(JacksonUtil.treeToValue(cachedData.getDescriptor(), GeneralFileDescriptor.class)).isEqualTo(descriptor);
         verify(resourceService).getResourceDataInfo(tenantId, savedResource.getId());
 

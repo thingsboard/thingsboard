@@ -89,7 +89,7 @@ public class TbResource extends TbResourceInfo {
 
     @JsonIgnore
     public TbResourceDataInfo toResourceDataInfo() {
-        return new TbResourceDataInfo(data, getResourceType().name(), getDescriptor());
+        return new TbResourceDataInfo(data, getDescriptor());
     }
 
     @Override
