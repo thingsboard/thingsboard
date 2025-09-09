@@ -169,24 +169,30 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         var ackedMsg = ackIfNeeded(ctx, msg);
         final String userPrompt = TbNodeUtils.processPattern(this.userPrompt, ackedMsg);
 
-        if (resourceIds == null) {
-            buildAndSendRequest(ctx, ackedMsg, UserMessage.from(userPrompt));
-        } else {
-            ListenableFuture<List<Content>> contentFuture = Futures.transform(loadResources(ctx), resources -> buildContents(userPrompt, resources),
-                    aiMessageExecutor);
-            Futures.addCallback(contentFuture, new FutureCallback<>() {
-                        @Override
-                        public void onSuccess(List<Content> contents) {
-                            buildAndSendRequest(ctx, ackedMsg, UserMessage.from(contents));
-                        }
+        final ListenableFuture<UserMessage> userMessageFuture =
+                resourceIds == null
+                        ? Futures.immediateFuture(UserMessage.from(userPrompt))
+                        : Futures.transform(
+                        loadResources(ctx),
+                        resources -> UserMessage.from(buildContents(userPrompt, resources)),
+                        aiMessageExecutor
+                );
 
-                        @Override
-                        public void onFailure(Throwable t) {
-                            tellFailure(ctx, ackedMsg, t);
-                        }
-                    },
-                    MoreExecutors.directExecutor());
-        }
+        Futures.addCallback(
+                userMessageFuture,
+                new FutureCallback<>() {
+                    @Override
+                    public void onSuccess(UserMessage userMessage) {
+                        buildAndSendRequest(ctx, ackedMsg, userMessage);
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        tellFailure(ctx, ackedMsg, t);
+                    }
+                },
+                MoreExecutors.directExecutor()
+        );
     }
 
     private void buildAndSendRequest(TbContext ctx, TbMsg ackedMsg, UserMessage userMessage) {
