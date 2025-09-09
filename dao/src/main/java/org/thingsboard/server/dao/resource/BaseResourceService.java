@@ -672,9 +672,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
-    public List<TbResourceInfo> findTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
-        log.trace("Executing findTenantResourcesByIds, tenantId [{}], resourceIds [{}]", tenantId, resourceIds);
-        return resourceInfoDao.findTenantResourcesByIds(tenantId, resourceIds);
+    public List<TbResourceInfo> findSystemOrTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
+        log.trace("Executing findSystemOrTenantResourcesByIds, tenantId [{}], resourceIds [{}]", tenantId, resourceIds);
+        return resourceInfoDao.findSystemOrTenantResourcesByIds(tenantId, resourceIds);
     }
 
     @Override

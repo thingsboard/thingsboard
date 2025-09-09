@@ -44,6 +44,7 @@ import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.GeneralFileDescriptor;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceDataInfo;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
@@ -53,6 +54,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -134,7 +136,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             resourceIds = new HashSet<>(config.getResourceIds().size());
             for (UUID resourceId : config.getResourceIds()) {
                 TbResourceId tbResourceId = new TbResourceId(resourceId);
-                ctx.checkTenantEntity(tbResourceId);
+                validateResource(ctx, tbResourceId);
                 resourceIds.add(tbResourceId);
             }
         }
@@ -188,7 +190,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             chatMessages.add(SystemMessage.from(TbNodeUtils.processPattern(systemPrompt, ackedMsg)));
         }
 
-         chatMessages.add(userMessage);
+        chatMessages.add(userMessage);
 
         var chatRequest = ChatRequest.builder()
                 .messages(chatMessages)
@@ -249,12 +251,31 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         return JacksonUtil.newObjectNode().put("response", response).toString();
     }
 
+    private void validateResource(TbContext ctx, TbResourceId tbResourceId) throws TbNodeException {
+        TbResourceInfo resource = ctx.getResourceService().findResourceInfoById(ctx.getTenantId(), tbResourceId);
+        if (resource == null) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] was not found");
+        }
+        if (!ResourceType.GENERAL.equals(resource.getResourceType())) {
+            throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] has unsupported resource type: " + resource.getResourceType());
+        }
+        ctx.checkTenantEntity(resource);
+    }
+
     private ListenableFuture<List<TbResourceDataInfo>> loadResources(TbContext ctx) {
+        TbResourceDataCache cache = ctx.getTbResourceDataCache();
         List<ListenableFuture<TbResourceDataInfo>> resourceFutures = new ArrayList<>(resourceIds.size());
         for (TbResourceId resourceId : resourceIds) {
-            ListenableFuture<TbResourceDataInfo> f = ctx.getTbResourceDataCache()
-                    .getResourceDataInfo(ctx.getTenantId(), resourceId);
-            resourceFutures.add(f);
+            ListenableFuture<TbResourceDataInfo> future = Futures.transform(
+                    cache.getResourceDataInfo(ctx.getTenantId(), resourceId),
+                    resource -> {
+                        if (resource == null) {
+                            throw new RuntimeException("[" + ctx.getTenantId() + "] Resource with ID: [" + resourceId + "] was not found");
+                        }
+                        return resource;
+                    }, MoreExecutors.directExecutor()
+            );
+            resourceFutures.add(future);
         }
         return Futures.allAsList(resourceFutures);
     }
@@ -270,21 +291,15 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     }
 
     private Content toContent(TbResourceDataInfo resource) {
-        if (!ResourceType.GENERAL.name().equals(resource.getResourceType())) {
-            throw new RuntimeException("Unsupported resource type: " + resource.getResourceType());
-        }
         if (resource.getDescriptor() == null) {
-            throw new RuntimeException("Missing descriptor for resource " + resource.getResourceType());
+            throw new RuntimeException("Missing descriptor for resource");
         }
-
-        GeneralFileDescriptor descriptor =
-                JacksonUtil.treeToValue(resource.getDescriptor(), GeneralFileDescriptor.class);
-
+        GeneralFileDescriptor descriptor = JacksonUtil.treeToValue(resource.getDescriptor(), GeneralFileDescriptor.class);
         String mediaType = descriptor.getMediaType();
-        byte[] data = resource.getData();
         if (mediaType == null) {
-            throw new RuntimeException("Missing mediaType for resource " + resource.getDescriptor());
+            throw new RuntimeException("Missing mediaType in resource descriptor " + resource.getDescriptor());
         }
+        byte[] data = resource.getData();
         if (mediaType.startsWith("text/")) {
             return new TextContent(new String(data, StandardCharsets.UTF_8));
         }

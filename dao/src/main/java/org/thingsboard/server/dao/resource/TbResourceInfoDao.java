@@ -47,5 +47,5 @@ public interface TbResourceInfoDao extends Dao<TbResourceInfo> {
 
     TbResourceInfo findPublicResourceByKey(ResourceType resourceType, String publicResourceKey);
 
-    List<TbResourceInfo> findTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds);
+    List<TbResourceInfo> findSystemOrTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds);
 }

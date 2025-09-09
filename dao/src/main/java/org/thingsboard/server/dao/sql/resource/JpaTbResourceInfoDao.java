@@ -131,7 +131,7 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
     }
 
     @Override
-    public List<TbResourceInfo> findTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
-        return DaoUtil.convertDataList(resourceInfoRepository.findTenantResourcesByIdIn(tenantId.getId(), TenantId.NULL_UUID, toUUIDs(resourceIds)));
+    public List<TbResourceInfo> findSystemOrTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
+        return DaoUtil.convertDataList(resourceInfoRepository.findSystemOrTenantResourcesByIdIn(tenantId.getId(), TenantId.NULL_UUID, toUUIDs(resourceIds)));
     }
 }

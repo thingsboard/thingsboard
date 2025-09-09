@@ -38,8 +38,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.GeneralFileDescriptor;
-import org.thingsboard.server.common.data.ImageDescriptor;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -268,10 +266,10 @@ public class TbResourceController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get Tenant Resource Infos by ids (getTenantResourcesByIds)")
+    @ApiOperation(value = "Get Resource Infos by ids (getTenantResourcesByIds)")
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/resource/tenant", params = {"resourceIds"})
-    public List<TbResourceInfo> getTenantResourcesByIds(
+    @GetMapping(value = "/resource", params = {"resourceIds"})
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
             @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
         SecurityUser user = getCurrentUser();
@@ -279,7 +277,7 @@ public class TbResourceController extends BaseController {
         for (UUID resourceId : resourceUuids) {
             resourceIds.add(new TbResourceId(resourceId));
         }
-        return resourceService.findTenantResourcesByIds(user.getTenantId(), resourceIds);
+        return resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
     }
 
     @ApiOperation(value = "Get All Resource Infos (getAllResources)",
