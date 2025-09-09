@@ -56,7 +56,7 @@ public class DefaultTbResourceDataCache implements TbResourceDataCache {
     }
 
     @Override
-    public FluentFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+    public FluentFuture<TbResourceDataInfo> getResourceDataInfoAsync(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Retrieving resource data info by id [{}], tenant id [{}] from cache", resourceId, tenantId);
         return DonAsynchron.toFluentFuture(cache.get(new ResourceDataKey(tenantId, resourceId)));
     }

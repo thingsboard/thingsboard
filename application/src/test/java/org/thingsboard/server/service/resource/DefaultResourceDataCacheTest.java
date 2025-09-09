@@ -61,7 +61,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
         TbResourceInfo savedResource = tbResourceService.save(resource);
         verify(resourceDataCache, timeout(2000).times(1)).evictResourceData(tenantId, savedResource.getId());
 
-        TbResourceDataInfo cachedData = resourceDataCache.getResourceDataInfo(tenantId, savedResource.getId()).get();
+        TbResourceDataInfo cachedData = resourceDataCache.getResourceDataInfoAsync(tenantId, savedResource.getId()).get();
         assertThat(cachedData.getData()).isEqualTo(data);
         assertThat(ResourceType.valueOf(cachedData.getResourceType())).isEqualTo(ResourceType.GENERAL);
         assertThat(JacksonUtil.treeToValue(cachedData.getDescriptor(), GeneralFileDescriptor.class)).isEqualTo(descriptor);
@@ -69,7 +69,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
 
         // retrieve resource data second time
         clearInvocations(resourceService);
-        TbResourceDataInfo cachedData2 = resourceDataCache.getResourceDataInfo(tenantId, savedResource.getId()).get();
+        TbResourceDataInfo cachedData2 = resourceDataCache.getResourceDataInfoAsync(tenantId, savedResource.getId()).get();
         assertThat(cachedData2.getData()).isEqualTo(data);
         verifyNoMoreInteractions(resourceService);
 
@@ -77,7 +77,7 @@ public class DefaultResourceDataCacheTest extends AbstractControllerTest {
         TbResource resourceById = resourceService.findResourceById(tenantId, savedResource.getId());
         tbResourceService.delete(resourceById, true, null);
         verify(resourceDataCache, timeout(2000).times(2)).evictResourceData(tenantId, savedResource.getId());
-        TbResourceDataInfo cachedDataAfterDeletion = resourceDataCache.getResourceDataInfo(tenantId, savedResource.getId()).get();
+        TbResourceDataInfo cachedDataAfterDeletion = resourceDataCache.getResourceDataInfoAsync(tenantId, savedResource.getId()).get();
         assertThat(cachedDataAfterDeletion).isEqualTo(null);
     }
 

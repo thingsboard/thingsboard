@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbResourceDataCache {
 
-    FluentFuture<TbResourceDataInfo> getResourceDataInfo(TenantId tenantId, TbResourceId resourceId);
+    FluentFuture<TbResourceDataInfo> getResourceDataInfoAsync(TenantId tenantId, TbResourceId resourceId);
 
     void evictResourceData(TenantId tenantId, TbResourceId resourceId);
 }

@@ -640,9 +640,9 @@ class TbAiNodeTest {
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId2)))).willReturn(xmlResource);
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId3)))).willReturn(imageResource);
 
-        given(tbResourceDataCacheMock.getResourceDataInfo(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(textResource.toResourceDataInfo())));
-        given(tbResourceDataCacheMock.getResourceDataInfo(any(), eq(new TbResourceId(resourceId2)))).willReturn(FluentFuture.from(Futures.immediateFuture(xmlResource.toResourceDataInfo())));
-        given(tbResourceDataCacheMock.getResourceDataInfo(any(), eq(new TbResourceId(resourceId3)))).willReturn(FluentFuture.from(Futures.immediateFuture(imageResource.toResourceDataInfo())));
+        given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(textResource.toResourceDataInfo())));
+        given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId2)))).willReturn(FluentFuture.from(Futures.immediateFuture(xmlResource.toResourceDataInfo())));
+        given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId3)))).willReturn(FluentFuture.from(Futures.immediateFuture(imageResource.toResourceDataInfo())));
 
         aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -685,7 +685,7 @@ class TbAiNodeTest {
         TbResource tbResource = buildGeneralResource("Text resource content for AI request.".getBytes(), "text/plain");
 
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId)))).willReturn(tbResource);
-        given(tbResourceDataCacheMock.getResourceDataInfo(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(null)));
+        given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(null)));
 
         aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -717,7 +717,7 @@ class TbAiNodeTest {
         TbResourceDataInfo resourceDataInfo = new TbResourceDataInfo(tbResource.getData(), GENERAL.name(), null);
 
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId)))).willReturn(tbResource);
-        given(tbResourceDataCacheMock.getResourceDataInfo(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(resourceDataInfo)));
+        given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(resourceDataInfo)));
 
         aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -749,7 +749,7 @@ class TbAiNodeTest {
         TbResourceDataInfo resourceDataInfo = new TbResourceDataInfo(tbResource.getData(), GENERAL.name(), JacksonUtil.newObjectNode());
 
         given(resourceServiceMock.findResourceInfoById(any(), eq(new TbResourceId(resourceId)))).willReturn(tbResource);
-        given(tbResourceDataCacheMock.getResourceDataInfo(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(resourceDataInfo)));
+        given(tbResourceDataCacheMock.getResourceDataInfoAsync(any(), eq(new TbResourceId(resourceId)))).willReturn(FluentFuture.from(Futures.immediateFuture(resourceDataInfo)));
 
         aiNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 

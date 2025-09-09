@@ -267,7 +267,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
         List<ListenableFuture<TbResourceDataInfo>> resourceFutures = new ArrayList<>(resourceIds.size());
         for (TbResourceId resourceId : resourceIds) {
             ListenableFuture<TbResourceDataInfo> future = Futures.transform(
-                    cache.getResourceDataInfo(ctx.getTenantId(), resourceId),
+                    cache.getResourceDataInfoAsync(ctx.getTenantId(), resourceId),
                     resource -> {
                         if (resource == null) {
                             throw new RuntimeException("[" + ctx.getTenantId() + "] Resource with ID: [" + resourceId + "] was not found");
