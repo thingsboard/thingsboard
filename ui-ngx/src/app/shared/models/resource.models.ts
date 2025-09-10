@@ -25,7 +25,7 @@ export enum ResourceType {
   PKCS_12 = 'PKCS_12',
   JKS = 'JKS',
   JS_MODULE = 'JS_MODULE',
-  TEXT = 'TEXT',
+  GENERAL = 'GENERAL',
 }
 
 export enum ResourceSubType {
@@ -59,7 +59,7 @@ export const ResourceTypeTranslationMap = new Map<ResourceType, string>(
     [ResourceType.PKCS_12, 'resource.type.pkcs-12'],
     [ResourceType.JKS, 'resource.type.jks'],
     [ResourceType.JS_MODULE, 'resource.type.js-module'],
-    [ResourceType.TEXT, 'resource.type.text'],
+    [ResourceType.GENERAL, 'resource.type.general'],
   ]
 );
 

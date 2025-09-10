@@ -106,6 +106,9 @@ export class ResourcesDialogComponent extends DialogComponent<ResourcesDialogCom
           map((response) => response[0])
         ).subscribe(result => this.dialogRef.close(result));
       } else {
+        if (resource.resourceType !== ResourceType.GENERAL) {
+          delete resource.descriptor;
+        }
         this.resourceService.saveResource(resource).subscribe(result => this.dialogRef.close(result));
       }
     }
