@@ -24,6 +24,7 @@ import { Resource, ResourceInfo, ResourceSubType, ResourceType, TBResourceScope 
 import { catchError, mergeMap } from 'rxjs/operators';
 import { isNotEmptyStr } from '@core/utils';
 import { ResourcesService } from '@core/services/resources.service';
+import { NotificationTarget } from "@shared/models/notification.models";
 
 @Injectable({
   providedIn: 'root'
@@ -47,12 +48,8 @@ export class ResourceService {
     return this.http.get<PageData<ResourceInfo>>(url, defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenantResources(pageLink: PageLink, resourceType?: ResourceType, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
-    let url = `/api/resource${pageLink.toQuery()}`;
-    if (isNotEmptyStr(resourceType)) {
-      url += `&resourceType=${resourceType}`;
-    }
-    return this.http.get<PageData<ResourceInfo>>(url, defaultHttpOptionsFromConfig(config));
+  public getTenantResources(pageLink: PageLink, config?: RequestConfig): Observable<PageData<ResourceInfo>> {
+    return this.http.get<PageData<ResourceInfo>>(`/api/resource/tenant${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config))
   }
 
   public getResource(resourceId: string, config?: RequestConfig): Observable<Resource> {
@@ -96,6 +93,11 @@ export class ResourceService {
 
   public deleteResource(resourceId: string, force = false, config?: RequestConfig) {
     return this.http.delete(`/api/resource/${resourceId}?force=${force}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getResourcesByIds(ids: string[], config?: RequestConfig): Observable<Array<ResourceInfo>> {
+    return this.http.get<Array<ResourceInfo>>(`/api/resource?resourceIds=${ids.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
   }
 
 }
