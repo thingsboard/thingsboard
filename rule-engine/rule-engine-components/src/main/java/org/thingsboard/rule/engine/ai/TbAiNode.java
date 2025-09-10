@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.ai.model.AiModelType;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -62,6 +63,7 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -263,30 +265,23 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     }
 
     private ListenableFuture<List<TbResourceDataInfo>> loadResources(TbContext ctx) {
-        TbResourceDataCache cache = ctx.getTbResourceDataCache();
-        List<ListenableFuture<TbResourceDataInfo>> resourceFutures = new ArrayList<>(resourceIds.size());
-        for (TbResourceId resourceId : resourceIds) {
-            ListenableFuture<TbResourceDataInfo> future = Futures.transform(
-                    cache.getResourceDataInfoAsync(ctx.getTenantId(), resourceId),
-                    resource -> {
-                        if (resource == null) {
-                            throw new RuntimeException("[" + ctx.getTenantId() + "] Resource with ID: [" + resourceId + "] was not found");
-                        }
-                        return resource;
-                    }, MoreExecutors.directExecutor()
-            );
-            resourceFutures.add(future);
-        }
-        return Futures.allAsList(resourceFutures);
+        final TenantId tenantId = ctx.getTenantId();
+        final TbResourceDataCache cache = ctx.getTbResourceDataCache();
+        List<? extends ListenableFuture<TbResourceDataInfo>> futures = resourceIds.stream()
+                .map(id -> cache.getResourceDataInfoAsync(tenantId, id))
+                .toList();
+        return Futures.allAsList(futures);
     }
 
     private List<Content> buildContents(String userPrompt, List<TbResourceDataInfo> resources) {
-        List<Content> contents = new ArrayList<>();
-        contents.add(new TextContent(userPrompt));
+        List<Content> contents = new ArrayList<>(1 + resources.size());
+        contents.add(new TextContent(userPrompt)); // prompt first
 
-        for (TbResourceDataInfo resource : resources) {
-            contents.add(toContent(resource));
-        }
+        resources.stream()
+                .filter(Objects::nonNull)
+                .map(this::toContent)
+                .forEach(contents::add);
+
         return contents;
     }
 

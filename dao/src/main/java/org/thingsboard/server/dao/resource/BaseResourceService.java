@@ -51,12 +51,14 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.dao.ResourceContainerDao;
+import org.thingsboard.server.dao.ResourceIdContainerDao;
+import org.thingsboard.server.dao.ResourceLinkContainerDao;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleNodeDao;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
@@ -93,13 +95,16 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final ResourceDataValidator resourceValidator;
     protected final WidgetTypeDao widgetTypeDao;
     protected final DashboardInfoDao dashboardInfoDao;
-    private final Map<EntityType, ResourceContainerDao<?>> resourceContainerDaoMap = new HashMap<>();
+    protected final RuleNodeDao ruleNodeDao;
+    private final Map<EntityType, ResourceLinkContainerDao<?>> resourceLinkContainerDaoMap = new HashMap<>();
+    private final Map<EntityType, ResourceIdContainerDao<?>> resourceIdContainerDaoMap = new HashMap<>();
     protected static final int MAX_ENTITIES_TO_FIND = 10;
 
     @PostConstruct
     public void init() {
-        resourceContainerDaoMap.put(EntityType.WIDGET_TYPE, widgetTypeDao);
-        resourceContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
+        resourceLinkContainerDaoMap.put(EntityType.WIDGET_TYPE, widgetTypeDao);
+        resourceLinkContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
+        resourceIdContainerDaoMap.put(EntityType.RULE_NODE, ruleNodeDao);
     }
 
     @Autowired @Lazy
@@ -351,22 +356,10 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
 
         if (!force) {
-            if (resource.getResourceType() == ResourceType.JS_MODULE) {
-                var link = resource.getLink();
-                Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
-
-                resourceContainerDaoMap.forEach((entityType, resourceContainerDao) -> {
-                    var entities = tenantId.isSysTenantId() ? resourceContainerDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND) :
-                            resourceContainerDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
-                    if (!entities.isEmpty()) {
-                        affectedEntities.put(entityType.name(), entities);
-                    }
-                });
-
-                if (!affectedEntities.isEmpty()) {
-                    success = false;
-                    result.references(affectedEntities);
-                }
+            Map<String, List<? extends HasId<?>>> references = findResourceReferences(tenantId, resource);
+            if (!references.isEmpty()) {
+                success = false;
+                result.references(references);
             }
         }
         if (success) {
@@ -376,6 +369,33 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
 
         return result.success(success).build();
+    }
+
+    private Map<String, List<? extends HasId<?>>> findResourceReferences(TenantId tenantId, TbResourceInfo resource) {
+        Map<String, List<? extends HasId<?>>> references = new HashMap<>();
+
+        if (resource.getResourceType() == ResourceType.JS_MODULE) {
+            var link = resource.getLink();
+            resourceLinkContainerDaoMap.forEach((entityType, dao) -> {
+                List<? extends HasId<?>> entities = tenantId.isSysTenantId()
+                        ? dao.findByResourceLink(link, MAX_ENTITIES_TO_FIND)
+                        : dao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
+                if (!entities.isEmpty()) {
+                    references.put(entityType.name(), entities);
+                }
+            });
+        }
+
+        if (resource.getResourceType() == ResourceType.GENERAL) {
+            resourceIdContainerDaoMap.forEach((entityType, dao) -> {
+                List<? extends HasId<?>> entities = dao.findByResourceId(resource.getId(), MAX_ENTITIES_TO_FIND);
+                if (!entities.isEmpty()) {
+                    references.put(entityType.name(), entities);
+                }
+            });
+        }
+
+        return references;
     }
 
     @Override
