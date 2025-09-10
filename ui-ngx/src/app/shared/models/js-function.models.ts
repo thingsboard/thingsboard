@@ -240,6 +240,7 @@ const modulesLoading: {[url: string]: ReplaySubject<System.Module>} = {};
 const loadFunctionModule = (http: HttpClient, moduleLink: string): Observable<System.Module> => {
   const url = removeTbResourcePrefix(moduleLink);
   let request: ReplaySubject<System.Module>;
+  let objectURL: string;
   if (modulesLoading[url]) {
     request = modulesLoading[url];
   } else {
@@ -248,12 +249,13 @@ const loadFunctionModule = (http: HttpClient, moduleLink: string): Observable<Sy
     const options = defaultHttpOptionsFromConfig({ignoreLoading: true, ignoreErrors: true});
     http.get(url, {...options, ...{ observe: 'response', responseType: 'blob' } }).pipe(
       mergeMap((response) => {
-        const objectURL = URL.createObjectURL(response.body);
-        const asyncModule = from(import(/* @vite-ignore */objectURL));
-        URL.revokeObjectURL(objectURL);
-        return asyncModule;
+        objectURL = URL.createObjectURL(response.body);
+        return from(import(/* @vite-ignore */objectURL));
       }),
       finalize(() => {
+        if (objectURL) {
+          URL.revokeObjectURL(objectURL);
+        }
         delete modulesLoading[url];
       })
     ).subscribe(
