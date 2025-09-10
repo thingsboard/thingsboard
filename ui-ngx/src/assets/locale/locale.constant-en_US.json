@@ -4489,7 +4489,7 @@
             "js-module": "JS module",
             "lwm2m-model": "LWM2M model",
             "pkcs-12": "PKCS #12",
-            "text": "Text"
+            "general": "General"
         },
         "resource-sub-type": "Sub-type",
         "sub-type": {

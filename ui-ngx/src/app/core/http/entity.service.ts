@@ -299,9 +299,7 @@ export class EntityService {
           entityIds);
         break;
       case EntityType.TB_RESOURCE:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.resourceService.getResource(id, config),
-          entityIds);
+        observable = this.resourceService.getResourcesByIds(entityIds, config);
         break;
     }
     return observable;
@@ -478,7 +476,7 @@ export class EntityService {
         break;
       case EntityType.TB_RESOURCE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.resourceService.getTenantResources(pageLink, subType as ResourceType, config);
+        entitiesObservable = this.resourceService.getResources(pageLink, subType as ResourceType, null, config);
         break;
       case EntityType.QUEUE_STATS:
         pageLink.sortOrder.property = 'createdTime';

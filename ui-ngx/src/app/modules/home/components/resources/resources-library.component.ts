@@ -44,7 +44,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   standalone = false;
 
   @Input()
-  resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS, ResourceType.TEXT];
+  resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS, ResourceType.GENERAL];
 
   @Input()
   defaultResourceType = ResourceType.LWM2M_MODEL;
@@ -90,8 +90,17 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
-      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
+      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []],
+      descriptor: this.fb.group({
+        mediaType: ['']
+      })
     });
+  }
+
+  mediaTypeChange(mediaType: string): void {
+    if (this.entityForm.get('resourceType').value === ResourceType.GENERAL) {
+      this.entityForm.get('descriptor').get('mediaType').patchValue(mediaType);
+    }
   }
 
   updateForm(entity: Resource): void {

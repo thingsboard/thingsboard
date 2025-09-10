@@ -130,7 +130,7 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        resources: {title: name, resourceType: ResourceType.TEXT},
+        resources: {title: name, resourceType: ResourceType.GENERAL},
         isAdd: true
       }
     }).afterClosed()
