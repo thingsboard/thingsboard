@@ -436,5 +436,5 @@ public interface TbContext {
 
     MqttClientSettings getMqttClientSettings();
 
-    <E extends HasId<?> & HasTenantId> void checkTenantEntity(E entity) throws TbNodeException;
+    <E extends HasId<I> & HasTenantId, I extends EntityId> void checkTenantEntity(E entity) throws TbNodeException;
 }

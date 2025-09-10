@@ -675,7 +675,7 @@ class TbAiNodeTest {
     }
 
     @Test
-    void givenNullResource_whenOnMsg_thenEnqueueForTellFailure() throws TbNodeException {
+    void givenNullResource_whenOnMsg_thenRequestContainsSystemAndUserPrompt() throws TbNodeException {
         // GIVEN
         config = constructValidConfig();
         UUID resourceId = UUID.randomUUID();
@@ -699,10 +699,15 @@ class TbAiNodeTest {
         aiNode.onMsg(ctxMock, msg);
 
         // THEN
-        var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
-        then(ctxMock).should().enqueueForTellFailure(any(), exceptionCaptor.capture());
-        Throwable actualException = exceptionCaptor.getValue();
-        assertThat(actualException.getMessage()).isEqualTo("[" + tenantId + "] Resource with ID: [" + resourceId + "] was not found");
+        then(aiChatModelServiceMock).should().sendChatRequestAsync(any(),
+                argThat(actualChatRequest -> {
+                    assertThat(actualChatRequest.messages()).hasSize(2);
+                    assertThat(actualChatRequest.messages().get(0)).isEqualTo(SystemMessage.from(config.getSystemPrompt()));
+                    assertThat(((UserMessage)actualChatRequest.messages().get(1)).contents())
+                            .containsAll(List.of(new TextContent(config.getUserPrompt())));
+                    return true;
+                })
+        );
     }
 
     @Test

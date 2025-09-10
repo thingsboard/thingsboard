@@ -275,7 +275,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
 
     private List<Content> buildContents(String userPrompt, List<TbResourceDataInfo> resources) {
         List<Content> contents = new ArrayList<>(1 + resources.size());
-        contents.add(new TextContent(userPrompt)); // prompt first
+        contents.add(new TextContent(userPrompt)); // user prompt first
 
         resources.stream()
                 .filter(Objects::nonNull)
