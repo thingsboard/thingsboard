@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-api-usage-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-api-usage-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-api-usage-content">
+    <div class="api-items-list">
+      @for (api of apiUsages; track api){
+        <div class="api-item {{api.status.value}}"
+             [class.cursor-pointer]="api.state"
+             [class.active]="api.state && api.state === currentState"
+             (click)="updateState($event, api.state)">
+          <div class="api-item-content">
+            <div class="api-item-title">{{ api.label }}</div>
+            <div class="api-item-statistic">
+              <div class="api-item-statistic-count">{{ api.current.value }} / {{ api.maxLimit.value }}</div>
+              <div class="api-item-statistic-progress">
+                <mat-progress-bar mode="determinate"
+                                  [value]="api.progress"
+                ></mat-progress-bar>
+              </div>
+              <div class="api-item-statistic-status">
+                <div class="statistic-status">{{ ('api-usage.status.' + api.status.value) | translate }}</div>
+                <div class="statistic-icon">
+                  @if (api.status.value === 'enabled') {
+                    <tb-icon class="tb-mat-18">check_circle</tb-icon>
+                  } @else {
+                    <tb-icon class="tb-mat-18">warning</tb-icon>
+                  }
+                </div>
+              </div>
+            </div>
+          </div>
+          <mat-divider></mat-divider>
+        </div>
+      }
+    </div>
+  </div>
+</div>
