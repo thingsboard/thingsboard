@@ -26,7 +26,8 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = TbelCfSingleValueArg.class, name = "SINGLE_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfTsRollingArg.class, name = "TS_ROLLING")
+        @JsonSubTypes.Type(value = TbelCfTsRollingArg.class, name = "TS_ROLLING"),
+        @JsonSubTypes.Type(value = TbelCfTsGeofencingArg.class, name = "GEOFENCING_CF_ARGUMENT_VALUE"),
 })
 public interface TbelCfArg extends TbelCfObject {
 

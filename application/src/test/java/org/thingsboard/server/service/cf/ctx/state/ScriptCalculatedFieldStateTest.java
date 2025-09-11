@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -77,7 +78,7 @@ public class ScriptCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
-        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService, apiLimitService);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService, apiLimitService, null);
         ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getArgNames());
     }
@@ -124,7 +125,7 @@ public class ScriptCalculatedFieldStateTest {
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
@@ -140,7 +141,7 @@ public class ScriptCalculatedFieldStateTest {
                 "assetHumidity", new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new LongDataEntry("a", 45L), 10L)
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
