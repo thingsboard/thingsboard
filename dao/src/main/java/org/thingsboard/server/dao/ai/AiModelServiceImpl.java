@@ -63,7 +63,14 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Override
     @Transactional
     public AiModel save(AiModel model) {
-        aiModelValidator.validate(model, AiModel::getTenantId);
+        return save(model, true);
+    }
+
+    @Override
+    public AiModel save(AiModel model, boolean doValidate) {
+        if (doValidate) {
+            aiModelValidator.validate(model, AiModel::getTenantId);
+        }
 
         AiModel savedModel;
         try {
@@ -101,6 +108,11 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Override
     public FluentFuture<Optional<AiModel>> findAiModelByTenantIdAndIdAsync(TenantId tenantId, AiModelId modelId) {
         return FluentFuture.from(jpaExecutor.submit(() -> findAiModelByTenantIdAndId(tenantId, modelId)));
+    }
+
+    @Override
+    public Optional<AiModel> findAiModelByTenantIdAndName(TenantId tenantId, String name) {
+        return Optional.ofNullable(aiModelDao.findByTenantIdAndName(tenantId.getId(), name));
     }
 
     @Override
