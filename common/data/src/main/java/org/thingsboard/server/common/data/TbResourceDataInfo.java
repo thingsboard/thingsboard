@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.TenantId;
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TbResourceDataInfo {
 
-public interface ResourceContainerDao<T extends HasId<?>> {
-
-    List<T> findByTenantIdAndResourceLink(TenantId tenantId, String link, int limit);
-
-    List<T> findByResourceLink(String link, int limit);
+    private byte[] data;
+    private JsonNode descriptor;
 
 }

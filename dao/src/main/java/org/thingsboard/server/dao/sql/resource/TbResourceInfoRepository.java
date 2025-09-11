@@ -79,4 +79,10 @@ public interface TbResourceInfoRepository extends JpaRepository<TbResourceInfoEn
 
     TbResourceInfoEntity findByResourceTypeAndPublicResourceKeyAndIsPublicTrue(String resourceType, String publicResourceKey);
 
+    @Query("SELECT tr FROM TbResourceInfoEntity tr WHERE " +
+            "tr.id IN (:resourceIds) AND (tr.tenantId = :tenantId OR tr.tenantId = :systemTenantId)")
+    List<TbResourceInfoEntity> findSystemOrTenantResourcesByIdIn(@Param("tenantId") UUID tenantId,
+                                                                 @Param("systemTenantId") UUID systemTenantId,
+                                                                 @Param("resourceIds") List<UUID> resourceIds);
+
 }

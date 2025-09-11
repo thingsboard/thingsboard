@@ -20,14 +20,14 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ImageContainerDao;
-import org.thingsboard.server.dao.ResourceContainerDao;
+import org.thingsboard.server.dao.ResourceLinkContainerDao;
 
 import java.util.UUID;
 
 /**
  * The Interface DashboardInfoDao.
  */
-public interface DashboardInfoDao extends Dao<DashboardInfo>, ImageContainerDao<DashboardInfo>, ResourceContainerDao<DashboardInfo> {
+public interface DashboardInfoDao extends Dao<DashboardInfo>, ImageContainerDao<DashboardInfo>, ResourceLinkContainerDao<DashboardInfo> {
 
     /**
      * Find dashboards by tenantId and page link.
