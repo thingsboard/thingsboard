@@ -73,12 +73,12 @@ public class GeofencingCalculatedFieldConfigurationTest {
         EntityCoordinates entityCoordinatesMock = mock(EntityCoordinates.class);
         cfg.setEntityCoordinates(entityCoordinatesMock);
         var zoneGroupConfiguration = mock(ZoneGroupConfiguration.class);
-        cfg.setZoneGroups(List.of(zoneGroupConfiguration));
+        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfiguration));
 
         cfg.validate();
 
         verify(entityCoordinatesMock).validate();
-        verify(zoneGroupConfiguration).validate();
+        verify(zoneGroupConfiguration).validate("someGroupName");
     }
 
     @Test
@@ -89,38 +89,16 @@ public class GeofencingCalculatedFieldConfigurationTest {
         var zoneGroupConfigurationA = mock(ZoneGroupConfiguration.class);
         var zoneGroupConfigurationB = mock(ZoneGroupConfiguration.class);
 
-        when(zoneGroupConfigurationA.getName()).thenReturn("zoneGroupA");
-        when(zoneGroupConfigurationB.getName()).thenReturn("zoneGroupB");
+        String zoneGroupAName = "zoneGroupA";
+        String zoneGroupBName = "zoneGroupB";
 
-        cfg.setZoneGroups(List.of(zoneGroupConfigurationA, zoneGroupConfigurationB));
+        cfg.setZoneGroups(Map.of("zoneGroupA", zoneGroupConfigurationA, "zoneGroupB", zoneGroupConfigurationB));
 
         assertThatCode(cfg::validate).doesNotThrowAnyException();
 
         verify(entityCoordinatesMock).validate();
-        verify(zoneGroupConfigurationA).validate();
-        verify(zoneGroupConfigurationB).validate();
-    }
-
-    @Test
-    void validateShouldThrowWhenZoneGroupNamesDuplicated() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        EntityCoordinates entityCoordinatesMock = mock(EntityCoordinates.class);
-        cfg.setEntityCoordinates(entityCoordinatesMock);
-        var zoneGroupConfigurationA = mock(ZoneGroupConfiguration.class);
-        var zoneGroupConfigurationB = mock(ZoneGroupConfiguration.class);
-
-        when(zoneGroupConfigurationA.getName()).thenReturn("zoneGroupDuplicated");
-        when(zoneGroupConfigurationB.getName()).thenReturn("zoneGroupDuplicated");
-
-        cfg.setZoneGroups(List.of(zoneGroupConfigurationA, zoneGroupConfigurationB));
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Geofencing calculated field zone group name must be unique!");
-
-        verify(entityCoordinatesMock).validate();
-        verify(zoneGroupConfigurationA).validate();
-        verify(zoneGroupConfigurationB, never()).validate();
+        verify(zoneGroupConfigurationA).validate(zoneGroupAName);
+        verify(zoneGroupConfigurationB).validate(zoneGroupBName);
     }
 
     @Test
@@ -135,7 +113,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
         when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(false);
-        cfg.setZoneGroups(List.of(zoneGroupConfigurationMock));
+        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfigurationMock));
         cfg.setScheduledUpdateInterval(60);
         assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
     }
@@ -145,7 +123,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
         when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(true);
-        cfg.setZoneGroups(List.of(zoneGroupConfigurationMock));
+        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfigurationMock));
         cfg.setScheduledUpdateInterval(60);
         assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
     }
@@ -154,7 +132,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
     void testGetArgumentsOverride() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setEntityCoordinates(new EntityCoordinates(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY));
-        cfg.setZoneGroups(List.of(new ZoneGroupConfiguration("allowedZones", "perimeter", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false)));
+        cfg.setZoneGroups(Map.of("allowedZones", new ZoneGroupConfiguration("perimeter", GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false)));
 
         Map<String, Argument> arguments = cfg.getArguments();
 

@@ -452,7 +452,7 @@ public class GeofencingCalculatedFieldStateTest {
         EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
         config.setEntityCoordinates(entityCoordinates);
 
-        ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", reportStrategy, true);
+        ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("zone", reportStrategy, true);
         var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.TO);
         allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
@@ -462,7 +462,7 @@ public class GeofencingCalculatedFieldStateTest {
         allowedZonesGroup.setRelationType("CurrentZone");
         allowedZonesGroup.setDirection(EntitySearchDirection.TO);
 
-        ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("restrictedZones", "zone", reportStrategy, true);
+        ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("zone", reportStrategy, true);
         var restrictedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         restrictedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.TO);
         restrictedZoneDynamicSourceConfiguration.setRelationType("RestrictedZone");
@@ -472,7 +472,7 @@ public class GeofencingCalculatedFieldStateTest {
         restrictedZonesGroup.setRelationType("CurrentZone");
         restrictedZonesGroup.setDirection(EntitySearchDirection.TO);
 
-        config.setZoneGroups(List.of(allowedZonesGroup, restrictedZonesGroup));
+        config.setZoneGroups(Map.of("allowedZones", allowedZonesGroup, "restrictedZones", restrictedZonesGroup));
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);

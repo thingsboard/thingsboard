@@ -54,7 +54,6 @@ import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -366,7 +365,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         cfg.setEntityCoordinates(entityCoordinates);
 
         // Dynamic groups via relations
-        ZoneGroupConfiguration allowedZoneGroupConfiguration = new ZoneGroupConfiguration("allowedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        ZoneGroupConfiguration allowedZoneGroupConfiguration = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var allowedDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         allowedDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         allowedDynamicSourceConfiguration.setMaxLevel(1);
@@ -374,7 +373,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         allowedDynamicSourceConfiguration.setRelationType("AllowedZone");
         allowedZoneGroupConfiguration.setRefDynamicSourceConfiguration(allowedDynamicSourceConfiguration);
 
-        ZoneGroupConfiguration restrictedZoneGroupConfiguration = new ZoneGroupConfiguration("restrictedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        ZoneGroupConfiguration restrictedZoneGroupConfiguration = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var restrictedDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         restrictedDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         restrictedDynamicSourceConfiguration.setMaxLevel(1);
@@ -382,7 +381,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         restrictedDynamicSourceConfiguration.setRelationType("RestrictedZone");
         restrictedZoneGroupConfiguration.setRefDynamicSourceConfiguration(restrictedDynamicSourceConfiguration);
 
-        cfg.setZoneGroups(List.of(allowedZoneGroupConfiguration, restrictedZoneGroupConfiguration));
+        cfg.setZoneGroups(Map.of("allowedZones", allowedZoneGroupConfiguration, "restrictedZones", restrictedZoneGroupConfiguration));
 
         Output out = new Output();
         out.setType(OutputType.ATTRIBUTES);

@@ -35,7 +35,6 @@ public class ZoneGroupConfiguration {
     private EntityId refEntityId;
     private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
 
-    private final String name;
     private final String perimeterKeyName;
 
     private final GeofencingReportStrategy reportStrategy;
@@ -44,10 +43,7 @@ public class ZoneGroupConfiguration {
     private String relationType;
     private EntitySearchDirection direction;
 
-    public void validate() {
-        if (StringUtils.isBlank(name)) {
-            throw new IllegalArgumentException("Zone group name must be specified!");
-        }
+    public void validate(String name) {
         if (EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY.equals(name) || EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY.equals(name)) {
             throw new IllegalArgumentException("Name '" + name + "' is reserved and cannot be used for zone group!");
         }

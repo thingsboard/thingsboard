@@ -36,20 +36,10 @@ import static org.thingsboard.server.common.data.cf.configuration.geofencing.Geo
 public class ZoneGroupConfigurationTest {
 
     @ParameterizedTest
-    @ValueSource(strings = "  ")
-    @NullAndEmptySource
-    void validateShouldThrowWhenNameIsNullEmptyOrBlank(String name) {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration(name, "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        assertThatThrownBy(zoneGroupConfiguration::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Zone group name must be specified!");
-    }
-
-    @ParameterizedTest
     @ValueSource(strings = {EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY, EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY})
     void validateShouldThrowWhenUsedReservedEntityCoordinateNames(String name) {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration(name, "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        assertThatThrownBy(zoneGroupConfiguration::validate)
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        assertThatThrownBy(() -> zoneGroupConfiguration.validate(name))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Name '" + name + "' is reserved and cannot be used for zone group!");
     }
@@ -58,16 +48,16 @@ public class ZoneGroupConfigurationTest {
     @ValueSource(strings = "  ")
     @NullAndEmptySource
     void validateShouldThrowWhenPerimeterKeyNameIsNullEmptyOrBlank(String perimeterKeyName) {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", perimeterKeyName, REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        assertThatThrownBy(zoneGroupConfiguration::validate)
+        var zoneGroupConfiguration = new ZoneGroupConfiguration(perimeterKeyName, REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Perimeter key name must be specified for 'allowedZonesGroup' zone group!");
     }
 
     @Test
     void validateShouldThrowWhenReportStrategyIsNull() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", null, false);
-        assertThatThrownBy(zoneGroupConfiguration::validate)
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", null, false);
+        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Report strategy must be specified for 'allowedZonesGroup' zone group!");
     }
@@ -76,40 +66,40 @@ public class ZoneGroupConfigurationTest {
     @ValueSource(strings = "  ")
     @NullAndEmptySource
     void validateShouldThrowWhenRelationCreationEnabledAndRelationTypeIsNullEmptyOrBlank(String relationType) {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
         zoneGroupConfiguration.setRelationType(relationType);
-        assertThatThrownBy(zoneGroupConfiguration::validate)
+        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Relation type must be specified for 'allowedZonesGroup' zone group!");
     }
 
     @Test
     void validateShouldThrowWhenRelationCreationEnabledAndDirectionIsNull() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
         zoneGroupConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
         zoneGroupConfiguration.setDirection(null);
-        assertThatThrownBy(zoneGroupConfiguration::validate)
+        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Relation direction must be specified for 'allowedZonesGroup' zone group!");
     }
 
     @Test
     void validateShouldDoesNotThrowAnyExceptionWhenRelationCreationDisabledAndConfigValid() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        assertThatCode(zoneGroupConfiguration::validate).doesNotThrowAnyException();
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        assertThatCode(() -> zoneGroupConfiguration.validate("allowedZonesGroup")).doesNotThrowAnyException();
     }
 
     @Test
     void validateShouldDoesNotThrowAnyExceptionWhenRelationCreationEnabledAndConfigValid() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
         zoneGroupConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
         zoneGroupConfiguration.setDirection(EntitySearchDirection.TO);
-        assertThatCode(zoneGroupConfiguration::validate).doesNotThrowAnyException();
+        assertThatCode(() -> zoneGroupConfiguration.validate("allowedZonesGroup")).doesNotThrowAnyException();
     }
 
     @Test
     void whenHasDynamicSourceCalled_shouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
         assertThat(zoneGroupConfiguration.hasDynamicSource()).isTrue();
     }
@@ -124,7 +114,7 @@ public class ZoneGroupConfigurationTest {
 
     @Test
     void validateToArgumentsMethodCallWithoutRefEntityId() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("allowedZonesGroup", "perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         Argument zoneGroupArgument = zoneGroupConfiguration.toArgument();
         assertThat(zoneGroupArgument).isNotNull();
         assertThat(zoneGroupArgument.getRefEntityKey()).isEqualTo(new ReferencedEntityKey("perimeter", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));

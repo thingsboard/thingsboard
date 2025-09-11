@@ -51,7 +51,6 @@ import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -674,7 +673,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone groups: ATTRIBUTE on specific assets (one zone per group)
-        ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
@@ -682,7 +681,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
         allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
 
-        ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("restrictedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var restrictedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         restrictedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         restrictedZoneDynamicSourceConfiguration.setRelationType("RestrictedZone");
@@ -690,7 +689,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         restrictedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
         restrictedZonesGroup.setRefDynamicSourceConfiguration(restrictedZoneDynamicSourceConfiguration);
 
-        cfg.setZoneGroups(List.of(allowedZonesGroup, restrictedZonesGroup));
+        cfg.setZoneGroups(Map.of("allowedZones", allowedZonesGroup, "restrictedZones", restrictedZonesGroup));
 
         // Output to server attributes
         Output out = new Output();
@@ -783,14 +782,14 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setEntityCoordinates(new EntityCoordinates(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY));
 
-        var allowedZonesGroup = new ZoneGroupConfiguration("allowedZones", "zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        var allowedZonesGroup = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
         allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
         allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
         allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
         allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
         allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
-        cfg.setZoneGroups(List.of(allowedZonesGroup));
+        cfg.setZoneGroups(Map.of("allowedZones", allowedZonesGroup));
 
         // Server attributes output
         Output out = new Output();

@@ -25,17 +25,15 @@ import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSuppor
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Set;
 
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
 
     private EntityCoordinates entityCoordinates;
-    private List<ZoneGroupConfiguration> zoneGroups;
+    private Map<String, ZoneGroupConfiguration> zoneGroups;
     private int scheduledUpdateInterval;
 
     private Output output;
@@ -49,13 +47,13 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     @JsonIgnore
     public Map<String, Argument> getArguments() {
         Map<String, Argument> args = new HashMap<>(entityCoordinates.toArguments());
-        zoneGroups.forEach(zg -> args.put(zg.getName(), zg.toArgument()));
+        zoneGroups.forEach((zgName, zgConfig) -> args.put(zgName, zgConfig.toArgument()));
         return args;
     }
 
     @Override
     public List<EntityId> getReferencedEntities() {
-        return zoneGroups.stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();
+        return zoneGroups.values().stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();
     }
 
     @Override
@@ -65,7 +63,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateInterval > 0 && zoneGroups.stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
+        return scheduledUpdateInterval > 0 && zoneGroups.values().stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
     }
 
     @Override
@@ -73,17 +71,11 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         if (entityCoordinates == null) {
             throw new IllegalArgumentException("Geofencing calculated field entity coordinates must be specified!");
         }
+        entityCoordinates.validate();
         if (zoneGroups == null || zoneGroups.isEmpty()) {
             throw new IllegalArgumentException("Geofencing calculated field must contain at least one geofencing zone group defined!");
         }
-        entityCoordinates.validate();
-        Set<String> seen = new HashSet<>();
-        for (var zg : zoneGroups) {
-            if (!seen.add(zg.getName())) {
-                throw new IllegalArgumentException("Geofencing calculated field zone group name must be unique!");
-            }
-            zg.validate();
-        }
+        zoneGroups.forEach((key, value) -> value.validate(key));
     }
 
 }
