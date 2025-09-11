@@ -28,23 +28,46 @@ import java.util.Random;
 
 @SuppressWarnings({"WeakerAccess", "unused"})
 public final class MqttClientConfig {
+
+    @Getter
     private final SslContext sslContext;
     private final String randomClientId;
 
     @Getter
     @Setter
     private String ownerId; // [TenantId][IntegrationId] or [TenantId][RuleNodeId] for exceptions logging purposes
+    @Nonnull
+    @Getter
     private String clientId;
+    @Getter
     private int timeoutSeconds = 60;
+    @Getter
     private MqttVersion protocolVersion = MqttVersion.MQTT_3_1;
-    @Nullable private String username = null;
-    @Nullable private String password = null;
+    @Nullable
+    @Getter
+    @Setter
+    private String username = null;
+    @Nullable
+    @Getter
+    @Setter
+    private String password = null;
+    @Getter
+    @Setter
     private boolean cleanSession = true;
-    @Nullable private MqttLastWill lastWill;
+    @Nullable
+    @Getter
+    @Setter
+    private MqttLastWill lastWill;
+    @Setter
+    @Getter
     private Class<? extends Channel> channelClass = NioSocketChannel.class;
 
+    @Getter
+    @Setter
     private boolean reconnect = true;
+    @Getter
     private long reconnectDelay = 1L;
+    @Getter
     private int maxBytesInMessage = 8092;
 
     @Getter
@@ -74,107 +97,35 @@ public final class MqttClientConfig {
     public MqttClientConfig(SslContext sslContext) {
         this.sslContext = sslContext;
         Random random = new Random();
-        String id = "netty-mqtt/";
+        StringBuilder id = new StringBuilder("netty-mqtt/");
         String[] options = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789".split("");
-        for(int i = 0; i < 8; i++){
-            id += options[random.nextInt(options.length)];
+        for (int i = 0; i < 8; i++) {
+            id.append(options[random.nextInt(options.length)]);
         }
-        this.clientId = id;
-        this.randomClientId = id;
-    }
-
-    @Nonnull
-    public String getClientId() {
-        return clientId;
+        this.clientId = id.toString();
+        this.randomClientId = id.toString();
     }
 
     public void setClientId(@Nullable String clientId) {
-        if(clientId == null){
+        if (clientId == null) {
             this.clientId = randomClientId;
-        }else{
+        } else {
             this.clientId = clientId;
         }
     }
 
-    public int getTimeoutSeconds() {
-        return timeoutSeconds;
-    }
-
     public void setTimeoutSeconds(int timeoutSeconds) {
-        if(timeoutSeconds != -1 && timeoutSeconds <= 0){
+        if (timeoutSeconds != -1 && timeoutSeconds <= 0) {
             throw new IllegalArgumentException("timeoutSeconds must be > 0 or -1");
         }
         this.timeoutSeconds = timeoutSeconds;
     }
 
-    public MqttVersion getProtocolVersion() {
-        return protocolVersion;
-    }
-
     public void setProtocolVersion(MqttVersion protocolVersion) {
-        if(protocolVersion == null){
+        if (protocolVersion == null) {
             throw new NullPointerException("protocolVersion");
         }
         this.protocolVersion = protocolVersion;
-    }
-
-    @Nullable
-    public String getUsername() {
-        return username;
-    }
-
-    public void setUsername(@Nullable String username) {
-        this.username = username;
-    }
-
-    @Nullable
-    public String getPassword() {
-        return password;
-    }
-
-    public void setPassword(@Nullable String password) {
-        this.password = password;
-    }
-
-    public boolean isCleanSession() {
-        return cleanSession;
-    }
-
-    public void setCleanSession(boolean cleanSession) {
-        this.cleanSession = cleanSession;
-    }
-
-    @Nullable
-    public MqttLastWill getLastWill() {
-        return lastWill;
-    }
-
-    public void setLastWill(@Nullable MqttLastWill lastWill) {
-        this.lastWill = lastWill;
-    }
-
-    public Class<? extends Channel> getChannelClass() {
-        return channelClass;
-    }
-
-    public void setChannelClass(Class<? extends Channel> channelClass) {
-        this.channelClass = channelClass;
-    }
-
-    public SslContext getSslContext() {
-        return sslContext;
-    }
-
-    public boolean isReconnect() {
-        return reconnect;
-    }
-
-    public void setReconnect(boolean reconnect) {
-        this.reconnect = reconnect;
-    }
-
-    public long getReconnectDelay() {
-        return reconnectDelay;
     }
 
     /**
@@ -187,10 +138,6 @@ public final class MqttClientConfig {
             throw new IllegalArgumentException("reconnectDelay must be > 0");
         }
         this.reconnectDelay = reconnectDelay;
-    }
-
-    public int getMaxBytesInMessage() {
-        return maxBytesInMessage;
     }
 
     /**
@@ -206,4 +153,5 @@ public final class MqttClientConfig {
         }
         this.maxBytesInMessage = maxBytesInMessage;
     }
+
 }

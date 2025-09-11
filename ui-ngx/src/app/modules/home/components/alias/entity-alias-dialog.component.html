@@ -28,9 +28,9 @@
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
   <div mat-dialog-content>
-    <fieldset class="tb-form-panel no-padding no-border no-gap" [disabled]="isLoading$ | async">
-      <div class="tb-form-row column-xs align-start no-border no-gap no-padding tb-standard-fields">
-        <mat-form-field class="flex">
+    <fieldset class="tb-form-panel outlined" [disabled]="isLoading$ | async">
+      <div class="flex flex-row items-start xs:flex-col xs:items-stretch">
+        <mat-form-field class="flex-1" appearance="outline">
           <mat-label translate>alias.name</mat-label>
           <input matInput formControlName="alias" required>
           <mat-error *ngIf="entityAliasFormGroup.get('alias').hasError('required')">

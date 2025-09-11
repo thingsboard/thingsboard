@@ -66,8 +66,7 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>
-            {{ translate.get('filter.no-filter-matching',
-            {filter: truncate.transform(searchText, true, 6, &apos;...&apos;)}) | async }}
+            {{ 'filter.no-filter-matching' | translate : {filter: (searchText | truncate: true: 6: &apos;...&apos;)} }}
           </span>
         </ng-template>
         <span>

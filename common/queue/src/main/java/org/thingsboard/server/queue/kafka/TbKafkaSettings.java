@@ -16,12 +16,10 @@
 package org.thingsboard.server.queue.kafka;
 
 import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -30,12 +28,13 @@ import org.apache.kafka.common.serialization.ByteArrayDeserializer;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
+import org.thingsboard.server.queue.util.TbKafkaComponent;
 
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -47,7 +46,7 @@ import java.util.Properties;
  * Created by ashvayka on 25.09.18.
  */
 @Slf4j
-@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+@TbKafkaComponent
 @ConfigurationProperties(prefix = "queue.kafka")
 @Component
 public class TbKafkaSettings {
@@ -143,14 +142,15 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.consumer-properties-per-topic-inline:}")
     private String consumerPropertiesPerTopicInline;
 
+    @Autowired
+    private KafkaAdmin kafkaAdmin;
+
     @Deprecated
     @Setter
     private List<TbProperty> other;
 
     @Setter
     private Map<String, List<TbProperty>> consumerPropertiesPerTopic = new HashMap<>();
-
-    private volatile AdminClient adminClient;
 
     @PostConstruct
     public void initInlineTopicProperties() {
@@ -240,15 +240,12 @@ public class TbKafkaSettings {
         }
     }
 
-    public AdminClient getAdminClient() {
-        if (adminClient == null) {
-            synchronized (this) {
-                if (adminClient == null) {
-                    adminClient = AdminClient.create(toAdminProps());
-                }
-            }
-        }
-        return adminClient;
+    /*
+     * Temporary solution to avoid major code changes.
+     * FIXME: use single instance of Kafka queue admin, don't create a separate one for each consumer/producer
+     * */
+    public KafkaAdmin getAdmin() {
+        return kafkaAdmin;
     }
 
     protected Properties toAdminProps() {
@@ -277,13 +274,6 @@ public class TbKafkaSettings {
         });
 
         return result;
-    }
-
-    @PreDestroy
-    private void destroy() {
-        if (adminClient != null) {
-            adminClient.close();
-        }
     }
 
 }

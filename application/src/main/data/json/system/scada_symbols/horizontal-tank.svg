@@ -572,7 +572,7 @@
  </mask><g filter="url(#filter0_ii_1694_158298)" tb:tag="value-box">
   <path d="m381 272c0-6.627 5.373-12 12-12h216c6.627 0 12 5.373 12 12v56c0 6.627-5.373 12-12 12h-216c-6.627 0-12-5.373-12-12v-56z" fill="#f3f3f3" tb:tag="value-box-background"/>
   <path d="m382.5 272c0-5.799 4.701-10.5 10.5-10.5h216c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-216c-5.799 0-10.5-4.701-10.5-10.5v-56z" stroke="#727171" stroke-width="3"/>
-  <text x="499.84497" y="300.37811" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
+  <text x="499.84497" y="300.37811" fill="#727171" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><g transform="matrix(1 0 0 .5 .64 .00025)">
   <path d="m335.68-5e-4s-336.32 0-336.32 201v985.08c0 7.9536 8.9543 13.921 20 13.921h960c11.045 0 20-5.9676 20-13.921v-985.08c0-201-330.35-201-330.35-201h-169.65zm335.35 243.6c-6.4433 0-11.667 3.7608-11.667 8.4v901.2c0 4.6392 5.2233 8.4 11.667 8.4h73.333c6.4433 0 11.667-3.7608 11.667-8.4v-901.2c0-4.6392-5.2233-8.4-11.667-8.4z" fill="#000" fill-opacity="0" tb:tag="clickArea"/>
  </g><defs>

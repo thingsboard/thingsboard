@@ -13,10 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-string-items-list {
-  .mat-mdc-standard-chip {
-    .mdc-evolution-chip__cell--primary, .mat-mdc-chip-action-label {
-      overflow: hidden;
-    }
-  }
+package org.thingsboard.server.service.entitiy.ai;
+
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiModel;
+
+public interface TbAiModelService {
+
+    AiModel save(AiModel model, User user);
+
+    boolean delete(AiModel model, User user);
+
 }

@@ -20,14 +20,17 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.boot.autoconfigure.web.ServerProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.ssl.SslBundle;
+import org.springframework.boot.ssl.SslBundles;
+import org.springframework.boot.ssl.SslStoreBundle;
 import org.springframework.boot.web.server.Ssl;
-import org.springframework.boot.web.server.SslStoreProvider;
 import org.springframework.boot.web.server.WebServerFactoryCustomizer;
 import org.springframework.boot.web.servlet.server.ConfigurableServletWebServerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
-import java.security.KeyStore;
+import java.util.List;
+import java.util.function.Consumer;
 
 @Component
 @ConditionalOnExpression("'${spring.main.web-environment:true}'=='true' && '${server.ssl.enabled:false}'=='true'")
@@ -43,6 +46,9 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
     @Qualifier("httpServerSslCredentials")
     private SslCredentialsConfig httpServerSslCredentialsConfig;
 
+    @Autowired
+    SslBundles sslBundles;
+
     private final ServerProperties serverProperties;
 
     public SslCredentialsWebServerCustomizer(ServerProperties serverProperties) {
@@ -53,19 +59,36 @@ public class SslCredentialsWebServerCustomizer implements WebServerFactoryCustom
     public void customize(ConfigurableServletWebServerFactory factory) {
         SslCredentials sslCredentials = this.httpServerSslCredentialsConfig.getCredentials();
         Ssl ssl = serverProperties.getSsl();
+        ssl.setBundle("default");
         ssl.setKeyAlias(sslCredentials.getKeyAlias());
         ssl.setKeyPassword(sslCredentials.getKeyPassword());
         factory.setSsl(ssl);
-        factory.setSslStoreProvider(new SslStoreProvider() {
+        factory.setSslBundles(sslBundles);
+    }
+
+    @Bean
+    public SslBundles sslBundles() {
+        SslStoreBundle storeBundle = SslStoreBundle.of(
+                httpServerSslCredentialsConfig.getCredentials().getKeyStore(),
+                httpServerSslCredentialsConfig.getCredentials().getKeyPassword(),
+                null
+        );
+        return new SslBundles() {
             @Override
-            public KeyStore getKeyStore() {
-                return sslCredentials.getKeyStore();
+            public SslBundle getBundle(String name) {
+                return SslBundle.of(storeBundle);
             }
 
             @Override
-            public KeyStore getTrustStore() {
-                return null;
+            public List<String> getBundleNames() {
+                return List.of("default");
             }
-        });
+
+            @Override
+            public void addBundleUpdateHandler(String name, Consumer<SslBundle> handler) {
+                // no-op
+            }
+        };
     }
+
 }

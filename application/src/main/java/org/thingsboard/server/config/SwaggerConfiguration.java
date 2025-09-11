@@ -116,6 +116,8 @@ public class SwaggerConfiguration {
     private String appVersion;
     @Value("${swagger.group_name:thingsboard}")
     private String groupName;
+    @Value("${swagger.doc_expansion:list}")
+    private String docExpansion;
 
     @Bean
     public OpenAPI thingsboardApi() {
@@ -172,7 +174,7 @@ public class SwaggerConfiguration {
         uiProperties.setDefaultModelExpandDepth(1);
         uiProperties.setDefaultModelRendering("example");
         uiProperties.setDisplayRequestDuration(false);
-        uiProperties.setDocExpansion("list");
+        uiProperties.setDocExpansion(docExpansion);
         uiProperties.setFilter("false");
         uiProperties.setMaxDisplayedTags(null);
         uiProperties.setOperationsSorter("alpha");

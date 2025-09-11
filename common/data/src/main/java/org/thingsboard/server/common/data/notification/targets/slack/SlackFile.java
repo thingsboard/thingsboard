@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg;
+package org.thingsboard.server.common.data.notification.targets.slack;
 
-public interface TbActorError {
+import lombok.Builder;
+import lombok.Data;
 
-    boolean isUnrecoverable();
+@Data
+@Builder
+public class SlackFile {
+
+    private final String name;
+    private final String type; // one of https://api.slack.com/types/file#file_types
+    private final byte[] data;
 
 }

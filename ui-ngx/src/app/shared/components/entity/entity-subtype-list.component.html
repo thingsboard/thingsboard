@@ -22,6 +22,7 @@
   <mat-chip-grid #chipList formControlName="entitySubtypeList">
     <mat-chip-row
       *ngFor="let entitySubtype of entitySubtypeList"
+      class="tb-chip-row-ellipsis"
       [removable]="!disabled"
       (removed)="remove(entitySubtype)">
       {{customTranslate(entitySubtype)}}

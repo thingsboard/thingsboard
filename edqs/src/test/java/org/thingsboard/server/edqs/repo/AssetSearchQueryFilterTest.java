@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.AssetSearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -132,7 +133,7 @@ public class AssetSearchQueryFilterTest extends AbstractEDQTest {
     private PageData<QueryResult> findData(CustomerId customerId, EntityId rootId,
                                            EntitySearchDirection direction, String relationType, int maxLevel, boolean lastLevelOnly, List<String> assetTypes) {
         AssetSearchQueryFilter filter = new AssetSearchQueryFilter();
-        filter.setRootEntity(rootId);
+        filter.setRootEntity(AliasEntityId.fromEntityId(rootId));
         filter.setDirection(direction);
         filter.setRelationType(relationType);
         filter.setAssetTypes(assetTypes);

@@ -13,22 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.service.ai;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import com.google.common.util.concurrent.FluentFuture;
+import dev.langchain4j.model.chat.ChatModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
 
-@Data
-public class CalculatedFieldInitMsg implements ToCalculatedFieldSystemMsg {
+public interface AiRequestsExecutor {
 
-    private final TenantId tenantId;
-    private final CalculatedField cf;
+    FluentFuture<ChatResponse> sendChatRequestAsync(ChatModel chatModel, ChatRequest chatRequest);
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_INIT_MSG;
-    }
 }

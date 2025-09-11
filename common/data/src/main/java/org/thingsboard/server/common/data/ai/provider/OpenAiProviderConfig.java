@@ -13,24 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.common.data.ai.provider;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import jakarta.validation.constraints.NotNull;
 
-@Data
-public class CalculatedFieldInitProfileEntityMsg implements ToCalculatedFieldSystemMsg {
-
-    private final TenantId tenantId;
-    private final EntityId profileEntityId;
-    private final EntityId entityId;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_INIT_PROFILE_ENTITY_MSG;
-    }
-
-}
+public record OpenAiProviderConfig(
+        @NotNull String apiKey
+) implements AiProviderConfig {}

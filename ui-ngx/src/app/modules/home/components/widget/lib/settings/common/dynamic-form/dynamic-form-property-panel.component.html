@@ -116,7 +116,7 @@
             <div class="fixed-title-width" translate>dynamic-form.property.disable-on-property</div>
             <mat-form-field  class="flex" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="disableOnProperty" placeholder="{{ 'widget-config.set' | translate }}">
-                <mat-option [value]="null"></mat-option>
+                <mat-option [value]="null">{{ 'dynamic-form.property.disable-on-property-none' | translate }}</mat-option>
                 <mat-option *ngFor="let prop of booleanPropertyIds" [value]="prop">
                   {{ prop }}
                 </mat-option>
