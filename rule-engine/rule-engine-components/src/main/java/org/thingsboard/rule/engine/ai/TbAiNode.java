@@ -259,7 +259,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
             throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] was not found", true);
         }
         if (!ResourceType.GENERAL.equals(resource.getResourceType())) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] has unsupported resource type: " + resource.getResourceType());
+            throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] has unsupported resource type: " + resource.getResourceType(), true);
         }
         ctx.checkTenantEntity(resource);
     }
