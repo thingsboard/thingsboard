@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
@@ -144,7 +143,6 @@ public class GeofencingCalculatedFieldConfigurationTest {
     @Test
     void scheduledUpdateEnabledWhenIntervalIsGreaterThanZeroAndDynamicArgumentsPresent() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setTimeUnit(TimeUnit.SECONDS);
         var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
         when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(true);
         cfg.setZoneGroups(List.of(zoneGroupConfigurationMock));

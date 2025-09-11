@@ -46,7 +46,6 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -119,7 +118,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Set a scheduled interval to some value
         cfg.setScheduledUpdateInterval(600);
-        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();
@@ -170,7 +168,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Enable scheduling with an interval below tenant min
         cfg.setScheduledUpdateInterval(600);
-        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();
@@ -254,7 +251,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         // Enable scheduling with an interval greater than tenant min
         int valueFromConfig = min + 100;
         cfg.setScheduledUpdateInterval(valueFromConfig);
-        cfg.setTimeUnit(TimeUnit.SECONDS);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();

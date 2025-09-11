@@ -326,8 +326,7 @@ public class CalculatedFieldCtx {
                 && other.calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration otherConfig) {
             boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
             boolean refreshIntervalChanged = thisConfig.getScheduledUpdateInterval() != otherConfig.getScheduledUpdateInterval();
-            boolean timeUnitChanged = thisConfig.getTimeUnit() != otherConfig.getTimeUnit();
-            return refreshTriggerChanged || refreshIntervalChanged || timeUnitChanged;
+            return refreshTriggerChanged || refreshIntervalChanged;
         }
         return false;
     }

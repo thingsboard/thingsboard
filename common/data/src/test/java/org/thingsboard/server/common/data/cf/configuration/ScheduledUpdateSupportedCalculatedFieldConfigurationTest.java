@@ -17,8 +17,6 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 
@@ -26,39 +24,18 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration.SUPPORTED_TIME_UNITS;
 
 @ExtendWith(MockitoExtension.class)
-class ScheduledUpdateSupportedCalculatedFieldConfigurationTest {
+public class ScheduledUpdateSupportedCalculatedFieldConfigurationTest {
 
-    @ParameterizedTest
-    @EnumSource(TimeUnit.class)
-    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSupported(TimeUnit timeUnit) {
+    @Test
+    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSupported() {
         int scheduledUpdateInterval = 60;
-        int minAllowedInterval = (int) timeUnit.toSeconds(scheduledUpdateInterval - 1);
+        int minAllowedInterval = scheduledUpdateInterval - 1;
 
         var cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setScheduledUpdateInterval(scheduledUpdateInterval);
-        cfg.setTimeUnit(timeUnit);
-
-        if (SUPPORTED_TIME_UNITS.contains(timeUnit)) {
-            assertThatCode(() -> cfg.validate(minAllowedInterval)).doesNotThrowAnyException();
-            return;
-        }
-        assertThatThrownBy(() -> cfg.validate(minAllowedInterval))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Unsupported scheduled update time unit: " + timeUnit + ". Allowed: " + SUPPORTED_TIME_UNITS);
-    }
-
-    @Test
-    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSpecified() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setScheduledUpdateInterval(60);
-        cfg.setTimeUnit(null);
-
-        assertThatThrownBy(() -> cfg.validate(0))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Scheduled update time unit should be specified!");
+        assertThatCode(() -> cfg.validate(minAllowedInterval)).doesNotThrowAnyException();
     }
 
     @Test
@@ -67,7 +44,6 @@ class ScheduledUpdateSupportedCalculatedFieldConfigurationTest {
 
         var cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setScheduledUpdateInterval(1);
-        cfg.setTimeUnit(TimeUnit.HOURS);
 
         assertThatThrownBy(() -> cfg.validate(minAllowedInterval))
                 .isInstanceOf(IllegalArgumentException.class)

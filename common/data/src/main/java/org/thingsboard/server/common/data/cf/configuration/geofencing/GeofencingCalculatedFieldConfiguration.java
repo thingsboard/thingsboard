@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
@@ -38,7 +37,6 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     private EntityCoordinates entityCoordinates;
     private List<ZoneGroupConfiguration> zoneGroups;
     private int scheduledUpdateInterval;
-    private TimeUnit timeUnit;
 
     private Output output;
 

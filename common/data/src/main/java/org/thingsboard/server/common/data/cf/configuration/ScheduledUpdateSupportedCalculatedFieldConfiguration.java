@@ -17,15 +17,7 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
-import java.util.EnumSet;
-import java.util.Set;
-import java.util.concurrent.TimeUnit;
-
 public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
-
-    Set<TimeUnit> SUPPORTED_TIME_UNITS =
-            EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
-
 
     @JsonIgnore
     boolean isScheduledUpdateEnabled();
@@ -34,20 +26,8 @@ public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends Ca
 
     void setScheduledUpdateInterval(int interval);
 
-    TimeUnit getTimeUnit();
-
-    void setTimeUnit(TimeUnit timeUnit);
-
     default void validate(long minAllowedScheduledUpdateInterval) {
-        var timeUnit = getTimeUnit();
-        if (timeUnit == null) {
-            throw new IllegalArgumentException("Scheduled update time unit should be specified!");
-        }
-        if (!SUPPORTED_TIME_UNITS.contains(timeUnit)) {
-            throw new IllegalArgumentException("Unsupported scheduled update time unit: " + timeUnit +
-                                               ". Allowed: " + SUPPORTED_TIME_UNITS);
-        }
-        if (timeUnit.toSeconds(getScheduledUpdateInterval()) < minAllowedScheduledUpdateInterval) {
+        if (getScheduledUpdateInterval() < minAllowedScheduledUpdateInterval) {
             throw new IllegalArgumentException("Scheduled update interval is less than configured " +
                                                "minimum allowed interval in tenant profile: " + minAllowedScheduledUpdateInterval);
         }
