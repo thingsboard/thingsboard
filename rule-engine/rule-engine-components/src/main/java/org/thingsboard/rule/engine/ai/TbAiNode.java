@@ -256,7 +256,7 @@ public final class TbAiNode extends TbAbstractExternalNode implements TbNode {
     private void validateResource(TbContext ctx, TbResourceId tbResourceId) throws TbNodeException {
         TbResourceInfo resource = ctx.getResourceService().findResourceInfoById(ctx.getTenantId(), tbResourceId);
         if (resource == null) {
-            throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] was not found");
+            throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] was not found", true);
         }
         if (!ResourceType.GENERAL.equals(resource.getResourceType())) {
             throw new TbNodeException("[" + ctx.getTenantId() + "] Resource with ID: [" + tbResourceId + "] has unsupported resource type: " + resource.getResourceType());
