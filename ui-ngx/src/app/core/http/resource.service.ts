@@ -24,7 +24,6 @@ import { Resource, ResourceInfo, ResourceSubType, ResourceType, TBResourceScope 
 import { catchError, mergeMap } from 'rxjs/operators';
 import { isNotEmptyStr } from '@core/utils';
 import { ResourcesService } from '@core/services/resources.service';
-import { NotificationTarget } from "@shared/models/notification.models";
 
 @Injectable({
   providedIn: 'root'
