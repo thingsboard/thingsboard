@@ -25,7 +25,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { TimeUnit, timeUnitTranslations } from '../rule-node-config.models';
+import { TimeUnit, timeUnitTranslations } from '@home/components/rule-node/rule-node-config.models';
 import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
