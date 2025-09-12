@@ -31,6 +31,7 @@ import {
   PolygonsDataLayerSettings
 } from '@shared/models/widget/maps/map.models';
 import { WidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
+import { deepClone } from '@core/utils';
 
 interface AliasFilterPair {
   alias?: EntityAliasInfo,
@@ -271,7 +272,7 @@ const getMapLatestDataLayersDatasources = (settings: MapDataLayerSettings[],
 
 const getMapLatestDataLayerDatasourceDataKeys = (settings: MapDataLayerSettings,
                                            dataLayerType: MapDataLayerType): DataKey[] => {
-  const dataKeys = settings.additionalDataKeys || [];
+  const dataKeys = settings.additionalDataKeys?.length ? deepClone(settings.additionalDataKeys) : [];
   switch (dataLayerType) {
     case 'markers':
       const markersSettings = settings as MarkersDataLayerSettings;
