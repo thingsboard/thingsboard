@@ -22,19 +22,22 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
+  ArgumentEntityType,
   CalculatedField,
   CalculatedFieldConfiguration,
   calculatedFieldDefaultScript,
+  CalculatedFieldGeofencing,
   CalculatedFieldTestScriptFn,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
+  getCalculatedFieldCurrentEntityFilter,
   OutputType,
   OutputTypeTranslations
 } from '@shared/models/calculated-field.models';
 import { digitsRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { map, startWith, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -43,6 +46,8 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { Observable } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
+import { EntityFilter } from '@shared/models/query/query.models';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -63,12 +68,20 @@ export interface CalculatedFieldDialogData {
 })
 export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFieldDialogComponent, CalculatedField> {
 
+  readonly minAllowedScheduledUpdateIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedScheduledUpdateIntervalInSecForCF;
+
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
     type: [CalculatedFieldType.SIMPLE],
     debugSettings: [],
     configuration: this.fb.group({
+      entityCoordinates: this.fb.group({
+        latitudeKeyName: [null, [Validators.required]],
+        longitudeKeyName: [null, [Validators.required]],
+      }),
       arguments: this.fb.control({}),
+      zoneGroups: this.fb.control({}),
+      scheduledUpdateInterval: [this.minAllowedScheduledUpdateIntervalInSecForCF],
       expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
       expressionSCRIPT: [calculatedFieldDefaultScript],
       output: this.fb.group({
@@ -104,6 +117,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     action: () => this.data.additionalDebugActionConfig.action({ id: this.data.value.id, ...this.fromGroupValue }),
   } : null;
 
+  currentEntityFilter: EntityFilter;
+
+  isRelatedEntity: boolean;
+
   readonly OutputTypeTranslations = OutputTypeTranslations;
   readonly OutputType = OutputType;
   readonly AttributeScope = AttributeScope;
@@ -113,6 +130,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   readonly fieldTypes = Object.values(CalculatedFieldType) as CalculatedFieldType[];
   readonly outputTypes = Object.values(OutputType) as OutputType[];
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
+  readonly DataKeyType = DataKeyType;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -125,6 +143,8 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     this.observeIsLoading();
     this.applyDialogData();
     this.observeTypeChanges();
+    this.observeZoneChanges();
+    this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.data.entityName, this.data.entityId);
   }
 
   get configFormGroup(): FormGroup {
@@ -135,19 +155,34 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     return this.fieldFormGroup.get('configuration').get('output') as FormGroup;
   }
 
+  get coordinatesFormGroup(): FormGroup {
+    return this.fieldFormGroup.get('configuration').get('entityCoordinates') as FormGroup;
+  }
+
   get fromGroupValue(): CalculatedField {
     const { configuration, type, name, ...rest } = this.fieldFormGroup.value;
     const { expressionSIMPLE, expressionSCRIPT, output, ...restConfig } = configuration;
-    return {
-      configuration: {
-        ...restConfig,
-        type, expression: configuration['expression'+type].trim(),
-        output: { ...output, name: output.name?.trim() ?? '' }
-      },
+    let cf: CalculatedField = {
       name: name.trim(),
       type,
-      ...rest,
+      ...rest
     } as CalculatedField;
+    if (type !== CalculatedFieldType.GEOFENCING) {
+      cf.configuration = {
+        ...restConfig,
+        type,
+        expression: configuration['expression'+type].trim(),
+        output: { ...output, name: output.name?.trim() ?? '' }
+      } as CalculatedFieldConfiguration;
+    } else {
+      cf.configuration = {
+        ...restConfig,
+        type,
+        output: { ...output, name: output.name?.trim() ?? '' }
+      } as CalculatedFieldConfiguration;
+      delete cf.configuration.arguments;
+    }
+    return cf;
   }
 
   cancel(): void {
@@ -204,6 +239,19 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       .subscribe(type => this.toggleKeyByCalculatedFieldType(type));
   }
 
+  private observeZoneChanges(): void {
+    this.configFormGroup.get('zoneGroups').valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((zoneGroups: CalculatedFieldGeofencing) =>
+        this.checkRelatedEntity(zoneGroups)
+      );
+    this.checkRelatedEntity(this.configFormGroup.get('zoneGroups').value);
+  }
+
+  private checkRelatedEntity(zoneGroups: CalculatedFieldGeofencing) {
+    this.isRelatedEntity = Object.values(zoneGroups).some(zone => zone.refDynamicSourceConfiguration?.type === ArgumentEntityType.RelationQuery);
+  }
+
   private toggleScopeByOutputType(type: OutputType): void {
     if (type === OutputType.Attribute) {
       this.outputFormGroup.get('scope').enable({emitEvent: false});
@@ -222,20 +270,36 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   }
 
   private toggleKeyByCalculatedFieldType(type: CalculatedFieldType): void {
-    if (type === CalculatedFieldType.SIMPLE) {
-      this.outputFormGroup.get('name').enable({emitEvent: false});
-      this.configFormGroup.get('expressionSIMPLE').enable({emitEvent: false});
-      this.configFormGroup.get('expressionSCRIPT').disable({emitEvent: false});
-      if (this.outputFormGroup.get('type').value === OutputType.Attribute) {
-        this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
-      } else {
-        this.configFormGroup.get('useLatestTs').enable({emitEvent: false});
-      }
-    } else {
+    if (type === CalculatedFieldType.GEOFENCING) {
+      this.configFormGroup.get('entityCoordinates').enable({emitEvent: false});
+      this.configFormGroup.get('zoneGroups').enable({emitEvent: false});
+      this.configFormGroup.get('scheduledUpdateInterval').enable({emitEvent: false});
+
       this.outputFormGroup.get('name').disable({emitEvent: false});
       this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
       this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
-      this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
+      this.configFormGroup.get('expressionSCRIPT').disable({emitEvent: false});
+      this.configFormGroup.get('arguments').disable({emitEvent: false});
+    } else {
+      this.configFormGroup.get('entityCoordinates').disable({emitEvent: false});
+      this.configFormGroup.get('zoneGroups').disable({emitEvent: false});
+      this.configFormGroup.get('scheduledUpdateInterval').disable({emitEvent: false});
+
+      if (type === CalculatedFieldType.SIMPLE) {
+        this.outputFormGroup.get('name').enable({emitEvent: false});
+        this.configFormGroup.get('expressionSIMPLE').enable({emitEvent: false});
+        this.configFormGroup.get('expressionSCRIPT').disable({emitEvent: false});
+        if (this.outputFormGroup.get('type').value === OutputType.Attribute) {
+          this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
+        } else {
+          this.configFormGroup.get('useLatestTs').enable({emitEvent: false});
+        }
+      } else {
+        this.outputFormGroup.get('name').disable({emitEvent: false});
+        this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
+        this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
+        this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
+      }
     }
   }
 

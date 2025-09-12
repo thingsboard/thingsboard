@@ -133,7 +133,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         );
       }
       if (isDefinedAndNotNull(this.minTime)) {
-        validators.push(Validators.min(this.minTime));
+        validators.push((control: AbstractControl) =>
+          Validators.min(Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
+        );
       }
 
       timeControl.setValidators(validators);

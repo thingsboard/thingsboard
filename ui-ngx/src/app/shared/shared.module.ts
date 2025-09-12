@@ -228,7 +228,7 @@ import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.
 import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
-import { TimeUnitInputComponent } from "@shared/components/time-unit-input.component";
+import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
