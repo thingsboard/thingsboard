@@ -327,7 +327,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
                     transportService.process(state.getSession(),
                             TransportProtos.SubscribeToAttributeUpdatesMsg.getDefaultInstance(), new CoapNoOpCallback(exchange));
                     transportService.process(state.getSession(),
-                            TransportProtos.GetAttributeRequestMsg.newBuilder().setOnlyShared(true).build(),
+                            TransportProtos.GetAttributeRequestMsg.newBuilder().setOnlyShared(true).setAddClient(false).setAddShared(true).build(),
                             new CoapNoOpCallback(exchange));
                 } else {
                     Response response = new Response(CoAP.ResponseCode.VALID);

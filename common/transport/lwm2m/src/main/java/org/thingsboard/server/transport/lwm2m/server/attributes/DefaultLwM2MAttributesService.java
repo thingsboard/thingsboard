@@ -95,8 +95,14 @@ public class DefaultLwM2MAttributesService implements LwM2MAttributesService {
         SettableFuture<List<TransportProtos.TsKvProto>> future = SettableFuture.create();
         int requestId = reqIdSeq.incrementAndGet();
         futures.put(requestId, future);
-        transportService.process(client.getSession(), TransportProtos.GetAttributeRequestMsg.newBuilder().setRequestId(requestId).
-                addAllSharedAttributeNames(keys).build(), new TransportServiceCallback<Void>() {
+        TransportProtos.GetAttributeRequestMsg request = TransportProtos.GetAttributeRequestMsg.newBuilder()
+                .setRequestId(requestId)
+                .setAddClient(false)
+                .setAddShared(true)
+                .setOnlyShared(true)
+                .addAllSharedAttributeNames(keys)
+                .build();
+        transportService.process(client.getSession(), request, new TransportServiceCallback<Void>() {
             @Override
             public void onSuccess(Void msg) {
 
