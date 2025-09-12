@@ -58,12 +58,6 @@ public class AiModelEdgeProcessor extends BaseAiModelProcessor implements AiMode
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     processAiModel(tenantId, aiModelId, aiModelUpdateMsg, edge);
                     return Futures.immediateFuture(null);
-                case ENTITY_DELETED_RPC_MESSAGE:
-                    Optional<AiModel> aiModel = edgeCtx.getAiModelService().findAiModelById(tenantId, aiModelId);
-                    if (aiModel.isPresent()) {
-                        edgeCtx.getAiModelService().deleteByTenantIdAndId(tenantId, aiModelId);
-                    }
-                    return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
                 default:
                     return handleUnsupportedMsgType(aiModelUpdateMsg.getMsgType());
@@ -111,33 +105,6 @@ public class AiModelEdgeProcessor extends BaseAiModelProcessor implements AiMode
         return EdgeEventType.AI_MODEL;
     }
 
-//    @Override
-//    public ListenableFuture<Void> processEntityNotification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-//        EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
-//        EdgeEventActionType actionType = EdgeEventActionType.valueOf(edgeNotificationMsg.getAction());
-//        EntityId entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(edgeNotificationMsg.getEntityIdMSB(), edgeNotificationMsg.getEntityIdLSB()));
-//        EdgeId originatorEdgeId = safeGetEdgeId(edgeNotificationMsg.getOriginatorEdgeIdMSB(), edgeNotificationMsg.getOriginatorEdgeIdLSB());
-//
-//        switch (actionType) {
-//            case UPDATED:
-//            case ADDED:
-//                EntityId calculatedFieldOwnerId = JacksonUtil.fromString(edgeNotificationMsg.getBody(), EntityId.class);
-//                if (calculatedFieldOwnerId != null &&
-//                        (EntityType.DEVICE.equals(calculatedFieldOwnerId.getEntityType()) || EntityType.ASSET.equals(calculatedFieldOwnerId.getEntityType()))) {
-//                    JsonNode body = JacksonUtil.toJsonNode(edgeNotificationMsg.getBody());
-//                    EdgeId edgeId = safeGetEdgeId(edgeNotificationMsg.getEdgeIdMSB(), edgeNotificationMsg.getEdgeIdLSB());
-//
-//                    return edgeId != null ?
-//                            saveEdgeEvent(tenantId, edgeId, type, actionType, entityId, body) :
-//                            processNotificationToRelatedEdges(tenantId, calculatedFieldOwnerId, entityId, type, actionType, originatorEdgeId);
-//                } else {
-//                    return processActionForAllEdges(tenantId, type, actionType, entityId, null, originatorEdgeId);
-//                }
-//            default:
-//                return super.processEntityNotification(tenantId, edgeNotificationMsg);
-//        }
-//    }
-
     private void processAiModel(TenantId tenantId, AiModelId aiModelId, AiModelUpdateMsg aiModelUpdateMsg, Edge edge) {
         Pair<Boolean, Boolean> resultPair = super.saveOrUpdateAiModel(tenantId, aiModelId, aiModelUpdateMsg);
         Boolean wasCreated = resultPair.getFirst();
@@ -158,7 +125,7 @@ public class AiModelEdgeProcessor extends BaseAiModelProcessor implements AiMode
                 TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, edge.getCustomerId());
                 pushEntityEventToRuleEngine(tenantId, aiModelId, edge.getCustomerId(), TbMsgType.ENTITY_CREATED, aiModelAsString, msgMetaData);
             } else {
-                log.warn("[{}][{}] Failed to find AiModel", tenantId, aiModelId);
+                log.warn("[{}][{}] Failed to find aiModel", tenantId, aiModelId);
             }
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to push aiModel action to rule engine: {}", tenantId, aiModelId, TbMsgType.ENTITY_CREATED.name(), e);
