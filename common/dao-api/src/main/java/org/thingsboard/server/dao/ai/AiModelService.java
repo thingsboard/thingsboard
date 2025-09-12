@@ -29,6 +29,8 @@ public interface AiModelService extends EntityDaoService {
 
     AiModel save(AiModel model);
 
+    AiModel save(AiModel model, boolean doValidate);
+
     Optional<AiModel> findAiModelById(TenantId tenantId, AiModelId modelId);
 
     PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink);
@@ -36,6 +38,8 @@ public interface AiModelService extends EntityDaoService {
     Optional<AiModel> findAiModelByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
     FluentFuture<Optional<AiModel>> findAiModelByTenantIdAndIdAsync(TenantId tenantId, AiModelId modelId);
+
+    Optional<AiModel> findAiModelByTenantIdAndName(TenantId tenantId, String name);
 
     boolean deleteByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
