@@ -17,19 +17,15 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.EntityView;
-import org.thingsboard.server.common.data.Tenant;
-import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -39,8 +35,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
-import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.relation.RelationDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.Collections;
@@ -48,57 +43,32 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@Slf4j
 @DaoSqlTest
 public class EntityRelationControllerTest extends AbstractControllerTest {
 
     public static final String BASE_DEVICE_NAME = "Test dummy device";
 
     @Autowired
-    RelationService relationService;
+    private RelationDao relationDao;
 
-    private IdComparator<EntityView> idComparator;
-    private Tenant savedTenant;
-    private User tenantAdmin;
     private Device mainDevice;
 
     @Before
     public void beforeTest() throws Exception {
-        loginSysAdmin();
-        idComparator = new IdComparator<>();
+        loginTenantAdmin();
 
-        Tenant tenant = new Tenant();
-        tenant.setTitle("Test tenant");
-
-        savedTenant = saveTenant(tenant);
-        Assert.assertNotNull(savedTenant);
-
-        tenantAdmin = new User();
-        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant2@thingsboard.org");
-        tenantAdmin.setFirstName("Joe");
-        tenantAdmin.setLastName("Downs");
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
-
-        Device device = new Device();
+        var device = new Device();
         device.setName("Main test device");
         device.setType("default");
         mainDevice = doPost("/api/device", device, Device.class);
     }
 
-    @After
-    public void afterTest() throws Exception {
-        loginSysAdmin();
-
-        deleteTenant(savedTenant.getId());
-    }
-
     @Test
     public void testSaveAndFindRelation() throws Exception {
-        Device device = buildSimpleDevice("Test device 1");
+        Device device = createDevice("Test device 1");
         EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
 
         Mockito.reset(tbClusterService, auditLogService);
@@ -116,57 +86,117 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         Assert.assertEquals("Found relation is not equals origin!", relation, foundRelation);
 
         testNotifyEntityAllOneTimeRelation(foundRelation,
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.RELATION_ADD_OR_UPDATE, foundRelation);
     }
 
     @Test
-    public void testSaveWithDeviceFromNotCreated() throws Exception {
-        Device device = new Device();
-        device.setName("Test device 2");
-        device.setType("default");
-        EntityRelation relation = createFromRelation(device, mainDevice, "CONTAINS");
+    public void testSaveRelationFromValidation() throws Exception {
+        // GIVEN
+        var relation = new EntityRelation();
+        relation.setFrom(null);
+        relation.setTo(mainDevice.getId());
+        relation.setType("Contains");
 
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/relation", relation)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Parameter entityId can't be empty!")));
-
-        testNotifyEntityNever(mainDevice.getId(), null);
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            doPost(endpoint, relation)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: from must not be null")));
+        }
     }
 
     @Test
-    public void testSaveWithDeviceToNotCreated() throws Exception {
-        Device device = new Device();
-        device.setName("Test device 2");
-        device.setType("default");
-        EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
+    public void testSaveRelationToValidation() throws Exception {
+        // GIVEN
+        var relation = new EntityRelation();
+        relation.setFrom(mainDevice.getId());
+        relation.setTo(null);
+        relation.setType("Contains");
 
-        Mockito.reset(tbClusterService, auditLogService);
-
-        doPost("/api/relation", relation)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Parameter entityId can't be empty!")));
-
-        testNotifyEntityNever(mainDevice.getId(), null);
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            doPost(endpoint, relation)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: to must not be null")));
+        }
     }
 
     @Test
-    public void testSaveWithDeviceToMissing() throws Exception {
-        Device device = new Device();
-        device.setName("Test device 2");
-        device.setType("default");
-        device.setId(new DeviceId(UUID.randomUUID()));
-        EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
+    public void testSaveRelationRelationTypeValidation() throws Exception {
+        // GIVEN
+        var device = createDevice("Test device");
+
+        EntityRelation relationTypeNull = createFromRelation(mainDevice, device, null);
+        EntityRelation relationTypeEmpty = createFromRelation(mainDevice, device, "");
+        EntityRelation relationTypeBlank = createFromRelation(mainDevice, device, "  ");
+        EntityRelation relationTypeContainsNullChar = createFromRelation(mainDevice, device, "null char \u0000");
+        EntityRelation relationTypeTooLong = createFromRelation(mainDevice, device, "a".repeat(256));
+
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            doPost(endpoint, relationTypeNull)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: type must not be blank")));
+
+            doPost(endpoint, relationTypeEmpty)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: type must not be blank")));
+
+            doPost(endpoint, relationTypeBlank)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: type must not be blank")));
+
+            doPost(endpoint, relationTypeContainsNullChar)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: type should not contain 0x00 symbol")));
+
+            doPost(endpoint, relationTypeTooLong)
+                    .andExpect(status().isBadRequest())
+                    .andExpect(statusReason(is("Validation error: type length must be equal or less than 255")));
+        }
+    }
+
+    @Test
+    public void testSaveRelationFromNonexistentEntity() throws Exception {
+        // GIVEN
+        var nonexistentDevice = new Device();
+        nonexistentDevice.setId(new DeviceId(UUID.randomUUID()));
+        nonexistentDevice.setName("Nonexistent device");
+        nonexistentDevice.setType("default");
+        EntityRelation relation = createFromRelation(nonexistentDevice, mainDevice, "CONTAINS");
 
         Mockito.reset(tbClusterService, auditLogService);
 
-        doPost("/api/relation", relation)
-                .andExpect(status().isNotFound())
-                .andExpect(statusReason(containsString(msgErrorNoFound("Device", device.getId().getId().toString()))));
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            doPost(endpoint, relation)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(is(msgErrorNoFound("Device", nonexistentDevice.getId().toString()))));
 
-        testNotifyEntityNever(mainDevice.getId(), null);
+            testNotifyEntityNever(mainDevice.getId(), null);
+        }
+    }
+
+    @Test
+    public void testSaveRelationToNonexistentEntity() throws Exception {
+        // GIVEN
+        var nonexistentDevice = new Device();
+        nonexistentDevice.setId(new DeviceId(UUID.randomUUID()));
+        nonexistentDevice.setName("Nonexistent device");
+        nonexistentDevice.setType("default");
+        EntityRelation relation = createFromRelation(mainDevice, nonexistentDevice, "CONTAINS");
+
+        Mockito.reset(tbClusterService, auditLogService);
+
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            doPost(endpoint, relation)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(is(msgErrorNoFound("Device", nonexistentDevice.getId().toString()))));
+
+            testNotifyEntityNever(mainDevice.getId(), null);
+        }
     }
 
     @Test
@@ -178,7 +208,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         createDevicesByFrom(numOfDevices, BASE_DEVICE_NAME);
 
         EntityRelation relationTest = createFromRelation(mainDevice, mainDevice, "TEST_NOTIFY_ENTITY");
-        testNotifyEntityAllManyRelation(relationTest, savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+        testNotifyEntityAllManyRelation(relationTest, tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.RELATION_ADD_OR_UPDATE, numOfDevices);
 
         String url = String.format("/api/relations?fromId=%s&fromType=%s",
@@ -204,7 +234,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         final int numOfDevices = 30;
         createDevicesByFrom(numOfDevices, BASE_DEVICE_NAME);
 
-        Device device = buildSimpleDevice("Unique dummy test device ");
+        Device device = createDevice("Unique dummy test device ");
         String relationType = "TEST";
         EntityRelation relation = createFromRelation(mainDevice, device, relationType);
 
@@ -221,7 +251,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         final int numOfDevices = 30;
         createDevicesByFrom(numOfDevices, BASE_DEVICE_NAME);
 
-        Device device = buildSimpleDevice("Unique dummy test device ");
+        Device device = createDevice("Unique dummy test device ");
         String relationType = "TEST";
         EntityRelation relation = createFromRelation(mainDevice, device, relationType);
 
@@ -240,7 +270,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         final int numOfDevices = 30;
         createDevicesByFrom(numOfDevices, BASE_DEVICE_NAME);
 
-        Device device = buildSimpleDevice("Unique dummy test device ");
+        Device device = createDevice("Unique dummy test device ");
         String relationType = "TEST";
         EntityRelation relation = createFromRelation(device, mainDevice, relationType);
 
@@ -252,13 +282,12 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         assertFoundList(url, 1);
     }
 
-
     @Test
     public void testSaveAndFindRelationsByToWithRelationTypeOther() throws Exception {
         final int numOfDevices = 30;
         createDevicesByFrom(numOfDevices, BASE_DEVICE_NAME);
 
-        Device device = buildSimpleDevice("Unique dummy test device ");
+        Device device = createDevice("Unique dummy test device ");
         String relationType = "TEST";
         EntityRelation relation = createFromRelation(device, mainDevice, relationType);
 
@@ -280,9 +309,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
                 mainDevice.getUuidId(), EntityType.DEVICE
         );
 
-        List<EntityRelationInfo> relationsInfos =
-                JacksonUtil.convertValue(doGet(url, JsonNode.class), new TypeReference<>() {
-                });
+        List<EntityRelationInfo> relationsInfos = JacksonUtil.convertValue(doGet(url, JsonNode.class), new TypeReference<>() {});
 
         Assert.assertNotNull("Relations is not found!", relationsInfos);
         Assert.assertEquals("List of found relationsInfos is not equal to number of created relations!",
@@ -299,57 +326,88 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
                 mainDevice.getUuidId(), EntityType.DEVICE
         );
 
-        List<EntityRelationInfo> relationsInfos =
-                JacksonUtil.convertValue(doGet(url, JsonNode.class), new TypeReference<>() {
-                });
+        List<EntityRelationInfo> relationsInfos = JacksonUtil.convertValue(doGet(url, JsonNode.class), new TypeReference<>() {});
 
         Assert.assertNotNull("Relations is not found!", relationsInfos);
-        Assert.assertEquals("List of found relationsInfos is not equal to number of created relations!",
-                numOfDevices, relationsInfos.size());
+        Assert.assertEquals("List of found relationsInfos is not equal to number of created relations!", numOfDevices, relationsInfos.size());
 
         assertRelationsInfosByTo(relationsInfos);
     }
 
     @Test
     public void testDeleteRelation() throws Exception {
-        Device device = buildSimpleDevice("Test device 1");
+        // GIVEN
+        Device device = createDevice("Test device 1");
 
         EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
         relation = doPost("/api/v2/relation", relation, EntityRelation.class);
 
-        String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
-                mainDevice.getUuidId(), EntityType.DEVICE,
-                "CONTAINS", device.getUuidId(), EntityType.DEVICE
-        );
-
-        EntityRelation foundRelation = doGet(url, EntityRelation.class);
-
-        Assert.assertNotNull("Relation is not found!", foundRelation);
-        Assert.assertEquals("Found relation is not equals origin!", relation, foundRelation);
-
         Mockito.reset(tbClusterService, auditLogService);
 
+        // WHEN
         String deleteUrl = String.format("/api/v2/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
                 mainDevice.getUuidId(), EntityType.DEVICE,
                 "CONTAINS", device.getUuidId(), EntityType.DEVICE
         );
         var deletedRelation = doDelete(deleteUrl, EntityRelation.class);
 
+        // THEN
         testNotifyEntityAllOneTimeRelation(deletedRelation,
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.RELATION_DELETED, deletedRelation);
 
-        doGet(url).andExpect(status().is4xxClientError());
+        getRelation(relation)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(is(msgErrorNotFound)));
+    }
+
+    @Test
+    public void testDeleteRelationWithTypeEmptyOrBlank() throws Exception {
+        // GIVEN
+        Device device = createDevice("Test device");
+
+        // WHEN-THEN
+        for (String endpoint : List.of("/api/relation", "/api/v2/relation")) {
+            // saving relation with empty type
+            EntityRelation emptyRelation = createFromRelation(mainDevice, device, "");
+            relationDao.saveRelation(tenantId, emptyRelation);
+
+            // saving relation with blank type
+            EntityRelation blankRelation = createFromRelation(mainDevice, device, " ");
+            relationDao.saveRelation(tenantId, blankRelation);
+
+            // deleting relation with empty type
+            String deleteEmptyUrl = String.format(endpoint + "?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                    mainDevice.getUuidId(), EntityType.DEVICE,
+                    emptyRelation.getType(), device.getUuidId(), EntityType.DEVICE
+            );
+            doDelete(deleteEmptyUrl).andExpect(status().isOk());
+
+            getRelation(emptyRelation)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(is(msgErrorNotFound)));
+
+            // deleting relation with blank type
+            String deleteBlankUrl = String.format(endpoint + "?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                    mainDevice.getUuidId(), EntityType.DEVICE,
+                    blankRelation.getType(), device.getUuidId(), EntityType.DEVICE
+            );
+            doDelete(deleteBlankUrl).andExpect(status().isOk());
+
+            getRelation(blankRelation)
+                    .andExpect(status().isNotFound())
+                    .andExpect(statusReason(is(msgErrorNotFound)));
+        }
     }
 
     @Test
     public void testDeleteRelationWithOtherFromDeviceError() throws Exception {
-        Device device = buildSimpleDevice("Test device 1");
+        Device device = createDevice("Test device 1");
 
         EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
         doPost("/api/relation", relation).andExpect(status().isOk());
 
-        Device device2 = buildSimpleDevice("Test device 2");
+        Device device2 = createDevice("Test device 2");
         String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
                 device2.getUuidId(), EntityType.DEVICE,
                 "CONTAINS", device.getUuidId(), EntityType.DEVICE
@@ -366,12 +424,12 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
     @Test
     public void testDeleteRelationWithOtherToDeviceError() throws Exception {
-        Device device = buildSimpleDevice("Test device 1");
+        Device device = createDevice("Test device 1");
 
         EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
         doPost("/api/relation", relation).andExpect(status().isOk());
 
-        Device device2 = buildSimpleDevice("Test device 2");
+        Device device2 = createDevice("Test device 2");
         String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
                 mainDevice.getUuidId(), EntityType.DEVICE,
                 "CONTAINS", device2.getUuidId(), EntityType.DEVICE
@@ -411,7 +469,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         doDelete(url).andExpect(status().isOk());
 
         testNotifyEntityOneTimeMsgToEdgeServiceNever(null, mainDevice.getId(), mainDevice.getId(),
-                savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
+                tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.RELATIONS_DELETED);
 
         Assert.assertTrue(
@@ -442,8 +500,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
         List<EntityRelation> relations = readResponse(
                 doPost("/api/relations", query).andExpect(status().isOk()),
-                new TypeReference<List<EntityRelation>>() {
-                }
+                new TypeReference<>() {}
         );
 
         assertFoundRelations(relations, numOfDevices);
@@ -467,8 +524,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
         List<EntityRelation> relations = readResponse(
                 doPost("/api/relations", query).andExpect(status().isOk()),
-                new TypeReference<>() {
-                }
+                new TypeReference<>() {}
         );
 
         assertFoundRelations(relations, numOfDevices);
@@ -526,11 +582,11 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
     @Test
     public void testCreateRelationFromTenantToDevice() throws Exception {
-        EntityRelation relation = new EntityRelation(tenantAdmin.getTenantId(), mainDevice.getId(), "CONTAINS");
+        EntityRelation relation = new EntityRelation(tenantId, mainDevice.getId(), "CONTAINS");
         relation = doPost("/api/v2/relation", relation, EntityRelation.class);
 
         String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
-                tenantAdmin.getTenantId(), EntityType.TENANT,
+                tenantId, EntityType.TENANT,
                 "CONTAINS", mainDevice.getUuidId(), EntityType.DEVICE
         );
 
@@ -542,12 +598,12 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
     @Test
     public void testCreateRelationFromDeviceToTenant() throws Exception {
-        EntityRelation relation = new EntityRelation(mainDevice.getId(), tenantAdmin.getTenantId(), "CONTAINS");
+        EntityRelation relation = new EntityRelation(mainDevice.getId(), tenantId, "CONTAINS");
         relation = doPost("/api/v2/relation", relation, EntityRelation.class);
 
         String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
                 mainDevice.getUuidId(), EntityType.DEVICE,
-                "CONTAINS", tenantAdmin.getTenantId(), EntityType.TENANT
+                "CONTAINS", tenantId, EntityType.TENANT
         );
 
         EntityRelation foundRelation = doGet(url, EntityRelation.class);
@@ -558,7 +614,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveAndFindRelationDifferentTenant() throws Exception {
-        Device device = buildSimpleDevice("Test device 1");
+        Device device = createDevice("Test device 1");
         EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
 
         doPost("/api/relation", relation).andExpect(status().isOk());
@@ -577,12 +633,20 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
         deleteDifferentTenant();
     }
 
-    private Device buildSimpleDevice(String name) throws Exception {
-        Device device = new Device();
+    private Device createDevice(String name) {
+        var device = new Device();
         device.setName(name);
         device.setType("default");
-        device = doPost("/api/device", device, Device.class);
-        return device;
+        return doPost("/api/device", device, Device.class);
+    }
+
+    private ResultActions getRelation(EntityRelation relation) throws Exception {
+        return doGet("/api/relation?" +
+                "fromId=" + relation.getFrom().getId() +
+                "&fromType=" + relation.getFrom().getEntityType() +
+                "&relationType=" + relation.getType() +
+                "&toId=" + relation.getTo().getId() +
+                "&toType=" + relation.getTo().getEntityType());
     }
 
     private EntityRelation createFromRelation(Device mainDevice, Device device, String relationType) {
@@ -591,7 +655,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
     private void createDevicesByFrom(int numOfDevices, String baseName) throws Exception {
         for (int i = 0; i < numOfDevices; i++) {
-            Device device = buildSimpleDevice(baseName + i);
+            Device device = createDevice(baseName + i);
 
             EntityRelation relation = createFromRelation(mainDevice, device, "CONTAINS");
             doPost("/api/relation", relation).andExpect(status().isOk());
@@ -600,7 +664,7 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
 
     private void createDevicesByTo(int numOfDevices, String baseName) throws Exception {
         for (int i = 0; i < numOfDevices; i++) {
-            Device device = buildSimpleDevice(baseName + i);
+            Device device = createDevice(baseName + i);
             EntityRelation relation = createFromRelation(device, mainDevice, "CONTAINS");
             doPost("/api/relation", relation).andExpect(status().isOk());
         }
@@ -633,4 +697,5 @@ public class EntityRelationControllerTest extends AbstractControllerTest {
             Assert.assertEquals("Wrong relationType!", "CONTAINS", info.getType());
         }
     }
+
 }
