@@ -63,4 +63,9 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
     @Query("DELETE FROM RuleNodeEntity e where e.id in :ids")
     void deleteByIdIn(@Param("ids") List<UUID> ids);
 
+    @Query(nativeQuery = true, value = "SELECT * FROM rule_node r WHERE r.configuration::jsonb -> 'resourceIds' IS NOT NULL AND " +
+            "EXISTS (SELECT 1 FROM jsonb_array_elements_text(r.configuration::jsonb -> 'resourceIds') AS res_id WHERE res_id = cast(:resourceId as text)) LIMIT :limit")
+    List<RuleNodeEntity> findRuleNodesByResourceId(@Param("resourceId") UUID resourceId,
+                                                   @Param("limit") int limit);
+
 }

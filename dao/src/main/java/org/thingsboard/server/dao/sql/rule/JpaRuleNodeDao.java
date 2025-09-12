@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -105,6 +106,11 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
     @Override
     public void deleteByIdIn(List<RuleNodeId> ruleNodeIds) {
         ruleNodeRepository.deleteAllById(ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<RuleNode> findByResourceId(TbResourceId tbResourceId, int limit) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findRuleNodesByResourceId(tbResourceId.getId(), limit));
     }
 
     @Override
