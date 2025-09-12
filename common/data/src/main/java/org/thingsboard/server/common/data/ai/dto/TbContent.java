@@ -23,6 +23,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
 import static org.thingsboard.server.common.data.ai.dto.TbContent.TbTextContent;
+import static org.thingsboard.server.common.data.ai.dto.TbContent.TbScriptContent;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -31,23 +32,29 @@ import static org.thingsboard.server.common.data.ai.dto.TbContent.TbTextContent;
         visible = true
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TbTextContent.class, name = "TEXT")
+        @JsonSubTypes.Type(value = TbTextContent.class, name = "TEXT"),
+        @JsonSubTypes.Type(value = TbScriptContent.class, name = "SCRIPT")
 })
-public sealed interface TbContent permits TbTextContent {
+public sealed interface TbContent permits TbTextContent, TbScriptContent {
 
     TbContentType contentType();
 
     Content toLangChainContent();
 
-    enum TbContentType {
-
-        TEXT
-
+    static TbTextContent ofText(String text) {
+        return new TbTextContent(text);
     }
 
-    @Schema(
-            description = "Text-based content part of a user's prompt"
-    )
+    static TbScriptContent ofScript(String text) {
+        return new TbScriptContent(text);
+    }
+
+    enum TbContentType {
+        TEXT,
+        SCRIPT
+    }
+
+    @Schema(description = "Text-based content part of a user's prompt")
     record TbTextContent(
             @NotBlank
             @Schema(
@@ -67,7 +74,27 @@ public sealed interface TbContent permits TbTextContent {
         public Content toLangChainContent() {
             return TextContent.from(text);
         }
-
     }
 
+    @Schema(description = "TBEL script content part of a user's prompt")
+    record TbScriptContent(
+            @NotBlank
+            @Schema(
+                    requiredMode = Schema.RequiredMode.REQUIRED,
+                    description = "The TBEL script content",
+                    example = "msg.rt = 68; return {msg: msg, metadata: metadata, msgType: msgType};"
+            )
+            String script
+    ) implements TbContent {
+
+        @Override
+        public TbContentType contentType() {
+            return TbContentType.SCRIPT;
+        }
+
+        @Override
+        public Content toLangChainContent() {
+            return TextContent.from(script);
+        }
+    }
 }
