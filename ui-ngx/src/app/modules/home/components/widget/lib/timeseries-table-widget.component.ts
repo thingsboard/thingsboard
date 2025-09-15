@@ -513,7 +513,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         let title = '';
         const header = this.sources[index].header.find(column => column.index.toString() === value);
         if (value === '0') {
-          title = this.translate.instant('audit-log.timestamp');
+          title = this.translate.instant('widgets.table.display-timestamp');
         } else if (value === 'actions') {
           title = 'Actions';
         } else {
