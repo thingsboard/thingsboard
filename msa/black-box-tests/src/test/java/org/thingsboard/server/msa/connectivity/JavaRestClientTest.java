@@ -15,9 +15,19 @@
  */
 package org.thingsboard.server.msa.connectivity;
 
+import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
+import org.apache.hc.client5.http.impl.classic.HttpClients;
+import org.apache.hc.client5.http.io.HttpClientConnectionManager;
+import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
+import org.apache.hc.client5.http.ssl.DefaultClientTlsStrategy;
+import org.apache.hc.client5.http.ssl.HostnameVerificationPolicy;
+import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
+import org.apache.hc.core5.ssl.SSLContexts;
+import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.rest.client.RestClient;
@@ -31,14 +41,39 @@ import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.TestProperties;
 
+import javax.net.ssl.SSLContext;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
-public class RestClientTest extends AbstractContainerTest {
+public class JavaRestClientTest extends AbstractContainerTest {
 
-    private static final RestClient restClient = new RestClient(new RestTemplate(), TestProperties.getBaseUrl());
+    private RestClient restClient;
+
+    @BeforeClass
+    public void beforeClass() throws Exception {
+        SSLContext ssl = SSLContexts.custom()
+                .loadTrustMaterial((chain, authType) -> true)
+                .build();
+
+        var tls = new DefaultClientTlsStrategy(
+                ssl,
+                HostnameVerificationPolicy.CLIENT,
+                NoopHostnameVerifier.INSTANCE
+        );
+
+        HttpClientConnectionManager cm = PoolingHttpClientConnectionManagerBuilder.create()
+                .setTlsSocketStrategy(tls)
+                .build();
+
+        CloseableHttpClient httpClient = HttpClients.custom()
+                .setConnectionManager(cm)
+                .build();
+
+        RestTemplate rt = new RestTemplate(new HttpComponentsClientHttpRequestFactory(httpClient));
+        restClient = new RestClient(rt, TestProperties.getBaseUrl());
+    }
 
     @BeforeMethod
     public void setUp() throws Exception {
