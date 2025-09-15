@@ -100,6 +100,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required]],
           accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required]],
           secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required]],
+          baseUrl: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.baseUrl : '', [Validators.required]],
         }),
         modelId: [this.data.AIModel ? this.data.AIModel.configuration?.modelId : '', [Validators.required]],
         temperature: [this.data.AIModel ? this.data.AIModel.configuration?.temperature : null, [Validators.min(0)]],

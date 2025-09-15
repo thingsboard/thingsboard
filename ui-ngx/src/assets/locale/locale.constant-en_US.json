@@ -1112,7 +1112,8 @@
             "mistral-ai": "Mistral AI",
             "anthropic": "Anthropic",
             "amazon-bedrock": "Amazon Bedrock",
-            "github-models": "GitHub Models"
+            "github-models": "GitHub Models",
+            "ollama": "Ollama"
         },
         "name-required": "Name is required.",
         "name-max-length": "Name must be 255 characters or less.",
@@ -1159,6 +1160,8 @@
         "max-output-tokens-hint": "Sets the maximum number of tokens that the \nmodel can generate in a single response.",
         "endpoint": "Endpoint",
         "endpoint-required": "Endpoint is required.",
+        "baseurl": "Base URL",
+        "baseurl-required": "Base URL is required.",
         "service-version": "Service version",
         "check-connectivity": "Check connectivity",
         "check-connectivity-success": "Test request was successful",

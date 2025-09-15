@@ -150,6 +150,15 @@
                 </mat-error>
               </mat-form-field>
             }
+            @if (providerFieldsList.includes('baseUrl')) {
+              <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+                <mat-label translate>ai-models.baseurl</mat-label>
+                <input required matInput formControlName="baseUrl">
+                <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('baseUrl').hasError('required')">
+                  {{ 'ai-models.baseurl-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            }
           </div>
         </section>
       </section>

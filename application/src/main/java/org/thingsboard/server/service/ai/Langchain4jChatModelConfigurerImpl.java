@@ -32,6 +32,7 @@ import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.github.GitHubModelsChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
 import org.springframework.stereotype.Component;
@@ -43,6 +44,7 @@ import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelC
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
@@ -257,6 +259,20 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .frequencyPenalty(chatModelConfig.frequencyPenalty())
                 .presencePenalty(chatModelConfig.presencePenalty())
                 .maxTokens(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries())
+                .build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(OllamaChatModelConfig chatModelConfig) {
+        return OllamaChatModel.builder()
+                .baseUrl(chatModelConfig.providerConfig().baseUrl())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .numPredict(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
