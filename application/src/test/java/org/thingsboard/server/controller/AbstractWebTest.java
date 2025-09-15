@@ -918,7 +918,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(asyncDispatch(result));
     }
 
-    protected ResultActions doDelete(String urlTemplate, Object... params) throws Exception {
+    protected ResultActions doDelete(String urlTemplate, String... params) throws Exception {
         MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate);
         setJwtToken(deleteRequest);
         populateParams(deleteRequest, params);
@@ -934,12 +934,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(asyncDispatch(result));
     }
 
-    protected void populateParams(MockHttpServletRequestBuilder request, Object... params) {
+    protected void populateParams(MockHttpServletRequestBuilder request, String... params) {
         if (params != null && params.length > 0) {
             Assert.assertEquals(0, params.length % 2);
             MultiValueMap<String, String> paramsMap = new LinkedMultiValueMap<>();
             for (int i = 0; i < params.length; i += 2) {
-                paramsMap.add(params[i].toString(), params[i + 1].toString());
+                paramsMap.add(params[i], params[i + 1]);
             }
             request.params(paramsMap);
         }
