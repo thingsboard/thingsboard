@@ -16,7 +16,7 @@
 .tb-json-object {
   position: relative;
 
-  .fill-height {
+  &.fill-height {
     height: 100%;
   }
 

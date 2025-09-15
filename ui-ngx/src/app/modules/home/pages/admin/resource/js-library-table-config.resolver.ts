@@ -81,7 +81,9 @@ export class JsLibraryTableConfigResolver  {
       search: 'javascript.search',
       selectedEntities: 'javascript.selected-javascript-resources'
     };
-    this.config.entityResources = entityTypeResources.get(EntityType.TB_RESOURCE);
+    this.config.entityResources = {
+      helpLinkId: 'jsExtension'
+    };
     this.config.headerComponent = JsLibraryTableHeaderComponent;
 
     this.config.entityTitle = (resource) => resource ?

@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.queue.util;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@Data
-public class CalculatedFieldInitMsg implements ToCalculatedFieldSystemMsg {
+import java.lang.annotation.Inherited;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-    private final TenantId tenantId;
-    private final CalculatedField cf;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_INIT_MSG;
-    }
-}
+@Inherited
+@Retention(RetentionPolicy.RUNTIME)
+@Target({java.lang.annotation.ElementType.TYPE, java.lang.annotation.ElementType.METHOD})
+@ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
+public @interface TbKafkaComponent {}

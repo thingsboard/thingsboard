@@ -36,10 +36,12 @@ import {
 import { AiModelService } from '@core/http/ai-model.service';
 import { CheckConnectivityDialogComponent } from '@home/components/ai-model/check-connectivity-dialog.component';
 import { map } from 'rxjs/operators';
+import { deepTrim } from '@core/utils';
 
 export interface AIModelDialogData {
   AIModel?: AiModel;
   isAdd?: boolean;
+  name?: string;
 }
 
 @Component({
@@ -110,6 +112,10 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       })
     });
 
+    if (this.data.name) {
+      this.aiModelForms.get('name').patchValue(this.data.name, {emitEvent: false});
+    }
+
     this.aiModelForms.get('configuration.provider').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((provider: AiProvider) => {
@@ -162,6 +168,6 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
 
   add(): void {
     const aiModel = {...this.data.AIModel, ...this.aiModelForms.value} as AiModel;
-    this.aiModelService.saveAiModel(aiModel).subscribe(aiModel => this.dialogRef.close(aiModel));
+    this.aiModelService.saveAiModel(deepTrim(aiModel)).subscribe(aiModel => this.dialogRef.close(aiModel));
   }
 }

@@ -29,8 +29,8 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      <mat-form-field class="mat-block">
+    <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-2">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mat-block tb-inline-field">
         <mat-label translate>attribute.key</mat-label>
         <input matInput formControlName="key" required>
         <mat-error *ngIf="attributeFormGroup.get('key').hasError('required')">

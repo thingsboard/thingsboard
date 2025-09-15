@@ -13,22 +13,29 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.dao.edge.stats;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+
+import java.util.concurrent.atomic.AtomicLong;
 
 @Data
-public class CalculatedFieldLinkInitMsg implements ToCalculatedFieldSystemMsg {
+public class MsgCounters {
 
     private final TenantId tenantId;
-    private final CalculatedFieldLink link;
+    private final AtomicLong msgsAdded = new AtomicLong();
+    private final AtomicLong msgsPushed = new AtomicLong();
+    private final AtomicLong msgsPermanentlyFailed = new AtomicLong();
+    private final AtomicLong msgsTmpFailed = new AtomicLong();
+    private final AtomicLong msgsLag = new AtomicLong();
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_LINK_INIT_MSG;
+    public void clear() {
+        msgsAdded.set(0);
+        msgsPushed.set(0);
+        msgsPermanentlyFailed.set(0);
+        msgsTmpFailed.set(0);
+        msgsLag.set(0);
     }
+
 }

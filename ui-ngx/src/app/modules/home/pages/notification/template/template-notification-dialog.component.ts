@@ -40,6 +40,7 @@ export interface TemplateNotificationDialogData {
   predefinedType?: NotificationType;
   isAdd?: boolean;
   isCopy?: boolean;
+  name?: string;
 }
 
 @Component({
@@ -84,6 +85,9 @@ export class TemplateNotificationDialogComponent
     if (isDefinedAndNotNull(this.data?.predefinedType)) {
       this.hideSelectType = true;
       this.templateNotificationForm.get('notificationType').setValue(this.data.predefinedType, {emitEvent: false});
+    }
+    if (isDefinedAndNotNull(this.data?.name)) {
+      this.templateNotificationForm.get('name').setValue(this.data.name, {emitEvent: false});
     }
 
     if (data.isAdd || data.isCopy) {

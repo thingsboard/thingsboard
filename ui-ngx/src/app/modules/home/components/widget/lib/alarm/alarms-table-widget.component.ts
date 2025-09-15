@@ -851,6 +851,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               content = this.defaultContent(key, contentInfo, value);
             }
             if (isDefined(content)) {
+              if (typeof content === 'object') {
+                content = JSON.stringify(content);
+              }
               content = this.utils.customTranslation(content, content);
               switch (typeof content) {
                 case 'string':
@@ -1187,8 +1190,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   }
 
   openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {
-    if ($event) {
-      $event.stopPropagation();
+    $event?.stopPropagation();
+    if (entity.id.id === NULL_UUID) {
+      return
     }
     const target = $event.target || $event.currentTarget;
     const config = new OverlayConfig();

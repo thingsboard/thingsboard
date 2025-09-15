@@ -101,6 +101,11 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             } catch (Exception e) {
             }
         }
+        if (value instanceof Long longValue) {
+            if (longValue >= Integer.MIN_VALUE && longValue <= Integer.MAX_VALUE) {
+                value = longValue.intValue();
+            }
+        }
         return new TbelCfSingleValueArg(ts, value);
     }
 

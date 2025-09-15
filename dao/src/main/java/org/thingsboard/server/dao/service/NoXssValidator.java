@@ -26,9 +26,13 @@ import org.owasp.validator.html.ScanException;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.util.Optional;
+import java.util.regex.Pattern;
 
 @Slf4j
 public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
+
+    private static final Pattern JS_TEMPLATE_PATTERN = Pattern.compile("\\{\\{.*}}", Pattern.DOTALL);
+
     private static final AntiSamy xssChecker = new AntiSamy();
     private static final Policy xssPolicy;
 
@@ -58,6 +62,9 @@ public class NoXssValidator implements ConstraintValidator<NoXss, Object> {
     public static boolean isValid(String stringValue) {
         if (stringValue.isEmpty()) {
             return true;
+        }
+        if (JS_TEMPLATE_PATTERN.matcher(stringValue).find()) {
+            return false;
         }
         try {
             return xssChecker.scan(stringValue, xssPolicy).getNumberOfErrors() == 0;
