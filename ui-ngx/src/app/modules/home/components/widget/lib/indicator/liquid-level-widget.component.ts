@@ -514,10 +514,10 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
     if (isNumeric(data)) {
       value = this.widgetUnitsConvertor(convertLiters(this.convertOutputData(percentage), this.widgetUnits as CapacityUnits, ConversionType.from))
-          .toFixed(this.settings.decimals || 0);
+          .toFixed(this.ctx.widgetConfig.decimals || 0);
     }
     this.valueColor.update(value);
-    const valueTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.valueFont),
+    const valueTextStyle = cssTextFromInlineStyle({...inlineTextStyle(this.settings.volumeFont),
                                                           color: this.valueColor.color});
     this.backgroundOverlayColor.update(percentage);
     if (this.overlayContainer) {
