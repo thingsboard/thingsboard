@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.ImageContainerDao;
-import org.thingsboard.server.dao.ResourceLinkContainerDao;
+import org.thingsboard.server.dao.ResourceContainerDao;
 
 import java.util.List;
 import java.util.UUID;
@@ -36,7 +36,7 @@ import java.util.UUID;
 /**
  * The Interface WidgetTypeDao.
  */
-public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo>, ResourceLinkContainerDao<WidgetTypeInfo> {
+public interface WidgetTypeDao extends Dao<WidgetTypeDetails>, ExportableEntityDao<WidgetTypeId, WidgetTypeDetails>, ImageContainerDao<WidgetTypeInfo>, ResourceContainerDao<WidgetTypeInfo> {
 
     /**
      * Save or update widget type object

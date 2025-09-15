@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.dao;
 
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.List;
 
-public interface ResourceIdContainerDao<T extends HasId<?>> {
+public interface ResourceContainerDao<T extends HasId<?>> {
 
-    List<T> findByResourceId(TbResourceId tbResourceId, int limit);
+    List<EntityInfo> findByTenantIdAndResource(TenantId tenantId, String reference, int limit);
+
+    List<EntityInfo> findByResource(String reference, int limit);
 
 }

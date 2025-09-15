@@ -100,12 +100,6 @@ public class JpaRuleNodeDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
-    public void testFindRuleNodesByResourceId() {
-        List<RuleNode> ruleNodes = ruleNodeDao.findByResourceId(new TbResourceId(UUID.randomUUID()), 10);
-        assertEquals(0, ruleNodes.size());
-    }
-
-    @Test
     public void testFindRuleNodesByType() {
         PageData<RuleNode> ruleNodes = ruleNodeDao.findAllRuleNodesByType( "A", new PageLink(10, 0, PREFIX_FOR_RULE_NODE_NAME));
         assertEquals(20, ruleNodes.getTotalElements());
