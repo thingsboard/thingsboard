@@ -370,7 +370,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(isSuccess);
 
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
-        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>() {
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<EntityInfo>>>() {
         });
         Assert.assertNull(widgetTypeInfos);
     }
@@ -464,7 +464,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(isSuccess);
 
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
-        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>() {
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<EntityInfo>>>() {
         });
         Assert.assertNull(dashboardInfos);
     }
