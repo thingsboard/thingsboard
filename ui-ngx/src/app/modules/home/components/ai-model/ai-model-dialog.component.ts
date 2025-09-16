@@ -108,7 +108,8 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
         topK: [this.data.AIModel ? this.data.AIModel.configuration?.topK : null, [Validators.min(0)]],
         frequencyPenalty: [this.data.AIModel ? this.data.AIModel.configuration?.frequencyPenalty : null],
         presencePenalty: [this.data.AIModel ? this.data.AIModel.configuration?.presencePenalty : null],
-        maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration?.maxOutputTokens : null, [Validators.min(1)]]
+        maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration?.maxOutputTokens : null],
+        contextLength: [this.data.AIModel ? this.data.AIModel.configuration?.contextLength : null]
       })
     });
 

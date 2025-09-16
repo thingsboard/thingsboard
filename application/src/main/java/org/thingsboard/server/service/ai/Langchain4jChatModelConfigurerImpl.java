@@ -272,6 +272,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .temperature(chatModelConfig.temperature())
                 .topP(chatModelConfig.topP())
                 .topK(chatModelConfig.topK())
+                .numCtx(chatModelConfig.contextLength())
                 .numPredict(chatModelConfig.maxOutputTokens())
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())

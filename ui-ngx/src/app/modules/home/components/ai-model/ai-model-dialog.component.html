@@ -151,7 +151,7 @@
               </mat-form-field>
             }
             @if (providerFieldsList.includes('baseUrl')) {
-              <mat-form-field class="mat-block flex-1" appearance="outline" subscriptSizing="dynamic">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>ai-models.baseurl</mat-label>
                 <input required matInput formControlName="baseUrl">
                 <mat-error *ngIf="aiModelForms.get('configuration').get('providerConfig').get('baseUrl').hasError('required')">
@@ -264,15 +264,18 @@
               </div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
                 <input matInput formControlName="maxOutputTokens"
-                       type="number" min="1" step="1" placeholder="{{ 'ai-models.set' | translate }}">
-                <mat-icon matSuffix
-                          matTooltipPosition="above"
-                          matTooltipClass="tb-error-tooltip"
-                          [matTooltip]="'ai-models.max-output-tokens-min' | translate"
-                          *ngIf="aiModelForms.get('configuration').get('maxOutputTokens').hasError('min')"
-                          class="tb-error">
-                  warning
-                </mat-icon>
+                       type="number" step="1" placeholder="{{ 'ai-models.set' | translate }}">
+              </mat-form-field>
+            </div>
+          }
+          @if (modelFieldsList.includes('contextLength')) {
+            <div class="tb-form-row space-between">
+              <div tb-hint-tooltip-icon="{{ 'ai-models.context-length-hint' | translate }}">
+                {{ 'ai-models.context-length' | translate }}
+              </div>
+              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                <input matInput formControlName="contextLength"
+                       type="number" step="1" placeholder="{{ 'ai-models.set' | translate }}">
               </mat-form-field>
             </div>
           }

@@ -34,7 +34,8 @@ public record OllamaChatModelConfig(
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
         @PositiveOrZero Integer topK,
-        @Positive Integer maxOutputTokens,
+        Integer contextLength,
+        Integer maxOutputTokens,
         @With @Positive Integer timeoutSeconds,
         @With @PositiveOrZero Integer maxRetries
 ) implements AiChatModelConfig<OllamaChatModelConfig> {
