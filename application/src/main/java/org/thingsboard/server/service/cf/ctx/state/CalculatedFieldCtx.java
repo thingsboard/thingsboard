@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -77,6 +78,9 @@ public class CalculatedFieldCtx {
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
 
+    private List<String> mainEntityGeofencingArgumentNames;
+    private List<String> linkedEntityGeofencingArgumentNames;
+
     public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService, RelationService relationService) {
         this.calculatedField = calculatedField;
 
@@ -88,6 +92,8 @@ public class CalculatedFieldCtx {
         this.mainEntityArguments = new HashMap<>();
         this.linkedEntityArguments = new HashMap<>();
         this.argNames = new ArrayList<>();
+        this.mainEntityGeofencingArgumentNames = new ArrayList<>();
+        this.linkedEntityGeofencingArgumentNames = new ArrayList<>();
         this.output = calculatedField.getConfiguration().getOutput();
         if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
             this.arguments.putAll(argBasedConfig.getArguments());
@@ -107,6 +113,17 @@ public class CalculatedFieldCtx {
             if (argBasedConfig instanceof ExpressionBasedCalculatedFieldConfiguration expressionBasedConfig) {
                 this.expression = expressionBasedConfig.getExpression();
                 this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) argBasedConfig).isUseLatestTs();
+            }
+            if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration geofencingConfig) {
+                geofencingConfig.getZoneGroups().forEach((zoneGroupName, config) -> {
+                    if (config.isCfEntitySource(entityId)) {
+                        mainEntityGeofencingArgumentNames.add(zoneGroupName);
+                        return;
+                    }
+                    if (config.isLinkedCfEntitySource(entityId)) {
+                        linkedEntityGeofencingArgumentNames.add(zoneGroupName);
+                    }
+                });
             }
         }
         this.tbelInvokeService = tbelInvokeService;

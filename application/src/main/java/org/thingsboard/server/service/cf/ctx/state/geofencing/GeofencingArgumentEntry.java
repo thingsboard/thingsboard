@@ -21,6 +21,8 @@ import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfTsGeofencingArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
+import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 
@@ -36,6 +38,10 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
     private boolean forceResetPrevious;
 
     public GeofencingArgumentEntry() {
+    }
+
+    public GeofencingArgumentEntry(EntityId entityId, TransportProtos.AttributeValueProto entry) {
+        this.zoneStates = toZones(Map.of(entityId, ProtoUtils.fromProto(entry)));
     }
 
     public GeofencingArgumentEntry(Map<EntityId, KvEntry> entityIdkvEntryMap) {

@@ -48,6 +48,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -390,7 +391,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
-        return mapToArguments(ctx.getMainEntityArguments(), scope, attrDataList);
+        return mapToArguments(ctx.getEntityId(), ctx.getMainEntityArguments(), ctx.getMainEntityGeofencingArgumentNames(), scope, attrDataList);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
@@ -398,17 +399,23 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
-        return mapToArguments(argNames, scope, attrDataList);
+        List<String> geofencingArgumentNames = ctx.getLinkedEntityGeofencingArgumentNames();
+        return mapToArguments(entityId, argNames, geofencingArgumentNames, scope, attrDataList);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, String> argNames, List<String> geoArgNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
             String argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            if (argName == null) {
+                continue;
             }
+            if (geoArgNames.contains(argName)) {
+                arguments.put(argName, new GeofencingArgumentEntry(entityId, item));
+                continue;
+            }
+            arguments.put(argName, new SingleValueArgumentEntry(item));
         }
         return arguments;
     }

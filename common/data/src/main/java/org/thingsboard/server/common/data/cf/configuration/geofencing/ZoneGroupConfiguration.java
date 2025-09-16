@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 import org.springframework.lang.Nullable;
@@ -69,6 +70,19 @@ public class ZoneGroupConfiguration {
 
     public boolean hasDynamicSource() {
         return refDynamicSourceConfiguration != null;
+    }
+
+    @JsonIgnore
+    public boolean isCfEntitySource(EntityId cfEntityId) {
+        if (refEntityId == null && refDynamicSourceConfiguration == null) {
+            return true;
+        }
+        return refEntityId != null && refEntityId.equals(cfEntityId);
+    }
+
+    @JsonIgnore
+    public boolean isLinkedCfEntitySource(EntityId cfEntityId) {
+        return refEntityId != null && !refEntityId.equals(cfEntityId);
     }
 
     public Argument toArgument() {
