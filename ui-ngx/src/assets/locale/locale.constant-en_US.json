@@ -9544,7 +9544,8 @@
             "add-key": "Add key",
             "no-key": "No key",
             "delete-key": "Delete key",
-            "target-dashboard-state": "Target dashboard state"
+            "target-dashboard-state": "Target dashboard state",
+            "go-to-main-state": "Go to default view"
         }
     },
     "color": {
