@@ -33,6 +33,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthService } from '@core/auth/auth.service';
 import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
+import { UtilsService } from "@core/services/utils.service";
 
 @Component({
   selector: 'tb-profile',
@@ -54,6 +55,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private authService: AuthService,
               private translate: TranslateService,
               private unitService: UnitService,
+              private utils: UtilsService,
               private fb: UntypedFormBuilder) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
@@ -66,7 +68,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   private buildProfileForm() {
     this.profile = this.fb.group({
-      email: ['', [Validators.required, Validators.email]],
+      email: ['', [Validators.required, this.utils.validateEmail]],
       firstName: [''],
       lastName: [''],
       phone: [''],

@@ -14,14 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
+import { UtilsService } from "@core/services/utils.service";
 
 @Component({
   selector: 'tb-contact',
   templateUrl: './contact.component.html'
 })
-export class ContactComponent {
+export class ContactComponent implements OnInit {
 
   @Input()
   parentForm: UntypedFormGroup;
@@ -30,7 +31,11 @@ export class ContactComponent {
 
   phoneInputDefaultCountry = 'US';
 
-  constructor() {
+  constructor(private utils: UtilsService) {
+  }
+  
+  ngOnInit() {
+    this.parentForm.controls['email'].addValidators(this.utils.validateEmail)
   }
 
   changeCountry(countryCode: string) {
