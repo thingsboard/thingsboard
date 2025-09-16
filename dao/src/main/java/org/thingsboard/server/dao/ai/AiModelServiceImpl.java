@@ -146,8 +146,8 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
         deleteByTenantIdAndIdInternal(tenantId, id.getId());
     }
 
-    private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, UUID aiModelId) {
-        AiModel aiModel = aiModelDao.findById(tenantId, aiModelId);
+    private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, UUID modelId) {
+        AiModel aiModel = findAiModelById(tenantId, new AiModelId(modelId)).orElse(null);
         if (aiModel == null) {
             return false;
         }
