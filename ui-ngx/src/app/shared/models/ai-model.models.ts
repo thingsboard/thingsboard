@@ -43,6 +43,7 @@ export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId
     frequencyPenalty?: number;
     presencePenalty?: number;
     maxOutputTokens?: number;
+    contextLength?: number;
   }
 }
 
@@ -91,7 +92,7 @@ export const ProviderFieldsAllList = [
   'baseUrl'
 ];
 
-export const ModelFieldsAllList = ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens'];
+export const ModelFieldsAllList = ['temperature', 'topP', 'topK', 'frequencyPenalty', 'presencePenalty', 'maxOutputTokens', 'contextLength'];
 
 export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFieldsList: string[], modelFieldsList: string[] }>([
   [
@@ -200,7 +201,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     {
       modelList: [],
       providerFieldsList: ['baseUrl'],
-      modelFieldsList: ['temperature', 'topP', 'topK', 'maxOutputTokens'],
+      modelFieldsList: ['temperature', 'topP', 'topK', 'maxOutputTokens', 'contextLength'],
     },
   ],
 ]);
