@@ -63,12 +63,7 @@ public class AiModelEdgeProcessor extends BaseAiModelProcessor implements AiMode
                     return handleUnsupportedMsgType(aiModelUpdateMsg.getMsgType());
             }
         } catch (DataValidationException e) {
-            if (e.getMessage().contains("limit reached")) {
-                log.warn("[{}] Number of allowed aiModel violated {}", tenantId, aiModelUpdateMsg, e);
-                return Futures.immediateFuture(null);
-            } else {
-                return Futures.immediateFailedFuture(e);
-            }
+            return Futures.immediateFailedFuture(e);
         } finally {
             edgeSynchronizationManager.getEdgeId().remove();
         }
