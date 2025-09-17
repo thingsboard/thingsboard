@@ -50,7 +50,7 @@ public class GeofencingZoneState {
         }
         this.ts = attributeKvEntry.getLastUpdateTs();
         this.version = attributeKvEntry.getVersion();
-        this.perimeterDefinition = JacksonUtil.fromString(entry.getJsonValue().orElseThrow(), PerimeterDefinition.class);
+        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class);
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {
