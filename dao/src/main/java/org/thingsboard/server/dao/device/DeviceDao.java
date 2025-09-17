@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.dao.model.sql.DeviceInfoEntity;
 
 import java.util.List;
 import java.util.Optional;
@@ -127,6 +128,41 @@ public interface DeviceDao extends Dao<Device>, TenantEntityDao<Device>, Exporta
      * @return the list of device objects
      */
     ListenableFuture<List<Device>> findDevicesByIdsAsync(List<UUID> deviceIds);
+
+    /**
+     * Find deviceInfos by devices Ids.
+     *
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    List<DeviceInfo> findDeviceInfosByIds(List<UUID> deviceIds);
+
+    /**
+     * Find deviceInfos by devices Ids.
+     *
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByIdsAsync(List<UUID> deviceIds);
+
+    /**
+     * Find deviceInfos by tenantId and deviceInfos Ids.
+     *
+     * @param tenantId the tenantId
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceIds);
+
+    /**
+     * Find deviceInfos by tenantId, customerId and deviceInfos Ids.
+     *
+     * @param tenantId the tenantId
+     * @param customerId the customerId
+     * @param deviceIds the device Ids
+     * @return the list of device objects
+     */
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdCustomerIdAndIdsAsync(UUID tenantId, UUID customerId, List<UUID> deviceIds);
 
     /**
      * Find devices by tenantId, customerId and page link.

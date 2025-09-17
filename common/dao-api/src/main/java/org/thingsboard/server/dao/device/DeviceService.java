@@ -92,6 +92,16 @@ public interface DeviceService extends EntityDaoService {
 
     ListenableFuture<List<Device>> findDevicesByIdsAsync(List<DeviceId> deviceIds);
 
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds);
+
+    List<DeviceInfo> findDeviceInfosByIds(List<DeviceId> deviceIds);
+
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByIdsAsync(List<DeviceId> deviceIds);
+
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds);
+
+    ListenableFuture<List<DeviceInfo>> findDeviceInfosByQuery(TenantId tenantId, DeviceSearchQuery query);
+
     void deleteDevicesByTenantId(TenantId tenantId);
 
     PageData<Device> findDevicesByTenantIdAndCustomerId(TenantId tenantId, CustomerId customerId, PageLink pageLink);
