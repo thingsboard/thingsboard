@@ -113,16 +113,16 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     expressionColumn.sortable = false;
     expressionColumn.cellContentFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel.length < 45 ? expressionLabel : `<span style="display: inline-block; width: 45ch">${expressionLabel.substring(0, 44)}…</span>`;
+      return expressionLabel?.length < 45 ? expressionLabel : `<span style="display: inline-block; width: 45ch">${expressionLabel.substring(0, 44)}…</span>`;
     }
     expressionColumn.cellTooltipFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel.length < 45 ? null : expressionLabel
+      return expressionLabel?.length < 45 ? null : expressionLabel
     };
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '50px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '70px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(
@@ -159,7 +159,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     if (entity.type === CalculatedFieldType.SCRIPT) {
       return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
     } else {
-      return entity.configuration.expression;
+      return entity.configuration?.expression ?? '';
     }
   }
 
@@ -257,13 +257,23 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private updateImportedCalculatedField(calculatedField: CalculatedField): CalculatedField {
-    calculatedField.configuration.arguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
-      const arg = calculatedField.configuration.arguments[key];
-      acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
-        ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
-        : arg;
-      return acc;
-    }, {});
+    if (calculatedField.type === CalculatedFieldType.GEOFENCING) {
+      calculatedField.configuration.zoneGroups = Object.keys(calculatedField.configuration.zoneGroups).reduce((acc, key) => {
+        const arg = calculatedField.configuration.zoneGroups[key];
+        acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
+          ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
+          : arg;
+        return acc;
+      }, {});
+    } else {
+      calculatedField.configuration.arguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+        const arg = calculatedField.configuration.arguments[key];
+        acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
+          ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
+          : arg;
+        return acc;
+      }, {});
+    }
 
     return calculatedField;
   }
