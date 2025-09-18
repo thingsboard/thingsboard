@@ -84,7 +84,6 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
 
     private Map<EntityId, GeofencingZoneState> toZones(Map<EntityId, KvEntry> entityIdKvEntryMap) {
         return entityIdKvEntryMap.entrySet().stream()
-                .filter(entry -> entry.getValue().getJsonValue().isPresent())
                 .collect(Collectors.toMap(Map.Entry::getKey,
                         entry -> new GeofencingZoneState(entry.getKey(), entry.getValue())));
     }
