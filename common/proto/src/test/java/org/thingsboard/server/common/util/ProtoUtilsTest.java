@@ -21,6 +21,10 @@ import org.jeasy.random.EasyRandomParameters;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
@@ -40,6 +44,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
@@ -56,6 +61,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
+import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
@@ -277,6 +283,87 @@ class ProtoUtilsTest {
 
     private void assertEqualDeserializedEntity(Object expected, Object actual, String entityName) {
         assertThat(actual).as(String.format(description, entityName, entityName)).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"{\"key\":\"value\"}"})
+    void testRpcWithVariousAdditionalInfoToProtoAndBack(String additionalInfo) {
+        UUID requestId = UUID.fromString("93405c57-5787-46ff-806e-670bb60f49b6");
+        String methodName = "reboot";
+        String params = "";
+        String serviceId = "serviceId";
+        long expirationTime = System.currentTimeMillis();
+        int retries = 3;
+
+        ToDeviceRpcRequest request = new ToDeviceRpcRequest(
+                requestId,
+                tenantId,
+                deviceId,
+                false,
+                expirationTime,
+                new ToDeviceRpcRequestBody(methodName, params),
+                true,
+                retries,
+                additionalInfo
+        );
+        ToDeviceRpcRequestActorMsg msg = new ToDeviceRpcRequestActorMsg(serviceId, request);
+
+        // Serialize
+        TransportProtos.ToDeviceActorNotificationMsgProto toProto = ProtoUtils.toProto(msg);
+        assertThat(toProto).isNotNull();
+        assertThat(toProto.hasToDeviceRpcRequestMsg()).isTrue();
+
+        TransportProtos.ToDeviceRpcRequestActorMsgProto toDeviceRpcRequestActorMsgProto = toProto.getToDeviceRpcRequestMsg();
+        assertThat(toDeviceRpcRequestActorMsgProto.hasToDeviceRpcRequestMsg()).isTrue();
+
+        TransportProtos.ToDeviceRpcRequestMsg toDeviceRpcRequestMsg = toDeviceRpcRequestActorMsgProto.getToDeviceRpcRequestMsg();
+        assertThat(toDeviceRpcRequestMsg.getRequestIdMSB()).isEqualTo(requestId.getMostSignificantBits());
+        assertThat(toDeviceRpcRequestMsg.getRequestIdLSB()).isEqualTo(requestId.getLeastSignificantBits());
+        assertThat(toDeviceRpcRequestMsg.getMethodName()).isEqualTo(methodName);
+        assertThat(toDeviceRpcRequestMsg.getParams()).isEqualTo(params);
+        assertThat(toDeviceRpcRequestMsg.getExpirationTime()).isEqualTo(expirationTime);
+        assertThat(toDeviceRpcRequestMsg.getOneway()).isFalse();
+        assertThat(toDeviceRpcRequestMsg.getPersisted()).isTrue();
+        assertThat(toDeviceRpcRequestMsg.getRetries()).isEqualTo(retries);
+
+        if (additionalInfo != null) {
+            assertThat(toDeviceRpcRequestMsg.hasAdditionalInfo()).isTrue();
+            assertThat(toDeviceRpcRequestMsg.getAdditionalInfo()).isEqualTo(additionalInfo);
+        } else {
+            assertThat(toDeviceRpcRequestMsg.hasAdditionalInfo()).isFalse();
+        }
+
+        // Deserialize
+        ToDeviceActorNotificationMsg fromProto = ProtoUtils.fromProto(toProto);
+        assertThat(fromProto).isNotNull();
+        assertThat(fromProto).isInstanceOf(ToDeviceRpcRequestActorMsg.class);
+        ToDeviceRpcRequestActorMsg toDeviceRpcRequestActorMsg = (ToDeviceRpcRequestActorMsg) fromProto;
+
+        assertThat(toDeviceRpcRequestActorMsg.getDeviceId()).isEqualTo(deviceId);
+        assertThat(toDeviceRpcRequestActorMsg.getTenantId()).isEqualTo(tenantId);
+        assertThat(toDeviceRpcRequestActorMsg.getServiceId()).isEqualTo(serviceId);
+        assertThat(toDeviceRpcRequestActorMsg.getMsg()).isEqualTo(request);
+    }
+
+    @ParameterizedTest
+    @EnumSource(EntityType.class)
+    void testEntityIdProto_toProto_fromProto(EntityType entityType) {
+        UUID uuid = UUID.fromString("51a514d7-ea8f-496d-b567-f6e76f0f9b83");
+
+        EntityId original = EntityIdFactory.getByTypeAndUuid(entityType, uuid);
+        assertThat(original).isNotNull();
+
+        // toProto
+        TransportProtos.EntityIdProto proto = ProtoUtils.toProto(original);
+        assertThat(proto).isNotNull();
+        assertThat(proto.getType().getNumber()).isEqualTo(entityType.getProtoNumber());
+        assertThat(proto.getEntityIdMSB()).isEqualTo(uuid.getMostSignificantBits());
+        assertThat(proto.getEntityIdLSB()).isEqualTo(uuid.getLeastSignificantBits());
+
+        // fromProto
+        EntityId restored = ProtoUtils.fromProto(proto);
+        assertThat(restored).isNotNull().isEqualTo(original);
     }
 
 }

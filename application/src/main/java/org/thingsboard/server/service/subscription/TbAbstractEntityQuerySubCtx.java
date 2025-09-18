@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
+import org.thingsboard.server.common.data.query.EntityFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateType;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.KeyFilterPredicate;
@@ -94,9 +95,14 @@ public abstract class TbAbstractEntityQuerySubCtx<T extends EntityCountQuery> ex
     public void setAndResolveQuery(T query) {
         dynamicValues.clear();
         this.query = query;
-        if (query != null && query.getKeyFilters() != null) {
-            for (KeyFilter filter : query.getKeyFilters()) {
-                registerDynamicValues(filter.getPredicate());
+        if (query != null) {
+            if (query.getEntityFilter() != null) {
+                EntityFilter.resolveEntityFilter(query.getEntityFilter(), getTenantId(), getUserId(), getOwnerId());
+            }
+            if (query.getKeyFilters() != null) {
+                for (KeyFilter filter : query.getKeyFilters()) {
+                    registerDynamicValues(filter.getPredicate());
+                }
             }
         }
         resolve(getTenantId(), getCustomerId(), getUserId());

@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  ElementRef,
-  EventEmitter,
-  forwardRef,
-  Input,
-  OnInit,
-  Output,
-  ViewChild
-} from '@angular/core';
+import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { firstValueFrom, merge, Observable, of, Subject } from 'rxjs';
@@ -151,7 +142,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   entityChanged = new EventEmitter<BaseData<EntityId>>();
 
   @Output()
-  createNew = new EventEmitter<void>();
+  createNew = new EventEmitter<string>();
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
@@ -299,6 +290,12 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.noEntitiesMatchingText = 'notification.no-recipients-matching';
           this.entityRequiredText = 'notification.notification-recipient-required';
           this.notFoundEntities = 'notification.no-recipients-text';
+          break;
+        case EntityType.AI_MODEL:
+          this.entityText = 'ai-models.ai-model';
+          this.noEntitiesMatchingText = 'ai-models.no-model-matching';
+          this.entityRequiredText = 'ai-models.model-required';
+          this.notFoundEntities = 'ai-models.no-model-text';
           break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
@@ -454,9 +451,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     return entityType;
   }
 
-  createNewEntity($event: Event) {
+  createNewEntity($event: Event, searchText?: string) {
     $event.stopPropagation();
-    this.createNew.emit();
+    this.createNew.emit(searchText);
   }
 
   get showEntityLink(): boolean {

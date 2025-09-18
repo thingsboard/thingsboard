@@ -19,7 +19,7 @@
   <div class="tb-bar-chart-overlay" [style]="overlayStyle"></div>
   @if (widgetComponent.dashboardWidget.showWidgetTitlePanel) {
     <div class="tb-widget-title-row flex justify-between">
-      <ng-container *ngTemplateOutlet="widgetComponent.widgetTitlePanel"></ng-container>
+      <ng-container *ngTemplateOutlet="widgetTitlePanel || widgetComponent.widgetTitlePanel"></ng-container>
       <ng-container *ngTemplateOutlet="widgetComponent.widgetHeaderActionsPanel"></ng-container>
     </div>
   } @else {

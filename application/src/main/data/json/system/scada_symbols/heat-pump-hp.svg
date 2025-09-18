@@ -489,7 +489,7 @@
   <rect x="1" y="1" width="798" height="542" rx="31" stroke="#000" stroke-opacity=".87" stroke-width="2"/>
   <rect x="80" y="72.001" width="180" height="128" rx="8"/>
   <rect x="81" y="73.001" width="178" height="126" rx="7" stroke="#000" stroke-opacity=".87" stroke-width="2" tb:tag="value-box-background"/>
-  <text x="170.51953" y="139.75" dominant-baseline="middle" fill="#002878" font-family="Roboto" font-size="40px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan>27</tspan></text>
+  <text x="170.51953" y="139.75" dominant-baseline="middle" fill="#002878" font-family="Roboto, sans-serif" font-size="40px" font-weight="500" text-anchor="middle" tb:tag="value-text" xml:space="preserve"><tspan>27</tspan></text>
   <ellipse cx="542" cy="284" rx="180" ry="180" fill="#fff"/>
   <path d="m720.5 284c0 98.583-79.918 178.5-178.5 178.5s-178.5-79.918-178.5-178.5 79.918-178.5 178.5-178.5 178.5 79.918 178.5 178.5z" stroke="#000" stroke-opacity=".12" stroke-width="2.9985"/>
   <g clip-path="url(#clip1_3215_7169)">

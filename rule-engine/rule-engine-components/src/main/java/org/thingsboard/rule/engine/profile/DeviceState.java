@@ -258,7 +258,7 @@ class DeviceState {
 
     private boolean processAttributes(TbContext ctx, TbMsg msg, String scope) throws ExecutionException, InterruptedException {
         boolean stateChanged = false;
-        Set<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(JsonParser.parseString(msg.getData()));
         if (!attributes.isEmpty()) {
             SnapshotUpdate update = merge(latestValues, attributes, scope);
             for (DeviceProfileAlarm alarm : deviceProfile.getAlarmSettings()) {
@@ -321,7 +321,7 @@ class DeviceState {
         return new SnapshotUpdate(AlarmConditionKeyType.TIME_SERIES, keys);
     }
 
-    private SnapshotUpdate merge(DataSnapshot latestValues, Set<AttributeKvEntry> attributes, String scope) {
+    private SnapshotUpdate merge(DataSnapshot latestValues, List<AttributeKvEntry> attributes, String scope) {
         long newTs = 0;
         Set<AlarmConditionFilterKey> keys = new HashSet<>();
         for (AttributeKvEntry entry : attributes) {

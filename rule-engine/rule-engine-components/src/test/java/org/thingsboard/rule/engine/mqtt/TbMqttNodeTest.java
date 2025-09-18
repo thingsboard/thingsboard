@@ -212,40 +212,45 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         assertThatNoException().isThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))));
     }
 
-    @Test
-    public void givenClientIdIsTooLong_whenInit_thenThrowsException() {
-        String invalidClientId = "vhfrbeb38ygwfwrgfwefgterhytjytj";
-        mqttNodeConfig.setClientId(invalidClientId);
+    @ParameterizedTest
+    @MethodSource("provideInvalidClientIdScenarios")
+    public void givenInvalidClientId_whenInit_thenThrowsException(MqttVersion version, int maxLength, int repeat, String serviceId, boolean appendSuffix) {
+        String baseClientId = "x".repeat(repeat);
+        mqttNodeConfig.setClientId(baseClientId);
+        mqttNodeConfig.setAppendClientIdSuffix(appendSuffix);
+        mqttNodeConfig.setProtocolVersion(version);
 
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(ctxMock.getSelf()).willReturn(new RuleNode(RULE_NODE_ID));
 
+        String clientId = appendSuffix ? baseClientId + "_" + serviceId : baseClientId;
+        if (appendSuffix) {
+            given(ctxMock.getServiceId()).willReturn(serviceId);
+        }
+
+        String expectedMessage = "The length of Client ID cannot be longer than " + maxLength + ", but current length is " + clientId.length() + ".";
+
         assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("Client ID is too long '" + invalidClientId + "'. " +
-                        "The length of Client ID cannot be longer than 23, but current length is " + invalidClientId.length() + ".")
+                .hasMessage(expectedMessage)
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
                 .isEqualTo(true);
     }
 
-    @Test
-    public void givenClientIdIsOkAndAppendClientIdSuffixIsTrue_whenInit_thenClientIdBecomesInvalidAndThrowsException() {
-        String validClientId = "fertjnhnjj4ge";
-        mqttNodeConfig.setClientId("fertjnhnjj4ge");
-        mqttNodeConfig.setAppendClientIdSuffix(true);
+    private static Stream<Arguments> provideInvalidClientIdScenarios() {
+        return Stream.of(
+                // MQTT_5, too long clientId
+                Arguments.of(MqttVersion.MQTT_5, 256, 257, null, false),
 
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
-        given(ctxMock.getSelf()).willReturn(new RuleNode(RULE_NODE_ID));
-        String serviceId = "test-service";
-        given(ctxMock.getServiceId()).willReturn(serviceId);
+                // MQTT_5, base + suffix exceeds
+                Arguments.of(MqttVersion.MQTT_5, 256, 250, "test-service", true),
 
-        String resultedClientId = validClientId + "_" + serviceId;
-        assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Client ID is too long '" + resultedClientId + "'. " +
-                        "The length of Client ID cannot be longer than 23, but current length is " + resultedClientId.length() + ".")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+                // MQTT_3_1, too long clientId
+                Arguments.of(MqttVersion.MQTT_3_1, 23, 24, null, false),
+
+                // MQTT_3_1, base + suffix exceeds
+                Arguments.of(MqttVersion.MQTT_3_1, 23, 5, "verylongservicename", true)
+        );
     }
 
     @Test

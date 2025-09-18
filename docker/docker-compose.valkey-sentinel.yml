@@ -14,13 +14,11 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
   # Valkey sentinel
   # The latest version of Valkey compatible with ThingsBoard is 8.0
   valkey-primary:
-    image: 'bitnami/valkey:8.0'
+    image: 'bitnamilegacy/valkey:8.0'
     volumes:
       - ./tb-node/valkey-sentinel-data-primary:/bitnami/valkey/data
     environment:
@@ -28,7 +26,7 @@ services:
       - 'VALKEY_PASSWORD=thingsboard'
 
   valkey-replica:
-    image: 'bitnami/valkey:8.0'
+    image: 'bitnamilegacy/valkey:8.0'
     volumes:
       - ./tb-node/valkey-sentinel-data-replica:/bitnami/valkey/data
     environment:
@@ -40,7 +38,7 @@ services:
       - valkey-primary
 
   valkey-sentinel:
-    image: 'bitnami/valkey-sentinel:8.0'
+    image: 'bitnamilegacy/valkey-sentinel:8.0'
     volumes:
       - ./tb-node/valkey-sentinel-data-sentinel:/bitnami/valkey/data
     environment:

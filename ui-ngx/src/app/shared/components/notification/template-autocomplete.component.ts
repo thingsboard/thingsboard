@@ -212,13 +212,17 @@ export class TemplateAutocompleteComponent implements ControlValueAccessor, OnIn
   }
 
   createTemplate($event: Event, button: MatButton) {
-    if ($event) {
-      $event.stopPropagation();
-    }
+    $event?.stopPropagation();
     button._elementRef.nativeElement.blur();
+    this.createTemplateByName($event);
+  }
+  
+  createTemplateByName($event: Event, name?: string) {
+    $event?.stopPropagation();
     this.openNotificationTemplateDialog({
       isAdd: true,
-      predefinedType: this.notificationTypes
+      predefinedType: this.notificationTypes,
+      name
     });
   }
 

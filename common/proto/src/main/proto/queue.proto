@@ -64,6 +64,8 @@ enum EntityTypeProto {
   CALCULATED_FIELD      = 39;
   CALCULATED_FIELD_LINK = 40;
   JOB                   = 41;
+  ADMIN_SETTINGS        = 42;
+  AI_MODEL              = 43;
 }
 
 enum ApiUsageRecordKeyProto {
@@ -78,6 +80,12 @@ enum ApiUsageRecordKeyProto {
   CREATED_ALARMS_COUNT = 8;
   ACTIVE_DEVICES       = 9;
   INACTIVE_DEVICES     = 10;
+}
+
+message EntityIdProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto type = 4;
 }
 
 /**
@@ -696,6 +704,8 @@ message ToDeviceRpcRequestMsg {
   int64 requestIdLSB = 6;
   bool oneway = 7;
   bool persisted = 8;
+  optional int32 retries = 9;
+  optional string additionalInfo = 10;
 }
 
 message ToDeviceRpcResponseMsg {
@@ -892,11 +902,25 @@ message TsRollingArgumentProto {
   repeated TsDoubleValProto tsValue = 4;
 }
 
+message GeofencingZoneProto {
+  EntityIdProto zoneId = 1;
+  int64 ts = 2;
+  string perimeterDefinition = 3;
+  int64 version = 4;
+  optional bool inside = 5;
+}
+
+message GeofencingArgumentProto {
+  string argName = 1;
+  repeated GeofencingZoneProto zones = 2;
+}
+
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   string type = 2;
   repeated SingleValueArgumentProto singleValueArguments = 3;
   repeated TsRollingArgumentProto rollingValueArguments = 4;
+  repeated GeofencingArgumentProto geofencingArguments = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

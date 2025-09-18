@@ -32,19 +32,7 @@ docker run --rm -v tb-edge-postgres-data:/volume -v ~/.mytb-edge-data/db:/backup
 After completing the data migration to the newly created Docker volumes, you'll need to update the volume mounts in your Docker Compose configuration.
 Modify the `docker-compose.yml` file for ThingsBoard Edge to update the volume settings.
 
-First, please update docker compose file version. Find next snippet:
-```text
-version: '3.0'
-...
-```
-
-And replace it with:
-```text
-version: '3.8'
-...
-```
-
-Then update volume mounts. Locate the following snippet:
+Update volume mounts. Locate the following snippet:
 ```text
     volumes:
       - ~/.mytb-edge-data:/data
