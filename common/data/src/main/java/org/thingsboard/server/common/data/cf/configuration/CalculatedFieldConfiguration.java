@@ -21,12 +21,14 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -35,7 +37,8 @@ import java.util.Map;
 )
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT")
+        @JsonSubTypes.Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT"),
+        @JsonSubTypes.Type(value = GeofencingCalculatedFieldConfiguration.class, name = "GEOFENCING")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {
@@ -43,19 +46,28 @@ public interface CalculatedFieldConfiguration {
     @JsonIgnore
     CalculatedFieldType getType();
 
-    Map<String, Argument> getArguments();
-
-    String getExpression();
-
-    void setExpression(String expression);
-
     Output getOutput();
 
+    void validate();
+
     @JsonIgnore
-    List<EntityId> getReferencedEntities();
+    default List<EntityId> getReferencedEntities() {
+        return Collections.emptyList();
+    }
 
-    List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId);
+    default CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
+        CalculatedFieldLink link = new CalculatedFieldLink();
+        link.setTenantId(tenantId);
+        link.setEntityId(referencedEntityId);
+        link.setCalculatedFieldId(calculatedFieldId);
+        return link;
+    }
 
-    CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId);
+    default List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
+        return getReferencedEntities().stream()
+                .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
+                .map(referencedEntityId -> buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId))
+                .collect(Collectors.toList());
+    }
 
 }
