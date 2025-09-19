@@ -63,76 +63,116 @@
         </mat-form-field>
       </div>
       <ng-container [formGroup]="configFormGroup">
-        <div class="tb-form-panel">
-          <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
-          <tb-calculated-field-arguments-table
-            formControlName="arguments"
-            [entityId]="data.entityId"
-            [tenantId]="data.tenantId"
-            [entityName]="data.entityName"
-            [calculatedFieldType]="fieldFormGroup.get('type').value"
-          />
-        </div>
-        <div class="tb-form-panel no-gap">
-          <div class="tb-form-panel-title tb-required">
-            {{ (fieldFormGroup.get('type').value === CalculatedFieldType.SIMPLE ? 'calculated-fields.expression' : 'calculated-fields.type.script' ) | translate }}
+        @if (fieldFormGroup.get('type').value !== CalculatedFieldType.GEOFENCING) {
+          <div class="tb-form-panel">
+            <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
+            <tb-calculated-field-arguments-table formControlName="arguments"
+                                                 [entityId]="data.entityId"
+                                                 [tenantId]="data.tenantId"
+                                                 [entityName]="data.entityName"
+                                                 [calculatedFieldType]="fieldFormGroup.get('type').value"/>
           </div>
-          <mat-form-field class="mt-3" appearance="outline" subscriptSizing="dynamic" [class.hidden]="fieldFormGroup.get('type').value !== CalculatedFieldType.SIMPLE">
-            <input matInput formControlName="expressionSIMPLE" maxlength="255" [placeholder]="'(temperature - 32) / 1.8'" required>
-            <div  matSuffix
-                  class="pr-2"
-                  [tb-help-popup]="'math/math-methods_fn'"
-                  tb-help-popup-placement="left"
-                  [tb-help-popup-style]="{maxWidth: '970px'}">
+          <div class="tb-form-panel no-gap">
+            <div class="tb-form-panel-title tb-required">
+              {{ (fieldFormGroup.get('type').value === CalculatedFieldType.SIMPLE ? 'calculated-fields.expression' : 'calculated-fields.type.script' ) | translate }}
             </div>
-            @if (configFormGroup.get('expressionSIMPLE').errors && configFormGroup.get('expressionSIMPLE').touched) {
-              <mat-error>
-                @if (configFormGroup.get('expressionSIMPLE').hasError('required')) {
-                  {{ 'calculated-fields.hint.expression-required' | translate }}
-                } @else if (configFormGroup.get('expressionSIMPLE').hasError('pattern')) {
-                  {{ 'calculated-fields.hint.expression-invalid' | translate }}
-                } @else if (configFormGroup.get('expressionSIMPLE').hasError('maxLength')) {
-                  {{ 'calculated-fields.hint.expression-max-length' | translate }}
-                }
-              </mat-error>
-            } @else {
-              <mat-hint>{{ 'calculated-fields.hint.expression' | translate }}</mat-hint>
-            }
-          </mat-form-field>
-          <div [class.hidden]="fieldFormGroup.get('type').value !== CalculatedFieldType.SCRIPT">
-            <tb-js-func
-              required
-              formControlName="expressionSCRIPT"
-              functionName="calculate"
-              [functionArgs]="functionArgs$ | async"
-              [disableUndefinedCheck]="true"
-              [scriptLanguage]="ScriptLanguage.TBEL"
-              [highlightRules]="argumentsHighlightRules$ | async"
-              [editorCompleter]="argumentsEditorCompleter$ | async"
-              [helpPopupStyle]="{ width: '1200px' }"
-              helpId="calculated-field/expression_fn"
-            >
-              <div toolbarPrefixButton class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}</div>
-              <button toolbarSuffixButton
-                      mat-icon-button
-                      matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
-                      matTooltipPosition="above"
-                      class="tb-mat-32"
-                      [disabled]="configFormGroup.get('arguments').invalid"
-                      (click)="onTestScript()">
-                <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
-              </button>
-            </tb-js-func>
-            <div>
-              <button mat-button mat-raised-button color="primary"
-                      type="button"
-                      (click)="onTestScript()"
-                      [disabled]="configFormGroup.get('arguments').invalid">
-                {{ 'calculated-fields.test-script-function' | translate }}
-              </button>
+            <mat-form-field class="mt-3" appearance="outline" subscriptSizing="dynamic" [class.hidden]="fieldFormGroup.get('type').value !== CalculatedFieldType.SIMPLE">
+              <input matInput formControlName="expressionSIMPLE" maxlength="255" [placeholder]="'(temperature - 32) / 1.8'" required>
+              <div  matSuffix
+                    class="pr-2"
+                    [tb-help-popup]="'math/math-methods_fn'"
+                    tb-help-popup-placement="left"
+                    [tb-help-popup-style]="{maxWidth: '970px'}">
+              </div>
+              @if (configFormGroup.get('expressionSIMPLE').errors && configFormGroup.get('expressionSIMPLE').touched) {
+                <mat-error>
+                  @if (configFormGroup.get('expressionSIMPLE').hasError('required')) {
+                    {{ 'calculated-fields.hint.expression-required' | translate }}
+                  } @else if (configFormGroup.get('expressionSIMPLE').hasError('pattern')) {
+                    {{ 'calculated-fields.hint.expression-invalid' | translate }}
+                  } @else if (configFormGroup.get('expressionSIMPLE').hasError('maxLength')) {
+                    {{ 'calculated-fields.hint.expression-max-length' | translate }}
+                  }
+                </mat-error>
+              } @else {
+                <mat-hint>{{ 'calculated-fields.hint.expression' | translate }}</mat-hint>
+              }
+            </mat-form-field>
+            <div [class.hidden]="fieldFormGroup.get('type').value !== CalculatedFieldType.SCRIPT">
+              <tb-js-func required
+                          formControlName="expressionSCRIPT"
+                          functionName="calculate"
+                          [functionArgs]="functionArgs$ | async"
+                          [disableUndefinedCheck]="true"
+                          [scriptLanguage]="ScriptLanguage.TBEL"
+                          [highlightRules]="argumentsHighlightRules$ | async"
+                          [editorCompleter]="argumentsEditorCompleter$ | async"
+                          [helpPopupStyle]="{ width: '1200px' }"
+                          helpId="calculated-field/expression_fn">
+                <div toolbarPrefixButton class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}</div>
+                <button toolbarSuffixButton
+                        mat-icon-button
+                        matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                        matTooltipPosition="above"
+                        class="tb-mat-32"
+                        [disabled]="configFormGroup.get('arguments').invalid"
+                        (click)="onTestScript()">
+                  <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+                </button>
+              </tb-js-func>
+              <div>
+                <button mat-button mat-raised-button color="primary"
+                        type="button"
+                        (click)="onTestScript()"
+                        [disabled]="configFormGroup.get('arguments').invalid">
+                  {{ 'calculated-fields.test-script-function' | translate }}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
+        } @else {
+          <div class="tb-form-panel">
+            <div class="tb-form-panel-title tb-required" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.entity-coordinates' | translate }}">
+              {{ 'calculated-fields.entity-coordinates' | translate }}
+            </div>
+            <div class="flex items-start gap-3" [formGroup]="coordinatesFormGroup">
+              <tb-entity-key-autocomplete class="flex-1"
+                                          placeholder="{{ 'calculated-fields.latitude-time-series-key' | translate }}"
+                                          requiredText="{{ 'calculated-fields.latitude-time-series-key-required' | translate }}"
+                                          formControlName="latitudeKeyName"
+                                          [dataKeyType]="DataKeyType.timeseries"
+                                          [entityFilter]="currentEntityFilter"/>
+              <tb-entity-key-autocomplete class="flex-1"
+                                          placeholder="{{ 'calculated-fields.longitude-time-series-key' | translate }}"
+                                          requiredText="{{ 'calculated-fields.longitude-time-series-key-required' | translate }}"
+                                          formControlName="longitudeKeyName"
+                                          [dataKeyType]="DataKeyType.timeseries"
+                                          [entityFilter]="currentEntityFilter"/>
+            </div>
+          </div>
+
+          <div class="tb-form-panel">
+            <div class="tb-form-panel-title tb-required" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.geofencing-zone-groups' | translate }}">
+              {{ 'calculated-fields.geofencing-zone-groups' | translate }}
+            </div>
+            <tb-calculated-field-geofencing-zone-groups-table formControlName="zoneGroups"
+                                                              [entityId]="data.entityId"
+                                                              [tenantId]="data.tenantId"
+                                                              [entityName]="data.entityName"/>
+            <div class="tb-form-row space-between flex-1 columns-xs" [class.!hidden]="!isRelatedEntity">
+              <div tb-hint-tooltip-icon="{{'calculated-fields.hint.zone-group-refresh-interval' | translate}}">{{ 'calculated-fields.zone-group-refresh-interval' | translate }}</div>
+              <div class="flex flex-row items-center justify-start gap-2">
+                <tb-time-unit-input required
+                                    inlineField
+                                    requiredText="{{ 'calculated-fields.hint.zone-group-refresh-interval-required' | translate }}"
+                                    minErrorText="{{ 'calculated-fields.hint.zone-group-refresh-interval-min' | translate }}"
+                                    [minTime]="minAllowedScheduledUpdateIntervalInSecForCF"
+                                    formControlName="scheduledUpdateInterval">
+                </tb-time-unit-input>
+              </div>
+            </div>
+          </div>
+        }
         <div class="tb-form-panel" [formGroup]="outputFormGroup">
           <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
           <div class="flex items-center gap-3">

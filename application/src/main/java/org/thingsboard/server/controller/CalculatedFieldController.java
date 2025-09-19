@@ -289,7 +289,6 @@ public class CalculatedFieldController extends BaseController {
                 default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
-
     }
 
 }

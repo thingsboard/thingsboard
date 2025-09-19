@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -321,11 +322,13 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 .peek(calculatedField -> {
                     calculatedField.setTenantId(ctx.getTenantId());
                     calculatedField.setEntityId(savedEntity.getId());
-                    calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
-                        if (argument.getRefEntityId() != null) {
-                            argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), ctx.isFinalImportAttempt()));
-                        }
-                    });
+                    if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
+                        configuration.getArguments().values().forEach(argument -> {
+                            if (argument.getRefEntityId() != null) {
+                                argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), ctx.isFinalImportAttempt()));
+                            }
+                        });
+                    }
                 }).toList();
 
         for (CalculatedField existingField : existing) {
