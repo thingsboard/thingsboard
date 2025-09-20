@@ -31,6 +31,7 @@ import org.thingsboard.server.service.install.NoSqlKeyspaceService;
 import org.thingsboard.server.service.install.SystemDataLoaderService;
 import org.thingsboard.server.service.install.TsDatabaseSchemaService;
 import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
+import org.thingsboard.server.service.install.exception.SchemaUpToDate;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
@@ -99,7 +100,11 @@ public class ThingsboardInstallService {
                     latestMigrateService.migrate();
                 } else {
                     // TODO DON'T FORGET to update SUPPORTED_VERSIONS_FROM in DefaultDatabaseSchemaSettingsService
-                    databaseSchemaVersionService.validateSchemaSettings();
+                    try {
+                        databaseSchemaVersionService.validateSchemaSettings();
+                    }catch (SchemaUpToDate e){
+                        return;
+                    }
                     String fromVersion = databaseSchemaVersionService.getDbSchemaVersion();
                     String toVersion = databaseSchemaVersionService.getPackageSchemaVersion();
                     log.info("Upgrading ThingsBoard from version {} to {} ...", fromVersion, toVersion);
