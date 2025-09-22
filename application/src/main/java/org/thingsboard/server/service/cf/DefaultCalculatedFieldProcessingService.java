@@ -60,7 +60,7 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 @TbRuleEngineComponent
 @Service
 @Slf4j
-public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedFieldProcessingService {
+public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedFieldProcessingService implements CalculatedFieldProcessingService {
 
     private final TbClusterService clusterService;
     private final PartitionService partitionService;
@@ -79,6 +79,11 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     @Override
     protected String getExecutorNamePrefix() {
         return "calculated-field-callback";
+    }
+
+    @Override
+    public ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId) {
+        return super.fetchArguments(ctx, entityId);
     }
 
     @Override

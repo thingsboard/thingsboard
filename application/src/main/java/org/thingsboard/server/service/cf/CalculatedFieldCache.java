@@ -45,4 +45,6 @@ public interface CalculatedFieldCache {
 
     void evict(CalculatedFieldId calculatedFieldId);
 
+    EntityId getProfileId(TenantId tenantId, EntityId entityId);
+
 }

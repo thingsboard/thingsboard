@@ -211,7 +211,8 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
     }
 
-    private EntityId getProfileId(TenantId tenantId, EntityId entityId) {
+    @Override
+    public EntityId getProfileId(TenantId tenantId, EntityId entityId) {
         return switch (entityId.getEntityType()) {
             case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
             case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();

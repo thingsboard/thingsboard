@@ -60,7 +60,7 @@ import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transfor
 
 @Data
 @Slf4j
-public abstract class AbstractCalculatedFieldProcessingService implements CalculatedFieldProcessingService {
+public abstract class AbstractCalculatedFieldProcessingService {
 
     protected final AttributesService attributesService;
     protected final TimeseriesService timeseriesService;
@@ -84,8 +84,7 @@ public abstract class AbstractCalculatedFieldProcessingService implements Calcul
 
     protected abstract String getExecutorNamePrefix();
 
-    @Override
-    public ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId) {
+    protected ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = switch (ctx.getCalculatedField().getType()) {
             case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false);
             case SIMPLE, SCRIPT, ALARM -> {
