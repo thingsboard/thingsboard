@@ -19,11 +19,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -53,8 +52,7 @@ public class ComponentDescriptorController extends BaseController {
             notes = "Gets the Component Descriptor object using class name from the path parameters. " +
                     COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/component/{componentDescriptorClazz:.+}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/component/{componentDescriptorClazz:.+}")
     public ComponentDescriptor getComponentDescriptorByClazz(
             @Parameter(description = "Component Descriptor class name", required = true)
             @PathVariable("componentDescriptorClazz") String strComponentDescriptorClazz) throws ThingsboardException {
@@ -66,8 +64,7 @@ public class ComponentDescriptorController extends BaseController {
             notes = "Gets the Component Descriptors using rule node type and optional rule chain type request parameters. " +
                     COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/components/{componentType}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/components/{componentType}")
     public List<ComponentDescriptor> getComponentDescriptorsByType(
             @Parameter(description = "Type of the Rule Node", schema = @Schema(allowableValues = {"ENRICHMENT", "FILTER", "TRANSFORMATION", "ACTION", "EXTERNAL"}, requiredMode = Schema.RequiredMode.REQUIRED))
             @PathVariable("componentType") String strComponentType,
@@ -81,8 +78,7 @@ public class ComponentDescriptorController extends BaseController {
             notes = "Gets the Component Descriptors using coma separated list of rule node types and optional rule chain type request parameters. " +
                     COMPONENT_DESCRIPTOR_DEFINITION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
-    @RequestMapping(value = "/components", params = {"componentTypes"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/components", params = {"componentTypes"})
     public List<ComponentDescriptor> getComponentDescriptorsByTypes(
             @Parameter(description = "List of types of the Rule Nodes, (ENRICHMENT, FILTER, TRANSFORMATION, ACTION or EXTERNAL)", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("componentTypes") String[] strComponentTypes,

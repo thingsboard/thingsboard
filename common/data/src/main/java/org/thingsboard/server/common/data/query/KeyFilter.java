@@ -18,11 +18,15 @@ package org.thingsboard.server.common.data.query;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Schema
 @Data
 public class KeyFilter implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 8713090919646599284L;
 
     private EntityKey key;
     private EntityKeyValueType valueType;

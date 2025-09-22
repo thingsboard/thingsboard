@@ -18,8 +18,13 @@ package org.thingsboard.server.common.data.query;
 import jakarta.validation.Valid;
 import lombok.Data;
 
+import java.io.Serial;
+
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
+
+    @Serial
+    private static final long serialVersionUID = 7135920799116250009L;
 
     private StringOperation operation;
     @Valid
@@ -41,4 +46,5 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         IN,
         NOT_IN
     }
+
 }
