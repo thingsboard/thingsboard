@@ -24,7 +24,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Constants } from '@shared/models/constants';
 import { Router } from '@angular/router';
 import { OAuth2ClientLoginInfo } from '@shared/models/oauth2.models';
-import { UtilsService } from "@core/services/utils.service";
+import { validateEmail } from '@app/core/utils';
 
 @Component({
   selector: 'tb-login',
@@ -36,7 +36,7 @@ export class LoginComponent extends PageComponent implements OnInit {
   passwordViolation = false;
 
   loginFormGroup = this.fb.group({
-        username: ['', [Validators.required, this.utils.validateEmail]],
+        username: ['', [Validators.required, validateEmail]],
         password: ['']
   });
   oauth2Clients: Array<OAuth2ClientLoginInfo> = null;
@@ -44,7 +44,6 @@ export class LoginComponent extends PageComponent implements OnInit {
   constructor(protected store: Store<AppState>,
               private authService: AuthService,
               public fb: UntypedFormBuilder,
-              private utils: UtilsService,
               private router: Router) {
     super(store);
   }

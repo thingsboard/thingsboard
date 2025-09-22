@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnInit, Optional } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Optional } from '@angular/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -23,18 +23,17 @@ import { User } from '@shared/models/user.model';
 import { selectAuth } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, validateEmail } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { UtilsService } from "@core/services/utils.service";
 
 @Component({
   selector: 'tb-user',
   templateUrl: './user.component.html',
   styleUrls: ['./user.component.scss']
 })
-export class UserComponent extends EntityComponent<User> implements OnInit{
+export class UserComponent extends EntityComponent<User>{
 
   authority = Authority;
 
@@ -47,14 +46,9 @@ export class UserComponent extends EntityComponent<User> implements OnInit{
               @Optional() @Inject('entity') protected entityValue: User,
               @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<User>,
               public fb: UntypedFormBuilder,
-              private utils: UtilsService,
               protected cd: ChangeDetectorRef,
               protected translate: TranslateService) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
-  }
-
-  ngOnInit(): void {
-    this.entityForm.controls.email.addValidators(this.utils.validateEmail);
   }
 
   hideDelete() {
@@ -76,7 +70,7 @@ export class UserComponent extends EntityComponent<User> implements OnInit{
   buildForm(entity: User): UntypedFormGroup {
     return this.fb.group(
       {
-        email: [entity ? entity.email : '', [Validators.required]],
+        email: [entity ? entity.email : '', [Validators.required,validateEmail]],
         firstName: [entity ? entity.firstName : ''],
         lastName: [entity ? entity.lastName : ''],
         phone: [entity ? entity.phone : ''],

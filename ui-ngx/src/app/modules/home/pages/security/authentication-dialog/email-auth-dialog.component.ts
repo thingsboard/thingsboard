@@ -28,7 +28,7 @@ import {
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
 import { MatStepper } from '@angular/material/stepper';
-import { UtilsService } from "@core/services/utils.service";
+import { validateEmail } from '@app/core/utils';
 
 export interface EmailAuthDialogData {
   email: string;
@@ -52,14 +52,13 @@ export class EmailAuthDialogComponent extends DialogComponent<EmailAuthDialogCom
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private twoFaService: TwoFactorAuthenticationService,
-              private utils: UtilsService,
               @Inject(MAT_DIALOG_DATA) public data: EmailAuthDialogData,
               public dialogRef: MatDialogRef<EmailAuthDialogComponent>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
 
     this.emailConfigForm = this.fb.group({
-            email: [this.data.email, [Validators.required, this.utils.validateEmail]]
+          email: [this.data.email, [Validators.required, validateEmail]]
     });
 
     this.emailVerificationForm = this.fb.group({

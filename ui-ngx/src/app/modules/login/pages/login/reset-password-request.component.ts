@@ -22,7 +22,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { UntypedFormBuilder, Validators } from '@angular/forms';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
-import { UtilsService } from "@core/services/utils.service";
+import { validateEmail } from '@app/core/utils';
 
 @Component({
   selector: 'tb-reset-password-request',
@@ -34,13 +34,12 @@ export class ResetPasswordRequestComponent extends PageComponent implements OnIn
   clicked: boolean = false;
 
   requestPasswordRequest = this.fb.group({
-    email: ['', [Validators.required, this.utils.validateEmail]],
+    email: ['', [Validators.required, validateEmail]],
   }, {updateOn: 'submit'});
 
   constructor(protected store: Store<AppState>,
               private authService: AuthService,
               private translate: TranslateService,
-              private utils: UtilsService,
               public fb: UntypedFormBuilder) {
     super(store);
   }
