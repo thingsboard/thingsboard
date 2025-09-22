@@ -28,12 +28,11 @@ import { environment as env } from '@env/environment';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { ActivatedRoute } from '@angular/router';
-import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr, validateEmail } from '@core/utils';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { AuthService } from '@core/auth/auth.service';
 import { UnitSystem, UnitSystems } from '@shared/models/unit.models';
 import { UnitService } from '@core/services/unit.service';
-import { UtilsService } from "@core/services/utils.service";
 
 @Component({
   selector: 'tb-profile',
@@ -55,7 +54,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private authService: AuthService,
               private translate: TranslateService,
               private unitService: UnitService,
-              private utils: UtilsService,
               private fb: UntypedFormBuilder) {
     super(store);
     this.authUser = getCurrentAuthUser(this.store);
@@ -68,7 +66,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
 
   private buildProfileForm() {
     this.profile = this.fb.group({
-      email: ['', [Validators.required, this.utils.validateEmail]],
+      email: ['', [Validators.required, validateEmail]],
       firstName: [''],
       lastName: [''],
       phone: [''],

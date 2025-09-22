@@ -24,6 +24,7 @@ import { EntityComponent } from './entity.component';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { CountryData } from '@shared/models/country.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { validateEmail } from '@app/core/utils';
 
 @Directive()
 export abstract class ContactBasedComponent<T extends ContactBased<HasId>> extends EntityComponent<T> implements AfterViewInit {
@@ -50,7 +51,7 @@ export abstract class ContactBasedComponent<T extends ContactBased<HasId>> exten
     entityForm.addControl('address', this.fb.control(entity ? entity.address : '', []));
     entityForm.addControl('address2', this.fb.control(entity ? entity.address2 : '', []));
     entityForm.addControl('phone', this.fb.control(entity ? entity.phone : '', [Validators.maxLength(255)]));
-    entityForm.addControl('email', this.fb.control(entity ? entity.email : '', [Validators.email]));
+    entityForm.addControl('email', this.fb.control(entity ? entity.email : '', [validateEmail]));
     return entityForm;
   }
 

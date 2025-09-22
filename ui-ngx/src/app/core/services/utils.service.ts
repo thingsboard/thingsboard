@@ -477,14 +477,4 @@ export class UtilsService {
       el.parentNode.removeChild(el);
     }
   }
-
-  public validateEmail(control: AbstractControl): ValidationErrors | null {
-    const email = control.value;
-    const nativeEmailError = Validators.email(control);
-    if (nativeEmailError !== null) {
-      return nativeEmailError;
-    }
-    const passesDomainCheck = /\.[^.\s]{2,}$/.test(email);
-    return passesDomainCheck ? null : {email: true};
-  }
 }
