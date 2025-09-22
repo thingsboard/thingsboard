@@ -13,24 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.concurrent.TimeUnit;
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+@Data
+@EqualsAndHashCode(callSuper = true)
+public class DurationAlarmCondition extends AlarmCondition {
 
-    Map<String, Argument> getArguments();
+    private TimeUnit unit;
+    private AlarmConditionValue<Long> value;
 
-    default List<EntityId> getReferencedEntities() {
-        return getArguments().values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    @Override
+    public AlarmConditionType getType() {
+        return AlarmConditionType.DURATION;
     }
 
 }

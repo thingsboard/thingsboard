@@ -13,24 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
-import org.thingsboard.server.common.data.id.EntityId;
+public class AnyTimeSchedule implements AlarmSchedule {
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
-
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
-
-    Map<String, Argument> getArguments();
-
-    default List<EntityId> getReferencedEntities() {
-        return getArguments().values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    @Override
+    public AlarmScheduleType getType() {
+        return AlarmScheduleType.ANY_TIME;
     }
 
 }

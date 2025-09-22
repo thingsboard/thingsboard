@@ -13,28 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = RelationQueryDynamicSourceConfiguration.class, name = "RELATION_QUERY"),
-        @JsonSubTypes.Type(value = CurrentCustomerDynamicSourceConfiguration.class, name = "CURRENT_CUSTOMER")
-})
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface CfArgumentDynamicSourceConfiguration {
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonSubTypes({
+        @Type(name = "SIMPLE", value = SimpleAlarmConditionExpression.class),
+        @Type(name = "TBEL", value = TbelAlarmConditionExpression.class),
+})
+public interface AlarmConditionExpression {
 
     @JsonIgnore
-    CFArgumentDynamicSourceType getType();
-
-    default void validate() {}
+    AlarmConditionExpressionType getType();
 
 }

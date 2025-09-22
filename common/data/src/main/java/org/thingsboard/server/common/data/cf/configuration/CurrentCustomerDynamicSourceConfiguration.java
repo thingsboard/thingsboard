@@ -15,22 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+@Data
+public class CurrentCustomerDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+    private boolean inherit; // TODO: implement
 
-    Map<String, Argument> getArguments();
-
-    default List<EntityId> getReferencedEntities() {
-        return getArguments().values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    @Override
+    public CFArgumentDynamicSourceType getType() {
+        return CFArgumentDynamicSourceType.CURRENT_CUSTOMER;
     }
 
 }

@@ -16,15 +16,8 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Data
 public abstract class BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration {
@@ -32,14 +25,6 @@ public abstract class BaseCalculatedFieldConfiguration implements ExpressionBase
     protected Map<String, Argument> arguments;
     protected String expression;
     protected Output output;
-
-    @Override
-    public List<EntityId> getReferencedEntities() {
-        return arguments.values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
 
     @Override
     public void validate() {

@@ -13,24 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+import java.io.Serializable;
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+@Data
+public class CustomTimeScheduleItem implements Serializable {
 
-    Map<String, Argument> getArguments();
-
-    default List<EntityId> getReferencedEntities() {
-        return getArguments().values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
+    private boolean enabled;
+    private int dayOfWeek;
+    private long startsOn;
+    private long endsOn;
 
 }

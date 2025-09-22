@@ -13,24 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.alarm.rule;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.id.DashboardId;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+@Data
+public class AlarmRule {
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
-
-    Map<String, Argument> getArguments();
-
-    default List<EntityId> getReferencedEntities() {
-        return getArguments().values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
-    }
+    @Valid
+    @NotNull
+    private AlarmCondition condition;
+    private String alarmDetails;
+    private DashboardId dashboardId;
 
 }

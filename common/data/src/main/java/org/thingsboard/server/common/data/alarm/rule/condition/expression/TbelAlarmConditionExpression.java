@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
-import org.thingsboard.server.common.data.id.EntityId;
+import jakarta.validation.constraints.NotBlank;
+import lombok.Data;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
+@Data
+public class TbelAlarmConditionExpression implements AlarmConditionExpression {
 
-public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
+    @NotBlank
+    private String expression;
 
-    Map<String, Argument> getArguments();
-
-    default List<EntityId> getReferencedEntities() {
-        return getArguments().values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    @Override
+    public AlarmConditionExpressionType getType() {
+        return AlarmConditionExpressionType.TBEL;
     }
 
 }
