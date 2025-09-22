@@ -15,30 +15,27 @@
  */
 package org.thingsboard.server.actors.calculatedField;
 
+import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
-public class EntityInitCalculatedFieldMsg implements ToCalculatedFieldSystemMsg {
+@Builder
+public class CalculatedFieldAlarmActionMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
-    private final CalculatedFieldCtx ctx;
-    private final StateAction stateAction;
+    private final Alarm alarm;
+    private final ActionType action;
     private final TbCallback callback;
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_ENTITY_INIT_CF_MSG;
+        return MsgType.CF_ALARM_ACTION_MSG;
     }
 
-    public enum StateAction {
-        INIT,
-        REINIT,
-        RECREATE,
-        REPROCESS
-    }
 }

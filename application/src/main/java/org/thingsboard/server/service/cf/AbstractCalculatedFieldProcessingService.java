@@ -44,7 +44,6 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
 import java.util.HashMap;
 import java.util.List;
@@ -57,12 +56,11 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
-import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
 
 @Data
 @Slf4j
-public abstract class AbstractCalculatedFieldProcessingService {
+public abstract class AbstractCalculatedFieldProcessingService implements CalculatedFieldProcessingService {
 
     protected final AttributesService attributesService;
     protected final TimeseriesService timeseriesService;
@@ -86,10 +84,11 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
     protected abstract String getExecutorNamePrefix();
 
-    public ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
+    @Override
+    public ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = switch (ctx.getCalculatedField().getType()) {
             case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false);
-            case SIMPLE, SCRIPT -> {
+            case SIMPLE, SCRIPT, ALARM -> {
                 Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
                 for (var entry : ctx.getArguments().entrySet()) {
                     var argEntityId = resolveEntityId(entityId, entry.getValue());
@@ -99,11 +98,9 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 yield futures;
             }
         };
-        return Futures.whenAllComplete(argFutures.values()).call(() -> {
-            var result = createStateByType(ctx);
-            result.updateState(ctx, resolveArgumentFutures(argFutures));
-            return result;
-        }, MoreExecutors.directExecutor());
+        return Futures.whenAllComplete(argFutures.values())
+                .call(() -> resolveArgumentFutures(argFutures),
+                        MoreExecutors.directExecutor());
     }
 
     protected EntityId resolveEntityId(EntityId entityId, Argument argument) {
@@ -174,6 +171,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 yield Futures.transform(relationService.findByQuery(tenantId, configuration.toEntityRelationsQuery(entityId)),
                         configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
             }
+            case CURRENT_CUSTOMER -> throw new UnsupportedOperationException(); // fixme implement
         };
     }
 

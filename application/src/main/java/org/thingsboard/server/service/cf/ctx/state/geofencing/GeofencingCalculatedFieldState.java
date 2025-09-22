@@ -19,8 +19,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupC
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
@@ -39,7 +41,6 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,20 +50,16 @@ import static org.thingsboard.server.common.data.cf.configuration.geofencing.Ent
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.INSIDE;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus.OUTSIDE;
 
-@Data
+@Getter
+@Setter
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
-    private boolean dirty;
+    private boolean dirty = false;
 
-    public GeofencingCalculatedFieldState() {
-        super(new ArrayList<>(), new HashMap<>(), false, -1);
-        this.dirty = false;
-    }
-
-    public GeofencingCalculatedFieldState(List<String> argNames) {
-        super(argNames);
+    public GeofencingCalculatedFieldState(EntityId entityId) {
+        super(entityId);
     }
 
     @Override
@@ -71,11 +68,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
-
+    public boolean update(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
         boolean stateUpdated = false;
 
         for (var entry : argumentValues.entrySet()) {
@@ -117,7 +110,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
         double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);
@@ -157,11 +150,21 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
             updateResultNode(argumentKey, zoneResults, zoneGroupCfg.getReportStrategy(), resultNode);
         });
 
-        var result = new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode);
+        var result = TelemetryCalculatedFieldResult.builder()
+                .type(ctx.getOutput().getType())
+                .scope(ctx.getOutput().getScope())
+                .result(resultNode)
+                .build();
         if (relationFutures.isEmpty()) {
             return Futures.immediateFuture(result);
         }
         return Futures.whenAllComplete(relationFutures).call(() -> result, MoreExecutors.directExecutor());
+    }
+
+    @Override
+    public void reset(CalculatedFieldCtx ctx) {
+        super.reset(ctx);
+        dirty = false;
     }
 
     private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {

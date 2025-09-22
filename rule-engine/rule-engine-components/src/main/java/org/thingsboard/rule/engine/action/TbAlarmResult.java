@@ -17,11 +17,13 @@ package org.thingsboard.rule.engine.action;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 
 @Data
 @AllArgsConstructor
+@NoArgsConstructor
 public class TbAlarmResult {
     boolean isCreated;
     boolean isUpdated;

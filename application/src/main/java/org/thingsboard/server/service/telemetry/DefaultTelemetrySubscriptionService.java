@@ -169,6 +169,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
         addMainCallback(resultFuture, result -> {
             if (strategy.processCalculatedFields()) {
+                // TODO: divide CFs and alarm rules processing
                 calculatedFieldQueueService.pushRequestToQueue(request, result, request.getCallback());
             } else {
                 request.getCallback().onSuccess(null);

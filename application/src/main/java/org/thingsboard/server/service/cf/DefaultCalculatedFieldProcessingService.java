@@ -25,13 +25,10 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -51,7 +48,6 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -59,13 +55,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
 @Service
 @Slf4j
-public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedFieldProcessingService implements CalculatedFieldProcessingService {
+public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedFieldProcessingService {
 
     private final TbClusterService clusterService;
     private final PartitionService partitionService;
@@ -84,11 +79,6 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     @Override
     protected String getExecutorNamePrefix() {
         return "calculated-field-callback";
-    }
-
-    @Override
-    public ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        return super.fetchStateFromDb(ctx, entityId);
     }
 
     @Override
@@ -115,12 +105,9 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         try {
-            OutputType type = calculatedFieldResult.getType();
-            TbMsgType msgType = OutputType.ATTRIBUTES.equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
-            TbMsgMetaData md = OutputType.ATTRIBUTES.equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
-            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(calculatedFieldResult.toStringOrElseNull()).build();
+            TbMsg msg = result.toTbMsg(entityId, cfIds);
             clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
@@ -134,7 +121,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                 }
             });
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, calculatedFieldResult, e);
+            log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, result, e);
             callback.onFailure(e);
         }
     }
@@ -208,6 +195,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         public void onFailure(Throwable t) {
             callback.onFailure(t);
         }
+
     }
 
 }

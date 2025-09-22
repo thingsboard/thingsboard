@@ -19,21 +19,24 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
-import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
-import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.profile.TbAssetProfileCache;
+import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.Collections;
 import java.util.List;
@@ -42,6 +45,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Predicate;
 
 @Service
 @Slf4j
@@ -51,9 +55,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final ConcurrentReferenceHashMap<CalculatedFieldId, Lock> calculatedFieldFetchLocks = new ConcurrentReferenceHashMap<>();
 
     private final CalculatedFieldService calculatedFieldService;
-    private final TbelInvokeService tbelInvokeService;
-    private final ApiLimitService apiLimitService;
-    private final RelationService relationService;
+    private final TbAssetProfileCache assetProfileCache;
+    private final TbDeviceProfileCache deviceProfileCache;
+    @Lazy
+    private final ActorSystemContext systemContext;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
@@ -113,7 +118,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                 if (ctx == null) {
                     CalculatedField calculatedField = getCalculatedField(calculatedFieldId);
                     if (calculatedField != null) {
-                        ctx = new CalculatedFieldCtx(calculatedField, tbelInvokeService, apiLimitService, relationService);
+                        ctx = new CalculatedFieldCtx(calculatedField, systemContext);
                         calculatedFieldsCtx.put(calculatedFieldId, ctx);
                         log.debug("[{}] Put calculated field ctx into cache: {}", calculatedFieldId, ctx);
                     }
@@ -134,6 +139,27 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         return getCalculatedFieldsByEntityId(entityId).stream()
                 .map(cf -> getCalculatedFieldCtx(cf.getId()))
                 .toList();
+    }
+
+    @Override
+    public boolean hasCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter) {
+        List<CalculatedFieldCtx> entityCfs = getCalculatedFieldCtxsByEntityId(entityId);
+        for (CalculatedFieldCtx ctx : entityCfs) {
+            if (filter.test(ctx)) {
+                return true;
+            }
+        }
+
+        EntityId profileId = getProfileId(tenantId, entityId);
+        if (profileId != null) {
+            List<CalculatedFieldCtx> profileCfs = getCalculatedFieldCtxsByEntityId(profileId);
+            for (CalculatedFieldCtx ctx : profileCfs) {
+                if (filter.test(ctx)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
@@ -183,6 +209,14 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);
         entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.getCalculatedFieldId().equals(calculatedFieldId)));
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
+    }
+
+    private EntityId getProfileId(TenantId tenantId, EntityId entityId) {
+        return switch (entityId.getEntityType()) {
+            case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
+            case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
+            default -> null;
+        };
     }
 
     private Lock getFetchLock(CalculatedFieldId id) {

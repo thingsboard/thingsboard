@@ -15,41 +15,36 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Data
-@AllArgsConstructor
+@Getter
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
+    protected final EntityId entityId;
     protected List<String> requiredArguments;
-    protected Map<String, ArgumentEntry> arguments;
-    protected boolean sizeExceedsLimit;
 
+    protected Map<String, ArgumentEntry> arguments = new HashMap<>();
+    protected boolean sizeExceedsLimit;
     protected long latestTimestamp = -1;
 
-    public BaseCalculatedFieldState(List<String> requiredArguments) {
-        this.requiredArguments = requiredArguments;
-        this.arguments = new HashMap<>();
-    }
-
-    public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+    public BaseCalculatedFieldState(EntityId entityId) {
+        this.entityId = entityId;
     }
 
     @Override
-    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
+    public void init(CalculatedFieldCtx ctx) {
+        this.requiredArguments = ctx.getArgNames();
+    }
 
+    @Override
+    public boolean update(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
         boolean stateUpdated = false;
 
         for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
@@ -80,9 +75,17 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
+    public void reset(CalculatedFieldCtx ctx) { // must reset everything dependent on arguments
+        requiredArguments = null;
+        arguments.clear();
+        sizeExceedsLimit = false;
+        latestTimestamp = -1;
+    }
+
+    @Override
     public boolean isReady() {
         return arguments.keySet().containsAll(requiredArguments) &&
-                arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
     }
 
     @Override

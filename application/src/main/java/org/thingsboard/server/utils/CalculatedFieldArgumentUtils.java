@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -28,10 +29,11 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 
 import java.util.Optional;
 
@@ -64,11 +66,12 @@ public class CalculatedFieldArgumentUtils {
         return new StringDataEntry(key, defaultValue);
     }
 
-    public static CalculatedFieldState createStateByType(CalculatedFieldCtx ctx) {
+    public static CalculatedFieldState createStateByType(CalculatedFieldCtx ctx, EntityId entityId) {
         return switch (ctx.getCfType()) {
-            case SIMPLE -> new SimpleCalculatedFieldState(ctx.getArgNames());
-            case SCRIPT -> new ScriptCalculatedFieldState(ctx.getArgNames());
-            case GEOFENCING -> new GeofencingCalculatedFieldState(ctx.getArgNames());
+            case SIMPLE -> new SimpleCalculatedFieldState(entityId);
+            case SCRIPT -> new ScriptCalculatedFieldState(entityId);
+            case GEOFENCING -> new GeofencingCalculatedFieldState(entityId);
+            case ALARM -> new AlarmCalculatedFieldState(entityId);
         };
     }
 

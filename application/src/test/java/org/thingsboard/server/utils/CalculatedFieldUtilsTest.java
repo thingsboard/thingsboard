@@ -36,7 +36,6 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculat
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -85,14 +84,14 @@ class CalculatedFieldUtilsTest {
         geofencingArgumentEntry.setZoneStates(zoneStates);
 
         // Create cf state with the geofencing argument and add it to the state map
-        CalculatedFieldState state = new GeofencingCalculatedFieldState(List.of("geofencingArgumentTest"));
-        state.updateState(mock(CalculatedFieldCtx.class), Map.of("geofencingArgumentTest", geofencingArgumentEntry));
+        CalculatedFieldState state = new GeofencingCalculatedFieldState(DEVICE_ID);
+        state.update(mock(CalculatedFieldCtx.class), Map.of("geofencingArgumentTest", geofencingArgumentEntry));
 
         // when
         CalculatedFieldStateProto proto = toProto(stateId, state);
 
         // then
-        CalculatedFieldState fromProto = CalculatedFieldUtils.fromProto(proto);
+        CalculatedFieldState fromProto = CalculatedFieldUtils.fromProto(stateId, proto);
         assertThat(fromProto)
                 .usingRecursiveComparison()
                 .ignoringFields("requiredArguments")

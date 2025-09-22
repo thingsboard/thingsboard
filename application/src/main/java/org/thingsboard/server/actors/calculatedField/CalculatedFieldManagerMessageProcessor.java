@@ -16,15 +16,18 @@
 package org.thingsboard.server.actors.calculatedField;
 
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
+import org.thingsboard.server.actors.calculatedField.EntityInitCalculatedFieldMsg.StateAction;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
@@ -127,11 +130,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     public void onStateRestoreMsg(CalculatedFieldStateRestoreMsg msg) {
         var cfId = msg.getId().cfId();
-        var calculatedField = calculatedFields.get(cfId);
+        var ctx = calculatedFields.get(cfId);
 
-        if (calculatedField != null) {
+        if (ctx != null) {
             if (msg.getState() != null) {
-                msg.getState().setRequiredArguments(calculatedField.getArgNames());
+                msg.getState().init(ctx);
             }
             log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
@@ -198,6 +201,22 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
+    public void onEntityActionEventMsg(CalculatedFieldEntityActionEventMsg msg) {
+        switch (msg.getAction()) {
+            case ALARM_ACK, ALARM_CLEAR, ALARM_DELETE -> {
+                Alarm alarm = JacksonUtil.treeToValue(msg.getEntity(), Alarm.class);
+                CalculatedFieldAlarmActionMsg alarmActionMsg = CalculatedFieldAlarmActionMsg.builder()
+                        .tenantId(tenantId)
+                        .alarm(alarm)
+                        .action(msg.getAction())
+                        .callback(msg.getCallback())
+                        .build();
+                getOrCreateActor(alarm.getOriginator()).tellWithHighPriority(alarmActionMsg);
+            }
+            default -> msg.getCallback().onSuccess();
+        }
+    }
+
     private void onProfileDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         entityProfileCache.removeProfileId(msg.getEntityId());
         callback.onSuccess();
@@ -217,8 +236,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var fieldsCount = entityIdFields.size() + profileIdFields.size();
         if (fieldsCount > 0) {
             MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callback);
-            entityIdFields.forEach(ctx -> initCfForEntity(entityId, ctx, true, multiCallback));
-            profileIdFields.forEach(ctx -> initCfForEntity(entityId, ctx, true, multiCallback));
+            entityIdFields.forEach(ctx -> initCfForEntity(entityId, ctx, StateAction.INIT, multiCallback));
+            profileIdFields.forEach(ctx -> initCfForEntity(entityId, ctx, StateAction.INIT, multiCallback));
         } else {
             callback.onSuccess();
         }
@@ -237,7 +256,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callback);
                 var entityId = msg.getEntityId();
                 oldProfileCfs.forEach(ctx -> deleteCfForEntity(entityId, ctx.getCfId(), multiCallback));
-                newProfileCfs.forEach(ctx -> initCfForEntity(entityId, ctx, true, multiCallback));
+                newProfileCfs.forEach(ctx -> initCfForEntity(entityId, ctx, StateAction.INIT, multiCallback));
             } else {
                 callback.onSuccess();
             }
@@ -275,13 +294,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
                 addLinks(cf);
                 scheduleDynamicArgumentsRefreshTaskForCfIfNeeded(cfCtx);
-                applyToTargetCfEntityActors(cfCtx, callback, (id, cb) -> initCfForEntity(id, cfCtx, false, cb));
+                applyToTargetCfEntityActors(cfCtx, callback, (id, cb) -> initCfForEntity(id, cfCtx, StateAction.INIT, cb));
             }
         }
     }
 
     private CalculatedFieldCtx getCfCtx(CalculatedField cf) {
-        return new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService(), systemContext.getRelationService());
+        return new CalculatedFieldCtx(cf, systemContext);
     }
 
     private void onCfUpdated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
@@ -295,7 +314,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
-                var newCfCtx = getCfCtx(newCf);
+                var newCfCtx = getCfCtx(newCf); // fixme wtf? why isn't oldCfCtx closed properly? when to close it?
                 try {
                     newCfCtx.init();
                 } catch (Exception e) {
@@ -328,21 +347,28 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 deleteLinks(oldCfCtx);
                 addLinks(newCf);
 
-                // We use copy on write lists to safely pass the reference to another actor for the iteration.
-                // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-                var stateChanges = newCfCtx.hasStateChanges(oldCfCtx);
-                if (stateChanges || newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
-                    applyToTargetCfEntityActors(newCfCtx, callback, (id, cb) -> initCfForEntity(id, newCfCtx, stateChanges, cb));
+                StateAction stateAction;
+                if (newCfCtx.getCfType() != oldCfCtx.getCfType()) {
+                    stateAction = StateAction.RECREATE;
+                } else if (newCfCtx.hasStateChanges(oldCfCtx)) {
+                    stateAction = StateAction.REINIT;
+                } else if (newCfCtx.hasContextOnlyChanges(oldCfCtx)) {
+                    stateAction = StateAction.REPROCESS;
                 } else {
                     callback.onSuccess();
+                    return;
                 }
+
+                // We use copy on write lists to safely pass the reference to another actor for the iteration.
+                // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
+                applyToTargetCfEntityActors(newCfCtx, callback, (id, cb) -> initCfForEntity(id, newCfCtx, stateAction, cb));
             }
         }
     }
 
     private void onCfDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
-        var cfCtx = calculatedFields.remove(cfId);
+        var cfCtx = calculatedFields.remove(cfId); // fixme wtf? why isn't ctx closed properly?
         if (cfCtx == null) {
             log.debug("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
@@ -489,9 +515,9 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         getOrCreateActor(entityId).tell(new CalculatedFieldEntityDeleteMsg(tenantId, cfId, callback));
     }
 
-    private void initCfForEntity(EntityId entityId, CalculatedFieldCtx cfCtx, boolean forceStateReinit, TbCallback callback) {
+    private void initCfForEntity(EntityId entityId, CalculatedFieldCtx cfCtx, StateAction stateAction, TbCallback callback) {
         log.debug("Pushing entity init CF msg to specific actor [{}]", entityId);
-        getOrCreateActor(entityId).tell(new EntityInitCalculatedFieldMsg(tenantId, cfCtx, callback, forceStateReinit));
+        getOrCreateActor(entityId).tell(new EntityInitCalculatedFieldMsg(tenantId, cfCtx, stateAction, callback));
     }
 
     private boolean isMyPartition(EntityId entityId, TbCallback callback) {
@@ -555,7 +581,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void initCalculatedField(CalculatedField cf) throws CalculatedFieldException {
-        var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService(), systemContext.getRelationService());
+        var cfCtx = new CalculatedFieldCtx(cf, systemContext);
         try {
             cfCtx.init();
         } catch (Exception e) {

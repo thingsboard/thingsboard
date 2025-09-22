@@ -73,6 +73,9 @@ public class CalculatedFieldManagerActor extends AbstractCalculatedFieldActor {
             case CF_ENTITY_LIFECYCLE_MSG:
                 processor.onEntityLifecycleMsg((CalculatedFieldEntityLifecycleMsg) msg);
                 break;
+            case CF_ENTITY_ACTION_EVENT_MSG:
+                processor.onEntityActionEventMsg((CalculatedFieldEntityActionEventMsg) msg);
+                break;
             case CF_TELEMETRY_MSG:
                 processor.onTelemetryMsg((CalculatedFieldTelemetryMsg) msg);
                 break;

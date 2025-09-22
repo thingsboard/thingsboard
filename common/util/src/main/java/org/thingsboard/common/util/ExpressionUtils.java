@@ -15,13 +15,16 @@
  */
 package org.thingsboard.common.util;
 
+import net.objecthunter.exp4j.Expression;
+import net.objecthunter.exp4j.ExpressionBuilder;
 import net.objecthunter.exp4j.function.Function;
 import net.objecthunter.exp4j.function.Functions;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
-public class ExpressionFunctionsUtil {
+public class ExpressionUtils {
 
     public static final List<Function> userDefinedFunctions = new ArrayList<>();
 
@@ -73,6 +76,15 @@ public class ExpressionFunctionsUtil {
         userDefinedFunctions.add(Functions.getBuiltinFunction("exp"));
         userDefinedFunctions.add(Functions.getBuiltinFunction("expm1"));
         userDefinedFunctions.add(Functions.getBuiltinFunction("signum"));
+    }
+
+    public static Expression createExpression(String expression, Set<String> variables) {
+        return new ExpressionBuilder(expression)
+                .functions(userDefinedFunctions)
+                .implicitMultiplication(true)
+                .operator()
+                .variables(variables)
+                .build();
     }
 
 }

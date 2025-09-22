@@ -15,14 +15,22 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 import org.mvel2.MVEL;
+import org.thingsboard.common.util.ExpressionUtils;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfCtx;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
@@ -36,20 +44,22 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static org.thingsboard.common.util.ExpressionFunctionsUtil.userDefinedFunctions;
+import java.util.Objects;
+import java.util.stream.Stream;
 
 @Data
 public class CalculatedFieldCtx {
@@ -67,10 +77,13 @@ public class CalculatedFieldCtx {
     private Output output;
     private String expression;
     private boolean useLatestTs;
+
     private TbelInvokeService tbelInvokeService;
     private RelationService relationService;
-    private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
-    private ThreadLocal<Expression> customExpression;
+    private AlarmSubscriptionService alarmService;
+
+    private Map<String, CalculatedFieldScriptEngine> tbelExpressions;
+    private Map<String, ThreadLocal<Expression>> simpleExpressions;
 
     private boolean initialized;
 
@@ -81,7 +94,8 @@ public class CalculatedFieldCtx {
     private List<String> mainEntityGeofencingArgumentNames;
     private List<String> linkedEntityGeofencingArgumentNames;
 
-    public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService, RelationService relationService) {
+    public CalculatedFieldCtx(CalculatedField calculatedField,
+                              ActorSystemContext systemContext) {
         this.calculatedField = calculatedField;
 
         this.cfId = calculatedField.getId();
@@ -126,19 +140,20 @@ public class CalculatedFieldCtx {
                 });
             }
         }
-        this.tbelInvokeService = tbelInvokeService;
-        this.relationService = relationService;
+        this.tbelInvokeService = systemContext.getTbelInvokeService();
+        this.relationService = systemContext.getRelationService();
+        this.alarmService = systemContext.getAlarmService();
 
-        this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
-        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
-        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+        this.maxDataPointsPerRollingArg = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg); // fixme why tenant profile update is not handled??
+        this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
 
     public void init() {
         switch (cfType) {
             case SCRIPT -> {
                 try {
-                    this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+                    initTbelExpression(expression);
                     initialized = true;
                 } catch (Exception e) {
                     throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
@@ -146,28 +161,89 @@ public class CalculatedFieldCtx {
             }
             case GEOFENCING -> initialized = true;
             case SIMPLE -> {
-                if (isValidExpression(expression)) {
-                    this.customExpression = ThreadLocal.withInitial(() ->
-                            new ExpressionBuilder(expression)
-                                    .functions(userDefinedFunctions)
-                                    .implicitMultiplication(true)
-                                    .variables(this.arguments.keySet())
-                                    .build()
-                    );
-                    initialized = true;
-                } else {
-                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+                initSimpleExpression(expression);
+                initialized = true;
+            }
+            case ALARM -> {
+                AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+                Stream<AlarmRule> rules = configuration.getCreateRules().values().stream();
+                if (configuration.getClearRule() != null) {
+                    rules = Stream.concat(rules, Stream.of(configuration.getClearRule()));
                 }
+                rules.map(rule -> rule.getCondition().getExpression()).forEach(expression -> {
+                    if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
+                        initTbelExpression(tbelExpression.getExpression());
+                    }
+                });
+                initialized = true;
             }
         }
     }
 
-    public void stop() {
-        if (calculatedFieldScriptEngine != null) {
-            calculatedFieldScriptEngine.destroy();
+    public double evaluateSimpleExpression(String expressionStr, CalculatedFieldState state) {
+        Expression expression = simpleExpressions.get(expressionStr).get();
+        for (Map.Entry<String, ArgumentEntry> entry : state.getArguments().entrySet()) {
+            try {
+                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
+                double value = switch (kvEntry.getDataType()) {
+                    case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
+                    case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
+                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
+                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
+                };
+                expression.setVariable(entry.getKey(), value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
+            }
         }
-        if (customExpression != null) {
-            customExpression.remove();
+        return expression.evaluate();
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(String expression, CalculatedFieldState state) {
+        Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
+        List<Object> args = new ArrayList<>(argNames.size() + 1);
+        args.add(new Object()); // first element is a ctx, but we will set it later;
+        for (String argName : argNames) {
+            var arg = toTbelArgument(argName, state);
+            arguments.put(argName, arg);
+            if (arg instanceof TbelCfSingleValueArg svArg) {
+                args.add(svArg.getValue());
+            } else {
+                args.add(arg);
+            }
+        }
+        args.set(0, new TbelCfCtx(arguments, state.getLatestTimestamp()));
+
+        return tbelExpressions.get(expression).executeScriptAsync(args.toArray());
+    }
+
+    private TbelCfArg toTbelArgument(String key, CalculatedFieldState state) {
+        return state.getArguments().get(key).toTbelCfArg();
+    }
+
+    private void initTbelExpression(String expression) {
+        if (tbelExpressions == null) {
+            tbelExpressions = new HashMap<>();
+        } else if (tbelExpressions.containsKey(expression)) {
+            return;
+        }
+        CalculatedFieldScriptEngine engine = initEngine(tenantId, expression, tbelInvokeService);
+        tbelExpressions.put(expression, engine);
+    }
+
+    private void initSimpleExpression(String expression) {
+        if (simpleExpressions == null) {
+            simpleExpressions = new HashMap<>();
+        } else if (simpleExpressions.containsKey(expression)) {
+            return;
+        }
+        if (isValidExpression(expression)) {
+            ThreadLocal<Expression> compiledExpression = ThreadLocal.withInitial(() ->
+                    ExpressionUtils.createExpression(expression, this.arguments.keySet())
+            );
+            simpleExpressions.put(expression, compiledExpression);
+        } else {
+            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
         }
     }
 
@@ -326,26 +402,53 @@ public class CalculatedFieldCtx {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
-    public boolean hasOtherSignificantChanges(CalculatedFieldCtx other) {
-        boolean expressionChanged = calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !expression.equals(other.expression);
-        boolean outputChanged = !output.equals(other.output);
-        return expressionChanged || outputChanged;
+    public boolean hasContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state reinit and will be picked up by the state on the fly
+        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !expression.equals(other.expression)) {
+            return true;
+        }
+        if (!output.equals(other.output)) {
+            return true;
+        }
+        if (cfType == CalculatedFieldType.ALARM && !calculatedField.getName().equals(other.getCalculatedField().getName())) {
+            return true;
+        }
+        return false;
     }
 
-    public boolean hasStateChanges(CalculatedFieldCtx other) {
-        boolean typeChanged = !cfType.equals(other.cfType);
-        boolean argumentsChanged = !arguments.equals(other.arguments);
-        return typeChanged || argumentsChanged;
+    public boolean hasStateChanges(CalculatedFieldCtx other) { // has changes that require state reinit (will trigger state.reset() and re-fetch arguments)
+        boolean hasChanges = !arguments.equals(other.arguments);
+        if (hasChanges) {
+            return true;
+        }
+        if (cfType == CalculatedFieldType.ALARM) {
+            var thisConfig = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+            var otherConfig = (AlarmCalculatedFieldConfiguration) other.getCalculatedField().getConfiguration();
+            if (!thisConfig.getCreateRules().equals(otherConfig.getCreateRules()) ||
+                !Objects.equals(thisConfig.getClearRule(), otherConfig.getClearRule())) {
+                hasChanges = true;
+            }
+            // TODO: implement rules update logic!
+        }
+        return hasChanges;
     }
 
     public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration thisConfig
-                && other.calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration otherConfig) {
+            && other.calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration otherConfig) {
             boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
             boolean refreshIntervalChanged = thisConfig.getScheduledUpdateInterval() != otherConfig.getScheduledUpdateInterval();
             return refreshTriggerChanged || refreshIntervalChanged;
         }
         return false;
+    }
+
+    public void stop() {
+        if (tbelExpressions != null) {
+            tbelExpressions.values().forEach(CalculatedFieldScriptEngine::destroy);
+        }
+        if (simpleExpressions != null) {
+            simpleExpressions.values().forEach(ThreadLocal::remove);
+        }
     }
 
     public String getSizeExceedsLimitMessage() {

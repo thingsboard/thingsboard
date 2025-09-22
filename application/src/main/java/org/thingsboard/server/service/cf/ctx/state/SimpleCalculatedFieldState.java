@@ -19,27 +19,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
-import java.util.List;
-import java.util.Map;
-
-@Data
-@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
 
-    public SimpleCalculatedFieldState(List<String> requiredArguments) {
-        super(requiredArguments);
+    public SimpleCalculatedFieldState(EntityId entityId) {
+        super(entityId);
     }
 
     @Override
@@ -55,31 +48,18 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx) {
-        var expr = ctx.getCustomExpression().get();
-
-        for (Map.Entry<String, ArgumentEntry> entry : this.arguments.entrySet()) {
-            try {
-                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
-                double value = switch (kvEntry.getDataType()) {
-                    case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
-                    case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
-                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
-                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
-                };
-                expr.setVariable(entry.getKey(), value);
-            } catch (NumberFormatException e) {
-                throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
-            }
-        }
-
-        double expressionResult = expr.evaluate();
+    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+        double expressionResult = ctx.evaluateSimpleExpression(ctx.getExpression(), this);
 
         Output output = ctx.getOutput();
         Object result = formatResult(expressionResult, output.getDecimalsByDefault());
         JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
 
-        return Futures.immediateFuture(new CalculatedFieldResult(output.getType(), output.getScope(), outputResult));
+        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .type(output.getType())
+                .scope(output.getScope())
+                .result(outputResult)
+                .build());
     }
 
     private Object formatResult(double expressionResult, Integer decimals) {

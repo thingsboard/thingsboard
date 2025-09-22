@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.service.cf.ctx.state.alarm;
 
-enum AlarmStateUpdateResult {
+public enum AlarmEvalResult {
 
-    NONE, CREATED, UPDATED, SEVERITY_UPDATED, CLEARED;
+    FALSE, NOT_YET_TRUE, TRUE;
 
 }
