@@ -28,10 +28,12 @@ import {
   TwoFactorAuthSettings,
   TwoFactorAuthSettingsForm
 } from '@shared/models/two-factor-auth.models';
-import { isNotEmptyStr } from '@core/utils';
+import { isDefined, isNotEmptyStr } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { MatExpansionPanel } from '@angular/material/expansion';
+import { NotificationTargetConfigType, NotificationTargetConfigTypeInfoMap } from '@shared/models/notification.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-2fa-settings',
@@ -46,6 +48,13 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
   twoFaFormGroup: UntypedFormGroup;
   twoFactorAuthProviderType = TwoFactorAuthProviderType;
   twoFactorAuthProvidersData = twoFactorAuthProvidersData;
+
+  notificationTargetConfigType = NotificationTargetConfigType;
+  notificationTargetConfigTypes: NotificationTargetConfigType[] = this.allowNotificationTargetConfigTypes();
+  notificationTargetConfigTypeInfoMap = NotificationTargetConfigTypeInfoMap;
+
+  filterByTenants: boolean;
+  entityType = EntityType;
 
   showMainLoadingBar = false;
 
@@ -80,7 +89,10 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       this.joinRateLimit(setting, 'verificationCodeCheckRateLimit');
       const providers = setting.providers.filter(provider => provider.enable);
       providers.forEach(provider => delete provider.enable);
-      const config = Object.assign(setting, {providers});
+      const enforcedUsersFilter = this.twoFaFormGroup.get('enforcedUsersFilter').value;
+      delete enforcedUsersFilter.filterByTenants;
+      const config = Object.assign(setting, {providers}, {enforcedUsersFilter});
+      this.filterByTenants = this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').value;
       this.twoFaService.saveTwoFaSettings(config).subscribe(
         (settings) => {
           this.setAuthConfigFormValue(settings);
@@ -117,6 +129,13 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   private build2faSettingsForm(): void {
     this.twoFaFormGroup = this.fb.group({
+      enforceTwoFa: [false],
+      enforcedUsersFilter: this.fb.group({
+        type: [NotificationTargetConfigType.ALL_USERS],
+        filterByTenants: [true],
+        tenantsIds: [],
+        tenantProfilesIds: []
+      }),
       maxVerificationFailuresBeforeUserLockout: [30, [
         Validators.pattern(/^\d*$/),
         Validators.min(0),
@@ -161,6 +180,15 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
         this.providersForm.at(indexBackupCode).get('enable').enable( {emitEvent: false});
       }
     });
+    this.twoFaFormGroup.get('enforceTwoFa').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.twoFaFormGroup.get('enforcedUsersFilter').enable({emitEvent: false});
+      } else {
+        this.twoFaFormGroup.get('enforcedUsersFilter').disable({emitEvent: false});
+      }
+    });
   }
 
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
@@ -172,19 +200,24 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeCheckRateLimitTime: checkRateLimitTime || 900,
       providers: []
     });
+    if (settings?.enforceTwoFa) {
+      this.getByIndexPanel(0).open();
+    }
     if (checkRateLimitNumber > 0) {
-      this.getByIndexPanel(this.providersForm.length).open();
+      this.getByIndexPanel(this.providersForm.length+1).open();
     }
     Object.values(TwoFactorAuthProviderType).forEach((provider, index) => {
       const findIndex = allowProvidersConfig.indexOf(provider);
       if (findIndex > -1) {
         processFormValue.providers.push(Object.assign(settings.providers[findIndex], {enable: true}));
-        this.getByIndexPanel(index).open();
+        this.getByIndexPanel(index+1).open();
       } else {
         processFormValue.providers.push({enable: false});
       }
     });
     this.twoFaFormGroup.patchValue(processFormValue);
+    this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter.tenantProfilesIds);
+    this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').patchValue(this.filterByTenants, {onlySelf: true});
   }
 
   private buildProvidersSettingsForm(provider: TwoFactorAuthProviderType) {
@@ -244,5 +277,13 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     delete processFormValue[`${property}Enable`];
     delete processFormValue[`${property}Number`];
     delete processFormValue[`${property}Time`];
+  }
+
+  private allowNotificationTargetConfigTypes(): NotificationTargetConfigType[] {
+    return [
+      NotificationTargetConfigType.ALL_USERS,
+      NotificationTargetConfigType.TENANT_ADMINISTRATORS,
+      NotificationTargetConfigType.SYSTEM_ADMINISTRATORS
+    ];
   }
 }
