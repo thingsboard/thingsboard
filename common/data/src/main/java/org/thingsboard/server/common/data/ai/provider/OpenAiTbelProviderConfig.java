@@ -15,8 +15,9 @@
  */
 package org.thingsboard.server.common.data.ai.provider;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OpenAiTbelProviderConfig {}
+import jakarta.validation.constraints.NotNull;
+
+public record OpenAiTbelProviderConfig(
+        @NotNull String apiKey,
+        @NotNull String baseUrl
+) implements AiProviderConfig {}
