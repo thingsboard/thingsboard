@@ -32,4 +32,6 @@ public final class TbNodeConnectionType {
 
     public static final String TO_ROOT_RULE_CHAIN = "To Root Rule Chain";
 
+    public static final String NOT_FOUND = "Not Found";
+
 }
