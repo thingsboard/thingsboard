@@ -203,7 +203,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   get hideToolbar(): boolean {
-    return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
+    const showToolbarInSpecialCase = this.forceFullscreen && this.hideToolbarSetting() && !this.isMobile;
+  
+    if (showToolbarInSpecialCase) {
+      return this.isEditingWidget || this.isAddingWidget;
+    }
+    
+    return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget) || !(this.isMobile || !this.forceFullscreen);
   }
 
   @Input()
