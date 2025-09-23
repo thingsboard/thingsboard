@@ -73,6 +73,7 @@ import org.thingsboard.server.service.edge.rpc.processor.resource.ResourceEdgePr
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.rule.RuleChainMetadataEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.telemetry.TelemetryEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.user.UserProcessor;
 import org.thingsboard.server.service.edge.rpc.sync.EdgeRequestsService;
 import org.thingsboard.server.service.executors.GrpcCallbackExecutorService;
 
@@ -260,6 +261,9 @@ public class EdgeContextComponent {
 
     @Autowired
     private CalculatedFieldProcessor calculatedFieldProcessor;
+
+    @Autowired
+    private UserProcessor userProcessor;
 
     public EdgeProcessor getProcessor(EdgeEventType edgeEventType) {
         EdgeProcessor processor = processorMap.get(edgeEventType);

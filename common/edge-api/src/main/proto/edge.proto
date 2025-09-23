@@ -441,6 +441,8 @@ message UplinkMsg {
   repeated RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = 24;
   repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
   repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 26;
+  repeated UserUpdateMsg userUpdateMsg = 27;
+  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 28;
 }
 
 message UplinkResponseMsg {
