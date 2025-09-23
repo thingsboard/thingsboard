@@ -17,9 +17,11 @@ package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class RepeatingAlarmCondition extends AlarmCondition {
 
     private AlarmConditionValue<Integer> count;

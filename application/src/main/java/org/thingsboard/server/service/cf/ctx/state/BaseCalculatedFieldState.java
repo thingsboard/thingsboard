@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -44,8 +45,8 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public boolean update(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        boolean stateUpdated = false;
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        Map<String, ArgumentEntry> updatedArguments = null;
 
         for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
             String key = entry.getKey();
@@ -65,13 +66,19 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             }
 
             if (entryUpdated) {
-                stateUpdated = true;
+                if (updatedArguments == null) {
+                    updatedArguments = new HashMap<>(argumentValues.size());
+                }
+                updatedArguments.put(key, newEntry);
                 updateLastUpdateTimestamp(newEntry);
             }
 
         }
 
-        return stateUpdated;
+        if (updatedArguments == null) {
+            updatedArguments = Collections.emptyMap();
+        }
+        return updatedArguments;
     }
 
     @Override

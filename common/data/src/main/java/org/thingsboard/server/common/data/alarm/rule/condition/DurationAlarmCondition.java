@@ -17,11 +17,13 @@ package org.thingsboard.server.common.data.alarm.rule.condition;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
 import java.util.concurrent.TimeUnit;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class DurationAlarmCondition extends AlarmCondition {
 
     private TimeUnit unit;

@@ -56,11 +56,11 @@ public interface CalculatedFieldState {
 
     void init(CalculatedFieldCtx ctx);
 
-    boolean update(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> arguments);
+    Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> arguments, CalculatedFieldCtx ctx);
 
     void reset(CalculatedFieldCtx ctx);
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();

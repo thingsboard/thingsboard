@@ -22,6 +22,7 @@ import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmCondition;
@@ -194,6 +195,8 @@ public class AlarmRuleState {
     }
 
     private long getRequiredDurationInMs() {
+        // fixme timeUnit??
+
         return getValue(((DurationAlarmCondition) condition).getValue(), KvUtil::getLongValue);
     }
 
@@ -219,6 +222,16 @@ public class AlarmRuleState {
         this.condition = alarmRule.getCondition();
     }
 
+    public StateInfo getStateInfo() {
+        if (condition.getType() == AlarmConditionType.REPEATING) {
+            return new StateInfo(eventCount, null);
+        } else if (condition.getType() == AlarmConditionType.DURATION) {
+            return new StateInfo(null, duration);
+        } else {
+            return StateInfo.EMPTY;
+        }
+    }
+
     @Override
     public String toString() {
         return "AlarmRuleState{" +
@@ -228,6 +241,11 @@ public class AlarmRuleState {
                ", duration=" + duration +
                ", eventCount=" + eventCount +
                '}';
+    }
+
+    public record StateInfo(Long eventCount, Long duration) {
+        static final StateInfo EMPTY = new StateInfo(null, null);
+
     }
 
 }

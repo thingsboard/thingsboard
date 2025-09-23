@@ -45,6 +45,7 @@ import org.thingsboard.server.common.stats.DefaultStatsFactory;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -99,7 +100,7 @@ public class ScriptCalculatedFieldStateTest {
         state.arguments = new HashMap<>(Map.of("assetHumidity", assetHumidityArgEntry));
 
         Map<String, ArgumentEntry> newArgs = Map.of("deviceTemperature", deviceTemperatureArgEntry);
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -116,7 +117,7 @@ public class ScriptCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(ts, new LongDataEntry("assetHumidity", 41L), 349L);
         Map<String, ArgumentEntry> newArgs = Map.of("assetHumidity", newArgEntry);
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -228,7 +229,7 @@ public class ScriptCalculatedFieldStateTest {
     }
 
     private TelemetryCalculatedFieldResult performCalculation() throws InterruptedException, ExecutionException {
-        return (TelemetryCalculatedFieldResult) state.performCalculation(ctx).get();
+        return (TelemetryCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
     }
 
 }

@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -94,7 +95,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("key3", key3ArgEntry);
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -112,7 +113,7 @@ public class SimpleCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis(), new LongDataEntry("key1", 18L), 190L);
         Map<String, ArgumentEntry> newArgs = Map.of("key1", newArgEntry);
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(Map.of("key1", newArgEntry));
@@ -126,7 +127,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("key3", new TsRollingArgumentEntry(10, 30000L));
-        assertThatThrownBy(() -> state.update(ctx, newArgs))
+        assertThatThrownBy(() -> state.update(newArgs, ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Rolling argument entry is not supported for simple calculated fields.");
     }
@@ -156,7 +157,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        assertThatThrownBy(() -> state.performCalculation(ctx))
+        assertThatThrownBy(() -> state.performCalculation(Collections.emptyMap(), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Argument 'key2' is not a number.");
     }
@@ -271,7 +272,7 @@ public class SimpleCalculatedFieldStateTest {
     }
 
     private TelemetryCalculatedFieldResult performCalculation() throws InterruptedException, ExecutionException {
-        return (TelemetryCalculatedFieldResult) state.performCalculation(ctx).get();
+        return (TelemetryCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
     }
 
 }

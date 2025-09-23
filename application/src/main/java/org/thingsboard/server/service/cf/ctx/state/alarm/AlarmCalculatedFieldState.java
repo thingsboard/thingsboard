@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -105,22 +106,35 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        return super.update(argumentValues, ctx);
+    }
+
+    @Override
     public void reset(CalculatedFieldCtx ctx) {
         super.reset(ctx);
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
+        if (updatedArgs.isEmpty()) {
+            // FIXME: do we evaluate alarm rule (and increment event count) after arguments or expression change (state reinit)???
+            return Futures.immediateFuture(new AlarmCalculatedFieldResult(null));
+        }
         initCurrentAlarm(ctx);
-        AlarmCalculatedFieldResult result = createOrClearAlarms(state -> state.eval(ctx), ctx);
-        return Futures.immediateFuture(result);
+        TbAlarmResult result = createOrClearAlarms(state -> state.eval(ctx), ctx);
+        return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
+                .alarmResult(result)
+                .build());
     }
 
     // TODO: harvesting
-    public ListenableFuture<CalculatedFieldResult> performCalculation(long ts, CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, long ts, CalculatedFieldCtx ctx) {
         initCurrentAlarm(ctx);
-        AlarmCalculatedFieldResult result = createOrClearAlarms(ruleState -> ruleState.eval(ts), ctx);
-        return Futures.immediateFuture(result);
+        TbAlarmResult result = createOrClearAlarms(ruleState -> ruleState.eval(ts), ctx);
+        return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
+                .alarmResult(result)
+                .build());
     }
 
     @SneakyThrows
@@ -160,28 +174,33 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         createRuleStates.values().forEach(AlarmRuleState::clear);
     }
 
-    public AlarmCalculatedFieldResult createOrClearAlarms(Function<AlarmRuleState, AlarmEvalResult> evalFunction, CalculatedFieldCtx ctx) {
+    private TbAlarmResult createOrClearAlarms(Function<AlarmRuleState, AlarmEvalResult> evalFunction,
+                                              CalculatedFieldCtx ctx) {
         TbAlarmResult result = null;
         AlarmRuleState resultState = null;
+        AlarmRuleState.StateInfo resultStateInfo = null;
+
         for (AlarmRuleState state : createRuleStates.values()) {
             AlarmEvalResult evalResult = evalFunction.apply(state);
             log.debug("Evaluated create rule {} with args {}. Result: {}", state, arguments, evalResult);
-            if (AlarmEvalResult.TRUE.equals(evalResult)) {
+            if (evalResult == AlarmEvalResult.TRUE) {
                 resultState = state;
                 break;
-            } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
+            } else if (evalResult == AlarmEvalResult.FALSE) {
                 clearAlarmState(state);
             }
         }
 
         if (resultState != null) {
             result = calculateAlarmResult(resultState, ctx);
+            resultStateInfo = resultState.getStateInfo();
             log.debug("Alarm result for state {}: {}", resultState, result);
             clearAlarmState(clearRuleState);
         } else if (currentAlarm != null && clearRuleState != null) {
             AlarmEvalResult evalResult = evalFunction.apply(clearRuleState);
             log.debug("Evaluated clear rule {} with args {}. Result: {}", clearRuleState, arguments, evalResult);
-            if (AlarmEvalResult.TRUE.equals(evalResult)) {
+            if (evalResult == AlarmEvalResult.TRUE) {
+                resultStateInfo = clearRuleState.getStateInfo();
                 clearAlarmState(clearRuleState);
                 for (AlarmRuleState state : createRuleStates.values()) {
                     clearAlarmState(state);
@@ -190,18 +209,23 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                         ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), true
                 );
                 if (clearResult.isCleared()) {
-                    result = new TbAlarmResult(false, false, true, clearResult.getAlarm());
+                    result = TbAlarmResult.builder()
+                            .isCleared(true)
+                            .alarm(clearResult.getAlarm())
+                            .build();
+                    addStateInfo(result, clearRuleState);
                     resultState = clearRuleState;
                 }
                 currentAlarm = null;
-            } else if (AlarmEvalResult.FALSE.equals(evalResult)) {
+            } else if (evalResult == AlarmEvalResult.FALSE) {
                 clearAlarmState(clearRuleState);
             }
         }
-        return AlarmCalculatedFieldResult.builder()
-                .alarmResult(result)
-                .alarmRuleState(resultState)
-                .build();
+        if (result != null && resultState != null) {
+            result.setConditionRepeats(resultStateInfo.eventCount());
+            result.setConditionDuration(resultStateInfo.duration());
+        }
+        return result;
     }
 
     private void clearAlarmState(AlarmRuleState state) {
@@ -262,6 +286,14 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             AlarmApiCallResult result = ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(newAlarm));
             currentAlarm = result.getAlarm();
             return TbAlarmResult.fromAlarmResult(result);
+        }
+    }
+
+    private void addStateInfo(TbAlarmResult alarmResult, AlarmRuleState ruleState) {
+        if (ruleState.getCondition().getType() == AlarmConditionType.REPEATING) {
+            alarmResult.setConditionRepeats(ruleState.getEventCount());
+        } else if (ruleState.getCondition().getType() == AlarmConditionType.DURATION) {
+            alarmResult.setConditionDuration(ruleState.getDuration());
         }
     }
 

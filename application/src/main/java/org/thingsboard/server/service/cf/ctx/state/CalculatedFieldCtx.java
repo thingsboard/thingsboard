@@ -455,4 +455,13 @@ public class CalculatedFieldCtx {
         return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
     }
 
+    @Override
+    public String toString() {
+        return "CalculatedFieldCtx{" +
+               "cfId=" + cfId +
+               ", cfType=" + cfType +
+               ", entityId=" + entityId +
+               '}';
+    }
+
 }

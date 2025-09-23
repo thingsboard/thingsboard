@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
+import java.util.Map;
+
 @Slf4j
 @EqualsAndHashCode(callSuper = true)
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
@@ -41,7 +43,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
         ListenableFuture<Object> resultFuture = ctx.evaluateTbelExpression(ctx.getExpression(), this);
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,

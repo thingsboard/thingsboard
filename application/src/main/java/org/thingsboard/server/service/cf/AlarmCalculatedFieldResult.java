@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf;
 
 import lombok.Builder;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.common.data.DataConstants;
@@ -25,16 +26,15 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 
 import java.util.List;
 
 @Data
 @Builder
+@RequiredArgsConstructor
 public class AlarmCalculatedFieldResult implements CalculatedFieldResult {
 
     private final TbAlarmResult alarmResult;
-    private final AlarmRuleState alarmRuleState;
 
     @Override
     public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
@@ -49,14 +49,11 @@ public class AlarmCalculatedFieldResult implements CalculatedFieldResult {
         } else {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
-        switch (alarmRuleState.getCondition().getType()) {
-            case REPEATING -> {
-                metaData.putValue(DataConstants.ALARM_CONDITION_REPEATS, String.valueOf(alarmRuleState.getEventCount()));
-            }
-            case DURATION -> {
-                // TODO: schedule instead of duration
-                metaData.putValue(DataConstants.ALARM_CONDITION_DURATION, String.valueOf(alarmRuleState.getDuration()));
-            }
+        if (alarmResult.getConditionRepeats() != null) {
+            metaData.putValue(DataConstants.ALARM_CONDITION_REPEATS, String.valueOf(alarmResult.getConditionRepeats()));
+        }
+        if (alarmResult.getConditionDuration() != null) {
+            metaData.putValue(DataConstants.ALARM_CONDITION_DURATION, String.valueOf(alarmResult.getConditionDuration()));
         }
 
         return TbMsg.newMsg()

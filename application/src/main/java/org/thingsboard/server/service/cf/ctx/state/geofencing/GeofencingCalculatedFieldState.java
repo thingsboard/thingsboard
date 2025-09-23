@@ -41,6 +41,8 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -68,8 +70,8 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public boolean update(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        boolean stateUpdated = false;
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        Map<String, ArgumentEntry> updatedArguments = null;
 
         for (var entry : argumentValues.entrySet()) {
             String key = entry.getKey();
@@ -103,14 +105,21 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                 entryUpdated = existingEntry.updateEntry(newEntry);
             }
             if (entryUpdated) {
-                stateUpdated = true;
+                if (updatedArguments == null) {
+                    updatedArguments = new HashMap<>(argumentValues.size());
+                }
+                updatedArguments.put(key, newEntry);
             }
         }
-        return stateUpdated;
+
+        if (updatedArguments == null) {
+            updatedArguments = Collections.emptyMap();
+        }
+        return updatedArguments;
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx) {
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
         double latitude = (double) arguments.get(ENTITY_ID_LATITUDE_ARGUMENT_KEY).getValue();
         double longitude = (double) arguments.get(ENTITY_ID_LONGITUDE_ARGUMENT_KEY).getValue();
         Coordinates entityCoordinates = new Coordinates(latitude, longitude);

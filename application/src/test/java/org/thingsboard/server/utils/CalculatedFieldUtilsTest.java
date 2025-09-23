@@ -85,7 +85,7 @@ class CalculatedFieldUtilsTest {
 
         // Create cf state with the geofencing argument and add it to the state map
         CalculatedFieldState state = new GeofencingCalculatedFieldState(DEVICE_ID);
-        state.update(mock(CalculatedFieldCtx.class), Map.of("geofencingArgumentTest", geofencingArgumentEntry));
+        state.update(Map.of("geofencingArgumentTest", geofencingArgumentEntry), mock(CalculatedFieldCtx.class));
 
         // when
         CalculatedFieldStateProto proto = toProto(stateId, state);

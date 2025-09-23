@@ -49,6 +49,7 @@ import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +119,7 @@ public class GeofencingCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("allowedZones", geofencingAllowedZoneArgEntry);
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -132,21 +133,21 @@ public class GeofencingCalculatedFieldStateTest {
 
     @Test
     void testUpdateStateWithInvalidArgumentTypeForLatitudeArgument() {
-        assertThatThrownBy(() -> state.update(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, geofencingAllowedZoneArgEntry)))
+        assertThatThrownBy(() -> state.update(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, geofencingAllowedZoneArgEntry), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for latitude argument: GEOFENCING. Only SINGLE_VALUE type is allowed.");
     }
 
     @Test
     void testUpdateStateWithInvalidArgumentTypeForLongitudeArgument() {
-        assertThatThrownBy(() -> state.update(ctx, Map.of(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, geofencingAllowedZoneArgEntry)))
+        assertThatThrownBy(() -> state.update(Map.of(ENTITY_ID_LONGITUDE_ARGUMENT_KEY, geofencingAllowedZoneArgEntry), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for longitude argument: GEOFENCING. Only SINGLE_VALUE type is allowed.");
     }
 
     @Test
     void testUpdateStateWithInvalidArgumentTypeForGeofencingArgument() {
-        assertThatThrownBy(() -> state.update(ctx, Map.of("someArgumentName", latitudeArgEntry)))
+        assertThatThrownBy(() -> state.update(Map.of("someArgumentName", latitudeArgEntry), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for someArgumentName argument: SINGLE_VALUE. Only GEOFENCING type is allowed.");
     }
@@ -157,7 +158,7 @@ public class GeofencingCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 50.4760), 190L);
         Map<String, ArgumentEntry> newArgs = Map.of("latitude", newArgEntry);
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).isEqualTo(newArgs);
@@ -169,7 +170,7 @@ public class GeofencingCalculatedFieldStateTest {
 
         Map<String, ArgumentEntry> newArgs = Map.of("allowedZones", geofencingAllowedZoneArgEntry);
 
-        boolean stateUpdated = state.update(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isFalse();
         assertThat(state.getArguments()).isEqualTo(newArgs);
@@ -179,7 +180,7 @@ public class GeofencingCalculatedFieldStateTest {
     void testUpdateStateWhenUpdateExistingSingleValueArgumentEntryWithValueOfAnotherType() {
         state.arguments = new HashMap<>(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry));
 
-        assertThatThrownBy(() -> state.update(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, geofencingAllowedZoneArgEntry)))
+        assertThatThrownBy(() -> state.update(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, geofencingAllowedZoneArgEntry), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for single value argument entry: GEOFENCING");
     }
@@ -189,7 +190,7 @@ public class GeofencingCalculatedFieldStateTest {
     void testUpdateStateWhenUpdateExistingGeofencingValueArgumentEntryWithValueOfAnotherType() {
         state.arguments = new HashMap<>(Map.of("allowedZones", geofencingAllowedZoneArgEntry));
 
-        assertThatThrownBy(() -> state.update(ctx, Map.of("allowedZones", latitudeArgEntry)))
+        assertThatThrownBy(() -> state.update(Map.of("allowedZones", latitudeArgEntry), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for geofencing argument entry: SINGLE_VALUE");
     }
@@ -255,7 +256,7 @@ public class GeofencingCalculatedFieldStateTest {
         SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
 
         // move the device to new coordinates → leaves allowed, enters restricted
-        state.update(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude));
+        state.update(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude), ctx);
 
         TelemetryCalculatedFieldResult result2 = performCalculation();
 
@@ -327,7 +328,7 @@ public class GeofencingCalculatedFieldStateTest {
         SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
 
         // move the device to new coordinates → leaves allowed, enters restricted
-        state.update(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude));
+        state.update(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude), ctx);
 
         TelemetryCalculatedFieldResult result2 = performCalculation();
 
@@ -399,7 +400,7 @@ public class GeofencingCalculatedFieldStateTest {
         SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
 
         // move the device to new coordinates → leaves allowed, enters restricted
-        state.update(ctx, Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude));
+        state.update(Map.of(ENTITY_ID_LATITUDE_ARGUMENT_KEY, newLatitude, ENTITY_ID_LONGITUDE_ARGUMENT_KEY, newLongitude), ctx);
 
         TelemetryCalculatedFieldResult result2 = performCalculation();
 
@@ -486,7 +487,7 @@ public class GeofencingCalculatedFieldStateTest {
     }
 
     private TelemetryCalculatedFieldResult performCalculation() throws InterruptedException, ExecutionException {
-        return (TelemetryCalculatedFieldResult) state.performCalculation(ctx).get();
+        return (TelemetryCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
     }
 
 }
