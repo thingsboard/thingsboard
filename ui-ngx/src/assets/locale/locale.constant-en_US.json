@@ -511,7 +511,7 @@
             "verification-limitations": "Verification limitations",
             "verification-message-template-pattern": "Verification message need to contains pattern: ${code}",
             "verification-message-template-required": "Verification message template is required.",
-            "within-time": "Within time (sec)",
+            "within-time": "Within time",
             "within-time-pattern": "Time must be a positive integer.",
             "within-time-required": "Time is required.",
             "force-2fa": "Force two-factor authentication",

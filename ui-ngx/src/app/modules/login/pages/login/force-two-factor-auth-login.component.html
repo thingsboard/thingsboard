@@ -31,12 +31,12 @@
         <mat-card-content>
           <div class="providers-container tb-default flex flex-col gap-2">
             <p class="mat-body"> {{ (config ? 'login.set-up-verification-method-login' :'login.set-up-verification-method') | translate }}</p>
-            <ng-container *ngFor="let provider of allowProviders">
+            @for (provider of allowProviders; track provider) {
               <button type="button" [disabled]="config?.configs?.[provider]" mat-stroked-button class="provider" (click)="updateState(provider)">
                 <mat-icon class="tb-mat-18" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
                 {{ providersData.get(provider).name | translate }}
               </button>
-            </ng-container>
+            }
             @if (config) {
               <button type="button" mat-raised-button color="accent" class="navigation w-full" (click)="cancelLogin()">
                 {{ 'login.login' | translate }}
@@ -63,7 +63,7 @@
                 <p class="mat-body qr-code-description mb-4" translate>security.2fa.dialog.scan-qr-code</p>
                 <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
                 <p class="mat-body qr-code-description" translate>login.enter-key-manually</p>
-                <div class="flex flex-row mb-8 w-full overflow-hidden" style="align-items: center">
+                <div class="flex flex-row items-center mb-8 w-full overflow-hidden">
                   <span tbTruncateWithTooltip class="w-full">{{ totpAuthURLSecret }}</span>
                   <tb-copy-button
                     class="attribute-copy"
@@ -203,9 +203,9 @@
               <div mat-dialog-content tb-toast class="backup-code">
                 <p class="mat-body-2 description" translate>security.2fa.dialog.backup-code-description</p>
                 <div class="container">
-                  <div *ngFor="let code of backupCode?.codes" class="code">
-                    {{ code }}
-                  </div>
+                  @for (code of backupCode?.codes; track code) {
+                    <div class="code">{{ code }}</div>
+                  }
                 </div>
                 <div class="action-buttons flex flex-row items-center justify-start gap-4">
                   <button type="button" mat-flat-button class="provider w-full" (click)="downloadFile()">
@@ -242,10 +242,14 @@
       </mat-card-title>
     </mat-card-header>
     <mat-card-content>
-      <p class="mat-body">
+      <p class="mat-body inline-block">
         {{ twoFactorAuthProvidersEnterCodeCardTranslate.get(providerType).description | translate }}
-        <ng-container *ngIf="providerType === TwoFactorAuthProviderType.SMS">{{ smsConfigForm.get('phone').value }}</ng-container>
-        <ng-container *ngIf="providerType === TwoFactorAuthProviderType.EMAIL">{{ emailConfigForm.get('email').value }}</ng-container>
+        @if (providerType === TwoFactorAuthProviderType.SMS) {
+          <span>{{ smsConfigForm.get('phone').value }}</span>
+        }
+        @if (providerType === TwoFactorAuthProviderType.EMAIL) {
+          <span>{{ emailConfigForm.get('email').value }}</span>
+        }
       </p>
       <form [formGroup]="configForm" class="flex flex-col items-center justify-start">
         <mat-form-field class="mat-block w-full">

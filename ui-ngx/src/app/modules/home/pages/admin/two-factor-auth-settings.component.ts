@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { Component, DestroyRef, OnDestroy, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Store } from '@ngrx/store';
@@ -29,11 +29,10 @@ import {
   TwoFactorAuthSettingsForm
 } from '@shared/models/two-factor-auth.models';
 import { isDefined, isNotEmptyStr } from '@core/utils';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
 import { MatExpansionPanel } from '@angular/material/expansion';
 import { NotificationTargetConfigType, NotificationTargetConfigTypeInfoMap } from '@shared/models/notification.models';
 import { EntityType } from '@shared/models/entity-type.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-2fa-settings',
@@ -42,7 +41,6 @@ import { EntityType } from '@shared/models/entity-type.models';
 })
 export class TwoFactorAuthSettingsComponent extends PageComponent implements OnInit, HasConfirmForm, OnDestroy {
 
-  private readonly destroy$ = new Subject<void>();
   private readonly posIntValidation = [Validators.required, Validators.min(1), Validators.pattern(/^\d*$/)];
 
   twoFaFormGroup: UntypedFormGroup;
@@ -62,7 +60,8 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               private twoFaService: TwoFactorAuthenticationService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private destroyRef: DestroyRef) {
     super(store);
   }
 
@@ -75,8 +74,6 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
 
   ngOnDestroy() {
     super.ngOnDestroy();
-    this.destroy$.next();
-    this.destroy$.complete();
   }
 
   confirmForm(): UntypedFormGroup {
@@ -156,7 +153,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       this.buildProvidersSettingsForm(provider);
     });
     this.twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       if (value) {
         this.twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').enable({emitEvent: false});
@@ -167,7 +164,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       }
     });
     this.providersForm.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((value: TwoFactorAuthProviderConfigForm[]) => {
       const activeProvider = value.filter(provider => provider.enable);
       const indexBackupCode = Object.values(TwoFactorAuthProviderType).indexOf(TwoFactorAuthProviderType.BACKUP_CODE);
@@ -181,7 +178,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       }
     });
     this.twoFaFormGroup.get('enforceTwoFa').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       if (value) {
         this.twoFaFormGroup.get('enforcedUsersFilter').enable({emitEvent: false});
@@ -245,7 +242,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     }
     const newProviders = this.fb.group(formControlConfig);
     newProviders.get('enable').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(value => {
       if (value) {
         newProviders.enable({emitEvent: false});
