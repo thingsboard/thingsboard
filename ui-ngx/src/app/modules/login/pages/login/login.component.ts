@@ -36,8 +36,8 @@ export class LoginComponent extends PageComponent implements OnInit {
   passwordViolation = false;
 
   loginFormGroup = this.fb.group({
-        username: ['', [Validators.required, validateEmail]],
-        password: ['']
+    username: ['', [Validators.required, validateEmail]],
+    password: ['']
   });
   oauth2Clients: Array<OAuth2ClientLoginInfo> = null;
 
