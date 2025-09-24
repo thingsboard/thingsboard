@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -24,6 +26,8 @@ import lombok.ToString;
 @ToString(callSuper = true)
 public class RepeatingAlarmCondition extends AlarmCondition {
 
+    @Valid
+    @NotNull
     private AlarmConditionValue<Integer> count;
 
     @Override

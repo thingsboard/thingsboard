@@ -152,7 +152,8 @@ public enum MsgType {
     CF_ENTITY_DELETE_MSG,
 
     CF_DYNAMIC_ARGUMENTS_REFRESH_MSG,
-    CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG;
+    CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG,
+    CF_REEVALUATE_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

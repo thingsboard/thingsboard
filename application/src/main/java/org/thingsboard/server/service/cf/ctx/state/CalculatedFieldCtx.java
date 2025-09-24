@@ -77,6 +77,7 @@ public class CalculatedFieldCtx {
     private Output output;
     private String expression;
     private boolean useLatestTs;
+    private boolean requiresScheduledReevaluation;
 
     private TbelInvokeService tbelInvokeService;
     private RelationService relationService;
@@ -140,6 +141,7 @@ public class CalculatedFieldCtx {
                 });
             }
         }
+        this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();
         this.alarmService = systemContext.getAlarmService();

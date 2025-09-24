@@ -15,9 +15,12 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
 import java.util.List;
@@ -26,9 +29,14 @@ import java.util.Map;
 @Data
 public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
+    @Valid
+    @NotEmpty
     private Map<String, Argument> arguments;
 
+    @Valid
+    @NotEmpty
     private Map<AlarmSeverity, AlarmRule> createRules;
+    @Valid
     private AlarmRule clearRule;
 
     private boolean propagate;
@@ -49,6 +57,12 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
     @Override
     public void validate() {
 
+    }
+
+    @Override
+    public boolean requiresScheduledReevaluation() {
+        return createRules.values().stream().anyMatch(rule -> rule.getCondition().getType() == AlarmConditionType.DURATION) ||
+               (clearRule != null && clearRule.getCondition().getType() == AlarmConditionType.DURATION);
     }
 
 }

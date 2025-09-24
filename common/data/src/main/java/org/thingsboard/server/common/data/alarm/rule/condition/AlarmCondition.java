@@ -41,6 +41,7 @@ public abstract class AlarmCondition {
     @NotNull
     @Valid
     private AlarmConditionExpression expression;
+    @Valid
     private AlarmConditionValue<AlarmSchedule> schedule;
 
     @JsonIgnore

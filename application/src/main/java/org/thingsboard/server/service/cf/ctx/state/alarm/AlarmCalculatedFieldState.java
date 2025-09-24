@@ -117,21 +117,15 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
-        if (updatedArgs.isEmpty()) {
-            // FIXME: do we evaluate alarm rule (and increment event count) after arguments or expression change (state reinit)???
-            return Futures.immediateFuture(new AlarmCalculatedFieldResult(null));
-        }
         initCurrentAlarm(ctx);
-        TbAlarmResult result = createOrClearAlarms(state -> state.eval(ctx), ctx);
-        return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
-                .alarmResult(result)
-                .build());
-    }
-
-    // TODO: harvesting
-    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, long ts, CalculatedFieldCtx ctx) {
-        initCurrentAlarm(ctx);
-        TbAlarmResult result = createOrClearAlarms(ruleState -> ruleState.eval(ts), ctx);
+        TbAlarmResult result = createOrClearAlarms(state -> {
+            if (updatedArgs != null) {
+                boolean newEvent = !updatedArgs.isEmpty();
+                return state.eval(newEvent, ctx);
+            } else {
+                return state.eval(System.currentTimeMillis());
+            }
+        }, ctx);
         return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
                 .alarmResult(result)
                 .build());

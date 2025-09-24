@@ -78,6 +78,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new HashMap<>();
     private final Map<CalculatedFieldId, ScheduledFuture<?>> cfDynamicArgumentsRefreshTasks = new ConcurrentHashMap<>();
+    private ScheduledFuture<?> cfsReevaluationTask;
 
     private final CalculatedFieldProcessingService cfExecService;
     private final CalculatedFieldStateService cfStateService;
@@ -118,6 +119,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         entityIdCalculatedFieldLinks.clear();
         cfDynamicArgumentsRefreshTasks.values().forEach(future -> future.cancel(true));
         cfDynamicArgumentsRefreshTasks.clear();
+        if (cfsReevaluationTask != null) {
+            cfsReevaluationTask.cancel(true);
+            cfsReevaluationTask = null;
+        }
         ctx.stop(ctx.getSelf());
     }
 
@@ -125,6 +130,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         log.debug("[{}] Processing CF actor init message.", msg.getTenantId().getId());
         initEntityProfileCache();
         initCalculatedFields();
+        scheduleCfsReevaluation();
         msg.getCallback().onSuccess();
     }
 
@@ -141,6 +147,23 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         } else {
             cfStateService.removeState(msg.getId(), msg.getCallback());
         }
+    }
+
+    private void scheduleCfsReevaluation() {
+        cfsReevaluationTask = systemContext.getScheduler().scheduleWithFixedDelay(() -> {
+            try {
+                calculatedFields.values().forEach(cf -> {
+                    if (cf.isRequiresScheduledReevaluation()) {
+                        applyToTargetCfEntityActors(cf, TbCallback.EMPTY, (entityId, callback) -> {
+                            log.debug("[{}][{}] Pushing scheduled CF reevaluate msg", entityId, cf.getCfId());
+                            getOrCreateActor(entityId).tell(new CalculatedFieldReevaluateMsg(tenantId, cf));
+                        });
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("[{}] Failed to trigger CFs reevaluation", tenantId, e);
+            }
+        }, systemContext.getAlarmsReevaluationInterval(), systemContext.getAlarmsReevaluationInterval(), TimeUnit.SECONDS);
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {

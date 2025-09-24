@@ -64,21 +64,21 @@ public class AlarmRuleState {
         this.state = state;
     }
 
-    public AlarmEvalResult eval(CalculatedFieldCtx ctx) {
+    public AlarmEvalResult eval(boolean newEvent, CalculatedFieldCtx ctx) { // on event or config change
         boolean active = isActive(state.getLatestTimestamp());
         return switch (condition.getType()) {
-            case SIMPLE -> (active && eval(condition.getExpression(), ctx)) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+            case SIMPLE -> evalSimple(active, ctx);
             case DURATION -> evalDuration(active, ctx);
-            case REPEATING -> evalRepeating(active, ctx);
+            case REPEATING -> evalRepeating(active, newEvent, ctx);
         };
     }
 
-    public AlarmEvalResult eval(long ts) {
+    public AlarmEvalResult eval(long ts) { // on schedule
         switch (condition.getType()) {
-            case SIMPLE:
-            case REPEATING:
+            case SIMPLE, REPEATING -> {
                 return AlarmEvalResult.NOT_YET_TRUE;
-            case DURATION:
+            }
+            case DURATION -> {
                 long requiredDurationInMs = getRequiredDurationInMs();
                 if (requiredDurationInMs > 0 && lastEventTs > 0 && ts > lastEventTs) {
                     long duration = this.duration + (ts - lastEventTs);
@@ -88,8 +88,43 @@ public class AlarmRuleState {
                         return AlarmEvalResult.FALSE;
                     }
                 }
-            default:
-                return AlarmEvalResult.FALSE;
+            }
+        }
+        return AlarmEvalResult.FALSE;
+    }
+
+    private AlarmEvalResult evalSimple(boolean active, CalculatedFieldCtx ctx) {
+        return (active && eval(condition.getExpression(), ctx)) ?
+                AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+    }
+
+    private AlarmEvalResult evalRepeating(boolean active, boolean newEvent, CalculatedFieldCtx ctx) {
+        if (active && eval(condition.getExpression(), ctx)) {
+            if (newEvent) {
+                eventCount++;
+            }
+            long requiredRepeats = getIntValue(((RepeatingAlarmCondition) condition).getCount());
+            return eventCount >= requiredRepeats ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
+        } else {
+            return AlarmEvalResult.FALSE;
+        }
+    }
+
+    private AlarmEvalResult evalDuration(boolean active, CalculatedFieldCtx ctx) {
+        if (active && eval(condition.getExpression(), ctx)) {
+            if (lastEventTs > 0) {
+                if (state.getLatestTimestamp() > lastEventTs) {
+                    duration = duration + (state.getLatestTimestamp() - lastEventTs);
+                    lastEventTs = state.getLatestTimestamp();
+                }
+            } else {
+                lastEventTs = state.getLatestTimestamp();
+                duration = 0L;
+            }
+            long requiredDurationInMs = getRequiredDurationInMs();
+            return duration > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
+        } else {
+            return AlarmEvalResult.FALSE;
         }
     }
 
@@ -162,42 +197,13 @@ public class AlarmRuleState {
         duration = 0L;
     }
 
-    private AlarmEvalResult evalRepeating(boolean active, CalculatedFieldCtx ctx) {
-        if (active && eval(condition.getExpression(), ctx)) {
-            eventCount++;
-            long requiredRepeats = getIntValue(((RepeatingAlarmCondition) condition).getCount());
-            return eventCount >= requiredRepeats ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
-        } else {
-            return AlarmEvalResult.FALSE;
-        }
-    }
-
-    private AlarmEvalResult evalDuration(boolean active, CalculatedFieldCtx ctx) {
-        if (active && eval(condition.getExpression(), ctx)) {
-            if (lastEventTs > 0) {
-                if (state.getLatestTimestamp() > lastEventTs) {
-                    duration = duration + (state.getLatestTimestamp() - lastEventTs);
-                    lastEventTs = state.getLatestTimestamp();
-                }
-            } else {
-                lastEventTs = state.getLatestTimestamp();
-                duration = 0L;
-            }
-            long requiredDurationInMs = getRequiredDurationInMs();
-            return duration > requiredDurationInMs ? AlarmEvalResult.TRUE : AlarmEvalResult.NOT_YET_TRUE;
-        } else {
-            return AlarmEvalResult.FALSE;
-        }
-    }
-
     private Integer getIntValue(AlarmConditionValue<Integer> value) {
         return getValue(value, entry -> Optional.ofNullable(KvUtil.getLongValue(entry)).map(Long::intValue).orElse(null));
     }
 
     private long getRequiredDurationInMs() {
-        // fixme timeUnit??
-
-        return getValue(((DurationAlarmCondition) condition).getValue(), KvUtil::getLongValue);
+        DurationAlarmCondition durationCondition = (DurationAlarmCondition) condition;
+        return durationCondition.getUnit().toMillis(getValue(durationCondition.getValue(), KvUtil::getLongValue));
     }
 
     private boolean eval(AlarmConditionExpression expression, CalculatedFieldCtx ctx) {
@@ -226,7 +232,7 @@ public class AlarmRuleState {
         if (condition.getType() == AlarmConditionType.REPEATING) {
             return new StateInfo(eventCount, null);
         } else if (condition.getType() == AlarmConditionType.DURATION) {
-            return new StateInfo(null, duration);
+            return new StateInfo(null, duration + (System.currentTimeMillis() - lastEventTs));
         } else {
             return StateInfo.EMPTY;
         }

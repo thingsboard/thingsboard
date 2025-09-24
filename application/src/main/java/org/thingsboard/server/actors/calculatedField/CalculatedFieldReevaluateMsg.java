@@ -13,30 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition;
+package org.thingsboard.server.actors.calculatedField;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.ToString;
-
-import java.util.concurrent.TimeUnit;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.MsgType;
+import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
-@ToString(callSuper = true)
-public class DurationAlarmCondition extends AlarmCondition {
+public class CalculatedFieldReevaluateMsg implements ToCalculatedFieldSystemMsg {
 
-    @NotNull
-    private TimeUnit unit;
-    @Valid
-    @NotNull
-    private AlarmConditionValue<Long> value;
+    private final TenantId tenantId;
+    private final CalculatedFieldCtx cfCtx;
 
     @Override
-    public AlarmConditionType getType() {
-        return AlarmConditionType.DURATION;
+    public MsgType getMsgType() {
+        return MsgType.CF_REEVALUATE_MSG;
     }
 
 }
