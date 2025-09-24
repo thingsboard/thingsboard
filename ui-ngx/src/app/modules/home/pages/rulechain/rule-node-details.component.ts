@@ -22,7 +22,6 @@ import {
   OnDestroy,
   OnInit,
   Output,
-  SecurityContext,
   SimpleChanges,
   ViewChild
 } from '@angular/core';
