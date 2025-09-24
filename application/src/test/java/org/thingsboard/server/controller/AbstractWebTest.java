@@ -78,10 +78,12 @@ import org.thingsboard.server.actors.device.SessionInfo;
 import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -89,6 +91,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -101,6 +104,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -1310,6 +1314,26 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void reprocessJob(JobId jobId) throws Exception {
         doPost("/api/job/" + jobId + "/reprocess").andExpect(status().isOk());
+    }
+
+    protected void postTelemetry(EntityId entityId, String payload) throws Exception {
+        doPost("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
+               "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload)).andExpect(status().isOk());
+    }
+
+    protected CalculatedField saveCalculatedField(CalculatedField calculatedField) {
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    protected PageData<EventInfo> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
+        return getEvents(tenantId, entityId, EventType.DEBUG_RULE_NODE, limit);
+    }
+
+    protected PageData<EventInfo> getEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit) throws Exception {
+        TimePageLink pageLink = new TimePageLink(limit);
+        return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
+                new TypeReference<PageData<EventInfo>>() {
+                }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
     }
 
 }

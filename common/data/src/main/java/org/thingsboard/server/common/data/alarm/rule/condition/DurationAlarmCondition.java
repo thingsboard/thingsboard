@@ -13,10 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition;
 
-enum AlarmStateUpdateResult {
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
-    NONE, CREATED, UPDATED, SEVERITY_UPDATED, CLEARED;
+import java.util.concurrent.TimeUnit;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+public class DurationAlarmCondition extends AlarmCondition {
+
+    @NotNull
+    private TimeUnit unit;
+    @Valid
+    @NotNull
+    private AlarmConditionValue<Long> value;
+
+    @Override
+    public AlarmConditionType getType() {
+        return AlarmConditionType.DURATION;
+    }
 
 }

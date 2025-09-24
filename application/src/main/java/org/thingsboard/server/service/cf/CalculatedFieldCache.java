@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 public interface CalculatedFieldCache {
 
@@ -36,10 +37,14 @@ public interface CalculatedFieldCache {
 
     List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
 
+    boolean hasCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter);
+
     void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     void updateCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
 
     void evict(CalculatedFieldId calculatedFieldId);
+
+    EntityId getProfileId(TenantId tenantId, EntityId entityId);
 
 }

@@ -141,6 +141,8 @@ public enum MsgType {
     CF_PARTITIONS_CHANGE_MSG, // Sent when cluster event occures;
 
     CF_ENTITY_LIFECYCLE_MSG, // Sent on CF/Device/Asset create/update/delete;
+    CF_ENTITY_ACTION_EVENT_MSG,
+    CF_ALARM_ACTION_MSG,
     CF_TELEMETRY_MSG, // Sent from queue to actor system;
     CF_LINKED_TELEMETRY_MSG, // Sent from queue to actor system;
 
@@ -150,7 +152,8 @@ public enum MsgType {
     CF_ENTITY_DELETE_MSG,
 
     CF_DYNAMIC_ARGUMENTS_REFRESH_MSG,
-    CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG;
+    CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG,
+    CF_REEVALUATE_MSG;
 
     @Getter
     private final boolean ignoreOnStart;

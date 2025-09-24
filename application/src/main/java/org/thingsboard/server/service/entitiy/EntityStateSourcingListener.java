@@ -22,6 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.Device;
@@ -31,9 +32,11 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -53,13 +56,17 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.gen.transport.TransportProtos.EntityActionEventProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ToCalculatedFieldMsg;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.thingsboard.rule.engine.api.JobManager;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
+import org.thingsboard.server.service.cf.CalculatedFieldCache;
 
 import java.util.Set;
 
@@ -72,6 +79,7 @@ public class EntityStateSourcingListener {
     private final TbClusterService tbClusterService;
     private final EdgeSynchronizationManager edgeSynchronizationManager;
     private final JobManager jobManager;
+    private final CalculatedFieldCache calculatedFieldCache;
 
     @PostConstruct
     public void init() {
@@ -153,7 +161,7 @@ public class EntityStateSourcingListener {
             return;
         }
         EntityType entityType = entityId.getEntityType();
-        if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT && !tenantService.tenantExists(tenantId)) {
+        if (entityType != EntityType.TENANT && !tenantExists(tenantId)) {
             log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
             return;
         }
@@ -216,18 +224,46 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
-        log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
-        if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
-            EntityType.DEVICE.equals(event.getEntityId().getEntityType())
-            && event.getEntity() instanceof DeviceCredentials) {
-            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
-                    (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
-        } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device device) {
-            Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
-            if (tenant != null) {
-                tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
+        TenantId tenantId = event.getTenantId();
+        log.trace("[{}] ActionEntityEvent called: {}", tenantId, event);
+        switch (event.getActionType()) {
+            case CREDENTIALS_UPDATED -> {
+                if (EntityType.DEVICE.equals(event.getEntityId().getEntityType()) &&
+                    event.getEntity() instanceof DeviceCredentials deviceCredentials) {
+                    tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(tenantId,
+                            (DeviceId) event.getEntityId(), deviceCredentials), null);
+                }
             }
-            pushAssignedFromNotification(tenant, event.getTenantId(), device);
+            case ASSIGNED_TO_TENANT -> {
+                if (event.getEntity() instanceof Device device) {
+                    Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
+                    if (tenant != null) {
+                        tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
+                    }
+                    pushAssignedFromNotification(tenant, tenantId, device);
+                }
+            }
+            case ALARM_ACK, ALARM_CLEAR, ALARM_DELETE -> {
+                if (event.getActionType() == ActionType.ALARM_DELETE && !tenantExists(tenantId)) {
+                    return;
+                }
+                Alarm alarm = (Alarm) event.getEntity();
+                if (calculatedFieldCache.hasCalculatedFields(tenantId, alarm.getOriginator(), ctx -> ctx.getCfType() == CalculatedFieldType.ALARM)) {
+                    ToCalculatedFieldMsg msg = ToCalculatedFieldMsg.newBuilder()
+                            .setEventMsg(toProto(event))
+                            .addCfTypes(CalculatedFieldType.ALARM.name())
+                            .build();
+                    tbClusterService.pushMsgToCalculatedFields(tenantId, alarm.getOriginator(), msg, new TbQueueCallback() {
+                        @Override
+                        public void onSuccess(TbQueueMsgMetadata metadata) {}
+
+                        @Override
+                        public void onFailure(Throwable t) {
+                            log.error("[{}] Failed to push alarm event to CF queue: {}", tenantId, event, t);
+                        }
+                    });
+                }
+            }
         }
     }
 
@@ -338,11 +374,24 @@ public class EntityStateSourcingListener {
         }
     }
 
+    private boolean tenantExists(TenantId tenantId) {
+        return tenantId.isSysTenantId() || tenantService.tenantExists(tenantId);
+    }
+
     private TbMsgMetaData getMetaDataForAssignedFrom(Tenant tenant) {
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("assignedFromTenantId", tenant.getId().getId().toString());
         metaData.putValue("assignedFromTenantName", tenant.getName());
         return metaData;
+    }
+
+    private EntityActionEventProto toProto(ActionEntityEvent<?> event) {
+        return EntityActionEventProto.newBuilder()
+                .setTenantId(ProtoUtils.toProto(event.getTenantId()))
+                .setEntityId(ProtoUtils.toProto(event.getEntityId()))
+                .setAction(event.getActionType().name())
+                .setEntity(event.getEntity() != null ? JacksonUtil.toString(event.getEntity()) : "")
+                .build();
     }
 
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.queue;
 
+import com.google.protobuf.ProtocolStringList;
 import jakarta.annotation.PreDestroy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -22,10 +23,12 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldEntityActionEventMsg;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldLinkedTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -57,6 +60,7 @@ import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedCon
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -158,12 +162,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                 try {
                     ToCalculatedFieldMsg toCfMsg = msg.getValue();
                     pendingMsgHolder.setMsg(toCfMsg);
-                    if (toCfMsg.hasTelemetryMsg()) {
-                        log.trace("[{}] Forwarding regular telemetry message for processing {}", id, toCfMsg.getTelemetryMsg());
-                        forwardToActorSystem(toCfMsg.getTelemetryMsg(), callback);
-                    } else if (toCfMsg.hasLinkedTelemetryMsg()) {
-                        forwardToActorSystem(toCfMsg.getLinkedTelemetryMsg(), callback);
-                    }
+                    processMsg(toCfMsg, id, callback);
                 } catch (Throwable e) {
                     log.warn("[{}] Failed to process message: {}", id, msg, e);
                     callback.onFailure(e);
@@ -179,6 +178,18 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
             ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
         }
         consumer.commit();
+    }
+
+    private void processMsg(ToCalculatedFieldMsg toCfMsg, UUID id, TbCallback callback) {
+        Set<CalculatedFieldType> cfTypes = getCfTypes(toCfMsg.getCfTypesList());
+        if (toCfMsg.hasTelemetryMsg()) { // TODO: add CF type filter to the message. or just rename the CF strategy to "Process alarms and calculated fields
+            log.trace("[{}] Forwarding regular telemetry message for processing {}", id, toCfMsg.getTelemetryMsg());
+            forwardToActorSystem(toCfMsg.getTelemetryMsg(), callback);
+        } else if (toCfMsg.hasLinkedTelemetryMsg()) {
+            forwardToActorSystem(toCfMsg.getLinkedTelemetryMsg(), callback);
+        } else if (toCfMsg.hasEventMsg()) {
+            actorContext.tell(CalculatedFieldEntityActionEventMsg.fromProto(toCfMsg.getEventMsg(), callback));
+        }
     }
 
     @Override
@@ -249,6 +260,18 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
 
     private TenantId toTenantId(long tenantIdMSB, long tenantIdLSB) {
         return TenantId.fromUUID(new UUID(tenantIdMSB, tenantIdLSB));
+    }
+
+    private Set<CalculatedFieldType> getCfTypes(ProtocolStringList cfTypesList) {
+        Set<CalculatedFieldType> cfTypes;
+        if (cfTypesList.isEmpty()) {
+            cfTypes = EnumSet.allOf(CalculatedFieldType.class);
+        } else {
+            cfTypes = cfTypesList.stream()
+                    .map(CalculatedFieldType::valueOf)
+                    .collect(Collectors.toSet());
+        }
+        return cfTypes;
     }
 
     @Override
