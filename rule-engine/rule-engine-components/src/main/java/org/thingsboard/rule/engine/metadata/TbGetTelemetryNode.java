@@ -19,9 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -45,10 +42,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * Created by mshvayka on 04.09.18.
- */
-@Slf4j
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
@@ -107,7 +100,7 @@ public class TbGetTelemetryNode implements TbNode {
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         Interval interval = getInterval(msg);
-        if (interval.getStartTs() > interval.getEndTs()) {
+        if (interval.startTs() > interval.endTs()) {
             throw new RuntimeException("Interval start should be less than Interval end");
         }
         List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
@@ -124,10 +117,10 @@ public class TbGetTelemetryNode implements TbNode {
         final long aggIntervalStep = Aggregation.NONE.equals(aggregation) ? 1 :
                 // exact how it validates on BaseTimeseriesService.validate()
                 // see CassandraBaseTimeseriesDao.findAllAsync()
-                interval.getEndTs() - interval.getStartTs();
+                interval.endTs() - interval.startTs();
 
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, orderBy.name()))
+                .map(key -> new BaseReadTsKvQuery(key, interval.startTs(), interval.endTs(), aggIntervalStep, limit, aggregation, orderBy.name()))
                 .collect(Collectors.toList());
     }
 
@@ -140,18 +133,19 @@ public class TbGetTelemetryNode implements TbNode {
         }
         var copy = msg.getMetaData().copy();
         for (String key : keys) {
-            if (resultNode.has(key)) {
-                copy.putValue(key, resultNode.get(key).toString());
+            JsonNode value = resultNode.get(key);
+            if (value != null) {
+                copy.putValue(key, value.isValueNode() ? value.asText() : value.toString());
             }
         }
         return copy;
     }
 
-    private void processSingle(ObjectNode node, TsKvEntry entry) {
+    private static void processSingle(ObjectNode node, TsKvEntry entry) {
         node.put(entry.getKey(), entry.getValueAsString());
     }
 
-    private void processArray(ObjectNode node, TsKvEntry entry) {
+    private static void processArray(ObjectNode node, TsKvEntry entry) {
         if (node.has(entry.getKey())) {
             ArrayNode arrayNode = (ArrayNode) node.get(entry.getKey());
             arrayNode.add(buildNode(entry));
@@ -162,7 +156,7 @@ public class TbGetTelemetryNode implements TbNode {
         }
     }
 
-    private ObjectNode buildNode(TsKvEntry entry) {
+    private static ObjectNode buildNode(TsKvEntry entry) {
         ObjectNode obj = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
         obj.put("ts", entry.getTs());
         JacksonUtil.addKvEntry(obj, entry, "value", JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
@@ -173,41 +167,35 @@ public class TbGetTelemetryNode implements TbNode {
         if (config.isUseMetadataIntervalPatterns()) {
             return getIntervalFromPatterns(msg);
         } else {
-            Interval interval = new Interval();
-            long ts = getCurrentTimeMillis();
-            interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
-            interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
-            return interval;
+            long nowTs = getCurrentTimeMillis();
+            long startTs = nowTs - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval());
+            long endTs = nowTs - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval());
+            return new Interval(startTs, endTs);
         }
     }
 
     private Interval getIntervalFromPatterns(TbMsg msg) {
-        Interval interval = new Interval();
-        interval.setStartTs(checkPattern(msg, config.getStartIntervalPattern()));
-        interval.setEndTs(checkPattern(msg, config.getEndIntervalPattern()));
-        return interval;
+        return new Interval(checkPattern(msg, config.getStartIntervalPattern()), checkPattern(msg, config.getEndIntervalPattern()));
     }
 
-    private long checkPattern(TbMsg msg, String pattern) {
+    private static long checkPattern(TbMsg msg, String pattern) {
         String value = getValuePattern(msg, pattern);
         if (value == null) {
-            throw new IllegalArgumentException("Message value: '" +
-                    replaceRegex(pattern) + "' is undefined");
+            throw new IllegalArgumentException("Message value: '" + replaceRegex(pattern) + "' is undefined");
         }
         boolean parsable = NumberUtils.isParsable(value);
         if (!parsable) {
-            throw new IllegalArgumentException("Message value: '" +
-                    replaceRegex(pattern) + "' has invalid format");
+            throw new IllegalArgumentException("Message value: '" + replaceRegex(pattern) + "' has invalid format");
         }
         return Long.parseLong(value);
     }
 
-    private String getValuePattern(TbMsg msg, String pattern) {
+    private static String getValuePattern(TbMsg msg, String pattern) {
         String value = TbNodeUtils.processPattern(pattern, msg);
         return value.equals(pattern) ? null : value;
     }
 
-    private String replaceRegex(String pattern) {
+    private static String replaceRegex(String pattern) {
         return pattern.replaceAll("[$\\[{}\\]]", "");
     }
 
@@ -222,12 +210,7 @@ public class TbGetTelemetryNode implements TbNode {
         return System.currentTimeMillis();
     }
 
-    @Data
-    @NoArgsConstructor
-    private static class Interval {
-        private Long startTs;
-        private Long endTs;
-    }
+    private record Interval(long startTs, long endTs) {}
 
     @Override
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
