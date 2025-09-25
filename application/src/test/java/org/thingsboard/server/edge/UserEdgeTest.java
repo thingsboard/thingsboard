@@ -23,9 +23,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -42,6 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
 
 @DaoSqlTest
 public class UserEdgeTest extends AbstractEdgeTest {
@@ -194,7 +197,8 @@ public class UserEdgeTest extends AbstractEdgeTest {
 
         UUID uuid = UUID.randomUUID();
         customerUser.setId(new UserId(uuid));
-        UplinkMsg uplinkMsg = constructUserUplinkMsg(customerUser, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
+        UUID userCredentialsUuid = UUID.randomUUID();
+        UplinkMsg uplinkMsg = constructUserUplinkMsg(customerUser, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userCredentialsUuid);
 
         edgeImitator.expectResponsesAmount(1);
         edgeImitator.sendUplinkMsg(uplinkMsg);
@@ -205,10 +209,10 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(customerUser.getEmail(), userFromCloud.getEmail());
         assertUserCredentialsFlags(userFromCloud, false, false);
 
-        UplinkMsg credentialsUplinkMsg = constructUserCredentialsUplinkMsg(customerUser.getId(), "password", true);
+        UplinkMsg enabledCredentialsUplinkMsg = constructUserCredentialsUplinkMsg(customerUser.getId(), "password", true, userCredentialsUuid);
 
         edgeImitator.expectResponsesAmount(1);
-        edgeImitator.sendUplinkMsg(credentialsUplinkMsg);
+        edgeImitator.sendUplinkMsg(enabledCredentialsUplinkMsg);
         Assert.assertTrue(edgeImitator.waitForResponses());
 
         User cloudUserWithCredentials = doGet("/api/user/" + uuid, User.class);
@@ -269,15 +273,26 @@ public class UserEdgeTest extends AbstractEdgeTest {
         return savedCustomer;
     }
 
-    private UplinkMsg constructUserUplinkMsg(User user, UpdateMsgType msgType) {
+    private UplinkMsg constructUserUplinkMsg(User user, UpdateMsgType msgType, UUID userCredentialsUuid) {
         UserUpdateMsg userUpdateMsg = EdgeMsgConstructorUtils.constructUserUpdatedMsg(msgType, user);
+
+        UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setId(new UserCredentialsId(userCredentialsUuid));
+        userCredentials.setUserId(user.getId());
+        userCredentials.setEnabled(false);
+        userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
+        userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+        UserCredentialsUpdateMsg userCredentialsMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+
         return UplinkMsg.newBuilder()
                 .addUserUpdateMsg(userUpdateMsg)
+                .addUserCredentialsUpdateMsg(userCredentialsMsg)
                 .build();
     }
 
-    private UplinkMsg constructUserCredentialsUplinkMsg(UserId userId, String password, boolean enabled) {
+    private UplinkMsg constructUserCredentialsUplinkMsg(UserId userId, String password, boolean enabled, UUID userCredentialsUuid) {
         UserCredentials userCredentials = new UserCredentials();
+        userCredentials.setId(new UserCredentialsId(userCredentialsUuid));
         userCredentials.setUserId(userId);
         userCredentials.setEnabled(enabled);
         userCredentials.setPassword(password);

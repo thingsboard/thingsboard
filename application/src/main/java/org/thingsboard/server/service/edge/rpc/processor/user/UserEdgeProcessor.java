@@ -91,7 +91,6 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         boolean isCreated = super.saveOrUpdateUser(tenantId, userId, userUpdateMsg);
 
         if (isCreated) {
-            saveOrUpdateUserCredentials(tenantId, userId, null);
             createRelationFromEdge(tenantId, edge.getId(), userId);
             pushUserCreatedEventToRuleEngine(tenantId, edge, userId);
         }
@@ -122,7 +121,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addUserUpdateMsg(EdgeMsgConstructorUtils.constructUserUpdatedMsg(msgType, user));
                     UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
-                    if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
+                    if (userCredentialsByUserId != null) {
                         builder.addUserCredentialsUpdateMsg(EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentialsByUserId));
                     }
                     return builder.build();
@@ -136,7 +135,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
             }
             case CREDENTIALS_UPDATED -> {
                 UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
-                if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
+                if (userCredentialsByUserId != null) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
                     return DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())

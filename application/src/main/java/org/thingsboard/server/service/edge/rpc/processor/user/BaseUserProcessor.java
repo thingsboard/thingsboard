@@ -18,7 +18,6 @@ package org.thingsboard.server.service.edge.rpc.processor.user;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -29,8 +28,6 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
-
-import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
 
 @Slf4j
 public abstract class BaseUserProcessor extends BaseEdgeProcessor {
@@ -89,7 +86,21 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
                     tenantId, user.getName(), userCredentials.getId(), userCredentials.isEnabled());
             try {
-                saveOrUpdateUserCredentials(tenantId, user.getId(), userCredentials);
+                UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
+
+                if (userCredentialsByUserId == null) {
+                    userCredentialsByUserId = new UserCredentials();
+                }
+
+                userCredentialsByUserId.setId(userCredentials.getId());
+                userCredentialsByUserId.setEnabled(userCredentials.isEnabled());
+                userCredentialsByUserId.setActivateToken(userCredentials.getActivateToken());
+                userCredentialsByUserId.setAdditionalInfo(userCredentials.getAdditionalInfo());
+                userCredentialsByUserId.setPassword(userCredentials.getPassword());
+                userCredentialsByUserId.setResetToken(userCredentials.getResetToken());
+                userCredentialsByUserId.setUserId(user.getId());
+
+                edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentialsByUserId, false);
             } catch (Exception e) {
                 log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
                         tenantId, user.getName(), userCredentialsUpdateMsg, e);
@@ -98,40 +109,6 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         } else {
             log.warn("[{}] Can't find user by id [{}], userCredentialsUpdateMsg [{}]", tenantId, userCredentials.getUserId(), userCredentialsUpdateMsg);
         }
-    }
-
-    protected void saveOrUpdateUserCredentials(TenantId tenantId, UserId userId, UserCredentials edgeUserCredentials) {
-        UserCredentials userCredentials = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, userId);
-
-        if (userCredentials == null) {
-            userCredentials = new UserCredentials();
-            userCredentials.setUserId(userId);
-        }
-
-        if (edgeUserCredentials != null) {
-            updateCredentialsFromEdge(userCredentials, edgeUserCredentials);
-        } else {
-            applyDefaultCredentials(userCredentials);
-        }
-
-        edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentials, false);
-    }
-
-    private void updateCredentialsFromEdge(UserCredentials target, UserCredentials source) {
-        if (source.getId() != null) {
-            target.setId(source.getId());
-        }
-        target.setEnabled(source.isEnabled());
-        target.setActivateToken(source.getActivateToken());
-        target.setAdditionalInfo(source.getAdditionalInfo());
-        target.setPassword(source.getPassword());
-        target.setResetToken(source.getResetToken());
-    }
-
-    private void applyDefaultCredentials(UserCredentials target) {
-        target.setEnabled(false);
-        target.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
-        target.setAdditionalInfo(JacksonUtil.newObjectNode());
     }
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, User user, UserUpdateMsg userUpdateMsg);
