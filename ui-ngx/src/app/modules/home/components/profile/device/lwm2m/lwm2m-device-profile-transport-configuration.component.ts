@@ -184,9 +184,6 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
       takeUntil(this.destroy$)
     ).subscribe(value => this.updateObserveStrategy(value));
 
-    this.lwm2mDeviceProfileFormGroup.get('initAttrTelAsObsStrategy').valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe(value => this.configurationValue.observeAttr.initAttrTelAsObsStrategy = value);
 
     this.lwm2mDeviceProfileFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)

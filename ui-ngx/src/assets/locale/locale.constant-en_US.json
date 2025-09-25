@@ -2395,8 +2395,8 @@
                 "composite-by-object": "Composite by objects",
                 "composite-by-object-description": "Resources are grouped by object type and observed using separate Composite Observe requests (balanced approach)"
             },
-            "init-attr-tel-as-obs-strategy": "Initializing attributes and telemetry as an Observe Strategy",
-            "init-attr-tel-as-obs-strategy-hint": "If the value is false - when initializing attributes and telemetry reading their values one by one\nIf the value is true - when initializing attributes and telemetry reading their values as indicated by the observation strategy"
+            "init-attr-tel-as-obs-strategy": "Initialize attributes and telemetry using Observe strategy",
+            "init-attr-tel-as-obs-strategy-hint": "If false - attributes and telemetry are initialized by reading their values one by one.\\nIf true - attributes and telemetry are initialized by subscribing to their values using the Observe strategy."
         },
         "snmp": {
             "add-communication-config": "Add communication config",
