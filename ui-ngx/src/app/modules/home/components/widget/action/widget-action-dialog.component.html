@@ -57,7 +57,7 @@
               <mat-option *ngFor="let column of configuredColumns; let $index = index"
                           [value]="$index"
                           [disabled]="usedCellClickColumns.includes($index)">
-                {{ getCellClickColumnInfo($index, column) }}
+                {{ getCellClickColumnInfo($index, column) | customTranslate }}
               </mat-option>
             </mat-select>
             <mat-icon matSuffix

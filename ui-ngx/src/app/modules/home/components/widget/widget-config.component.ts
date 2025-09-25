@@ -926,7 +926,26 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.modelValue) {
       const configuredColumns = new Array<CellClickColumnInfo>();
       if (this.modelValue.config?.datasources[0]?.dataKeys?.length) {
-        configuredColumns.push(...this.keysToCellClickColumns(this.modelValue.config.datasources[0].dataKeys));
+        const {
+          displayEntityLabel,
+          displayEntityName,
+          displayEntityType,
+          entityNameColumnTitle,
+          entityLabelColumnTitle
+        } = this.modelValue.config.settings;
+        const displayEntitiesArray = [];
+        if (isDefined(displayEntityName)) {
+          const displayName = entityNameColumnTitle ? entityNameColumnTitle : 'entityName';
+          displayEntitiesArray.push({name: displayName, label: displayName});
+        }
+        if (isDefined(displayEntityLabel)) {
+          const displayLabel = entityLabelColumnTitle ? entityLabelColumnTitle : 'entityLabel';
+          displayEntitiesArray.push({name: displayLabel, label: displayLabel});
+        }
+        if (isDefined(displayEntityType)) {
+          displayEntitiesArray.push({name: 'entityType', label: 'entityType'});
+        }
+        configuredColumns.push(...displayEntitiesArray, ...this.keysToCellClickColumns(this.modelValue.config.datasources[0].dataKeys));
       }
       if (this.modelValue.config?.alarmSource?.dataKeys?.length) {
         configuredColumns.push(...this.keysToCellClickColumns(this.modelValue.config.alarmSource.dataKeys));
