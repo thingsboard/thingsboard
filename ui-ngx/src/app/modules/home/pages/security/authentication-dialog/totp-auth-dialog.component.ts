@@ -42,6 +42,7 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
 
   totpConfigForm: UntypedFormGroup;
   totpAuthURL: string;
+  totpAuthURLSecret: string;
 
   @ViewChild('stepper', {static: false}) stepper: MatStepper;
   @ViewChild('canvas', {static: false}) canvasRef: ElementRef<HTMLCanvasElement>;
@@ -55,6 +56,7 @@ export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogCompo
     this.twoFaService.generateTwoFaAccountConfig(TwoFactorAuthProviderType.TOTP).subscribe(accountConfig => {
       this.authAccountConfig = accountConfig as TotpTwoFactorAuthAccountConfig;
       this.totpAuthURL = this.authAccountConfig.authUrl;
+      this.totpAuthURLSecret = new URL(this.totpAuthURL).searchParams.get('secret');
       this.authAccountConfig.useByDefault = true;
       import('qrcode').then((QRCode) => {
         unwrapModule(QRCode).toCanvas(this.canvasRef.nativeElement, this.totpAuthURL);

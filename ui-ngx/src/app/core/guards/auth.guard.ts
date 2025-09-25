@@ -104,6 +104,16 @@ export class AuthGuard  {
               }
               this.authService.logout();
               return of(this.authService.defaultUrl(false));
+            } else if (path === 'login.force-mfa') {
+              if (authState.authUser?.authority === Authority.MFA_CONFIGURATION_TOKEN) {
+                return this.authService.getAvailableTwoFaProviders().pipe(
+                  map(() => {
+                    return true;
+                  })
+                );
+              }
+              this.authService.logout();
+              return of(this.authService.defaultUrl(false));
             } else {
               return of(true);
             }
