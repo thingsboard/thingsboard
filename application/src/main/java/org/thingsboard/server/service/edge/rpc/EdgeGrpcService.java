@@ -501,7 +501,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 sessionNewEvents.remove(edgeId);
             } finally {
                 newEventLock.unlock();
-            }destroySession(toRemove);
+            }
+            destroySession(toRemove);
             TenantId tenantId = toRemove.getEdge().getTenantId();
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
