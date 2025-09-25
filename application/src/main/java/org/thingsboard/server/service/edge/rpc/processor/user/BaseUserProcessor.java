@@ -89,18 +89,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
                     tenantId, user.getName(), userCredentials.getId(), userCredentials.isEnabled());
             try {
-                UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
-                if (userCredentialsByUserId == null) {
-                    userCredentialsByUserId = createDefaultUserCredentialsIfAbsent(tenantId, user.getId());
-                }
-                userCredentialsByUserId.setEnabled(userCredentials.isEnabled());
-                userCredentialsByUserId.setPassword(userCredentials.getPassword());
-                userCredentialsByUserId.setActivateToken(userCredentials.getActivateToken());
-                userCredentialsByUserId.setResetToken(userCredentials.getResetToken());
-                userCredentialsByUserId.setAdditionalInfo(userCredentials.getAdditionalInfo());
-
-                edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentialsByUserId);
-
+                saveOrUpdateUserCredentials(tenantId, user.getId(), userCredentials);
             } catch (Exception e) {
                 log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
                         tenantId, user.getName(), userCredentialsUpdateMsg, e);
@@ -111,18 +100,38 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         }
     }
 
-    protected UserCredentials createDefaultUserCredentialsIfAbsent(TenantId tenantId, UserId userId) {
+    protected void saveOrUpdateUserCredentials(TenantId tenantId, UserId userId, UserCredentials edgeUserCredentials) {
         UserCredentials userCredentials = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, userId);
+
         if (userCredentials == null) {
             userCredentials = new UserCredentials();
             userCredentials.setUserId(userId);
-            userCredentials.setEnabled(false);
-            userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
-            userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
-            userCredentials = edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentials, false);
         }
 
-        return userCredentials;
+        if (edgeUserCredentials != null) {
+            updateCredentialsFromEdge(userCredentials, edgeUserCredentials);
+        } else {
+            applyDefaultCredentials(userCredentials);
+        }
+
+        edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentials, false);
+    }
+
+    private void updateCredentialsFromEdge(UserCredentials target, UserCredentials source) {
+        if (source.getId() != null) {
+            target.setId(source.getId());
+        }
+        target.setEnabled(source.isEnabled());
+        target.setActivateToken(source.getActivateToken());
+        target.setAdditionalInfo(source.getAdditionalInfo());
+        target.setPassword(source.getPassword());
+        target.setResetToken(source.getResetToken());
+    }
+
+    private void applyDefaultCredentials(UserCredentials target) {
+        target.setEnabled(false);
+        target.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+        target.setAdditionalInfo(JacksonUtil.newObjectNode());
     }
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, User user, UserUpdateMsg userUpdateMsg);

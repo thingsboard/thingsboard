@@ -91,7 +91,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         boolean isCreated = super.saveOrUpdateUser(tenantId, userId, userUpdateMsg);
 
         if (isCreated) {
-            createDefaultUserCredentialsIfAbsent(tenantId, userId);
+            saveOrUpdateUserCredentials(tenantId, userId, null);
             createRelationFromEdge(tenantId, edge.getId(), userId);
             pushUserCreatedEventToRuleEngine(tenantId, edge, userId);
         }

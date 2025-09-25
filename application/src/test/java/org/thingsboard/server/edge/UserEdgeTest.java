@@ -290,7 +290,6 @@ public class UserEdgeTest extends AbstractEdgeTest {
     private void assertUserCredentialsFlags(User user, boolean enabled, boolean activated) {
         JsonNode info = user.getAdditionalInfo();
         Assert.assertNotNull(info);
-        System.out.println(info);
         Assert.assertEquals(enabled, info.get("userCredentialsEnabled").asBoolean());
         Assert.assertEquals(activated, info.get("userActivated").asBoolean());
     }
