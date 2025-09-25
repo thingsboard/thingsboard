@@ -17,6 +17,13 @@
 -->
 <div class="mat-content mat-padding flex flex-col">
   <label class="tb-title" translate>entity.columns-to-display</label>
+  <mat-checkbox
+    [checked]="allColumnsVisible"
+    [indeterminate]="someColumnsVisible"
+    (change)="toggleAllColumns($event)">
+    {{'entity.show-all-columns' | translate}}
+  </mat-checkbox>
+  <mat-divider/>
   <mat-checkbox [(ngModel)]="column.display" *ngFor="let column of (columns | selectableColumns)"
                 (ngModelChange)="update()">
     {{ column.title }}

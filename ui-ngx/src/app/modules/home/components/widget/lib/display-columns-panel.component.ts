@@ -37,6 +37,32 @@ export class DisplayColumnsPanelComponent {
     this.columns = this.data.columns;
   }
 
+  get selectableColumns(): DisplayColumn[] {
+    return this.columns.filter(column => column.selectable);
+  }
+
+  get allColumnsVisible(): boolean {
+    const selectableColumns = this.selectableColumns;
+    return selectableColumns.length > 0 && selectableColumns.every(column => column.display);
+  }
+
+  get someColumnsVisible(): boolean {
+    const selectableColumns = this.selectableColumns;
+    const visibleCount = selectableColumns.filter(column => column.display).length;
+    return visibleCount > 0 && visibleCount < selectableColumns.length;
+  }
+
+  public toggleAllColumns(event: any): void {
+    const isChecked = event.checked;
+    const selectableColumns = this.selectableColumns;
+    
+    selectableColumns.forEach(column => {
+      column.display = isChecked;
+    });
+    
+    this.update();
+  }
+
   public update() {
     this.data.columnsUpdated(this.columns);
   }
