@@ -203,13 +203,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   get hideToolbar(): boolean {
-    const showToolbarInSpecialCase = this.forceFullscreen && this.hideToolbarSetting() && !this.isMobile;
-  
-    if (showToolbarInSpecialCase) {
-      return this.isEditingWidget || this.isAddingWidget;
-    }
-    
-    return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget) || !(this.isMobile || !this.forceFullscreen);
+    return ((this.hideToolbarValue || this.hideToolbarSetting()) && !this.isEdit) || (this.isEditingWidget || this.isAddingWidget);
   }
 
   @Input()
@@ -655,9 +649,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   private hideToolbarSetting(): boolean {
-    if (this.dashboard.configuration.settings &&
-      isDefined(this.dashboard.configuration.settings.hideToolbar)) {
-      return this.dashboard.configuration.settings.hideToolbar;
+    if (isDefined(this.dashboard.configuration?.settings?.hideToolbar)) {
+      const check = !this.forceFullscreen || this.isMobileApp;
+      return this.dashboard.configuration.settings.hideToolbar && check;
     } else {
       return false;
     }
