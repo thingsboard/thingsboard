@@ -650,8 +650,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private hideToolbarSetting(): boolean {
     if (isDefined(this.dashboard.configuration?.settings?.hideToolbar)) {
-      const check = !this.forceFullscreen || this.isMobileApp;
-      return this.dashboard.configuration.settings.hideToolbar && check;
+      const isForcedToDisplayToolbar = !this.forceFullscreen || this.isMobileApp;
+      return this.dashboard.configuration.settings.hideToolbar && isForcedToDisplayToolbar;
     } else {
       return false;
     }
