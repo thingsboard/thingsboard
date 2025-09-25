@@ -18,7 +18,7 @@
 @if (!versionLoadResult$) {
   @if (entityDataInfo) {
     <mat-toolbar>
-      <h2>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
+      <h2 tbTruncateWithTooltip>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
       <span class="flex-1"></span>
     </mat-toolbar>
     <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
