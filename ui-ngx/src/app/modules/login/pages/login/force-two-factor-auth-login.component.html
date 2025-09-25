@@ -60,7 +60,7 @@
             </mat-card-header>
             <mat-card-content>
               <div class="flex flex-col items-center justify-start">
-                <p class="mat-body qr-code-description mb-4" translate>security.2fa.dialog.scan-qr-code</p>
+                <p class="mat-body qr-code-description mb-4" translate>login.scan-qr-code</p>
                 <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
                 <p class="mat-body qr-code-description" translate>login.enter-key-manually</p>
                 <div class="flex flex-row items-center mb-8 w-full overflow-hidden">
@@ -69,7 +69,7 @@
                     class="attribute-copy"
                     [disabled]="isLoading$ | async"
                     [copyText]="totpAuthURLSecret"
-                    tooltipText="{{ 'attribute.copy-key' | translate }}"
+                    tooltipText="{{ 'login.copy-key' | translate }}"
                     tooltipPosition="above"
                     icon="content_copy"
                     [style]="{'font-size': '24px', color: 'rgba(255,255,255,.8)'}"
@@ -111,9 +111,13 @@
             <mat-card-content>
               <div class="flex flex-col items-center justify-start">
                 <form [formGroup]="smsConfigForm" class="mb-12">
-                  <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
+                  <p class="mat-body step-description input" translate>login.sms-description</p>
                   <div class="flex flex-row items-center justify-between gap-3.75">
                     <tb-phone-input class="flex-1"
+                                    label="{{ 'login.phone-input.phone-input-label' | translate }}"
+                                    hint="login.phone-input.phone-input-hint"
+                                    requiredErrorText="{{ 'login.phone-input.phone-input-required' | translate }}"
+                                    validationErrorText="{{ 'login.phone-input.phone-input-validation' | translate }}"
                                     formControlName="phone"
                                     [floatLabel]="'auto'">
                     </tb-phone-input>
@@ -121,7 +125,7 @@
                 </form>
                 <div class="flex flex-col items-center justify-start gap-2 w-full">
                   <button type="button" mat-stroked-button [disabled]="(isLoading$ | async) || smsConfigForm.invalid || !smsConfigForm.dirty" class="navigation w-full" (click)="sendSmsCode()">
-                    {{ 'security.2fa.dialog.send-code' | translate }}
+                    {{ 'login.send-code' | translate }}
                   </button>
                   <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(TwoFactorAuthProviderType.SMS)">
                     {{ 'login.try-another-way' | translate }}
@@ -148,28 +152,28 @@
                 <button mat-icon-button type="button" (click)="state.set(ForceTwoFAState.SETUP)">
                   <mat-icon>chevron_left</mat-icon>
                 </button>
-                {{ 'login.enable-authenticator-sms' | translate }}
+                {{ 'login.enable-authenticator-email' | translate }}
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
               <div class="flex flex-col items-center justify-start">
                 <form [formGroup]="emailConfigForm" class="mb-8">
-                  <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
+                  <p class="mat-body step-description input" translate>login.email-description</p>
                   <mat-form-field class="mat-block input-container flex-1">
                     <input matInput formControlName="email"
                            type="email" required
-                           placeholder="{{ 'security.2fa.dialog.email-step-label' | translate }}" />
+                           placeholder="{{ 'login.email-label' | translate }}" />
                     <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
-                      {{ 'user.email-required' | translate }}
+                      {{ 'login.email-required' | translate }}
                     </mat-error>
                     <mat-error *ngIf="emailConfigForm.get('email').hasError('email')">
-                      {{ 'user.invalid-email-format' | translate }}
+                      {{ 'login.invalid-email-format' | translate }}
                     </mat-error>
                   </mat-form-field>
                 </form>
                 <div class="flex flex-col items-center justify-start gap-2 w-full">
                   <button type="button" mat-stroked-button [disabled]="(isLoading$ | async) || emailConfigForm.invalid" class="navigation w-full" (click)="sendEmailCode()">
-                    {{ 'security.2fa.dialog.send-code' | translate }}
+                    {{ 'login.send-code' | translate }}
                   </button>
                   <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(TwoFactorAuthProviderType.EMAIL)">
                     {{ 'login.try-another-way' | translate }}
@@ -201,7 +205,7 @@
             </mat-card-header>
             <mat-card-content>
               <div mat-dialog-content tb-toast class="backup-code">
-                <p class="mat-body-2 description" translate>security.2fa.dialog.backup-code-description</p>
+                <p class="mat-body-2 description" translate>login.backup-code-description</p>
                 <div class="container">
                   @for (code of backupCode?.codes; track code) {
                     <div class="code">{{ code }}</div>
@@ -209,13 +213,13 @@
                 </div>
                 <div class="action-buttons flex flex-row items-center justify-start gap-4">
                   <button type="button" mat-flat-button class="provider w-full" (click)="downloadFile()">
-                    {{ 'security.2fa.dialog.download-txt' | translate }}
+                    {{ 'login.download-txt' | translate }}
                   </button>
                   <button type="button" mat-stroked-button class="provider w-full" (click)="printCode()">
-                    {{ 'action.print' | translate }}
+                    {{ 'login.print' | translate }}
                   </button>
                 </div>
-                <p class="mat-body-2 description" translate>security.2fa.dialog.backup-code-warn</p>
+                <p class="mat-body-2 description" translate>login.backup-code-warn</p>
                 <button type="button" mat-raised-button color="accent" class="navigation w-full" (click)="backupCodeState.set(BackupCodeState.SUCCESS)">
                   {{ 'login.continue' | translate }}
                 </button>
@@ -257,9 +261,9 @@
                  maxlength="6" type="text" required
                  inputmode="numeric" pattern="[0-9]*"
                  autocomplete="off"
-                 placeholder="{{ 'security.2fa.dialog.verification-code' | translate }}">
+                 placeholder="{{ 'login.verification-code' | translate }}">
           <mat-error *ngIf="configForm.get('verificationCode').invalid">
-            {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
+            {{ 'login.verification-code-invalid' | translate }}
           </mat-error>
         </mat-form-field>
         <div class="flex flex-col items-center justify-start gap-2 w-full">

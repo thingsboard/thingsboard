@@ -3909,7 +3909,25 @@
         "authenticator-backup-code-success": "Backup code successfully enabled",
         "authenticator-backup-code-success-description": "The next time you log in, you will be prompted to enter the security code or use one of backup code.",
         "add-verification-method": "Add verification method",
-        "get-backup-code": "Get backup code"
+        "get-backup-code": "Get backup code",
+        "copy-key": "Copy key",
+        "send-code": "Send code",
+        "email-label": "Email",
+        "sms-description": "Enter a phone number to use as your authenticator.",
+        "backup-code-description": "Print out the codes so you have them handy when you need to use them to log in to your account. You can use each backup code once.",
+        "backup-code-warn": "Once you leave this page, these codes cannot be shown again. Store them safely using the options below.",
+        "download-txt": "Download (txt)",
+        "print": "Print",
+        "verification-code": "6-digit code",
+        "verification-code-invalid": "Invalid verification code format",
+        "scan-qr-code": "Scan this QR code with your verification app",
+        "phone-input": {
+            "phone-input-label": "Phone number",
+            "phone-input-required": "Phone number is required",
+            "phone-input-validation": "Phone number is invalid or not possible",
+            "phone-input-pattern": "Invalid phone number. Should be in E.164 format, ex. {{phoneNumber}}",
+            "phone-input-hint": "Phone Number in E.164 format, ex. {{phoneNumber}}"
+        }
     },
     "markdown": {
         "edit": "Edit",
