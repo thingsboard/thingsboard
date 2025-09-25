@@ -9032,6 +9032,7 @@
             "show-empty-space-hidden-action": "Show empty space instead of hidden cell button action",
             "dont-reserve-space-hidden-action": "Don't reserve space for hidden action buttons",
             "display-timestamp": "Timestamp",
+            "timestamp-column-name":"Timestamp",
             "display-pagination": "Display pagination",
             "default-page-size": "Default page size",
             "page-step-settings": "Page step settings",
