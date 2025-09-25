@@ -1169,7 +1169,21 @@
         "check-connectivity-failed": "Test request failed",
         "no-model-matching": "No models matching '{{entity}}' were found.",
         "model-required": "Model is required.",
-        "no-model-text": "No models found."
+        "no-model-text": "No models found.",
+        "authentication": "Authentication",
+        "authentication-basic-hint": "Uses standard HTTP Basic authentication. The username and password will be combined, Base64-encoded, and sent in an \"Authorization\" header with each request to the Ollama server.",
+        "authentication-token-hint": "Uses Bearer token authentication. The provided token will be sent directly in an \"Authorization\" eader with each request to the Ollama server.",
+        "authentication-type": {
+            "none": "None",
+            "basic": "Basic",
+            "token": "Token"
+        },
+        "username": "Username",
+        "username-required": "Username is required.",
+        "password": "Password",
+        "password-required": "Password is required.",
+        "token": "Token",
+        "token-required": "Token is required."
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
