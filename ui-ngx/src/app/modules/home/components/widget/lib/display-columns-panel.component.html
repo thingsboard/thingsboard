@@ -24,8 +24,9 @@
     {{'entity.show-all-columns' | translate}}
   </mat-checkbox>
   <mat-divider/>
-  <mat-checkbox [(ngModel)]="column.display" *ngFor="let column of (columns | selectableColumns)"
-                (ngModelChange)="update()">
-    {{ column.title }}
-  </mat-checkbox>
+  @for (column of columns; track column.def) {
+    <mat-checkbox [(ngModel)]="column.display" (ngModelChange)="update()">
+      {{ column.title }}
+    </mat-checkbox>
+  }
 </div>

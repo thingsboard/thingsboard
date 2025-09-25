@@ -15,6 +15,8 @@
 ///
 
 import { Component, Inject, InjectionToken } from '@angular/core';
+import { isDefinedAndNotNull } from '@app/core/utils';
+import { SelectableColumnsPipe } from '@app/shared/pipe/selectable-columns.pipe';
 import { DisplayColumn } from '@home/components/widget/lib/table-widget.models';
 
 export const DISPLAY_COLUMNS_PANEL_DATA = new InjectionToken<any>('DisplayColumnsPanelData');
@@ -34,29 +36,23 @@ export class DisplayColumnsPanelComponent {
   columns: DisplayColumn[];
 
   constructor(@Inject(DISPLAY_COLUMNS_PANEL_DATA) public data: DisplayColumnsPanelData) {
-    this.columns = this.data.columns;
-  }
-
-  get selectableColumns(): DisplayColumn[] {
-    return this.columns.filter(column => column.selectable);
+    const selectableColumnsPipe = new SelectableColumnsPipe();
+    this.columns = selectableColumnsPipe.transform(this.data.columns);
   }
 
   get allColumnsVisible(): boolean {
-    const selectableColumns = this.selectableColumns;
-    return selectableColumns.length > 0 && selectableColumns.every(column => column.display);
+    return isDefinedAndNotNull(this.columns) && this.columns.every(column => column.display);
   }
 
   get someColumnsVisible(): boolean {
-    const selectableColumns = this.selectableColumns;
-    const visibleCount = selectableColumns.filter(column => column.display).length;
-    return visibleCount > 0 && visibleCount < selectableColumns.length;
+    const filtredColumns = this.columns.filter(item => item.display);
+    return filtredColumns.length !== 0 && this.columns.length !== filtredColumns.length;
   }
 
   public toggleAllColumns(event: any): void {
     const isChecked = event.checked;
-    const selectableColumns = this.selectableColumns;
     
-    selectableColumns.forEach(column => {
+    this.columns.forEach(column => {
       column.display = isChecked;
     });
     
