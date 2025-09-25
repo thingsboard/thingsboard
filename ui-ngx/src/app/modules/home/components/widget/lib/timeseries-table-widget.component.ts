@@ -513,7 +513,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         let title = '';
         const header = this.sources[index].header.find(column => column.index.toString() === value);
         if (value === '0') {
-          title = 'Timestamp';
+          title = this.translate.instant('widgets.table.timestamp-column-name');
         } else if (value === 'actions') {
           title = 'Actions';
         } else {

@@ -147,6 +147,7 @@ export interface WidgetAction extends IWidgetAction {
 
 export interface IDashboardWidget {
   updateWidgetParams(): void;
+  updateParamsFromData(detectChanges?: boolean): void;
 }
 
 export class WidgetContext {
@@ -476,6 +477,10 @@ export class WidgetContext {
         this.dashboardWidget.updateWidgetParams();
       }, 0);
     }
+  }
+
+  updateParamsFromData(detectChanges = false) {
+    this.dashboardWidget.updateParamsFromData(detectChanges);
   }
 
   updateAliases(aliasIds?: Array<string>) {

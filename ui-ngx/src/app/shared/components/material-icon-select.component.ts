@@ -71,6 +71,10 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
   @coerceBoolean()
   iconClearButton = false;
 
+  @Input()
+  @coerceBoolean()
+  allowedCustomIcon = false;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -169,7 +173,8 @@ export class MaterialIconSelectComponent extends PageComponent implements OnInit
         this.viewContainerRef, MaterialIconsComponent, 'left', true, null,
         {
           selectedIcon: this.materialIconFormGroup.get('icon').value,
-          iconClearButton: this.iconClearButton
+          iconClearButton: this.iconClearButton,
+          allowedCustomIcon: this.allowedCustomIcon,
         },
         {},
         {}, {}, true);

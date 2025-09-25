@@ -24,6 +24,7 @@ import {
 } from '@shared/models/widget.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
+  deepClone,
   guid,
   hashCode,
   isDefinedAndNotNull,
@@ -61,17 +62,42 @@ export interface TbMapDatasource extends Datasource {
   mapDataIds: string[];
 }
 
-export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings, id = guid()): TbMapDatasource => {
+export const mapDataSourceSettingsToDatasource = (settings: MapDataSourceSettings | MapDataLayerSettings,
+                                                  id = guid(),
+                                                  includeDataKeys = false, dataLayerType?: MapDataLayerType): TbMapDatasource => {
+  const dataKeys = includeDataKeys ? mapDataLayerDatasourceDataKeys((settings as MapDataLayerSettings), dataLayerType) : [];
   return {
     type: settings.dsType,
     name: settings.dsLabel,
     deviceId: settings.dsDeviceId,
     entityAliasId: settings.dsEntityAliasId,
     filterId: settings.dsFilterId,
-    dataKeys: [],
+    dataKeys: dataKeys,
     latestDataKeys: [],
     mapDataIds: [id]
   };
+};
+
+const mapDataLayerDatasourceDataKeys = (settings: MapDataLayerSettings,
+                                                 dataLayerType: MapDataLayerType): DataKey[] => {
+  const dataKeys = settings.additionalDataKeys?.length ? deepClone(settings.additionalDataKeys) : [];
+  switch (dataLayerType) {
+    case 'trips':
+      const tripsSettings = settings as TripsDataLayerSettings;
+      dataKeys.push(tripsSettings.xKey, tripsSettings.yKey);
+      break;
+    case 'markers':
+      const markersSettings = settings as MarkersDataLayerSettings;
+      dataKeys.push(markersSettings.xKey, markersSettings.yKey);
+      break;
+    case 'polygons':
+      dataKeys.push((settings as PolygonsDataLayerSettings).polygonKey);
+      break;
+    case 'circles':
+      dataKeys.push((settings as CirclesDataLayerSettings).circleKey);
+      break;
+  }
+  return dataKeys;
 };
 
 
@@ -658,10 +684,11 @@ export interface AdditionalMapDataSourceSettings extends MapDataSourceSettings {
   dataKeys: DataKey[];
 }
 
-export const additionalMapDataSourcesToDatasources = (additionalMapDataSources: AdditionalMapDataSourceSettings[]): TbMapDatasource[] => {
+export const additionalMapDataSourcesToDatasources = (additionalMapDataSources: AdditionalMapDataSourceSettings[],
+                                                      includeDataKeys = true): TbMapDatasource[] => {
   return additionalMapDataSources.map(addDs => {
     const res = mapDataSourceSettingsToDatasource(addDs);
-    res.dataKeys = addDs.dataKeys;
+    res.dataKeys = includeDataKeys ? addDs.dataKeys : [];
     return res;
   });
 };

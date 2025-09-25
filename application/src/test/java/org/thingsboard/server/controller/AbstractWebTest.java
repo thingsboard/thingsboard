@@ -68,7 +68,10 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.actors.DefaultTbActorSystem;
 import org.thingsboard.server.actors.TbActorId;
 import org.thingsboard.server.actors.TbActorMailbox;
+import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
 import org.thingsboard.server.actors.TbEntityActorId;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldEntityActor;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldEntityMessageProcessor;
 import org.thingsboard.server.actors.device.DeviceActor;
 import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
@@ -99,6 +102,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -150,6 +154,7 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.service.cf.CfRocksDb;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -1099,6 +1104,17 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         });
     }
 
+    protected void awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsDirty(EntityId entityId, CalculatedFieldId cfId) {
+        CalculatedFieldEntityMessageProcessor processor = getCalculatedFieldEntityMessageProcessor(entityId);
+        Map<CalculatedFieldId, CalculatedFieldState> statesMap = (Map<CalculatedFieldId, CalculatedFieldState>) ReflectionTestUtils.getField(processor, "states");
+        Awaitility.await("CF state for entity actor marked as dirty").atMost(5, TimeUnit.SECONDS).until(() -> {
+            CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
+            boolean stateDirty = calculatedFieldState != null && calculatedFieldState.isDirty();
+            log.warn("entityId {}, cfId {}, state dirty == {}", entityId, cfId, stateDirty);
+            return stateDirty;
+        });
+    }
+
     protected static String getMapName(FeatureType featureType) {
         switch (featureType) {
             case ATTRIBUTES:
@@ -1118,6 +1134,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         TbActorMailbox actorMailbox = actors.get(new TbEntityActorId(deviceId));
         DeviceActor actor = (DeviceActor) ReflectionTestUtils.getField(actorMailbox, "actor");
         return (DeviceActorMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
+    }
+
+    protected CalculatedFieldEntityMessageProcessor getCalculatedFieldEntityMessageProcessor(EntityId entityId) {
+        DefaultTbActorSystem actorSystem = (DefaultTbActorSystem) ReflectionTestUtils.getField(actorService, "system");
+        ConcurrentMap<TbActorId, TbActorMailbox> actors = (ConcurrentMap<TbActorId, TbActorMailbox>) ReflectionTestUtils.getField(actorSystem, "actors");
+        Awaitility.await("CF entity actor was created").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> actors.containsKey(new TbCalculatedFieldEntityActorId(entityId)));
+        TbActorMailbox actorMailbox = actors.get(new TbCalculatedFieldEntityActorId(entityId));
+        CalculatedFieldEntityActor actor = (CalculatedFieldEntityActor) ReflectionTestUtils.getField(actorMailbox, "actor");
+        return (CalculatedFieldEntityMessageProcessor) ReflectionTestUtils.getField(actor, "processor");
     }
 
     protected void updateDefaultTenantProfileConfig(Consumer<DefaultTenantProfileConfiguration> updater) throws ThingsboardException {

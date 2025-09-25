@@ -51,7 +51,7 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
     @Override
     public void destroy(TbActorStopReason stopReason, Throwable cause) throws TbActorException {
         log.debug("[{}] Stopping CF entity actor.", processor.tenantId);
-        processor.stop();
+        processor.stop(false);
     }
 
     @Override
@@ -74,6 +74,9 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
                 break;
             case CF_LINKED_TELEMETRY_MSG:
                 processor.process((EntityCalculatedFieldLinkedTelemetryMsg) msg);
+                break;
+            case CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG:
+                processor.process((EntityCalculatedFieldDynamicArgumentsRefreshMsg) msg);
                 break;
             default:
                 return false;
