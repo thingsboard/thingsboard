@@ -74,8 +74,8 @@
               {{'dashboard.states-short' | translate}}
             </button>
         </ng-container>
-          <img *ngIf="showDashboardLogo()" [src]="dashboardLogo | image | async"
-               aria-label="dashboard_logo" class="dashboard_logo"/>
+          <img *ngIf="showDashboardLogo()" [src]="dashboardLogo | image | async" (click)="goHome()"
+               aria-label="dashboard_logo" class="dashboard_logo pointer-events-auto cursor-pointer"/>
         </div>
         <div class="tb-dashboard-action-panel">
           <button [class.!hidden]="!showCloseToolbar()" mat-icon-button class="close-action"

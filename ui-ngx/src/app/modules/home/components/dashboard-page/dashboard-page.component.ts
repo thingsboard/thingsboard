@@ -1800,6 +1800,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
+  goHome() {
+    this.router.navigate(['home']);
+  }
+
   get showMainLayoutFiller(): boolean {
     const layoutMaxWidth = this.dashboardUtils.getBreakpointInfoById(this.layouts.main.layoutCtx.breakpoint)?.maxWidth || Infinity;
     const dashboardMaxWidth = this.dashboardUtils.getBreakpointInfoById(this.dashboardCtx.breakpoint)?.maxWidth || Infinity;
