@@ -35,6 +35,12 @@ export interface AiModel extends Omit<BaseData<AiModelId>, 'label'>, HasTenantId
       accessKeyId?: string;
       secretAccessKey?: string;
       baseUrl?: string;
+      auth?: {
+        type: AuthenticationType;
+        username?: string;
+        password?: string;
+        token?: string
+      }
     };
     modelId: string;
     temperature?: number;
@@ -241,4 +247,9 @@ export interface AiModelWithUserMsg {
 export interface CheckConnectivityResult {
   status: string;
   errorDetails: string;
+}
+export enum AuthenticationType {
+  NONE = 'NONE',
+  BASIC = 'BASIC',
+  TOKEN = 'TOKEN'
 }
