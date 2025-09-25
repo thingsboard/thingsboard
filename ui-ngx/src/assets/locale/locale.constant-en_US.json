@@ -1429,6 +1429,8 @@
         "mobile-order": "Dashboard order in mobile application",
         "mobile-hide": "Hide dashboard in mobile application",
         "update-image": "Update dashboard image",
+        "update-new-version": "Upload new version",
+        "upload-file-to-update": "Upload file to update",
         "take-screenshot": "Take screenshot",
         "select-widget-title": "Select widget",
         "select-widget-value": "{{title}}: select widget",
@@ -9030,6 +9032,7 @@
             "show-empty-space-hidden-action": "Show empty space instead of hidden cell button action",
             "dont-reserve-space-hidden-action": "Don't reserve space for hidden action buttons",
             "display-timestamp": "Timestamp",
+            "timestamp-column-name":"Timestamp",
             "display-pagination": "Display pagination",
             "default-page-size": "Default page size",
             "page-step-settings": "Page step settings",
@@ -9601,7 +9604,8 @@
             "add-key": "Add key",
             "no-key": "No key",
             "delete-key": "Delete key",
-            "target-dashboard-state": "Target dashboard state"
+            "target-dashboard-state": "Target dashboard state",
+            "go-to-main-state": "Go to default view"
         }
     },
     "color": {
