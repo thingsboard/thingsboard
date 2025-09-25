@@ -45,6 +45,9 @@
             <mat-label translate>admin.user-lockout-notification-email</mat-label>
             <input matInput type="email"
                    formControlName="userLockoutNotificationEmail"/>
+            <mat-error *ngIf="securitySettingsFormGroup.get('userLockoutNotificationEmail').invalid">
+              {{ 'login.invalid-email-format' | translate }}
+            </mat-error>
           </mat-form-field>
           <mat-form-field class="mat-block">
             <mat-label translate>admin.user-activation-token-ttl</mat-label>
