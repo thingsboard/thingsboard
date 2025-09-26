@@ -38,7 +38,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActivatedRoute, Router, UrlTree } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from '@core/services/utils.service';
 import {
   BreakpointId,
@@ -157,7 +157,6 @@ import {
   MoveWidgetsDialogResult
 } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 import { HttpStatusCode } from '@angular/common/http';
-import { AuthService } from '@core/auth/auth.service';
 
 // @dynamic
 @Component({
@@ -273,8 +272,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     {width: '100%', height: '100%', maxWidth: '100%', minWidth: '100%'};
   rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
 
-  dashboardLogoLink: string | UrlTree;
-
   private dashboardLogoCache: SafeUrl;
   private defaultDashboardLogo = 'assets/logo_title_white.svg';
 
@@ -377,7 +374,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private dialog: MatDialog,
               public translate: TranslateService,
               private popoverService: TbPopoverService,
-              private authService: AuthService,
               private renderer: Renderer2,
               private ngZone: NgZone,
               @Optional() @Inject('embeddedValue') private embeddedValue,
@@ -520,7 +516,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.layouts.right.layoutCtx.widgets = new LayoutWidgetsArray(this.dashboardCtx);
     this.widgetEditMode = data.widgetEditMode;
     this.singlePageMode = data.singlePageMode;
-    this.dashboardLogoLink = this.getDashboardLogoLink();
 
     this.readonly = this.embedded || (this.singlePageMode && !this.widgetEditMode && !this.route.snapshot.queryParamMap.get('edit'))
                     || this.forceFullscreen || this.isMobileApp || this.authUser.authority === Authority.CUSTOMER_USER ||
@@ -1830,13 +1825,5 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       return breakpoint.maxWidth < 960;
     }
     return false;
-  }
-
-  private getDashboardLogoLink(): string | UrlTree {
-    if (this.authUser.isPublic) {
-      return this.dashboardService.getPublicDashboardLink(this.dashboard);
-    } else {
-      return this.authService.defaultUrl(true, this.authState);
-    }
   }
 }
