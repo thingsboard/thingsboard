@@ -1112,7 +1112,8 @@
             "mistral-ai": "Mistral AI",
             "anthropic": "Anthropic",
             "amazon-bedrock": "Amazon Bedrock",
-            "github-models": "GitHub Models"
+            "github-models": "GitHub Models",
+            "ollama": "Ollama"
         },
         "name-required": "Name is required.",
         "name-max-length": "Name must be 255 characters or less.",
@@ -1155,17 +1156,34 @@
         "frequency-penalty": "Frequency penalty",
         "frequency-penalty-hint": "Applies a penalty to a token's likelihood that increases based on its frequency in the text.",
         "max-output-tokens": "Maximum output tokens",
-        "max-output-tokens-min": "Must be greater than 0.",
         "max-output-tokens-hint": "Sets the maximum number of tokens that the \nmodel can generate in a single response.",
+        "context-length": "Context length",
+        "context-length-hint": "Defines the size of the context window in tokens. This value sets the total memory limit for the model, including both the user's input and the generated response.",
         "endpoint": "Endpoint",
         "endpoint-required": "Endpoint is required.",
+        "baseurl": "Base URL",
+        "baseurl-required": "Base URL is required.",
         "service-version": "Service version",
         "check-connectivity": "Check connectivity",
         "check-connectivity-success": "Test request was successful",
         "check-connectivity-failed": "Test request failed",
         "no-model-matching": "No models matching '{{entity}}' were found.",
         "model-required": "Model is required.",
-        "no-model-text": "No models found."
+        "no-model-text": "No models found.",
+        "authentication": "Authentication",
+        "authentication-basic-hint": "Uses standard HTTP Basic authentication. The username and password will be combined, Base64-encoded, and sent in an \"Authorization\" header with each request to the Ollama server.",
+        "authentication-token-hint": "Uses Bearer token authentication. The provided token will be sent directly in an \"Authorization\" eader with each request to the Ollama server.",
+        "authentication-type": {
+            "none": "None",
+            "basic": "Basic",
+            "token": "Token"
+        },
+        "username": "Username",
+        "username-required": "Username is required.",
+        "password": "Password",
+        "password-required": "Password is required.",
+        "token": "Token",
+        "token-required": "Token is required."
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
