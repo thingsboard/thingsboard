@@ -821,7 +821,7 @@ export class ImportExportService {
     return cellData;
   }
 
-  public exportCsv(data: {[key: string]: any}[], filename: string) {
+  public exportCsv(data: {[key: string]: any}[], filename: string, normalizeFileName = false) {
     let colsHead: string;
     let colsData: string;
     if (data && data.length) {
@@ -836,18 +836,18 @@ export class ImportExportService {
       colsData = '';
     }
     const csvData = `${colsHead}\n${colsData}`;
-    this.downloadFile(csvData, filename, CSV_TYPE);
+    this.downloadFile(csvData, filename, CSV_TYPE, normalizeFileName);
   }
 
-  public exportText(data: string | Array<string>, filename: string) {
+  public exportText(data: string | Array<string>, filename: string, normalizeFileName = false) {
     let content = data;
     if (Array.isArray(data)) {
       content = data.join('\n');
     }
-    this.downloadFile(content, filename, TEXT_TYPE);
+    this.downloadFile(content, filename, TEXT_TYPE, normalizeFileName);
   }
 
-  public exportJSZip(data: object, filename: string): Observable<void> {
+  public exportJSZip(data: object, filename: string, normalizeFileName = false): Observable<void> {
     const exportJsSubjectSubject = new Subject<void>();
     import('jszip').then((JSZip) => {
       try {
@@ -859,7 +859,7 @@ export class ImportExportService {
           }
         }
         jsZip.generateAsync({type: 'blob'}).then(content => {
-          this.downloadFile(content, filename, ZIP_TYPE);
+          this.downloadFile(content, filename, ZIP_TYPE, normalizeFileName);
           exportJsSubjectSubject.next(null);
         }).catch((e: any) => {
             exportJsSubjectSubject.error(e);
@@ -1174,7 +1174,7 @@ export class ImportExportService {
     this.downloadFile(data, filename, JSON_TYPE, normalizeFileName);
   }
 
-  private prepareFilename(filename: string, extension: string, normalizeFileName: boolean): string {
+  private prepareFilename(filename: string, extension: string, normalizeFileName = false): string {
     if (normalizeFileName) {
       filename = filename.toLowerCase().replace(/\s/g, '_');
     }
@@ -1182,7 +1182,7 @@ export class ImportExportService {
     return `${filename}.${extension}`;
   }
 
-  private downloadFile(data: any, filename = 'download', fileType: FileType, normalizeFileName = false) {
+  private downloadFile(data: any, filename = 'download', fileType: FileType, normalizeFileName: boolean) {
     filename = this.prepareFilename(filename, fileType.extension, normalizeFileName);
     const blob = new Blob([data], {type: fileType.mimeType});
     const url = URL.createObjectURL(blob);
