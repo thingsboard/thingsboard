@@ -15,17 +15,15 @@
  */
 package org.thingsboard.server.common.data;
 
-import lombok.Builder;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-
-import java.util.List;
-import java.util.Map;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
-@Builder
-public class TbResourceDeleteResult {
-
-    private boolean success;
-    private Map<String, List<EntityInfo>> references;
-
+@EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+public class GeneralFileDescriptor {
+    private String mediaType;
 }
