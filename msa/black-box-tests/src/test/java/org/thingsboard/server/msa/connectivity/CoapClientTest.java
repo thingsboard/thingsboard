@@ -60,6 +60,10 @@ public class CoapClientTest extends AbstractCoapClientTest{
         assertThat(provisionResponse.get("credentialsValue").asText()).isEqualTo(expectedDeviceCredentials.getCredentialsId());
         assertThat(provisionResponse.get("status").asText()).isEqualTo("SUCCESS");
 
+        // provision second time should fail
+        JsonNode provisionResponse2 = JacksonUtil.fromBytes(createCoapClientAndPublish(device.getName()));
+        assertThat(provisionResponse2.get("status").asText()).isEqualTo("FAILURE");
+
         updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
     }
 
