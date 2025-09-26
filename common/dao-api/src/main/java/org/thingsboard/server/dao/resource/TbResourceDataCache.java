@@ -13,19 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.dao.resource;
 
-import lombok.Builder;
-import lombok.Data;
+import com.google.common.util.concurrent.FluentFuture;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
+import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
-import java.util.Map;
+public interface TbResourceDataCache {
 
-@Data
-@Builder
-public class TbResourceDeleteResult {
+    FluentFuture<TbResourceDataInfo> getResourceDataInfoAsync(TenantId tenantId, TbResourceId resourceId);
 
-    private boolean success;
-    private Map<String, List<EntityInfo>> references;
-
+    void evictResourceData(TenantId tenantId, TbResourceId resourceId);
 }

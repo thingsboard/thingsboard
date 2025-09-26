@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.resource;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -51,4 +52,5 @@ public interface TbResourceDao extends Dao<TbResource>, TenantEntityWithDataDao,
 
     long getResourceSize(TenantId tenantId, TbResourceId resourceId);
 
+    TbResourceDataInfo getResourceDataInfo(TenantId tenantId, TbResourceId resourceId);
 }

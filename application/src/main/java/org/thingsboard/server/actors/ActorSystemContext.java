@@ -97,6 +97,7 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleNodeStateService;
@@ -510,6 +511,10 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private ResourceService resourceService;
+
+    @Autowired
+    @Getter
+    private TbResourceDataCache resourceDataCache;
 
     @Lazy
     @Autowired(required = false)
