@@ -115,6 +115,10 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
             initRpc(0);
         } else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationReadCollectedValueTest")) {
             initRpc(3303);
+        } else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationInitReadCompositeAllTest")) {
+            initRpc(2);
+        }else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationInitReadCompositeByObjectTest")) {
+            initRpc(3);
         } else {
             initRpc(1);
         }
@@ -221,10 +225,67 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                         "    ],\n" +
                         "    \"attributeLwm2m\": {}\n" +
                         "  }";
+       String INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_ALL =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\",\n" +
+                       "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+                       "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
+                       "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [\n" +
+                       "      \"/5_1.2/0/6\",\n" +
+                       "      \"/5_1.2/0/7\"\n" +
+                       "    ],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/5_1.2/0/9\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"initAttrTelAsObsStrategy\": true,\n" +
+                       "    \"observeStrategy\": 1\n" +
+                       "  }";
+    String INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_BY_OBJECT =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\",\n" +
+                       "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+                       "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
+                       "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/9\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [\n" +
+                       "      \"/5_1.2/0/6\",\n" +
+                       "      \"/5_1.2/0/7\"\n" +
+                       "    ],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/5_1.2/0/9\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"initAttrTelAsObsStrategy\": true,\n" +
+                       "    \"observeStrategy\": 2\n" +
+                       "  }";
+
         CONFIG_PROFILE_WITH_PARAMS_RPC =
                 switch (typeConfigProfile) {
                     case 0 -> ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE;
                     case 1 -> TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE;
+                    case 2 -> INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_ALL;
+                    case 3 -> INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_BY_OBJECT;
                     case 3303 -> TELEMETRY_WITH_PARAMS_RPC_COLLECTED_VALUE;
                     default -> throw new IllegalStateException("Unexpected value: " + typeConfigProfile);
                 };
