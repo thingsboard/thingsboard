@@ -76,39 +76,47 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         return isCreated;
     }
 
-    protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg userCredentialsUpdateMsg) {
-        UserCredentials userCredentials = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
-        if (userCredentials == null) {
-            throw new RuntimeException("[{" + tenantId + "}] userCredentialsUpdateMsg {" + userCredentialsUpdateMsg + "} cannot be converted to user credentials");
+    protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg updateMsg) {
+        UserCredentials userCredentialsFromUpdateMsg = JacksonUtil.fromString(updateMsg.getEntity(), UserCredentials.class, true);
+        if (userCredentialsFromUpdateMsg == null) {
+            throw new RuntimeException(String.format("[%s] Failed to parse UserCredentials from updateMsg: %s", tenantId, updateMsg));
         }
-        User user = edgeCtx.getUserService().findUserById(tenantId, userCredentials.getUserId());
-        if (user != null) {
-            log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
-                    tenantId, user.getName(), userCredentials.getId(), userCredentials.isEnabled());
-            try {
-                UserCredentials userCredentialsByUserId = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
 
-                if (userCredentialsByUserId == null) {
-                    userCredentialsByUserId = new UserCredentials();
-                }
+        User user = edgeCtx.getUserService().findUserById(tenantId, userCredentialsFromUpdateMsg.getUserId());
+        if (user == null) {
+            log.warn("[{}] Can't find user by id [{}] skipping credentials update. UserCredentialsUpdateMsg [{}]",
+                    tenantId, userCredentialsFromUpdateMsg.getUserId(), updateMsg);
+            return;
+        }
 
-                userCredentialsByUserId.setId(userCredentials.getId());
-                userCredentialsByUserId.setEnabled(userCredentials.isEnabled());
-                userCredentialsByUserId.setActivateToken(userCredentials.getActivateToken());
-                userCredentialsByUserId.setAdditionalInfo(userCredentials.getAdditionalInfo());
-                userCredentialsByUserId.setPassword(userCredentials.getPassword());
-                userCredentialsByUserId.setResetToken(userCredentials.getResetToken());
-                userCredentialsByUserId.setUserId(user.getId());
+        log.debug("[{}] Updating user credentials for user [{}]. New credentials Id [{}], enabled [{}]",
+                tenantId, user.getName(), userCredentialsFromUpdateMsg.getId(), userCredentialsFromUpdateMsg.isEnabled());
 
-                edgeCtx.getUserService().saveUserCredentials(tenantId, userCredentialsByUserId, false);
-            } catch (Exception e) {
-                log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
-                        tenantId, user.getName(), userCredentialsUpdateMsg, e);
-                throw new RuntimeException(e);
+        try {
+            UserCredentials existing = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
+            boolean created = existing == null;
+
+            UserCredentials updated = created ? new UserCredentials() : existing;
+            updated.setId(userCredentialsFromUpdateMsg.getId());
+            updated.setUserId(user.getId());
+            updated.setEnabled(userCredentialsFromUpdateMsg.isEnabled());
+            updated.setActivateToken(userCredentialsFromUpdateMsg.getActivateToken());
+            updated.setAdditionalInfo(userCredentialsFromUpdateMsg.getAdditionalInfo());
+            updated.setPassword(userCredentialsFromUpdateMsg.getPassword());
+            updated.setResetToken(userCredentialsFromUpdateMsg.getResetToken());
+
+
+            if (created) {
+                edgeCtx.getUserService().saveUserCredentials(tenantId, updated, false);
+            } else {
+                edgeCtx.getUserService().replaceUserCredentials(tenantId, updated, existing.getId(), false);
             }
-        } else {
-            log.warn("[{}] Can't find user by id [{}], userCredentialsUpdateMsg [{}]", tenantId, userCredentials.getUserId(), userCredentialsUpdateMsg);
+        } catch (Exception e) {
+            log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
+                    tenantId, user.getName(), updateMsg, e);
+            throw new RuntimeException(e);
         }
+
     }
 
     protected void setCustomerId(CustomerId existingCustomerId, User user) {
