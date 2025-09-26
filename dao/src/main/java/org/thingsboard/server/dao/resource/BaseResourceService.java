@@ -35,6 +35,7 @@ import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
@@ -355,7 +356,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
 
         if (!force) {
-            Map<String, List<? extends HasId<?>>> references = findResourceReferences(tenantId, resource);
+            Map<String, List<EntityInfo>> references = findResourceReferences(tenantId, resource);
             if (!references.isEmpty()) {
                 success = false;
                 result.references(references);
@@ -370,8 +371,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         return result.success(success).build();
     }
 
-    private Map<String, List<? extends HasId<?>>> findResourceReferences(TenantId tenantId, TbResourceInfo resource) {
-        Map<String, List<? extends HasId<?>>> references = new HashMap<>();
+    private Map<String, List<EntityInfo>> findResourceReferences(TenantId tenantId, TbResourceInfo resource) {
+        Map<String, List<EntityInfo>> references = new HashMap<>();
 
         if (resource.getResourceType() == ResourceType.JS_MODULE) {
             var ref = resource.getLink();
@@ -386,9 +387,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         return references;
     }
 
-    private void findReferences(TenantId tenantId, Map<String, List<? extends HasId<?>>> references, String ref, Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap) {
+    private void findReferences(TenantId tenantId, Map<String, List<EntityInfo>> references, String ref, Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap) {
         resourceLinkContainerDaoMap.forEach((entityType, dao) -> {
-            List<? extends HasId<?>> entities = tenantId.isSysTenantId()
+            List<EntityInfo> entities = tenantId.isSysTenantId()
                     ? dao.findByResource(ref, MAX_ENTITIES_TO_FIND)
                     : dao.findByTenantIdAndResource(tenantId, ref, MAX_ENTITIES_TO_FIND);
             if (!entities.isEmpty()) {
