@@ -82,7 +82,6 @@ public class UserDataValidator extends DataValidator<User> {
         }
 
         validateEmail(user.getEmail());
-        validateEmailUniqueness(user, requestTenantId);
 
         Authority authority = user.getAuthority();
         if (authority == null) {
@@ -135,13 +134,6 @@ public class UserDataValidator extends DataValidator<User> {
             } else if (!customer.getTenantId().getId().equals(tenantId.getId())) {
                 throw new DataValidationException("User can't be assigned to customer from different tenant!");
             }
-        }
-    }
-
-    public void validateEmailUniqueness(User user, TenantId tenantId) {
-        User existing = userService.findUserByTenantIdAndEmail(tenantId, user.getEmail());
-        if (existing != null && !existing.getId().equals(user.getId())) {
-            throw new DataValidationException("User with email '" + user.getEmail() + "' already present in database!");
         }
     }
 

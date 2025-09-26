@@ -18,12 +18,14 @@ package org.thingsboard.server.service.edge.rpc.processor.user;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.util.Pair;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -86,11 +88,17 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
     }
 
     private void saveOrUpdateUser(TenantId tenantId, UserId userId, UserUpdateMsg userUpdateMsg, Edge edge) {
-        boolean isCreated = super.saveOrUpdateUser(tenantId, userId, userUpdateMsg);
-
+        Pair<Boolean, Boolean> resultPair = super.saveOrUpdateUser(tenantId, userId, userUpdateMsg);
+        boolean isCreated = resultPair.getFirst();
         if (isCreated) {
             createRelationFromEdge(tenantId, edge.getId(), userId);
             pushUserCreatedEventToRuleEngine(tenantId, edge, userId);
+        }
+
+        Boolean userEmailUpdated = resultPair.getSecond();
+
+        if (userEmailUpdated) {
+            saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER, EdgeEventActionType.UPDATED, userId, null);
         }
     }
 

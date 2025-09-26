@@ -17,7 +17,9 @@ package org.thingsboard.server.service.edge.rpc.processor.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -33,8 +35,9 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
     @Autowired
     private DataValidator<User> userValidator;
 
-    protected boolean saveOrUpdateUser(TenantId tenantId, UserId userId, UserUpdateMsg userUpdateMsg) {
+    protected Pair<Boolean, Boolean> saveOrUpdateUser(TenantId tenantId, UserId userId, UserUpdateMsg userUpdateMsg) {
         boolean isCreated = false;
+        boolean userEmailUpdated = false;
 
         try {
             User user = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
@@ -50,6 +53,18 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                 user.setId(userId);
             }
 
+            String userEmail = user.getEmail();
+            User existing = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, user.getEmail());
+
+            if (existing != null && !existing.getId().equals(user.getId())) {
+                String[] splitEmail = userEmail.split("@");
+                userEmail = splitEmail[0] + "_" + StringUtils.randomAlphanumeric(15) + "@" + splitEmail[1];
+                log.warn("[{}] User with email {} already exists. Renaming User email to {}",
+                        tenantId, user.getEmail(), userEmail);
+                userEmailUpdated = true;
+            }
+            user.setEmail(userEmail);
+
             userValidator.validate(user, User::getTenantId);
 
             if (isCreated) {
@@ -62,7 +77,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             throw e;
         }
 
-        return isCreated;
+        return Pair.of(isCreated, userEmailUpdated);
     }
 
     protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg updateMsg) {

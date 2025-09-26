@@ -207,6 +207,22 @@ public class UserEdgeTest extends AbstractEdgeTest {
         User userFromCloud = doGet("/api/user/" + uuid, User.class);
         Assert.assertNotNull(userFromCloud);
         Assert.assertEquals(customerUser.getEmail(), userFromCloud.getEmail());
+        //check user with existing email
+        User userWithExistingEmail = buildUser(Authority.CUSTOMER_USER, savedCustomer.getId(), "customerUser@thingsboard.org", DEFAULT_FIRST_NAME, "Johnson");
+
+        UUID uuidForExistingEmail = UUID.randomUUID();
+        userWithExistingEmail.setId(new UserId(uuidForExistingEmail));
+        UUID userCredentialsUuidForExistingEmail = UUID.randomUUID();
+        UplinkMsg uplinkMsgForExistingEmail = constructUserUplinkMsg(userWithExistingEmail, UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userCredentialsUuidForExistingEmail);
+
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsgForExistingEmail);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        User userFromCloudWithExistingEmail = doGet("/api/user/" + uuidForExistingEmail, User.class);
+        Assert.assertNotNull(userFromCloudWithExistingEmail);
+        Assert.assertNotEquals(userWithExistingEmail.getEmail(), userFromCloudWithExistingEmail.getEmail());
+
         assertUserCredentialsFlags(userFromCloud, false, false);
 
         UplinkMsg enabledCredentialsUplinkMsg = constructUserCredentialsUplinkMsg(customerUser.getId(), "password", true, userCredentialsUuid);
