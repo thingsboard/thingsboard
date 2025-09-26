@@ -14,19 +14,48 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { AuthService } from '@core/auth/auth.service';
+import { AppState } from '@core/core.state';
+import { Store } from '@ngrx/store';
+import { UrlTree } from '@angular/router';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { UrlHolder } from '@shared/pipe/image.pipe';
 
 @Component({
   selector: 'tb-logo',
   templateUrl: './logo.component.html',
   styleUrls: ['./logo.component.scss']
 })
-export class LogoComponent {
+export class LogoComponent implements OnInit {
 
-  logo = 'assets/logo_title_white.svg';
+  @Input()
+  @coerceBoolean()
+  isLogin: boolean = false;
 
-  gotoThingsboard(): void {
-    window.open('https://thingsboard.io', '_blank');
+  @Input()
+  logoSrc: string | UrlHolder = 'assets/logo_title_white.svg';
+
+  logoLink: UrlTree;
+
+  constructor(private authService: AuthService,
+              private store: Store<AppState>) {
   }
 
+  ngOnInit() {
+    if (!this.isLogin) {
+      this.logoLink = this.authService.defaultUrl(true, getCurrentAuthState(this.store));
+    }
+  }
+
+  onLogoClick() {
+    if (this.isLogin) {
+      this.gotoThingsboard();
+    }
+  }
+
+  private gotoThingsboard() {
+    window.open('https://thingsboard.io', '_blank');
+  }
 }
