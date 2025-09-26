@@ -117,9 +117,13 @@
         <ng-container *ngIf="direction === directions.FROM" matColumnDef="toName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.to-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
-            <a class="link" [routerLink]="relation.entityURL">
-              {{ relation.toName | customTranslate }}
-            </a>
+              @if(relation.entityURL){
+                <a class="link" [routerLink]="relation.entityURL">
+                 {{ relation.toName | customTranslate }}
+                </a>
+              } @else {
+                {{ relation.toName | customTranslate }}
+              }
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.TO" matColumnDef="fromEntityTypeName">
