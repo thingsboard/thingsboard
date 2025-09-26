@@ -70,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
@@ -84,7 +85,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
 
-    private static final int DEFAULT_TOKEN_LENGTH = 30;
+    public static final int DEFAULT_TOKEN_LENGTH = 30;
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
@@ -159,8 +160,20 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     @Transactional
     public User saveUser(TenantId tenantId, User user) {
+        return saveUser(tenantId, user, true);
+    }
+
+    @Override
+    @Transactional
+    public User saveUser(TenantId tenantId, User user, boolean doValidate) {
+        boolean isCreatedOnCloud = doValidate;
         log.trace("Executing saveUser [{}]", user);
-        User oldUser = userValidator.validate(user, User::getTenantId);
+        User oldUser = null;
+        if (doValidate) {
+            oldUser = userValidator.validate(user, User::getTenantId);
+        } else if (user.getId() != null) {
+            oldUser = findUserById(user.getTenantId(), user.getId());
+        }
         if (!userLoginCaseSensitive) {
             user.setEmail(user.getEmail().toLowerCase());
         }
@@ -169,7 +182,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         try {
             savedUser = userDao.saveAndFlush(user.getTenantId(), user);
             publishEvictEvent(evictEvent);
-            if (user.getId() == null) {
+            if (user.getId() == null && isCreatedOnCloud) {
                 countService.publishCountEntityEvictEvent(savedUser.getTenantId(), EntityType.USER);
                 UserCredentials userCredentials = new UserCredentials();
                 userCredentials.setEnabled(false);
@@ -215,8 +228,15 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
+        return saveUserCredentials(tenantId, userCredentials, true);
+    }
+
+    @Override
+    public UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials, boolean doValidate) {
         log.trace("Executing saveUserCredentials [{}]", userCredentials);
-        userCredentialsValidator.validate(userCredentials, data -> tenantId);
+        if (doValidate) {
+            userCredentialsValidator.validate(userCredentials, data -> tenantId);
+        }
         UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
         eventPublisher.publishEvent(ActionEntityEvent.builder()
                 .tenantId(tenantId)
@@ -304,19 +324,44 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
-        log.trace("Executing replaceUserCredentials [{}]", userCredentials);
-        userCredentialsValidator.validate(userCredentials, data -> tenantId);
-        userCredentialsDao.removeById(tenantId, userCredentials.getUuidId());
-        userCredentials.setId(null);
-        if (userCredentials.getPassword() != null) {
-            updatePasswordHistory(userCredentials);
+        return replaceUserCredentialsInternal(tenantId, userCredentials, userCredentials.getUuidId(), true);
+    }
+
+    @Override
+    public UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials,
+                                                  UserCredentialsId oldUserCredentialsId, boolean doValidate) {
+        return replaceUserCredentialsInternal(tenantId, userCredentials, oldUserCredentialsId.getId(), doValidate);
+    }
+
+    private UserCredentials replaceUserCredentialsInternal(TenantId tenantId, UserCredentials userCredentials,
+                                                           UUID oldCredentialsUuid, boolean doValidate) {
+        log.trace("[{}] Replacing user credentials for user [{}], old credentials ID [{}]",
+                tenantId, userCredentials.getUserId(), oldCredentialsUuid);
+
+        if (doValidate) {
+            userCredentialsValidator.validate(userCredentials, data -> tenantId);
         }
-        UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
-        eventPublisher.publishEvent(ActionEntityEvent.builder()
-                .tenantId(tenantId)
-                .entityId(userCredentials.getUserId())
-                .actionType(ActionType.CREDENTIALS_UPDATED).build());
-        return result;
+
+        try {
+            userCredentialsDao.removeById(tenantId, oldCredentialsUuid);
+
+            if (userCredentials.getPassword() != null) {
+                updatePasswordHistory(userCredentials);
+            }
+
+            UserCredentials savedCredentials = userCredentialsDao.save(tenantId, userCredentials);
+
+            eventPublisher.publishEvent(ActionEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(userCredentials.getUserId())
+                    .actionType(ActionType.CREDENTIALS_UPDATED)
+                    .build());
+
+            return savedCredentials;
+        } catch (Exception e) {
+            log.error("[{}] Failed to replace user credentials for user [{}]", tenantId, userCredentials.getUserId(), e);
+            throw new RuntimeException("Failed to replace user credentials", e);
+        }
     }
 
     @Override
