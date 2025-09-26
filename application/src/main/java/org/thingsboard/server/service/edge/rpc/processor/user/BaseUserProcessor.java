@@ -19,12 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -52,19 +49,11 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             } else {
                 user.setId(userId);
             }
-            setCustomerId(isCreated ? null : userById.getCustomerId(), user);
 
             userValidator.validate(user, User::getTenantId);
 
             if (isCreated) {
                 user.setId(userId);
-                String email = user.getEmail();
-                User userByEmail = edgeCtx.getUserService().findUserByEmail(tenantId, email);
-                if (userByEmail != null && !userByEmail.getId().equals(userId)) {
-                    throw new DataValidationException(String.format(
-                            "[%s] User with email %s already exists!", tenantId, email
-                    ));
-                }
             }
 
             edgeCtx.getUserService().saveUser(tenantId, user, false);
@@ -117,20 +106,6 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             throw new RuntimeException(e);
         }
 
-    }
-
-    protected void setCustomerId(CustomerId existingCustomerId, User user) {
-        if (user.getAuthority() == Authority.CUSTOMER_USER) {
-            if (user.getCustomerId() == null) {
-                if (existingCustomerId != null) {
-                    user.setCustomerId(existingCustomerId);
-                } else {
-                    throw new RuntimeException("Customer user should be assigned to customer!");
-                }
-            }
-        } else {
-            user.setCustomerId(null);
-        }
     }
 
 }
