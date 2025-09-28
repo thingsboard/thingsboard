@@ -24,6 +24,7 @@ import {
   NgZone,
   OnDestroy,
   OnInit,
+  SecurityContext,
   ViewChild
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -53,6 +54,7 @@ import {
 import { deepClone } from '@core/utils';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
+import { DomSanitizer } from '@angular/platform-browser';
 
 @Component({
   selector: 'tb-manage-widget-actions',
@@ -106,7 +108,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
               private dialogs: DialogService,
               private cd: ChangeDetectorRef,
               private elementRef: ElementRef,
-              private zone: NgZone) {
+              private zone: NgZone,
+              private sanitizer: DomSanitizer) {
     super();
     const sortOrder: SortOrder = { property: 'actionSourceName', direction: Direction.ASC };
     this.pageLink = new PageLink(10, 0, null, sortOrder);
@@ -289,7 +292,8 @@ export class ManageWidgetActionsComponent extends PageComponent implements OnIni
     }
     const title = this.translate.instant('widget-config.delete-action-title');
     const content = this.translate.instant('widget-config.delete-action-text', {actionName: action.name});
-    this.dialogs.confirm(title, content,
+    const safeContent = this.sanitizer.sanitize(SecurityContext.HTML, content);
+    this.dialogs.confirm(title, safeContent,
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'), true).subscribe(
       (res) => {
