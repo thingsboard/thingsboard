@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.security.auth.extractor;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.API_KEY_HEADER_PREFIX;
