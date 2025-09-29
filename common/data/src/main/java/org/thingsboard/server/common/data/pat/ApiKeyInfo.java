@@ -39,7 +39,7 @@ public class ApiKeyInfo extends BaseData<ApiKeyId> implements HasTenantId {
     @Schema(description = "JSON object with Tenant Id. Tenant Id of the api key cannot be changed.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
-    @Schema(description = "JSON object with User Id. User Id of the api key cannot be changed.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with User Id. User Id of the api key cannot be changed.")
     private UserId userId;
 
     @Schema(description = "Expiration time of the api key.")

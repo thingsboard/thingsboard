@@ -138,6 +138,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
         apiKeyInfo.setDescription(description);
         apiKeyInfo.setEnabled(enabled);
+        apiKeyInfo.setUserId(tenantAdminUserId);
         return apiKeyInfo;
     }
 

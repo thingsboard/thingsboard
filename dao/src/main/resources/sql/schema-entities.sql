@@ -716,7 +716,7 @@ CREATE TABLE IF NOT EXISTS api_key (
     user_id uuid,
     hash varchar(255),
     enabled boolean NOT NULL DEFAULT TRUE,
-    expiration_time bigint,
+    expiration_time bigint DEFAULT 0,
     description varchar(1024),
     CONSTRAINT api_hash_unq_key UNIQUE (hash)
 );

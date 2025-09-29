@@ -47,14 +47,14 @@ public class ApiKeyDataValidator extends DataValidator<ApiKey> {
         if (apiKey.getTenantId() == null || apiKey.getTenantId().getId() == null) {
             throw new DataValidationException("API key should be assigned to tenant!");
         }
-        if (tenantDao.findById(apiKey.getTenantId(), apiKey.getTenantId().getId()) == null) {
+        if (!TenantId.SYS_TENANT_ID.equals(apiKey.getTenantId()) && tenantDao.findById(apiKey.getTenantId(), apiKey.getTenantId().getId()) == null) {
             throw new DataValidationException("API key reference a non-existent tenant!");
         }
 
         if (apiKey.getUserId() == null || apiKey.getUserId().getId() == null) {
             throw new DataValidationException("API key should be assigned to user!");
         }
-        if (userDao.findById(tenantId, apiKey.getUserId().getId()) == null) {
+        if (userDao.findById(apiKey.getTenantId(), apiKey.getUserId().getId()) == null) {
             throw new DataValidationException("API key reference a non-existent user!");
         }
     }

@@ -20,8 +20,7 @@ import org.springframework.stereotype.Component;
 
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.API_KEY_HEADER_PREFIX;
 
-@Component
-@Qualifier("apiKeyHeaderTokenExtractor")
+@Component(value = "apiKeyHeaderTokenExtractor")
 public class ApiKeyHeaderTokenExtractor extends AbstractHeaderTokenExtractor {
 
     public ApiKeyHeaderTokenExtractor() {

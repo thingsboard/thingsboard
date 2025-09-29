@@ -50,4 +50,9 @@ public interface ApiKeyRepository extends JpaRepository<ApiKeyEntity, UUID> {
     Set<String> deleteByUserId(@Param("tenantId") UUID tenantId,
                                @Param("userId") UUID userId);
 
+    @Transactional
+    @Modifying
+    @Query("DELETE FROM ApiKeyEntity ak WHERE ak.expirationTime > 0 AND ak.expirationTime < :ts")
+    int deleteAllByExpirationTimeBefore(@Param("ts") long ts);
+
 }

@@ -71,12 +71,7 @@ public enum EntityType {
             return "AI model";
         }
     },
-    API_KEY(44, "api_key") {
-        @Override
-        public String getNormalName() {
-            return "API key";
-        }
-    };
+    API_KEY(44);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto

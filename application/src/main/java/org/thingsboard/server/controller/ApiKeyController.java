@@ -51,7 +51,7 @@ import static org.thingsboard.server.controller.ControllerConstants.API_KEY_ID_P
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARAM_DESCRIPTION;
 
 @RestController
@@ -64,23 +64,22 @@ public class ApiKeyController extends BaseController {
     private final ApiKeyService apiKeyService;
 
     @ApiOperation(value = "Save API key for user (saveApiKey)",
-            notes = "Creates an API key for the given user and returns the token ONCE as 'ApiKey <hash>'." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+            notes = "Creates an API key for the given user and returns the token ONCE as 'ApiKey <hash>'." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @PostMapping(value = "/apiKey")
     public String saveApiKey(
             @Parameter(description = "A JSON value representing the Api Key token.")
             @RequestBody @Valid ApiKeyInfo apiKeyInfo) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         apiKeyInfo.setTenantId(securityUser.getTenantId());
-        apiKeyInfo.setUserId(securityUser.getId());
         checkEntity(apiKeyInfo.getId(), apiKeyInfo, Resource.API_KEY);
         return toUserApiKey(checkNotNull(apiKeyService.saveApiKey(securityUser.getTenantId(), apiKeyInfo)).getHash());
     }
 
     @ApiOperation(value = "Get User Api Keys (getUserApiKeys)",
             notes = "Returns a page of api keys owned by user. " +
-                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+                    PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @GetMapping(value = "/apiKeys/{userId}")
     public PageData<ApiKeyInfo> getUserApiKeys(
             @Parameter(description = USER_ID_PARAM_DESCRIPTION)
@@ -99,8 +98,8 @@ public class ApiKeyController extends BaseController {
     @ApiOperation(value = "Update API key Description",
             notes = "Updates the description of the existing API key by apiKeyId. " +
                     "Only the description can be updated. " +
-                    "Referencing a non-existing ApiKey Id will cause a 'Not Found' error." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+                    "Referencing a non-existing ApiKey Id will cause a 'Not Found' error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @PutMapping("/apiKey/{id}/description")
     public ApiKeyInfo updateApiKeyDescription(
             @Parameter(description = API_KEY_ID_PARAM_DESCRIPTION, required = true)
@@ -114,8 +113,8 @@ public class ApiKeyController extends BaseController {
     }
 
     @ApiOperation(value = "Enable or disable API key (enableApiKey)",
-            notes = "Updates api key with enabled = true/false. " + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+            notes = "Updates api key with enabled = true/false. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @PutMapping(value = "/apiKey/{id}/enabled/{enabledValue}")
     public ApiKeyInfo enableApiKey(
             @Parameter(description = "Unique identifier of the API key to enable/disable", required = true)
@@ -129,8 +128,8 @@ public class ApiKeyController extends BaseController {
     }
 
     @ApiOperation(value = "Delete API key by ID (deleteApiKey)",
-            notes = "Deletes the API key. Referencing non-existing ApiKey Id will cause an error." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+            notes = "Deletes the API key. Referencing non-existing ApiKey Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @DeleteMapping(value = "/apiKey/{id}")
     public void deleteApiKey(@PathVariable UUID id) throws ThingsboardException {
         ApiKeyId apiKeyId = new ApiKeyId(id);

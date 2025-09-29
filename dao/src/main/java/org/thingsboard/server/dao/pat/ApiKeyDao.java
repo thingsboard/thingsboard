@@ -30,4 +30,6 @@ public interface ApiKeyDao extends Dao<ApiKey> {
 
     Set<String> deleteByUserId(TenantId tenantId, UserId userId);
 
+    int deleteAllByExpirationTimeBefore(long ts);
+
 }

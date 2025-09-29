@@ -184,7 +184,6 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
 
     @Test
     public void testDeleteByTenantId() {
-        // Create 3 API keys for the user
         for (int i = 0; i < 3; i++) {
             ApiKeyInfo apiKeyInfo = createApiKeyInfo("API Key " + i);
             apiKeyService.saveApiKey(tenantId, apiKeyInfo);
@@ -213,7 +212,6 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         Assert.assertEquals(size, pageData.getData().size());
         Assert.assertEquals(size, pageData.getTotalElements());
 
-        // delete by user id
         apiKeyService.deleteByUserId(tenantId, userId);
 
         pageData = apiKeyService.findApiKeysByUserId(tenantId, userId, new PageLink(10));

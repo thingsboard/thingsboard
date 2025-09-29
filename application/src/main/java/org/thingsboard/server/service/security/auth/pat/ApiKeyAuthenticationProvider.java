@@ -17,6 +17,7 @@ package org.thingsboard.server.service.security.auth.pat;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
@@ -60,13 +61,13 @@ public class ApiKeyAuthenticationProvider implements org.springframework.securit
         }
         ApiKey apiKey = apiKeyService.findApiKeyByHash(key);
         if (apiKey == null) {
-            throw new UsernameNotFoundException("User not found for the provided API key");
+            throw new BadCredentialsException("User not found for the provided API key");
         }
         if (!apiKey.isEnabled()) {
             throw new DisabledException("API key auth is not active");
         }
         if (apiKey.getExpirationTime() != 0 && apiKey.getExpirationTime() < System.currentTimeMillis()) {
-            throw new BadCredentialsException("API key is expired");
+            throw new CredentialsExpiredException("API key is expired");
         }
         TenantId tenantId = apiKey.getTenantId();
         UserId userId = apiKey.getUserId();

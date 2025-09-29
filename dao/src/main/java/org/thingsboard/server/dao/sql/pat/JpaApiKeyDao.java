@@ -56,6 +56,11 @@ public class JpaApiKeyDao extends JpaAbstractDao<ApiKeyEntity, ApiKey> implement
     }
 
     @Override
+    public int deleteAllByExpirationTimeBefore(long ts) {
+        return apiKeyRepository.deleteAllByExpirationTimeBefore(ts);
+    }
+
+    @Override
     protected Class<ApiKeyEntity> getEntityClass() {
         return ApiKeyEntity.class;
     }

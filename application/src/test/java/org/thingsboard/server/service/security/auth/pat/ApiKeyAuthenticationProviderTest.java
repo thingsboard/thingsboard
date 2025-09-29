@@ -48,7 +48,7 @@ import static org.mockito.Mockito.when;
 public class ApiKeyAuthenticationProviderTest {
 
     private static final String TEST_API_KEY = "test_api_key";
-    private static final String USER_EMAIL = "test@example.com";
+    private static final String USER_EMAIL = "tenant@thingsboard.org";
 
     @Mock
     private ApiKeyService apiKeyService;
