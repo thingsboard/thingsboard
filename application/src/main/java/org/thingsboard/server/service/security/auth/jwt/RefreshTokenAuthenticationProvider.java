@@ -57,17 +57,17 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     public Authentication authenticate(Authentication authentication) throws AuthenticationException {
         Assert.notNull(authentication, "No authentication data provided");
         RawAccessJwtToken rawAccessToken = (RawAccessJwtToken) authentication.getCredentials();
-        SecurityUser unsafeUser = tokenFactory.parseRefreshToken(rawAccessToken.getToken());
+        SecurityUser unsafeUser = tokenFactory.parseRefreshToken(rawAccessToken.token());
         UserPrincipal principal = unsafeUser.getUserPrincipal();
 
         SecurityUser securityUser;
-        if (principal.getType() == UserPrincipal.Type.USER_NAME) {
+        if (principal.getType() ==  UserPrincipal.Type.USER_NAME) {
             securityUser = authenticateByUserId(unsafeUser.getId());
         } else {
             securityUser = authenticateByPublicId(principal.getValue());
         }
         securityUser.setSessionId(unsafeUser.getSessionId());
-        if (tokenOutdatingService.isOutdated(rawAccessToken.getToken(), securityUser.getId())) {
+        if (tokenOutdatingService.isOutdated(rawAccessToken.token(), securityUser.getId())) {
             throw new CredentialsExpiredException("Token is outdated");
         }
 
@@ -93,9 +93,8 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
         if (user.getAuthority() == null) throw new InsufficientAuthenticationException("User has no authority assigned");
 
         UserPrincipal userPrincipal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-        SecurityUser securityUser = new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
 
-        return securityUser;
+        return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
     }
 
     private SecurityUser authenticateByPublicId(String publicId) {
@@ -125,13 +124,12 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
 
         UserPrincipal userPrincipal = new UserPrincipal(UserPrincipal.Type.PUBLIC_ID, publicId);
 
-        SecurityUser securityUser = new SecurityUser(user, true, userPrincipal);
-
-        return securityUser;
+        return new SecurityUser(user, true, userPrincipal);
     }
 
     @Override
     public boolean supports(Class<?> authentication) {
         return (RefreshAuthenticationToken.class.isAssignableFrom(authentication));
     }
+
 }

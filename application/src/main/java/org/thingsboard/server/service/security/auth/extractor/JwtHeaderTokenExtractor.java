@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.jwt.extractor;
+package org.thingsboard.server.service.security.auth.extractor;
 
-import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.stereotype.Component;
 
-public interface TokenExtractor {
-    String extract(HttpServletRequest request);
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.BEARER_HEADER_PREFIX;
+
+@Component(value = "jwtHeaderTokenExtractor")
+public class JwtHeaderTokenExtractor extends AbstractHeaderTokenExtractor {
+
+    public JwtHeaderTokenExtractor() {
+        super(BEARER_HEADER_PREFIX);
+    }
+
 }

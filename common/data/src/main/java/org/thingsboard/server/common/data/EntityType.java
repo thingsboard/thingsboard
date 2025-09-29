@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data;
 
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.util.Arrays;
 import java.util.EnumSet;
@@ -69,6 +70,12 @@ public enum EntityType {
         public String getNormalName() {
             return "AI model";
         }
+    },
+    API_KEY(44, "api_key") {
+        @Override
+        public String getNormalName() {
+            return "API key";
+        }
     };
 
     @Getter
@@ -76,7 +83,7 @@ public enum EntityType {
     @Getter
     private final String tableName;
     @Getter
-    private final String normalName = StringUtils.capitalize(StringUtils.removeStart(name(), "TB_")
+    private final String normalName = StringUtils.capitalize(Strings.CS.removeStart(name(), "TB_")
             .toLowerCase().replaceAll("_", " "));
 
     public static final List<String> NORMAL_NAMES = EnumSet.allOf(EntityType.class).stream()

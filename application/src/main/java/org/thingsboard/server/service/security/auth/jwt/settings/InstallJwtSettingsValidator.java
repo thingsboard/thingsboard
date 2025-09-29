@@ -24,7 +24,6 @@ import org.thingsboard.server.common.data.security.model.JwtSettings;
 /**
  * During Install or upgrade the validation is suppressed to keep existing data
  * */
-
 @Primary
 @Profile("install")
 @Component
