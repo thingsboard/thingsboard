@@ -21,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
@@ -41,7 +42,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     public void testSaveApiKey() throws Exception {
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("New API key description", true);
 
-        String apiKeyStr = doPost("/api/apiKey", apiKeyInfo, String.class);
+        String apiKeyStr = doPost("/api/apiKey", apiKeyInfo, ApiKey.class).getHash();
         Assert.assertTrue(apiKeyStr.startsWith(API_KEY_HEADER_PREFIX));
 
         PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
@@ -65,7 +66,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
         int expectedSize = 10;
         for (int i = 0; i < expectedSize; i++) {
-            doPost("/api/apiKey", apiKeyInfo, String.class);
+            doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
         }
 
         PageData<ApiKeyInfo> pageData2 = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
@@ -83,7 +84,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     @Test
     public void testUpdateApiKeyDescription() throws Exception {
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
-        doPost("/api/apiKey", apiKeyInfo, String.class);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
 
         PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
         Assert.assertEquals(1, pageData.getData().size());
@@ -102,7 +103,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     @Test
     public void testEnableApiKey() throws Exception {
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
-        doPost("/api/apiKey", apiKeyInfo, String.class);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
 
         PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
         Assert.assertEquals(1, pageData.getData().size());
@@ -125,7 +126,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
         doDelete("/api/apiKey/" + UUID.randomUUID()).andExpect(status().isNotFound());
 
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", false);
-        doPost("/api/apiKey", apiKeyInfo, String.class);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
 
         PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
         Assert.assertEquals(1, pageData.getData().size());

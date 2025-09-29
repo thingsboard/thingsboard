@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.pat;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -34,7 +33,6 @@ public class ApiKey extends ApiKeyInfo {
 
     @NoXss
     @Schema(description = "Api key hash value", requiredMode = Schema.RequiredMode.REQUIRED)
-    @JsonIgnore
     private String hash;
 
     public ApiKey() {

@@ -67,13 +67,15 @@ public class ApiKeyController extends BaseController {
             notes = "Creates an API key for the given user and returns the token ONCE as 'ApiKey <hash>'." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN')")
     @PostMapping(value = "/apiKey")
-    public String saveApiKey(
+    public ApiKey saveApiKey(
             @Parameter(description = "A JSON value representing the Api Key token.")
             @RequestBody @Valid ApiKeyInfo apiKeyInfo) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         apiKeyInfo.setTenantId(securityUser.getTenantId());
         checkEntity(apiKeyInfo.getId(), apiKeyInfo, Resource.API_KEY);
-        return toUserApiKey(checkNotNull(apiKeyService.saveApiKey(securityUser.getTenantId(), apiKeyInfo)).getHash());
+        ApiKey savedApiKey = checkNotNull(apiKeyService.saveApiKey(securityUser.getTenantId(), apiKeyInfo));
+        savedApiKey.setHash(toUserApiKey(savedApiKey.getHash()));
+        return savedApiKey;
     }
 
     @ApiOperation(value = "Get User Api Keys (getUserApiKeys)",
