@@ -33,6 +33,7 @@ import java.util.Date;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.NONE;
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
+import static org.eclipse.leshan.core.model.ResourceModel.Type.TIME;
 
 @Slf4j
 public class LwM2mValueConverterImpl implements LwM2mValueConverter {
@@ -58,7 +59,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
             currentType = OPAQUE;
         }
 
-        if (currentType == expectedType || currentType == NONE) {
+        if (currentType == expectedType || currentType == NONE || currentType == TIME) {
             /** expected type */
             return value;
         }
@@ -135,7 +136,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                              **/
                         } catch (IllegalArgumentException e) {
                             log.debug("Unable to convert string to date", e);
-                            throw new CodecException("Unable to convert string (%s) to date for resource %s", value,
+                            throw new CodecException("Unable to convert string (%s) to %s for resource %s", value, TIME.name(),
                                     resourcePath);
                         }
                     default:
@@ -149,7 +150,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                     case FLOAT:
                         return String.valueOf(value);
                     case TIME:
-                        String DATE_FORMAT = "MMM d, yyyy HH:mm a";
+                        String DATE_FORMAT = "yyyy-MM-dd[[ ]['T']HH:mm[:ss[.SSS]][ ][XXX][Z][z][VV][O]]";
                         Long timeValue;
                         try {
                             timeValue = ((Date) value).getTime();
