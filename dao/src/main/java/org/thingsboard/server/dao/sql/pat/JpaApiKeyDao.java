@@ -46,13 +46,13 @@ public class JpaApiKeyDao extends JpaAbstractDao<ApiKeyEntity, ApiKey> implement
     }
 
     @Override
-    public Set<String> deleteByTenantId(TenantId tenantId) {
-        return apiKeyRepository.deleteByTenantId(tenantId.getId());
+    public void deleteByTenantId(TenantId tenantId) {
+        apiKeyRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override
-    public Set<String> deleteByUserId(TenantId tenantId, UserId userId) {
-        return apiKeyRepository.deleteByUserId(tenantId.getId(), userId.getId());
+    public void deleteByUserId(TenantId tenantId, UserId userId) {
+        apiKeyRepository.deleteByUserId(tenantId.getId(), userId.getId());
     }
 
     @Override

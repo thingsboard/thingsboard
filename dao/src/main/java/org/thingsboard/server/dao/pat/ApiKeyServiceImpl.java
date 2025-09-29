@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.pat;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.ApiKeyId;
@@ -30,12 +29,10 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
-import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
-import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.validator.ApiKeyDataValidator;
 
 import java.util.Optional;
-import java.util.Set;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -45,7 +42,7 @@ import static org.thingsboard.server.dao.user.UserServiceImpl.INCORRECT_USER_ID;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKey, ApiKey, ApiKeyEvictEvent> implements ApiKeyService {
+public class ApiKeyServiceImpl extends AbstractEntityService implements ApiKeyService {
 
     private static final String INCORRECT_API_KEY_ID = "Incorrect ApiKeyId ";
     private static final int DEFAULT_API_KEY_BYTES = 32;
@@ -53,12 +50,6 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     private final ApiKeyDao apiKeyDao;
     private final ApiKeyInfoDao apiKeyInfoDao;
     private final ApiKeyDataValidator apiKeyValidator;
-
-    @Override
-    @TransactionalEventListener
-    public void handleEvictEvent(ApiKeyEvictEvent event) {
-        cache.evict(ApiKeyCacheKey.of(event.hash()));
-    }
 
     @Override
     public ApiKey saveApiKey(TenantId tenantId, ApiKeyInfo apiKeyInfo) {
@@ -72,12 +63,7 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             } else {
                 apiKey.setHash(old.getHash());
             }
-            var savedApiKey = apiKeyDao.save(tenantId, apiKey);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedApiKey.getId()).entity(savedApiKey).created(apiKey.getId() == null).build());
-            if (old != null && old.isEnabled() != apiKey.isEnabled()) {
-                publishEvictEvent(new ApiKeyEvictEvent(apiKey.getHash()));
-            }
-            return savedApiKey;
+            return apiKeyDao.save(tenantId, apiKey);
         } catch (Exception e) {
             checkConstraintViolation(e, "api_hash_unq_key", "Api Key with such hash already exists!");
             throw e;
@@ -121,30 +107,26 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             return;
         }
         apiKeyDao.removeById(tenantId, apiKeyId);
-        publishEvictEvent(new ApiKeyEvictEvent(apiKey.getHash()));
     }
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         log.trace("Executing deleteApiKeysByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        Set<String> hashes = apiKeyDao.deleteByTenantId(tenantId);
-        hashes.forEach(hash -> publishEvictEvent(new ApiKeyEvictEvent(hash)));
+        apiKeyDao.deleteByTenantId(tenantId);
     }
 
     @Override
     public void deleteByUserId(TenantId tenantId, UserId userId) {
         log.trace("Executing deleteApiKeysByUserId, tenantId [{}]", tenantId);
         validateId(userId, id -> INCORRECT_USER_ID + id);
-        Set<String> hashes = apiKeyDao.deleteByUserId(tenantId, userId);
-        hashes.forEach(hash -> publishEvictEvent(new ApiKeyEvictEvent(hash)));
+        apiKeyDao.deleteByUserId(tenantId, userId);
     }
 
     @Override
     public ApiKey findApiKeyByHash(String hash) {
         log.trace("Executing findApiKeyByHash [{}]", hash);
-        var cacheKey = ApiKeyCacheKey.of(hash);
-        return cache.getAndPutInTransaction(cacheKey, () -> apiKeyDao.findByHash(hash), true);
+        return apiKeyDao.findByHash(hash);
     }
 
     private static String generateApiKeySecret() {

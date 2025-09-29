@@ -26,9 +26,9 @@ public interface ApiKeyDao extends Dao<ApiKey> {
 
     ApiKey findByHash(String hash);
 
-    Set<String> deleteByTenantId(TenantId tenantId);
+    void deleteByTenantId(TenantId tenantId);
 
-    Set<String> deleteByUserId(TenantId tenantId, UserId userId);
+    void deleteByUserId(TenantId tenantId, UserId userId);
 
     int deleteAllByExpirationTimeBefore(long ts);
 
