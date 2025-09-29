@@ -99,6 +99,24 @@
       </tb-phone-input>
       <div formGroupName="additionalInfo" class="flex flex-col">
         <mat-form-field class="mat-block">
+          <mat-label translate>language.language</mat-label>
+          <mat-select formControlName="lang">
+            <mat-option *ngFor="let lang of languageList" [value]="lang">
+              {{ lang ? ('language.locales.' + lang | translate) : ''}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block" floatLabel="always">
+          <mat-label translate>unit.unit-system</mat-label>
+          <mat-select formControlName="unitSystem"
+                      [placeholder]="'unit.unit-system-type.AUTO' | translate">
+            <mat-option [value]="null">{{ 'unit.unit-system-type.AUTO' | translate }}</mat-option>
+            @for(unit of UnitSystems; track unit) {
+              <mat-option [value]="unit">{{ 'unit.unit-system-type.' + unit | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field class="mat-block">
           <mat-label translate>user.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
