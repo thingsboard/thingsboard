@@ -4488,7 +4488,8 @@
             "jks": "JKS",
             "js-module": "JS module",
             "lwm2m-model": "LWM2M model",
-            "pkcs-12": "PKCS #12"
+            "pkcs-12": "PKCS #12",
+            "general": "General"
         },
         "resource-sub-type": "Sub-type",
         "sub-type": {
@@ -4496,7 +4497,12 @@
             "scada-symbol": "Scada symbol",
             "extension": "Extension",
             "module": "Module"
-        }
+        },
+        "resource-is-in-use": "Resource is used by other entities",
+        "resources-are-in-use": "Resources are used by other entities",
+        "resource-is-in-use-text": "The Resource <b>'{{title}}'</b> was not deleted because it is used by the following entities:",
+        "resources-are-in-use-text": "Not all Resources have been deleted because they are used by other entities.</br>You can view referenced entities by clicking the <b>References</b> button in the corresponding resource row.</br>If you still want to delete these resources, select them in the table below and click the <b>Delete selected</b> button.",
+        "delete-resource-in-use-text": "If you still want to delete the resource, click the <b>Delete anyway</b> button."
     },
     "javascript": {
         "add": "Add JavaScript resource",
@@ -5467,7 +5473,8 @@
             "timeout-required": "Timeout is required",
             "timeout-validation": "Must be from 1 second to 10 minutes.",
             "force-acknowledgement": "Force acknowledgement",
-            "force-acknowledgement-hint": "If enabled, the incoming message is acknowledged immediately. The model's response is then enqueued as a separate, new message."
+            "force-acknowledgement-hint": "If enabled, the incoming message is acknowledged immediately. The model's response is then enqueued as a separate, new message.",
+            "ai-resources": "AI resources"
         }
     },
     "timezone": {
