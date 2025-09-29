@@ -25,24 +25,24 @@ import jakarta.validation.constraints.PositiveOrZero;
 import lombok.Builder;
 import lombok.With;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
-import org.thingsboard.server.common.data.ai.provider.GitHubModelsProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
 
 @Builder
-public record GitHubModelsChatModelConfig(
-        @NotNull @Valid GitHubModelsProviderConfig providerConfig,
+public record OllamaChatModelConfig(
+        @NotNull @Valid OllamaProviderConfig providerConfig,
         @NotBlank String modelId,
         @PositiveOrZero Double temperature,
         @Positive @Max(1) Double topP,
-        Double frequencyPenalty,
-        Double presencePenalty,
+        @PositiveOrZero Integer topK,
+        Integer contextLength,
         Integer maxOutputTokens,
         @With @Positive Integer timeoutSeconds,
         @With @PositiveOrZero Integer maxRetries
-) implements AiChatModelConfig<GitHubModelsChatModelConfig> {
+) implements AiChatModelConfig<OllamaChatModelConfig> {
 
     @Override
     public AiProvider provider() {
-        return AiProvider.GITHUB_MODELS;
+        return AiProvider.OLLAMA;
     }
 
     @Override
@@ -52,7 +52,7 @@ public record GitHubModelsChatModelConfig(
 
     @Override
     public boolean supportsJsonMode() {
-        return false;
+        return true;
     }
 
 }
