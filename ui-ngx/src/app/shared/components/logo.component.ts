@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit, HostBinding } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthService } from '@core/auth/auth.service';
 import { AppState } from '@core/core.state';
@@ -29,11 +29,6 @@ import { UrlHolder } from '@shared/pipe/image.pipe';
   styleUrls: ['./logo.component.scss']
 })
 export class LogoComponent implements OnInit {
-
-  @HostBinding('class.login-logo')
-  get isLoginLogoClass() {
-    return this.isLogin;
-  }
 
   @Input()
   @coerceBoolean()
@@ -53,15 +48,5 @@ export class LogoComponent implements OnInit {
       const authState = getCurrentAuthState(this.store);
       this.logoLink = this.authService.defaultUrl(true, authState);
     }
-  }
-
-  onLogoClick() {
-    if (this.isLogin) {
-      this.gotoThingsboard();
-    }
-  }
-
-  private gotoThingsboard() {
-    window.open('https://thingsboard.io', '_blank');
   }
 }

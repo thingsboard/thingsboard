@@ -15,6 +15,17 @@
     limitations under the License.
 
 -->
-<a [routerLink]="isLogin ? '' : logoLink" (click)="onLogoClick()">
+@if (isLogin) {
+  <a href="https://thingsboard.io" target="_blank">
+    <ng-container *ngTemplateOutlet="logo"></ng-container>
+  </a>
+} @else {
+  <a [routerLink]="logoLink">
+    <ng-container *ngTemplateOutlet="logo"></ng-container>
+  </a>
+}
+
+<ng-template #logo>
   <img [src]="logoSrc" aria-label="logo" alt="Logo"/>
-</a>
+</ng-template>
+
