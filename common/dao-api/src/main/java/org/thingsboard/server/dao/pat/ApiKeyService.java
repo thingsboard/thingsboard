@@ -30,8 +30,6 @@ public interface ApiKeyService extends EntityDaoService {
 
     void deleteApiKey(TenantId tenantId, ApiKey apiKey, boolean force);
 
-    void deleteByTenantId(TenantId tenantId);
-
     void deleteByUserId(TenantId tenantId, UserId userId);
 
     ApiKey findApiKeyByHash(String hash);
