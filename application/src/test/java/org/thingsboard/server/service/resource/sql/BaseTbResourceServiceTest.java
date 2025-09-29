@@ -682,7 +682,10 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
     private AiModel constructValidOpenAiModel(String name) {
         var modelConfig = OpenAiChatModelConfig.builder()
-                .providerConfig(new OpenAiProviderConfig("test-api-key"))
+                .providerConfig(OpenAiProviderConfig.builder()
+                        .baseUrl(OpenAiProviderConfig.OPENAI_OFFICIAL_BASE_URL)
+                        .apiKey("test-api-key")
+                        .build())
                 .modelId("gpt-4o")
                 .temperature(0.5)
                 .topP(0.3)
@@ -699,6 +702,7 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
                 .configuration(modelConfig)
                 .build();
     }
+
     @Test
     public void testFindTenantResourcesByTenantId() throws Exception {
         loginSysAdmin();

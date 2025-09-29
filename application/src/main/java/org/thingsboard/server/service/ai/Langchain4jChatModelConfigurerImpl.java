@@ -70,6 +70,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     @Override
     public ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig) {
         return OpenAiChatModel.builder()
+                .baseUrl(chatModelConfig.providerConfig().baseUrl())
                 .apiKey(chatModelConfig.providerConfig().apiKey())
                 .modelName(chatModelConfig.modelId())
                 .temperature(chatModelConfig.temperature())
