@@ -15,7 +15,26 @@
  */
 :host {
   pointer-events: auto;
-  img {
+  a img {
+    display: block;
+    width: 100%;
     height: 100%;
+  }
+}
+
+:host.login-logo {
+  display: inline-block;
+  width: 280px;
+  height: 60px;
+  a {
+    display: inline-block;
+    width: 100%;
+    height: 100%;
+    text-decoration: none;
+    border: none;
+    transform: none;
+    &:focus {
+      outline: 0;
+    }
   }
 }
