@@ -129,7 +129,7 @@
             @if (providerFieldsList.includes('apiKey')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>ai-models.api-key</mat-label>
-                <input type="password" matInput formControlName="apiKey" autocomplete="new-password">
+                <input type="password" matInput formControlName="apiKey" [required]="apiKeyRequired" autocomplete="new-password">
                 <tb-toggle-password matSuffix></tb-toggle-password>
                 <mat-error *ngIf="aiModelForms.get('configuration.providerConfig.apiKey').hasError('required') ||
                   aiModelForms.get('configuration.providerConfig.apiKey').hasError('pattern')">
