@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.server.dao.resource;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OllamaProviderConfig {}
+import com.google.common.util.concurrent.FluentFuture;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
+import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
+
+public interface TbResourceDataCache {
+
+    FluentFuture<TbResourceDataInfo> getResourceDataInfoAsync(TenantId tenantId, TbResourceId resourceId);
+
+    void evictResourceData(TenantId tenantId, TbResourceId resourceId);
+}

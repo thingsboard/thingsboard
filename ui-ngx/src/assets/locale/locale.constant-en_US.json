@@ -1112,13 +1112,15 @@
             "mistral-ai": "Mistral AI",
             "anthropic": "Anthropic",
             "amazon-bedrock": "Amazon Bedrock",
-            "github-models": "GitHub Models"
+            "github-models": "GitHub Models",
+            "ollama": "Ollama"
         },
         "name-required": "Name is required.",
         "name-max-length": "Name must be 255 characters or less.",
         "provider": "Provider",
         "api-key": "API key",
         "api-key-required": "API key is required.",
+        "api-key-open-ai-required": "API key is required when using the official OpenAI API.",
         "project-id": "Project ID",
         "project-id-required": "Project ID is required",
         "location": "Location",
@@ -1155,17 +1157,34 @@
         "frequency-penalty": "Frequency penalty",
         "frequency-penalty-hint": "Applies a penalty to a token's likelihood that increases based on its frequency in the text.",
         "max-output-tokens": "Maximum output tokens",
-        "max-output-tokens-min": "Must be greater than 0.",
         "max-output-tokens-hint": "Sets the maximum number of tokens that the \nmodel can generate in a single response.",
+        "context-length": "Context length",
+        "context-length-hint": "Defines the size of the context window in tokens. This value sets the total memory limit for the model, including both the user's input and the generated response.",
         "endpoint": "Endpoint",
         "endpoint-required": "Endpoint is required.",
+        "baseurl": "Base URL",
+        "baseurl-required": "Base URL is required.",
         "service-version": "Service version",
         "check-connectivity": "Check connectivity",
         "check-connectivity-success": "Test request was successful",
         "check-connectivity-failed": "Test request failed",
         "no-model-matching": "No models matching '{{entity}}' were found.",
         "model-required": "Model is required.",
-        "no-model-text": "No models found."
+        "no-model-text": "No models found.",
+        "authentication": "Authentication",
+        "authentication-basic-hint": "Uses standard HTTP Basic authentication. The username and password will be combined, Base64-encoded, and sent in an \"Authorization\" header with each request to the Ollama server.",
+        "authentication-token-hint": "Uses Bearer token authentication. The provided token will be sent directly in an \"Authorization\" eader with each request to the Ollama server.",
+        "authentication-type": {
+            "none": "None",
+            "basic": "Basic",
+            "token": "Token"
+        },
+        "username": "Username",
+        "username-required": "Username is required.",
+        "password": "Password",
+        "password-required": "Password is required.",
+        "token": "Token",
+        "token-required": "Token is required."
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -4488,7 +4507,8 @@
             "jks": "JKS",
             "js-module": "JS module",
             "lwm2m-model": "LWM2M model",
-            "pkcs-12": "PKCS #12"
+            "pkcs-12": "PKCS #12",
+            "general": "General"
         },
         "resource-sub-type": "Sub-type",
         "sub-type": {
@@ -4496,7 +4516,12 @@
             "scada-symbol": "Scada symbol",
             "extension": "Extension",
             "module": "Module"
-        }
+        },
+        "resource-is-in-use": "Resource is used by other entities",
+        "resources-are-in-use": "Resources are used by other entities",
+        "resource-is-in-use-text": "The Resource <b>'{{title}}'</b> was not deleted because it is used by the following entities:",
+        "resources-are-in-use-text": "Not all Resources have been deleted because they are used by other entities.</br>You can view referenced entities by clicking the <b>References</b> button in the corresponding resource row.</br>If you still want to delete these resources, select them in the table below and click the <b>Delete selected</b> button.",
+        "delete-resource-in-use-text": "If you still want to delete the resource, click the <b>Delete anyway</b> button."
     },
     "javascript": {
         "add": "Add JavaScript resource",
@@ -5467,7 +5492,8 @@
             "timeout-required": "Timeout is required",
             "timeout-validation": "Must be from 1 second to 10 minutes.",
             "force-acknowledgement": "Force acknowledgement",
-            "force-acknowledgement-hint": "If enabled, the incoming message is acknowledged immediately. The model's response is then enqueued as a separate, new message."
+            "force-acknowledgement-hint": "If enabled, the incoming message is acknowledged immediately. The model's response is then enqueued as a separate, new message.",
+            "ai-resources": "AI resources"
         }
     },
     "timezone": {

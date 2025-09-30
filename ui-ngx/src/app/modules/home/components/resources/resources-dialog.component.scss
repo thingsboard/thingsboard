@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OllamaProviderConfig {}
+:host ::ng-deep {
+  .mat-mdc-dialog-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    padding: 0 !important;
+  }
+}

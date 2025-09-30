@@ -13,10 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.ai.provider;
+package org.thingsboard.server.common.data;
 
-public sealed interface AiProviderConfig
-        permits
-        OpenAiProviderConfig, AzureOpenAiProviderConfig, GoogleAiGeminiProviderConfig,
-        GoogleVertexAiGeminiProviderConfig, MistralAiProviderConfig, AnthropicProviderConfig,
-        AmazonBedrockProviderConfig, GitHubModelsProviderConfig, OllamaProviderConfig {}
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+public class GeneralFileDescriptor {
+    private String mediaType;
+}
