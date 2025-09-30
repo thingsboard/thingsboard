@@ -148,6 +148,7 @@ public class TenantIdLoader {
                 break;
             case NOTIFICATION:
             case ADMIN_SETTINGS:
+            case API_KEY:
                 return ctxTenantId;
             case NOTIFICATION_RULE:
                 tenantEntity = ctx.getNotificationRuleService().findNotificationRuleById(ctxTenantId, new NotificationRuleId(id));
