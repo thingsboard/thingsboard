@@ -74,7 +74,11 @@ public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticati
         if (header == null) {
             header = request.getHeader(JWT_TOKEN_HEADER_PARAM_V2);
         }
-        return header != null && header.startsWith(BEARER_HEADER_PREFIX);
+        if (header == null) {
+            // If there is NO auth header at all, let the JWT filter try to attempt Authentication and failure in the process.
+            return true;
+        }
+        return header.startsWith(BEARER_HEADER_PREFIX);
     }
 
     @Override

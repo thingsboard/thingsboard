@@ -137,23 +137,22 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
             try {
                 response.setContentType(MediaType.APPLICATION_JSON_VALUE);
 
-                if (exception instanceof ThingsboardException) {
-                    ThingsboardException thingsboardException = (ThingsboardException) exception;
+                if (exception instanceof ThingsboardException thingsboardException) {
                     if (thingsboardException.getErrorCode() == ThingsboardErrorCode.SUBSCRIPTION_VIOLATION) {
-                        handleSubscriptionException((ThingsboardException) exception, response);
+                        handleSubscriptionException(thingsboardException, response);
                     } else if (thingsboardException.getErrorCode() == ThingsboardErrorCode.DATABASE) {
                         handleDatabaseException(thingsboardException.getCause(), response);
                     } else {
-                        handleThingsboardException((ThingsboardException) exception, response);
+                        handleThingsboardException(thingsboardException, response);
                     }
-                } else if (exception instanceof TbRateLimitsException) {
-                    handleRateLimitException(response, (TbRateLimitsException) exception);
+                } else if (exception instanceof TbRateLimitsException rateLimitsException) {
+                    handleRateLimitException(response, rateLimitsException);
                 } else if (exception instanceof AccessDeniedException) {
                     handleAccessDeniedException(response);
-                } else if (exception instanceof AuthenticationException) {
-                    handleAuthenticationException((AuthenticationException) exception, response);
-                } else if (exception instanceof MaxPayloadSizeExceededException) {
-                    handleMaxPayloadSizeExceededException(response, (MaxPayloadSizeExceededException) exception);
+                } else if (exception instanceof AuthenticationException authenticationException) {
+                    handleAuthenticationException(authenticationException, response);
+                } else if (exception instanceof MaxPayloadSizeExceededException maxPayloadSizeExceededException) {
+                    handleMaxPayloadSizeExceededException(response, maxPayloadSizeExceededException);
                 } else if (exception instanceof DataAccessException e) {
                     handleDatabaseException(e, response);
                 } else {
@@ -238,12 +237,10 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Token has expired", ThingsboardErrorCode.JWT_TOKEN_EXPIRED, HttpStatus.UNAUTHORIZED));
         } else if (authenticationException instanceof AuthMethodNotSupportedException) {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(authenticationException.getMessage(), ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
-        } else if (authenticationException instanceof UserPasswordExpiredException) {
-            UserPasswordExpiredException expiredException = (UserPasswordExpiredException) authenticationException;
+        } else if (authenticationException instanceof UserPasswordExpiredException expiredException) {
             String resetToken = expiredException.getResetToken();
             JacksonUtil.writeValue(response.getWriter(), ThingsboardCredentialsExpiredResponse.of(expiredException.getMessage(), resetToken));
-        } else if (authenticationException instanceof UserPasswordNotValidException) {
-            UserPasswordNotValidException expiredException = (UserPasswordNotValidException) authenticationException;
+        } else if (authenticationException instanceof UserPasswordNotValidException expiredException) {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardCredentialsViolationResponse.of(expiredException.getMessage()));
         } else {
             JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of("Authentication failed", ThingsboardErrorCode.AUTHENTICATION, HttpStatus.UNAUTHORIZED));
