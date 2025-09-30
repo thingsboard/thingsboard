@@ -98,16 +98,14 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
   ngOnInit(): void {
     this.serverFormGroup = this.fb.group({
       host: ['', Validators.required],
-      port: ['', [Validators.required, Validators.min(5683), Validators.max(5688), Validators.pattern('[0-9]*')]],
+      port: ['', [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern('[0-9]*')]],
       securityMode: [Lwm2mSecurityType.NO_SEC],
       serverPublicKey: [''],
       clientHoldOffTime: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
-      // shortServerId: ['', [Validators.required, Validators.pattern(this.isBootstrap ? '^(' + this.shortServerIdBsMin+ '|' + this.shortServerIdBsMax + ')$' : '[0-9]*'), !this.isBootstrap ? [Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax)] : [] ]],
-      shortServerId: ['', [Validators.required, Validators.pattern(this.isBootstrap ? '^(' + this.shortServerIdBsMin+ '|' + this.shortServerIdBsMax + ')$' : '[0-9]*'),
-        ...(!this.isBootstrap ? [
-          Validators.min(this.shortServerIdMin),
-          Validators.max(this.shortServerIdMax)
-        ] : []) ]],
+      shortServerId: ['', this.isBootstrap
+        ? [Validators.required, Validators.pattern('^(' + this.shortServerIdBsMin+ '|' + this.shortServerIdBsMax + ')$' )]
+        : [Validators.required, Validators.pattern('[0-9]*'),Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax)]
+      ],
       bootstrapServerAccountTimeout: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       binding: [''],
       lifetime: [null, [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
