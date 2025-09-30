@@ -15,11 +15,15 @@
  */
 package org.thingsboard.server.service.housekeeper.processor;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.housekeeper.LatestTsDeletionHousekeeperTask;
+import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 
 import java.util.List;
@@ -33,8 +37,16 @@ public class LatestTsDeletionTaskProcessor extends HousekeeperTaskProcessor<Late
 
     @Override
     public void process(LatestTsDeletionHousekeeperTask task) throws Exception {
-        wait(timeseriesService.removeLatest(task.getTenantId(), task.getEntityId(), List.of(task.getKey())));
-        log.debug("[{}][{}][{}] Deleted latest telemetry for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
+        wait(processAsync(task));
+    }
+
+    @Override
+    public ListenableFuture<Void> processAsync(LatestTsDeletionHousekeeperTask task) {
+        ListenableFuture<List<TsKvLatestRemovingResult>> future = timeseriesService.removeLatest(task.getTenantId(), task.getEntityId(), List.of(task.getKey()));
+        return Futures.transform(future, result -> {
+            log.debug("[{}][{}][{}] Deleted latest telemetry for key '{}'", task.getTenantId(), task.getEntityId().getEntityType(), task.getEntityId(), task.getKey());
+            return null;
+        }, MoreExecutors.directExecutor());
     }
 
     @Override
