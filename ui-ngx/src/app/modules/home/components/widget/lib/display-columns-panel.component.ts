@@ -15,8 +15,8 @@
 ///
 
 import { Component, Inject, InjectionToken } from '@angular/core';
-import { isDefinedAndNotNull } from '@app/core/utils';
-import { SelectableColumnsPipe } from '@app/shared/pipe/selectable-columns.pipe';
+import { isDefinedAndNotNull } from '@core/utils';
+import { SelectableColumnsPipe } from '@shared/public-api';
 import { DisplayColumn } from '@home/components/widget/lib/table-widget.models';
 
 export const DISPLAY_COLUMNS_PANEL_DATA = new InjectionToken<any>('DisplayColumnsPanelData');
@@ -35,9 +35,9 @@ export class DisplayColumnsPanelComponent {
 
   columns: DisplayColumn[];
 
-  constructor(@Inject(DISPLAY_COLUMNS_PANEL_DATA) public data: DisplayColumnsPanelData) {
-    const selectableColumnsPipe = new SelectableColumnsPipe();
-    this.columns = selectableColumnsPipe.transform(this.data.columns);
+  constructor(@Inject(DISPLAY_COLUMNS_PANEL_DATA) public data: DisplayColumnsPanelData,
+              private selectableColumnsPipe:SelectableColumnsPipe ) {
+    this.columns = this.selectableColumnsPipe.transform(this.data.columns);
   }
 
   get allColumnsVisible(): boolean {
