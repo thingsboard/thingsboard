@@ -74,6 +74,8 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
 
   authenticationHint: string;
 
+  private readonly openAiDefaultBaseUrl = 'https://api.openai.com/v1';
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected dialogRef: MatDialogRef<AIModelDialogComponent, AiModel>,
@@ -107,7 +109,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
           region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
-          baseUrl: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.baseUrl : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          baseUrl: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.baseUrl : this.openAiDefaultBaseUrl, [Validators.required, Validators.pattern(/.*\S.*/)]],
           auth: this.fb.group({
             type: [this.data.AIModel?.configuration?.providerConfig?.auth?.type ?? AuthenticationType.NONE],
             username: [this.data.AIModel?.configuration?.providerConfig?.auth?.username ?? '', [Validators.required, Validators.pattern(/.*\S.*/)]],
@@ -133,6 +135,18 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       this.aiModelForms.get('configuration.modelId').reset('');
       this.aiModelForms.get('configuration.providerConfig').reset({});
       this.updateValidation(provider);
+      if (provider === AiProvider.OPENAI) {
+        this.aiModelForms.get('configuration.providerConfig.baseUrl').patchValue(this.openAiDefaultBaseUrl, {emitEvent: false});
+        this.updateApiKeyValidatorForOpenAIProvider(this.openAiDefaultBaseUrl);
+      }
+    });
+
+    this.aiModelForms.get('configuration.providerConfig.baseUrl').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((url: string) => {
+      if (this.provider === AiProvider.OPENAI) {
+        this.updateApiKeyValidatorForOpenAIProvider(url);
+      }
     });
 
     this.aiModelForms.get('configuration.providerConfig.auth.type').valueChanges.pipe(
@@ -159,6 +173,15 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       return of(this.provider ? AiModelMap.get(this.provider).modelList || [] : []).pipe(
         map(name => name?.filter(option => option.toLowerCase().includes(search))),
       );
+  }
+
+  private updateApiKeyValidatorForOpenAIProvider(url: string) {
+    if (url !== this.openAiDefaultBaseUrl) {
+      this.aiModelForms.get('configuration.providerConfig.apiKey').removeValidators(Validators.required);
+    } else {
+      this.aiModelForms.get('configuration.providerConfig.apiKey').addValidators(Validators.required);
+    }
+    this.aiModelForms.get('configuration.providerConfig.apiKey').updateValueAndValidity({emitEvent: false});
   }
 
   private getAuthenticationHint(type: AuthenticationType) {

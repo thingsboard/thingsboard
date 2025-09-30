@@ -116,14 +116,24 @@
                 <input matInput formControlName="serviceVersion">
               </mat-form-field>
             }
+            @if (providerFieldsList.includes('baseUrl')) {
+              <mat-form-field class="mat-block flex-1" appearance="outline">
+                <mat-label translate>ai-models.baseurl</mat-label>
+                <input required matInput formControlName="baseUrl">
+                <mat-error *ngIf="aiModelForms.get('configuration.providerConfig.baseUrl').hasError('required') ||
+                  aiModelForms.get('configuration.providerConfig.baseUrl').hasError('pattern')">
+                  {{ 'ai-models.baseurl-required' | translate }}
+                </mat-error>
+              </mat-form-field>
+            }
             @if (providerFieldsList.includes('apiKey')) {
               <mat-form-field class="mat-block flex-1" appearance="outline">
                 <mat-label translate>ai-models.api-key</mat-label>
-                <input type="password" required matInput formControlName="apiKey" autocomplete="new-password">
+                <input type="password" matInput formControlName="apiKey" autocomplete="new-password">
                 <tb-toggle-password matSuffix></tb-toggle-password>
                 <mat-error *ngIf="aiModelForms.get('configuration.providerConfig.apiKey').hasError('required') ||
                   aiModelForms.get('configuration.providerConfig.apiKey').hasError('pattern')">
-                  {{ 'ai-models.api-key-required' | translate }}
+                  {{ ( provider === aiProvider.OPENAI ? 'ai-models.api-key-open-ai-required' : 'ai-models.api-key-required') | translate }}
                 </mat-error>
               </mat-form-field>
             }
@@ -155,16 +165,6 @@
                 <mat-error *ngIf="aiModelForms.get('configuration.providerConfig.secretAccessKey').hasError('required') ||
                   aiModelForms.get('configuration.providerConfig.secretAccessKey').hasError('pattern')">
                   {{ 'ai-models.secret-access-key-required' | translate }}
-                </mat-error>
-              </mat-form-field>
-            }
-            @if (providerFieldsList.includes('baseUrl')) {
-              <mat-form-field class="mat-block flex-1" appearance="outline">
-                <mat-label translate>ai-models.baseurl</mat-label>
-                <input required matInput formControlName="baseUrl">
-                <mat-error *ngIf="aiModelForms.get('configuration.providerConfig.baseUrl').hasError('required') ||
-                  aiModelForms.get('configuration.providerConfig.baseUrl').hasError('pattern')">
-                  {{ 'ai-models.baseurl-required' | translate }}
                 </mat-error>
               </mat-form-field>
             }
