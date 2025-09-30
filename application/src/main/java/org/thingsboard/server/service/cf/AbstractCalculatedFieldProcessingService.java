@@ -19,13 +19,11 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
@@ -47,7 +45,6 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -114,7 +111,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         if (!argument.hasOwnerSource()) {
             return entityId;
         }
-        return resolveOwnerArgument(tenantId, entityId, argument);
+        return resolveOwnerArgument(tenantId, entityId);
     }
 
     protected Map<String, ArgumentEntry> resolveArgumentFutures(Map<String, ListenableFuture<ArgumentEntry>> argFutures) {
@@ -166,14 +163,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         }
         var refDynamicSourceConfiguration = value.getRefDynamicSourceConfiguration();
         return switch (refDynamicSourceConfiguration.getType()) {
-            case CURRENT_CUSTOMER -> {
-                EntityId resolved = resolveOwnerArgument(tenantId, entityId, value);
-                if (resolved != null) {
-                    yield Futures.immediateFuture(List.of(resolved));
-                } else {
-                    yield Futures.immediateFuture(Collections.emptyList());
-                }
-            }
+            case CURRENT_OWNER -> Futures.immediateFuture(List.of(resolveOwnerArgument(tenantId, entityId)));
             case RELATION_QUERY -> {
                 var configuration = (RelationQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
                 if (configuration.isSimpleRelation()) {
@@ -192,21 +182,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
         };
     }
 
-    @Nullable
-    private EntityId resolveOwnerArgument(TenantId tenantId, EntityId entityId, Argument argument) {
-        return switch (argument.getRefDynamicSourceConfiguration().getType()) {
-            case CURRENT_CUSTOMER -> {
-                EntityId ownerId = ownerService.getOwner(tenantId, entityId);
-                if (ownerId.getEntityType() == EntityType.TENANT) {
-                    // todo: if inherit is true - use customer id
-                    // fixme: WTF do we need it at all?
-                    yield null;
-                } else {
-                    yield ownerId;
-                }
-            }
-            default -> throw new UnsupportedOperationException();
-        };
+    private EntityId resolveOwnerArgument(TenantId tenantId, EntityId entityId) {
+        return ownerService.getOwner(tenantId, entityId);
     }
 
     private ListenableFuture<ArgumentEntry> fetchGeofencingKvEntry(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument) {
@@ -234,9 +211,6 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     protected ListenableFuture<ArgumentEntry> fetchArgumentValue(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
-        if (entityId == null) {
-            return Futures.immediateFuture(transformSingleValueArgument(Optional.empty()));
-        }
         return switch (argument.getRefEntityKey().getType()) {
             case TS_ROLLING -> fetchTsRolling(tenantId, entityId, argument, startTs);
             case ATTRIBUTE -> fetchAttribute(tenantId, entityId, argument, startTs);

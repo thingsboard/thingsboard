@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CurrentCustomerDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CurrentOwnerDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
@@ -218,7 +218,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
         Argument temperatureThresholdArgument = new Argument();
         temperatureThresholdArgument.setRefEntityKey(new ReferencedEntityKey("temperatureThreshold", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
-        temperatureThresholdArgument.setRefDynamicSourceConfiguration(new CurrentCustomerDynamicSourceConfiguration());
+        temperatureThresholdArgument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
         temperatureThresholdArgument.setDefaultValue("1000");
 
         Map<String, Argument> arguments = Map.of(

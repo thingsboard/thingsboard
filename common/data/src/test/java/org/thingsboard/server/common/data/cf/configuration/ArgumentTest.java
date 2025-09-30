@@ -38,9 +38,9 @@ public class ArgumentTest {
     }
 
     @Test
-    void validateWhenCurrentCustomerSourceConfigurationIsNotNull() {
+    void validateWhenCurrentOwnerSourceConfigurationIsNotNull() {
         var argument = new Argument();
-        argument.setRefDynamicSourceConfiguration(new CurrentCustomerDynamicSourceConfiguration());
+        argument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
         assertThat(argument.hasDynamicSource()).isTrue();
         assertThat(argument.hasOwnerSource()).isTrue();
         assertThat(argument.hasRelationQuerySource()).isFalse();

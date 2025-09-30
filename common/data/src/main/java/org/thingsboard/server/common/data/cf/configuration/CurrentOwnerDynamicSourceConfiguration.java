@@ -18,13 +18,11 @@ package org.thingsboard.server.common.data.cf.configuration;
 import lombok.Data;
 
 @Data
-public class CurrentCustomerDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
-
-    private boolean inherit; // TODO: implement
+public class CurrentOwnerDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
     @Override
     public CFArgumentDynamicSourceType getType() {
-        return CFArgumentDynamicSourceType.CURRENT_CUSTOMER;
+        return CFArgumentDynamicSourceType.CURRENT_OWNER;
     }
 
 }
