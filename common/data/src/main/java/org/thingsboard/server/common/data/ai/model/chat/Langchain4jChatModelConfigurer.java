@@ -21,6 +21,8 @@ public interface Langchain4jChatModelConfigurer {
 
     ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig);
 
+    ChatModel configureChatModel(OpenAiTbelChatModelConfig chatModelConfig);
+
     ChatModel configureChatModel(AzureOpenAiChatModelConfig chatModelConfig);
 
     ChatModel configureChatModel(GoogleAiGeminiChatModelConfig chatModelConfig);
