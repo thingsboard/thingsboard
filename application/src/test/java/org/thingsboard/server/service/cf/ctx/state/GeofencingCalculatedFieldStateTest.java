@@ -257,7 +257,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2).isNotNull();
         assertThat(result2.getType()).isEqualTo(output.getType());
         assertThat(result2.getScope()).isEqualTo(output.getScope());
-        assertThat(result2.getResult()).isEqualTo(
+        assertThat(result2.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
                         .put("allowedZonesEvent", "LEFT")
                         .put("allowedZonesStatus", "OUTSIDE")
@@ -329,7 +329,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2).isNotNull();
         assertThat(result2.getType()).isEqualTo(output.getType());
         assertThat(result2.getScope()).isEqualTo(output.getScope());
-        assertThat(result2.getResult()).isEqualTo(
+        assertThat(result2.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
                         .put("allowedZonesEvent", "LEFT")
                         .put("restrictedZonesEvent", "ENTERED")
@@ -401,7 +401,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2).isNotNull();
         assertThat(result2.getType()).isEqualTo(output.getType());
         assertThat(result2.getScope()).isEqualTo(output.getScope());
-        assertThat(result2.getResult()).isEqualTo(
+        assertThat(result2.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
                         .put("allowedZonesStatus", "OUTSIDE")
                         .put("restrictedZonesStatus", "INSIDE")

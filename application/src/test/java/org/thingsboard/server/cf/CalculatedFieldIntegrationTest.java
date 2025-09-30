@@ -831,10 +831,11 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + tenantProfileEntityInfo.getId().getId().toString(), TenantProfile.class);
         assertThat(foundTenantProfile).isNotNull();
         assertThat(foundTenantProfile.getDefaultProfileConfiguration()).isNotNull();
-        foundTenantProfile.getDefaultProfileConfiguration().setMinAllowedScheduledUpdateIntervalInSecForCF(TIMEOUT / 10);
+        int minAllowedScheduledUpdateIntervalInSecForCF = TIMEOUT / 10;
+        foundTenantProfile.getDefaultProfileConfiguration().setMinAllowedScheduledUpdateIntervalInSecForCF(minAllowedScheduledUpdateIntervalInSecForCF);
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", foundTenantProfile, TenantProfile.class);
         assertThat(savedTenantProfile).isNotNull();
-        assertThat(savedTenantProfile.getDefaultProfileConfiguration().getMinAllowedScheduledUpdateIntervalInSecForCF()).isEqualTo(TIMEOUT / 10);
+        assertThat(savedTenantProfile.getDefaultProfileConfiguration().getMinAllowedScheduledUpdateIntervalInSecForCF()).isEqualTo(minAllowedScheduledUpdateIntervalInSecForCF);
         loginTenantAdmin();
 
         // --- Arrange entities ---
@@ -884,7 +885,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cfg.setOutput(out);
 
         // Enable scheduled refresh with a 6-second interval
-        cfg.setScheduledUpdateInterval(6);
+        cfg.setScheduledUpdateInterval(minAllowedScheduledUpdateIntervalInSecForCF);
+        cfg.setScheduledUpdateEnabled(true);
 
         cf.setConfiguration(cfg);
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", cf, CalculatedField.class);
@@ -935,7 +937,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         relAllowedB.setType("AllowedZone");
         doPost("/api/relation", relAllowedB).andExpect(status().isOk());
 
-        awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsDirty(device.getId(), savedCalculatedField.getId());
+        awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsReadyToRefreshDynamicArguments(device.getId(), savedCalculatedField.getId(), minAllowedScheduledUpdateIntervalInSecForCF);
 
         // --- Same coordinates as before, but now we expect ENTERED since a new zone is registered ---
         doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",

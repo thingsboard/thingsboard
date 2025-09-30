@@ -45,6 +45,7 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 
 import java.util.HashMap;
 import java.util.List;
@@ -102,6 +103,9 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
             var result = createStateByType(ctx);
             result.updateState(ctx, resolveArgumentFutures(argFutures));
+            if (ctx.hasRelationQueryDynamicArguments() && result instanceof GeofencingCalculatedFieldState geofencingCalculatedFieldState) {
+                geofencingCalculatedFieldState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
+            }
             return result;
         }, MoreExecutors.directExecutor());
     }
