@@ -49,6 +49,7 @@
       <mat-hint [innerHTML]="(syncStrategyHints.get(createVersionFormGroup.get('syncStrategy').value) | translate) | safe:'html'"></mat-hint>
     </mat-form-field>
     <tb-entity-types-version-create
+      class="mt-5"
       formControlName="entityTypes">
     </tb-entity-types-version-create>
   </form>

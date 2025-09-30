@@ -39,11 +39,13 @@
            [flow]="flow.flowJs">
         <div class="upload-label">
           <mat-icon class="tb-mat-32 drop-label-icon">cloud_upload</mat-icon>
-          <span class="drop-label-text">{{ dropLabel }}</span>
-          <button type="button" mat-button color="primary" class="browse-file" [class]="uploadButtonClass">
-            <label
-              for="{{inputId}}">{{ uploadButtonText ? uploadButtonText : ((multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate) }}</label>
-          </button>
+          <div>
+            <span class="drop-label-text">{{ dropLabel }}</span>
+            <button type="button" mat-button color="primary" class="browse-file" [class]="uploadButtonClass">
+              <label
+                for="{{inputId}}">{{ uploadButtonText ? uploadButtonText : ((multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate) }}</label>
+            </button>
+          </div>
           <input class="file-input" flowButton #flowInput type="file" [flow]="flow.flowJs"
                  [flowAttributes]="{accept: accept}" id="{{inputId}}">
         </div>
