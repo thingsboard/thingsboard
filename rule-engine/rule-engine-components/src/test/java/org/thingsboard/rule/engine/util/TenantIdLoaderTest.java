@@ -169,8 +169,6 @@ public class TenantIdLoaderTest {
     private JobService jobService;
     @Mock
     private AiModelService aiModelService;
-    @Mock
-    private ApiKeyService apiKeyService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
