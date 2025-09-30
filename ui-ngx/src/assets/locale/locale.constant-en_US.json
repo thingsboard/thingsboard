@@ -1120,6 +1120,7 @@
         "provider": "Provider",
         "api-key": "API key",
         "api-key-required": "API key is required.",
+        "api-key-open-ai-required": "API key is required when using the official OpenAI API.",
         "project-id": "Project ID",
         "project-id-required": "Project ID is required",
         "location": "Location",
