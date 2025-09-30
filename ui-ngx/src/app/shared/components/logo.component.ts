@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input, OnInit } from '@angular/core';
+import { Component, Input, AfterViewInit } from '@angular/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { AuthService } from '@core/auth/auth.service';
 import { AppState } from '@core/core.state';
@@ -28,7 +28,7 @@ import { UrlHolder } from '@shared/pipe/image.pipe';
   templateUrl: './logo.component.html',
   styleUrls: ['./logo.component.scss']
 })
-export class LogoComponent implements OnInit {
+export class LogoComponent implements AfterViewInit {
 
   @Input()
   @coerceBoolean()
@@ -37,16 +37,19 @@ export class LogoComponent implements OnInit {
   @Input()
   logoSrc: string | UrlHolder = 'assets/logo_title_white.svg';
 
-  logoLink: UrlTree;
+  @Input()
+  logoUrl: string | UrlTree;
 
   constructor(private authService: AuthService,
               private store: Store<AppState>) {
   }
 
-  ngOnInit() {
-    if (!this.isLogin) {
-      const authState = getCurrentAuthState(this.store);
-      this.logoLink = this.authService.defaultUrl(true, authState);
+  ngAfterViewInit() {
+    if (!this.isLogin && !this.logoUrl) {
+      setTimeout(() => {
+        const authState = getCurrentAuthState(this.store);
+        this.logoUrl = this.authService.defaultUrl(true, authState);
+      }, 0);
     }
   }
 }
