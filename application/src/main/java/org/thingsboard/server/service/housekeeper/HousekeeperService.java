@@ -134,7 +134,6 @@ public class HousekeeperService {
                                 reprocessingService.submitForReprocessing(parallelMsg.getValue(), t);
                             }
                         }, MoreExecutors.directExecutor());
-                    } catch (InterruptedException ignored) {
                     } catch (Throwable e) {
                         log.error("Error during parallel task processing [{}]", parallelMsg, e);
                         reprocessingService.submitForReprocessing(parallelMsg.getValue(), e);
