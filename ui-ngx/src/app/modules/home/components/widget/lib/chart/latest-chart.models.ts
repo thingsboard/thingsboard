@@ -87,6 +87,7 @@ export interface LatestChartSettings extends LatestChartTooltipSettings {
   sortSeries: boolean;
   showTotal?: boolean;
   showLegend: boolean;
+  legendShowTotal: boolean;
   animation: ChartAnimationSettings;
 }
 
@@ -96,6 +97,7 @@ export const latestChartDefaultSettings: LatestChartSettings = {
   sortSeries: false,
   showTotal: false,
   showLegend: true,
+  legendShowTotal: true,
   animation: mergeDeep({} as ChartAnimationSettings, chartAnimationDefaultSettings)
 };
 
@@ -105,14 +107,12 @@ export interface LatestChartWidgetSettings extends LatestChartSettings {
   legendLabelColor: string;
   legendValueFont: Font;
   legendValueColor: string;
-  legendShowTotal: boolean;
   background: BackgroundSettings;
   padding: string;
 }
 
 export const latestChartWidgetDefaultSettings: LatestChartWidgetSettings = {
   ...latestChartDefaultSettings,
-  showLegend: true,
   legendPosition: LegendPosition.bottom,
   legendLabelFont: {
     family: 'Roboto',
@@ -132,7 +132,6 @@ export const latestChartWidgetDefaultSettings: LatestChartWidgetSettings = {
     lineHeight: '20px'
   },
   legendValueColor: 'rgba(0, 0, 0, 0.87)',
-  legendShowTotal: true,
   background: {
     type: BackgroundType.color,
     color: '#fff',

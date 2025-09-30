@@ -82,8 +82,7 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
   padding: string;
 
   get legendItems(): LatestChartLegendItem[] {
-    let items = this.latestChart ? this.latestChart.getLegendItems() : [];
-    return this.legendShowTotal ? items : items.filter(item => !item.total);
+    return this.latestChart ? this.latestChart.getLegendItems() : [];
   }
 
   legendLabelStyle: ComponentStyle;
@@ -93,7 +92,6 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   private shapeResize$: ResizeObserver;
   private legendHorizontal: boolean;
-  private legendShowTotal: boolean;
 
   private latestChart: TbLatestChart<LatestChartSettings>;
 
@@ -121,7 +119,6 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
       this.legendValueStyle = textStyle(this.settings.legendValueFont);
       this.disabledLegendValueStyle = textStyle(this.settings.legendValueFont);
       this.legendValueStyle.color = this.settings.legendValueColor;
-      this.legendShowTotal = this.settings.legendShowTotal;
     }
   }
 
