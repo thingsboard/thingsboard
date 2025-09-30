@@ -100,7 +100,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         }
         Map<String, RelationQueryDynamicSourceConfiguration> relationQueryBasedArguments = argumentsBasedCfg.getArguments().entrySet()
                 .stream()
-                .filter(entry -> entry.getValue().hasDynamicSource())
+                .filter(entry -> entry.getValue().hasRelationQuerySource())
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> (RelationQueryDynamicSourceConfiguration) entry.getValue().getRefDynamicSourceConfiguration()));
         if (relationQueryBasedArguments.isEmpty()) {
             return;

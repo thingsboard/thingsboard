@@ -19,7 +19,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
@@ -66,11 +65,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
-
-    @BeforeEach
-    void setUp() throws Exception {
-        loginTenantAdmin();
-    }
 
     @Test
     public void testSimpleCalculatedFieldWhenAllTelemetryPresent() throws Exception {

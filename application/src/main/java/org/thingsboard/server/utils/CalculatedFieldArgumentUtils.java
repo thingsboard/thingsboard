@@ -22,6 +22,8 @@ import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -64,6 +66,11 @@ public class CalculatedFieldArgumentUtils {
             return new BooleanDataEntry(key, Boolean.parseBoolean(defaultValue));
         }
         return new StringDataEntry(key, defaultValue);
+    }
+
+    public static AttributeKvEntry createDefaultAttributeEntry(Argument argument, long ts) {
+        KvEntry kvEntry = createDefaultKvEntry(argument);
+        return new BaseAttributeKvEntry(kvEntry, ts, 0L);
     }
 
     public static CalculatedFieldState createStateByType(CalculatedFieldCtx ctx, EntityId entityId) {

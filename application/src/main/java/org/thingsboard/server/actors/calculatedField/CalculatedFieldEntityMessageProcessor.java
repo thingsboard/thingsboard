@@ -155,6 +155,24 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
+    public void process(CalculatedFieldArgumentResetMsg msg) throws CalculatedFieldException {
+        log.debug("[{}] Processing CF argument reset msg.", entityId);
+        var ctx = msg.getCtx();
+        var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
+        try {
+            Map<String, Argument> dynamicSourceArgs = ctx.getArguments().entrySet().stream()
+                    .filter(entry -> entry.getValue().hasOwnerSource())
+                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+            Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, entityId, dynamicSourceArgs);
+            fetchedArgs.values().forEach(arg -> arg.setForceResetPrevious(true));
+
+            processArgumentValuesUpdate(ctx, Collections.singletonList(ctx.getCfId()), callback, fetchedArgs, null, null);
+        } catch (Exception e) {
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
+        }
+    }
+
     public void process(CalculatedFieldEntityDeleteMsg msg) {
         log.debug("[{}] Processing CF entity delete msg.", msg.getEntityId());
         if (this.entityId.equals(msg.getEntityId())) {
@@ -422,11 +440,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, List<TsKvProto> data) {
-        var argNames = ctx.getLinkedEntityArguments().get(entityId);
-        if (argNames.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return mapToArguments(argNames, data);
+        return mapToArguments(ctx.getLinkedAndDynamicArgs(entityId), data);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, List<TsKvProto> data) {
@@ -454,11 +468,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
-        var argNames = ctx.getLinkedEntityArguments().get(entityId);
+        var argNames = ctx.getLinkedAndDynamicArgs(entityId);
         if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
-        List<String> geofencingArgumentNames = ctx.getLinkedEntityGeofencingArgumentNames();
+        List<String> geofencingArgumentNames = ctx.getLinkedEntityAndCurrentOwnerGeofencingArgumentNames();
         return mapToArguments(entityId, argNames, geofencingArgumentNames, scope, attrDataList);
     }
 
@@ -480,11 +494,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<String> removedAttrKeys) {
-        var argNames = ctx.getLinkedEntityArguments().get(entityId);
-        if (argNames.isEmpty()) {
-            return Collections.emptyMap();
-        }
-        return mapToArgumentsWithDefaultValue(argNames, ctx.getArguments(), scope, removedAttrKeys);
+        return mapToArgumentsWithDefaultValue(ctx.getLinkedAndDynamicArgs(entityId), ctx.getArguments(), scope, removedAttrKeys);
     }
 
     private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<String> removedAttrKeys) {

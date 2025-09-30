@@ -668,6 +668,7 @@ public class DefaultTbClusterService implements TbClusterService {
             }
             msg.event(ComponentLifecycleEvent.UPDATED)
                     .oldProfileId(old.getDeviceProfileId())
+                    .ownerChanged(!entity.getOwnerId().equals(old.getOwnerId()))
                     .oldName(old.getName());
         }
         broadcast(msg.build());
@@ -688,6 +689,7 @@ public class DefaultTbClusterService implements TbClusterService {
         } else {
             msg.event(ComponentLifecycleEvent.UPDATED)
                     .oldProfileId(old.getAssetProfileId())
+                    .ownerChanged(!entity.getOwnerId().equals(old.getOwnerId()))
                     .oldName(old.getName());
         }
         broadcast(msg.build());

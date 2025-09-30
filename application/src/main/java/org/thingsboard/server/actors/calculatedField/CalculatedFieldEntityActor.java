@@ -84,6 +84,9 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
             case CF_ALARM_ACTION_MSG:
                 processor.process((CalculatedFieldAlarmActionMsg) msg);
                 break;
+            case CF_ARGUMENT_RESET_MSG:
+                processor.process((CalculatedFieldArgumentResetMsg) msg);
+                break;
             default:
                 return false;
         }

@@ -29,10 +29,21 @@ public class ArgumentTest {
     }
 
     @Test
-    void validateShouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
+    void validateWhenRelationQuerySourceConfigurationIsNotNull() {
         var argument = new Argument();
         argument.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
         assertThat(argument.hasDynamicSource()).isTrue();
+        assertThat(argument.hasRelationQuerySource()).isTrue();
+        assertThat(argument.hasOwnerSource()).isFalse();
+    }
+
+    @Test
+    void validateWhenCurrentCustomerSourceConfigurationIsNotNull() {
+        var argument = new Argument();
+        argument.setRefDynamicSourceConfiguration(new CurrentCustomerDynamicSourceConfiguration());
+        assertThat(argument.hasDynamicSource()).isTrue();
+        assertThat(argument.hasOwnerSource()).isTrue();
+        assertThat(argument.hasRelationQuerySource()).isFalse();
     }
 
 }

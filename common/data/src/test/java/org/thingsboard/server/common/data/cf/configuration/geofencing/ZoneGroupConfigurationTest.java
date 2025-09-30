@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CurrentCustomerDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -98,19 +99,25 @@ public class ZoneGroupConfigurationTest {
     }
 
     @Test
-    void whenHasDynamicSourceCalled_shouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
+    void whenHasRelationQuerySourceCalled_shouldReturnTrueIfRelationQuerySourceConfigurationIsNotNull() {
         var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
-        assertThat(zoneGroupConfiguration.hasDynamicSource()).isTrue();
+        assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isTrue();
     }
 
     @Test
-    void whenHasDynamicSourceCalled_shouldReturnTrueIfDynamicSourceConfigurationIsNull() {
+    void whenHasRelationQuerySourceCalled_shouldReturnFalseIfRelationQuerySourceConfigurationIsNull() {
         var zoneGroupConfiguration = mock(ZoneGroupConfiguration.class);
         assertThat(zoneGroupConfiguration.getRefDynamicSourceConfiguration()).isNull();
-        assertThat(zoneGroupConfiguration.hasDynamicSource()).isFalse();
+        assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isFalse();
     }
 
+    @Test
+    void whenHasRelationQuerySourceCalled_shouldReturnFalseIfCurrentCustomerSourceConfigured() {
+        var zoneGroupConfiguration = mock(ZoneGroupConfiguration.class);
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(new CurrentCustomerDynamicSourceConfiguration());
+        assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isFalse();
+    }
 
     @Test
     void validateToArgumentsMethodCallWithoutRefEntityId() {

@@ -69,9 +69,10 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                                                    TimeseriesService timeseriesService,
                                                    ApiLimitService apiLimitService,
                                                    RelationService relationService,
+                                                   OwnerService ownerService,
                                                    TbClusterService clusterService,
                                                    PartitionService partitionService) {
-        super(attributesService, timeseriesService, apiLimitService, relationService);
+        super(attributesService, timeseriesService, apiLimitService, relationService, ownerService);
         this.clusterService = clusterService;
         this.partitionService = partitionService;
     }
@@ -83,26 +84,26 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
 
     @Override
     public ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId) {
-        return super.fetchArguments(ctx, entityId);
+        return super.fetchArguments(ctx, entityId, System.currentTimeMillis());
     }
 
     @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        // only geofencing calculated fields supports dynamic arguments scheduled updates
+        // only scheduledSupported CF instances supports dynamic arguments scheduled updates
         if (!ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
             return Map.of();
         }
-        return resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true));
+        return resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
     }
 
     @Override
     public Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
         for (var entry : arguments.entrySet()) {
-            if (entry.getValue().hasDynamicSource()) {
+            if (entry.getValue().hasRelationQuerySource()) {
                 continue;
             }
-            var argEntityId = resolveEntityId(entityId, entry.getValue());
+            var argEntityId = resolveEntityId(tenantId, entityId, entry.getValue());
             var argValueFuture = fetchArgumentValue(tenantId, argEntityId, entry.getValue(), System.currentTimeMillis());
             argFutures.put(entry.getKey(), argValueFuture);
         }

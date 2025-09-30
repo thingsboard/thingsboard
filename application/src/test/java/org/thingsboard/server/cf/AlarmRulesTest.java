@@ -25,6 +25,7 @@ import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -40,6 +41,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CurrentCustomerDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
@@ -74,13 +76,14 @@ public class AlarmRulesTest extends AbstractControllerTest {
     @Autowired
     private EventDao eventDao;
 
+    private Device device;
     private DeviceId deviceId;
     private EventId latestEventId;
 
     @Before
     public void beforeEach() throws Exception {
         loginTenantAdmin();
-        Device device = createDevice("Device A", "aaa");
+        device = createDevice("Device A", "aaa");
         deviceId = device.getId();
     }
 
@@ -204,6 +207,40 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
             assertThat(alarmResult.getConditionDuration()).isBetween(createDurationMs, createDurationMs + 2000);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_currentOwnerArgument() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+
+        Argument temperatureThresholdArgument = new Argument();
+        temperatureThresholdArgument.setRefEntityKey(new ReferencedEntityKey("temperatureThreshold", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        temperatureThresholdArgument.setRefDynamicSourceConfiguration(new CurrentCustomerDynamicSourceConfiguration());
+        temperatureThresholdArgument.setDefaultValue("1000");
+
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument,
+                "temperatureThreshold", temperatureThresholdArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= temperatureThreshold;", null, null)
+        );
+
+        device.setCustomerId(customerId);
+        device = doPost("/api/device", device, Device.class);
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"temperatureThreshold\":50}");
+
+        postTelemetry(deviceId, "{\"temperature\":51}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
     }
 

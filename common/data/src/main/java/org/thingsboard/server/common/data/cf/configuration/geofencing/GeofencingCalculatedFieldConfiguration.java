@@ -63,7 +63,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateInterval > 0 && zoneGroups.values().stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
+        return scheduledUpdateInterval > 0 && zoneGroups.values().stream().anyMatch(ZoneGroupConfiguration::hasRelationQuerySource);
     }
 
     @Override

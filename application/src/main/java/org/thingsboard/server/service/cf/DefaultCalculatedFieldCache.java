@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
@@ -40,6 +41,7 @@ import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -59,12 +61,15 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final TbDeviceProfileCache deviceProfileCache;
     @Lazy
     private final ActorSystemContext systemContext;
+    private final OwnerService ownerService;
 
     private final ConcurrentMap<CalculatedFieldId, CalculatedField> calculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedField>> entityIdCalculatedFields = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
+
+    private final ConcurrentMap<EntityId, Set<EntityId>> ownerEntities = new ConcurrentHashMap<>();
 
     @Value("${queue.calculated_fields.init_fetch_pack_size:50000}")
     @Getter
@@ -218,6 +223,44 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
             default -> null;
         };
+    }
+
+    @Override
+    public Set<EntityId> getDynamicEntities(TenantId tenantId, EntityId entityId) {
+        if (entityId != null && entityId.getEntityType().isOneOf(EntityType.CUSTOMER, EntityType.TENANT)) {
+            return getOwnedEntities(tenantId, entityId);
+        }
+        return Collections.emptySet();
+    }
+
+    @Override
+    public void addOwnerEntity(TenantId tenantId, EntityId entityId) {
+        EntityId owner = ownerService.getOwner(tenantId, entityId);
+        getOwnedEntities(tenantId, owner).add(entityId);
+    }
+
+    @Override
+    public void updateOwnerEntity(TenantId tenantId, EntityId entityId) {
+        evictEntity(entityId);
+        addOwnerEntity(tenantId, entityId);
+    }
+
+    @Override
+    public void evictEntity(EntityId entityId) {
+        ownerEntities.values().forEach(entities -> entities.remove(entityId));
+    }
+
+    @Override
+    public void evictOwner(EntityId owner) {
+        ownerEntities.remove(owner);
+    }
+
+    private Set<EntityId> getOwnedEntities(TenantId tenantId, EntityId ownerId) {
+        return ownerEntities.computeIfAbsent(ownerId, owner -> {
+            Set<EntityId> entities = ConcurrentHashMap.newKeySet();
+            entities.addAll(ownerService.getOwnedEntities(tenantId, ownerId));
+            return entities;
+        });
     }
 
     private Lock getFetchLock(CalculatedFieldId id) {

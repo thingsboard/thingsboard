@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Predicate;
 
 public interface CalculatedFieldCache {
@@ -46,5 +47,15 @@ public interface CalculatedFieldCache {
     void evict(CalculatedFieldId calculatedFieldId);
 
     EntityId getProfileId(TenantId tenantId, EntityId entityId);
+
+    Set<EntityId> getDynamicEntities(TenantId tenantId, EntityId entityId);
+
+    void updateOwnerEntity(TenantId tenantId, EntityId entityId);
+
+    void addOwnerEntity(TenantId tenantId, EntityId entityId);
+
+    void evictEntity(EntityId entityId);
+
+    void evictOwner(EntityId owner);
 
 }

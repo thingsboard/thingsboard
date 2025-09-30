@@ -85,6 +85,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         checkEntityAndPushToQueue(tenantId, entityId,
                 cf -> cf.matches(entries),
                 cf -> cf.linkMatches(entityId, entries),
+                cf -> cf.dynamicSourceMatches(request.getEntries()),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -102,6 +103,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         checkEntityAndPushToQueue(tenantId, entityId,
                 cf -> cf.matches(entries, scope),
                 cf -> cf.linkMatches(entityId, entries, scope),
+                cf -> cf.dynamicSourceMatches(request.getEntries(), request.getScope()),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -118,6 +120,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         checkEntityAndPushToQueue(tenantId, entityId,
                 cf -> cf.matchesKeys(result, scope),
                 cf -> cf.linkMatchesAttrKeys(entityId, result, scope),
+                cf -> cf.matchesDynamicSourceKeys(result, request.getScope()),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -128,16 +131,19 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         checkEntityAndPushToQueue(tenantId, entityId,
                 cf -> cf.matchesKeys(result),
                 cf -> cf.linkMatchesTsKeys(entityId, result),
+                cf -> cf.matchesDynamicSourceKeys(result),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
     private void checkEntityAndPushToQueue(TenantId tenantId, EntityId entityId,
-                                           Predicate<CalculatedFieldCtx> mainEntityFilter, Predicate<CalculatedFieldCtx> linkedEntityFilter,
+                                           Predicate<CalculatedFieldCtx> mainEntityFilter,
+                                           Predicate<CalculatedFieldCtx> linkedEntityFilter,
+                                           Predicate<CalculatedFieldCtx> dynamicSourceFilter,
                                            Supplier<ToCalculatedFieldMsg> msg, FutureCallback<Void> callback) {
         if (EntityType.TENANT.equals(entityId.getEntityType())) {
             tenantId = (TenantId) entityId;
         }
-        boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter);
+        boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter, dynamicSourceFilter);
         if (send) {
             ToCalculatedFieldMsg calculatedFieldMsg = msg.get();
             clusterService.pushMsgToCalculatedFields(tenantId, entityId, calculatedFieldMsg, wrap(callback));
@@ -148,7 +154,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         }
     }
 
-    private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter) {
+    private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter, Predicate<CalculatedFieldCtx> dynamicSourceFilter) {
         if (!supportedReferencedEntities.contains(entityId.getEntityType())) {
             return false;
         }
@@ -161,6 +167,16 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         for (CalculatedFieldLink link : links) {
             CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(link.getCalculatedFieldId());
             if (ctx != null && linkedEntityFilter.test(ctx)) {
+                return true;
+            }
+        }
+
+        for (EntityId dynamicEntity : calculatedFieldCache.getDynamicEntities(tenantId, entityId)) {
+            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntity).stream().anyMatch(dynamicSourceFilter)) {
+                return true;
+            }
+            EntityId dynamicEntityProfileId = calculatedFieldCache.getProfileId(tenantId, dynamicEntity);
+            if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntityProfileId).stream().anyMatch(dynamicSourceFilter)) {
                 return true;
             }
         }
