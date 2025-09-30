@@ -110,6 +110,9 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
         'o3',
         'o3-mini',
         'o1',
+        'gpt-5',
+        'gpt-5-mini',
+        'gpt-5-nano',
         'gpt-4.1',
         'gpt-4.1-mini',
         'gpt-4.1-nano',
@@ -134,6 +137,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
       modelList: [
         'gemini-2.5-pro',
         'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
         'gemini-2.0-flash',
         'gemini-2.0-flash-lite',
       ],
@@ -147,6 +151,7 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
       modelList: [
         'gemini-2.5-pro',
         'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
         'gemini-2.0-flash',
         'gemini-2.0-flash-lite',
       ],
@@ -176,10 +181,11 @@ export const AiModelMap = new Map<AiProvider, { modelList: string[], providerFie
     AiProvider.ANTHROPIC,
     {
       modelList: [
+        'claude-opus-4-1',
         'claude-opus-4-0',
+        'claude-sonnet-4-5',
         'claude-sonnet-4-0',
         'claude-3-7-sonnet-latest',
-        'claude-3-5-sonnet-latest',
         'claude-3-5-haiku-latest',
       ],
       providerFieldsList: ['apiKey'],
