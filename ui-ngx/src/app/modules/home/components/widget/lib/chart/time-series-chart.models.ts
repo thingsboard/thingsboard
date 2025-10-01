@@ -143,7 +143,7 @@ export interface TimeSeriesChartDataItem {
   xAxisIndex: number;
   yAxisId: TimeSeriesChartYAxisId;
   yAxisIndex: number;
-  option?: LineSeriesOption | CustomSeriesOption;
+  option?: LineSeriesOption;
   barRenderContext?: BarRenderContext;
   unitConvertor?: TbUnitConverter;
 }

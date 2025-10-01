@@ -363,10 +363,11 @@ export class TimeSeriesChartBasicConfigComponent extends BasicWidgetConfigCompon
       this.timeSeriesChartWidgetConfigForm.get('tooltipValueColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipShowDate').enable({emitEvent: false});
       this.timeSeriesChartWidgetConfigForm.get('tooltipHideZeroValues').enable({emitEvent: false});
-      if (stack)
+      if (stack) {
         this.timeSeriesChartWidgetConfigForm.get('tooltipStackedShowTotal').enable();
-      else
+      } else {
         this.timeSeriesChartWidgetConfigForm.get('tooltipStackedShowTotal').disable();
+      }
       this.timeSeriesChartWidgetConfigForm.get('tooltipBackgroundColor').enable();
       this.timeSeriesChartWidgetConfigForm.get('tooltipBackgroundBlur').enable();
       if (tooltipShowDate) {

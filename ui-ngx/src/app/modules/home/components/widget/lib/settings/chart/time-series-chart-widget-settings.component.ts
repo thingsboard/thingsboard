@@ -227,10 +227,11 @@ export class TimeSeriesChartWidgetSettingsComponent extends WidgetSettingsCompon
       this.timeSeriesChartWidgetSettingsForm.get('tooltipValueFormatter').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
       this.timeSeriesChartWidgetSettingsForm.get('tooltipHideZeroValues').enable();
-      if (stack)
+      if (stack) {
         this.timeSeriesChartWidgetSettingsForm.get('tooltipStackedShowTotal').enable();
-      else
+      } else {
         this.timeSeriesChartWidgetSettingsForm.get('tooltipStackedShowTotal').disable();
+      }
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
       this.timeSeriesChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
       if (tooltipShowDate) {
