@@ -6026,6 +6026,7 @@
         "show-date-time-interval": "Show date time interval",
         "show-date-time-interval-hint": "Show date time interval according to the data aggregation.",
         "hide-zero-tooltip-values": "Hide zero values",
+        "show-stack-total": "Show total value in stack mode",
         "background-color": "Background color",
         "background-blur": "Background blur"
     },
