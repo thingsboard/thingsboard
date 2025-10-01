@@ -15,8 +15,15 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-public enum CFArgumentDynamicSourceType {
+public interface RelationQueryBased {
 
-    RELATION_QUERY, RELATION_PATH_QUERY
+    int getMaxLevel();
+
+    default void validateMaxRelationLevel(String argumentName, int maxAllowedRelationLevel) {
+        if (getMaxLevel() > maxAllowedRelationLevel) {
+            throw new IllegalArgumentException("Max relation level is greater than configured " +
+                    "maximum allowed relation level in tenant profile: " + maxAllowedRelationLevel + " for argument: " + argumentName);
+        }
+    }
 
 }

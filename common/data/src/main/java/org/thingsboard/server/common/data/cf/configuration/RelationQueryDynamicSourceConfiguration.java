@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 @Data
-public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
+public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration, RelationQueryBased {
 
     private int maxLevel;
     private boolean fetchLastLevelOnly;
@@ -57,13 +57,6 @@ public class RelationQueryDynamicSourceConfiguration implements CfArgumentDynami
     @JsonIgnore
     public boolean isSimpleRelation() {
         return maxLevel == 1;
-    }
-
-    public void validateMaxRelationLevel(String argumentName, int maxAllowedRelationLevel) {
-        if (maxLevel > maxAllowedRelationLevel) {
-            throw new IllegalArgumentException("Max relation level is greater than configured " +
-                                               "maximum allowed relation level in tenant profile: " + maxAllowedRelationLevel + " for argument: " + argumentName);
-        }
     }
 
     public EntityRelationsQuery toEntityRelationsQuery(EntityId rootEntityId) {
