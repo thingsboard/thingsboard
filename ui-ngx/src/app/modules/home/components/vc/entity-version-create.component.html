@@ -15,39 +15,40 @@
     limitations under the License.
 
 -->
-<section *ngIf="!versionCreateResult$">
+@if (!versionCreateResult$) {
   <mat-toolbar>
     <h2>{{ 'version-control.create-entity-version' | translate }}</h2>
     <span class="flex-1"></span>
   </mat-toolbar>
   <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
-                    *ngIf="isLoading$ | async">
+                    [class.hidden]="(isLoading$ | async) === false">
   </mat-progress-bar>
   <form [formGroup]="createVersionFormGroup" style="padding-top: 16px;">
     <fieldset [disabled]="isLoading$ | async">
       <div class="flex flex-1 flex-col">
         <tb-branch-autocomplete
           required
+          appearance="outline"
           formControlName="branch">
         </tb-branch-autocomplete>
-        <mat-form-field class="mat-block flex-1">
+        <mat-form-field class="mat-block flex-1" appearance="outline">
           <mat-label translate>version-control.version-name</mat-label>
           <input required matInput formControlName="versionName">
-          <mat-error *ngIf="createVersionFormGroup.get('versionName').hasError('required') ||
-                            createVersionFormGroup.get('versionName').hasError('pattern')">
+          <mat-error [class.hidden]="!(createVersionFormGroup.get('versionName').hasError('required') ||
+                                       createVersionFormGroup.get('versionName').hasError('pattern'))">
             {{ 'version-control.version-name-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-checkbox *ngIf="entityId.entityType === entityTypes.DEVICE" formControlName="saveCredentials" style="margin-bottom: 16px;">
+        <mat-checkbox [class.hidden]="entityId.entityType !== entityTypes.DEVICE" formControlName="saveCredentials" style="margin-bottom: 16px;">
           {{ 'version-control.export-credentials' | translate }}
         </mat-checkbox>
-        <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityId.entityType)" formControlName="saveAttributes" style="margin-bottom: 16px;">
+        <mat-checkbox [class.hidden]="entityTypesWithoutRelatedData.has(entityId.entityType)" formControlName="saveAttributes" style="margin-bottom: 16px;">
           {{ 'version-control.export-attributes' | translate }}
         </mat-checkbox>
-        <mat-checkbox *ngIf="!entityTypesWithoutRelatedData.has(entityId.entityType)" formControlName="saveRelations" style="margin-bottom: 16px;">
+        <mat-checkbox [class.hidden]="entityTypesWithoutRelatedData.has(entityId.entityType)" formControlName="saveRelations" style="margin-bottom: 16px;">
           {{ 'version-control.export-relations' | translate }}
         </mat-checkbox>
-        <mat-checkbox *ngIf="typesWithCalculatedFields.has(entityId.entityType)" formControlName="saveCalculatedFields" class="mb-4">
+        <mat-checkbox [class.hidden]="!typesWithCalculatedFields.has(entityId.entityType)" formControlName="saveCalculatedFields" class="mb-4">
           {{ 'version-control.export-calculated-fields' | translate }}
         </mat-checkbox>
       </div>
@@ -67,10 +68,9 @@
       {{ 'action.create' | translate }}
     </button>
   </div>
-</section>
-<section *ngIf="versionCreateResult$">
-  <section *ngIf="(versionCreateResult$ | async)?.done || resultMessage; else progress">
-    <section *ngIf="resultMessage">
+} @else {
+  @if ((versionCreateResult$ | async)?.done || resultMessage) {
+    <section [class.hidden]="!resultMessage">
       <div class="mat-headline-6 vc-result-message">{{ resultMessage }}</div>
       <div class="flex items-center justify-end gap-2">
         <button mat-button color="primary"
@@ -81,13 +81,12 @@
         </button>
       </div>
     </section>
-  </section>
-  <ng-template #progress>
+  } @else {
     <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.creating-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
     </section>
-  </ng-template>
-</section>
+  }
+}

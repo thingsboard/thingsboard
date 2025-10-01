@@ -48,6 +48,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -91,16 +92,18 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         this.ctx = ctx;
     }
 
-    public void stop() {
-        log.info("[{}][{}] Stopping entity actor.", tenantId, entityId);
+    public void stop(boolean partitionChanged) {
+        log.info(partitionChanged ?
+                        "[{}][{}] Stopping entity actor due to change partition event." :
+                        "[{}][{}] Stopping entity actor.",
+                tenantId, entityId);
         states.clear();
         ctx.stop(ctx.getSelf());
     }
 
     public void process(CalculatedFieldPartitionChangeMsg msg) {
         if (!systemContext.getPartitionService().resolve(ServiceType.TB_RULE_ENGINE, DataConstants.CF_QUEUE_NAME, tenantId, entityId).isMyPartition()) {
-            log.info("[{}] Stopping entity actor due to change partition event.", entityId);
-            ctx.stop(ctx.getSelf());
+            stop(true);
         }
     }
 
@@ -224,6 +227,18 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
+    public void process(EntityCalculatedFieldDynamicArgumentsRefreshMsg msg) throws CalculatedFieldException {
+        log.debug("[{}][{}] Processing CF dynamic arguments refresh msg.", entityId, msg.getCfId());
+        CalculatedFieldState currentState = states.get(msg.getCfId());
+        if (currentState == null) {
+            log.debug("[{}][{}] Failed to find CF state for entity.", entityId, msg.getCfId());
+        } else {
+            currentState.setDirty(true);
+            log.debug("[{}][{}] CF state marked as dirty.", entityId, msg.getCfId());
+        }
+        msg.getCallback().onSuccess();
+    }
+
     private void processTelemetry(CalculatedFieldCtx ctx, CalculatedFieldTelemetryMsgProto proto, List<CalculatedFieldId> cfIdList, MultipleTbCallback callback) throws CalculatedFieldException {
         processArgumentValuesUpdate(ctx, cfIdList, callback, mapToArguments(ctx, proto.getTsDataList()), toTbMsgId(proto), toTbMsgType(proto));
     }
@@ -251,6 +266,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state == null) {
             state = getOrInitState(ctx);
             justRestored = true;
+        } else if (state.isDirty()) {
+            log.debug("[{}][{}] Going to update dirty CF state.", entityId, ctx.getCfId());
+            try {
+                Map<String, ArgumentEntry> dynamicArgsFromDb = cfService.fetchDynamicArgsFromDb(ctx, entityId);
+                dynamicArgsFromDb.forEach(newArgValues::putIfAbsent);
+                state.setDirty(false);
+            } catch (Exception e) {
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
+            }
         }
         if (state.isSizeOk()) {
             if (state.updateState(ctx, newArgValues) || justRestored) {
@@ -271,7 +295,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state != null) {
             return state;
         } else {
-            ListenableFuture<CalculatedFieldState> stateFuture = systemContext.getCalculatedFieldProcessingService().fetchStateFromDb(ctx, entityId);
+            ListenableFuture<CalculatedFieldState> stateFuture = cfService.fetchStateFromDb(ctx, entityId);
             // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
             // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
             // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
@@ -288,7 +312,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         boolean stateSizeChecked = false;
         try {
             if (ctx.isInitialized() && state.isReady()) {
-                CalculatedFieldResult calculationResult = state.performCalculation(ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
+                CalculatedFieldResult calculationResult = state.performCalculation(entityId, ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
                 stateSizeChecked = true;
                 if (state.isSizeOk()) {
@@ -298,7 +322,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         callback.onSuccess();
                     }
                     if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.getResult().toString(), null);
+                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.toStringOrElseNull(), null);
                     }
                 }
             } else {
@@ -367,7 +391,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
-        return mapToArguments(ctx.getMainEntityArguments(), scope, attrDataList);
+        return mapToArguments(entityId, ctx.getMainEntityArguments(), ctx.getMainEntityGeofencingArgumentNames(), scope, attrDataList);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
@@ -375,17 +399,23 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (argNames.isEmpty()) {
             return Collections.emptyMap();
         }
-        return mapToArguments(argNames, scope, attrDataList);
+        List<String> geofencingArgumentNames = ctx.getLinkedEntityGeofencingArgumentNames();
+        return mapToArguments(entityId, argNames, geofencingArgumentNames, scope, attrDataList);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, String> argNames, List<String> geoArgNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
             String argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            if (argName == null) {
+                continue;
             }
+            if (geoArgNames.contains(argName)) {
+                arguments.put(argName, new GeofencingArgumentEntry(entityId, item));
+                continue;
+            }
+            arguments.put(argName, new SingleValueArgumentEntry(item));
         }
         return arguments;
     }

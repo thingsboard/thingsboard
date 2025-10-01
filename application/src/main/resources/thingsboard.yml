@@ -1542,7 +1542,7 @@ swagger:
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
   group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
-  # Control the initial display state of API operations and tags (none, list or full)
+  # Control the initial display state of API operations and tags (none or list)
   doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
 # Queue configuration parameters

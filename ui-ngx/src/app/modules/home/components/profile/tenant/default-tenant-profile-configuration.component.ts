@@ -124,6 +124,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       edgeUplinkMessagesRateLimitsPerEdge: [null, []],
       maxCalculatedFieldsPerEntity: [null, [Validators.required, Validators.min(0)]],
       maxArgumentsPerCF: [null, [Validators.required, Validators.min(0)]],
+      maxRelationLevelPerCfArgument: [null, [Validators.required, Validators.min(1)]],
+      minAllowedScheduledUpdateIntervalInSecForCF: [null, [Validators.required, Validators.min(0)]],
       maxDataPointsPerRollingArg: [null, [Validators.required, Validators.min(0)]],
       maxStateSizeInKBytes: [null, [Validators.required, Validators.min(0)]],
       calculatedFieldDebugEventsRateLimit: [null, []],
