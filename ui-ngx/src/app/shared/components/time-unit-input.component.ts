@@ -25,7 +25,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { TimeUnit, timeUnitTranslations } from '../rule-node-config.models';
+import { TimeUnit, timeUnitTranslations } from '@home/components/rule-node/rule-node-config.models';
 import { isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
@@ -133,7 +133,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         );
       }
       if (isDefinedAndNotNull(this.minTime)) {
-        validators.push(Validators.min(this.minTime));
+        validators.push((control: AbstractControl) =>
+          Validators.min(Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
+        );
       }
 
       timeControl.setValidators(validators);

@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSetter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -84,6 +85,11 @@ public class TbResource extends TbResourceInfo {
         this.preview = Optional.ofNullable(preview)
                 .map(Base64.getDecoder()::decode)
                 .orElse(null);
+    }
+
+    @JsonIgnore
+    public TbResourceDataInfo toResourceDataInfo() {
+        return new TbResourceDataInfo(data, getDescriptor());
     }
 
     @Override

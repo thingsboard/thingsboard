@@ -59,7 +59,7 @@
         <mat-cell *matCellDef="let argument" class="w-1/4 xs:hidden">
           <div tbTruncateWithTooltip>
             @if (argument.refEntityId?.id && argument.refEntityId?.entityType !== ArgumentEntityType.Tenant) {
-              <a aria-label="Open entity details page"
+              <a [attr.aria-label]="'calculated-fields.open-details-page' | translate"
                  [routerLink]="getEntityDetailsPageURL(argument.refEntityId.id, argument.refEntityId.entityType)">
                 {{ entityNameMap.get(argument.refEntityId.id) ?? '' }}
               </a>

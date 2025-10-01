@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.dao.model.sql.DashboardInfoEntity;
 
 import java.util.List;
@@ -87,12 +88,15 @@ public interface DashboardInfoRepository extends JpaRepository<DashboardInfoEnti
     )
     List<DashboardInfoEntity> findByImageLink(@Param("imageLink") String imageLink, @Param("limit") int limit);
 
-    @Query(value = "SELECT * FROM dashboard d WHERE d.tenant_id = :tenantId and d.configuration ILIKE CONCAT('%', :link, '%') limit :limit",
-            nativeQuery = true)
-    List<DashboardInfoEntity> findDashboardInfosByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId, @Param("link") String link, @Param("limit") int limit);
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DASHBOARD', d.title) " +
+            "FROM DashboardEntity d WHERE d.tenantId = :tenantId AND ilike(cast(d.configuration as string), CONCAT('%', :link, '%')) = true")
+    List<EntityInfo> findDashboardInfosByTenantIdAndResourceLink(@Param("tenantId") UUID tenantId,
+                                                                 @Param("link") String link,
+                                                                 Pageable pageable);
 
-    @Query(value = "SELECT * FROM dashboard d WHERE d.configuration ILIKE CONCAT('%', :link, '%') limit :limit",
-            nativeQuery = true)
-    List<DashboardInfoEntity> findDashboardInfosByResourceLink(@Param("link") String link, @Param("limit") int limit);
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(d.id, 'DASHBOARD', d.title) " +
+            "FROM DashboardEntity d WHERE ilike(cast(d.configuration as string), CONCAT('%', :link, '%')) = true")
+    List<EntityInfo> findDashboardInfosByResourceLink(@Param("link") String link,
+                                                      Pageable pageable);
 
 }

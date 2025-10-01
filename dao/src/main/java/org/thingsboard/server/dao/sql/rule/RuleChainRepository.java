@@ -17,10 +17,12 @@ package org.thingsboard.server.dao.sql.rule;
 
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.edqs.fields.RuleChainFields;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.ExportableEntityRepository;
@@ -71,6 +73,19 @@ public interface RuleChainRepository extends JpaRepository<RuleChainEntity, UUID
 
     @Query("SELECT externalId FROM RuleChainEntity WHERE id = :id")
     UUID getExternalIdById(@Param("id") UUID id);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(rc.id, 'RULE_CHAIN', rc.name) " +
+            "FROM RuleChainEntity rc WHERE rc.tenantId = :tenantId AND EXISTS " +
+            "(SELECT 1 FROM RuleNodeEntity rn WHERE rn.ruleChainId = rc.id AND cast(rn.configuration as string) LIKE CONCAT('%', :resourceId, '%'))")
+    List<EntityInfo> findRuleChainsByTenantIdAndResource(@Param("tenantId") UUID tenantId,
+                                                         @Param("resourceId") String resourceId,
+                                                         PageRequest of);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(rc.id, 'RULE_CHAIN', rc.name) " +
+            "FROM RuleChainEntity rc WHERE EXISTS " +
+            "(SELECT 1 FROM RuleNodeEntity rn WHERE rn.ruleChainId = rc.id AND cast(rn.configuration as string) LIKE CONCAT('%', :resourceId, '%'))")
+    List<EntityInfo> findRuleChainsByResource(@Param("resourceId") String resourceId,
+                                              Pageable pageable);
 
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.RuleChainFields(r.id, r.createdTime, r.tenantId," +
             "r.name, r.version, r.additionalInfo) FROM RuleChainEntity r WHERE r.id > :id ORDER BY r.id")

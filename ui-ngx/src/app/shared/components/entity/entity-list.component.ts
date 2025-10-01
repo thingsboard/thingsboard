@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -93,6 +104,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Input()
@@ -108,6 +120,13 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   @coerceBoolean()
   inlineField: boolean;
+
+  @Input()
+  @coerceBoolean()
+  allowCreateNew: boolean;
+
+  @Output()
+  createNew = new EventEmitter<string>();
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
@@ -134,6 +153,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   private updateValidators() {
     this.entityListFormGroup.get('entities').setValidators(this.required ? [Validators.required] : []);
     this.entityListFormGroup.get('entities').updateValueAndValidity();
+  }
+
+  createNewEntity($event: Event, searchText?: string) {
+    $event.stopPropagation();
+    this.createNew.emit(searchText);
   }
 
   registerOnChange(fn: any): void {
@@ -201,6 +225,9 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
       this.modelValue = null;
     }
     this.dirty = true;
+    if (this.entityInput) {
+      this.entityInput.nativeElement.value = '';
+    }
   }
 
   validate(): ValidationErrors | null {

@@ -32,8 +32,10 @@ import dev.langchain4j.model.chat.request.ChatRequestParameters;
 import dev.langchain4j.model.github.GitHubModelsChatModel;
 import dev.langchain4j.model.googleai.GoogleAiGeminiChatModel;
 import dev.langchain4j.model.mistralai.MistralAiChatModel;
+import dev.langchain4j.model.ollama.OllamaChatModel;
 import dev.langchain4j.model.openai.OpenAiChatModel;
 import dev.langchain4j.model.vertexai.gemini.VertexAiGeminiChatModel;
+import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
@@ -43,10 +45,12 @@ import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelC
 import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -54,7 +58,11 @@ import software.amazon.awssdk.services.bedrockruntime.BedrockRuntimeClient;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.util.Base64;
+
+import static java.util.Collections.singletonMap;
 
 @Component
 class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigurer {
@@ -62,6 +70,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
     @Override
     public ChatModel configureChatModel(OpenAiChatModelConfig chatModelConfig) {
         return OpenAiChatModel.builder()
+                .baseUrl(chatModelConfig.providerConfig().baseUrl())
                 .apiKey(chatModelConfig.providerConfig().apiKey())
                 .modelName(chatModelConfig.modelId())
                 .temperature(chatModelConfig.temperature())
@@ -134,7 +143,7 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
 
             // set request timeout from model config
             if (chatModelConfig.timeoutSeconds() != null) {
-                retrySettings.setTotalTimeout(org.threeten.bp.Duration.ofSeconds(chatModelConfig.timeoutSeconds()));
+                retrySettings.setTotalTimeoutDuration(Duration.ofSeconds(chatModelConfig.timeoutSeconds()));
             }
 
             // set updated retry settings
@@ -260,6 +269,35 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .timeout(toDuration(chatModelConfig.timeoutSeconds()))
                 .maxRetries(chatModelConfig.maxRetries())
                 .build();
+    }
+
+    @Override
+    public ChatModel configureChatModel(OllamaChatModelConfig chatModelConfig) {
+        var builder = OllamaChatModel.builder()
+                .baseUrl(chatModelConfig.providerConfig().baseUrl())
+                .modelName(chatModelConfig.modelId())
+                .temperature(chatModelConfig.temperature())
+                .topP(chatModelConfig.topP())
+                .topK(chatModelConfig.topK())
+                .numCtx(chatModelConfig.contextLength())
+                .numPredict(chatModelConfig.maxOutputTokens())
+                .timeout(toDuration(chatModelConfig.timeoutSeconds()))
+                .maxRetries(chatModelConfig.maxRetries());
+
+        var auth = chatModelConfig.providerConfig().auth();
+        if (auth instanceof OllamaProviderConfig.OllamaAuth.Basic basicAuth) {
+            String credentials = basicAuth.username() + ":" + basicAuth.password();
+            String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
+            builder.customHeaders(singletonMap(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials));
+        } else if (auth instanceof OllamaProviderConfig.OllamaAuth.Token tokenAuth) {
+            builder.customHeaders(singletonMap(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAuth.token()));
+        } else if (auth instanceof OllamaProviderConfig.OllamaAuth.None) {
+            // do nothing
+        } else {
+            throw new UnsupportedOperationException("Unknown authentication type: " + auth.getClass().getSimpleName());
+        }
+
+        return builder.build();
     }
 
     private static Duration toDuration(Integer timeoutSeconds) {
