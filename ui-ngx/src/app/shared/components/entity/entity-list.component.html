@@ -40,6 +40,12 @@
            [matAutocompleteConnectedTo]="origin"
            [matAutocomplete]="entityAutocomplete"
            [matChipInputFor]="chipList">
+    <button mat-button color="primary" matSuffix
+            type="button"
+            *ngIf="allowCreateNew && !disabled"
+            (click)="createNewEntity($event)">
+      <span style="white-space: nowrap">{{ 'entity.create-new' | translate }}</span>
+    </button>
   </mat-chip-grid>
   <mat-autocomplete #entityAutocomplete="matAutocomplete"
                     class="tb-autocomplete"
@@ -56,6 +62,11 @@
           <span>
           {{ 'entity.no-entities-matching' | translate: {entity: searchText} }}
           </span>
+          @if (allowCreateNew) {
+            <span>
+              <a translate (click)="createNewEntity($event, searchText)">entity.create-new-key</a>
+            </span>
+          }
         </ng-template>
       </div>
     </mat-option>

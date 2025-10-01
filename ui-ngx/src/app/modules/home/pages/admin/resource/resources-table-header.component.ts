@@ -28,7 +28,7 @@ import { PageLink } from '@shared/models/page/page-link';
 })
 export class ResourcesTableHeaderComponent extends EntityTableHeaderComponent<Resource, PageLink, ResourceInfo> {
 
-  readonly resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS];
+  readonly resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS, ResourceType.GENERAL];
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
 
   constructor(protected store: Store<AppState>) {
