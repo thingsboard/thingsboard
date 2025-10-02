@@ -419,9 +419,10 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     const timewindowFormValue = this.timewindowForm.getRawValue();
     const realtimeDisableCustomInterval = timewindowFormValue.realtime.disableCustomInterval;
     const historyDisableCustomInterval = timewindowFormValue.history.disableCustomInterval;
-    updateFormValuesOnTimewindowTypeChange(selectedTab, this.quickIntervalOnly, this.timewindowForm,
+    updateFormValuesOnTimewindowTypeChange(selectedTab, this.timewindowForm,
       realtimeDisableCustomInterval, historyDisableCustomInterval,
-      timewindowFormValue.realtime.advancedParams, timewindowFormValue.history.advancedParams);
+      timewindowFormValue.realtime.advancedParams, timewindowFormValue.history.advancedParams,
+      this.realtimeTimewindowOptions, this.historyTimewindowOptions);
     this.timewindowForm.patchValue({
       hideAggregation: timewindowFormValue.hideAggregation,
       hideAggInterval: timewindowFormValue.hideAggInterval,
