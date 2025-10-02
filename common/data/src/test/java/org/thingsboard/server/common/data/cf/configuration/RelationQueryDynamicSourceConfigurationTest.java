@@ -123,9 +123,8 @@ public class RelationQueryDynamicSourceConfigurationTest {
                 .hasMessage("Relation query dynamic source configuration relation type must be specified!");
     }
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    void isSimpleRelationTrueWhenLevelIsOneAndEntityTypesEmptyOrNull(List<EntityType> entityTypes) {
+    @Test
+    void isSimpleRelationTrueWhenLevelIsOneAndEntityTypesEmptyOrNull() {
         var cfg = new RelationQueryDynamicSourceConfiguration();
         cfg.setMaxLevel(1);
         assertThat(cfg.isSimpleRelation()).isTrue();
@@ -138,9 +137,8 @@ public class RelationQueryDynamicSourceConfigurationTest {
         assertThat(cfg.isSimpleRelation()).isFalse();
     }
 
-    @ParameterizedTest
-    @NullAndEmptySource
-    void toEntityRelationsQueryShouldThrowForSimpleRelation(List<EntityType> entityTypes) {
+    @Test
+    void toEntityRelationsQueryShouldThrowForSimpleRelation() {
         var cfg = new RelationQueryDynamicSourceConfiguration();
         cfg.setMaxLevel(1);
         cfg.setFetchLastLevelOnly(false);
@@ -177,7 +175,7 @@ public class RelationQueryDynamicSourceConfigurationTest {
     }
 
     @Test
-    void resolveEntityIdsFromDirectionFROMReturnsToIds() {
+    void resolveEntityIds_whenDirectionFROM_thenReturnsToIds() {
         when(rel1.getTo()).thenReturn(mock(EntityId.class));
         when(rel2.getTo()).thenReturn(mock(EntityId.class));
 
@@ -190,7 +188,7 @@ public class RelationQueryDynamicSourceConfigurationTest {
     }
 
     @Test
-    void resolveEntityIdsFromDirectionTOReturnsFromIds() {
+    void resolveEntityIds_whenDirectionTO_thenReturnsFromIds() {
         when(rel1.getFrom()).thenReturn(mock(EntityId.class));
         when(rel2.getFrom()).thenReturn(mock(EntityId.class));
 

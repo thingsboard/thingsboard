@@ -28,9 +28,11 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -41,6 +43,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 @DaoSqlTest
 public class RelationServiceTest extends AbstractServiceTest {
@@ -348,14 +352,14 @@ public class RelationServiceTest extends AbstractServiceTest {
         query.setFilters(Collections.singletonList(new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.singletonList(EntityType.ASSET))));
         List<EntityRelation> relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
         Assert.assertEquals(expected.size(), relations.size());
-        for(EntityRelation r : expected){
+        for (EntityRelation r : expected) {
             Assert.assertTrue(relations.contains(r));
         }
 
         //Test from cache
         relations = relationService.findByQuery(SYSTEM_TENANT_ID, query).get();
         Assert.assertEquals(expected.size(), relations.size());
-        for(EntityRelation r : expected){
+        for (EntityRelation r : expected) {
             Assert.assertTrue(relations.contains(r));
         }
     }
@@ -621,6 +625,51 @@ public class RelationServiceTest extends AbstractServiceTest {
         Assert.assertTrue(relations.contains(relationD));
         Assert.assertTrue(relations.contains(relationE));
         Assert.assertTrue(relations.contains(relationF));
+    }
+
+    @Test
+    public void testFindByPathQuery() throws Exception {
+        /*
+        A
+        └──[firstLevel, TO]→ B
+            └──[secondLevel, TO]→ C
+                ├──[thirdLevel, FROM]→ D
+                ├──[thirdLevel, FROM]→ E
+                └──[thirdLevel, FROM]→ F
+        */
+        // rootEntity
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        // firstLevelEntity
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        // secondLevelEntity
+        AssetId assetC = new AssetId(Uuids.timeBased());
+        // thirdLevelEntities
+        AssetId assetD = new AssetId(Uuids.timeBased());
+        AssetId assetE = new AssetId(Uuids.timeBased());
+        AssetId assetF = new AssetId(Uuids.timeBased());
+
+        EntityRelation firstLevelRelation = new EntityRelation(assetB, assetA, "firstLevel");
+        EntityRelation secondLevelRelation = new EntityRelation(assetC, assetB, "secondLevel");
+        EntityRelation thirdLevelRelation1 = new EntityRelation(assetC, assetD, "thirdLevel");
+        EntityRelation thirdLevelRelation2 = new EntityRelation(assetC, assetE, "thirdLevel");
+        EntityRelation thirdLevelRelation3 = new EntityRelation(assetC, assetF, "thirdLevel");
+
+        firstLevelRelation = saveRelation(firstLevelRelation);
+        secondLevelRelation = saveRelation(secondLevelRelation);
+        thirdLevelRelation1 = saveRelation(thirdLevelRelation1);
+        thirdLevelRelation2 = saveRelation(thirdLevelRelation2);
+        thirdLevelRelation3 = saveRelation(thirdLevelRelation3);
+
+        List<EntityRelation> expectedRelations = List.of(thirdLevelRelation1, thirdLevelRelation2, thirdLevelRelation3);
+
+        EntityRelationPathQuery relationPathQuery = new EntityRelationPathQuery(assetA, List.of(
+                new RelationPathLevel(EntitySearchDirection.TO, "firstLevel"),
+                new RelationPathLevel(EntitySearchDirection.TO, "secondLevel"),
+                new RelationPathLevel(EntitySearchDirection.FROM, "thirdLevel")
+        ));
+        List<EntityRelation> entityRelations = relationService.findByRelationPathQueryAsync(tenantId, relationPathQuery).get();
+
+        assertThat(expectedRelations).containsExactlyInAnyOrderElementsOf(entityRelations);
     }
 
     @Test
