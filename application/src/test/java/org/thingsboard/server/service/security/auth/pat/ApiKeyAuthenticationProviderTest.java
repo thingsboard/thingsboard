@@ -21,6 +21,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.CredentialsExpiredException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.core.Authentication;
@@ -114,7 +115,7 @@ public class ApiKeyAuthenticationProviderTest {
         provider.authenticate(token);
     }
 
-    @Test(expected = UsernameNotFoundException.class)
+    @Test(expected = BadCredentialsException.class)
     public void testNonExistentApiKey() {
         when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(null);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
@@ -131,7 +132,7 @@ public class ApiKeyAuthenticationProviderTest {
         provider.authenticate(token);
     }
 
-    @Test(expected = BadCredentialsException.class)
+    @Test(expected = CredentialsExpiredException.class)
     public void testExpiredApiKey() {
         apiKey.setExpirationTime(System.currentTimeMillis() - 10000); // Expired 10 seconds ago
         when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
