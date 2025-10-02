@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.cf;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.assertj.core.api.Assertions;
 import org.junit.Before;
@@ -35,7 +36,13 @@ import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionVal
 import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate.NumericOperation;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
@@ -131,6 +138,41 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(alarmResult.isCleared()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.CLEARED_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_simpleConditionExpression() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        SimpleAlarmConditionExpression simpleExpression = new SimpleAlarmConditionExpression();
+        AlarmConditionFilter filter = new AlarmConditionFilter();
+        filter.setArgument("temperature");
+        NumericFilterPredicate predicate = new NumericFilterPredicate();
+        predicate.setOperation(NumericOperation.GREATER_OR_EQUAL);
+        AlarmConditionValue<Double> thresholdValue = new AlarmConditionValue<>();
+        thresholdValue.setStaticValue(100.0);
+        predicate.setValue(thresholdValue);
+        filter.setPredicate(predicate);
+        simpleExpression.setFilters(List.of(filter));
+        simpleExpression.setOperation(ComplexOperation.AND);
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition(simpleExpression, null, null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"temperature\":100}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
     }
 
@@ -310,21 +352,27 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
     private AlarmRule toAlarmRule(Condition condition) {
         AlarmRule rule = new AlarmRule();
-        TbelAlarmConditionExpression expression = new TbelAlarmConditionExpression();
-        expression.setExpression(condition.expression());
-        if (condition.eventsCount() != null) {
+        AlarmConditionExpression expression;
+        if (condition.getTbelExpression() != null) {
+            TbelAlarmConditionExpression tbelExpression = new TbelAlarmConditionExpression();
+            tbelExpression.setExpression(condition.getTbelExpression());
+            expression = tbelExpression;
+        } else {
+            expression = condition.getSimpleExpression();
+        }
+        if (condition.getEventsCount() != null) {
             RepeatingAlarmCondition alarmCondition = new RepeatingAlarmCondition();
             alarmCondition.setExpression(expression);
             AlarmConditionValue<Integer> count = new AlarmConditionValue<>();
-            count.setStaticValue(condition.eventsCount());
+            count.setStaticValue(condition.getEventsCount());
             alarmCondition.setCount(count);
             rule.setCondition(alarmCondition);
-        } else if (condition.durationMs() != null) {
+        } else if (condition.getDurationMs() != null) {
             DurationAlarmCondition alarmCondition = new DurationAlarmCondition();
             alarmCondition.setExpression(expression);
             alarmCondition.setUnit(TimeUnit.MILLISECONDS);
             AlarmConditionValue<Long> duration = new AlarmConditionValue<>();
-            duration.setStaticValue(condition.durationMs());
+            duration.setStaticValue(condition.getDurationMs());
             alarmCondition.setValue(duration);
             rule.setCondition(alarmCondition);
         } else {
@@ -340,6 +388,28 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 .map(e -> (CalculatedFieldDebugEvent) e).toList();
     }
 
-    private record Condition(String expression, Integer eventsCount, Long durationMs) {}
+    @Getter
+    private static final class Condition {
+
+        private final String tbelExpression;
+        private final SimpleAlarmConditionExpression simpleExpression;
+        private final Integer eventsCount;
+        private final Long durationMs;
+
+        private Condition(String tbelExpression, Integer eventsCount, Long durationMs) {
+            this.tbelExpression = tbelExpression;
+            this.simpleExpression = null;
+            this.eventsCount = eventsCount;
+            this.durationMs = durationMs;
+        }
+
+        private Condition(SimpleAlarmConditionExpression simpleExpression, Integer eventsCount, Long durationMs) {
+            this.tbelExpression = null;
+            this.simpleExpression = simpleExpression;
+            this.eventsCount = eventsCount;
+            this.durationMs = durationMs;
+        }
+
+    }
 
 }

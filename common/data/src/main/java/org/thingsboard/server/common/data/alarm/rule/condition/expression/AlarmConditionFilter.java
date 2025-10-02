@@ -15,23 +15,23 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.KeyFilterPredicate;
 
-import java.util.List;
+import java.io.Serializable;
 
+@Schema
 @Data
-public class SimpleAlarmConditionExpression implements AlarmConditionExpression {
+public class AlarmConditionFilter implements Serializable {
 
+    @NotBlank
+    private String argument;
     @Valid
-    @NotEmpty
-    private List<AlarmConditionFilter> filters;
-    private ComplexOperation operation;
-
-    @Override
-    public AlarmConditionExpressionType getType() {
-        return AlarmConditionExpressionType.SIMPLE;
-    }
+    @NotNull
+    private KeyFilterPredicate predicate;
 
 }

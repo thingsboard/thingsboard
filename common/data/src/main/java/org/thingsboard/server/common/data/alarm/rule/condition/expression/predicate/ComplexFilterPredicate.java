@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition.expression;
+package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
 
 import java.util.List;
 
 @Data
-public class SimpleAlarmConditionExpression implements AlarmConditionExpression {
+public class ComplexFilterPredicate implements KeyFilterPredicate {
 
-    @Valid
-    @NotEmpty
-    private List<AlarmConditionFilter> filters;
     private ComplexOperation operation;
+    private List<KeyFilterPredicate> predicates;
 
     @Override
-    public AlarmConditionExpressionType getType() {
-        return AlarmConditionExpressionType.SIMPLE;
+    public FilterPredicateType getType() {
+        return FilterPredicateType.COMPLEX;
     }
 
 }

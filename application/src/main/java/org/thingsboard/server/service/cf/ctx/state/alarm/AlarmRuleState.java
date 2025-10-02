@@ -31,16 +31,13 @@ import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSch
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.CustomTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.SpecificTimeSchedule;
-import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.msg.tools.SchedulerUtils;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
-import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.Optional;
-import java.util.function.Function;
 
 @Data
 @Slf4j
@@ -132,7 +129,7 @@ public class AlarmRuleState {
         if (condition.getSchedule() == null) {
             return true;
         }
-        AlarmSchedule schedule = getValue(condition.getSchedule(), entry -> Optional.ofNullable(KvUtil.getStringValue(entry))
+        AlarmSchedule schedule = state.resolveValue(condition.getSchedule(), entry -> Optional.ofNullable(KvUtil.getStringValue(entry))
                 .map(str -> JsonConverter.parse(str, AlarmSchedule.class))
                 .orElse(null));
         return switch (schedule.getType()) {
@@ -198,29 +195,16 @@ public class AlarmRuleState {
     }
 
     private Integer getIntValue(AlarmConditionValue<Integer> value) {
-        return getValue(value, entry -> Optional.ofNullable(KvUtil.getLongValue(entry)).map(Long::intValue).orElse(null));
+        return state.resolveValue(value, entry -> Optional.ofNullable(KvUtil.getLongValue(entry)).map(Long::intValue).orElse(null));
     }
 
     private long getRequiredDurationInMs() {
         DurationAlarmCondition durationCondition = (DurationAlarmCondition) condition;
-        return durationCondition.getUnit().toMillis(getValue(durationCondition.getValue(), KvUtil::getLongValue));
+        return durationCondition.getUnit().toMillis(state.resolveValue(durationCondition.getValue(), KvUtil::getLongValue));
     }
 
     private boolean eval(AlarmConditionExpression expression, CalculatedFieldCtx ctx) {
         return state.eval(expression, ctx);
-    }
-
-    private <T> T getValue(AlarmConditionValue<T> conditionValue, Function<KvEntry, T> mapper) {
-        T value = conditionValue.getStaticValue();
-        if (value == null) {
-            String argument = conditionValue.getDynamicValueArgument();
-            SingleValueArgumentEntry entry = state.getArgument(argument);
-            value = mapper.apply(entry.getKvEntryValue());
-            if (value == null) {
-                throw new IllegalArgumentException("No value found for argument " + argument);
-            }
-        }
-        return value;
     }
 
     public void setAlarmRule(AlarmRule alarmRule) {

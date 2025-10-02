@@ -24,6 +24,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.KvUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -33,13 +34,23 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionFilter;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.BooleanFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.KeyFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.service.cf.AlarmCalculatedFieldResult;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
@@ -51,6 +62,9 @@ import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.function.Function;
+
+import static org.thingsboard.server.common.data.StringUtils.equalsAny;
+import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
 
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
@@ -129,20 +143,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
                 .alarmResult(result)
                 .build());
-    }
-
-    @SneakyThrows
-    public boolean eval(AlarmConditionExpression expression, CalculatedFieldCtx ctx) {
-        if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
-            Object result = ctx.evaluateTbelExpression(tbelExpression.getExpression(), this).get();
-            if (result instanceof Boolean booleanResult) {
-                return booleanResult;
-            } else {
-                throw new IllegalStateException("Condition expression returned non-boolean value: '" + result + "'");
-            }
-        } else {
-            throw new UnsupportedOperationException("Simple expressions not supported");
-        }
     }
 
     public void processAlarmAction(Alarm alarm, ActionType action) {
@@ -317,6 +317,146 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         }
 
         return alarmDetails;
+    }
+
+    @SneakyThrows
+    public boolean eval(AlarmConditionExpression expression, CalculatedFieldCtx ctx) {
+        if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
+            Object result = ctx.evaluateTbelExpression(tbelExpression.getExpression(), this).get();
+            if (result instanceof Boolean booleanResult) {
+                return booleanResult;
+            } else {
+                throw new IllegalStateException("Condition expression returned non-boolean value: '" + result + "'");
+            }
+        } else {
+            SimpleAlarmConditionExpression simpleExpression = (SimpleAlarmConditionExpression) expression;
+            ComplexOperation operation = simpleExpression.getOperation();
+            if (operation == null) {
+                operation = ComplexOperation.AND;
+            }
+            return switch (operation) {
+                case OR -> {
+                    for (AlarmConditionFilter filter : simpleExpression.getFilters()) {
+                        SingleValueArgumentEntry argument = getArgument(filter.getArgument());
+                        if (eval(argument, filter.getPredicate())) {
+                            yield true;
+                        }
+                    }
+                    yield false;
+                }
+                case AND -> {
+                    for (AlarmConditionFilter filter : simpleExpression.getFilters()) {
+                        SingleValueArgumentEntry argument = getArgument(filter.getArgument());
+                        if (!eval(argument, filter.getPredicate())) {
+                            yield false;
+                        }
+                    }
+                    yield true;
+                }
+            };
+        }
+    }
+
+    private boolean eval(SingleValueArgumentEntry argument, KeyFilterPredicate predicate) {
+        return switch (predicate.getType()) {
+            case STRING -> evalStrPredicate(argument, (StringFilterPredicate) predicate);
+            case NUMERIC -> evalNumPredicate(argument, (NumericFilterPredicate) predicate);
+            case BOOLEAN -> evalBooleanPredicate(argument, (BooleanFilterPredicate) predicate);
+            case COMPLEX -> evalComplexPredicate(argument, (ComplexFilterPredicate) predicate);
+        };
+    }
+
+    private boolean evalComplexPredicate(SingleValueArgumentEntry argument, ComplexFilterPredicate complexPredicate) {
+        return switch (complexPredicate.getOperation()) {
+            case OR -> {
+                for (KeyFilterPredicate predicate : complexPredicate.getPredicates()) {
+                    if (eval(argument, predicate)) {
+                        yield true;
+                    }
+                }
+                yield false;
+            }
+            case AND -> {
+                for (KeyFilterPredicate predicate : complexPredicate.getPredicates()) {
+                    if (!eval(argument, predicate)) {
+                        yield false;
+                    }
+                }
+                yield true;
+            }
+        };
+    }
+
+    private boolean evalBooleanPredicate(SingleValueArgumentEntry argument, BooleanFilterPredicate predicate) {
+        Boolean value = KvUtil.getBoolValue(argument.getKvEntryValue());
+        if (value == null) {
+            return false;
+        }
+        Boolean predicateValue = resolveValue(predicate.getValue(), KvUtil::getBoolValue);
+        if (predicateValue == null) {
+            return false;
+        }
+        return switch (predicate.getOperation()) {
+            case EQUAL -> value.equals(predicateValue);
+            case NOT_EQUAL -> !value.equals(predicateValue);
+        };
+    }
+
+    private boolean evalNumPredicate(SingleValueArgumentEntry argument, NumericFilterPredicate predicate) {
+        Double value = KvUtil.getDoubleValue(argument.getKvEntryValue());
+        if (value == null) {
+            return false;
+        }
+        Double predicateValue = resolveValue(predicate.getValue(), KvUtil::getDoubleValue);
+        if (predicateValue == null) {
+            return false;
+        }
+        return switch (predicate.getOperation()) {
+            case NOT_EQUAL -> !value.equals(predicateValue);
+            case EQUAL -> value.equals(predicateValue);
+            case GREATER -> value > predicateValue;
+            case GREATER_OR_EQUAL -> value >= predicateValue;
+            case LESS -> value < predicateValue;
+            case LESS_OR_EQUAL -> value <= predicateValue;
+        };
+    }
+
+    private boolean evalStrPredicate(SingleValueArgumentEntry argument, StringFilterPredicate predicate) {
+        String value = KvUtil.getStringValue(argument.getKvEntryValue());
+        if (value == null) {
+            return false;
+        }
+        String predicateValue = resolveValue(predicate.getValue(), KvUtil::getStringValue);
+        if (predicateValue == null) {
+            return false;
+        }
+        if (predicate.isIgnoreCase()) {
+            value = value.toLowerCase();
+            predicateValue = predicateValue.toLowerCase();
+        }
+        return switch (predicate.getOperation()) {
+            case CONTAINS -> value.contains(predicateValue);
+            case EQUAL -> value.equals(predicateValue);
+            case STARTS_WITH -> value.startsWith(predicateValue);
+            case ENDS_WITH -> value.endsWith(predicateValue);
+            case NOT_EQUAL -> !value.equals(predicateValue);
+            case NOT_CONTAINS -> !value.contains(predicateValue);
+            case IN -> equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
+            case NOT_IN -> !equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
+        };
+    }
+
+    protected <T> T resolveValue(AlarmConditionValue<T> conditionValue, Function<KvEntry, T> mapper) {
+        T value = conditionValue.getStaticValue();
+        if (value == null) {
+            String argument = conditionValue.getDynamicValueArgument();
+            SingleValueArgumentEntry entry = getArgument(argument);
+            value = mapper.apply(entry.getKvEntryValue());
+            if (value == null) {
+                throw new IllegalArgumentException("No value found for argument " + argument);
+            }
+        }
+        return value;
     }
 
     protected SingleValueArgumentEntry getArgument(String key) {
