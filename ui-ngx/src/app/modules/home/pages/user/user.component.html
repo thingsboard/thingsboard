@@ -74,7 +74,7 @@
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>user.email</mat-label>
         <input matInput type="email" formControlName="email" required>
         <mat-error *ngIf="entityForm.get('email').hasError('email')">
@@ -84,21 +84,22 @@
           {{ 'user.email-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>user.first-name</mat-label>
         <input matInput formControlName="firstName">
       </mat-form-field>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>user.last-name</mat-label>
         <input matInput formControlName="lastName">
       </mat-form-field>
       <tb-phone-input [required]="false"
                       label="{{ 'contact.phone' | translate }}"
                       [enableFlagsSelect]="true"
+                      appearance="outline"
                       formControlName="phone">
       </tb-phone-input>
       <div formGroupName="additionalInfo" class="flex flex-col">
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>language.language</mat-label>
           <mat-select formControlName="lang">
             <mat-option *ngFor="let lang of languageList" [value]="lang">
@@ -106,7 +107,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block" floatLabel="always">
+        <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
           <mat-label translate>unit.unit-system</mat-label>
           <mat-select formControlName="unitSystem"
                       [placeholder]="'unit.unit-system-type.AUTO' | translate">
@@ -116,16 +117,17 @@
             }
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="mat-block">
+        <mat-form-field class="mat-block" appearance="outline">
           <mat-label translate>user.description</mat-label>
           <textarea matInput formControlName="description" rows="2"></textarea>
         </mat-form-field>
         <section class="tb-default-dashboard flex flex-1 flex-col" *ngIf="entity?.id">
-          <section class="flex flex-1 flex-col gt-sm:flex-row">
+          <section class="flex flex-1 flex-col items-baseline gt-sm:flex-row">
             <tb-dashboard-autocomplete
               class="flex-1"
               label="{{ 'user.default-dashboard' | translate }}"
               formControlName="defaultDashboardId"
+              appearance="outline"
               [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
               [tenantId]="entity?.tenantId?.id"
               [customerId]="entity?.customerId?.id"
@@ -135,11 +137,12 @@
               {{ 'user.always-fullscreen' | translate }}
             </mat-checkbox>
           </section>
-          <section class="flex flex-1 flex-col gt-sm:flex-row">
+          <section class="flex flex-1 flex-col items-baseline gt-sm:flex-row">
             <tb-dashboard-autocomplete
               class="flex-1"
               label="{{ 'dashboard.home-dashboard' | translate }}"
               formControlName="homeDashboardId"
+              appearance="outline"
               [dashboardsScope]="entity?.authority === authority.TENANT_ADMIN ? 'tenant' : 'customer'"
               [tenantId]="entity?.tenantId?.id"
               [customerId]="entity?.customerId?.id"
