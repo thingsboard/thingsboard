@@ -39,7 +39,7 @@
         <div class="flex flex-row items-center justify-between gap-2">
           <mat-form-field class="mat-block input-container flex-1">
             <input matInput formControlName="email"
-                   type="email" required
+                   type="email"
                    placeholder="{{ 'security.2fa.dialog.email-step-label' | translate }}" />
             <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
               {{ 'user.email-required' | translate }}
