@@ -20,6 +20,7 @@ import moment_ from 'moment';
 import * as momentTz from 'moment-timezone';
 import { IntervalType } from '@shared/models/telemetry/telemetry.models';
 import { FormGroup } from '@angular/forms';
+import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 
 const moment = moment_;
 
@@ -524,17 +525,20 @@ export const timewindowTypeChanged = (newTimewindow: Timewindow, oldTimewindow: 
 };
 
 export const updateFormValuesOnTimewindowTypeChange = (selectedTab: TimewindowType,
-                                                       quickIntervalOnly: boolean, timewindowForm: FormGroup,
+                                                       timewindowForm: FormGroup,
                                                        realtimeDisableCustomInterval: boolean, historyDisableCustomInterval: boolean,
-                                                       realtimeAdvancedParams?: TimewindowAdvancedParams,
-                                                       historyAdvancedParams?: TimewindowAdvancedParams) => {
+                                                       realtimeAdvancedParams: TimewindowAdvancedParams,
+                                                       historyAdvancedParams: TimewindowAdvancedParams,
+                                                       realtimeTimewindowOptions: ToggleHeaderOption[],
+                                                       historyTimewindowOptions: ToggleHeaderOption[]) => {
   const timewindowFormValue = timewindowForm.getRawValue();
   if (selectedTab === TimewindowType.REALTIME) {
-    if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
-      && !(quickIntervalOnly && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)) {
-      if (Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType])) {
-        timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
-      }
+    const sameWindowTypeOptionAvailable = realtimeTimewindowOptions.some(
+      option => {
+        return option.value === RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]
+      });
+    if (sameWindowTypeOptionAvailable) {
+      timewindowForm.get('realtime.realtimeType').patchValue(RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]]);
       if (!realtimeDisableCustomInterval ||
           !realtimeAdvancedParams?.allowedLastIntervals?.length || realtimeAdvancedParams.allowedLastIntervals.includes(timewindowFormValue.history.timewindowMs)) {
         timewindowForm.get('realtime.timewindowMs').patchValue(timewindowFormValue.history.timewindowMs);
@@ -552,20 +556,26 @@ export const updateFormValuesOnTimewindowTypeChange = (selectedTab: TimewindowTy
       }
     }
   } else {
-    timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
-    if (!historyDisableCustomInterval ||
+    const sameWindowTypeOptionAvailable = historyTimewindowOptions.some(
+      option => {
+        return option.value === HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]
+      });
+    if (sameWindowTypeOptionAvailable) {
+      timewindowForm.get('history.historyType').patchValue(HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]]);
+      if (!historyDisableCustomInterval ||
         !historyAdvancedParams?.allowedLastIntervals?.length || historyAdvancedParams.allowedLastIntervals?.includes(timewindowFormValue.realtime.timewindowMs)) {
-      timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
-    }
-    if (!historyAdvancedParams?.allowedQuickIntervals?.length || historyAdvancedParams.allowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
-      timewindowForm.get('history.quickInterval').patchValue(timewindowFormValue.realtime.quickInterval);
-    }
-    const defaultAggInterval = historyDefaultAggInterval(timewindowForm.getRawValue(), historyAdvancedParams);
-    const allowedAggIntervals = historyAllowedAggIntervals(timewindowForm.getRawValue(), historyAdvancedParams);
-    if (defaultAggInterval || !allowedAggIntervals.length || allowedAggIntervals.includes(timewindowFormValue.realtime.interval)) {
-      setTimeout(() => timewindowForm.get('history.interval').patchValue(
-        defaultAggInterval ?? timewindowFormValue.realtime.interval
-      ));
+        timewindowForm.get('history.timewindowMs').patchValue(timewindowFormValue.realtime.timewindowMs);
+      }
+      if (!historyAdvancedParams?.allowedQuickIntervals?.length || historyAdvancedParams.allowedQuickIntervals?.includes(timewindowFormValue.realtime.quickInterval)) {
+        timewindowForm.get('history.quickInterval').patchValue(timewindowFormValue.realtime.quickInterval);
+      }
+      const defaultAggInterval = historyDefaultAggInterval(timewindowForm.getRawValue(), historyAdvancedParams);
+      const allowedAggIntervals = historyAllowedAggIntervals(timewindowForm.getRawValue(), historyAdvancedParams);
+      if (defaultAggInterval || !allowedAggIntervals.length || allowedAggIntervals.includes(timewindowFormValue.realtime.interval)) {
+        setTimeout(() => timewindowForm.get('history.interval').patchValue(
+          defaultAggInterval ?? timewindowFormValue.realtime.interval
+        ));
+      }
     }
   }
   timewindowForm.patchValue({
