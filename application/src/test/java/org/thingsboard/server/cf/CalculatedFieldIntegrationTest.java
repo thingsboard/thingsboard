@@ -36,7 +36,7 @@ import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfig
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
@@ -47,10 +47,12 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.controller.CalculatedFieldControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -760,19 +762,13 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         // Zone groups: ATTRIBUTE on specific assets (one zone per group)
         ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
-        allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
-        allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        var allowedZoneDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        allowedZoneDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "AllowedZone")));
         allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
 
         ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var restrictedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        restrictedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        restrictedZoneDynamicSourceConfiguration.setRelationType("RestrictedZone");
-        restrictedZoneDynamicSourceConfiguration.setMaxLevel(1);
-        restrictedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        var restrictedZoneDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        restrictedZoneDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "RestrictedZone")));
         restrictedZonesGroup.setRefDynamicSourceConfiguration(restrictedZoneDynamicSourceConfiguration);
 
         cfg.setZoneGroups(Map.of("allowedZones", allowedZonesGroup, "restrictedZones", restrictedZonesGroup));
@@ -870,11 +866,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cfg.setEntityCoordinates(new EntityCoordinates(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY));
 
         var allowedZonesGroup = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
-        allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
-        allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        var allowedZoneDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        allowedZoneDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "AllowedZone")));
         allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
         cfg.setZoneGroups(Map.of("allowedZones", allowedZonesGroup));
 

@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfig
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
@@ -39,15 +39,19 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupC
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
 @DaoSqlTest
@@ -112,10 +116,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
         ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var dynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        dynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        dynamicSourceConfiguration.setMaxLevel(1);
-        dynamicSourceConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
+        var dynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        dynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE)));
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
         cfg.setZoneGroups(Map.of("allowed", zoneGroupConfiguration));
 
@@ -150,19 +152,26 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         // Arrange a device
         Device device = createTestDevice();
 
-        // Build a valid Geofencing configuration
         GeofencingCalculatedFieldConfiguration cfg = new GeofencingCalculatedFieldConfiguration();
 
         // Coordinates: TS_LATEST, no dynamic source
         EntityCoordinates entityCoordinates = new EntityCoordinates("latitude", "longitude");
         cfg.setEntityCoordinates(entityCoordinates);
 
-        // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
+        int maxRelationLevel = tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMaxRelationLevelPerCfArgument();
+
+        // Zone-group argument (ATTRIBUTE)
         ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration( "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var dynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        dynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        dynamicSourceConfiguration.setMaxLevel(Integer.MAX_VALUE);
-        dynamicSourceConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
+        var dynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+
+        List<RelationPathLevel> levels = new ArrayList<>();
+        for (int i = 0; i < maxRelationLevel + 1; i++) {
+            levels.add(mock(RelationPathLevel.class));
+        }
+
+        dynamicSourceConfiguration.setLevels(levels);
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
         cfg.setZoneGroups(Map.of("allowed", zoneGroupConfiguration));
 
@@ -195,10 +204,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
         ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration( "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var dynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        dynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        dynamicSourceConfiguration.setMaxLevel(1);
-        dynamicSourceConfiguration.setRelationType(EntityRelation.CONTAINS_TYPE);
+        var dynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        dynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE)));
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
         cfg.setZoneGroups(Map.of("allowed", zoneGroupConfiguration));
 
