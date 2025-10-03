@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -319,13 +320,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state == null) {
             state = createState(ctx);
             justRestored = true;
-        } else if (ctx.shouldFetchDynamicArgumentsFromDb(state)) {
+        } else if (ctx.shouldFetchRelationQueryDynamicArgumentsFromDb(state)) {
             log.debug("[{}][{}] Going to update dynamic arguments for CF.", entityId, ctx.getCfId());
             try {
                 Map<String, ArgumentEntry> dynamicArgsFromDb = cfService.fetchDynamicArgsFromDb(ctx, entityId);
                 dynamicArgsFromDb.forEach(newArgValues::putIfAbsent);
-                var geofencingState = (GeofencingCalculatedFieldState) state;
-                geofencingState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
+                if (ctx.getCfType() == CalculatedFieldType.GEOFENCING) {
+                    var geofencingState = (GeofencingCalculatedFieldState) state;
+                    geofencingState.updateLastDynamicArgumentsRefreshTs();
+                }
             } catch (Exception e) {
                 throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
             }
@@ -352,6 +355,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private void initState(CalculatedFieldState state, CalculatedFieldCtx ctx) {
         state.init(ctx);
+
+        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isRelationQueryDynamicArguments()) {
+            GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
+            geofencingState.updateLastDynamicArgumentsRefreshTs();
+        }
 
         Map<String, ArgumentEntry> arguments = fetchArguments(ctx);
         state.update(arguments, ctx);

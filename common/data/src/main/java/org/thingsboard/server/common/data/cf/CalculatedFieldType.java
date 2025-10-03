@@ -19,5 +19,6 @@ public enum CalculatedFieldType {
     SIMPLE,
     SCRIPT,
     GEOFENCING,
-    ALARM
+    ALARM,
+    PROPAGATION
 }
