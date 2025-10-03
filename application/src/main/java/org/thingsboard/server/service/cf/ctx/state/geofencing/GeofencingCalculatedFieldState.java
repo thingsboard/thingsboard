@@ -146,6 +146,10 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         lastDynamicArgumentsRefreshTs = -1;
     }
 
+    public void updateLastDynamicArgumentsRefreshTs() {
+        lastDynamicArgumentsRefreshTs = System.currentTimeMillis();
+    }
+
     private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
         return arguments.entrySet()
                 .stream()

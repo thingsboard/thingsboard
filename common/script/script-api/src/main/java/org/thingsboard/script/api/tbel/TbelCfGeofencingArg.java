@@ -20,12 +20,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-public class TbelCfTsGeofencingArg implements TbelCfArg {
+public class TbelCfGeofencingArg implements TbelCfArg {
 
     private final Object value;
 
     @JsonCreator
-    public TbelCfTsGeofencingArg(@JsonProperty("value") Object value) {
+    public TbelCfGeofencingArg(@JsonProperty("value") Object value) {
         this.value = value;
     }
 

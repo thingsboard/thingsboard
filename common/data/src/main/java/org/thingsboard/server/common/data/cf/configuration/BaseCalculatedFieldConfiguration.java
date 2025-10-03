@@ -28,11 +28,15 @@ public abstract class BaseCalculatedFieldConfiguration implements ExpressionBase
 
     @Override
     public void validate() {
+        baseCalculatedFieldRestriction();
+        if (arguments.values().stream().anyMatch(Argument::hasRelationQuerySource)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support relation query configuration!");
+        }
+    }
+
+    protected void baseCalculatedFieldRestriction() {
         if (arguments.containsKey("ctx")) {
             throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
-        }
-        if (arguments.values().stream().anyMatch(Argument::hasRelationQuerySource)) {
-            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support relation query source configuration!");
         }
     }
 

@@ -40,7 +40,8 @@ import java.util.stream.Collectors;
         @Type(value = SimpleCalculatedFieldConfiguration.class, name = "SIMPLE"),
         @Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT"),
         @Type(value = GeofencingCalculatedFieldConfiguration.class, name = "GEOFENCING"),
-        @Type(value = AlarmCalculatedFieldConfiguration.class, name = "ALARM")
+        @Type(value = AlarmCalculatedFieldConfiguration.class, name = "ALARM"),
+        @Type(value = PropagationCalculatedFieldConfiguration.class, name = "PROPAGATION")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {

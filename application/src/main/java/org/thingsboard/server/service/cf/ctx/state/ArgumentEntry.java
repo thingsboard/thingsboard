@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgumentEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -35,7 +36,8 @@ import java.util.Map;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SingleValueArgumentEntry.class, name = "SINGLE_VALUE"),
         @JsonSubTypes.Type(value = TsRollingArgumentEntry.class, name = "TS_ROLLING"),
-        @JsonSubTypes.Type(value = GeofencingArgumentEntry.class, name = "GEOFENCING")
+        @JsonSubTypes.Type(value = GeofencingArgumentEntry.class, name = "GEOFENCING"),
+        @JsonSubTypes.Type(value = PropagationArgumentEntry.class, name = "PROPAGATION")
 })
 public interface ArgumentEntry {
 
@@ -64,6 +66,10 @@ public interface ArgumentEntry {
 
     static ArgumentEntry createGeofencingValueArgument(Map<EntityId, KvEntry> entityIdkvEntryMap) {
         return new GeofencingArgumentEntry(entityIdkvEntryMap);
+    }
+
+    static ArgumentEntry createPropagationArgument(List<EntityId> entityIds) {
+        return new PropagationArgumentEntry(entityIds);
     }
 
 }

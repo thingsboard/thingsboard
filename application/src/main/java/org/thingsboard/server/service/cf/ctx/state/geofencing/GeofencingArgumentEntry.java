@@ -18,7 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state.geofencing;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfTsGeofencingArg;
+import org.thingsboard.script.api.tbel.TbelCfGeofencingArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.util.ProtoUtils;
@@ -83,7 +83,7 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfTsGeofencingArg(zoneStates);
+        return new TbelCfGeofencingArg(zoneStates);
     }
 
     private Map<EntityId, GeofencingZoneState> toZones(Map<EntityId, KvEntry> entityIdKvEntryMap) {
