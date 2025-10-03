@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -352,6 +353,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private void initState(CalculatedFieldState state, CalculatedFieldCtx ctx) {
         state.init(ctx);
+        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.hasRelationQueryDynamicArguments()) {
+            GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
+            geofencingState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
+        }
 
         Map<String, ArgumentEntry> arguments = fetchArguments(ctx);
         state.update(arguments, ctx);
