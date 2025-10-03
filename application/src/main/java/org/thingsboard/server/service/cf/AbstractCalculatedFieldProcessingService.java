@@ -103,6 +103,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return Futures.whenAllComplete(argFutures.values()).call(() -> {
             var result = createStateByType(ctx);
             result.updateState(ctx, resolveArgumentFutures(argFutures));
+            // TODO: move to state.init() method after merge with alarm rules 2.0
             if (ctx.hasRelationQueryDynamicArguments() && result instanceof GeofencingCalculatedFieldState geofencingCalculatedFieldState) {
                 geofencingCalculatedFieldState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
             }
