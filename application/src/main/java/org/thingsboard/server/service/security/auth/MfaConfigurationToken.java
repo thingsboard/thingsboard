@@ -13,16 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets.platform;
+package org.thingsboard.server.service.security.auth;
 
-import lombok.Data;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
-@Data
-public class AllUsersFilter implements SystemLevelUsersFilter {
-
-    @Override
-    public UsersFilterType getType() {
-        return UsersFilterType.ALL_USERS;
+public class MfaConfigurationToken extends AbstractJwtAuthenticationToken {
+    public MfaConfigurationToken(SecurityUser securityUser) {
+        super(securityUser);
     }
-
 }

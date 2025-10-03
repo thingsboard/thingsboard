@@ -13,16 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.notification.targets.platform;
+package org.thingsboard.server.service.security.permission;
 
-import lombok.Data;
+import org.springframework.stereotype.Component;
 
-@Data
-public class AllUsersFilter implements SystemLevelUsersFilter {
+@Component
+public class MfaConfigurationPermissions extends AbstractPermissions {
 
-    @Override
-    public UsersFilterType getType() {
-        return UsersFilterType.ALL_USERS;
+    public MfaConfigurationPermissions() {
+        super();
+        // for compatibility with PE
     }
 
 }

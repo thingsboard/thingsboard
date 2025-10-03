@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-@Component(value = "tenantAdminPermissions")
+@Component
 public class TenantAdminPermissions extends AbstractPermissions {
 
     public TenantAdminPermissions() {
