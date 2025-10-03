@@ -15,25 +15,35 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Answers;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateReadExecutor;
 import org.thingsboard.server.dao.nosql.CassandraBufferedRateWriteExecutor;
 
 import java.text.ParseException;
 import java.util.List;
+import java.util.UUID;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willReturn;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(classes = CassandraBaseTimeseriesDao.class)
@@ -50,7 +60,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 @Slf4j
 public class CassandraBaseTimeseriesDaoPartitioningMonthsAlwaysExistsTest {
 
-    @Autowired
+    @MockitoSpyBean
     CassandraBaseTimeseriesDao tsDao;
 
     @MockBean(answer = Answers.RETURNS_MOCKS)
@@ -129,6 +139,55 @@ public class CassandraBaseTimeseriesDaoPartitioningMonthsAlwaysExistsTest {
                 ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2020-11-01T00:00:00Z").getTime(),
                 ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2020-12-01T00:00:00Z").getTime(),
                 ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-01T00:00:00Z").getTime()));
+    }
+
+    @Test
+    public void testEstimatePartitionCount() throws ParseException {
+        assertThat(tsDao.estimatePartitionCount(0, Long.MAX_VALUE)).as("centuries").isEqualTo(3_507_324_297L);
+        assertThat(tsDao.estimatePartitionCount(0, 0)).as("single").isEqualTo(1L);
+        long startTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2019-12-12T00:00:00Z").getTime());
+        long endTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-31T23:59:59Z").getTime());
+        assertThat(tsDao.estimatePartitionCount(startTs, endTs)).as("13 month + 2 spare periods").isEqualTo(13 + 2);
+        assertThat(tsDao.estimatePartitionCount(endTs, startTs)).as("wrong period estimated as 1").isEqualTo(1L);
+    }
+
+    @Test
+    public void testGetPartitionsFutureModeratePartitionsCount() throws ParseException {
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        TsKvQuery query = mock(TsKvQuery.class);
+        long startTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2019-12-12T00:00:00Z").getTime());
+        long endTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-31T23:59:59Z").getTime());
+
+        willReturn(mock(ListenableFuture.class)).given(tsDao).getPartitionsFromDB(tenantId, query, tenantId, startTs, endTs);
+
+        tsDao.getPartitionsFuture(tenantId, query, tenantId, startTs, endTs);
+
+        verify(tsDao).estimatePartitionCount(startTs, endTs);
+        verify(tsDao).calculatePartitions(eq(startTs), eq(endTs), anyInt());
+        verify(tsDao, never()).getPartitionsFromDB(tenantId, query, tenantId, startTs, endTs);
+    }
+
+    @Test
+    public void testGetPartitionsFutureHugePartitionsCountPreventOOMFallbackToDB() throws ParseException {
+
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+        TsKvQuery query = mock(TsKvQuery.class);
+        long startTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2000-12-12T00:00:00Z").getTime());
+        long endTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("3000-01-31T23:59:59Z").getTime());
+
+        willReturn(mock(ListenableFuture.class)).given(tsDao).getPartitionsFromDB(tenantId, query, tenantId, startTs, endTs);
+
+        tsDao.getPartitionsFuture(tenantId, query, tenantId, startTs, endTs);
+
+        verify(tsDao).estimatePartitionCount(startTs, endTs);
+        verify(tsDao, never()).calculatePartitions(eq(startTs), eq(endTs), anyInt());
+        verify(tsDao).getPartitionsFromDB(tenantId, query, tenantId, startTs, endTs);
     }
 
 }

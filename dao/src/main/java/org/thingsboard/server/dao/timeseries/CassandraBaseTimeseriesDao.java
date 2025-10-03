@@ -113,6 +113,10 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     @Value("${cassandra.query.use_ts_key_value_partitioning_on_read:true}")
     private boolean useTsKeyValuePartitioningOnRead;
 
+    @Getter
+    @Value("${cassandra.query.use_ts_key_value_partitioning_on_read_max_estimated_partition_count:40}") // 3+ years for MONTHS
+    private int useTsKeyValuePartitioningOnReadMaxEstimatedPartitionCount;
+
     @Value("${cassandra.query.ts_key_value_partitions_max_cache_size:100000}")
     private long partitionsCacheSize;
 
@@ -415,22 +419,41 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                         readResultsProcessingExecutor);
     }
 
-    private ListenableFuture<List<Long>> getPartitionsFuture(TenantId tenantId, TsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
+    ListenableFuture<List<Long>> getPartitionsFuture(TenantId tenantId, TsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
         if (!isUseTsKeyValuePartitioningOnRead()) {
-            return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition));
+            final long estimatedPartitionCount = estimatePartitionCount(minPartition, maxPartition);
+            if  (estimatedPartitionCount <= useTsKeyValuePartitioningOnReadMaxEstimatedPartitionCount) {
+                return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition, (int) estimatedPartitionCount));
+            }
         }
+        return getPartitionsFromDB(tenantId, query, entityId, minPartition, maxPartition);
+    }
+
+    ListenableFuture<List<Long>> getPartitionsFromDB(TenantId tenantId, TsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
         TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
         return Futures.transformAsync(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
     }
 
+    // Optimistic estimation of partition count, expected to be never called for infinite partitioning
+    long estimatePartitionCount(long minPartition, long maxPartition) {
+        if (maxPartition > minPartition) {
+            return (maxPartition - minPartition) / tsFormat.getDurationMs() + 2; //at least 2 partitions, at max 2 partitions overestimated
+        }
+        return 1; // 1 or 0, but 1 is more optimistic
+    }
+
     List<Long> calculatePartitions(long minPartition, long maxPartition) {
+       return calculatePartitions(minPartition, maxPartition, 0);
+    }
+
+    List<Long> calculatePartitions(long minPartition, long maxPartition, int estimatedPartitionCount) {
         if (minPartition == maxPartition) {
             return Collections.singletonList(minPartition);
         }
-        List<Long> partitions = new ArrayList<>();
+        List<Long> partitions = estimatedPartitionCount > 0 ? new ArrayList<>(estimatedPartitionCount) : new ArrayList<>();
 
         long currentPartition = minPartition;
         LocalDateTime currentPartitionTime = LocalDateTime.ofInstant(Instant.ofEpochMilli(currentPartition), ZoneOffset.UTC);
