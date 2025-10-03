@@ -54,9 +54,6 @@
       padding: 0 8px 8px;
       tb-branch-autocomplete {
         min-width: 200px;
-        @media #{$mat-gt-xs} {
-          max-width: 200px;
-        }
         display: block;
       }
     }
