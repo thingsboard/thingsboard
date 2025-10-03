@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 @Data
-public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration, RelationQueryBased {
+public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {
 
     private List<RelationPathLevel> levels;
 
@@ -53,10 +53,11 @@ public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDy
         };
     }
 
-    @Override
-    @JsonIgnore
-    public int getMaxLevel() {
-        return levels != null ? levels.size() : 0;
+    public void validateMaxRelationLevel(String argumentName, int maxAllowedRelationLevel) {
+        if (levels.size() > maxAllowedRelationLevel) {
+            throw new IllegalArgumentException("Max relation level is greater than configured " +
+                                               "maximum allowed relation level in tenant profile: " + maxAllowedRelationLevel + " for argument: " + argumentName);
+        }
     }
 
     public EntityRelationPathQuery toRelationPathQuery(EntityId entityId) {
@@ -64,9 +65,6 @@ public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDy
     }
 
     private RelationPathLevel getLastLevel() {
-        if (CollectionsUtil.isEmpty(levels)) {
-            throw new NoSuchElementException();
-        }
         return levels.get(levels.size() - 1);
     }
 
