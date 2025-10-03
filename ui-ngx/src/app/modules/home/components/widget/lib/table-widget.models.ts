@@ -549,6 +549,9 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     '.mat-mdc-paginator button.mat-mdc-icon-button[disabled][disabled] {\n' +
     'color: ' + mdDarkDisabled + ';\n' +
     '}\n' +
+    '.mat-mdc-paginator svg.mat-mdc-paginator-icon {\n' +
+    'fill: currentColor;\n' +
+    '}\n' +
     '.mat-mdc-paginator .mat-mdc-select-value {\n' +
     'color: ' + mdDarkSecondary + ';\n' +
     '}';
