@@ -110,6 +110,7 @@ public class CalculatedFieldCtx {
                 this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
                 initialized = true;
             } catch (Exception e) {
+                initialized = false;
                 throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
             }
         } else {
@@ -123,6 +124,7 @@ public class CalculatedFieldCtx {
                 );
                 initialized = true;
             } else {
+                initialized = false;
                 throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
             }
         }
