@@ -50,13 +50,6 @@ public interface CalculatedFieldState {
 
     long getLatestTimestamp();
 
-    default void setDirty(boolean dirty) {
-    }
-
-    default boolean isDirty() {
-        return false;
-    }
-
     void setRequiredArguments(List<String> requiredArguments);
 
     boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);

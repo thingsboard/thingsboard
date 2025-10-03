@@ -13,23 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.calculatedField;
+package org.thingsboard.server.common.data.relation;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.common.data.id.EntityId;
 
-@Data
-public class CalculatedFieldDynamicArgumentsRefreshMsg implements ToCalculatedFieldSystemMsg {
+import java.util.List;
 
-    private final TenantId tenantId;
-    private final CalculatedFieldId cfId;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_DYNAMIC_ARGUMENTS_REFRESH_MSG;
-    }
+public record EntityRelationPathQuery(EntityId rootEntityId, List<RelationPathLevel> levels) {
 
 }
