@@ -43,7 +43,6 @@ import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -94,11 +93,14 @@ public class AppActor extends ContextAwareActor {
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
+            case CF_ENTITY_ACTION_EVENT_MSG:
+                forwardToTenantActor((TenantAwareMsg) msg, true);
+                break;
             case QUEUE_TO_RULE_ENGINE_MSG:
                 onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
             case TRANSPORT_TO_DEVICE_ACTOR_MSG:
-                onToDeviceActorMsg((TenantAwareMsg) msg, false);
+                forwardToTenantActor((TenantAwareMsg) msg, false);
                 break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
@@ -108,7 +110,7 @@ public class AppActor extends ContextAwareActor {
             case DEVICE_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case SERVER_RPC_RESPONSE_TO_DEVICE_ACTOR_MSG:
             case REMOVE_RPC_TO_DEVICE_ACTOR_MSG:
-                onToDeviceActorMsg((TenantAwareMsg) msg, true);
+                forwardToTenantActor((TenantAwareMsg) msg, true);
                 break;
             case SESSION_TIMEOUT_MSG:
                 ctx.broadcastToChildrenByType(msg, EntityType.TENANT);
@@ -117,11 +119,11 @@ public class AppActor extends ContextAwareActor {
             case CF_STATE_RESTORE_MSG:
                 //TODO: use priority from the message body. For example, messages about CF lifecycle are important and Device lifecycle are not.
                 //      same for the Linked telemetry.
-                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
+                forwardToTenantActor((ToCalculatedFieldSystemMsg) msg, true);
                 break;
             case CF_TELEMETRY_MSG:
             case CF_LINKED_TELEMETRY_MSG:
-                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, false);
+                forwardToTenantActor((ToCalculatedFieldSystemMsg) msg, false);
                 break;
             default:
                 return false;
@@ -187,7 +189,7 @@ public class AppActor extends ContextAwareActor {
         }
     }
 
-    private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+    private void forwardToTenantActor(TenantAwareMsg msg, boolean priority) {
         getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
             if (priority) {
                 tenantActor.tellWithHighPriority(msg);
@@ -196,21 +198,6 @@ public class AppActor extends ContextAwareActor {
             }
         }, () -> {
             msg.getCallback().onSuccess();
-        });
-    }
-
-
-    private void onToDeviceActorMsg(TenantAwareMsg msg, boolean priority) {
-        getOrCreateTenantActor(msg.getTenantId()).ifPresentOrElse(tenantActor -> {
-            if (priority) {
-                tenantActor.tellWithHighPriority(msg);
-            } else {
-                tenantActor.tell(msg);
-            }
-        }, () -> {
-            if (msg instanceof TransportToDeviceActorMsgWrapper) {
-                ((TransportToDeviceActorMsgWrapper) msg).getCallback().onSuccess();
-            }
         });
     }
 
@@ -245,6 +232,7 @@ public class AppActor extends ContextAwareActor {
         public TbActor createActor() {
             return new AppActor(context);
         }
+
     }
 
 }

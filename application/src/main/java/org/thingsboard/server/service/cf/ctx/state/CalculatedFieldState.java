@@ -17,29 +17,26 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
-        @JsonSubTypes.Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
+        @Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
+        @Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
+        @Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
+        @Type(value = AlarmCalculatedFieldState.class, name = "ALARM")
 })
 public interface CalculatedFieldState {
 
@@ -50,11 +47,13 @@ public interface CalculatedFieldState {
 
     long getLatestTimestamp();
 
-    void setRequiredArguments(List<String> requiredArguments);
+    void init(CalculatedFieldCtx ctx);
 
-    boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
+    Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> arguments, CalculatedFieldCtx ctx);
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx);
+    void reset(CalculatedFieldCtx ctx);
+
+    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();

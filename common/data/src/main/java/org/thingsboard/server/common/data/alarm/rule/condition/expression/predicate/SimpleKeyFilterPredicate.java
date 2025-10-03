@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.rule.engine.profile;
+package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
-enum AlarmStateUpdateResult {
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
-    NONE, CREATED, UPDATED, SEVERITY_UPDATED, CLEARED;
+public interface SimpleKeyFilterPredicate<T> extends KeyFilterPredicate {
+
+    AlarmConditionValue<T> getValue();
 
 }

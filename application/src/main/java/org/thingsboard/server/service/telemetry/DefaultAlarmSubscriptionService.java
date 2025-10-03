@@ -102,7 +102,12 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
-        return withWsCallback(alarmService.clearAlarm(tenantId, alarmId, clearTs, details));
+        return clearAlarm(tenantId, alarmId, clearTs, details, true);
+    }
+
+    @Override
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent) {
+        return withWsCallback(alarmService.clearAlarm(tenantId, alarmId, clearTs, details, pushEvent));
     }
 
     @Override

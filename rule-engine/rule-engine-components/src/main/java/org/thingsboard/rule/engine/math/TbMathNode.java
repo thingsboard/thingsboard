@@ -22,8 +22,8 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
 import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 import org.springframework.util.ConcurrentReferenceHashMap;
+import org.thingsboard.common.util.ExpressionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -53,7 +53,6 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.common.util.ExpressionFunctionsUtil.userDefinedFunctions;
 import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
 
 @SuppressWarnings("UnstableApiUsage")
@@ -310,11 +309,8 @@ public class TbMathNode implements TbNode {
             case CUSTOM:
                 var expr = customExpression.get();
                 if (expr == null) {
-                    expr = new ExpressionBuilder(config.getCustomFunction())
-                            .functions(userDefinedFunctions)
-                            .implicitMultiplication(true)
-                            .variables(config.getArguments().stream().map(TbMathArgument::getName).collect(Collectors.toSet()))
-                            .build();
+                    expr = ExpressionUtils.createExpression(config.getCustomFunction(), config.getArguments().stream()
+                            .map(TbMathArgument::getName).collect(Collectors.toSet()));
                     customExpression.set(expr);
                 }
                 for (int i = 0; i < config.getArguments().size(); i++) {

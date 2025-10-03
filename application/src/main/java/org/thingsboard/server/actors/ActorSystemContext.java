@@ -117,6 +117,7 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.OwnerService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -571,6 +572,10 @@ public class ActorSystemContext {
     @Getter
     private JobManager jobManager;
 
+    @Autowired
+    @Getter
+    private OwnerService ownerService;
+
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private int maxConcurrentSessionsPerDevice;
@@ -658,6 +663,10 @@ public class ActorSystemContext {
     @Value("${actors.calculated_fields.calculation_timeout:5}")
     @Getter
     private long cfCalculationResultTimeout;
+
+    @Value("${actors.alarms.reevaluation_interval:60}")
+    @Getter
+    private long alarmsReevaluationInterval;
 
     @Autowired
     @Getter
@@ -862,7 +871,7 @@ public class ActorSystemContext {
 
     private boolean checkLimits(TenantId tenantId) {
         if (debugModeRateLimitsConfig.isCalculatedFieldDebugPerTenantLimitsEnabled() &&
-                !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration())) {
+            !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration())) {
             log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
             return false;
         }

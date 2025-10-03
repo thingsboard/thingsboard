@@ -54,7 +54,7 @@ public class ZoneGroupConfiguration {
         if (reportStrategy == null) {
             throw new IllegalArgumentException("Report strategy must be specified for '" + name + "' zone group!");
         }
-        if (hasDynamicSource()) {
+        if (refDynamicSourceConfiguration != null) {
             refDynamicSourceConfiguration.validate();
         }
         if (!createRelationsWithMatchedZones) {
@@ -68,8 +68,12 @@ public class ZoneGroupConfiguration {
         }
     }
 
-    public boolean hasDynamicSource() {
-        return refDynamicSourceConfiguration != null;
+    public boolean hasRelationQuerySource() {
+        return toArgument().hasRelationQuerySource();
+    }
+
+    public boolean hasCurrentOwnerSource() {
+        return toArgument().hasOwnerSource();
     }
 
     @JsonIgnore
@@ -92,4 +96,5 @@ public class ZoneGroupConfiguration {
         argument.setRefEntityKey(new ReferencedEntityKey(perimeterKeyName, ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
         return argument;
     }
+
 }

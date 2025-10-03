@@ -75,6 +75,15 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
             case CF_LINKED_TELEMETRY_MSG:
                 processor.process((EntityCalculatedFieldLinkedTelemetryMsg) msg);
                 break;
+            case CF_REEVALUATE_MSG:
+                processor.process((CalculatedFieldReevaluateMsg) msg);
+                break;
+            case CF_ALARM_ACTION_MSG:
+                processor.process((CalculatedFieldAlarmActionMsg) msg);
+                break;
+            case CF_ARGUMENT_RESET_MSG:
+                processor.process((CalculatedFieldArgumentResetMsg) msg);
+                break;
             default:
                 return false;
         }
@@ -85,4 +94,5 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
     void logProcessingException(Exception e) {
         log.warn("[{}][{}] Processing failure", tenantId, processor.entityId, e);
     }
+
 }
