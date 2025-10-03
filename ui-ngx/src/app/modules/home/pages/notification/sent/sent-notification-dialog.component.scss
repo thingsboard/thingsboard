@@ -234,12 +234,12 @@
   }
 }
 
-:host ::ng-deep .mdc-evolution-chip-set__chips {
-  max-width: 100%;
-}
-
-:host ::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__cell--primary,
-:host ::ng-deep .mat-mdc-standard-chip .mdc-evolution-chip__action--primary,
-:host ::ng-deep .mat-mdc-standard-chip .mat-mdc-chip-action-label {
-  overflow: hidden;
+:host ::ng-deep {
+  .mat-mdc-standard-chip{
+    .mdc-evolution-chip__cell--primary,
+    .mdc-evolution-chip__action--primary,
+    .mat-mdc-chip-action-label{
+      overflow: hidden;
+    }
+  }
 }
