@@ -66,7 +66,7 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   additionEntityTypes: {[key in string]: string} = {};
 
   @Input()
-  appearance: MatFormFieldAppearance = 'fill';
+  appearance: MatFormFieldAppearance = 'outline';
 
   @Input()
   @coerceBoolean()

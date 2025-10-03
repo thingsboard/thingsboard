@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host {
   .mat-mdc-card.auto-commit-settings {
     margin: 8px;
@@ -52,7 +54,9 @@
       padding: 0 8px 8px;
       tb-branch-autocomplete {
         min-width: 200px;
-        max-width: 200px;
+        @media #{$mat-gt-xs} {
+          max-width: 200px;
+        }
         display: block;
       }
     }
