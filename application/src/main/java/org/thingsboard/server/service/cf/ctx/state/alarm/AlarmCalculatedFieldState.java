@@ -472,7 +472,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    protected void validateNewEntry(ArgumentEntry newEntry) {
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
         if (!(newEntry instanceof SingleValueArgumentEntry)) {
             throw new IllegalArgumentException("Only single value arguments supported");
         }
