@@ -34,6 +34,8 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     private EntityCoordinates entityCoordinates;
     private Map<String, ZoneGroupConfiguration> zoneGroups;
+
+    private boolean scheduledUpdateEnabled;
     private int scheduledUpdateInterval;
 
     private Output output;
@@ -51,6 +53,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         return args;
     }
 
+
     @Override
     public List<EntityId> getReferencedEntities() {
         return zoneGroups.values().stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();
@@ -59,11 +62,6 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     @Override
     public Output getOutput() {
         return output;
-    }
-
-    @Override
-    public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateInterval > 0 && zoneGroups.values().stream().anyMatch(ZoneGroupConfiguration::hasRelationQuerySource);
     }
 
     @Override

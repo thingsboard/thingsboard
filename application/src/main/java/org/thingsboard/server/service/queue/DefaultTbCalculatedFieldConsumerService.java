@@ -38,6 +38,7 @@ import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldLinkedTelemetryMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -87,6 +88,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                                                    ActorSystemContext actorContext,
                                                    TbDeviceProfileCache deviceProfileCache,
                                                    TbAssetProfileCache assetProfileCache,
+                                                   TbResourceDataCache tbResourceDataCache,
                                                    TbTenantProfileCache tenantProfileCache,
                                                    TbApiUsageStateService apiUsageStateService,
                                                    PartitionService partitionService,
@@ -94,7 +96,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
                                                    JwtSettingsService jwtSettingsService,
                                                    CalculatedFieldCache calculatedFieldCache,
                                                    CalculatedFieldStateService stateService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService,
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.queueFactory = tbQueueFactory;
         this.stateService = stateService;

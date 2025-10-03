@@ -51,6 +51,7 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.util.ArrayList;
@@ -59,6 +60,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 @Data
@@ -93,8 +95,11 @@ public class CalculatedFieldCtx {
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
 
+    private boolean relationQueryDynamicArguments;
     private List<String> mainEntityGeofencingArgumentNames;
     private List<String> linkedEntityAndCurrentOwnerGeofencingArgumentNames;
+
+    private long scheduledUpdateIntervalMillis;
 
     public CalculatedFieldCtx(CalculatedField calculatedField,
                               ActorSystemContext systemContext) {
@@ -118,8 +123,8 @@ public class CalculatedFieldCtx {
                 var refId = entry.getValue().getRefEntityId();
                 var refKey = entry.getValue().getRefEntityKey();
                 if (refId == null) {
-                    // TODO: no matchers for this type of source exists yet, so no reason to add to dynamicEntityArguments map.
                     if (entry.getValue().hasRelationQuerySource()) {
+                        relationQueryDynamicArguments = true;
                         continue;
                     }
                     if (entry.getValue().hasOwnerSource()) {
@@ -149,6 +154,9 @@ public class CalculatedFieldCtx {
                     }
                 });
             }
+        }
+        if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
+            this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
         this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         this.tbelInvokeService = systemContext.getTbelInvokeService();
@@ -470,6 +478,9 @@ public class CalculatedFieldCtx {
         if (cfType == CalculatedFieldType.ALARM && !calculatedField.getName().equals(other.getCalculatedField().getName())) {
             return true;
         }
+        if (scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis) {
+            return true;
+        }
         return false;
     }
 
@@ -487,17 +498,35 @@ public class CalculatedFieldCtx {
             }
             // TODO: implement rules update logic!
         }
+        if (hasGeofencingZoneGroupConfigurationChanges(other)) {
+            hasChanges = true;
+        }
         return hasChanges;
     }
 
-    public boolean hasSchedulingConfigChanges(CalculatedFieldCtx other) {
-        if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration thisConfig
-            && other.calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration otherConfig) {
-            boolean refreshTriggerChanged = thisConfig.isScheduledUpdateEnabled() != otherConfig.isScheduledUpdateEnabled();
-            boolean refreshIntervalChanged = thisConfig.getScheduledUpdateInterval() != otherConfig.getScheduledUpdateInterval();
-            return refreshTriggerChanged || refreshIntervalChanged;
+    private boolean hasGeofencingZoneGroupConfigurationChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration thisConfig
+            && other.calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration otherConfig) {
+            return !thisConfig.getZoneGroups().equals(otherConfig.getZoneGroups());
         }
         return false;
+    }
+
+    public boolean hasRelationQueryDynamicArguments() {
+        return relationQueryDynamicArguments && scheduledUpdateIntervalMillis != -1;
+    }
+
+    public boolean shouldFetchDynamicArgumentsFromDb(CalculatedFieldState state) {
+        if (!hasRelationQueryDynamicArguments()) {
+            return false;
+        }
+        if (!(state instanceof GeofencingCalculatedFieldState geofencingState)) {
+            return false;
+        }
+        if (geofencingState.getLastDynamicArgumentsRefreshTs() == -1L) {
+            return true;
+        }
+        return geofencingState.getLastDynamicArgumentsRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
     }
 
     public void stop() {

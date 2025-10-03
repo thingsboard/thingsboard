@@ -26,7 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -164,19 +163,9 @@ public abstract class AbstractCalculatedFieldProcessingService {
         var refDynamicSourceConfiguration = value.getRefDynamicSourceConfiguration();
         return switch (refDynamicSourceConfiguration.getType()) {
             case CURRENT_OWNER -> Futures.immediateFuture(List.of(resolveOwnerArgument(tenantId, entityId)));
-            case RELATION_QUERY -> {
-                var configuration = (RelationQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
-                if (configuration.isSimpleRelation()) {
-                    yield switch (configuration.getDirection()) {
-                        case FROM ->
-                                Futures.transform(relationService.findByFromAndTypeAsync(tenantId, entityId, configuration.getRelationType(), RelationTypeGroup.COMMON),
-                                        configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
-                        case TO ->
-                                Futures.transform(relationService.findByToAndTypeAsync(tenantId, entityId, configuration.getRelationType(), RelationTypeGroup.COMMON),
-                                        configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
-                    };
-                }
-                yield Futures.transform(relationService.findByQuery(tenantId, configuration.toEntityRelationsQuery(entityId)),
+            case RELATION_PATH_QUERY -> {
+                var configuration = (RelationPathQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
+                yield Futures.transform(relationService.findByRelationPathQueryAsync(tenantId, configuration.toRelationPathQuery(entityId)),
                         configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
             }
         };

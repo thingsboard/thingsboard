@@ -27,7 +27,7 @@ SET profile_data = jsonb_set(
                         CASE
                             WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
                                 THEN NULL
-                            ELSE to_jsonb(3600)
+                            ELSE to_jsonb(60)
                             END,
                         'maxRelationLevelPerCfArgument',
                         CASE

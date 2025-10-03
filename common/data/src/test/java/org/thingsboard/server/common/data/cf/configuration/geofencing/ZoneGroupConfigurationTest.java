@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CurrentOwnerDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
@@ -101,7 +101,7 @@ public class ZoneGroupConfigurationTest {
     @Test
     void whenHasRelationQuerySourceCalled_shouldReturnTrueIfRelationQuerySourceConfigurationIsNotNull() {
         var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        zoneGroupConfiguration.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(new RelationPathQueryDynamicSourceConfiguration());
         assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isTrue();
     }
 

@@ -31,7 +31,6 @@ import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
@@ -97,33 +96,6 @@ public class GeofencingCalculatedFieldConfigurationTest {
         verify(entityCoordinatesMock).validate();
         verify(zoneGroupConfigurationA).validate(zoneGroupAName);
         verify(zoneGroupConfigurationB).validate(zoneGroupBName);
-    }
-
-    @Test
-    void scheduledUpdateDisabledWhenIntervalIsZero() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setScheduledUpdateInterval(0);
-        assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
-    }
-
-    @Test
-    void scheduledUpdateDisabledWhenIntervalIsGreaterThanZeroButNoZonesWithDynamicArguments() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
-        when(zoneGroupConfigurationMock.hasRelationQuerySource()).thenReturn(false);
-        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfigurationMock));
-        cfg.setScheduledUpdateInterval(60);
-        assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
-    }
-
-    @Test
-    void scheduledUpdateEnabledWhenIntervalIsGreaterThanZeroAndDynamicArgumentsPresent() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
-        when(zoneGroupConfigurationMock.hasRelationQuerySource()).thenReturn(true);
-        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfigurationMock));
-        cfg.setScheduledUpdateInterval(60);
-        assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
     }
 
     @Test

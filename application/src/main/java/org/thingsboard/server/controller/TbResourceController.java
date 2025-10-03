@@ -55,14 +55,17 @@ import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbResourceService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.LWM2M_OBJECT_DESCRIPTION;
@@ -261,6 +264,20 @@ public class TbResourceController extends BaseController {
         } else {
             return checkNotNull(resourceService.findAllTenantResourcesByTenantId(filter.build(), pageLink));
         }
+    }
+
+    @ApiOperation(value = "Get Resource Infos by ids (getSystemOrTenantResourcesByIds)")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/resource", params = {"resourceIds"})
+    public List<TbResourceInfo> getSystemOrTenantResourcesByIds(
+            @Parameter(description = "A list of resource ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("resourceIds") Set<UUID> resourceUuids) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        List<TbResourceId> resourceIds = new ArrayList<>();
+        for (UUID resourceId : resourceUuids) {
+            resourceIds.add(new TbResourceId(resourceId));
+        }
+        return resourceService.findSystemOrTenantResourcesByIds(user.getTenantId(), resourceIds);
     }
 
     @ApiOperation(value = "Get All Resource Infos (getAllResources)",

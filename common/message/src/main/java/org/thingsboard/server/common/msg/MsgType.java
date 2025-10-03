@@ -152,8 +152,6 @@ public enum MsgType {
     CF_ENTITY_DELETE_MSG,
 
     CF_ARGUMENT_RESET_MSG, // Sent to reset argument;
-    CF_DYNAMIC_ARGUMENTS_REFRESH_MSG,
-    CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG,
     CF_REEVALUATE_MSG;
 
     @Getter
