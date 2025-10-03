@@ -168,7 +168,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
         renderer: this.renderer,
         componentType: CalculatedFieldGeofencingZoneGroupsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: isExists ? ['left', 'leftTop', 'leftBottom'] : ['topRight', 'right', 'rightTop'],
+        preferredPlacement: 'right',
         context: ctx,
         isModal: true
       });
