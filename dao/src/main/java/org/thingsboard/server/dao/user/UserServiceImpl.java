@@ -556,6 +556,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     public boolean matchesFilter(TenantId tenantId, SystemLevelUsersFilter filter, User user) {
         switch (filter.getType()) {
             case TENANT_ADMINISTRATORS -> {
+                if (user.isSystemAdmin() || user.isCustomerUser()) {
+                    return false;
+                }
                 TenantAdministratorsFilter tenantAdministratorsFilter = (TenantAdministratorsFilter) filter;
                 if (isNotEmpty(tenantAdministratorsFilter.getTenantsIds())) {
                     return tenantAdministratorsFilter.getTenantsIds().contains(user.getTenantId().getId());
