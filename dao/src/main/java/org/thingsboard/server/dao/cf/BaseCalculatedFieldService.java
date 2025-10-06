@@ -34,7 +34,8 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.validator.CalculatedFieldDataValidator;
+import org.thingsboard.server.dao.service.validator.CalculatedFieldLinkDataValidator;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -55,8 +56,8 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     private final CalculatedFieldDao calculatedFieldDao;
     private final CalculatedFieldLinkDao calculatedFieldLinkDao;
-    private final DataValidator<CalculatedField> calculatedFieldDataValidator;
-    private final DataValidator<CalculatedFieldLink> calculatedFieldLinkDataValidator;
+    private final CalculatedFieldDataValidator calculatedFieldDataValidator;
+    private final CalculatedFieldLinkDataValidator calculatedFieldLinkDataValidator;
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {

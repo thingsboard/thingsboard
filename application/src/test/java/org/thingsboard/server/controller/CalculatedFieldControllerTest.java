@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
@@ -176,13 +176,13 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         doGet("/api/calculatedField/" + savedCalculatedField.getId().getId()).andExpect(status().isNotFound());
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId) {
-        return getCalculatedField(deviceId, getSimpleCalculatedFieldConfig());
+    private CalculatedField getCalculatedField(EntityId entityId) {
+        return getCalculatedField(entityId, getSimpleCalculatedFieldConfig());
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldConfiguration configuration) {
+    private CalculatedField getCalculatedField(EntityId entityId, CalculatedFieldConfiguration configuration) {
         CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setEntityId(deviceId);
+        calculatedField.setEntityId(entityId);
         calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
