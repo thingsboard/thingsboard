@@ -102,33 +102,6 @@ public class GeofencingCalculatedFieldConfigurationTest {
     }
 
     @Test
-    void scheduledUpdateDisabledWhenIntervalIsZero() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setScheduledUpdateInterval(0);
-        assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
-    }
-
-    @Test
-    void scheduledUpdateDisabledWhenIntervalIsGreaterThanZeroButNoZonesWithDynamicArguments() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
-        when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(false);
-        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfigurationMock));
-        cfg.setScheduledUpdateInterval(60);
-        assertThat(cfg.isScheduledUpdateEnabled()).isFalse();
-    }
-
-    @Test
-    void scheduledUpdateEnabledWhenIntervalIsGreaterThanZeroAndDynamicArgumentsPresent() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        var zoneGroupConfigurationMock = mock(ZoneGroupConfiguration.class);
-        when(zoneGroupConfigurationMock.hasDynamicSource()).thenReturn(true);
-        cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfigurationMock));
-        cfg.setScheduledUpdateInterval(60);
-        assertThat(cfg.isScheduledUpdateEnabled()).isTrue();
-    }
-
-    @Test
     void testGetArgumentsOverride() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         cfg.setEntityCoordinates(new EntityCoordinates(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY));
