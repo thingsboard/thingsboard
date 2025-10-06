@@ -30,6 +30,8 @@ $panel-width: 520px;
   }
 
   .level-text {
+    display: flex;
+    justify-content: center;
     width: 25px;
     color: rgba(0, 0, 0, 0.54);
   }
@@ -38,14 +40,20 @@ $panel-width: 520px;
     .tb-form-row {
       gap: 12px;
     }
+
     .tb-form-table-body {
       gap: unset;
     }
-  }
-  .tb-form-table-header-cell {
-    &.tb-actions-header {
-      width: 80px;
-      min-width: 80px;
+
+    .tb-form-table-header {
+      padding: 0;
+    }
+
+    .tb-form-table-header-cell {
+      &.tb-actions-header {
+        width: 40px;
+        min-width: 40px;
+      }
     }
   }
 

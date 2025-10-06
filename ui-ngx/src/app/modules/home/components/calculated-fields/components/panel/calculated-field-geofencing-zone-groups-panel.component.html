@@ -97,7 +97,8 @@
           <mat-expansion-panel class="tb-settings" expanded>
             <mat-expansion-panel-header>{{ 'calculated-fields.entity-zone-relationship' | translate }}</mat-expansion-panel-header>
             <div class="tb-form-table">
-              <div class="tb-form-table-header no-padding-right">
+              <div class="tb-form-table-header">
+                <div class="tb-form-table-header-cell tb-actions-header"></div>
                 <div class="tb-form-table-header-cell" translate>calculated-fields.level</div>
                 <div class="tb-form-table-header-cell flex-1" translate>calculated-fields.direction-level</div>
                 <div class="tb-form-table-header-cell flex-1 tb-required" translate>calculated-fields.relation-type</div>
@@ -110,6 +111,17 @@
                      (cdkDropListDropped)="keyDrop($event)">
                   @for (keyControl of levelsFormArray().controls; track trackByKey;) {
                     <div cdkDrag [cdkDragDisabled]="!dragEnabled" class="tb-draggable-form-table-row">
+                      <div class="tb-form-table-row-cell-buttons">
+                        <button mat-icon-button
+                                type="button"
+                                cdkDragHandle
+                                class="lt-lg:!hidden"
+                                [class.tb-hidden]="!dragEnabled"
+                                matTooltip="{{ 'action.drag' | translate }}"
+                                matTooltipPosition="above">
+                          <mat-icon>drag_indicator</mat-icon>
+                        </button>
+                      </div>
                       <div class="tb-form-row no-border flex-1" [formGroup]="keyControl">
                         <div class="level-text">{{ $index+1 }}</div>
                         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -136,15 +148,6 @@
                                 matTooltip="{{ 'calculated-fields.delete-level' | translate }}"
                                 matTooltipPosition="above">
                           <mat-icon>delete</mat-icon>
-                        </button>
-                        <button mat-icon-button
-                                type="button"
-                                cdkDragHandle
-                                class="lt-lg:!hidden"
-                                [class.tb-hidden]="!dragEnabled"
-                                matTooltip="{{ 'action.drag' | translate }}"
-                                matTooltipPosition="above">
-                          <mat-icon>drag_indicator</mat-icon>
                         </button>
                       </div>
                     </div>
