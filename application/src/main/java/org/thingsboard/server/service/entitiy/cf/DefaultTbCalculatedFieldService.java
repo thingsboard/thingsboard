@@ -34,7 +34,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-import java.util.Optional;
+import java.util.Set;
 
 @TbCoreComponent
 @Service
@@ -53,7 +53,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
                 CalculatedField existingCf = calculatedFieldService.findById(tenantId, calculatedField.getId());
                 checkForEntityChange(existingCf, calculatedField);
             }
-            checkEntityExistence(tenantId, calculatedField.getEntityId());
+            checkEntity(tenantId, calculatedField.getEntityId(), calculatedField.getType());
             CalculatedField savedCalculatedField = checkNotNull(calculatedFieldService.save(calculatedField));
             logEntityActionService.logEntityAction(tenantId, savedCalculatedField.getId(), savedCalculatedField, actionType, user);
             return savedCalculatedField;
@@ -70,7 +70,7 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
 
     @Override
     public PageData<CalculatedField> findByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, CalculatedFieldType type, PageLink pageLink) {
-        checkEntityExistence(tenantId, entityId);
+        checkEntity(tenantId, entityId, type);
         return calculatedFieldService.findCalculatedFieldsByEntityId(tenantId, entityId, type, pageLink);
     }
 
@@ -95,12 +95,15 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
         }
     }
 
-    private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
-        if (CalculatedField.SUPPORTED_ENTITIES.contains(entityId.getEntityType())) {
-            Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
-                    .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
-        } else {
-            throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
+    private void checkEntity(TenantId tenantId, EntityId entityId, CalculatedFieldType type) {
+        EntityType entityType = entityId.getEntityType();
+        Set<CalculatedFieldType> supportedTypes = CalculatedField.SUPPORTED_ENTITIES.get(entityType);
+        if (supportedTypes == null || supportedTypes.isEmpty()) {
+            throw new IllegalArgumentException("Entity type '" + entityType + "' does not support calculated fields");
+        } else if (type != null && !supportedTypes.contains(type)) {
+            throw new IllegalArgumentException("Entity type '" + entityType + "' does not support '" + type + "' calculated fields");
+        } else if (entityService.fetchEntity(tenantId, entityId).isEmpty()) {
+            throw new IllegalArgumentException(entityType.getNormalName() + " with id [" + entityId.getId() + "] does not exist.");
         }
     }
 

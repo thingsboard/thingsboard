@@ -26,6 +26,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -466,6 +467,17 @@ public class DefaultTbClusterService implements TbClusterService {
             broadcast(transportMsg, DataConstants.LWM2M_TRANSPORT_NAME, callback);
         }
         broadcastEntityStateChangeEvent(resource.getTenantId(), resource.getId(), ComponentLifecycleEvent.DELETED);
+    }
+
+    @Override
+    public void onCustomerUpdated(Customer customer, Customer oldCustomer) {
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(customer.getTenantId())
+                .entityId(customer.getId())
+                .event(oldCustomer == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED)
+                .ownerChanged(false) // for compatibility with PE
+                .build();
+        broadcast(msg);
     }
 
     private <T> void broadcastEntityChangeToTransport(TenantId tenantId, EntityId entityid, T entity, TbQueueCallback callback) {

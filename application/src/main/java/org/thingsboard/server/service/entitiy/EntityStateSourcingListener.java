@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.JobManager;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -147,6 +148,9 @@ public class EntityStateSourcingListener {
             }
             case JOB -> {
                 onJobUpdate((Job) event.getEntity());
+            }
+            case CUSTOMER -> {
+                tbClusterService.onCustomerUpdated((Customer) event.getEntity(), (Customer) event.getOldEntity());
             }
             default -> {
             }
