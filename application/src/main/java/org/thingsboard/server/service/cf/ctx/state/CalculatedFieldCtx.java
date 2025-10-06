@@ -103,6 +103,7 @@ public class CalculatedFieldCtx {
     private long scheduledUpdateIntervalMillis;
 
     private Argument propagationArgument;
+    private boolean applyExpressionForResolvedArguments;
 
     public CalculatedFieldCtx(CalculatedField calculatedField,
                               ActorSystemContext systemContext) {
@@ -159,6 +160,7 @@ public class CalculatedFieldCtx {
             }
             if (calculatedField.getConfiguration() instanceof PropagationCalculatedFieldConfiguration propagationConfig) {
                 propagationArgument = propagationConfig.toPropagationArgument();
+                applyExpressionForResolvedArguments = propagationConfig.isApplyExpressionToResolvedArguments();
                 relationQueryDynamicArguments = true;
             }
         }
@@ -177,13 +179,13 @@ public class CalculatedFieldCtx {
 
     public void init() {
         switch (cfType) {
-            case SCRIPT, PROPAGATION -> {
-                try {
-                    initTbelExpression(expression);
-                    initialized = true;
-                } catch (Exception e) {
-                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+            case SCRIPT -> initTbelExpression();
+            case PROPAGATION -> {
+                if (applyExpressionForResolvedArguments) {
+                    initTbelExpression();
+                    return;
                 }
+                initialized = true;
             }
             case GEOFENCING -> initialized = true;
             case SIMPLE -> {
@@ -203,6 +205,15 @@ public class CalculatedFieldCtx {
                 });
                 initialized = true;
             }
+        }
+    }
+
+    private void initTbelExpression() {
+        try {
+            initTbelExpression(expression);
+            initialized = true;
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
         }
     }
 

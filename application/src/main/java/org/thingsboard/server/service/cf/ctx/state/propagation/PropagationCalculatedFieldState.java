@@ -15,10 +15,14 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.propagation;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
@@ -26,6 +30,7 @@ import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.Map;
 
@@ -35,6 +40,12 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
 
     public PropagationCalculatedFieldState(EntityId entityId) {
         super(entityId);
+    }
+
+    @Override
+    public void init(CalculatedFieldCtx ctx) {
+        super.init(ctx);
+        requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Override
@@ -48,12 +59,42 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         if (!(argumentEntry instanceof PropagationArgumentEntry propagationArgumentEntry) || propagationArgumentEntry.isEmpty()) {
             return Futures.immediateFuture(PropagationCalculatedFieldResult.builder().build());
         }
-        return Futures.transform(super.performCalculation(updatedArgs, ctx), telemetryCfResult ->
-                        PropagationCalculatedFieldResult.builder()
-                                .propagationEntityIds(propagationArgumentEntry.getPropagationEntityIds())
-                                .result((TelemetryCalculatedFieldResult) telemetryCfResult)
-                                .build(),
-                MoreExecutors.directExecutor());
+        if (ctx.isApplyExpressionForResolvedArguments()) {
+            return Futures.transform(super.performCalculation(updatedArgs, ctx), telemetryCfResult ->
+                            PropagationCalculatedFieldResult.builder()
+                                    .propagationEntityIds(propagationArgumentEntry.getPropagationEntityIds())
+                                    .result((TelemetryCalculatedFieldResult) telemetryCfResult)
+                                    .build(),
+                    MoreExecutors.directExecutor());
+        }
+        return Futures.immediateFuture(PropagationCalculatedFieldResult.builder()
+                .propagationEntityIds(propagationArgumentEntry.getPropagationEntityIds())
+                .result(toTelemetryResult(ctx))
+                .build());
+    }
+
+    private TelemetryCalculatedFieldResult toTelemetryResult(CalculatedFieldCtx ctx) {
+        Output output = ctx.getOutput();
+        TelemetryCalculatedFieldResult.TelemetryCalculatedFieldResultBuilder telemetryCfBuilder =
+                TelemetryCalculatedFieldResult.builder()
+                        .type(output.getType())
+                        .scope(output.getScope());
+        ObjectNode valuesNode = JacksonUtil.newObjectNode();
+        arguments.forEach((argumentName, argumentEntry) -> {
+            if (argumentEntry instanceof PropagationArgumentEntry) {
+                return;
+            }
+            if (argumentEntry instanceof SingleValueArgumentEntry singleArgumentEntry) {
+                // TODO: use argumentName as a key or no?
+                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), argumentName);
+                return;
+            }
+            throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + argumentName + ". " +
+                                               "Only Latest telemetry or Attribute arguments supported for 'Arguments Only' propagation mode!");
+        });
+        ObjectNode result = toSimpleResult(output.getType() == OutputType.TIME_SERIES, valuesNode);
+        telemetryCfBuilder.result(result);
+        return telemetryCfBuilder.build();
     }
 
 }

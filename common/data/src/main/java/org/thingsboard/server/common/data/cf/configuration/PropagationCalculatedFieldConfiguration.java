@@ -33,6 +33,8 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
     private EntitySearchDirection direction;
     private String relationType;
 
+    private boolean applyExpressionToResolvedArguments;
+
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.PROPAGATION;
@@ -47,6 +49,19 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
         }
         if (StringUtils.isBlank(relationType)) {
             throw new IllegalArgumentException("Propagation calculated field relation type must be specified!");
+        }
+        if (!applyExpressionToResolvedArguments) {
+            arguments.forEach((name, argument) -> {
+                if (argument.getRefEntityKey() == null) {
+                    throw new IllegalArgumentException("Argument: '" + name + "' doesn't have reference entity key configured!");
+                }
+                if (argument.getRefEntityKey().getType() == ArgumentType.TS_ROLLING) {
+                    throw new IllegalArgumentException("Argument type: 'Time series rolling' detected for argument: '" + name + "'! " +
+                                                       "Only 'Attribute' or 'Latest telemetry' arguments are allowed for in 'Arguments only' propagation mode!");
+                }
+            });
+        } else if (StringUtils.isBlank(expression)) {
+            throw new IllegalArgumentException("Expression must be specified for 'Expression result' propagation mode!");
         }
     }
 
