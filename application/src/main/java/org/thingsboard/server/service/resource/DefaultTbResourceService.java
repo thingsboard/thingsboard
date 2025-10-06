@@ -102,7 +102,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             if (result.isSuccess()) {
                 logEntityActionService.logEntityAction(tenantId, resourceId, tbResource, actionType, user, resourceId.toString());
             }
-
             return result;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),

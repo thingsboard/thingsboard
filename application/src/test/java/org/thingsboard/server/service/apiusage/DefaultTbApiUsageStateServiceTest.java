@@ -20,9 +20,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
+import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.id.ApiUsageStateId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
@@ -33,8 +36,17 @@ import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
+import java.lang.reflect.Field;
+import java.time.LocalDate;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import static java.time.ZoneOffset.UTC;
+import static java.time.temporal.ChronoField.DAY_OF_MONTH;
+import static java.time.temporal.ChronoUnit.MONTHS;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
 
 @DaoSqlTest
@@ -48,6 +60,7 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
 
     private TenantId tenantId;
     private Tenant savedTenant;
+    private TenantProfile savedTenantProfile;
 
     private static final int MAX_ENABLE_VALUE = 5000;
     private static final long VALUE_WARNING = 4500L;
@@ -59,7 +72,7 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
         loginSysAdmin();
 
         TenantProfile tenantProfile = createTenantProfile();
-        TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
+        savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
         Assert.assertNotNull(savedTenantProfile);
 
         Tenant tenant = new Tenant();
@@ -107,6 +120,41 @@ public class DefaultTbApiUsageStateServiceTest extends AbstractControllerTest {
 
         service.process(disableMsg, TbCallback.EMPTY);
         assertEquals(ApiUsageStateValue.DISABLED, apiUsageStateService.findTenantApiUsageState(tenantId).getDbStorageState());
+    }
+
+    @Test
+    public void checkStartOfNextCycle_setsNextCycleToNextMonth() throws Exception {
+        ApiUsageState apiUsageState = new ApiUsageState(new ApiUsageStateId(UUID.randomUUID()));
+        apiUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setAlarmExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setTbelExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setReExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setTransportState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setTenantId(tenantId);
+        apiUsageState.setEntityId(tenantId);
+
+        long now = System.currentTimeMillis();
+        long currentCycleTs = now - TimeUnit.DAYS.toMillis(30);
+        long nextCycleTs = now - TimeUnit.MINUTES.toMillis(5); // < 1h ago
+        TenantApiUsageState tenantApiUsageState = new TenantApiUsageState(savedTenantProfile, apiUsageState);
+        tenantApiUsageState.setCycles(currentCycleTs, nextCycleTs);
+        Map<EntityId, BaseApiUsageState> map = new HashMap<>();
+        map.put(tenantId, tenantApiUsageState);
+
+        Field fieldToSet = DefaultTbApiUsageStateService.class.getDeclaredField("myUsageStates");
+        fieldToSet.setAccessible(true);
+        fieldToSet.set(service, map);
+
+        service.checkStartOfNextCycle();
+
+        long firstOfNextMonth = LocalDate.now()
+                .with((temporal) -> temporal.with(DAY_OF_MONTH, 1)
+                        .plus(1, MONTHS))
+                .atStartOfDay(UTC).toInstant().toEpochMilli();
+        assertThat(tenantApiUsageState.getNextCycleTs()).isEqualTo(firstOfNextMonth);
     }
 
     private TenantProfile createTenantProfile() {

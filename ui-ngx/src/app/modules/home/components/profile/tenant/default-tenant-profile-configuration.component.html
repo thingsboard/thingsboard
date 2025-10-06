@@ -275,6 +275,34 @@
         </mat-error>
         <mat-hint></mat-hint>
       </mat-form-field>
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.max-related-level-per-argument</mat-label>
+        <input matInput required min="1" step="1"
+               formControlName="maxRelationLevelPerCfArgument"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRelationLevelPerCfArgument').hasError('required')">
+          {{ 'tenant-profile.max-related-level-per-argument-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRelationLevelPerCfArgument').hasError('min')">
+          {{ 'tenant-profile.max-related-level-per-argument-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
+    </div>
+    <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+      <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+        <mat-label translate>tenant-profile.min-allowed-scheduled-update-interval</mat-label>
+        <input matInput required min="0" step="1"
+               formControlName="minAllowedScheduledUpdateIntervalInSecForCF"
+               type="number">
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('minAllowedScheduledUpdateIntervalInSecForCF').hasError('required')">
+          {{ 'tenant-profile.min-allowed-scheduled-update-interval-required' | translate}}
+        </mat-error>
+        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('minAllowedScheduledUpdateIntervalInSecForCF').hasError('min')">
+          {{ 'tenant-profile.min-allowed-scheduled-update-interval-range' | translate}}
+        </mat-error>
+        <mat-hint></mat-hint>
+      </mat-form-field>
       <div class="flex-1"></div>
     </div>
     <mat-expansion-panel class="configuration-panel">

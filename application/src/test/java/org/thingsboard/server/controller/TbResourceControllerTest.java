@@ -31,6 +31,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -321,18 +322,15 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
         Assert.assertNotNull(referenceValues);
 
-        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>() {
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<EntityInfo>>>() {
         });
         Assert.assertNotNull(widgetTypeInfos);
         Assert.assertFalse(widgetTypeInfos.isEmpty());
         Assert.assertEquals(1, widgetTypeInfos.size());
 
-        var dashboardInfo = widgetTypeInfos.get(EntityType.WIDGET_TYPE.name()).get(0);
-        Assert.assertNotNull(dashboardInfo);
-
-        WidgetTypeInfo foundedWidgetType = doGet("/api/widgetTypeInfo/" + savedWidgetType.getId().getId().toString(), WidgetTypeInfo.class);
-        Assert.assertNotNull(foundedWidgetType);
-        Assert.assertEquals(foundedWidgetType, dashboardInfo);
+        var widgetTypeInfo = widgetTypeInfos.get(EntityType.WIDGET_TYPE.name()).get(0);
+        Assert.assertNotNull(widgetTypeInfo);
+        Assert.assertEquals(new EntityInfo(savedWidgetType.getId(), savedWidgetType.getName()), widgetTypeInfo);
     }
 
     @Test
@@ -372,7 +370,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(isSuccess);
 
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
-        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<WidgetTypeInfo>>>() {
+        var widgetTypeInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<EntityInfo>>>() {
         });
         Assert.assertNull(widgetTypeInfos);
     }
@@ -417,7 +415,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
         Assert.assertNotNull(referenceValues);
 
-        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>() {
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<EntityInfo>>>() {
         });
         Assert.assertNotNull(dashboardInfos);
         Assert.assertFalse(dashboardInfos.isEmpty());
@@ -425,10 +423,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
 
         var dashboardInfo = dashboardInfos.get(EntityType.DASHBOARD.name()).get(0);
         Assert.assertNotNull(dashboardInfo);
-
-        DashboardInfo foundDashboard = doGet("/api/dashboard/info/" + savedDashboard.getId().getId().toString(), DashboardInfo.class);
-        Assert.assertNotNull(foundDashboard);
-        Assert.assertEquals(foundDashboard, dashboardInfo);
+        Assert.assertEquals(new EntityInfo(savedDashboard.getId(), savedDashboard.getName()), dashboardInfo);
     }
 
     @Test
@@ -469,7 +464,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(isSuccess);
 
         var referenceValues = JacksonUtil.toJsonNode(deleteResponse).get("references");
-        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<DashboardInfo>>>() {
+        var dashboardInfos = JacksonUtil.readValue(referenceValues.toString(), new TypeReference<HashMap<String, List<EntityInfo>>>() {
         });
         Assert.assertNull(dashboardInfos);
     }

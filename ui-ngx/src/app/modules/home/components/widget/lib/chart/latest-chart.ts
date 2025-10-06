@@ -36,6 +36,7 @@ import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 export abstract class TbLatestChart<S extends LatestChartSettings> {
 
   private readonly shapeResize$: ResizeObserver;
+  private showTotalValueInLegend: boolean;
 
   protected readonly settings: S;
 
@@ -121,7 +122,8 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
         this.legendItems.sort((a, b) => a.label.localeCompare(b.label));
       }
     }
-    if (this.settings.showLegend && !this.settings.showTotal) {
+    this.showTotalValueInLegend = this.settings.showLegend && !this.settings.showTotal && this.settings.legendShowTotal;
+    if (this.showTotalValueInLegend) {
       this.legendItems.push(
         {
           value: '--',
@@ -252,11 +254,11 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
       if (this.settings.showTotal || this.settings.showLegend) {
         if (hasValue) {
           this.totalText = this.valueFormatter.format(this.total);
-          if (this.settings.showLegend && !this.settings.showTotal) {
+          if (this.showTotalValueInLegend) {
             this.legendItems[this.legendItems.length - 1].hasValue = true;
             this.legendItems[this.legendItems.length - 1].value = this.totalText;
           }
-        } else if (this.settings.showLegend && !this.settings.showTotal) {
+        } else if (this.showTotalValueInLegend) {
           this.legendItems[this.legendItems.length - 1].hasValue = false;
           this.legendItems[this.legendItems.length - 1].value = '--';
         }

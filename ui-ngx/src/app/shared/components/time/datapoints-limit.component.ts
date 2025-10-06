@@ -29,6 +29,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { TimeService } from '@core/services/time.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-datapoints-limit',
@@ -69,7 +70,11 @@ export class DatapointsLimitComponent implements ControlValueAccessor, Validator
   @Input()
   disabled: boolean;
 
-  private propagateChange = (v: any) => { };
+  private propagateChangeValue: any;
+
+  private propagateChange = (v: any) => {
+    this.propagateChangeValue = v;
+  };
 
   private destroy$ = new Subject<void>();
 
@@ -79,6 +84,9 @@ export class DatapointsLimitComponent implements ControlValueAccessor, Validator
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (isDefined(this.propagateChangeValue)) {
+      this.propagateChange(this.propagateChangeValue);
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -115,19 +123,20 @@ export class DatapointsLimitComponent implements ControlValueAccessor, Validator
     }
   }
 
-  private checkLimit(limit?: number): number {
-    if (!limit || limit < this.minDatapointsLimit()) {
-      return this.minDatapointsLimit();
-    } else if (limit > this.maxDatapointsLimit()) {
-      return this.maxDatapointsLimit();
-    }
-    return limit;
-  }
-
   writeValue(value: number | null): void {
-    this.modelValue = this.checkLimit(value);
+    this.modelValue = value;
+    let limit = this.modelValue;
+    if (!limit) {
+      limit = Math.ceil(this.maxDatapointsLimit() / 2);
+    } else if (limit < this.minDatapointsLimit()) {
+      limit = this.minDatapointsLimit();
+    } else if (limit > this.maxDatapointsLimit()) {
+      limit = this.maxDatapointsLimit();
+    }
+
+    this.updateView(limit);
     this.datapointsLimitFormGroup.patchValue(
-      { limit: this.modelValue }, {emitEvent: false}
+      { limit: limit }, {emitEvent: false}
     );
   }
 

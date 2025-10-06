@@ -30,6 +30,7 @@ import {
   AiModelMap,
   AiProvider,
   AiProviderTranslations,
+  AuthenticationType,
   ModelType,
   ProviderFieldsAllList
 } from '@shared/models/ai-model.models';
@@ -37,6 +38,7 @@ import { AiModelService } from '@core/http/ai-model.service';
 import { CheckConnectivityDialogComponent } from '@home/components/ai-model/check-connectivity-dialog.component';
 import { map } from 'rxjs/operators';
 import { deepTrim } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface AIModelDialogData {
   AIModel?: AiModel;
@@ -63,11 +65,18 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
   providerMap: AiProvider[] = Object.keys(AiProvider) as AiProvider[];
   providerTranslationMap = AiProviderTranslations;
 
+  AuthenticationType = AuthenticationType;
+
   provider: AiProvider = AiProvider.OPENAI;
 
   aiModelForms: FormGroup;
 
   isAdd = false;
+
+  authenticationHint: string;
+
+  apiKeyRequired = true;
+  private readonly openAiDefaultBaseUrl = 'https://api.openai.com/v1';
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -75,6 +84,7 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
               @Inject(MAT_DIALOG_DATA) public data: AIModelDialogData,
               private fb: FormBuilder,
               private aiModelService: AiModelService,
+              private translate: TranslateService,
               private dialog: MatDialog) {
     super(store, router, dialogRef);
 
@@ -90,17 +100,24 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       configuration: this.fb.group({
         provider: [this.provider, []],
         providerConfig: this.fb.group({
-          apiKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.apiKey : '', [Validators.required]],
-          personalAccessToken: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.personalAccessToken : '', [Validators.required]],
-          endpoint: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.endpoint : '', [Validators.required]],
+          apiKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.apiKey : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          personalAccessToken: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.personalAccessToken : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          endpoint: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.endpoint : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           serviceVersion: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceVersion : ''],
-          projectId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.projectId : '', [Validators.required]],
-          location: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.location : '', [Validators.required]],
+          projectId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.projectId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          location: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.location : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
           serviceAccountKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.serviceAccountKey : '', [Validators.required]],
           fileName: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.fileName : '', [Validators.required]],
-          region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required]],
-          accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required]],
-          secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required]],
+          region: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.region : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          accessKeyId: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.accessKeyId : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          secretAccessKey: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.secretAccessKey : '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+          baseUrl: [this.data.AIModel ? this.data.AIModel.configuration.providerConfig?.baseUrl : this.openAiDefaultBaseUrl, [Validators.required, Validators.pattern(/.*\S.*/)]],
+          auth: this.fb.group({
+            type: [this.data.AIModel?.configuration?.providerConfig?.auth?.type ?? AuthenticationType.NONE],
+            username: [this.data.AIModel?.configuration?.providerConfig?.auth?.username ?? '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+            password: [this.data.AIModel?.configuration?.providerConfig?.auth?.password ?? '', [Validators.required, Validators.pattern(/.*\S.*/)]],
+            token: [this.data.AIModel?.configuration?.providerConfig?.auth?.token ?? '', [Validators.required, Validators.pattern(/.*\S.*/)]]
+          })
         }),
         modelId: [this.data.AIModel ? this.data.AIModel.configuration?.modelId : '', [Validators.required]],
         temperature: [this.data.AIModel ? this.data.AIModel.configuration?.temperature : null, [Validators.min(0)]],
@@ -108,7 +125,8 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
         topK: [this.data.AIModel ? this.data.AIModel.configuration?.topK : null, [Validators.min(0)]],
         frequencyPenalty: [this.data.AIModel ? this.data.AIModel.configuration?.frequencyPenalty : null],
         presencePenalty: [this.data.AIModel ? this.data.AIModel.configuration?.presencePenalty : null],
-        maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration?.maxOutputTokens : null, [Validators.min(1)]]
+        maxOutputTokens: [this.data.AIModel ? this.data.AIModel.configuration?.maxOutputTokens : null],
+        contextLength: [this.data.AIModel ? this.data.AIModel.configuration?.contextLength : null]
       })
     });
 
@@ -123,7 +141,35 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       this.aiModelForms.get('configuration.modelId').reset('');
       this.aiModelForms.get('configuration.providerConfig').reset({});
       this.updateValidation(provider);
-    })
+      if (provider === AiProvider.OPENAI) {
+        this.aiModelForms.get('configuration.providerConfig.baseUrl').patchValue(this.openAiDefaultBaseUrl, {emitEvent: false});
+        this.updateApiKeyValidatorForOpenAIProvider(this.openAiDefaultBaseUrl);
+      }
+    });
+
+    this.aiModelForms.get('configuration.providerConfig.baseUrl').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((url: string) => {
+      if (this.provider === AiProvider.OPENAI) {
+        this.updateApiKeyValidatorForOpenAIProvider(url);
+      }
+    });
+
+    this.aiModelForms.get('configuration.providerConfig.auth.type').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((type: AuthenticationType) => {
+      this.getAuthenticationHint(type);
+      this.aiModelForms.get('configuration.providerConfig.auth.username').disable();
+      this.aiModelForms.get('configuration.providerConfig.auth.password').disable();
+      this.aiModelForms.get('configuration.providerConfig.auth.token').disable();
+      if (type === AuthenticationType.BASIC) {
+        this.aiModelForms.get('configuration.providerConfig.auth.username').enable();
+        this.aiModelForms.get('configuration.providerConfig.auth.password').enable();
+      }
+      if (type === AuthenticationType.TOKEN) {
+        this.aiModelForms.get('configuration.providerConfig.auth.token').enable();
+      }
+    });
 
     this.updateValidation(this.provider);
   }
@@ -135,6 +181,27 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       );
   }
 
+  private updateApiKeyValidatorForOpenAIProvider(url: string) {
+    if (url !== this.openAiDefaultBaseUrl) {
+      this.aiModelForms.get('configuration.providerConfig.apiKey').removeValidators(Validators.required);
+      this.apiKeyRequired = false;
+    } else {
+      this.aiModelForms.get('configuration.providerConfig.apiKey').addValidators(Validators.required);
+      this.apiKeyRequired = true;
+    }
+    this.aiModelForms.get('configuration.providerConfig.apiKey').updateValueAndValidity({emitEvent: false});
+  }
+
+  private getAuthenticationHint(type: AuthenticationType) {
+    if (type === AuthenticationType.BASIC) {
+      this.authenticationHint = this.translate.instant('ai-models.authentication-basic-hint');
+    } else if (type === AuthenticationType.TOKEN) {
+      this.authenticationHint = this.translate.instant('ai-models.authentication-token-hint');
+    } else {
+      this.authenticationHint = null;
+    }
+  }
+
   private updateValidation(provider: AiProvider) {
     ProviderFieldsAllList.forEach(key => {
       if (AiModelMap.get(provider).providerFieldsList.includes(key)) {
@@ -142,7 +209,13 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
       } else {
         this.aiModelForms.get('configuration.providerConfig').get(key).disable();
       }
-    })
+    });
+    if (provider === AiProvider.OLLAMA) {
+      this.aiModelForms.get('configuration.providerConfig.auth').enable();
+      this.aiModelForms.get('configuration.providerConfig.auth.type').patchValue(this.data.AIModel?.configuration?.providerConfig?.auth?.type ?? AuthenticationType.NONE, {emitEvent: true});
+    } else {
+      this.aiModelForms.get('configuration.providerConfig.auth').disable();
+    }
   }
 
   get providerFieldsList(): string[] {

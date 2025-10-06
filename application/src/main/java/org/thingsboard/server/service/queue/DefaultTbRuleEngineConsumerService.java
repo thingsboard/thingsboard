@@ -33,6 +33,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.rpc.FromDeviceRpcResponse;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.QueueDeleteMsg;
@@ -78,13 +79,14 @@ public class DefaultTbRuleEngineConsumerService extends AbstractPartitionBasedCo
                                               QueueService queueService,
                                               TbDeviceProfileCache deviceProfileCache,
                                               TbAssetProfileCache assetProfileCache,
+                                              TbResourceDataCache tbResourceDataCache,
                                               TbTenantProfileCache tenantProfileCache,
                                               TbApiUsageStateService apiUsageStateService,
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
                                               JwtSettingsService jwtSettingsService,
                                               CalculatedFieldCache calculatedFieldCache) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;

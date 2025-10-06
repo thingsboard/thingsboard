@@ -17,6 +17,7 @@ package org.thingsboard.server.service.resource.sql;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.databind.node.TextNode;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,8 +25,10 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.ai.TbAiNode;
+import org.thingsboard.rule.engine.ai.TbAiNodeConfiguration;
+import org.thingsboard.rule.engine.ai.TbResponseFormat;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
@@ -37,26 +40,40 @@ import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
+import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.RuleChainId;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
+import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.ai.AiModelService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.service.resource.TbResourceService;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
+import java.util.function.Function;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -135,6 +152,10 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
     private WidgetTypeService widgetTypeService;
     @Autowired
     private DashboardService dashboardService;
+    @Autowired
+    private RuleChainService ruleChainService;
+    @Autowired
+    private AiModelService aiModelService;
 
     private Tenant savedTenant;
     private User tenantAdmin;
@@ -453,11 +474,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertFalse(result.getReferences().isEmpty());
         Assert.assertEquals(1, result.getReferences().size());
 
-        WidgetTypeInfo widgetTypeInfo = (WidgetTypeInfo) result.getReferences().get(EntityType.WIDGET_TYPE.name()).get(0);
-        WidgetTypeInfo foundWidgetTypeInfo = new WidgetTypeInfo(foundWidgetType);
+        EntityInfo widgetTypeInfo = (EntityInfo) result.getReferences().get(EntityType.WIDGET_TYPE.name()).get(0);
         Assert.assertNotNull(widgetTypeInfo);
-        Assert.assertNotNull(foundWidgetTypeInfo);
-        Assert.assertEquals(widgetTypeInfo, foundWidgetTypeInfo);
+        Assert.assertEquals(widgetTypeInfo, new EntityInfo(foundWidgetType.getId(), foundWidgetType.getName()));
 
         TbResourceInfo foundResourceInfo = resourceService.findResourceInfoById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
@@ -546,11 +565,9 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
         Assert.assertNotNull(result.getReferences());
         Assert.assertEquals(1, result.getReferences().size());
 
-        DashboardInfo dashboardInfo = (DashboardInfo) result.getReferences().get(EntityType.DASHBOARD.name()).get(0);
-        DashboardInfo foundDashboardInfo = dashboardService.findDashboardInfoById(savedTenant.getId(), savedDashboard.getId());
+        EntityInfo dashboardInfo = (EntityInfo) result.getReferences().get(EntityType.DASHBOARD.name()).get(0);
         Assert.assertNotNull(dashboardInfo);
-        Assert.assertNotNull(foundDashboardInfo);
-        Assert.assertEquals(foundDashboardInfo, dashboardInfo);
+        Assert.assertEquals(new EntityInfo(savedDashboard.getId(), savedDashboard.getName()), dashboardInfo);
 
         foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNotNull(foundResource);
@@ -596,6 +613,94 @@ public class BaseTbResourceServiceTest extends AbstractControllerTest {
 
         foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
         Assert.assertNull(foundResource);
+    }
+
+    @Test
+    public void testShouldNotDeleteResourceIfUsedInAiNode() throws Exception {
+        TbResource resource = new TbResource();
+        resource.setResourceType(ResourceType.GENERAL);
+        resource.setTitle("My resource");
+        resource.setFileName("test.json");
+        resource.setTenantId(savedTenant.getId());
+        resource.setData("<test></test>".getBytes());
+        TbResourceInfo savedResource = tbResourceService.save(resource);
+        RuleChainMetaData ruleChain = createRuleChainReferringResource(savedResource.getId());
+
+        TbResourceDeleteResult result = tbResourceService.delete(savedResource, false, null);
+        assertThat(result).isNotNull();
+        assertThat(result.isSuccess()).isFalse();
+        assertThat(result.getReferences()).isNotEmpty().hasSize(1);
+        EntityInfo entityInfo = (EntityInfo) result.getReferences().get(EntityType.RULE_CHAIN.name()).get(0);
+        assertThat(entityInfo).isEqualTo(new EntityInfo(ruleChain.getRuleChainId(), "Test"));
+
+        TbResource foundResource = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
+        assertThat(foundResource).isNotNull();
+
+        // force delete
+        TbResourceDeleteResult deleteResult = tbResourceService.delete(savedResource, true, null);
+        assertThat(deleteResult).isNotNull();
+        assertThat(deleteResult.isSuccess()).isTrue();
+
+        TbResource resourceAfterDeletion = resourceService.findResourceById(savedTenant.getId(), savedResource.getId());
+        assertThat(resourceAfterDeletion).isNull();
+    }
+
+    private RuleChainMetaData createRuleChainReferringResource(TbResourceId resourceId) {
+        AiModel model = constructValidOpenAiModel("Test model");
+        AiModel saved = aiModelService.save(model);
+
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setTenantId(tenantId);
+        ruleChain.setName("Test");
+        ruleChain.setType(RuleChainType.CORE);
+        ruleChain.setDebugMode(true);
+        ruleChain.setConfiguration(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
+        ruleChain = ruleChainService.saveRuleChain(ruleChain);
+        RuleChainId ruleChainId = ruleChain.getId();
+
+        RuleChainMetaData metaData = new RuleChainMetaData();
+        metaData.setRuleChainId(ruleChainId);
+
+        RuleNode aiNode = new RuleNode();
+        aiNode.setName("Ai request");
+        aiNode.setType(org.thingsboard.rule.engine.ai.TbAiNode.class.getName());
+        aiNode.setConfigurationVersion(TbAiNode.class.getAnnotation(org.thingsboard.rule.engine.api.RuleNode.class).version());
+        aiNode.setDebugSettings(DebugSettings.all());
+        TbAiNodeConfiguration configuration = new TbAiNodeConfiguration();
+        configuration.setResourceIds(Set.of(resourceId.getId()));
+        configuration.setModelId(saved.getId());
+        configuration.setResponseFormat(new TbResponseFormat.TbJsonResponseFormat());
+        configuration.setTimeoutSeconds(1);
+        configuration.setUserPrompt("What is temp");
+        aiNode.setConfiguration(JacksonUtil.valueToTree(configuration));
+
+        metaData.setNodes(Arrays.asList(aiNode));
+        metaData.setFirstNodeIndex(0);
+        ruleChainService.saveRuleChainMetaData(tenantId, metaData, Function.identity());
+        return ruleChainService.loadRuleChainMetaData(tenantId, ruleChainId);
+    }
+
+    private AiModel constructValidOpenAiModel(String name) {
+        var modelConfig = OpenAiChatModelConfig.builder()
+                .providerConfig(OpenAiProviderConfig.builder()
+                        .baseUrl(OpenAiProviderConfig.OPENAI_OFFICIAL_BASE_URL)
+                        .apiKey("test-api-key")
+                        .build())
+                .modelId("gpt-4o")
+                .temperature(0.5)
+                .topP(0.3)
+                .frequencyPenalty(0.1)
+                .presencePenalty(0.2)
+                .maxOutputTokens(1000)
+                .timeoutSeconds(60)
+                .maxRetries(2)
+                .build();
+
+        return AiModel.builder()
+                .tenantId(tenantId)
+                .name(name)
+                .configuration(modelConfig)
+                .build();
     }
 
     @Test

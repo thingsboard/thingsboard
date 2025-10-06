@@ -24,6 +24,8 @@ import { AiModel, AiRuleNodeResponseFormatTypeOnlyText, ResponseFormat } from '@
 import { deepTrim } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
+import { Resource, ResourceType } from "@shared/models/resource.models";
+import { ResourcesDialogComponent, ResourcesDialogData } from "@home/components/resources/resources-dialog.component";
 
 @Component({
   selector: 'tb-external-node-ai-config',
@@ -37,6 +39,9 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   entityType = EntityType;
 
   responseFormat = ResponseFormat;
+
+  EntityType = EntityType;
+  ResourceType = ResourceType;
 
   constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
@@ -53,6 +58,7 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
       modelId: [configuration?.modelId ?? null, [Validators.required]],
       systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
       userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      resourceIds: [configuration?.resourceIds ?? []],
       responseFormat: this.fb.group({
         type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
         schema: [configuration?.responseFormat?.schema ?? null, [jsonRequired]],
@@ -114,6 +120,24 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
       .subscribe((model) => {
         if (model) {
           this.aiConfigForm.get(formControl).patchValue(model.id);
+          this.aiConfigForm.get(formControl).markAsDirty();
+        }
+      });
+  };
+
+  createAiResources(name: string, formControl: string) {
+    this.dialog.open<ResourcesDialogComponent, ResourcesDialogData, Resource>(ResourcesDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        resources: {title: name, resourceType: ResourceType.GENERAL},
+        isAdd: true
+      }
+    }).afterClosed()
+      .subscribe((resource) => {
+        if (resource) {
+          const resourceIds = [...(this.aiConfigForm.get(formControl).value || []), resource.id.id];
+          this.aiConfigForm.get(formControl).patchValue(resourceIds);
           this.aiConfigForm.get(formControl).markAsDirty();
         }
       });

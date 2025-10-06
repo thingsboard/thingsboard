@@ -14,3 +14,35 @@
 -- limitations under the License.
 --
 
+-- UPDATE TENANT PROFILE CONFIGURATION START
+
+UPDATE tenant_profile
+SET profile_data = jsonb_set(
+        profile_data,
+        '{configuration}',
+        (profile_data -> 'configuration')
+            || jsonb_strip_nulls(
+                jsonb_build_object(
+                        'minAllowedScheduledUpdateIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END,
+                        'maxRelationLevelPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(10)
+                            END
+                )
+               ),
+        false
+                   )
+WHERE NOT (
+    (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+    );
+
+-- UPDATE TENANT PROFILE CONFIGURATION END

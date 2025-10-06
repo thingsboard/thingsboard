@@ -50,6 +50,7 @@ $warning-color: #FAA405;
             color: $enabled-color;
           }
           .mat-mdc-progress-bar {
+            --mdc-linear-progress-track-color: #{rgba($enabled-color, 0.06)};
             --mdc-linear-progress-active-indicator-color: #{$enabled-color};
           }
         }
@@ -58,6 +59,7 @@ $warning-color: #FAA405;
             color: $disabled-color;
           }
           .mat-mdc-progress-bar {
+            --mdc-linear-progress-track-color: #{rgba($disabled-color, 0.06)};
             --mdc-linear-progress-active-indicator-color: #{$disabled-color};
           }
         }
@@ -66,6 +68,7 @@ $warning-color: #FAA405;
             color: $warning-color;
           }
           .mat-mdc-progress-bar {
+            --mdc-linear-progress-track-color: #{rgba($warning-color, 0.06)};
             --mdc-linear-progress-active-indicator-color: #{$warning-color};
           }
         }

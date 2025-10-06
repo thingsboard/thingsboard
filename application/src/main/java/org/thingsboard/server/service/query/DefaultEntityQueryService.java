@@ -238,7 +238,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
             entitiesSortOrder = sortOrder;
         }
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
-        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
+        return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters());
     }
 
     @Override

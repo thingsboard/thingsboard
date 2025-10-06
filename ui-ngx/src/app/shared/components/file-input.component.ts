@@ -129,9 +129,14 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
   @Output()
   fileNameChanged = new EventEmitter<string|string[]>();
 
+  @Output()
+  mediaTypeChanged = new EventEmitter<string>();
+
   fileName: string | string[];
   fileContent: any;
   files: File[];
+
+  mediaType: string;
 
   @ViewChild('flow', {static: true})
   flow: FlowDirective;
@@ -180,6 +185,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
               this.fileContent = files[0].fileContent;
               this.fileName = files[0].fileName;
               this.files = files[0].files;
+              this.mediaType = files[0].mediaType;
               this.updateModel();
             } else if (files.length > 1) {
               this.fileContent = files.map(content => content.fileContent);
@@ -203,6 +209,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
         let fileName = null;
         let fileContent = null;
         let files = null;
+        let mediaType = null;
         if (reader.readyState === reader.DONE) {
           if (!this.workFromFileObj) {
             fileContent = reader.result;
@@ -211,16 +218,18 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
                 fileContent = this.contentConvertFunction(fileContent);
               }
               fileName = fileContent ? file.name : null;
+              mediaType = file?.file?.type || null;
             }
           } else if (file.name || file.file){
             files = file.file;
             fileName = file.name;
+            mediaType = file.file.type || null;
           }
         }
-        resolve({fileContent, fileName, files});
+        resolve({fileContent, fileName, files, mediaType});
       };
       reader.onerror = () => {
-        resolve({fileContent: null, fileName: null, files: null});
+        resolve({fileContent: null, fileName: null, files: null, mediaType: null});
       };
       if (this.readAsBinary) {
         reader.readAsBinaryString(file.file);
@@ -283,6 +292,7 @@ export class FileInputComponent extends PageComponent implements AfterViewInit, 
       this.propagateChange(this.files);
     } else {
       this.propagateChange(this.fileContent);
+      this.mediaTypeChanged.emit(this.mediaType);
       this.fileNameChanged.emit(this.fileName);
     }
   }

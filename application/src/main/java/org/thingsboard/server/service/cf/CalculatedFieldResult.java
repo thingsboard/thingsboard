@@ -34,4 +34,8 @@ public final class CalculatedFieldResult {
                 (result.isTextual() && result.asText().isEmpty());
     }
 
+    public String toStringOrElseNull() {
+        return result == null ? null : result.toString();
+    }
+
 }

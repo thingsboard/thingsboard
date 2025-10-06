@@ -88,6 +88,7 @@ export const doughnutPieChartSettings = (settings: DoughnutWidgetSettings): Deep
   showTotal: settings.layout === DoughnutLayout.with_total,
   animation: settings.animation,
   showLegend: settings.showLegend,
+  legendShowTotal: settings.legendShowTotal,
   totalValueFont: settings.totalValueFont,
   totalValueColor: settings.totalValueColor,
   showLabel: false,

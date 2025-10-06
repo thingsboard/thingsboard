@@ -15,12 +15,15 @@
  */
 package org.thingsboard.common.util;
 
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
 
 import java.util.concurrent.Callable;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Consumer;
 
@@ -69,6 +72,18 @@ public class DonAsynchron {
         ListenableFuture<T> future = Futures.submit(task, executor);
         withCallback(future, onSuccess, onFailure, callbackExecutor);
         return future;
+    }
+
+    public static <T> FluentFuture<T> toFluentFuture(CompletableFuture<T> completable) {
+        SettableFuture<T> future = SettableFuture.create();
+        completable.whenComplete((result, exception) -> {
+            if (exception != null) {
+                future.setException(exception);
+            } else {
+                future.set(result);
+            }
+        });
+        return FluentFuture.from(future);
     }
 
 }

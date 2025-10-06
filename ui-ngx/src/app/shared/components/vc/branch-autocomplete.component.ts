@@ -57,6 +57,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
   private requiredValue: boolean;
 
   get required(): boolean {
