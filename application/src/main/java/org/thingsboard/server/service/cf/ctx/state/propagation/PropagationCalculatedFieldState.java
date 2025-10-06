@@ -43,9 +43,12 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
     }
 
     @Override
-    public void init(CalculatedFieldCtx ctx) {
-        super.init(ctx);
-        requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
+    public boolean isReady() {
+        if (!super.isReady()) {
+            return false;
+        }
+        ArgumentEntry propagationArg = arguments.get(PROPAGATION_CONFIG_ARGUMENT);
+        return propagationArg != null && !propagationArg.isEmpty();
     }
 
     @Override

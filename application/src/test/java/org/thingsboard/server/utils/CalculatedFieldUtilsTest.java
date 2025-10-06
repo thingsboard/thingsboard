@@ -50,7 +50,6 @@ import static org.mockito.Mockito.mock;
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
-
 @ExtendWith(MockitoExtension.class)
 class CalculatedFieldUtilsTest {
 
@@ -94,11 +93,9 @@ class CalculatedFieldUtilsTest {
         CalculatedFieldState state = new GeofencingCalculatedFieldState(DEVICE_ID);
         state.update(Map.of("geofencingArgumentTest", geofencingArgumentEntry), mock(CalculatedFieldCtx.class));
 
-        // when
         CalculatedFieldStateProto proto = toProto(stateId, state);
-
-        // then
         CalculatedFieldState fromProto = CalculatedFieldUtils.fromProto(stateId, proto);
+
         assertThat(fromProto)
                 .usingRecursiveComparison()
                 .ignoringFields("requiredArguments")
