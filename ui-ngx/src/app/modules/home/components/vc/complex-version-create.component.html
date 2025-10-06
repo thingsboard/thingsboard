@@ -41,7 +41,7 @@
           </mat-error>
         </mat-form-field>
       </div>
-      <mat-form-field class="mat-block" style="margin-bottom: 24px;" appearance="outline">
+      <mat-form-field class="mat-block" style="margin-bottom: 24px;" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>version-control.default-sync-strategy</mat-label>
         <mat-select required formControlName="syncStrategy">
           @for (strategy of syncStrategies; track strategy) {
@@ -70,37 +70,6 @@
         {{ 'action.create' | translate }}
       </button>
     </div>
-    <mat-form-field class="mat-block" style="margin-bottom: 24px;" subscriptSizing="dynamic">
-      <mat-label translate>version-control.default-sync-strategy</mat-label>
-      <mat-select required formControlName="syncStrategy">
-        <mat-option *ngFor="let strategy of syncStrategies" [value]="strategy">
-          {{syncStrategyTranslations.get(strategy) | translate}}
-        </mat-option>
-      </mat-select>
-      <mat-hint [innerHTML]="(syncStrategyHints.get(createVersionFormGroup.get('syncStrategy').value) | translate) | safe:'html'"></mat-hint>
-    </mat-form-field>
-    <tb-entity-types-version-create
-      formControlName="entityTypes">
-    </tb-entity-types-version-create>
-  </form>
-  <div class="flex items-center justify-end gap-2" style="padding-top: 16px;">
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="export()"
-            [disabled]="(isLoading$ | async) || createVersionFormGroup.invalid || !createVersionFormGroup.dirty">
-      {{ 'action.create' | translate }}
-    </button>
-  </div>
-</section>
-<section *ngIf="versionCreateResult$">
-  <section *ngIf="resultMessage">
-    <div class="mat-headline-6 vc-result-message" [innerHtml]="resultMessage"></div>
   </section>
 } @else {
   <div class="mat-headline-6 vc-result-message" [class.hidden]="!resultMessage" [innerHtml]="resultMessage"></div>

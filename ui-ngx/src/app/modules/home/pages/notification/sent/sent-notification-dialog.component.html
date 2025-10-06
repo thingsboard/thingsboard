@@ -172,9 +172,9 @@
           </div>
           <mat-divider class="divider"></mat-divider>
           <mat-chip-listbox>
-            <mat-chip *ngFor="let recipientTitle of preview.recipientsPreview">
+            <mat-chip-row *ngFor="let recipientTitle of preview.recipientsPreview">
               <span>{{ recipientTitle }}</span>
-            </mat-chip>
+            </mat-chip-row>
           </mat-chip-listbox>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.WEB?.enabled">

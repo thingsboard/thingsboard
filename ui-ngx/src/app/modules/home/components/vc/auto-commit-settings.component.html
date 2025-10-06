@@ -60,6 +60,7 @@
                       <div class="flex flex-row gap-4 xs:flex-col xs:gap-0">
                         <tb-entity-type-select
                           showLabel
+                          appearance="outline"
                           formControlName="entityType"
                           required
                           [filterAllowedEntityTypes]="false"
@@ -67,6 +68,7 @@
                         </tb-entity-type-select>
                         <div formGroupName="config">
                           <tb-branch-autocomplete
+                            appearance="outline"
                             emptyPlaceholder="{{ 'version-control.default' | translate }}"
                             [selectDefaultBranch]="false"
                             formControlName="branch">
