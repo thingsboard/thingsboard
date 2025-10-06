@@ -922,7 +922,6 @@ message CalculatedFieldStateProto {
   repeated TsRollingArgumentProto rollingValueArguments = 4;
   repeated GeofencingArgumentProto geofencingArguments = 5;
   AlarmStateProto alarmState = 6;
-  repeated EntityIdProto propagationEntityIds = 7;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

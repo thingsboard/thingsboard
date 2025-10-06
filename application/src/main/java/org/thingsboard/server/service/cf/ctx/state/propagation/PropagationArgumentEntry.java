@@ -32,7 +32,6 @@ public class PropagationArgumentEntry implements ArgumentEntry {
 
     private boolean forceResetPrevious;
 
-    // TODO: do we need to persist this?
     public PropagationArgumentEntry(List<EntityId> propagationEntityIds) {
         this.propagationEntityIds = propagationEntityIds;
     }

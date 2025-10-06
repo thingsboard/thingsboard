@@ -85,8 +85,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
                 return;
             }
             if (argumentEntry instanceof SingleValueArgumentEntry singleArgumentEntry) {
-                // TODO: use argumentName as a key or no?
-                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), argumentName);
+                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue());
                 return;
             }
             throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + argumentName + ". " +
