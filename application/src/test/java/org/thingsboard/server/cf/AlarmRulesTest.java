@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -107,6 +108,8 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Condition clearRule = new Condition("return temperature <= 25;", null, null);
         CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
                 arguments, createRules, clearRule);
+        assertThat(getCalculatedFields(deviceId, CalculatedFieldType.ALARM, new PageLink(1)).getData())
+                .singleElement().isEqualTo(calculatedField);
 
         postTelemetry(deviceId, "{\"temperature\":50}");
         checkAlarmResult(calculatedField, alarmResult -> {

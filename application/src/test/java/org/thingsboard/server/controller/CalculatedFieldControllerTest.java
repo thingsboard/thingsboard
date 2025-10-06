@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoor
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.security.Authority;
@@ -147,6 +148,18 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testGetCalculatedFields() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
+        calculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(getCalculatedFields(testDevice.getId(), null, new PageLink(10)).getData())
+                .singleElement().isEqualTo(calculatedField);
+        assertThat(getCalculatedFields(testDevice.getId(), CalculatedFieldType.SIMPLE, new PageLink(10)).getData())
+                .singleElement().isEqualTo(calculatedField);
     }
 
     @Test

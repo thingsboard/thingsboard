@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -35,8 +36,10 @@ import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -136,11 +139,18 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public PageData<CalculatedField> findAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+    public PageData<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, CalculatedFieldType type, PageLink pageLink) {
         log.trace("Executing findAllByEntityId, entityId [{}], pageLink [{}]", entityId, pageLink);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
         validatePageLink(pageLink);
-        return calculatedFieldDao.findAllByEntityId(tenantId, entityId, pageLink);
+        Set<CalculatedFieldType> types;
+        if (type == null) {
+            types = EnumSet.allOf(CalculatedFieldType.class);
+            types.remove(CalculatedFieldType.ALARM);
+        } else {
+            types = Set.of(type);
+        }
+        return calculatedFieldDao.findByEntityIdAndTypes(tenantId, entityId, types, pageLink);
     }
 
     @Override

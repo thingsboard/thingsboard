@@ -44,7 +44,7 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "calculated fields",
+        name = "calculated fields", // TODO: rename to "alarms and calculated fields"
         configClazz = EmptyNodeConfiguration.class,
         nodeDescription = "Pushes incoming messages to calculated fields service",
         nodeDetails = "Node enables the processing of calculated fields without persisting incoming messages to the database. " +

@@ -22,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -68,10 +69,9 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     }
 
     @Override
-    public PageData<CalculatedField> findAllByTenantIdAndEntityId(EntityId entityId, SecurityUser user, PageLink pageLink) {
-        TenantId tenantId = user.getTenantId();
+    public PageData<CalculatedField> findByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, CalculatedFieldType type, PageLink pageLink) {
         checkEntityExistence(tenantId, entityId);
-        return calculatedFieldService.findAllCalculatedFieldsByEntityId(tenantId, entityId, pageLink);
+        return calculatedFieldService.findCalculatedFieldsByEntityId(tenantId, entityId, type, pageLink);
     }
 
     @Override
