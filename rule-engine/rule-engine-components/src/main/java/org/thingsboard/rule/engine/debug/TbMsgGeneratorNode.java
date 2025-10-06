@@ -63,9 +63,9 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.",
         inEnabled = false,
         configDirective = "tbActionNodeGeneratorConfig",
-        icon = "repeat"
+        icon = "repeat",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/generator/"
 )
-
 public class TbMsgGeneratorNode implements TbNode {
 
     private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,

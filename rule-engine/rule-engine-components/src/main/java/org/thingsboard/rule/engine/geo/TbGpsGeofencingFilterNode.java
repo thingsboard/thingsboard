@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.geo;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -23,10 +22,6 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
         name = "gps geofencing filter",
@@ -60,7 +55,9 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "</br></br>" +
                 "Available radius units: METER, KILOMETER, FOOT, MILE, NAUTICAL_MILE;<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
-        configDirective = "tbFilterNodeGpsGeofencingConfig")
+        configDirective = "tbFilterNodeGpsGeofencingConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/gps-geofencing-filter/"
+)
 public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofencingFilterNodeConfiguration> {
 
     @Override
@@ -72,4 +69,5 @@ public class TbGpsGeofencingFilterNode extends AbstractGeofencingNode<TbGpsGeofe
     protected Class<TbGpsGeofencingFilterNodeConfiguration> getConfigClazz() {
         return TbGpsGeofencingFilterNodeConfiguration.class;
     }
+
 }

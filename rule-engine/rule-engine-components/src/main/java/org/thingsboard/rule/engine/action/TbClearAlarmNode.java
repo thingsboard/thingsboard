@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -31,7 +30,6 @@ import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "clear alarm", relationTypes = {"Cleared", "False"},
@@ -44,7 +42,8 @@ import org.thingsboard.server.common.msg.TbMsg;
                         "Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>. " +
                         "Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.",
         configDirective = "tbActionNodeClearAlarmConfig",
-        icon = "notifications_off"
+        icon = "notifications_off",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/clear-alarm/"
 )
 public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfiguration> {
 
@@ -79,4 +78,5 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
             }
         }, ctx.getDbCallbackExecutor());
     }
+
 }
