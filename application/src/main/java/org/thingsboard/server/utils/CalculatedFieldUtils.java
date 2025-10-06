@@ -193,9 +193,6 @@ public class CalculatedFieldUtils {
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
-        List<EntityId> propagationEntityIds = proto.getPropagationEntityIdsList().stream().map(ProtoUtils::fromProto).toList();
-        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(propagationEntityIds));
-
         switch (type) {
             case SCRIPT -> {
                 proto.getRollingValueArgumentsList().forEach(argProto ->
@@ -216,6 +213,10 @@ public class CalculatedFieldUtils {
                     ruleState.setEventCount(ruleStateProto.getEventCount());
                     alarmState.getCreateRuleStates().put(severity, ruleState);
                 }
+            }
+            case PROPAGATION -> {
+                List<EntityId> propagationEntityIds = proto.getPropagationEntityIdsList().stream().map(ProtoUtils::fromProto).toList();
+                state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(propagationEntityIds));
             }
         }
 
