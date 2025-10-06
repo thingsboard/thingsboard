@@ -44,6 +44,7 @@ public class OwnerService {
         return switch (entityId.getEntityType()) {
             case DEVICE -> deviceService.findDeviceById(tenantId, (DeviceId) entityId).getOwnerId();
             case ASSET -> assetService.findAssetById(tenantId, (AssetId) entityId).getOwnerId();
+            case CUSTOMER -> tenantId;
             default -> throw new UnsupportedOperationException();
         };
     }

@@ -96,10 +96,11 @@ public class DefaultTbCalculatedFieldService extends AbstractTbEntityService imp
     }
 
     private void checkEntityExistence(TenantId tenantId, EntityId entityId) {
-        switch (entityId.getEntityType()) {
-            case ASSET, DEVICE, ASSET_PROFILE, DEVICE_PROFILE -> Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
+        if (CalculatedField.SUPPORTED_ENTITIES.contains(entityId.getEntityType())) {
+            Optional.ofNullable(entityService.fetchEntity(tenantId, entityId))
                     .orElseThrow(() -> new IllegalArgumentException(entityId.getEntityType().getNormalName() + " with id [" + entityId.getId() + "] does not exist."));
-            default -> throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
+        } else {
+            throw new IllegalArgumentException("Entity type '" + entityId.getEntityType() + "' does not support calculated fields.");
         }
     }
 

@@ -17,7 +17,6 @@ package org.thingsboard.server.cf;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +41,8 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.Simple
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate.NumericOperation;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate.StringOperation;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
@@ -53,7 +54,6 @@ import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.event.CalculatedFieldDebugEvent;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -81,14 +81,14 @@ public class AlarmRulesTest extends AbstractControllerTest {
     private EventDao eventDao;
 
     private Device device;
-    private DeviceId deviceId;
+    private EntityId originatorId;
     private EventId latestEventId;
 
     @Before
     public void beforeEach() throws Exception {
         loginTenantAdmin();
         device = createDevice("Device A", "aaa");
-        deviceId = device.getId();
+        originatorId = device.getId();
     }
 
     @Test
@@ -106,33 +106,33 @@ public class AlarmRulesTest extends AbstractControllerTest {
         );
 
         Condition clearRule = new Condition("return temperature <= 25;", null, null);
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+        CalculatedField calculatedField = createAlarmCf(originatorId, "High Temperature Alarm",
                 arguments, createRules, clearRule);
-        assertThat(getCalculatedFields(deviceId, CalculatedFieldType.ALARM, new PageLink(1)).getData())
+        assertThat(getCalculatedFields(originatorId, CalculatedFieldType.ALARM, new PageLink(1)).getData())
                 .singleElement().isEqualTo(calculatedField);
 
-        postTelemetry(deviceId, "{\"temperature\":50}");
+        postTelemetry(originatorId, "{\"temperature\":50}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.MAJOR);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
 
-        postTelemetry(deviceId, "{\"temperature\":100}");
+        postTelemetry(originatorId, "{\"temperature\":100}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isSeverityUpdated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
 
-        postTelemetry(deviceId, "{\"temperature\":101}");
+        postTelemetry(originatorId, "{\"temperature\":101}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isUpdated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });
 
-        postTelemetry(deviceId, "{\"temperature\":20}");
+        postTelemetry(originatorId, "{\"temperature\":20}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCleared()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
@@ -164,10 +164,10 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 AlarmSeverity.CRITICAL, new Condition(simpleExpression, null, null)
         );
 
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+        CalculatedField calculatedField = createAlarmCf(originatorId, "High Temperature Alarm",
                 arguments, createRules, null);
 
-        postTelemetry(deviceId, "{\"temperature\":100}");
+        postTelemetry(originatorId, "{\"temperature\":100}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
@@ -176,7 +176,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     /*
-     * todo: state restore (event count)
+     * todo: test state restore (event count)
      * */
     @Test
     public void testCreateAlarmForRepeatingCondition() throws Exception {
@@ -194,14 +194,14 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", eventsCountCritical, null)
         );
 
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+        CalculatedField calculatedField = createAlarmCf(originatorId, "High Temperature Alarm",
                 arguments, createRules, null);
         for (int i = 0; i < 4; i++) {
-            postTelemetry(deviceId, "{\"temperature\":50}");
+            postTelemetry(originatorId, "{\"temperature\":50}");
             Thread.sleep(10);
         }
         assertThat(getLatestAlarmResult(calculatedField.getId())).isNull();
-        postTelemetry(deviceId, "{\"temperature\":50}");
+        postTelemetry(originatorId, "{\"temperature\":50}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.MAJOR);
@@ -210,7 +210,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         });
 
         for (int i = 0; i < 5; i++) {
-            postTelemetry(deviceId, "{\"temperature\":50}");
+            postTelemetry(originatorId, "{\"temperature\":50}");
             Thread.sleep(10);
         }
         checkAlarmResult(calculatedField, alarmResult -> {
@@ -236,9 +236,9 @@ public class AlarmRulesTest extends AbstractControllerTest {
         );
         Condition clearRule = new Condition("return powerConsumption < 3000;", null, createDurationMs);
 
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 5 seconds",
+        CalculatedField calculatedField = createAlarmCf(originatorId, "High power consumption during 5 seconds",
                 arguments, createRules, clearRule);
-        postTelemetry(deviceId, "{\"powerConsumption\":3500}");
+        postTelemetry(originatorId, "{\"powerConsumption\":3500}");
         Thread.sleep(createDurationMs - 2000);
         assertThat(getLatestAlarmResult(calculatedField.getId())).isNull();
 
@@ -272,15 +272,62 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
         device.setCustomerId(customerId);
         device = doPost("/api/device", device, Device.class);
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+        CalculatedField calculatedField = createAlarmCf(originatorId, "High Temperature Alarm",
                 arguments, createRules, null);
         postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"temperatureThreshold\":50}");
 
-        postTelemetry(deviceId, "{\"temperature\":51}");
+        postTelemetry(originatorId, "{\"temperature\":51}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAndClearAlarm_customerAlarmRule_simpleExpression() throws Exception {
+        Argument locationArgument = new Argument();
+        locationArgument.setRefEntityKey(new ReferencedEntityKey("location", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationArgument.setDefaultValue("unknown");
+
+        Argument locationFilterArgument = new Argument();
+        locationFilterArgument.setRefEntityKey(new ReferencedEntityKey("locationFilter", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationFilterArgument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        locationFilterArgument.setDefaultValue("None");
+        loginSysAdmin();
+        postAttributes(tenantId, AttributeScope.SERVER_SCOPE, "{\"locationFilter\":\"Kyiv\"}");
+        loginTenantAdmin();
+
+        Map<String, Argument> arguments = Map.of(
+                "location", locationArgument,
+                "locationFilter", locationFilterArgument
+        );
+        originatorId = customerId;
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.INDETERMINATE, new Condition(createSimpleExpression(
+                        "location", StringOperation.CONTAINS, new AlarmConditionValue<>(null, "locationFilter")
+                ), null, null)
+        );
+        Condition clearRule = new Condition(createSimpleExpression(
+                "location", StringOperation.NOT_CONTAINS, new AlarmConditionValue<>(null, "locationFilter")
+        ), null, null);
+
+        CalculatedField calculatedField = createAlarmCf(customerId, "New resident",
+                arguments, createRules, clearRule);
+
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"location\":\"Ukraine, Kyiv\"}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"location\":\"Ukraine, Lviv\"}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCleared()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.CLEARED_UNACK);
         });
     }
 
@@ -291,7 +338,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertion.accept(alarmResult);
 
             Alarm alarm = alarmResult.getAlarm();
-            assertThat(alarm.getOriginator()).isEqualTo(deviceId);
+            assertThat(alarm.getOriginator()).isEqualTo(originatorId);
             assertThat(alarm.getType()).isEqualTo(calculatedField.getName());
         });
     }
@@ -303,8 +350,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         }
         CalculatedFieldDebugEvent debugEvent = debugEvents.get(0);
         if (debugEvent.getError() != null) {
-            System.err.println("CF error: " + debugEvent.getError());
-            Assertions.fail();
+            throw new RuntimeException(debugEvent.getError());
         }
         if (debugEvent.getId().equals(latestEventId)) {
             return null;
@@ -379,6 +425,18 @@ public class AlarmRulesTest extends AbstractControllerTest {
             rule.setCondition(alarmCondition);
         }
         return rule;
+    }
+
+    private SimpleAlarmConditionExpression createSimpleExpression(String argument, StringOperation stringOperation, AlarmConditionValue<String> conditionValue) {
+        SimpleAlarmConditionExpression simpleExpression = new SimpleAlarmConditionExpression();
+        AlarmConditionFilter filter = new AlarmConditionFilter();
+        filter.setArgument(argument);
+        StringFilterPredicate predicate = new StringFilterPredicate();
+        predicate.setOperation(stringOperation);
+        predicate.setValue(conditionValue);
+        filter.setPredicate(predicate);
+        simpleExpression.setFilters(List.of(filter));
+        return simpleExpression;
     }
 
     private List<CalculatedFieldDebugEvent> getDebugEvents(CalculatedFieldId calculatedFieldId, int limit) {
