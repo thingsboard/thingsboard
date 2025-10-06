@@ -13,10 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.relation;
 
-public enum CFArgumentDynamicSourceType {
+import org.thingsboard.server.common.data.StringUtils;
 
-    RELATION_PATH_QUERY
+public record RelationPathLevel(EntitySearchDirection direction, String relationType) {
 
+    public void validate() {
+        if (direction == null) {
+            throw new IllegalArgumentException("Direction must be specified!");
+        }
+        if (StringUtils.isBlank(relationType)) {
+            throw new IllegalArgumentException("Relation type must be specified!");
+        }
+    }
 }
