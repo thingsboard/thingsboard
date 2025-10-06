@@ -93,9 +93,6 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   emptyPlaceholder: string;
 
-  @Input()
-  appearance: MatFormFieldAppearance = 'outline';
-
   @ViewChild('branchAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('branchInput', { read: MatAutocompleteTrigger, static: true }) autoCompleteTrigger: MatAutocompleteTrigger;
   @ViewChild('branchInput', {static: true}) branchInput: ElementRef<HTMLInputElement>;
