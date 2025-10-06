@@ -21,7 +21,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
@@ -72,9 +71,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
 @DaoSqlTest
-@TestPropertySource(properties = {
-        "actors.alarms.reevaluation_interval=1"
-})
 public class AlarmRulesTest extends AbstractControllerTest {
 
     @MockitoSpyBean
@@ -235,10 +231,9 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Map<AlarmSeverity, Condition> createRules = Map.of(
                 AlarmSeverity.CRITICAL, new Condition("return powerConsumption >= 3000;", null, createDurationMs)
         );
-        long clearDurationMs = 2000L;
         Condition clearRule = new Condition("return powerConsumption < 3000;", null, createDurationMs);
 
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 3 seconds",
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 5 seconds",
                 arguments, createRules, clearRule);
         postTelemetry(deviceId, "{\"powerConsumption\":3500}");
         Thread.sleep(createDurationMs - 2000);

@@ -25,7 +25,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 public class CalculatedFieldReevaluateMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
-    private final CalculatedFieldCtx cfCtx;
+    private final CalculatedFieldCtx ctx;
 
     @Override
     public MsgType getMsgType() {

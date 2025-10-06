@@ -115,10 +115,19 @@ public class CalculatedFieldUtils {
     private static AlarmRuleStateProto toAlarmRuleStateProto(AlarmRuleState ruleState) {
         return AlarmRuleStateProto.newBuilder()
                 .setSeverity(Optional.ofNullable(ruleState.getSeverity()).map(Enum::name).orElse(""))
-                .setLastEventTs(ruleState.getLastEventTs())
-                .setDuration(ruleState.getDuration())
                 .setEventCount(ruleState.getEventCount())
+                .setFirstEventTs(ruleState.getFirstEventTs())
+                .setLastEventTs(ruleState.getLastEventTs())
                 .build();
+    }
+
+    private static AlarmRuleState fromAlarmRuleStateProto(AlarmRuleStateProto proto, AlarmCalculatedFieldState state) {
+        AlarmSeverity severity = StringUtils.isNotEmpty(proto.getSeverity()) ? AlarmSeverity.valueOf(proto.getSeverity()) : null;
+        AlarmRuleState ruleState = new AlarmRuleState(severity, null, state);
+        ruleState.setEventCount(proto.getEventCount());
+        ruleState.setFirstEventTs(proto.getFirstEventTs());
+        ruleState.setLastEventTs(proto.getLastEventTs());
+        return ruleState;
     }
 
     public static SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
@@ -196,12 +205,11 @@ public class CalculatedFieldUtils {
                 AlarmCalculatedFieldState alarmState = (AlarmCalculatedFieldState) state;
                 AlarmStateProto alarmStateProto = proto.getAlarmState();
                 for (AlarmRuleStateProto ruleStateProto : alarmStateProto.getCreateRuleStatesList()) {
-                    AlarmSeverity severity = StringUtils.isNotEmpty(ruleStateProto.getSeverity()) ? AlarmSeverity.valueOf(ruleStateProto.getSeverity()) : null;
-                    AlarmRuleState ruleState = new AlarmRuleState(severity, null, alarmState);
-                    ruleState.setLastEventTs(ruleStateProto.getLastEventTs());
-                    ruleState.setDuration(ruleStateProto.getDuration());
-                    ruleState.setEventCount(ruleStateProto.getEventCount());
-                    alarmState.getCreateRuleStates().put(severity, ruleState);
+                    AlarmRuleState ruleState = fromAlarmRuleStateProto(ruleStateProto, alarmState);
+                    alarmState.getCreateRuleStates().put(ruleState.getSeverity(), ruleState);
+                }
+                if (alarmStateProto.hasClearRuleState()) {
+                    alarmState.setClearRuleState(fromAlarmRuleStateProto(alarmStateProto.getClearRuleState(), alarmState));
                 }
             }
         }

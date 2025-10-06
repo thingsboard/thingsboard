@@ -664,10 +664,6 @@ public class ActorSystemContext {
     @Getter
     private long cfCalculationResultTimeout;
 
-    @Value("${actors.alarms.reevaluation_interval:60}")
-    @Getter
-    private long alarmsReevaluationInterval;
-
     @Autowired
     @Getter
     private MqttClientSettings mqttClientSettings;
@@ -895,12 +891,13 @@ public class ActorSystemContext {
         return getScheduler().scheduleWithFixedDelay(() -> ctx.tell(msg), delayInMs, periodInMs, TimeUnit.MILLISECONDS);
     }
 
-    public void scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {
+    public ScheduledFuture<?> scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {
         log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         if (delayInMs > 0) {
-            getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
+            return getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
         } else {
             ctx.tell(msg);
+            return null;
         }
     }
 

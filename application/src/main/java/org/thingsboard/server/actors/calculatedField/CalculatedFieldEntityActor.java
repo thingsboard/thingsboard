@@ -21,6 +21,7 @@ import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.CalculatedFieldStatePartitionRestoreMsg;
 import org.thingsboard.server.common.msg.TbActorStopReason;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
@@ -62,6 +63,9 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
                 break;
             case CF_STATE_RESTORE_MSG:
                 processor.process((CalculatedFieldStateRestoreMsg) msg);
+                break;
+            case CF_STATE_PARTITION_RESTORE_MSG:
+                processor.process((CalculatedFieldStatePartitionRestoreMsg) msg);
                 break;
             case CF_ENTITY_INIT_CF_MSG:
                 processor.process((EntityInitCalculatedFieldMsg) msg);

@@ -20,7 +20,6 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 
 import java.util.List;
@@ -57,12 +56,6 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
     @Override
     public void validate() {
 
-    }
-
-    @Override
-    public boolean requiresScheduledReevaluation() {
-        return createRules.values().stream().anyMatch(rule -> rule.getCondition().getType() == AlarmConditionType.DURATION) ||
-               (clearRule != null && clearRule.getCondition().getType() == AlarmConditionType.DURATION);
     }
 
 }

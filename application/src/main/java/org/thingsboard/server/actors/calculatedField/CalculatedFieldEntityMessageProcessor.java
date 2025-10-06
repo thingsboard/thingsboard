@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.msg.CalculatedFieldStatePartitionRestoreMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
@@ -83,7 +84,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     final CalculatedFieldProcessingService cfService;
     final CalculatedFieldStateService cfStateService;
 
-    TbActorCtx ctx;
+    TbActorCtx actorCtx;
     Map<CalculatedFieldId, CalculatedFieldState> states = new HashMap<>();
 
     CalculatedFieldEntityMessageProcessor(ActorSystemContext systemContext, TenantId tenantId, EntityId entityId) {
@@ -95,7 +96,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     void init(TbActorCtx ctx) {
-        this.ctx = ctx;
+        this.actorCtx = ctx;
     }
 
     public void stop(boolean partitionChanged) {
@@ -104,7 +105,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         "[{}][{}] Stopping entity actor.",
                 tenantId, entityId);
         states.clear();
-        ctx.stop(ctx.getSelf());
+        actorCtx.stop(actorCtx.getSelf());
     }
 
     public void process(CalculatedFieldPartitionChangeMsg msg) {
@@ -116,10 +117,22 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     public void process(CalculatedFieldStateRestoreMsg msg) {
         CalculatedFieldId cfId = msg.getId().cfId();
         log.debug("[{}] [{}] Processing CF state restore msg.", msg.getId().entityId(), cfId);
-        if (msg.getState() != null) {
-            states.put(cfId, msg.getState());
+        CalculatedFieldState state = msg.getState();
+        if (state != null) {
+            state.setCtx(msg.getCtx(), actorCtx);
+            state.setPartition(msg.getPartition());
+            states.put(cfId, state);
         } else {
             states.remove(cfId);
+        }
+    }
+
+    public void process(CalculatedFieldStatePartitionRestoreMsg msg) {
+        log.debug("Processing CF state partition restore msg: {}", msg);
+        for (CalculatedFieldState state : states.values()) {
+            if (msg.getPartition().equals(state.getPartition())) {
+                state.init();
+            }
         }
     }
 
@@ -138,10 +151,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 state = createState(ctx);
             } else if (msg.getStateAction() == StateAction.REINIT) {
                 log.debug("Force reinitialization of CF: [{}].", ctx.getCfId());
-                state.reset(ctx);
+                state.reset();
                 initState(state, ctx);
             } else {
-                state.init(ctx);
+                state.setCtx(ctx, actorCtx);
+                state.init();
             }
             if (state.isSizeOk()) {
                 processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, null, msg.getCallback());
@@ -183,7 +197,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             } else {
                 MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
                 states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
-                ctx.stop(ctx.getSelf());
+                actorCtx.stop(actorCtx.getSelf());
             }
         } else {
             var cfId = new CalculatedFieldId(msg.getEntityId().getId());
@@ -266,30 +280,30 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldReevaluateMsg msg) throws CalculatedFieldException {
-        CalculatedFieldId cfId = msg.getCfCtx().getCfId();
+        CalculatedFieldId cfId = msg.getCtx().getCfId();
         CalculatedFieldState state = states.get(cfId);
         if (state == null) {
             log.debug("[{}][{}] Failed to find CF state for entity to handle {}", entityId, cfId, msg);
         } else {
             if (state.isSizeOk()) {
                 log.debug("[{}][{}] Reevaluating CF state", entityId, cfId);
-                processStateIfReady(state, null, msg.getCfCtx(), Collections.singletonList(cfId), null, null, msg.getCallback());
+                processStateIfReady(state, null, msg.getCtx(), Collections.singletonList(cfId), null, null, msg.getCallback());
             } else {
-                throw new RuntimeException(msg.getCfCtx().getSizeExceedsLimitMessage());
+                throw new RuntimeException(msg.getCtx().getSizeExceedsLimitMessage());
             }
         }
     }
 
     public void process(CalculatedFieldAlarmActionMsg msg) {
         log.debug("[{}] Processing alarm action event msg: {}", entityId, msg);
-        states.values().forEach(state -> {
+        for (CalculatedFieldState state : states.values()) {
             if (state instanceof AlarmCalculatedFieldState alarmCfState) {
                 Alarm stateAlarm = alarmCfState.getCurrentAlarm();
                 if (stateAlarm != null && stateAlarm.getId().equals(msg.getAlarm().getId())) {
                     alarmCfState.processAlarmAction(msg.getAlarm(), msg.getAction());
                 }
             }
-        });
+        }
         msg.getCallback().onSuccess();
     }
 
@@ -352,7 +366,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private void initState(CalculatedFieldState state, CalculatedFieldCtx ctx) {
-        state.init(ctx);
+        state.setCtx(ctx, actorCtx);
+        state.init();
         if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.hasRelationQueryDynamicArguments()) {
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
             geofencingState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
