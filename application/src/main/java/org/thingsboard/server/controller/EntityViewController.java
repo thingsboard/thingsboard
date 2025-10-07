@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -128,7 +129,11 @@ public class EntityViewController extends BaseController {
     @ResponseBody
     public EntityView saveEntityView(
             @Parameter(description = "A JSON object representing the entity view.")
-            @RequestBody EntityView entityView) throws Exception {
+            @RequestBody EntityView entityView,
+            @Parameter(description = "Optional value of name conflict strategy. Possible values: FAIL or UNIQUIFY. " +
+                    "If omitted, FAIL strategy is applied. FAIL strategy implies exception will be thrown if an entity with the same name already exists. " +
+                    "UNIQUIFY strategy appends a numerical suffix to the entity name, if a name conflict occurs.")
+            @RequestParam(name = "nameConflictStrategy", defaultValue = "FAIL") NameConflictStrategy nameConflictStrategy) throws Exception {
         entityView.setTenantId(getCurrentUser().getTenantId());
         EntityView existingEntityView = null;
         if (entityView.getId() == null) {
@@ -137,7 +142,7 @@ public class EntityViewController extends BaseController {
         } else {
             existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
         }
-        return tbEntityViewService.save(entityView, existingEntityView, getCurrentUser());
+        return tbEntityViewService.save(entityView, existingEntityView, nameConflictStrategy, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete entity view (deleteEntityView)",

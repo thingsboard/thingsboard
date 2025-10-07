@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
@@ -177,14 +178,19 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public Device saveDevice(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the device.") @RequestBody Device device,
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
-                                     "If omitted, access token will be auto-generated.") @RequestParam(name = "accessToken", required = false) String accessToken) throws Exception {
+                                     "If omitted, access token will be auto-generated.")
+                             @RequestParam(name = "accessToken", required = false) String accessToken,
+                             @Parameter(description = "Optional value of name conflict strategy. Possible values: FAIL or UNIQUIFY. " +
+                                     "If omitted, FAIL strategy is applied. FAIL strategy implies exception will be thrown if an entity with the same name already exists. " +
+                                     "UNIQUIFY strategy appends a numerical suffix to the entity name, if a name conflict occurs.")
+                             @RequestParam(name = "nameConflictStrategy", defaultValue = "FAIL") NameConflictStrategy nameConflictStrategy) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
         if (device.getId() != null) {
             checkDeviceId(device.getId(), Operation.WRITE);
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(device, accessToken, getCurrentUser());
+        return tbDeviceService.save(device, accessToken, nameConflictStrategy, getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -209,12 +215,16 @@ public class DeviceController extends BaseController {
     @RequestMapping(value = "/device-with-credentials", method = RequestMethod.POST)
     @ResponseBody
     public Device saveDeviceWithCredentials(@Parameter(description = "The JSON object with device and credentials. See method description above for example.")
-                                            @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials) throws ThingsboardException {
+                                            @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials,
+                                            @Parameter(description = "Optional value of name conflict strategy. Possible values: FAIL or UNIQUIFY. " +
+                                                    "If omitted, FAIL strategy is applied. FAIL strategy implies exception will be thrown if an entity with the same name already exists. " +
+                                                    "UNIQUIFY strategy appends a numerical suffix to the entity name, if a name conflict occurs.")
+                                            @RequestParam(name = "nameConflictStrategy", defaultValue = "FAIL") NameConflictStrategy nameConflictStrategy) throws ThingsboardException {
         Device device = deviceAndCredentials.getDevice();
         DeviceCredentials credentials = deviceAndCredentials.getCredentials();
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(device, credentials, getCurrentUser());
+        return tbDeviceService.saveDeviceWithCredentials(device, credentials, nameConflictStrategy, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",

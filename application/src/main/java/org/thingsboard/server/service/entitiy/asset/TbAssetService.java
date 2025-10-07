@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.asset;
 
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -25,7 +26,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbAssetService {
 
-    Asset save(Asset asset, User user) throws Exception;
+    Asset save(Asset asset, NameConflictStrategy nameConflictStrategy, User user) throws Exception;
 
     void delete(Asset asset, User user);
 

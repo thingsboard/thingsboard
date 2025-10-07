@@ -22,15 +22,24 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.DebugModeUtil;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasDebugSettings;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -45,6 +54,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 @Slf4j
 public abstract class AbstractEntityService {
@@ -82,6 +92,9 @@ public abstract class AbstractEntityService {
     @Autowired
     @Lazy
     protected TbTenantProfileCache tbTenantProfileCache;
+
+    @Autowired
+    protected EntityDaoRegistry entityDaoRegistry;
 
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
@@ -155,4 +168,21 @@ public abstract class AbstractEntityService {
     private long getMaxDebugAllUntil(TenantId tenantId, long now) {
         return now + TimeUnit.MINUTES.toMillis(DebugModeUtil.getMaxDebugAllDuration(tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
     }
+
+    protected <E extends HasId<?> & HasTenantId & HasName> void uniquifyEntityName(E entity, E oldEntity, Consumer<String> setName, EntityType entityType) {
+        Dao<?> dao = entityDaoRegistry.getDao(entityType);
+        EntityInfo existingEntity = dao.findEntityInfoByName(entity.getTenantId(), entity.getName());
+        if (existingEntity != null && (oldEntity == null || !existingEntity.getId().equals(oldEntity.getId()))) {
+            int suffix = 1;
+            while (true) {
+                String newName = entity.getName() + "-" + suffix;
+                if (dao.findEntityInfoByName(entity.getTenantId(), newName) == null) {
+                    setName.accept(newName);
+                    break;
+                }
+                suffix++;
+            }
+        }
+    }
+
 }

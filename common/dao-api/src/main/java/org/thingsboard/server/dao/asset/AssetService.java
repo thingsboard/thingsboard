@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.asset;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
@@ -25,12 +26,15 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface AssetService extends EntityDaoService {
 
@@ -47,6 +51,8 @@ public interface AssetService extends EntityDaoService {
     Asset saveAsset(Asset asset, boolean doValidate);
 
     Asset saveAsset(Asset asset);
+
+    Asset saveAsset(Asset asset, NameConflictStrategy nameConflictStrategy);
 
     Asset assignAssetToCustomer(TenantId tenantId, AssetId assetId, CustomerId customerId);
 
