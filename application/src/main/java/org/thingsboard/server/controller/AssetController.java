@@ -145,7 +145,7 @@ public class AssetController extends BaseController {
                                    "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
                            @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
                            @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
-                                   "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for customer asset 'Office A', " +
+                                   "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for asset 'Office A', " +
                                    "created asset will have name like 'Office A-7fsh4f'.")
                            @RequestParam(name = "separator", defaultValue = "_") String separator) throws Exception {
         asset.setTenantId(getTenantId());

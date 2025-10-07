@@ -80,6 +80,11 @@ public class DefaultTbEntityViewService extends AbstractTbEntityService implemen
     final Map<TenantId, Map<EntityId, List<EntityView>>> localCache = new ConcurrentHashMap<>();
 
     @Override
+    public EntityView save(EntityView entityView, EntityView existingEntityView, User user) throws Exception {
+        return save(entityView, existingEntityView, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
     public EntityView save(EntityView entityView, EntityView existingEntityView, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = entityView.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = entityView.getTenantId();

@@ -32,7 +32,11 @@ import org.thingsboard.server.dao.device.claim.ReclaimResult;
 
 public interface TbDeviceService {
 
+    Device save(Device device, String accessToken, User user) throws Exception;
+
     Device save(Device device, String accessToken, NameConflictStrategy nameConflictStrategy, User user) throws Exception;
+
+    Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException;
 
     Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy, User user) throws ThingsboardException;
 

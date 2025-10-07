@@ -56,6 +56,11 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
     private final ClaimDevicesService claimDevicesService;
 
     @Override
+    public Device save(Device device, String accessToken, User user) throws Exception {
+        return save(device, accessToken, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
     public Device save(Device device, String accessToken, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = device.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = device.getTenantId();
@@ -70,6 +75,11 @@ public class DefaultTbDeviceService extends AbstractTbEntityService implements T
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DEVICE), device, actionType, user, e);
             throw e;
         }
+    }
+
+    @Override
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials credentials, User user) throws ThingsboardException {
+        return saveDeviceWithCredentials(device, credentials, NameConflictStrategy.DEFAULT, user);
     }
 
     @Override
