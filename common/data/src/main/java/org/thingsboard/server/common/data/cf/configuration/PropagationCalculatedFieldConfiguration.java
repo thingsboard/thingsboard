@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
@@ -30,7 +32,9 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
 
     public static final String PROPAGATION_CONFIG_ARGUMENT = "propagationCtx";
 
+    @NotNull
     private EntitySearchDirection direction;
+    @NotBlank
     private String relationType;
 
     private boolean applyExpressionToResolvedArguments;
@@ -44,20 +48,14 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
     public void validate() {
         baseCalculatedFieldRestriction();
         propagationRestriction();
-        if (direction == null) {
-            throw new IllegalArgumentException("Propagation calculated field direction must be specified!");
-        }
-        if (StringUtils.isBlank(relationType)) {
-            throw new IllegalArgumentException("Propagation calculated field relation type must be specified!");
-        }
         if (!applyExpressionToResolvedArguments) {
             arguments.forEach((name, argument) -> {
                 if (argument.getRefEntityKey() == null) {
                     throw new IllegalArgumentException("Argument: '" + name + "' doesn't have reference entity key configured!");
                 }
                 if (argument.getRefEntityKey().getType() == ArgumentType.TS_ROLLING) {
-                    throw new IllegalArgumentException("Argument type: 'Time series rolling' detected for argument: '" + name + "'! " +
-                                                       "Only 'Attribute' or 'Latest telemetry' arguments are allowed for in 'Arguments only' propagation mode!");
+                    throw new IllegalArgumentException("Argument type: 'Time series rolling' detected for argument: '" + name + "'. " +
+                                                       "Only 'Attribute' or 'Latest telemetry' arguments are allowed for 'Arguments only' propagation mode!");
                 }
             });
         } else if (StringUtils.isBlank(expression)) {
