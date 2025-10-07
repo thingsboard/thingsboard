@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.v3.oas.annotations.media.Schema;
+public enum NameConflictPolicy {
 
-@Schema
-public record NameConflictStrategy(NameConflictPolicy policy, String separator) {
-
-    public static final NameConflictStrategy DEFAULT = new NameConflictStrategy(NameConflictPolicy.FAIL, null);
+    FAIL,
+    UNIQUIFY;
 
 }

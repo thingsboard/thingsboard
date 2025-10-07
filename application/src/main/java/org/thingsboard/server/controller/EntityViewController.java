@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
@@ -130,10 +131,14 @@ public class EntityViewController extends BaseController {
     public EntityView saveEntityView(
             @Parameter(description = "A JSON object representing the entity view.")
             @RequestBody EntityView entityView,
-            @Parameter(description = "Optional value of name conflict strategy. Possible values: FAIL or UNIQUIFY. " +
-                    "If omitted, FAIL strategy is applied. FAIL strategy implies exception will be thrown if an entity with the same name already exists. " +
-                    "UNIQUIFY strategy appends a numerical suffix to the entity name, if a name conflict occurs.")
-            @RequestParam(name = "nameConflictStrategy", defaultValue = "FAIL") NameConflictStrategy nameConflictStrategy) throws Exception {
+            @Parameter(description = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
+                    "If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
+                    "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
+            @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
+            @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
+                    "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for entity view name 'Device A', " +
+                    "created customer will have name like 'Device A-7fsh4f'.")
+            @RequestParam(name = "separator", defaultValue = "_") String separator) throws Exception {
         entityView.setTenantId(getCurrentUser().getTenantId());
         EntityView existingEntityView = null;
         if (entityView.getId() == null) {
@@ -142,7 +147,7 @@ public class EntityViewController extends BaseController {
         } else {
             existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
         }
-        return tbEntityViewService.save(entityView, existingEntityView, nameConflictStrategy, getCurrentUser());
+        return tbEntityViewService.save(entityView, existingEntityView, new NameConflictStrategy(policy, separator), getCurrentUser());
     }
 
     @ApiOperation(value = "Delete entity view (deleteEntityView)",

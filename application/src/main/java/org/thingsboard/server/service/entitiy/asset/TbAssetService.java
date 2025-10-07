@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 public interface TbAssetService {
 
+    Asset save(Asset asset, User user) throws Exception;
+
     Asset save(Asset asset, NameConflictStrategy nameConflictStrategy, User user) throws Exception;
 
     void delete(Asset asset, User user);

@@ -1080,6 +1080,24 @@ public class AssetControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsTransactionalException(assetDao, savedTenant.getId(), assetId, "/api/asset/" + assetId);
     }
 
+    @Test
+    public void testSaveAssetWithUniquifyStrategy() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        doPost("/api/asset", asset, Asset.class);
+
+        doPost("/api/asset", asset).andExpect(status().isBadRequest());
+
+        doPost("/api/asset?policy=FAIL", asset).andExpect(status().isBadRequest());
+
+        Asset secondAsset = doPost("/api/asset?policy=UNIQUIFY", asset, Asset.class);
+        assertThat(secondAsset.getName()).startsWith("My asset_");
+
+        Asset thirdAsset = doPost("/api/asset?policy=UNIQUIFY&separator=-", asset, Asset.class);
+        assertThat(thirdAsset.getName()).startsWith("My asset-");
+    }
+
     private Asset createAsset(String name) {
         Asset asset = new Asset();
         asset.setName(name);

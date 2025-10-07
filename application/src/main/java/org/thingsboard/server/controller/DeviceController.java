@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
@@ -180,17 +181,21 @@ public class DeviceController extends BaseController {
                              @Parameter(description = "Optional value of the device credentials to be used during device creation. " +
                                      "If omitted, access token will be auto-generated.")
                              @RequestParam(name = "accessToken", required = false) String accessToken,
-                             @Parameter(description = "Optional value of name conflict strategy. Possible values: FAIL or UNIQUIFY. " +
-                                     "If omitted, FAIL strategy is applied. FAIL strategy implies exception will be thrown if an entity with the same name already exists. " +
-                                     "UNIQUIFY strategy appends a numerical suffix to the entity name, if a name conflict occurs.")
-                             @RequestParam(name = "nameConflictStrategy", defaultValue = "FAIL") NameConflictStrategy nameConflictStrategy) throws Exception {
+                             @Parameter(description = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
+                                     "If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
+                                     "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
+                             @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
+                             @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
+                                     "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for device name 'thermostat', " +
+                                     "created device will have name like 'thermostat-7fsh4f'.")
+                             @RequestParam(name = "separator", defaultValue = "_") String separator) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
         if (device.getId() != null) {
             checkDeviceId(device.getId(), Operation.WRITE);
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(device, accessToken, nameConflictStrategy, getCurrentUser());
+        return tbDeviceService.save(device, accessToken, new NameConflictStrategy(policy, separator), getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -216,15 +221,19 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public Device saveDeviceWithCredentials(@Parameter(description = "The JSON object with device and credentials. See method description above for example.")
                                             @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials,
-                                            @Parameter(description = "Optional value of name conflict strategy. Possible values: FAIL or UNIQUIFY. " +
-                                                    "If omitted, FAIL strategy is applied. FAIL strategy implies exception will be thrown if an entity with the same name already exists. " +
-                                                    "UNIQUIFY strategy appends a numerical suffix to the entity name, if a name conflict occurs.")
-                                            @RequestParam(name = "nameConflictStrategy", defaultValue = "FAIL") NameConflictStrategy nameConflictStrategy) throws ThingsboardException {
+                                            @Parameter(description = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
+                                                    "If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
+                                                    "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
+                                            @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
+                                            @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
+                                                    "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for device name 'thermostat', " +
+                                                    "created device will have name like 'thermostat-7fsh4f'.")
+                                            @RequestParam(name = "separator", defaultValue = "_") String separator) throws ThingsboardException {
         Device device = deviceAndCredentials.getDevice();
         DeviceCredentials credentials = deviceAndCredentials.getCredentials();
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(device, credentials, nameConflictStrategy, getCurrentUser());
+        return tbDeviceService.saveDeviceWithCredentials(device, credentials, new NameConflictStrategy(policy, separator), getCurrentUser());
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",

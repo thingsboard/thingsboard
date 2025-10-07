@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy;
 
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
@@ -25,6 +26,10 @@ public interface SimpleTbEntityService<T> {
     }
 
     T save(T entity, SecurityUser user) throws Exception;
+
+    default T save(T entity, NameConflictStrategy nameConflictPolicy, SecurityUser user) throws Exception {
+        return save(entity, null);
+    }
 
     void delete(T entity, User user);
 

@@ -36,10 +36,10 @@ import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
-import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -90,7 +90,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.function.Consumer;
 
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -190,7 +189,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
-        return this.saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.FAIL);
+        return this.saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
     }
 
     @Transactional
@@ -213,7 +212,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
-        return doSaveDevice(device, accessToken, doValidate, NameConflictStrategy.FAIL);
+        return doSaveDevice(device, accessToken, doValidate, NameConflictStrategy.DEFAULT);
     }
 
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
@@ -236,8 +235,8 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         } else if (device.getId() != null) {
             oldDevice = findDeviceById(device.getTenantId(), device.getId());
         }
-        if (nameConflictStrategy == NameConflictStrategy.UNIQUIFY) {
-            uniquifyEntityName(device, oldDevice, device::setName, EntityType.DEVICE);
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
+            uniquifyEntityName(device, oldDevice, device::setName, EntityType.DEVICE, nameConflictStrategy);
         }
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), oldDevice != null ? oldDevice.getName() : null);
         try {

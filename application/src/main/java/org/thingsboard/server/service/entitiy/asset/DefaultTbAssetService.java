@@ -40,6 +40,11 @@ public class DefaultTbAssetService extends AbstractTbEntityService implements Tb
     private final AssetService assetService;
 
     @Override
+    public Asset save(Asset asset, User user) throws Exception {
+        return save(asset, NameConflictStrategy.DEFAULT, user);
+    }
+
+    @Override
     public Asset save(Asset asset, NameConflictStrategy nameConflictStrategy, User user) throws Exception {
         ActionType actionType = asset.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = asset.getTenantId();

@@ -26,6 +26,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
@@ -154,7 +155,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     @Override
     public Asset saveAsset(Asset asset, boolean doValidate) {
-        return saveAsset(asset, doValidate, NameConflictStrategy.FAIL);
+        return saveAsset(asset, doValidate, NameConflictStrategy.DEFAULT);
     }
 
     private Asset saveAsset(Asset asset, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
@@ -165,8 +166,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
         } else if (asset.getId() != null) {
             oldAsset = findAssetById(asset.getTenantId(), asset.getId());
         }
-        if (nameConflictStrategy == NameConflictStrategy.UNIQUIFY) {
-            uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET);
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
+            uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET, nameConflictStrategy);
         }
         AssetCacheEvictEvent evictEvent = new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), oldAsset != null ? oldAsset.getName() : null);
         Asset savedAsset;

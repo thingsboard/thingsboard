@@ -22,21 +22,19 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.common.util.DebugModeUtil;
-import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.Dao;
@@ -169,18 +167,18 @@ public abstract class AbstractEntityService {
         return now + TimeUnit.MINUTES.toMillis(DebugModeUtil.getMaxDebugAllDuration(tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
     }
 
-    protected <E extends HasId<?> & HasTenantId & HasName> void uniquifyEntityName(E entity, E oldEntity, Consumer<String> setName, EntityType entityType) {
+    protected <E extends HasId<?> & HasTenantId & HasName> void uniquifyEntityName(E entity, E oldEntity, Consumer<String> setName, EntityType entityType, NameConflictStrategy nameConflictStrategy) {
         Dao<?> dao = entityDaoRegistry.getDao(entityType);
         EntityInfo existingEntity = dao.findEntityInfoByName(entity.getTenantId(), entity.getName());
         if (existingEntity != null && (oldEntity == null || !existingEntity.getId().equals(oldEntity.getId()))) {
-            int suffix = 1;
+            String suffix = StringUtils.randomAlphanumeric(6);
             while (true) {
-                String newName = entity.getName() + "-" + suffix;
+                String newName = entity.getName() + nameConflictStrategy.separator() + suffix;
                 if (dao.findEntityInfoByName(entity.getTenantId(), newName) == null) {
                     setName.accept(newName);
                     break;
                 }
-                suffix++;
+                suffix = StringUtils.randomAlphanumeric(6);
             }
         }
     }

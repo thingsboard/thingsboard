@@ -462,6 +462,21 @@ public class CustomerControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsTransactionalException(customerDao, savedTenant.getId(), customerId, "/api/customer/" + customerId);
     }
 
+    @Test
+    public void testSaveCustomerWithUniquifyStrategy() throws Exception {
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        doPost("/api/customer?policy=FAIL", customer).andExpect(status().isBadRequest());
+
+        Customer secondCustomer = doPost("/api/customer?policy=UNIQUIFY", customer, Customer.class);
+        assertThat(secondCustomer.getName()).startsWith("My customer_");
+
+        Customer thirdCustomer = doPost("/api/customer?policy=UNIQUIFY&separator=-", customer, Customer.class);
+        assertThat(thirdCustomer.getName()).startsWith("My customer-");
+    }
+
     private Customer createCustomer(String title) {
         Customer customer = new Customer();
         customer.setTitle(title);

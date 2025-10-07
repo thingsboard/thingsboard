@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.credentials.BasicMqttCredentials;
@@ -129,7 +130,7 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
         }
         device.setDeviceProfileId(deviceProfile.getId());
 
-        return tbDeviceService.saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.FAIL, user);
+        return tbDeviceService.saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT, user);
     }
 
     @Override

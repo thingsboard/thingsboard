@@ -853,4 +853,23 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
     }
+
+    @Test
+    public void testSaveEntityViewWithUniquifyStrategy() throws Exception {
+        EntityView view = new EntityView();
+        view.setEntityId(testDevice.getId());
+        view.setTenantId(tenantId);
+        view.setType("default");
+        view.setName("Test device view");
+
+        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        doPost("/api/entityView?policy=FAIL", view).andExpect(status().isBadRequest());
+
+        EntityView secondView = doPost("/api/entityView?policy=UNIQUIFY", view, EntityView.class);
+        assertThat(secondView.getName()).startsWith("Test device view_");
+
+        EntityView thirdView = doPost("/api/entityView?policy=UNIQUIFY&separator=-", view, EntityView.class);
+        assertThat(thirdView.getName()).startsWith("Test device view-");
+    }
 }

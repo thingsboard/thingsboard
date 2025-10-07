@@ -1608,6 +1608,24 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(device.getVersion()).isEqualTo(3);
     }
 
+    @Test
+    public void testSaveDeviceWithUniquifyStrategy() throws Exception {
+        Device device = new Device();
+        device.setName("My device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        doPost("/api/device", device).andExpect(status().isBadRequest());
+
+        doPost("/api/device?policy=FAIL", device).andExpect(status().isBadRequest());
+
+        Device secondDevice = doPost("/api/device?policy=UNIQUIFY", device, Device.class);
+        assertThat(secondDevice.getName()).startsWith("My device_");
+
+        Device thirdDevice = doPost("/api/device?policy=UNIQUIFY&separator=-", device, Device.class);
+        assertThat(thirdDevice.getName()).startsWith("My device-");
+    }
+
     private Device createDevice(String name) {
         Device device = new Device();
         device.setName(name);
