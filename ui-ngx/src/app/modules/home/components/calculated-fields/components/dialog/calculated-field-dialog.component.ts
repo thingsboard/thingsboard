@@ -81,6 +81,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       }),
       arguments: this.fb.control({}),
       zoneGroups: this.fb.control({}),
+      scheduledUpdateEnabled: [true],
       scheduledUpdateInterval: [this.minAllowedScheduledUpdateIntervalInSecForCF],
       expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
       expressionSCRIPT: [calculatedFieldDefaultScript],
@@ -144,6 +145,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     this.applyDialogData();
     this.observeTypeChanges();
     this.observeZoneChanges();
+    this.observeScheduledUpdateEnabled();
     this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.data.entityName, this.data.entityId);
   }
 
@@ -246,6 +248,23 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
         this.checkRelatedEntity(zoneGroups)
       );
     this.checkRelatedEntity(this.configFormGroup.get('zoneGroups').value);
+  }
+
+  private observeScheduledUpdateEnabled(): void {
+    this.configFormGroup.get('scheduledUpdateEnabled').valueChanges
+      .pipe(takeUntilDestroyed())
+      .subscribe((value: boolean) =>
+        this.checkScheduledUpdateEnabled(value)
+      );
+    this.checkScheduledUpdateEnabled(this.configFormGroup.get('scheduledUpdateEnabled').value);
+  }
+
+  private checkScheduledUpdateEnabled(value: boolean) {
+    if (value) {
+      this.configFormGroup.get('scheduledUpdateInterval').enable({emitEvent: false});
+    } else {
+      this.configFormGroup.get('scheduledUpdateInterval').disable({emitEvent: false});
+    }
   }
 
   private checkRelatedEntity(zoneGroups: CalculatedFieldGeofencing) {
