@@ -101,7 +101,7 @@ export class UserComponent extends EntityComponent<User> {
     this.entityForm.patchValue({phone: entity.phone});
     this.entityForm.patchValue({additionalInfo: {description: entity.additionalInfo ? entity.additionalInfo.description : ''}});
     this.entityForm.patchValue({additionalInfo:
-        {lang: entity.additionalInfo ? entity.additionalInfo.lang : env.defaultLang}});
+        {lang: entity.additionalInfo ? entity.additionalInfo.lang : null}});
     this.entityForm.patchValue({additionalInfo:
         {unitSystem: entity.additionalInfo ? entity.additionalInfo.unitSystem : null}});
     this.entityForm.patchValue({additionalInfo:

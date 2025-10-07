@@ -99,12 +99,14 @@
                       formControlName="phone">
       </tb-phone-input>
       <div formGroupName="additionalInfo" class="flex flex-col">
-        <mat-form-field class="mat-block" appearance="outline">
+        <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
           <mat-label translate>language.language</mat-label>
-          <mat-select formControlName="lang">
-            <mat-option *ngFor="let lang of languageList" [value]="lang">
-              {{ lang ? ('language.locales.' + lang | translate) : ''}}
-            </mat-option>
+          <mat-select formControlName="lang"
+                      [placeholder]="'language.auto' | translate">
+            <mat-option [value]="null">{{ 'language.auto' | translate }}</mat-option>
+            @for(lang of languageList; track lang) {
+              <mat-option [value]="lang">{{ 'language.locales.' + lang | translate }}</mat-option>
+            }
           </mat-select>
         </mat-form-field>
         <mat-form-field class="mat-block" floatLabel="always" appearance="outline">
