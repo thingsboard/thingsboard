@@ -35,8 +35,7 @@ import { BranchInfo } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { isNotEmptyStr } from '@core/utils';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
-
+import { SubscriptSizing, MatFormFieldAppearance } from '@angular/material/form-field';
 @Component({
   selector: 'tb-branch-autocomplete',
   templateUrl: './branch-autocomplete.component.html',
