@@ -52,6 +52,19 @@
       <form [formGroup]="totpConfigForm" class="flex flex-col items-center justify-start" (ngSubmit)="onSaveConfig()">
         <p class="mat-body qr-code-description" translate>security.2fa.dialog.scan-qr-code</p>
         <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
+        <p class="mat-body qr-code-description" translate>login.enter-key-manually</p>
+        <div class="flex flex-row items-center w-full overflow-hidden max-w-[375px]">
+          <span tbTruncateWithTooltip class="w-full">{{ totpAuthURLSecret }}</span>
+          <tb-copy-button
+            class="attribute-copy"
+            [disabled]="isLoading$ | async"
+            [copyText]="totpAuthURLSecret"
+            tooltipText="{{ 'attribute.copy-key' | translate }}"
+            tooltipPosition="above"
+            icon="content_copy"
+            [style]="{'font-size': '24px'}">
+          </tb-copy-button>
+        </div>
         <p class="mat-body qr-code-description" style="margin-top: 30px;" translate>security.2fa.dialog.enter-verification-code</p>
         <mat-form-field class="mat-block code-container flex-1">
           <input matInput formControlName="verificationCode"
