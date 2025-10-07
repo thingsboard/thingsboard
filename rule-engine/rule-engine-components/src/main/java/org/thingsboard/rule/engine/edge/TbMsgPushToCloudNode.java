@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.edge;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "push to cloud",
@@ -48,7 +46,8 @@ import java.util.UUID;
                 "In case successful storage cloud event to database message will be routed via <b>Success</b> route.",
         configDirective = "tbActionNodePushToCloudConfig",
         icon = "cloud_upload",
-        ruleChainTypes = RuleChainType.EDGE
+        ruleChainTypes = RuleChainType.EDGE,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/push-to-cloud/"
 )
 public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloudNodeConfiguration, Object, Object> {
 
@@ -80,7 +79,6 @@ public class TbMsgPushToCloudNode extends AbstractTbMsgPushNode<TbMsgPushToCloud
     }
 
     @Override
-    void processMsg(TbContext ctx, TbMsg msg) {
-    }
+    void processMsg(TbContext ctx, TbMsg msg) {}
 
 }
