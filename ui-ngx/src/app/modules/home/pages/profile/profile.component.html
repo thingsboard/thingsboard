@@ -37,7 +37,7 @@
         <fieldset [disabled]="isLoading$ | async">
           <mat-form-field class="mat-block">
             <mat-label translate>user.email</mat-label>
-            <input matInput type="email" formControlName="email" required/>
+            <input matInput type="email" formControlName="email"/>
             <mat-error *ngIf="profile.get('email').hasError('required')">
               {{ 'user.email-required' | translate }}
             </mat-error>

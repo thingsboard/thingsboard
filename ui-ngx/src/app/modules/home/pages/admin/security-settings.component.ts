@@ -32,7 +32,7 @@ import { JwtSettings, SecuritySettings } from '@shared/models/settings.models';
 import { AdminService } from '@core/http/admin.service';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { mergeMap, tap } from 'rxjs/operators';
-import { randomAlphanumeric } from '@core/utils';
+import { randomAlphanumeric, validateEmail } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -76,7 +76,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
   buildSecuritySettingsForm() {
     this.securitySettingsFormGroup = this.fb.group({
       maxFailedLoginAttempts: [null, [Validators.min(0)]],
-      userLockoutNotificationEmail: ['', []],
+      userLockoutNotificationEmail: ['', [validateEmail]],
       userActivationTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
       passwordResetTokenTtl: [24, [Validators.required, Validators.min(1), Validators.max(24)]],
       mobileSecretKeyLength: [null, [Validators.min(1)]],
