@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -55,7 +54,7 @@ public interface CalculatedFieldConfiguration {
 
     @JsonIgnore
     default List<EntityId> getReferencedEntities() {
-        return Collections.emptyList();
+        return List.of();
     }
 
     default CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {

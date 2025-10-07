@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoor
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.security.Authority;
@@ -44,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
@@ -81,7 +84,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveCalculatedField() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
@@ -109,7 +112,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveGeofencingCalculatedField() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), getGeofencingCalculatedFieldConfig());
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), CalculatedFieldType.GEOFENCING);
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
@@ -135,9 +138,47 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSavePropagationCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), CalculatedFieldType.PROPAGATION);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(savedCalculatedField).isNotNull();
+        assertThat(savedCalculatedField.getId()).isNotNull();
+        assertThat(savedCalculatedField.getCreatedTime()).isGreaterThan(0);
+        assertThat(savedCalculatedField.getTenantId()).isEqualTo(savedTenant.getId());
+        assertThat(savedCalculatedField.getEntityId()).isEqualTo(calculatedField.getEntityId());
+        assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
+        assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getPropagationCalculatedFieldConfig());
+        assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
+
+        savedCalculatedField.setName("Test CF");
+
+        CalculatedField updatedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
+
+        assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
+        assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
+
+        doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSavePropagationCalculatedFieldWithNullArguments() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), CalculatedFieldType.PROPAGATION, getPropagationCalculatedFieldConfig(null));
+
+        doPost("/api/calculatedField", calculatedField)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("arguments must not be empty")));
+    }
+
+    @Test
     public void testGetCalculatedFieldById() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
         CalculatedField fetchedCalculatedField = doGet("/api/calculatedField/" + savedCalculatedField.getId().getId(), CalculatedField.class);
@@ -152,7 +193,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     @Test
     public void testDeleteCalculatedField() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        CalculatedField calculatedField = getCalculatedField(testDevice.getId());
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
@@ -163,17 +204,27 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         doGet("/api/calculatedField/" + savedCalculatedField.getId().getId()).andExpect(status().isNotFound());
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId) {
-        return getCalculatedField(deviceId, getSimpleCalculatedFieldConfig());
+    private CalculatedField getSimpleCalculatedField(DeviceId deviceId) {
+        return getCalculatedField(deviceId, CalculatedFieldType.SIMPLE);
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldConfiguration configuration) {
+    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldType cfType) {
+        return getCalculatedField(deviceId, cfType, null);
+    }
+
+    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldType cfType, CalculatedFieldConfiguration customConfiguration) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(deviceId);
-        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setType(cfType);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(configuration);
+        if (customConfiguration != null) {
+            calculatedField.setConfiguration(customConfiguration);
+        } else switch (cfType) {
+            case SIMPLE -> calculatedField.setConfiguration(getSimpleCalculatedFieldConfig());
+            case GEOFENCING -> calculatedField.setConfiguration(getGeofencingCalculatedFieldConfig());
+            case PROPAGATION -> calculatedField.setConfiguration(getPropagationCalculatedFieldConfig());
+        }
         calculatedField.setVersion(1L);
         return calculatedField;
     }
@@ -194,6 +245,32 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         config.setZoneGroups(Map.of("safeArea", zoneGroupConfiguration));
         config.setScheduledUpdateEnabled(false);
         config.setOutput(output);
+
+        return config;
+    }
+
+    private CalculatedFieldConfiguration getPropagationCalculatedFieldConfig() {
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        return getPropagationCalculatedFieldConfig(Map.of("t", arg));
+    }
+
+    private CalculatedFieldConfiguration getPropagationCalculatedFieldConfig(Map<String, Argument> arguments) {
+        var config = new PropagationCalculatedFieldConfiguration();
+
+        config.setRelationType(EntityRelation.CONTAINS_TYPE);
+        config.setDirection(EntitySearchDirection.TO);
+
+        config.setApplyExpressionToResolvedArguments(false);
+        config.setExpression(null);
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        config.setOutput(output);
+
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        config.setArguments(arguments);
 
         return config;
     }
