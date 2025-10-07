@@ -103,7 +103,8 @@ public class PropagationCalculatedFieldStateTest {
         ctx.init();
 
         state = new PropagationCalculatedFieldState(ctx.getEntityId());
-        state.init(ctx);
+        state.setCtx(ctx, null);
+        state.init();
     }
 
     @Test

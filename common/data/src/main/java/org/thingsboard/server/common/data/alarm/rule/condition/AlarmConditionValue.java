@@ -15,9 +15,13 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class AlarmConditionValue<T> {
 
     private T staticValue;

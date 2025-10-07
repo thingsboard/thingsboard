@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TimeseriesDeleteRequest;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -45,9 +46,7 @@ import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.Collections;
-import java.util.EnumSet;
 import java.util.List;
-import java.util.Set;
 import java.util.UUID;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
@@ -72,10 +71,6 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
     private final CalculatedFieldCache calculatedFieldCache;
     private final TbClusterService clusterService;
-
-    private static final Set<EntityType> supportedReferencedEntities = EnumSet.of(
-            EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT
-    );
 
     @Override
     public void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result, FutureCallback<Void> callback) {
@@ -155,7 +150,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
     }
 
     private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter, Predicate<CalculatedFieldCtx> dynamicSourceFilter) {
-        if (!supportedReferencedEntities.contains(entityId.getEntityType())) {
+        if (!CalculatedField.SUPPORTED_REFERENCED_ENTITIES.contains(entityId.getEntityType())) {
             return false;
         }
 

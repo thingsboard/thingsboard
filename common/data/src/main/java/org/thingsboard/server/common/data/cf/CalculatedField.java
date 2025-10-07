@@ -25,6 +25,7 @@ import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
@@ -39,6 +40,10 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serial;
+import java.util.Collections;
+import java.util.EnumSet;
+import java.util.Map;
+import java.util.Set;
 
 @Schema
 @Data
@@ -47,6 +52,18 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
 
     @Serial
     private static final long serialVersionUID = 4491966747773381420L;
+
+    public static final Map<EntityType, Set<CalculatedFieldType>> SUPPORTED_ENTITIES = Map.of(
+            EntityType.DEVICE, CalculatedFieldType.all,
+            EntityType.ASSET, CalculatedFieldType.all,
+            EntityType.DEVICE_PROFILE, CalculatedFieldType.all,
+            EntityType.ASSET_PROFILE, CalculatedFieldType.all,
+            EntityType.CUSTOMER, Set.of(CalculatedFieldType.ALARM)
+    );
+
+    public static final Set<EntityType> SUPPORTED_REFERENCED_ENTITIES = Collections.unmodifiableSet(EnumSet.of(
+            EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT
+    ));
 
     private TenantId tenantId;
     private EntityId entityId;

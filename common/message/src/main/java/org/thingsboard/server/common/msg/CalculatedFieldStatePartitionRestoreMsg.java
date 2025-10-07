@@ -13,33 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.queue;
+package org.thingsboard.server.common.msg;
 
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
-import java.util.List;
-import java.util.Set;
+@Data
+public class CalculatedFieldStatePartitionRestoreMsg implements ToCalculatedFieldSystemMsg {
 
-public interface TbQueueConsumer<T extends TbQueueMsg> {
+    private final TopicPartitionInfo partition;
 
-    String getTopic();
+    @Override
+    public TenantId getTenantId() {
+        return TenantId.SYS_TENANT_ID;
+    }
 
-    void subscribe();
-
-    void subscribe(Set<TopicPartitionInfo> partitions);
-
-    void stop();
-
-    void unsubscribe();
-
-    List<T> poll(long durationInMillis);
-
-    void commit();
-
-    boolean isStopped();
-
-    Set<TopicPartitionInfo> getPartitions();
-
-    List<String> getFullTopicNames();
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.CF_STATE_PARTITION_RESTORE_MSG;
+    }
 
 }

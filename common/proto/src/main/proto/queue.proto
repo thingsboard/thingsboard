@@ -1914,7 +1914,7 @@ message AlarmStateProto {
 
 message AlarmRuleStateProto {
   string severity = 1;
-  int64 lastEventTs = 2;
-  int64 duration = 3;
-  int64 eventCount = 4;
+  int64 eventCount = 2;
+  int64 firstEventTs = 3;
+  int64 lastEventTs = 4;
 }

@@ -17,11 +17,9 @@ package org.thingsboard.server.cf;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.assertj.core.api.Assertions;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
@@ -43,6 +41,8 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.Simple
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate.NumericOperation;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate.StringOperation;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
@@ -57,6 +57,7 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -72,9 +73,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
 @DaoSqlTest
-@TestPropertySource(properties = {
-        "actors.alarms.reevaluation_interval=1"
-})
 public class AlarmRulesTest extends AbstractControllerTest {
 
     @MockitoSpyBean
@@ -85,6 +83,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
     private Device device;
     private DeviceId deviceId;
+    private EntityId originatorId;
     private EventId latestEventId;
 
     @Before
@@ -92,6 +91,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         loginTenantAdmin();
         device = createDevice("Device A", "aaa");
         deviceId = device.getId();
+        originatorId = deviceId;
     }
 
     @Test
@@ -111,6 +111,8 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Condition clearRule = new Condition("return temperature <= 25;", null, null);
         CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
                 arguments, createRules, clearRule);
+        assertThat(getCalculatedFields(deviceId, CalculatedFieldType.ALARM, new PageLink(1)).getData())
+                .singleElement().isEqualTo(calculatedField);
 
         postTelemetry(deviceId, "{\"temperature\":50}");
         checkAlarmResult(calculatedField, alarmResult -> {
@@ -177,7 +179,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     /*
-     * todo: state restore (event count)
+     * todo: test state restore (event count)
      * */
     @Test
     public void testCreateAlarmForRepeatingCondition() throws Exception {
@@ -235,10 +237,9 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Map<AlarmSeverity, Condition> createRules = Map.of(
                 AlarmSeverity.CRITICAL, new Condition("return powerConsumption >= 3000;", null, createDurationMs)
         );
-        long clearDurationMs = 2000L;
         Condition clearRule = new Condition("return powerConsumption < 3000;", null, createDurationMs);
 
-        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 3 seconds",
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 5 seconds",
                 arguments, createRules, clearRule);
         postTelemetry(deviceId, "{\"powerConsumption\":3500}");
         Thread.sleep(createDurationMs - 2000);
@@ -286,6 +287,53 @@ public class AlarmRulesTest extends AbstractControllerTest {
         });
     }
 
+    @Test
+    public void testCreateAndClearAlarm_customerAlarmRule_simpleExpression() throws Exception {
+        Argument locationArgument = new Argument();
+        locationArgument.setRefEntityKey(new ReferencedEntityKey("location", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationArgument.setDefaultValue("unknown");
+        originatorId = customerId;
+
+        Argument locationFilterArgument = new Argument();
+        locationFilterArgument.setRefEntityKey(new ReferencedEntityKey("locationFilter", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        locationFilterArgument.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        locationFilterArgument.setDefaultValue("None");
+
+        Map<String, Argument> arguments = Map.of(
+                "location", locationArgument,
+                "locationFilter", locationFilterArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.INDETERMINATE, new Condition(createSimpleExpression(
+                        "location", StringOperation.CONTAINS, new AlarmConditionValue<>(null, "locationFilter")
+                ), null, null)
+        );
+        Condition clearRule = new Condition(createSimpleExpression(
+                "location", StringOperation.NOT_CONTAINS, new AlarmConditionValue<>(null, "locationFilter")
+        ), null, null);
+
+        CalculatedField calculatedField = createAlarmCf(customerId, "New resident",
+                arguments, createRules, clearRule);
+
+        loginSysAdmin();
+        postAttributes(tenantId, AttributeScope.SERVER_SCOPE, "{\"locationFilter\":\"Kyiv\"}");
+        loginTenantAdmin();
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"location\":\"Ukraine, Kyiv\"}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+
+        postAttributes(customerId, AttributeScope.SERVER_SCOPE, "{\"location\":\"Ukraine, Lviv\"}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCleared()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.INDETERMINATE);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.CLEARED_UNACK);
+        });
+    }
+
     private void checkAlarmResult(CalculatedField calculatedField, Consumer<TbAlarmResult> assertion) {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             TbAlarmResult alarmResult = getLatestAlarmResult(calculatedField.getId());
@@ -293,7 +341,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertion.accept(alarmResult);
 
             Alarm alarm = alarmResult.getAlarm();
-            assertThat(alarm.getOriginator()).isEqualTo(deviceId);
+            assertThat(alarm.getOriginator()).isEqualTo(originatorId);
             assertThat(alarm.getType()).isEqualTo(calculatedField.getName());
         });
     }
@@ -305,8 +353,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         }
         CalculatedFieldDebugEvent debugEvent = debugEvents.get(0);
         if (debugEvent.getError() != null) {
-            System.err.println("CF error: " + debugEvent.getError());
-            Assertions.fail();
+            throw new RuntimeException(debugEvent.getError());
         }
         if (debugEvent.getId().equals(latestEventId)) {
             return null;
@@ -381,6 +428,18 @@ public class AlarmRulesTest extends AbstractControllerTest {
             rule.setCondition(alarmCondition);
         }
         return rule;
+    }
+
+    private SimpleAlarmConditionExpression createSimpleExpression(String argument, StringOperation stringOperation, AlarmConditionValue<String> conditionValue) {
+        SimpleAlarmConditionExpression simpleExpression = new SimpleAlarmConditionExpression();
+        AlarmConditionFilter filter = new AlarmConditionFilter();
+        filter.setArgument(argument);
+        StringFilterPredicate predicate = new StringFilterPredicate();
+        predicate.setOperation(stringOperation);
+        predicate.setValue(conditionValue);
+        filter.setPredicate(predicate);
+        simpleExpression.setFilters(List.of(filter));
+        return simpleExpression;
     }
 
     private List<CalculatedFieldDebugEvent> getDebugEvents(CalculatedFieldId calculatedFieldId, int limit) {

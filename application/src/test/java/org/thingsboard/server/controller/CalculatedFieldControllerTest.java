@@ -35,7 +35,8 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
@@ -191,6 +192,18 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testGetCalculatedFields() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
+        calculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(getCalculatedFields(testDevice.getId(), null, new PageLink(10)).getData())
+                .singleElement().isEqualTo(calculatedField);
+        assertThat(getCalculatedFields(testDevice.getId(), CalculatedFieldType.SIMPLE, new PageLink(10)).getData())
+                .singleElement().isEqualTo(calculatedField);
+    }
+
+    @Test
     public void testDeleteCalculatedField() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
@@ -204,17 +217,17 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         doGet("/api/calculatedField/" + savedCalculatedField.getId().getId()).andExpect(status().isNotFound());
     }
 
-    private CalculatedField getSimpleCalculatedField(DeviceId deviceId) {
-        return getCalculatedField(deviceId, CalculatedFieldType.SIMPLE);
+    private CalculatedField getSimpleCalculatedField(EntityId entityId) {
+        return getCalculatedField(entityId, CalculatedFieldType.SIMPLE);
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldType cfType) {
-        return getCalculatedField(deviceId, cfType, null);
+    private CalculatedField getCalculatedField(EntityId entityId, CalculatedFieldType cfType) {
+        return getCalculatedField(entityId, cfType, null);
     }
 
-    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldType cfType, CalculatedFieldConfiguration customConfiguration) {
+    private CalculatedField getCalculatedField(EntityId entityId, CalculatedFieldType cfType, CalculatedFieldConfiguration customConfiguration) {
         CalculatedField calculatedField = new CalculatedField();
-        calculatedField.setEntityId(deviceId);
+        calculatedField.setEntityId(entityId);
         calculatedField.setType(cfType);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);

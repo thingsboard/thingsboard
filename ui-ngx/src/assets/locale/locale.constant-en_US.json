@@ -5505,7 +5505,7 @@
             "time-series": "Time series",
             "latest": "Latest values",
             "web-sockets": "WebSockets",
-            "calculated-fields": "Calculated fields"
+            "calculated-fields-and-alarm-rules": "Calculated fields and alarm rules"
         },
         "save-attribute": {
             "processing-settings": "Processing settings",

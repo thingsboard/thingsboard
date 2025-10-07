@@ -15,8 +15,31 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.alarm;
 
-public enum AlarmEvalResult {
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
-    FALSE, NOT_YET_TRUE, TRUE;
+@Data
+@RequiredArgsConstructor
+public class AlarmEvalResult {
+
+    public static final AlarmEvalResult TRUE = new AlarmEvalResult(Status.TRUE);
+    public static final AlarmEvalResult FALSE = new AlarmEvalResult(Status.FALSE);
+    public static final AlarmEvalResult NOT_YET_TRUE = new AlarmEvalResult(Status.NOT_YET_TRUE);
+
+    private final Status status;
+    private final long leftDuration;
+    private final long leftEvents;
+
+    public AlarmEvalResult(Status status) {
+        this(status, 0, 0);
+    }
+
+    public static AlarmEvalResult notYetTrue(long leftEvents, long leftDuration) {
+        return new AlarmEvalResult(Status.NOT_YET_TRUE, leftDuration, leftEvents);
+    }
+
+    public enum Status {
+        FALSE, NOT_YET_TRUE, TRUE;
+    }
 
 }

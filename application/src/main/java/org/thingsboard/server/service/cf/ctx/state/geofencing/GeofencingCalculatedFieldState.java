@@ -141,8 +141,8 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public void reset(CalculatedFieldCtx ctx) {
-        super.reset(ctx);
+    public void reset() {
+        super.reset();
         lastDynamicArgumentsRefreshTs = -1;
     }
 

@@ -138,6 +138,7 @@ public enum MsgType {
 
     CF_CACHE_INIT_MSG, // Sent to init caches for CF actor;
     CF_STATE_RESTORE_MSG, // Sent to restore particular calculated field entity state;
+    CF_STATE_PARTITION_RESTORE_MSG,
     CF_PARTITIONS_CHANGE_MSG, // Sent when cluster event occures;
 
     CF_ENTITY_LIFECYCLE_MSG, // Sent on CF/Device/Asset create/update/delete;

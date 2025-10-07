@@ -186,6 +186,7 @@ public class TenantActor extends RuleChainManagerActor {
             case CF_CACHE_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
             case CF_PARTITIONS_CHANGE_MSG:
+            case CF_STATE_PARTITION_RESTORE_MSG:
                 forwardToCfActor((ToCalculatedFieldSystemMsg) msg, true);
                 break;
             case CF_TELEMETRY_MSG:
@@ -349,7 +350,7 @@ public class TenantActor extends RuleChainManagerActor {
                 }
             }
             if (cfActor != null) {
-                if (msg.getEntityId().getEntityType().isOneOf(EntityType.CALCULATED_FIELD, EntityType.DEVICE, EntityType.ASSET)) {
+                if (msg.getEntityId().getEntityType().isOneOf(EntityType.CALCULATED_FIELD, EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER)) {
                     cfActor.tellWithHighPriority(new CalculatedFieldEntityLifecycleMsg(tenantId, msg));
                 }
             }
@@ -394,6 +395,7 @@ public class TenantActor extends RuleChainManagerActor {
         public TbActor createActor() {
             return new TenantActor(context, tenantId);
         }
+
     }
 
 }

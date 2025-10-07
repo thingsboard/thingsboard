@@ -17,8 +17,11 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
@@ -31,19 +34,30 @@ import java.util.Map;
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected final EntityId entityId;
+    protected CalculatedFieldCtx ctx;
+    protected TbActorRef actorCtx;
     protected List<String> requiredArguments;
 
     protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
     protected long latestTimestamp = -1;
 
+    @Setter
+    private TopicPartitionInfo partition;
+
     public BaseCalculatedFieldState(EntityId entityId) {
         this.entityId = entityId;
     }
 
     @Override
-    public void init(CalculatedFieldCtx ctx) {
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        this.ctx = ctx;
+        this.actorCtx = actorCtx;
         this.requiredArguments = ctx.getArgNames();
+    }
+
+    @Override
+    public void init() {
     }
 
     @Override
@@ -84,7 +98,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void reset(CalculatedFieldCtx ctx) { // must reset everything dependent on arguments
+    public void reset() { // must reset everything dependent on arguments
         requiredArguments = null;
         arguments.clear();
         sizeExceedsLimit = false;

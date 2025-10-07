@@ -209,9 +209,14 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
         } else if (EntityType.API_USAGE_STATE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             apiUsageStateService.onApiUsageStateUpdate(tenantId);
         } else if (EntityType.CUSTOMER.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
-            if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
+            if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
+                calculatedFieldCache.addOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
+            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED) && componentLifecycleMsg.isOwnerChanged()) {
+                calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
+            } else if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.DELETED) {
                 apiUsageStateService.onCustomerDelete((CustomerId) componentLifecycleMsg.getEntityId());
                 calculatedFieldCache.evictOwner(componentLifecycleMsg.getEntityId());
+                calculatedFieldCache.evictEntity(componentLifecycleMsg.getEntityId());
             }
         } else if (EntityType.CALCULATED_FIELD.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (componentLifecycleMsg.getEvent() == ComponentLifecycleEvent.CREATED) {
@@ -221,7 +226,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             } else {
                 calculatedFieldCache.evict((CalculatedFieldId) componentLifecycleMsg.getEntityId());
             }
-        }  else if (EntityType.TB_RESOURCE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
+        } else if (EntityType.TB_RESOURCE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             tbResourceDataCache.evictResourceData(tenantId, new TbResourceId(componentLifecycleMsg.getEntityId().getId()));
         }
 

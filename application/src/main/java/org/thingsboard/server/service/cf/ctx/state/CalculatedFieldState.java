@@ -20,7 +20,9 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
@@ -49,11 +51,13 @@ public interface CalculatedFieldState {
 
     long getLatestTimestamp();
 
-    void init(CalculatedFieldCtx ctx);
+    void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx);
+
+    void init();
 
     Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> arguments, CalculatedFieldCtx ctx);
 
-    void reset(CalculatedFieldCtx ctx);
+    void reset();
 
     ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
 
@@ -66,6 +70,10 @@ public interface CalculatedFieldState {
     default boolean isSizeOk() {
         return !isSizeExceedsLimit();
     }
+
+    TopicPartitionInfo getPartition();
+
+    void setPartition(TopicPartitionInfo partition);
 
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
 

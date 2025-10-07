@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -34,6 +35,7 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Slf4j
@@ -83,9 +85,10 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     }
 
     @Override
-    public PageData<CalculatedField> findAllByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        log.debug("Try to find calculated fields by entityId[{}] and pageLink [{}]", entityId, pageLink);
-        return DaoUtil.toPageData(calculatedFieldRepository.findAllByTenantIdAndEntityId(tenantId.getId(), entityId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    public PageData<CalculatedField> findByEntityIdAndTypes(TenantId tenantId, EntityId entityId, Set<CalculatedFieldType> types, PageLink pageLink) {
+        log.debug("Try to find calculated fields by entityId [{}] and type [{}] and pageLink [{}]", entityId, types, pageLink);
+        return DaoUtil.toPageData(calculatedFieldRepository.findByTenantIdAndEntityIdAndTypes(tenantId.getId(), entityId.getId(),
+                types.stream().map(Enum::name).toList(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
 import org.mvel2.MVEL;
 import org.thingsboard.common.util.ExpressionUtils;
@@ -25,6 +26,8 @@ import org.thingsboard.script.api.tbel.TbelCfCtx;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldReevaluateMsg;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
@@ -61,10 +64,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 @Data
+@Slf4j
 public class CalculatedFieldCtx {
 
     private CalculatedField calculatedField;
@@ -81,8 +86,8 @@ public class CalculatedFieldCtx {
     private Output output;
     private String expression;
     private boolean useLatestTs;
-    private boolean requiresScheduledReevaluation;
 
+    private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
     private RelationService relationService;
     private AlarmSubscriptionService alarmService;
@@ -167,7 +172,7 @@ public class CalculatedFieldCtx {
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
-        this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
+        this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();
         this.alarmService = systemContext.getAlarmService();
@@ -252,6 +257,12 @@ public class CalculatedFieldCtx {
         args.set(0, new TbelCfCtx(arguments, state.getLatestTimestamp()));
 
         return tbelExpressions.get(expression).executeScriptAsync(args.toArray());
+    }
+
+    public ScheduledFuture<?> scheduleReevaluation(long delayMs, TbActorRef actorCtx) {
+        log.debug("[{}] Scheduling CF reevaluation in {} ms", cfId, delayMs);
+        // TODO: use single lazy-loaded instance of CalculatedFieldReevaluateMsg
+        return systemContext.scheduleMsgWithDelay(actorCtx, new CalculatedFieldReevaluateMsg(tenantId, this), delayMs);
     }
 
     private TbelCfArg toTbelArgument(String key, CalculatedFieldState state) {
@@ -487,8 +498,12 @@ public class CalculatedFieldCtx {
     }
 
     public boolean hasContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state reinit and will be picked up by the state on the fly
-        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !expression.equals(other.expression)) {
-            return true;
+        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration expressionConfig) {
+            boolean shouldCompareExpression = !(expressionConfig instanceof PropagationCalculatedFieldConfiguration propagationConfig)
+                                              || propagationConfig.isApplyExpressionToResolvedArguments();
+            if (shouldCompareExpression && !expression.equals(other.expression)) {
+                return true;
+            }
         }
         if (!output.equals(other.output)) {
             return true;
@@ -496,10 +511,7 @@ public class CalculatedFieldCtx {
         if (cfType == CalculatedFieldType.ALARM && !calculatedField.getName().equals(other.getCalculatedField().getName())) {
             return true;
         }
-        if (scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis) {
-            return true;
-        }
-        return false;
+        return scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis;
     }
 
     public boolean hasStateChanges(CalculatedFieldCtx other) { // has changes that require state reinit (will trigger state.reset() and re-fetch arguments)
