@@ -27,7 +27,7 @@ import {
   TbCircleData,
   TbMapDatasource,
   TbPolygonCoordinates,
-  TbPolygonRawCoordinates
+  TbPolygonRawCoordinates, TbPolylineCoordinates, TbPolylineRawCoordinates
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
@@ -83,6 +83,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import { ShapePatternStorage } from '@home/components/widget/lib/maps/data-layer/shapes-data-layer';
+import { TbPolylineDataLayer } from '@home/components/widget/lib/maps/data-layer/polylines-data-layer';
 
 type TooltipInstancesData = {root: HTMLElement, instances: ITooltipsterInstance[]};
 
@@ -273,6 +274,11 @@ export abstract class TbMap<S extends BaseMapSettings> {
       const circlesDataLayers = this.settings.circles.map(settings => new TbCirclesDataLayer(this, settings));
       this.dataLayers.push(...circlesDataLayers);
       this.latestDataLayers.push(...circlesDataLayers);
+    }
+    if (this.settings.polylines) {
+      const polylinesDataLayers = this.settings.polylines.map(settings => new TbPolylineDataLayer(this, settings));
+      this.dataLayers.push(...polylinesDataLayers);
+      this.latestDataLayers.push(...polylinesDataLayers);
     }
     if (this.settings.trips) {
       const tripsDataLayers = this.settings.trips.map(settings => new TbTripsDataLayer(this, settings));
@@ -792,6 +798,15 @@ export abstract class TbMap<S extends BaseMapSettings> {
             return this.coordinatesToCircleData(layer.getLatLng(), layer.getRadius());
           }
           return null;
+        case MapItemType.polyline:
+          if (layer instanceof L.Polyline) {
+            let coordinates: any = layer.getLatLngs();
+            if (coordinates.length === 1) {
+              coordinates = coordinates[0];
+            }
+            return this.coordinatesToPolylineData(coordinates);
+          }
+          return null;
       }
     }
   }
@@ -813,7 +828,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.editToolbar.close();
   }
 
-  private prepareDrawMode(shape: 'Marker' | 'Rectangle' | 'Polygon' | 'Circle', tooltipsTranslation: Record<string, string>) {
+  private prepareDrawMode(shape: 'Marker' | 'Rectangle' | 'Polygon' | 'Circle' | 'Polyline', tooltipsTranslation: Record<string, string>) {
     this.map.pm.setLang('en', { tooltips: tooltipsTranslation }, 'en');
     this.map.pm.enableDraw(shape);
     // @ts-ignore
@@ -1040,6 +1055,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
       if (this.addCircleButton) {
         this.addCircleButton.setDisabled(!this.addCircleDataLayers.some(dl => dl.isEnabled() && dl.hasUnplacedItems()));
       }
+      // TODO
       this.customActionsToolbar?.setDisabled(false);
     }
   }
@@ -1336,6 +1352,10 @@ export abstract class TbMap<S extends BaseMapSettings> {
   public abstract polygonDataToCoordinates(coordinates: TbPolygonRawCoordinates): TbPolygonRawCoordinates;
 
   public abstract coordinatesToPolygonData(coordinates: TbPolygonCoordinates): TbPolygonRawCoordinates;
+
+  public abstract polylineDataToCoordinates(coordinates: TbPolylineRawCoordinates): TbPolylineRawCoordinates;
+
+  public abstract coordinatesToPolylineData(coordinates: TbPolylineCoordinates): TbPolylineRawCoordinates;
 
   public abstract circleDataToCoordinates(circle: TbCircleData): TbCircleData;
 

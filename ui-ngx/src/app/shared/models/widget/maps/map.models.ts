@@ -96,6 +96,9 @@ const mapDataLayerDatasourceDataKeys = (settings: MapDataLayerSettings,
     case 'circles':
       dataKeys.push((settings as CirclesDataLayerSettings).circleKey);
       break;
+    case 'polylines':
+      dataKeys.push((settings as PolylinesDataLayerSettings).polylineKey);
+      break;
   }
   return dataKeys;
 };
@@ -196,9 +199,9 @@ export const defaultBaseDataLayerSettings = (mapType: MapType): Partial<MapDataL
   }
 })
 
-export type MapDataLayerType = 'trips' | 'markers' | 'polygons' | 'circles';
+export type MapDataLayerType = 'trips' | 'markers' | 'polygons' | 'circles' | 'polylines';
 
-export const mapDataLayerTypes: MapDataLayerType[] = ['trips', 'markers', 'polygons', 'circles'];
+export const mapDataLayerTypes: MapDataLayerType[] = ['trips', 'markers', 'polygons', 'circles', 'polylines'];
 
 export const mapDataLayerValid = (dataLayer: MapDataLayerSettings, type: MapDataLayerType): boolean => {
   if (!dataLayer.dsType || ![DatasourceType.function, DatasourceType.device, DatasourceType.entity].includes(dataLayer.dsType)) {
@@ -229,6 +232,12 @@ export const mapDataLayerValid = (dataLayer: MapDataLayerSettings, type: MapData
     case 'polygons':
       const polygonsDataLayer = dataLayer as PolygonsDataLayerSettings;
       if (!polygonsDataLayer.polygonKey?.type || !polygonsDataLayer.polygonKey?.name) {
+        return false;
+      }
+      break;
+    case 'polylines':
+      const polylinesDataLayer = dataLayer as PolylinesDataLayerSettings;
+      if (!polylinesDataLayer.polylineKey?.type || !polylinesDataLayer.polylineKey?.name) {
         return false;
       }
       break;
@@ -654,6 +663,58 @@ export const defaultBaseCirclesDataLayerSettings = (mapType: MapType): Partial<C
 } as Partial<CirclesDataLayerSettings>, defaultBaseDataLayerSettings(mapType),
   {label: {show: false}, tooltip: {show: false, pattern: '<b>${entityName}</b><br/><br/><b>TimeStamp:</b> ${ts:7}'}} as Partial<CirclesDataLayerSettings>)
 
+export interface PolylinesDataLayerSettings extends ShapeDataLayerSettings {
+  polylineKey: DataKey;
+}
+
+export const defaultPolylinesDataLayerSettings = (mapType: MapType, functionsOnly = false): PolylinesDataLayerSettings => mergeDeep({
+  dsType: functionsOnly ? DatasourceType.function : DatasourceType.entity,
+  dsLabel: functionsOnly ? 'First polyline' : '',
+  polylineKey: {
+    name: functionsOnly ? 'f(x)' : 'perimeter',
+    label: 'perimeter',
+    type: functionsOnly ? DataKeyType.function : DataKeyType.attribute,
+    settings: {},
+    color: materialColors[0].value
+  }
+} as PolylinesDataLayerSettings, defaultBasePolylinesDataLayerSettings(mapType) as PolylinesDataLayerSettings);
+
+export const defaultBasePolylinesDataLayerSettings = (mapType: MapType): Partial<PolylinesDataLayerSettings> => mergeDeep({
+    fillType: ShapeFillType.color,
+    // fillColor: {
+    //   type: DataLayerColorType.constant,
+    //   color: 'rgba(51,136,255,0.2)',
+    // },
+    // fillImage: {
+    //   type: ShapeFillImageType.image,
+    //   image: '/assets/widget-preview-empty.svg',
+    //   preserveAspectRatio: true,
+    //   opacity: 1,
+    //   angle: 0,
+    //   scale: 1
+    // },
+    // fillStripe: {
+    //   weight: 3,
+    //   color: {
+    //     type: DataLayerColorType.constant,
+    //     color: '#8f8f8f'
+    //   },
+    //   spaceWeight: 9,
+    //   spaceColor: {
+    //     type: DataLayerColorType.constant,
+    //     color: 'rgba(143,143,143,0)',
+    //   },
+    //   angle: 45
+    // },
+    strokeColor: {
+      type: DataLayerColorType.constant,
+      color: '#3388ff',
+    },
+    strokeWeight: 3
+  } as Partial<PolylinesDataLayerSettings>, defaultBaseDataLayerSettings(mapType),
+  {label: {show: false}, tooltip: {show: false, pattern: '<b>${entityName}</b><br/><br/><b>TimeStamp:</b> ${ts:7}'}} as Partial<PolylinesDataLayerSettings>)
+
+
 export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: MapDataLayerType, functionsOnly = false): MapDataLayerSettings => {
   switch (dataLayerType) {
     case 'trips':
@@ -664,6 +725,8 @@ export const defaultMapDataLayerSettings = (mapType: MapType, dataLayerType: Map
       return defaultPolygonsDataLayerSettings(mapType, functionsOnly);
     case 'circles':
       return defaultCirclesDataLayerSettings(mapType, functionsOnly);
+    case 'polylines':
+      return defaultPolylinesDataLayerSettings(mapType, functionsOnly);
   }
 };
 
@@ -677,6 +740,8 @@ export const defaultBaseMapDataLayerSettings = <T extends MapDataLayerSettings>(
       return defaultBasePolygonsDataLayerSettings(mapType) as T;
     case 'circles':
       return defaultBaseCirclesDataLayerSettings(mapType) as T;
+    case 'polylines':
+      return defaultBasePolylinesDataLayerSettings(mapType) as T;
   }
 }
 
@@ -815,6 +880,7 @@ export interface BaseMapSettings {
   markers: MarkersDataLayerSettings[];
   polygons: PolygonsDataLayerSettings[];
   circles: CirclesDataLayerSettings[];
+  polylines: PolylinesDataLayerSettings[];
   additionalDataSources: AdditionalMapDataSourceSettings[];
   controlsPosition: MapControlsPosition;
   zoomActions: MapZoomAction[];
@@ -839,6 +905,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   markers: [],
   polygons: [],
   circles: [],
+  polylines: [],
   additionalDataSources: [],
   controlsPosition: MapControlsPosition.topleft,
   zoomActions: [MapZoomAction.scroll, MapZoomAction.doubleClick, MapZoomAction.controlButtons],
@@ -1244,6 +1311,13 @@ export type TbPolygonRawCoordinates = TbPolygonRawCoordinate[];
 export type TbPolyData = L.LatLngTuple[] | L.LatLngTuple[][] | L.LatLngTuple[][][];
 export type TbPolygonCoordinate = L.LatLng | L.LatLng[] | L.LatLng[][];
 export type TbPolygonCoordinates = TbPolygonCoordinate[];
+
+
+export type TbPolylineRawCoordinate = L.LatLngTuple | L.LatLngTuple[] | L.LatLngTuple[][];
+export type TbPolylineRawCoordinates = TbPolylineRawCoordinate[];
+export type TbPolylineData = L.LatLngTuple[] | L.LatLngTuple[][];
+export type TbPolylineCoordinate = L.LatLng | L.LatLng[] | L.LatLng[][];
+export type TbPolylineCoordinates = TbPolylineCoordinate[];
 
 export interface TbCircleData {
   latitude: number;

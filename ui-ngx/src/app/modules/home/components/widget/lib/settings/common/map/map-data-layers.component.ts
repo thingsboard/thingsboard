@@ -104,6 +104,10 @@ export class MapDataLayersComponent implements ControlValueAccessor, OnInit, Val
         this.addDataLayerText = 'widgets.maps.data-layer.circle.add-circle';
         this.noDataLayersText = 'widgets.maps.data-layer.circle.no-circles';
         break;
+      case 'polylines': // todo translation
+        this.addDataLayerText = 'widgets.maps.data-layer.circle.add-polylines';
+        this.noDataLayersText = 'widgets.maps.data-layer.circle.no-polylines';
+        break;
     }
     this.dataLayersFormGroup = this.fb.group({
       dataLayers: [this.fb.array([]), []]

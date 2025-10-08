@@ -659,7 +659,8 @@ export enum MapItemType {
   marker = 'marker',
   polygon = 'polygon',
   rectangle = 'rectangle',
-  circle = 'circle'
+  circle = 'circle',
+  polyline = 'polyline'
 }
 
 export const widgetActionTypes = Object.keys(WidgetActionType)
@@ -1145,5 +1146,4 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
 
   protected onWidgetConfigSet(widgetConfig: WidgetConfigComponentData) {
   }
-
 }
