@@ -219,13 +219,9 @@ public class DeviceController extends BaseController {
     @ResponseBody
     public Device saveDeviceWithCredentials(@Parameter(description = "The JSON object with device and credentials. See method description above for example.")
                                             @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials,
-                                            @Parameter(description = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
-                                                    "If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
-                                                    "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
+                                            @Parameter(description = NAME_CONFLICT_POLICY_DESC)
                                             @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
-                                            @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
-                                                    "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for device name 'thermostat', " +
-                                                    "created device will have name like 'thermostat-7fsh4f'.")
+                                            @Parameter(description = NAME_CONFLICT_SEPARATOR_DESC)
                                             @RequestParam(name = "separator", defaultValue = "_") String separator) throws ThingsboardException {
         Device device = deviceAndCredentials.getDevice();
         DeviceCredentials credentials = deviceAndCredentials.getCredentials();
