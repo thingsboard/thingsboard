@@ -77,8 +77,8 @@ import static org.thingsboard.server.service.cf.ctx.state.alarm.AlarmEvalResult.
 @Slf4j
 public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
 
-    private String alarmType;
     private AlarmCalculatedFieldConfiguration configuration;
+    private String alarmType;
 
     @Getter
     private final Map<AlarmSeverity, AlarmRuleState> createRuleStates = new TreeMap<>(Comparator.comparing(Enum::ordinal));
@@ -97,8 +97,13 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
         super.setCtx(ctx, actorCtx);
-        this.alarmType = ctx.getCalculatedField().getName();
         this.configuration = getConfiguration(ctx);
+        this.alarmType = ctx.getCalculatedField().getName();
+
+        if (currentAlarm != null && !currentAlarm.getType().equals(alarmType)) {
+            currentAlarm = null;
+            initialFetchDone = false;
+        }
     }
 
     @Override
@@ -170,10 +175,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public void reset() {
         super.reset();
-        createRuleStates.values().forEach(AlarmRuleState::clear);
-        if (clearRuleState != null) {
-            clearRuleState.clear();
-        }
+        configuration = null;
     }
 
     @Override
@@ -502,7 +504,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             SingleValueArgumentEntry entry = getArgument(argument);
             value = mapper.apply(entry.getKvEntryValue());
             if (value == null) {
-                throw new IllegalArgumentException("No value found for argument " + argument);
+                throw new IllegalArgumentException("No proper value found for argument " + argument);
             }
         }
         return value;

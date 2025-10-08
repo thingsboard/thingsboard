@@ -15,10 +15,11 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.alarm;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.KvUtil;
-import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
@@ -28,6 +29,8 @@ import org.thingsboard.server.common.data.alarm.rule.condition.DurationAlarmCond
 import org.thingsboard.server.common.data.alarm.rule.condition.RepeatingAlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSchedule;
+import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmScheduleType;
+import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AnyTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.CustomTimeSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.CustomTimeScheduleItem;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.SpecificTimeSchedule;
@@ -109,8 +112,12 @@ public class AlarmRuleState {
                 eventCount++;
             }
             long requiredRepeats = getIntValue(((RepeatingAlarmCondition) condition).getCount());
-            long leftRepeats = requiredRepeats - eventCount;
-            return leftRepeats <= 0 ? AlarmEvalResult.TRUE : AlarmEvalResult.notYetTrue(leftRepeats, 0);
+            if (requiredRepeats > 0) {
+                long leftRepeats = requiredRepeats - eventCount;
+                return leftRepeats <= 0 ? AlarmEvalResult.TRUE : AlarmEvalResult.notYetTrue(leftRepeats, 0);
+            } else {
+                return AlarmEvalResult.NOT_YET_TRUE;
+            }
         } else {
             return AlarmEvalResult.FALSE;
         }
@@ -132,11 +139,15 @@ public class AlarmRuleState {
             }
             duration = lastEventTs - firstEventTs;
             long requiredDuration = getRequiredDurationInMs();
-            long leftDuration = requiredDuration - duration;
-            if (leftDuration <= 0) {
-                return AlarmEvalResult.TRUE;
+            if (requiredDuration > 0) {
+                long leftDuration = requiredDuration - duration;
+                if (leftDuration <= 0) {
+                    return AlarmEvalResult.TRUE;
+                } else {
+                    return AlarmEvalResult.notYetTrue(0, leftDuration);
+                }
             } else {
-                return AlarmEvalResult.notYetTrue(0, leftDuration);
+                return AlarmEvalResult.NOT_YET_TRUE;
             }
         } else {
             return AlarmEvalResult.FALSE;
@@ -148,13 +159,14 @@ public class AlarmRuleState {
             return true;
         }
         AlarmSchedule schedule = state.resolveValue(condition.getSchedule(), entry -> Optional.ofNullable(KvUtil.getStringValue(entry))
-                .map(str -> JsonConverter.parse(str, AlarmSchedule.class))
-                .orElse(null));
-        return switch (schedule.getType()) {
+                .map(this::parseSchedule).orElse(null));
+        boolean active = switch (schedule.getType()) {
             case ANY_TIME -> true;
             case SPECIFIC_TIME -> isActiveSpecific((SpecificTimeSchedule) schedule, eventTs);
             case CUSTOM -> isActiveCustom((CustomTimeSchedule) schedule, eventTs);
         };
+        log.trace("Alarm rule active = {} for schedule {}", active, schedule);
+        return active;
     }
 
     private boolean isActiveSpecific(SpecificTimeSchedule schedule, long eventTs) {
@@ -219,6 +231,28 @@ public class AlarmRuleState {
 
     public boolean isEmpty() {
         return eventCount == 0L && firstEventTs == 0L && lastEventTs == 0L && durationCheckFuture == null;
+    }
+
+    private AlarmSchedule parseSchedule(String str) {
+        ObjectNode json = (ObjectNode) JacksonUtil.toJsonNode(str);
+        if (json.isEmpty()) {
+            return new AnyTimeSchedule(); // only if valid json, fail otherwise
+        }
+
+        if (!json.hasNonNull("type")) {
+            // deducting the schedule type
+            AlarmScheduleType type;
+            if (json.hasNonNull("daysOfWeek")) {
+                type = AlarmScheduleType.SPECIFIC_TIME;
+            } else if (json.hasNonNull("items")) {
+                type = AlarmScheduleType.CUSTOM;
+            } else {
+                throw new IllegalArgumentException("Failed to parse alarm schedule from '" + str + "'");
+            }
+            json.put("type", type.name());
+        }
+
+        return JacksonUtil.treeToValue(json, AlarmSchedule.class);
     }
 
     private Integer getIntValue(AlarmConditionValue<Integer> value) {
