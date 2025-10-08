@@ -33,7 +33,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
@@ -50,10 +50,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -366,19 +368,13 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         // Dynamic groups via relations
         ZoneGroupConfiguration allowedZoneGroupConfiguration = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var allowedDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        allowedDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        allowedDynamicSourceConfiguration.setMaxLevel(1);
-        allowedDynamicSourceConfiguration.setFetchLastLevelOnly(true);
-        allowedDynamicSourceConfiguration.setRelationType("AllowedZone");
+        var allowedDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        allowedDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "AllowedZone")));
         allowedZoneGroupConfiguration.setRefDynamicSourceConfiguration(allowedDynamicSourceConfiguration);
 
         ZoneGroupConfiguration restrictedZoneGroupConfiguration = new ZoneGroupConfiguration("zone", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        var restrictedDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        restrictedDynamicSourceConfiguration.setDirection(EntitySearchDirection.FROM);
-        restrictedDynamicSourceConfiguration.setMaxLevel(1);
-        restrictedDynamicSourceConfiguration.setFetchLastLevelOnly(true);
-        restrictedDynamicSourceConfiguration.setRelationType("RestrictedZone");
+        var restrictedDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        restrictedDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, "RestrictedZone")));
         restrictedZoneGroupConfiguration.setRefDynamicSourceConfiguration(restrictedDynamicSourceConfiguration);
 
         cfg.setZoneGroups(Map.of("allowedZones", allowedZoneGroupConfiguration, "restrictedZones", restrictedZoneGroupConfiguration));

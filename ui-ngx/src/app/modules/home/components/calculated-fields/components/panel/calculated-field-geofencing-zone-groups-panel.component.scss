@@ -29,6 +29,34 @@ $panel-width: 520px;
     }
   }
 
+  .level-text {
+    display: flex;
+    justify-content: center;
+    width: 25px;
+    color: rgba(0, 0, 0, 0.54);
+  }
+
+  .tb-form-table {
+    .tb-form-row {
+      gap: 12px;
+    }
+
+    .tb-form-table-body {
+      gap: unset;
+    }
+
+    .tb-form-table-header {
+      padding: 0;
+    }
+
+    .tb-form-table-header-cell {
+      &.tb-actions-header {
+        width: 40px;
+        min-width: 40px;
+      }
+    }
+  }
+
   .limit-field-row {
     @media screen and (max-width: $panel-width) {
       display: flex;
@@ -46,6 +74,11 @@ $panel-width: 520px;
   .time-interval-field {
     .advanced-input {
       flex-direction: column;
+    }
+  }
+  tb-entity-autocomplete {
+    .mat-mdc-form-field-has-icon-suffix .mat-mdc-text-field-wrapper {
+      padding-right: 0 !important;
     }
   }
 }

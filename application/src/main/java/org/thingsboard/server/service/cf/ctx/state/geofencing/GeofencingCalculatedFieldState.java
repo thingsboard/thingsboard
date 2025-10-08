@@ -15,16 +15,19 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.geofencing;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent;
@@ -39,7 +42,6 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -51,18 +53,14 @@ import static org.thingsboard.server.common.data.cf.configuration.geofencing.Geo
 
 @Data
 @Slf4j
+@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
-    private boolean dirty;
+    private long lastDynamicArgumentsRefreshTs = -1;
 
-    public GeofencingCalculatedFieldState() {
-        super(new ArrayList<>(), new HashMap<>(), false, -1);
-        this.dirty = false;
-    }
-
-    public GeofencingCalculatedFieldState(List<String> argNames) {
-        super(argNames);
+    public GeofencingCalculatedFieldState(List<String> requiredArguments) {
+        super(requiredArguments);
     }
 
     @Override
@@ -71,49 +69,21 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
-
-        boolean stateUpdated = false;
-
-        for (var entry : argumentValues.entrySet()) {
-            String key = entry.getKey();
-            ArgumentEntry newEntry = entry.getValue();
-
-            checkArgumentSize(key, newEntry, ctx);
-
-            ArgumentEntry existingEntry = arguments.get(key);
-            boolean entryUpdated;
-
-            if (existingEntry == null || newEntry.isForceResetPrevious()) {
-                entryUpdated = switch (key) {
-                    case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
-                        if (!(newEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry)) {
-                            throw new IllegalArgumentException("Unsupported argument entry type for " + key + " argument: " + newEntry.getType() + ". " +
-                                                               "Only SINGLE_VALUE type is allowed.");
-                        }
-                        arguments.put(key, singleValueArgumentEntry);
-                        yield true;
-                    }
-                    default -> {
-                        if (!(newEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
-                            throw new IllegalArgumentException("Unsupported argument entry type for " + key + " argument: " + newEntry.getType() + ". " +
-                                                               "Only GEOFENCING type is allowed.");
-                        }
-                        arguments.put(key, geofencingArgumentEntry);
-                        yield true;
-                    }
-                };
-            } else {
-                entryUpdated = existingEntry.updateEntry(newEntry);
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+        switch (key) {
+            case ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY -> {
+                if (!(newEntry instanceof SingleValueArgumentEntry)) {
+                    throw new IllegalArgumentException("Unsupported argument entry type for " + key + " argument: " + newEntry.getType() + ". " +
+                                                       "Only SINGLE_VALUE type is allowed.");
+                }
             }
-            if (entryUpdated) {
-                stateUpdated = true;
+            default -> {
+                if (!(newEntry instanceof GeofencingArgumentEntry)) {
+                    throw new IllegalArgumentException("Unsupported argument entry type for " + key + " argument: " + newEntry.getType() + ". " +
+                                                       "Only GEOFENCING type is allowed.");
+                }
             }
         }
-        return stateUpdated;
     }
 
     @Override
@@ -125,7 +95,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         var geofencingCfg = (GeofencingCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         Map<String, ZoneGroupConfiguration> zoneGroups = geofencingCfg.getZoneGroups();
 
-        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        ObjectNode valuesNode = JacksonUtil.newObjectNode();
         List<ListenableFuture<Boolean>> relationFutures = new ArrayList<>();
 
         getGeofencingArguments().forEach((argumentKey, argumentEntry) -> {
@@ -154,10 +124,11 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                     relationFutures.add(f);
                 }
             });
-            updateResultNode(argumentKey, zoneResults, zoneGroupCfg.getReportStrategy(), resultNode);
+            updateValuesNode(argumentKey, zoneResults, zoneGroupCfg.getReportStrategy(), valuesNode);
         });
 
-        var result = new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), resultNode);
+        OutputType outputType = ctx.getOutput().getType();
+        var result = new CalculatedFieldResult(ctx.getOutput().getType(), ctx.getOutput().getScope(), toResultNode(outputType, valuesNode));
         if (relationFutures.isEmpty()) {
             return Futures.immediateFuture(result);
         }
@@ -171,7 +142,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                 .collect(Collectors.toMap(Map.Entry::getKey, entry -> (GeofencingArgumentEntry) entry.getValue()));
     }
 
-    private void updateResultNode(String argumentKey, List<GeofencingEvalResult> zoneResults, GeofencingReportStrategy geofencingReportStrategy, ObjectNode resultNode) {
+    private void updateValuesNode(String argumentKey, List<GeofencingEvalResult> zoneResults, GeofencingReportStrategy geofencingReportStrategy, ObjectNode resultNode) {
         GeofencingEvalResult aggregationResult = aggregateZoneGroup(zoneResults);
         final String eventKey = argumentKey + "Event";
         final String statusKey = argumentKey + "Status";
@@ -183,6 +154,16 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                 resultNode.put(statusKey, aggregationResult.status().name());
             }
         }
+    }
+
+    private JsonNode toResultNode(OutputType outputType, ObjectNode valuesNode) {
+        if (OutputType.ATTRIBUTES.equals(outputType) || latestTimestamp == -1) {
+            return valuesNode;
+        }
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        resultNode.put("ts", latestTimestamp);
+        resultNode.set("values", valuesNode);
+        return resultNode;
     }
 
     private GeofencingEvalResult aggregateZoneGroup(List<GeofencingEvalResult> zoneResults) {

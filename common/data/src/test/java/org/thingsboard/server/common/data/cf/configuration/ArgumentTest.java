@@ -31,7 +31,7 @@ public class ArgumentTest {
     @Test
     void validateShouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
         var argument = new Argument();
-        argument.setRefDynamicSourceConfiguration(new RelationQueryDynamicSourceConfiguration());
+        argument.setRefDynamicSourceConfiguration(new RelationPathQueryDynamicSourceConfiguration());
         assertThat(argument.hasDynamicSource()).isTrue();
     }
 

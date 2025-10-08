@@ -48,9 +48,10 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    protected void validateNewEntry(ArgumentEntry newEntry) {
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
         if (newEntry instanceof TsRollingArgumentEntry) {
-            throw new IllegalArgumentException("Rolling argument entry is not supported for simple calculated fields.");
+            throw new IllegalArgumentException("Unsupported argument type detected for argument: " + key + ". " +
+                                               "Rolling argument entry is not supported for simple calculated fields.");
         }
     }
 

@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy;
@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -257,7 +258,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2).isNotNull();
         assertThat(result2.getType()).isEqualTo(output.getType());
         assertThat(result2.getScope()).isEqualTo(output.getScope());
-        assertThat(result2.getResult()).isEqualTo(
+        assertThat(result2.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
                         .put("allowedZonesEvent", "LEFT")
                         .put("allowedZonesStatus", "OUTSIDE")
@@ -329,7 +330,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2).isNotNull();
         assertThat(result2.getType()).isEqualTo(output.getType());
         assertThat(result2.getScope()).isEqualTo(output.getScope());
-        assertThat(result2.getResult()).isEqualTo(
+        assertThat(result2.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
                         .put("allowedZonesEvent", "LEFT")
                         .put("restrictedZonesEvent", "ENTERED")
@@ -401,7 +402,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result2).isNotNull();
         assertThat(result2.getType()).isEqualTo(output.getType());
         assertThat(result2.getScope()).isEqualTo(output.getScope());
-        assertThat(result2.getResult()).isEqualTo(
+        assertThat(result2.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
                         .put("allowedZonesStatus", "OUTSIDE")
                         .put("restrictedZonesStatus", "INSIDE")
@@ -453,21 +454,15 @@ public class GeofencingCalculatedFieldStateTest {
         config.setEntityCoordinates(entityCoordinates);
 
         ZoneGroupConfiguration allowedZonesGroup = new ZoneGroupConfiguration("zone", reportStrategy, true);
-        var allowedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        allowedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.TO);
-        allowedZoneDynamicSourceConfiguration.setRelationType("AllowedZone");
-        allowedZoneDynamicSourceConfiguration.setMaxLevel(1);
-        allowedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        var allowedZoneDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        allowedZoneDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.TO, "AllowedZone")));
         allowedZonesGroup.setRefDynamicSourceConfiguration(allowedZoneDynamicSourceConfiguration);
         allowedZonesGroup.setRelationType("CurrentZone");
         allowedZonesGroup.setDirection(EntitySearchDirection.TO);
 
         ZoneGroupConfiguration restrictedZonesGroup = new ZoneGroupConfiguration("zone", reportStrategy, true);
-        var restrictedZoneDynamicSourceConfiguration = new RelationQueryDynamicSourceConfiguration();
-        restrictedZoneDynamicSourceConfiguration.setDirection(EntitySearchDirection.TO);
-        restrictedZoneDynamicSourceConfiguration.setRelationType("RestrictedZone");
-        restrictedZoneDynamicSourceConfiguration.setMaxLevel(1);
-        restrictedZoneDynamicSourceConfiguration.setFetchLastLevelOnly(true);
+        var restrictedZoneDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        restrictedZoneDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.TO, "RestrictedZone")));
         restrictedZonesGroup.setRefDynamicSourceConfiguration(restrictedZoneDynamicSourceConfiguration);
         restrictedZonesGroup.setRelationType("CurrentZone");
         restrictedZonesGroup.setDirection(EntitySearchDirection.TO);

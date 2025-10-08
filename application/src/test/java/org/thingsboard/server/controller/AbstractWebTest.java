@@ -155,6 +155,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.memory.InMemoryStorage;
 import org.thingsboard.server.service.cf.CfRocksDb;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileService;
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -1104,14 +1105,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         });
     }
 
-    protected void awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsDirty(EntityId entityId, CalculatedFieldId cfId) {
+    protected void awaitForCalculatedFieldEntityMessageProcessorToRegisterCfStateAsReadyToRefreshDynamicArguments(EntityId entityId, CalculatedFieldId cfId, int scheduledUpdateInterval) {
         CalculatedFieldEntityMessageProcessor processor = getCalculatedFieldEntityMessageProcessor(entityId);
         Map<CalculatedFieldId, CalculatedFieldState> statesMap = (Map<CalculatedFieldId, CalculatedFieldState>) ReflectionTestUtils.getField(processor, "states");
-        Awaitility.await("CF state for entity actor marked as dirty").atMost(5, TimeUnit.SECONDS).until(() -> {
+        Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
-            boolean stateDirty = calculatedFieldState != null && calculatedFieldState.isDirty();
-            log.warn("entityId {}, cfId {}, state dirty == {}", entityId, cfId, stateDirty);
-            return stateDirty;
+            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs()
+                              < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+            log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
+            return isReady;
         });
     }
 
