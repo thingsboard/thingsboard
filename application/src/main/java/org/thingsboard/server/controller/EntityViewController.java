@@ -71,6 +71,8 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.MODEL_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -131,13 +133,9 @@ public class EntityViewController extends BaseController {
     public EntityView saveEntityView(
             @Parameter(description = "A JSON object representing the entity view.")
             @RequestBody EntityView entityView,
-            @Parameter(description = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
-                    "If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
-                    "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
+            @Parameter(description = NAME_CONFLICT_POLICY_DESC)
             @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
-            @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
-                    "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for entity view name 'Device A', " +
-                    "created customer will have name like 'Device A-7fsh4f'.")
+            @Parameter(description = NAME_CONFLICT_SEPARATOR_DESC)
             @RequestParam(name = "separator", defaultValue = "_") String separator) throws Exception {
         entityView.setTenantId(getCurrentUser().getTenantId());
         EntityView existingEntityView = null;

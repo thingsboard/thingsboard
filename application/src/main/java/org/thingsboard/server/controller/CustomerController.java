@@ -49,6 +49,8 @@ import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -131,13 +133,9 @@ public class CustomerController extends BaseController {
     @RequestMapping(value = "/customer", method = RequestMethod.POST)
     @ResponseBody
     public Customer saveCustomer(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the customer.") @RequestBody Customer customer,
-                                 @Parameter(description = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
-                                         "If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
-                                         "UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.")
+                                 @Parameter(description = NAME_CONFLICT_POLICY_DESC)
                                  @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
-                                 @Parameter(description = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
-                                         "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for customer name 'Customer A', " +
-                                         "created customer will have name like 'Customer A-7fsh4f'.")
+                                 @Parameter(description = NAME_CONFLICT_SEPARATOR_DESC)
                                  @RequestParam(name = "separator", defaultValue = "_") String separator) throws Exception {
         customer.setTenantId(getTenantId());
         checkEntity(customer.getId(), customer, Resource.CUSTOMER);

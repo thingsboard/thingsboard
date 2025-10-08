@@ -130,10 +130,10 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
         } else if (entityView.getId() != null) {
             old = findEntityViewById(entityView.getTenantId(), entityView.getId(), false);
         }
-        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
-            uniquifyEntityName(entityView, old, entityView::setName, EntityType.ENTITY_VIEW, nameConflictStrategy);
-        }
         try {
+            if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
+                uniquifyEntityName(entityView, old, entityView::setName, EntityType.ENTITY_VIEW, nameConflictStrategy);
+            }
             EntityView saved = entityViewDao.save(entityView.getTenantId(), entityView);
             publishEvictEvent(new EntityViewEvictEvent(saved.getTenantId(), saved.getId(), saved.getEntityId(), old != null ? old.getEntityId() : null, saved.getName(), old != null ? old.getName() : null, saved));
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(saved.getTenantId())
