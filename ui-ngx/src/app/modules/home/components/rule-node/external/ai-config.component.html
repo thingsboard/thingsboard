@@ -70,6 +70,16 @@
             {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
           </mat-error>
         </mat-form-field>
+        <tb-entity-list
+          class="flex-1"
+          allowCreateNew
+          placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
+          [inlineField]="true"
+          [entityType]="EntityType.TB_RESOURCE"
+          [subType]="ResourceType.GENERAL"
+          (createNew)="createAiResources($event, 'resourceIds')"
+          formControlName="resourceIds">
+        </tb-entity-list>
       </div>
     </mat-expansion-panel>
   </div>

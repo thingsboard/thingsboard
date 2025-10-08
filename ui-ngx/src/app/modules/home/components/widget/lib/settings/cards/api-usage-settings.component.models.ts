@@ -17,10 +17,10 @@
 import { IAliasController } from '@core/api/widget-api.models';
 import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 import { DataKey, Widget, widgetType } from '@shared/models/widget.models';
-import { Observable } from "rxjs";
-import { BackgroundSettings, BackgroundType } from "@shared/models/widget-settings.models";
-import { DataKeyType } from "@shared/models/telemetry/telemetry.models";
-import { materialColors } from "@shared/models/material.models";
+import { Observable } from 'rxjs';
+import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { materialColors } from '@shared/models/material.models';
 
 export interface ApiUsageSettingsContext {
   aliasController: IAliasController;
@@ -33,7 +33,7 @@ export interface ApiUsageSettingsContext {
 
 export interface ApiUsageWidgetSettings {
   dsEntityAliasId: string;
-  dataKeys: ApiUsageDataKeysSettings[];
+  apiUsageDataKeys: ApiUsageDataKeysSettings[];
   targetDashboardState: string;
   background: BackgroundSettings;
   padding: string;
@@ -80,7 +80,7 @@ const generateDataKey = (label: string, status: string, maxLimit: string, curren
 
 export const apiUsageDefaultSettings: ApiUsageWidgetSettings = {
   dsEntityAliasId: '',
-  dataKeys: [
+  apiUsageDataKeys: [
     generateDataKey('{i18n:api-usage.transport-messages}', 'transportApiState', 'transportMsgLimit', 'transportMsgCount'),
     generateDataKey('{i18n:api-usage.transport-data-points}', 'transportApiState', 'transportDataPointsLimit', 'transportDataPointsCount'),
     generateDataKey('{i18n:api-usage.rule-engine-executions}', 'ruleEngineApiState', 'ruleEngineExecutionLimit', 'ruleEngineExecutionCount'),
@@ -104,3 +104,15 @@ export const apiUsageDefaultSettings: ApiUsageWidgetSettings = {
   padding: '0'
 };
 
+export const getUniqueDataKeys = (data: ApiUsageDataKeysSettings[]): DataKey[] => {
+  const seenNames = new Set<string>();
+  return data
+    .flatMap(item => [item.status, item.maxLimit, item.current])
+    .filter(key => {
+      if (seenNames.has(key.name)) {
+        return false;
+      }
+      seenNames.add(key.name);
+      return true;
+    });
+};

@@ -26,10 +26,15 @@ public class Argument {
 
     @Nullable
     private EntityId refEntityId;
+    private CfArgumentDynamicSourceConfiguration refDynamicSourceConfiguration;
     private ReferencedEntityKey refEntityKey;
     private String defaultValue;
 
     private Integer limit;
     private Long timeWindow;
+
+    public boolean hasDynamicSource() {
+        return refDynamicSourceConfiguration != null;
+    }
 
 }

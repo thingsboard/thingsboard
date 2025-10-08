@@ -82,6 +82,12 @@ enum ApiUsageRecordKeyProto {
   INACTIVE_DEVICES     = 10;
 }
 
+message EntityIdProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  EntityTypeProto type = 4;
+}
+
 /**
  * Service Discovery Data Structures;
  */
@@ -896,11 +902,25 @@ message TsRollingArgumentProto {
   repeated TsDoubleValProto tsValue = 4;
 }
 
+message GeofencingZoneProto {
+  EntityIdProto zoneId = 1;
+  int64 ts = 2;
+  string perimeterDefinition = 3;
+  int64 version = 4;
+  optional bool inside = 5;
+}
+
+message GeofencingArgumentProto {
+  string argName = 1;
+  repeated GeofencingZoneProto zones = 2;
+}
+
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   string type = 2;
   repeated SingleValueArgumentProto singleValueArguments = 3;
   repeated TsRollingArgumentProto rollingValueArguments = 4;
+  repeated GeofencingArgumentProto geofencingArguments = 5;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

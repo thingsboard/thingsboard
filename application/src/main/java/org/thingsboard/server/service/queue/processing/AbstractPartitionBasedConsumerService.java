@@ -18,6 +18,7 @@ package org.thingsboard.server.service.queue.processing;
 import jakarta.annotation.PostConstruct;
 import org.springframework.context.ApplicationEventPublisher;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
@@ -43,12 +44,13 @@ public abstract class AbstractPartitionBasedConsumerService<N extends com.google
                                                  TbTenantProfileCache tenantProfileCache,
                                                  TbDeviceProfileCache deviceProfileCache,
                                                  TbAssetProfileCache assetProfileCache,
+                                                 TbResourceDataCache tbResourceDataCache,
                                                  CalculatedFieldCache calculatedFieldCache,
                                                  TbApiUsageStateService apiUsageStateService,
                                                  PartitionService partitionService,
                                                  ApplicationEventPublisher eventPublisher,
                                                  JwtSettingsService jwtSettingsService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, tbResourceDataCache, calculatedFieldCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
     }
 
     @PostConstruct
