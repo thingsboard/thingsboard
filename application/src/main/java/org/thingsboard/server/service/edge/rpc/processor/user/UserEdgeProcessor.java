@@ -96,7 +96,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
             pushUserCreatedEventToRuleEngine(tenantId, edge, userId);
         }
 
-        Boolean userEmailUpdated = resultPair.getSecond();
+        boolean userEmailUpdated = resultPair.getSecond();
 
         if (userEmailUpdated) {
             saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.USER, EdgeEventActionType.UPDATED, userId, null);

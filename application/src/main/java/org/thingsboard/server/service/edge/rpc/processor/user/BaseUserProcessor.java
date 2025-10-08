@@ -43,16 +43,12 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         try {
             User user = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
             if (user == null) {
-                throw new RuntimeException("[{" + tenantId + "}] userUpdateMsg {" + userUpdateMsg + "} cannot be converted to user");
+                throw new IllegalArgumentException(String.format("[%s] Failed to parse User from UserUpdateMsg: %s", tenantId, userUpdateMsg));
             }
 
             User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
-            if (userById == null) {
-                isCreated = true;
-                user.setId(null);
-            } else {
-                user.setId(userId);
-            }
+            isCreated = userById == null;
+            user.setId(isCreated ? null : userId);
 
             String userEmail = user.getEmail();
             User existing = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, user.getEmail());
@@ -85,7 +81,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
     protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg updateMsg) {
         UserCredentials userCredentialsFromUpdateMsg = JacksonUtil.fromString(updateMsg.getEntity(), UserCredentials.class, true);
         if (userCredentialsFromUpdateMsg == null) {
-            throw new RuntimeException(String.format("[%s] Failed to parse UserCredentials from updateMsg: %s", tenantId, updateMsg));
+            throw new IllegalArgumentException(String.format("[%s] Failed to parse UserCredentials from updateMsg: %s", tenantId, updateMsg));
         }
 
         User user = edgeCtx.getUserService().findUserById(tenantId, userCredentialsFromUpdateMsg.getUserId());
@@ -110,7 +106,6 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             updated.setAdditionalInfo(userCredentialsFromUpdateMsg.getAdditionalInfo());
             updated.setPassword(userCredentialsFromUpdateMsg.getPassword());
             updated.setResetToken(userCredentialsFromUpdateMsg.getResetToken());
-
 
             if (created) {
                 edgeCtx.getUserService().saveUserCredentials(tenantId, updated, false);

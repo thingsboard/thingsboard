@@ -166,7 +166,6 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     @Transactional
     public User saveUser(TenantId tenantId, User user, boolean doValidate) {
-        boolean isCreatedOnCloud = doValidate;
         log.trace("Executing saveUser [{}]", user);
         User oldUser = null;
         if (doValidate) {
@@ -182,7 +181,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         try {
             savedUser = userDao.saveAndFlush(user.getTenantId(), user);
             publishEvictEvent(evictEvent);
-            if (user.getId() == null && isCreatedOnCloud) {
+            if (user.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedUser.getTenantId(), EntityType.USER);
                 UserCredentials userCredentials = new UserCredentials();
                 userCredentials.setEnabled(false);

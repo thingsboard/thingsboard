@@ -136,5 +136,4 @@ public class UserDataValidator extends DataValidator<User> {
             }
         }
     }
-
 }
