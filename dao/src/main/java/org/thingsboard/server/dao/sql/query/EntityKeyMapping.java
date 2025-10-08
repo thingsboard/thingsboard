@@ -84,7 +84,7 @@ public class EntityKeyMapping {
     public static final String SERVICE_ID = "serviceId";
     public static final String OWNER_NAME = "ownerName";
     public static final String OWNER_TYPE = "ownerType";
-    public static final String LABELED_ENTITY_DISPLAY_NAME_SELECT_QUERY = "COALESCE(NULLIF(e." + LABEL + ", ''), e." + NAME + ")";
+    public static final String LABELED_ENTITY_DISPLAY_NAME_SELECT_QUERY = "COALESCE(NULLIF(TRIM(e." + LABEL + "), ''), e." + NAME + ")";
     public static final String USER_DISPLAY_NAME_SELECT_QUERY  = "COALESCE(NULLIF(TRIM(CONCAT_WS(' ', e.first_name, e.last_name)), ''), e.email)";
     public static final String OWNER_NAME_SELECT_QUERY = "case when e.customer_id = '" + NULL_UUID + "' " +
             "then (select title from tenant where id = e.tenant_id) " +

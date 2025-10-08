@@ -148,10 +148,10 @@ public abstract class BaseEntityData<T extends EntityFields> implements EntityDa
 
     public String getDisplayName(){
         return switch (getEntityType()) {
-            case DEVICE, ASSET -> StringUtils.isNotEmpty(fields.getLabel()) ? fields.getLabel() : fields.getName();
+            case DEVICE, ASSET -> StringUtils.isNotBlank(fields.getLabel()) ? fields.getLabel() : fields.getName();
             case USER -> {
-                boolean firstNameSet = StringUtils.isNotEmpty(fields.getFirstName());
-                boolean lastNameSet = StringUtils.isNotEmpty(fields.getLastName());
+                boolean firstNameSet = StringUtils.isNotBlank(fields.getFirstName());
+                boolean lastNameSet = StringUtils.isNotBlank(fields.getLastName());
                 if(firstNameSet && lastNameSet) {
                     yield fields.getFirstName() + " " + fields.getLastName();
                 } else if(firstNameSet) {
