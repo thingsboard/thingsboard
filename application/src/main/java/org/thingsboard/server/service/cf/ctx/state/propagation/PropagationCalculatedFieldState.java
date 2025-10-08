@@ -83,15 +83,15 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
                         .type(output.getType())
                         .scope(output.getScope());
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
-        arguments.forEach((argumentName, argumentEntry) -> {
+        arguments.forEach((outputKey, argumentEntry) -> {
             if (argumentEntry instanceof PropagationArgumentEntry) {
                 return;
             }
             if (argumentEntry instanceof SingleValueArgumentEntry singleArgumentEntry) {
-                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue());
+                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), outputKey);
                 return;
             }
-            throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + argumentName + ". " +
+            throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + outputKey + ". " +
                                                "Only Latest telemetry or Attribute arguments supported for 'Arguments Only' propagation mode!");
         });
         ObjectNode result = toSimpleResult(output.getType() == OutputType.TIME_SERIES, valuesNode);

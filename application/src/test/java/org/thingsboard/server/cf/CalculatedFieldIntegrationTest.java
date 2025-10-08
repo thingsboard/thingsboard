@@ -1058,7 +1058,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         Argument arg = new Argument();
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
-        cfg.setArguments(Map.of("t", arg));
+        cfg.setArguments(Map.of("temperatureComputed", arg));
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);
@@ -1073,14 +1073,14 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperature");
-                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperature");
+                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed");
+                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed");
                     assertThat(telemetry1).isNotNull();
                     assertThat(telemetry2).isNotNull();
-                    assertThat(telemetry1.get("temperature").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
-                    assertThat(telemetry1.get("temperature").get(0).get("value").asDouble()).isEqualTo(12.5);
-                    assertThat(telemetry2.get("temperature").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
-                    assertThat(telemetry2.get("temperature").get(0).get("value").asDouble()).isEqualTo(12.5);
+                    assertThat(telemetry1.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry1.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(12.5);
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(12.5);
                 });
 
         String deleteUrl = String.format("/api/v2/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
@@ -1088,7 +1088,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 EntityRelation.CONTAINS_TYPE, device.getId().getId(), EntityType.DEVICE
         );
         doDelete(deleteUrl).andExpect(status().isOk());
-        doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/timeseries/delete?keys=temperature&deleteAllDataForKeys=true").andExpect(status().isOk());
+        doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/timeseries/delete?keys=temperatureComputed&deleteAllDataForKeys=true").andExpect(status().isOk());
 
         // Update telemetry on device
         long newTs = System.currentTimeMillis() - 300000L;
@@ -1099,13 +1099,13 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperature");
-                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperature");
+                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed");
+                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed");
                     assertThat(telemetry1).isNotNull();
                     assertThat(telemetry2).isNotNull();
-                    assertThat(telemetry1.get("temperature").get(0).get("value")).isEqualTo(NullNode.instance);
-                    assertThat(telemetry2.get("temperature").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
-                    assertThat(telemetry2.get("temperature").get(0).get("value").asDouble()).isEqualTo(25);
+                    assertThat(telemetry1.get("temperatureComputed").get(0).get("value")).isEqualTo(NullNode.instance);
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(25);
                 });
     }
 

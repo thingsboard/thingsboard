@@ -179,7 +179,7 @@ public class PropagationCalculatedFieldStateTest {
         assertThat(result.getScope()).isEqualTo(AttributeScope.SERVER_SCOPE);
 
         ObjectNode expectedNode = JacksonUtil.newObjectNode();
-        JacksonUtil.addKvEntry(expectedNode, singleValueArgEntry.getKvEntryValue());
+        JacksonUtil.addKvEntry(expectedNode, singleValueArgEntry.getKvEntryValue(), TEMPERATURE_ARGUMENT_NAME);
 
         assertThat(result.getResult()).isEqualTo(expectedNode);
     }

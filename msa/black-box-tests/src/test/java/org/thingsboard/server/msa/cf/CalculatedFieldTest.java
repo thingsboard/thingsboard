@@ -541,7 +541,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         Argument arg = new Argument();
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
-        cfg.setArguments(Map.of("t", arg));
+        cfg.setArguments(Map.of("temperatureComputed", arg));
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);
@@ -558,19 +558,19 @@ public class CalculatedFieldTest extends AbstractContainerTest {
                 .untilAsserted(() -> {
                     JsonNode temperature1 = testRestClient.getLatestTelemetry(asset1.getId());
                     assertThat(temperature1).isNotNull();
-                    assertThat(temperature1.get("temperature")).isNotNull();
-                    assertThat(temperature1.get("temperature").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
-                    assertThat(temperature1.get("temperature").get(0).get("value").asText()).isEqualTo("12.5");
+                    assertThat(temperature1.get("temperatureComputed")).isNotNull();
+                    assertThat(temperature1.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(temperature1.get("temperatureComputed").get(0).get("value").asText()).isEqualTo("12.5");
 
                     JsonNode temperature2 = testRestClient.getLatestTelemetry(asset2.getId());
                     assertThat(temperature2).isNotNull();
-                    assertThat(temperature2.get("temperature")).isNotNull();
-                    assertThat(temperature2.get("temperature").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
-                    assertThat(temperature2.get("temperature").get(0).get("value").asText()).isEqualTo("12.5");
+                    assertThat(temperature2.get("temperatureComputed")).isNotNull();
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("value").asText()).isEqualTo("12.5");
                 });
 
         testRestClient.deleteEntityRelation(asset1.getId(), EntityRelation.CONTAINS_TYPE, device.getId());
-        testRestClient.deleteEntityTimeseries(asset1.getId(), "temperature", true);
+        testRestClient.deleteEntityTimeseries(asset1.getId(), "temperatureComputed", true);
 
         // Update telemetry on device
         long newTs = System.currentTimeMillis() - 300000L;
@@ -586,9 +586,9 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
                     JsonNode temperature2 = testRestClient.getLatestTelemetry(asset2.getId());
                     assertThat(temperature2).isNotNull();
-                    assertThat(temperature2.get("temperature")).isNotNull();
-                    assertThat(temperature2.get("temperature").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
-                    assertThat(temperature2.get("temperature").get(0).get("value").asInt()).isEqualTo(25);
+                    assertThat(temperature2.get("temperatureComputed")).isNotNull();
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("value").asInt()).isEqualTo(25);
                 });
 
         testRestClient.deleteCalculatedFieldIfExists(saved.getId());
