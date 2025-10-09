@@ -468,12 +468,10 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
     --mat-paginator-disabled-icon-color: ${mdDarkDisabled};
     --mat-select-enabled-trigger-text-color: ${mdDarkSecondary};
     --mat-select-disabled-trigger-text-color: ${mdDarkDisabled};
-    --mat-table-header-headline-color: ${mdDarkSecondary};
+    --mat-table-row-item-outline-color: ${mdDarkDivider};
+    --mdc-checkbox-unselected-focus-icon-color: ${mdDarkSecondary};
 
     --tb-orig-background-color: ${origBackgroundColor};
-    --tb-secondary-text-color: ${mdDarkSecondary};
-    --tb-second-disabled-color: ${mdDarkDisabled2};
-    --tb-divider-color: ${mdDarkDivider};
     --tb-current-entity-color: ${currentEntityColor};
     --tb-current-entity-sticky-color: ${currentEntityStickyColor};
     --tb-hover-color: ${hoverColor};
