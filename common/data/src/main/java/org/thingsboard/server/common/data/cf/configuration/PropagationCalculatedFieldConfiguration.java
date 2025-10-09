@@ -50,7 +50,7 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
         propagationRestriction();
         if (!applyExpressionToResolvedArguments) {
             arguments.forEach((name, argument) -> {
-                if (argument.getRefEntityId() != null || argument.getRefDynamicSourceConfiguration() != null) {
+                if (!currentEntitySource(argument)) {
                     throw new IllegalArgumentException("Arguments in 'Arguments only' propagation mode support only the 'Current entity' source entity type!");
                 }
                 if (argument.getRefEntityKey() == null) {
@@ -61,8 +61,17 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
                                                        "Only 'Attribute' or 'Latest telemetry' arguments are allowed for 'Arguments only' propagation mode!");
                 }
             });
-        } else if (StringUtils.isBlank(expression)) {
-            throw new IllegalArgumentException("Expression must be specified for 'Expression result' propagation mode!");
+        } else {
+            boolean noneMatchCurrentEntitySource = arguments.entrySet()
+                    .stream()
+                    .noneMatch(entry -> currentEntitySource(entry.getValue()));
+            if (noneMatchCurrentEntitySource) {
+                throw new IllegalArgumentException("At least one argument must be configured with the 'Current entity' " +
+                                                   "source entity type for 'Expression result' propagation mode!");
+            }
+            if (StringUtils.isBlank(expression)) {
+                throw new IllegalArgumentException("Expression must be specified for 'Expression result' propagation mode!");
+            }
         }
     }
 
@@ -79,4 +88,9 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
             throw new IllegalArgumentException("Argument name '" + PROPAGATION_CONFIG_ARGUMENT + "' is reserved and cannot be used.");
         }
     }
+
+    private boolean currentEntitySource(Argument argument) {
+        return argument.getRefEntityId() == null && argument.getRefDynamicSourceConfiguration() == null;
+    }
+
 }

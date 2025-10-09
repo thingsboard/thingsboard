@@ -53,12 +53,25 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenConfigurationDisallowArgumentsWithDynamicReferenceConfiguration() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        Argument argumentWithRefEntityIdSet = new Argument();
-        argumentWithRefEntityIdSet.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
-        cfg.setArguments(Map.of("argumentWithRefEntityIdSet", argumentWithRefEntityIdSet));
+        Argument argumentWithDynamicRefEntitySource = new Argument();
+        argumentWithDynamicRefEntitySource.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        cfg.setArguments(Map.of("argumentWithDynamicRefEntitySource", argumentWithDynamicRefEntitySource));
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Arguments in 'Arguments only' propagation mode support only the 'Current entity' source entity type!");
+    }
+
+    @Test
+    void validateShouldThrowWhenConfigurationHasNoArgumentsWithCurrentEntitySource() {
+        var cfg = new PropagationCalculatedFieldConfiguration();
+        Argument argumentWithRefEntityIdSet = new Argument();
+        argumentWithRefEntityIdSet.setRefEntityId(new DeviceId(UUID.fromString("3703e895-3f9b-4b75-a715-b68f1ad51944")));
+        cfg.setArguments(Map.of("argumentWithRefEntityIdSet", argumentWithRefEntityIdSet));
+        cfg.setApplyExpressionToResolvedArguments(true);
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("At least one argument must be configured with the 'Current entity' " +
+                            "source entity type for 'Expression result' propagation mode!");
     }
 
     @Test
