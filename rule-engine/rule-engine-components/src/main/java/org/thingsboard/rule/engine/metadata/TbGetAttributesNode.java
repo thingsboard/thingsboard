@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -30,11 +29,8 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Slf4j
-@RuleNode(type = ComponentType.ENRICHMENT,
+@RuleNode(
+        type = ComponentType.ENRICHMENT,
         name = "originator attributes",
         configClazz = TbGetAttributesNodeConfiguration.class,
         version = 1,
@@ -43,7 +39,9 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "that are not included in the incoming message to use them for further message processing. " +
                 "For example to filter messages based on the threshold value stored in the attributes.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeOriginatorAttributesConfig")
+        configDirective = "tbEnrichmentNodeOriginatorAttributesConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-attributes/"
+)
 public class TbGetAttributesNode extends TbAbstractGetAttributesNode<TbGetAttributesNodeConfiguration, EntityId> {
 
     @Override

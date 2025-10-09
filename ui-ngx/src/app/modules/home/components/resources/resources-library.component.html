@@ -30,7 +30,7 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
+          (click)="onEntityAction($event, 'deleteResource')"
           [class.!hidden]="hideDelete() || isEdit">
     {{ 'resource.delete' | translate }}
   </button>
@@ -48,16 +48,14 @@
 <div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
-      @if (resourceTypes.length > 1) {
-        <mat-form-field class="mat-block">
-          <mat-label translate>resource.resource-type</mat-label>
-          <mat-select formControlName="resourceType" required>
-            <mat-option *ngFor="let resourceType of resourceTypes" [value]="resourceType">
-              {{ resourceTypesTranslationMap.get(resourceType) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      }
+      <mat-form-field class="mat-block">
+        <mat-label translate>resource.resource-type</mat-label>
+        <mat-select formControlName="resourceType" required>
+          <mat-option *ngFor="let resourceType of resourceTypes" [value]="resourceType">
+            {{ resourceTypesTranslationMap.get(resourceType) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
       <mat-form-field class="mat-block" *ngIf="entityForm.get('resourceType').value !== resourceType.LWM2M_MODEL || !isAdd">
         <mat-label translate>resource.title</mat-label>
         <input matInput formControlName="title" required>
