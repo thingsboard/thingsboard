@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep{
+:host {
   .tb-table-widget {
     .mat-mdc-table, .mat-mdc-paginator, mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) {
       background: transparent;
@@ -24,9 +24,6 @@
       .mat-toolbar-tools {
         height: 39px;
         max-height: 39px;
-      }
-      .mat-mdc-table-toolbar:not([color="primary"]) .mat-toolbar-tools button.mat-mdc-icon-button mat-icon {
-        color:var(--tb-secondary-text-color)
       }
     }
     .table-container {
@@ -49,33 +46,22 @@
     }
 
     .mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {
-      border-color: var(--tb-second-disabled-color);
+      border-color: var(--mat-tab-header-pagination-disabled-icon-color);
     }
   }
 
-  .mat-mdc-input-element {
-    &::placeholder,
-    &::-moz-placeholder,
-    &::-webkit-input-placeholder,
-    &::-ms-input-placeholder {
-      color: var(--tb-secondary-text-color);
-    }
+  .mat-mdc-input-element::placeholder {
+    color: var(--mat-table-header-headline-color);
   }
-  
+
   .mat-mdc-table {
     .mat-mdc-header-row {
       background-color: var(--tb-orig-background-color);
     }
 
     .mat-mdc-cell, .mat-mdc-header-cell {
-      border-bottom-color: var(--tb-divider-color);
-      &.mat-mdc-table-sticky{
-        background-color:var(--tb-orig-background-color)
-      }
-      .mat-mdc-checkbox {
-        .mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate='true']) ~ .mdc-checkbox__background {
-          border-color: var(--tb-secondary-text-color);
-        }
+      &.mat-mdc-table-sticky {
+        background-color:var(--tb-orig-background-color);
       }
     }
 
@@ -83,26 +69,25 @@
       background-color: rgba(0,0,0,0); 
       &.tb-current-entity {
         background-color: var(--tb-current-entity-color);
-
         .mat-mdc-cell.mat-mdc-table-sticky {
           background-color: var(--tb-current-entity-sticky-color);
         }
       }
       &:hover:not(.tb-current-entity){
         background-color: var(--tb-hover-color);
-        .mat-mdc-cell.mat-mdc-table-sticky{
+        .mat-mdc-cell.mat-mdc-table-sticky {
           background-color: var(--tb-hover-sticky-color);
         }
       }
       &.mat-row-select.mat-selected:not(.tb-current-entity){
         background-color: var(--tb-selected-color);
-        .mat-mdc-cell.mat-mdc-table-sticky{
+        .mat-mdc-cell.mat-mdc-table-sticky {
           background-color: var(--tb-selected-sticky-color);
         }
       }
-      .mat-mdc-cell.mat-mdc-table-sticky {
+      &, .mat-mdc-cell.mat-mdc-table-sticky {
         transition: background-color .2s;
-        background-color:var(--tb-orig-background-color)
+        background-color:var(--tb-orig-background-color);
       }
     }
   } 
