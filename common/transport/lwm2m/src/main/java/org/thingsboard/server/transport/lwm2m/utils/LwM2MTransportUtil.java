@@ -82,6 +82,8 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
     public static final int BOOTSTRAP_DEFAULT_SHORT_ID_0 = 0;
+    public static final int LWM2M_DEFAULT_SHORT_ID_1 = 1;
+    public static final int LWM2M_DEFAULT_SHORT_ID_65534 = 65534;
 
     public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
         String path = fromVersionedIdToObjectId(pathIdVer);

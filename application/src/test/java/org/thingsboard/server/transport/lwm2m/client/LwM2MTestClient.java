@@ -88,10 +88,7 @@ import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder.getDefaultPathEncoder;
-import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverId;
-import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverIdBs;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.shortServerId;
-import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.shortServerIdBs0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
@@ -169,31 +166,29 @@ public class LwM2MTestClient {
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         if (securityBs != null && security != null) {
-            // SECURITY
-            security.setId(serverId);
-            securityBs.setId(serverIdBs);
+            // SECURITIES
+            securityBs.setId(0);
+            security.setId(1);
             LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{securityBs, security};
-            initializer.setClassForObject(SECURITY, Security.class);
             initializer.setInstancesForObject(SECURITY, instances);
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(serverId);
-            Server serverBs = new Server(shortServerIdBs0, TimeUnit.MINUTES.toSeconds(60));
-            serverBs.setId(serverIdBs);
-            instances = new LwM2mInstanceEnabler[]{serverBs, lwm2mServer};
-            initializer.setClassForObject(SERVER, Server.class);
+            lwm2mServer.setId(0);
+            instances = new LwM2mInstanceEnabler[]{lwm2mServer};
+
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
             // SECURITY
-            initializer.setInstancesForObject(SECURITY, securityBs);
-            // SERVER
+            securityBs.setId(0);
             initializer.setClassForObject(SERVER, Server.class);
+            initializer.setInstancesForObject(SECURITY, securityBs);
         } else {
             // SECURITY
+            security.setId(0);
             initializer.setInstancesForObject(SECURITY, security);
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(serverId);
+            lwm2mServer.setId(0);
             initializer.setInstancesForObject(SERVER, lwm2mServer);
         }
 

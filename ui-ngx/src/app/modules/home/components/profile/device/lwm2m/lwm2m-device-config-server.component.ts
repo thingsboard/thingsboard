@@ -104,7 +104,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       clientHoldOffTime: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       shortServerId: ['', this.isBootstrap
         ? [Validators.required, Validators.pattern('^(' + this.shortServerIdBsMin+ '|' + this.shortServerIdBsMax + ')$' )]
-        : [Validators.required, Validators.pattern('[0-9]*'),Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax)]
+        : [Validators.required, Validators.pattern('[0-9]*'), Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax)]
       ],
       bootstrapServerAccountTimeout: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       binding: [''],
