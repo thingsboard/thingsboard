@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -30,7 +29,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "customer attributes",
@@ -41,7 +39,9 @@ import org.thingsboard.server.common.data.util.TbPair;
                 "that is stored as customer attributes or telemetry data and used for dynamic message filtering, transformation, " +
                 "or actions such as alarm creation if the threshold is exceeded.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeCustomerAttributesConfig")
+        configDirective = "tbEnrichmentNodeCustomerAttributesConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/customer-attributes/"
+)
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
 
     private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id: %s and type: %s";

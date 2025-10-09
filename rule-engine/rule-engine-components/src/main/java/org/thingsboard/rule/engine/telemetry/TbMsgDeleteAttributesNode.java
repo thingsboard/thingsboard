@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -35,7 +34,6 @@ import java.util.stream.Collectors;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "delete attributes",
@@ -46,7 +44,8 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
                 " rule node will send the \"Attributes Deleted\" event to the root chain of the message originator and " +
                 " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
         configDirective = "tbActionNodeDeleteAttributesConfig",
-        icon = "remove_circle"
+        icon = "remove_circle",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/delete-attributes/"
 )
 public class TbMsgDeleteAttributesNode implements TbNode {
 
@@ -55,8 +54,8 @@ public class TbMsgDeleteAttributesNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesNodeConfiguration.class);
-        this.keys = config.getKeys();
+        config = TbNodeUtils.convert(configuration, TbMsgDeleteAttributesNodeConfiguration.class);
+        keys = config.getKeys();
     }
 
     @Override

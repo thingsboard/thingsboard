@@ -55,7 +55,8 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
                 "'Device', 'Asset', 'Entity View', 'Edge' or 'User'.</li></ul>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeChangeOriginatorConfig",
-        icon = "find_replace"
+        icon = "find_replace",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/change-originator/"
 )
 public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOriginatorNodeConfiguration> {
 

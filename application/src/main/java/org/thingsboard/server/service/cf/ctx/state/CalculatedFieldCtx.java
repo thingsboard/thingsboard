@@ -180,6 +180,7 @@ public class CalculatedFieldCtx {
                     initTbelExpression(expression);
                     initialized = true;
                 } catch (Exception e) {
+                    initialized = false;
                     throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
                 }
             }
@@ -273,6 +274,7 @@ public class CalculatedFieldCtx {
             );
             simpleExpressions.put(expression, compiledExpression);
         } else {
+            initialized = false;
             throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
         }
     }

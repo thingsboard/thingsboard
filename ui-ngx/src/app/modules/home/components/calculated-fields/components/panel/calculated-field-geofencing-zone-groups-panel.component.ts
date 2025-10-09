@@ -16,7 +16,15 @@
 
 import { AfterViewInit, ChangeDetectorRef, Component, Input, OnInit, output, ViewChild } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { FormBuilder, FormControl, FormGroup, ValidatorFn, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  FormBuilder,
+  FormControl,
+  FormGroup,
+  UntypedFormArray,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { charsWithNumRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import {
   ArgumentEntityType,
@@ -25,14 +33,15 @@ import {
   CalculatedFieldGeofencing,
   CalculatedFieldGeofencingValue,
   CalculatedFieldType,
+  GeofencingDirectionLevelTranslations,
   GeofencingDirectionTranslations,
   GeofencingReportStrategy,
   GeofencingReportStrategyTranslations,
   getCalculatedFieldCurrentEntityFilter
 } from '@shared/models/calculated-field.models';
-import { debounceTime, delay, distinctUntilChanged, filter, map } from 'rxjs/operators';
+import { debounceTime, delay, distinctUntilChanged, map } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityFilter } from '@shared/models/query/query.models';
@@ -44,6 +53,7 @@ import { Store } from '@ngrx/store';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { EntitySearchDirection } from '@shared/models/relation.models';
+import { CdkDragDrop } from "@angular/cdk/drag-drop";
 
 @Component({
   selector: 'tb-calculated-field-geofencing-zone-groups-panel',
@@ -73,12 +83,9 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
       id: ['']
     }),
     refDynamicSourceConfiguration: this.fb.group({
-      direction: [EntitySearchDirection.TO],
-      relationType: ['', [Validators.required]],
-      maxLevel: [1, [Validators.required, Validators.min(1), Validators.max(this.maxRelationLevelPerCfArgument)]],
-      fetchLastLevelOnly: [false],
+      levels: this.fb.array([], [this.levelsRequired()])
     }),
-    perimeterKeyName: ['', [Validators.pattern(oneSpaceInsideRegex)]],
+    perimeterKeyName: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex)]],
     reportStrategy: [GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS],
     createRelationsWithMatchedZones: [false],
     direction: [EntitySearchDirection.TO],
@@ -97,6 +104,8 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   readonly GeofencingReportStrategyTranslations = GeofencingReportStrategyTranslations;
   readonly GeofencingDirectionList = Object.values(EntitySearchDirection) as Array<EntitySearchDirection>;
   readonly GeofencingDirectionTranslations = GeofencingDirectionTranslations;
+  readonly GeofencingDirectionLevelTranslations = GeofencingDirectionLevelTranslations;
+  readonly AttributeScope = AttributeScope;
 
   private currentEntityFilter: EntityFilter;
 
@@ -107,7 +116,6 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     private store: Store<AppState>
   ) {
 
-    this.observeMaxLevelChanges();
     this.observeEntityFilterChanges();
     this.observeEntityTypeChanges();
     this.observeUpdatePosition();
@@ -131,7 +139,16 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     if (this.zone.refDynamicSourceConfiguration?.type) {
       this.refEntityIdFormGroup.get('entityType').setValue(this.zone.refDynamicSourceConfiguration.type, {emitEvent: false});
     }
-    this.validateFetchLastLevelOnly(this.zone?.refDynamicSourceConfiguration?.maxLevel);
+    if (this.zone?.refDynamicSourceConfiguration?.levels?.length > 0) {
+      this.zone.refDynamicSourceConfiguration.levels.forEach(level => {
+        this.levelsFormArray().push(this.fb.group({
+          direction: [level.direction],
+          relationType: [level.relationType, [Validators.required]]
+        }));
+      })
+    } else {
+      this.addKey();
+    }
     this.validateDirectionAndRelationType(this.zone?.createRelationsWithMatchedZones);
     this.validateRefDynamicSourceConfiguration(this.zone?.refEntityId?.entityType || this.zone?.refDynamicSourceConfiguration?.type);
 
@@ -241,17 +258,19 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   private observeEntityFilterChanges(): void {
     merge(
       this.refEntityIdFormGroup.get('entityType').valueChanges,
-      this.refEntityIdFormGroup.get('id').valueChanges.pipe(filter(Boolean)),
+      this.refEntityIdFormGroup.get('id').valueChanges,
     )
       .pipe(debounceTime(50), takeUntilDestroyed())
       .subscribe(() => this.updateEntityFilter(this.entityType));
+
+    this.refEntityIdFormGroup.get('id').valueChanges.pipe(distinctUntilChanged(), takeUntilDestroyed()).subscribe(() => this.geofencingFormGroup.get('perimeterKeyName').reset(''));
   }
 
   private observeEntityTypeChanges(): void {
     this.refEntityIdFormGroup.get('entityType').valueChanges
       .pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(type => {
-        this.geofencingFormGroup.get('refEntityId').get('id').setValue('');
+        this.geofencingFormGroup.get('refEntityId').get('id').setValue(null);
         const isEntityWithId = type !== ArgumentEntityType.Tenant && type !== ArgumentEntityType.Current && type !== ArgumentEntityType.RelationQuery;
         this.geofencingFormGroup.get('refEntityId')
           .get('id')[isEntityWithId ? 'enable' : 'disable']();
@@ -271,6 +290,12 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     };
   }
 
+  private levelsRequired(): ValidatorFn {
+    return (control: FormControl) => {
+      return control.value.length ? null : { levelsRequired: true };
+    };
+  }
+
   private forbiddenNameValidator(): ValidatorFn {
     return (control: FormControl) => {
       const trimmedValue = control.value.trim().toLowerCase();
@@ -282,10 +307,40 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   private observeUpdatePosition(): void {
     merge(
       this.refEntityIdFormGroup.get('entityType').valueChanges,
+      this.refEntityIdFormGroup.get('id').valueChanges,
       this.geofencingFormGroup.get('createRelationsWithMatchedZones').valueChanges
     )
       .pipe(delay(50), takeUntilDestroyed())
       .subscribe(() => this.popover.updatePosition());
   }
 
+  levelsFormArray(): UntypedFormArray {
+    return this.refDynamicSourceFormGroup.get('levels') as UntypedFormArray;
+  }
+
+  trackByKey(index: number, keyControl: AbstractControl): any {
+    return keyControl;
+  }
+
+  removeKey(index: number) {
+    this.levelsFormArray().removeAt(index);
+  }
+
+  addKey() {
+    this.levelsFormArray().push(this.fb.group({
+      direction: [EntitySearchDirection.TO],
+      relationType: ['', [Validators.required]]
+    }));
+  }
+
+  keyDrop(event: CdkDragDrop<string[]>) {
+    const keysArray = this.levelsFormArray();
+    const key = keysArray.at(event.previousIndex);
+    keysArray.removeAt(event.previousIndex);
+    keysArray.insert(event.currentIndex, key);
+  }
+
+  get dragEnabled(): boolean {
+    return this.levelsFormArray().controls.length > 1;
+  }
 }

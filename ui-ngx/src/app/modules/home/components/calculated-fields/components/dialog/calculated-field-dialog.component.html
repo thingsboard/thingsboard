@@ -160,12 +160,16 @@
                                                               [tenantId]="data.tenantId"
                                                               [entityName]="data.entityName"/>
             <div class="tb-form-row space-between flex-1 columns-xs" [class.!hidden]="!isRelatedEntity">
-              <div tb-hint-tooltip-icon="{{'calculated-fields.hint.zone-group-refresh-interval' | translate}}">{{ 'calculated-fields.zone-group-refresh-interval' | translate }}</div>
+              <mat-slide-toggle class="mat-slide" formControlName="scheduledUpdateEnabled">
+                <div tb-hint-tooltip-icon="{{'calculated-fields.hint.zone-group-refresh-interval' | translate}}">
+                  {{ 'calculated-fields.zone-group-refresh-interval' | translate }}
+                </div>
+              </mat-slide-toggle>
               <div class="flex flex-row items-center justify-start gap-2">
                 <tb-time-unit-input required
                                     inlineField
                                     requiredText="{{ 'calculated-fields.hint.zone-group-refresh-interval-required' | translate }}"
-                                    minErrorText="{{ 'calculated-fields.hint.zone-group-refresh-interval-min' | translate }}"
+                                    minErrorText="{{ 'calculated-fields.hint.zone-group-refresh-interval-min' | translate: {min: minAllowedScheduledUpdateIntervalInSecForCF}  }}"
                                     [minTime]="minAllowedScheduledUpdateIntervalInSecForCF"
                                     formControlName="scheduledUpdateInterval">
                 </tb-time-unit-input>
