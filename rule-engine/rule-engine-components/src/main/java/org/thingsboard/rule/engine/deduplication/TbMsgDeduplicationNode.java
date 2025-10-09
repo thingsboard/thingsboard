@@ -46,6 +46,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 
+@Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "deduplication",
@@ -59,9 +60,9 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
                 "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
                 "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>",
         icon = "content_copy",
-        configDirective = "tbTransformationNodeDeduplicationConfig"
+        configDirective = "tbTransformationNodeDeduplicationConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/deduplication/"
 )
-@Slf4j
 public class TbMsgDeduplicationNode implements TbNode {
 
     public static final long TB_MSG_DEDUPLICATION_RETRY_DELAY = 10L;
