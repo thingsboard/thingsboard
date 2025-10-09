@@ -310,7 +310,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         String sql = buildRelationPathSql(query);
         Object[] params = buildRelationPathParams(query, limit);
 
-        log.info("[{}] relation path query: {}", tenantId, sql);
+        log.trace("[{}] relation path query: {}", tenantId, sql);
 
         return jdbcTemplate.queryForList(sql, params).stream()
                 .map(row -> {
