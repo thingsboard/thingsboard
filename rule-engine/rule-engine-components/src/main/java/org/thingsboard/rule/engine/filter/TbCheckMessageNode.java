@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.filter;
 
 import com.google.gson.Gson;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -30,7 +29,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.Map;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
         name = "check fields presence",
@@ -40,7 +38,9 @@ import java.util.Map;
         nodeDetails = "By default, the rule node checks that all specified fields are present. " +
                 "Uncheck the 'Check that all selected fields are present' if the presence of at least one field is sufficient.<br><br>" +
                 "Output connections: <code>True</code>, <code>False</code>, <code>Failure</code>",
-        configDirective = "tbFilterNodeCheckMessageConfig")
+        configDirective = "tbFilterNodeCheckMessageConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/check-fields-presence/"
+)
 public class TbCheckMessageNode implements TbNode {
 
     private static final Gson gson = new Gson();

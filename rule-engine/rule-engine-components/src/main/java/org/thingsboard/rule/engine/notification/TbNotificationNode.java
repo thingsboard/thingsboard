@@ -42,7 +42,8 @@ import java.util.concurrent.ExecutionException;
         nodeDescription = "Sends notification to targets using the template",
         nodeDetails = "Will send notification to the specified targets using the template",
         configDirective = "tbExternalNodeNotificationConfig",
-        icon = "notifications"
+        icon = "notifications",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-notification/"
 )
 public class TbNotificationNode extends TbAbstractExternalNode {
 
@@ -51,7 +52,7 @@ public class TbNotificationNode extends TbAbstractExternalNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
-        this.config = TbNodeUtils.convert(configuration, TbNotificationNodeConfiguration.class);
+        config = TbNodeUtils.convert(configuration, TbNotificationNodeConfiguration.class);
     }
 
     @Override

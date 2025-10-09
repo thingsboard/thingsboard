@@ -16,16 +16,13 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -41,7 +38,6 @@ import java.util.Map;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "calculated fields",
@@ -52,16 +48,13 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
                 "This rule node accepts the same messages as these nodes but allows you to trigger the processing of calculated " +
                 "fields independently, ensuring that derived data can be computed and utilized in real time without storing the original message in the database.",
         configDirective = "tbNodeEmptyConfig",
-        icon = "published_with_changes"
+        icon = "published_with_changes",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/calculated-fields/"
 )
 public class TbCalculatedFieldsNode implements TbNode {
 
-    private EmptyNodeConfiguration config;
-
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
-    }
+    public void init(TbContext ctx, TbNodeConfiguration configuration) {}
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {

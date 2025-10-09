@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.telemetry;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -52,7 +51,6 @@ import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessin
 import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.WebSocketsOnly;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "save time series",
@@ -103,7 +101,8 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_RE
                 """,
         configDirective = "tbActionNodeTimeseriesConfig",
         icon = "file_upload",
-        version = 1
+        version = 1,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/save-timeseries/"
 )
 public class TbMsgTimeseriesNode implements TbNode {
 
