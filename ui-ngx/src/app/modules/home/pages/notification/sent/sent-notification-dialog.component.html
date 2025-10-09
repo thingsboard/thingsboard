@@ -171,11 +171,11 @@
             </div>
           </div>
           <mat-divider class="divider"></mat-divider>
-          <mat-chip-grid>
+          <mat-chip-set>
             <mat-chip-row class="tb-chip-row-ellipsis" *ngFor="let recipientTitle of preview.recipientsPreview">
               <span>{{ recipientTitle }}</span>
             </mat-chip-row>
-          </mat-chip-grid>
+          </mat-chip-set>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.WEB?.enabled">
           <div class="flex flex-row items-center justify-start gap-2">
