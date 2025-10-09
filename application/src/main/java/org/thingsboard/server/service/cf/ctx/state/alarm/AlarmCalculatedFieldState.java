@@ -90,6 +90,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private Alarm currentAlarm;
     private boolean initialFetchDone;
 
+    // TODO: deprecate device profile node, describe the differences and improvements
+
     public AlarmCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
@@ -107,7 +109,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public void init() { // todo: properly close state!
+    public void init() {
         super.init();
         AtomicBoolean reevalNeeded = new AtomicBoolean(false);
         Map<AlarmSeverity, AlarmRule> createRules = configuration.getCreateRules();
@@ -143,7 +145,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                     AlarmEvalResult evalResult = state.reeval(System.currentTimeMillis());
                     if (evalResult.getStatus() == TRUE || evalResult.getStatus() == NOT_YET_TRUE) {
                         ScheduledFuture<?> future = ctx.scheduleReevaluation(evalResult.getLeftDuration(), actorCtx);
-                        // TODO: use single task for multiple durations if durations are close enough. but be careful when cancelling the task in one of the states
                         if (future != null) {
                             state.setDurationCheckFuture(future);
                         }
@@ -168,14 +169,18 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
-        return super.update(argumentValues, ctx);
-    }
-
-    @Override
     public void reset() {
         super.reset();
         configuration = null;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        for (AlarmRuleState state : createRuleStates.values()) {
+            clearState(state);
+        }
+        clearState(clearRuleState);
     }
 
     @Override
@@ -186,10 +191,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 boolean newEvent = !updatedArgs.isEmpty();
                 AlarmEvalResult evalResult = state.eval(newEvent, ctx);
                 if (evalResult.getStatus() == NOT_YET_TRUE && evalResult.getLeftDuration() > 0) {
-                    // rounding up to the closest second
-//                    long leftDuration = (long) Math.ceil(evalResult.getLeftDuration() / 1000.0) * 1000;
                     long leftDuration = evalResult.getLeftDuration();
-                    ScheduledFuture<?> future = ctx.scheduleReevaluation(leftDuration, actorCtx); // TODO: use single task for multiple durations if durations are close enough. but be careful when cancelling the task in one of the states
+                    ScheduledFuture<?> future = ctx.scheduleReevaluation(leftDuration, actorCtx);
                     if (future != null) {
                         state.setDurationCheckFuture(future);
                     }

@@ -23,13 +23,14 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
+import java.io.Closeable;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 @Getter
-public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
+public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
 
     protected final EntityId entityId;
     protected CalculatedFieldCtx ctx;
@@ -116,6 +117,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             sizeExceedsLimit = true;
         }
     }
+
+    @Override
+    public void close() {}
 
     protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
 
