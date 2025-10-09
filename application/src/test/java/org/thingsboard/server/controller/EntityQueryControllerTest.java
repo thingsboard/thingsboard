@@ -432,14 +432,17 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         List<EntityKey> alarmFields = new ArrayList<>();
         alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "type"));
+        alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "originatorDisplayName"));
 
         EntityTypeFilter assetTypeFilter = new EntityTypeFilter();
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
 
         PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
-        List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
+        List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(AlarmData::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
+        List<String> retrievedAlarmDisplayName = alarmPageData.getData().stream().map(AlarmData::getOriginatorDisplayName).toList();
+        assertThat(retrievedAlarmDisplayName).containsExactlyInAnyOrderElementsOf(assets.stream().map(Asset::getLabel).toList());
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
