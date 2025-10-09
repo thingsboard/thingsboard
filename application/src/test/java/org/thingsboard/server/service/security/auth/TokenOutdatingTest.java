@@ -114,12 +114,12 @@ public class TokenOutdatingTest {
         // Token outdatage time is rounded to 1 sec. Need to wait before outdating so that outdatage time is strictly after token issue time
         SECONDS.sleep(1);
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
-        assertTrue(tokenOutdatingService.isOutdated(jwtToken.getToken(), securityUser.getId()));
+        assertTrue(tokenOutdatingService.isOutdated(jwtToken.token(), securityUser.getId()));
 
         SECONDS.sleep(1);
 
         JwtToken newJwtToken = tokenFactory.createAccessJwtToken(securityUser);
-        assertFalse(tokenOutdatingService.isOutdated(newJwtToken.getToken(), securityUser.getId()));
+        assertFalse(tokenOutdatingService.isOutdated(newJwtToken.token(), securityUser.getId()));
     }
 
     @Test
@@ -229,7 +229,7 @@ public class TokenOutdatingTest {
 
 
     private RawAccessJwtToken getRawJwtToken(JwtToken token) {
-        return new RawAccessJwtToken(token.getToken());
+        return new RawAccessJwtToken(token.token());
     }
 
     private SecurityUser createMockSecurityUser(UserId userId) {
@@ -241,4 +241,5 @@ public class TokenOutdatingTest {
         securityUser.setSessionId(UUID.randomUUID().toString());
         return securityUser;
     }
+
 }
