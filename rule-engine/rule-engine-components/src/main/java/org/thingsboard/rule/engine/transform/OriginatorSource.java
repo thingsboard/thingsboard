@@ -20,5 +20,6 @@ public enum OriginatorSource {
     TENANT,
     RELATED,
     ALARM_ORIGINATOR,
-    ENTITY
+    ENTITY,
+    ID
 }

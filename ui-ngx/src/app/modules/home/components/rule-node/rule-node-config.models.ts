@@ -23,7 +23,8 @@ export enum OriginatorSource {
   TENANT = 'TENANT',
   RELATED = 'RELATED',
   ALARM_ORIGINATOR = 'ALARM_ORIGINATOR',
-  ENTITY = 'ENTITY'
+  ENTITY = 'ENTITY',
+  ID = 'ID',
 }
 
 export interface OriginatorValuesDescriptions {
@@ -39,6 +40,7 @@ export const originatorSourceTranslations = new Map<OriginatorSource, string>(
     [OriginatorSource.RELATED, 'rule-node-config.originator-related'],
     [OriginatorSource.ALARM_ORIGINATOR, 'rule-node-config.originator-alarm-originator'],
     [OriginatorSource.ENTITY, 'rule-node-config.originator-entity'],
+    [OriginatorSource.ID, 'rule-node-config.originator-id'],
   ]
 );
 
@@ -49,6 +51,7 @@ export const originatorSourceDescTranslations = new Map<OriginatorSource, string
     [OriginatorSource.RELATED, 'rule-node-config.originator-related-entity-desc'],
     [OriginatorSource.ALARM_ORIGINATOR, 'rule-node-config.originator-alarm-originator-desc'],
     [OriginatorSource.ENTITY, 'rule-node-config.originator-entity-by-name-pattern-desc'],
+    [OriginatorSource.ID, 'rule-node-config.originator-entity-by-id-desc'],
   ]
 );
 export const allowedOriginatorFields: EntityField[] = [
