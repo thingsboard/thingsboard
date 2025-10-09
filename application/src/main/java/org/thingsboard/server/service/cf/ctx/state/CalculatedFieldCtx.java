@@ -498,12 +498,8 @@ public class CalculatedFieldCtx {
     }
 
     public boolean hasContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state reinit and will be picked up by the state on the fly
-        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration expressionConfig) {
-            boolean shouldCompareExpression = !(expressionConfig instanceof PropagationCalculatedFieldConfiguration propagationConfig)
-                                              || propagationConfig.isApplyExpressionToResolvedArguments();
-            if (shouldCompareExpression && !expression.equals(other.expression)) {
-                return true;
-            }
+        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !Objects.equals(expression, other.expression)) {
+            return true;
         }
         if (!output.equals(other.output)) {
             return true;

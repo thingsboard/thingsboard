@@ -50,6 +50,9 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
         propagationRestriction();
         if (!applyExpressionToResolvedArguments) {
             arguments.forEach((name, argument) -> {
+                if (argument.getRefEntityId() != null || argument.getRefDynamicSourceConfiguration() != null) {
+                    throw new IllegalArgumentException("Arguments in 'Arguments only' propagation mode support only the 'Current entity' source entity type!");
+                }
                 if (argument.getRefEntityKey() == null) {
                     throw new IllegalArgumentException("Argument: '" + name + "' doesn't have reference entity key configured!");
                 }

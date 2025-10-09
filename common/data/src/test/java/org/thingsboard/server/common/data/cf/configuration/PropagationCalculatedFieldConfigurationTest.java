@@ -19,10 +19,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -35,6 +37,28 @@ public class PropagationCalculatedFieldConfigurationTest {
     void typeShouldBePropagation() {
         var cfg = new PropagationCalculatedFieldConfiguration();
         assertThat(cfg.getType()).isEqualTo(CalculatedFieldType.PROPAGATION);
+    }
+
+    @Test
+    void validateShouldThrowWhenConfigurationDisallowArgumentsWithReferencedEntity() {
+        var cfg = new PropagationCalculatedFieldConfiguration();
+        Argument argumentWithRefEntityIdSet = new Argument();
+        argumentWithRefEntityIdSet.setRefEntityId(new DeviceId(UUID.fromString("bda14084-f40e-4acc-9b85-9d1dd209bb64")));
+        cfg.setArguments(Map.of("argumentWithRefEntityIdSet", argumentWithRefEntityIdSet));
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Arguments in 'Arguments only' propagation mode support only the 'Current entity' source entity type!");
+    }
+
+    @Test
+    void validateShouldThrowWhenConfigurationDisallowArgumentsWithDynamicReferenceConfiguration() {
+        var cfg = new PropagationCalculatedFieldConfiguration();
+        Argument argumentWithRefEntityIdSet = new Argument();
+        argumentWithRefEntityIdSet.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        cfg.setArguments(Map.of("argumentWithRefEntityIdSet", argumentWithRefEntityIdSet));
+        assertThatThrownBy(cfg::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Arguments in 'Arguments only' propagation mode support only the 'Current entity' source entity type!");
     }
 
     @Test
