@@ -176,13 +176,8 @@ public class CalculatedFieldCtx {
     public void init() {
         switch (cfType) {
             case SCRIPT -> {
-                try {
-                    initTbelExpression(expression);
-                    initialized = true;
-                } catch (Exception e) {
-                    initialized = false;
-                    throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
-                }
+                initTbelExpression(expression);
+                initialized = true;
             }
             case GEOFENCING -> initialized = true;
             case SIMPLE -> {
@@ -205,8 +200,7 @@ public class CalculatedFieldCtx {
         }
     }
 
-    public double evaluateSimpleExpression(String expressionStr, CalculatedFieldState state) {
-        Expression expression = simpleExpressions.get(expressionStr).get();
+    public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {
         for (Map.Entry<String, ArgumentEntry> entry : state.getArguments().entrySet()) {
             try {
                 BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
@@ -225,6 +219,10 @@ public class CalculatedFieldCtx {
     }
 
     public ListenableFuture<Object> evaluateTbelExpression(String expression, CalculatedFieldState state) {
+        return evaluateTbelExpression(tbelExpressions.get(expression), state);
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(CalculatedFieldScriptEngine expression, CalculatedFieldState state) {
         Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
         List<Object> args = new ArrayList<>(argNames.size() + 1);
         args.add(new Object()); // first element is a ctx, but we will set it later;
@@ -239,7 +237,7 @@ public class CalculatedFieldCtx {
         }
         args.set(0, new TbelCfCtx(arguments, state.getLatestTimestamp()));
 
-        return tbelExpressions.get(expression).executeScriptAsync(args.toArray());
+        return expression.executeScriptAsync(args.toArray());
     }
 
     public ScheduledFuture<?> scheduleReevaluation(long delayMs, TbActorRef actorCtx) {
@@ -258,8 +256,13 @@ public class CalculatedFieldCtx {
         } else if (tbelExpressions.containsKey(expression)) {
             return;
         }
-        CalculatedFieldScriptEngine engine = initEngine(tenantId, expression, tbelInvokeService);
-        tbelExpressions.put(expression, engine);
+        try {
+            CalculatedFieldScriptEngine engine = initEngine(tenantId, expression, tbelInvokeService);
+            tbelExpressions.put(expression, engine);
+        } catch (Exception e) {
+            initialized = false;
+            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+        }
     }
 
     private void initSimpleExpression(String expression) {
