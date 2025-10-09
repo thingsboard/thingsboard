@@ -43,6 +43,7 @@ import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.HashMap;
 import java.util.List;
@@ -226,12 +227,12 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
         return Futures.transform(attributeOptFuture, attrOpt -> {
             log.debug("[{}][{}] Fetched attribute for key {}: {}", tenantId, entityId, argument.getRefEntityKey(), attrOpt);
-            AttributeKvEntry attributeKvEntry = attrOpt.orElseGet(() -> new BaseAttributeKvEntry(createDefaultKvEntry(argument), defaultLastUpdateTs, 0L));
+            AttributeKvEntry attributeKvEntry = attrOpt.orElseGet(() -> new BaseAttributeKvEntry(createDefaultKvEntry(argument), defaultLastUpdateTs, SingleValueArgumentEntry.DEFAULT_VERSION));
             return transformSingleValueArgument(Optional.of(attributeKvEntry));
         }, calculatedFieldCallbackExecutor);
     }
 
-    protected ListenableFuture<ArgumentEntry> fetchTsLatest(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
+    protected ListenableFuture<ArgumentEntry> fetchTsLatest(TenantId tenantId, EntityId entityId, Argument argument, long defaultTs) {
         String timeseriesKey = argument.getRefEntityKey().getKey();
         log.trace("[{}][{}] Fetching latest timeseries {}", tenantId, entityId, timeseriesKey);
         return transformSingleValueArgument(
@@ -239,7 +240,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                         timeseriesService.findLatest(tenantId, entityId, timeseriesKey),
                         result -> {
                             log.debug("[{}][{}] Fetched latest timeseries {}: {}", tenantId, entityId, timeseriesKey, result);
-                            return result.or(() -> Optional.of(new BasicTsKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument), 0L)));
+                            return result.or(() -> Optional.of(new BasicTsKvEntry(defaultTs, createDefaultKvEntry(argument), SingleValueArgumentEntry.DEFAULT_VERSION)));
                         }, calculatedFieldCallbackExecutor));
     }
 

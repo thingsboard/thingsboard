@@ -300,8 +300,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private TbAlarmResult calculateAlarmResult(AlarmRuleState ruleState, CalculatedFieldCtx ctx) {
         AlarmSeverity severity = ruleState.getSeverity();
         if (currentAlarm != null) {
-            // TODO: In some extremely rare cases, we might miss the event of alarm clear (If one use in-mem queue and restarted the server) or (if one manipulated the rule chain).
-            // Maybe we should fetch alarm every time?
             currentAlarm.setEndTs(System.currentTimeMillis());
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
             // Skip update if severity is decreased.
