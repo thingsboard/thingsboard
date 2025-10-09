@@ -604,7 +604,41 @@ public class AlarmRulesTest extends AbstractControllerTest {
         });
     }
 
-    // todo: test alarm details
+    @Test
+    public void testAlarmDetails() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Argument humidityArgument = new Argument();
+        humidityArgument.setRefEntityKey(new ReferencedEntityKey("humidity", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        humidityArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument,
+                "humidity", humidityArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50 && humidity >= 50;", null, null)
+        );
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature and Humidity Alarm",
+                arguments, createRules, null);
+        AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+        configuration.getCreateRules().get(AlarmSeverity.CRITICAL).setAlarmDetails("""
+                temperature is ${temperature}, humidity is ${humidity}""");
+        calculatedField = saveCalculatedField(calculatedField);
+
+        postTelemetry(deviceId, "{\"temperature\":50}");
+        postAttributes(deviceId, AttributeScope.SERVER_SCOPE, "{\"humidity\":50}");
+
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getDetails().get("data").asText())
+                    .isEqualTo("temperature is 50, humidity is 50");
+        });
+    }
+
+    // TODO: MSA tests
 
     private void checkAlarmResult(CalculatedField calculatedField, Consumer<TbAlarmResult> assertion) {
         TbAlarmResult alarmResult = await().atMost(TIMEOUT, TimeUnit.SECONDS)
