@@ -84,6 +84,20 @@
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>protoc-java</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <checkStaleness>false</checkStaleness>
+                    <clearOutputDirectory>false</clearOutputDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>

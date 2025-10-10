@@ -159,10 +159,10 @@
         <module>transport</module>
         <module>ui-ngx</module>
         <module>tools</module>
-        <module>application</module>
-        <module>msa</module>
         <module>rest-client</module>
         <module>monitoring</module>
+        <module>application</module>
+        <module>msa</module>
     </modules>
 
     <profiles>
@@ -607,7 +607,7 @@
                     <configuration>
                         <release>17</release>
                         <compilerArgs>
-                            <arg>-Xlint:deprecation</arg>
+                            <arg>-Xlint:deprecation</arg>                                                 
                             <arg>-Xlint:removal</arg>
                             <arg>-Xlint:unchecked</arg>
                             <arg>-parameters</arg>
