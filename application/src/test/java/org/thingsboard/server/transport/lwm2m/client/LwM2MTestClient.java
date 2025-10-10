@@ -68,6 +68,7 @@ import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandle
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -77,6 +78,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RECOMMENDED_CIPHER_SUITES_ONLY;
@@ -146,25 +148,9 @@ public class LwM2MTestClient {
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
 
-        List<ObjectModel> models = ObjectLoader.loadAllDefault();
-        for (String resourceName : lwm2mClientResources) {
-            models.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
-        }
-        if (this.modelResources != null) {
-            List<ObjectModel> modelsRes = new ArrayList<>();
-            for (String resourceName : this.modelResources) {
-                modelsRes.addAll(ObjectLoader.loadDdfFile(LwM2MTestClient.class.getClassLoader().getResourceAsStream("lwm2m/" + resourceName), resourceName));
-            }
-            Set<Integer> idsToRemove = new HashSet<>();
-            for (ObjectModel model : modelsRes) {
-                idsToRemove.add(model.id);
-            }
-            models.removeIf(model -> idsToRemove.contains(model.id));
-            models.addAll(modelsRes);
-        }
+        ObjectsInitializer initializer = createFreshInitializer();
 
-        LwM2mModel model = new StaticModel(models);
-        ObjectsInitializer initializer = new ObjectsInitializer(model);
+
         if (securityBs != null && security != null) {
             // SECURITIES
             securityBs.setId(0);
@@ -179,9 +165,9 @@ public class LwM2MTestClient {
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
             // SECURITY
-            securityBs.setId(0);
             initializer.setClassForObject(SERVER, Server.class);
             initializer.setInstancesForObject(SECURITY, securityBs);
+            log.warn("Security section: securityBsId [{}] ",  securityBs.getId());
         } else {
             // SECURITY
             security.setId(0);
@@ -478,4 +464,35 @@ public class LwM2MTestClient {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(endpoint);
         Mockito.doAnswer(invocationOnMock -> null).when(defaultLwM2mUplinkMsgHandlerTest).initAttributes(lwM2MClient, true);
     }
+
+    private ObjectsInitializer createFreshInitializer() {
+        List<ObjectModel> models = new ArrayList<>(ObjectLoader.loadAllDefault());
+        for (String resourceName : lwm2mClientResources) {
+            try (InputStream in = LwM2MTestClient.class.getClassLoader()
+                    .getResourceAsStream("lwm2m/" + resourceName)) {
+                models.addAll(ObjectLoader.loadDdfFile(in, resourceName));
+            } catch (IOException | InvalidDDFFileException e) {
+                log.warn("Failed to load resource {}", resourceName, e);
+            }
+        }
+        if (this.modelResources != null) {
+            List<ObjectModel> modelsRes = new ArrayList<>();
+            for (String resourceName : this.modelResources) {
+                try (InputStream in = LwM2MTestClient.class.getClassLoader()
+                        .getResourceAsStream("lwm2m/" + resourceName)) {
+                    modelsRes.addAll(ObjectLoader.loadDdfFile(in, resourceName));
+                } catch (IOException | InvalidDDFFileException e) {
+                    log.warn("Failed to load resource {}", resourceName, e);
+                }
+            }
+            Set<Integer> idsToRemove = modelsRes.stream()
+                    .map(m -> m.id)
+                    .collect(Collectors.toSet());
+            models.removeIf(m -> idsToRemove.contains(m.id));
+            models.addAll(modelsRes);
+        }
+        LwM2mModel model = new StaticModel(models);
+        return new ObjectsInitializer(model);
+    }
 }
+

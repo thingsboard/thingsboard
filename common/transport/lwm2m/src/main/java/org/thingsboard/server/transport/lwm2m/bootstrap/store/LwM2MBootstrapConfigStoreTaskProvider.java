@@ -98,14 +98,16 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
             if (previousResponse != null) {
                 if (previousResponse.get(0) instanceof BootstrapDiscoverResponse discoverResponse) {
                     if (discoverResponse.isSuccess()) {
-                        this.initAfterBootstrapDiscover(discoverResponse);
+                         this.initAfterBootstrapDiscover(discoverResponse);
                         /// Short Server Ids - in old config
                         findInstancesIdOldByServerId(discoverResponse, session.getEndpoint());
-                    } else {
-                        log.error(
-                                "Unable to find bootstrap server instance in Security Object (0) in response {}: unable to continue bootstrap session with autoIdForSecurityObject mode. {}",
+                        log.warn(
+                                "Bootstrap server instance successfully found in Security Object (0) in response {}. Continuing bootstrap session. Session: {}",
                                 discoverResponse, session);
-                        return null;
+                    } else {
+                        log.warn(
+                                "Unable to find bootstrap server instance in Security Object (0) in response {}. Continuing bootstrap session with autoIdForSecurityObject mode, ignoring information from discoverResponse. Session: {}",
+                                discoverResponse, session);
                     }
                 }
                 // create requests from config
@@ -200,7 +202,8 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
     public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfigNew,
                                                                               ContentFormat contentFormat,
                                                                               String endpoint) {
-        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0);
+        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0) == null ?
+                0 : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0);
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
         Set<String> pathsDelete = new HashSet<>();
         ConcurrentHashMap<String, BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ConcurrentHashMap<>();
