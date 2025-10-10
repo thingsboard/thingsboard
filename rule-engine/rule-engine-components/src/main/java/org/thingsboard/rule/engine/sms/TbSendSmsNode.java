@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.sms;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
         name = "send sms",
@@ -36,7 +34,8 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDescription = "Sends SMS message via SMS provider.",
         nodeDetails = "Will send SMS message by populating target phone numbers and sms message fields using values derived from message metadata.",
         configDirective = "tbExternalNodeSendSmsConfig",
-        icon = "sms"
+        icon = "sms",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-sms/"
 )
 public class TbSendSmsNode extends TbAbstractExternalNode {
 

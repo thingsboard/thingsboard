@@ -47,22 +47,22 @@ import java.util.stream.Collectors;
                 "Regular expressions can be used to define which keys-value pairs to copy. Any configured key not found in the source will be ignored.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeCopyKeysConfig",
-        icon = "content_copy"
+        icon = "content_copy",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/copy-key-value-pairs/"
 )
 public class TbCopyKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
-    private TbCopyKeysNodeConfiguration config;
     private TbMsgSource copyFrom;
     private List<Pattern> compiledKeyPatterns;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
-        this.copyFrom = config.getCopyFrom();
+        var config = TbNodeUtils.convert(configuration, TbCopyKeysNodeConfiguration.class);
+        copyFrom = config.getCopyFrom();
         if (copyFrom == null) {
             throw new TbNodeException("CopyFrom can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         }
-        this.compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
+        compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
     }
 
     @Override

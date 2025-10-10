@@ -173,7 +173,7 @@ export class ResourcesLibraryTableConfigResolver  {
       case 'downloadResource':
         this.downloadResource(action.event, action.entity);
         return true;
-      case 'deleteLibrary':
+      case 'deleteResource':
         this.deleteResource(action.event, action.entity);
     }
     return false;
