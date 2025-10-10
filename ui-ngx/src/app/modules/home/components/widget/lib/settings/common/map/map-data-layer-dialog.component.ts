@@ -306,18 +306,19 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dialogTitle = 'widgets.maps.data-layer.polyline.polyline-configuration';
         this.dataLayerEditTitle = 'widgets.maps.data-layer.polyline.edit';
         this.dataLayerFormGroup.addControl('polylineKey', this.fb.control(polylineShapeDataLayer.polylineKey, Validators.required));
-        this.dataLayerFormGroup.addControl('usePathDecorator', this.fb.control(polylineShapeDataLayer.usePathDecorator));
-        this.dataLayerFormGroup.addControl('pathDecoratorSymbol', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbol, Validators.required));
-        this.dataLayerFormGroup.addControl('pathDecoratorSymbolSize', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolSize, [Validators.required, Validators.min(0)]));
-        this.dataLayerFormGroup.addControl('pathDecoratorSymbolColor', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolColor));
-        this.dataLayerFormGroup.addControl('pathDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathDecoratorOffset, [Validators.required, Validators.min(0)]));
-        this.dataLayerFormGroup.addControl('pathEndDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathEndDecoratorOffset, [Validators.required, Validators.min(0)]));
-        this.dataLayerFormGroup.addControl('pathDecoratorRepeat', this.fb.control(polylineShapeDataLayer.pathDecoratorRepeat, [Validators.required, Validators.min(0)]));
+        // this.dataLayerFormGroup.addControl('usePathDecorator', this.fb.control(polylineShapeDataLayer.usePathDecorator));
+        // this.dataLayerFormGroup.addControl('pathDecoratorSymbol', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbol, Validators.required));
+        // this.dataLayerFormGroup.addControl('pathDecoratorSymbolSize', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolSize, [Validators.required, Validators.min(0)]));
+        // this.dataLayerFormGroup.addControl('pathDecoratorSymbolColor', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolColor));
+        // this.dataLayerFormGroup.addControl('pathDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathDecoratorOffset, [Validators.required, Validators.min(0)]));
+        // this.dataLayerFormGroup.addControl('pathEndDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathEndDecoratorOffset, [Validators.required, Validators.min(0)]));
+        // this.dataLayerFormGroup.addControl('pathDecoratorRepeat', this.fb.control(polylineShapeDataLayer.pathDecoratorRepeat, [Validators.required, Validators.min(0)]));
         this.dataLayerFormGroup.addControl('showPoints', this.fb.control(polylineShapeDataLayer.showPoints));
         this.dataLayerFormGroup.addControl('pointSize', this.fb.control(polylineShapeDataLayer.pointSize, [Validators.required, Validators.min(0)]));
         this.dataLayerFormGroup.addControl('pointColor', this.fb.control(polylineShapeDataLayer.pointColor, Validators.required));
         this.dataLayerFormGroup.addControl('pointTooltip', this.fb.control(polylineShapeDataLayer.pointTooltip));
-        merge(this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
+        merge(
+          // this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
           this.dataLayerFormGroup.get('showPoints').valueChanges).pipe(
           takeUntilDestroyed(this.destroyRef)
         ).subscribe(() =>

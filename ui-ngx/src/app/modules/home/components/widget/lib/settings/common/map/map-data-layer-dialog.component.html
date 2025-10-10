@@ -163,6 +163,26 @@
           (keyEdit)="editKey('circleKey')"
           formControlName="circleKey">
         </tb-data-key-input>
+        <tb-data-key-input
+          *ngIf="dataLayerType === 'polylines'"
+          inlineField="false"
+          appearance="outline"
+          subscriptSizing="fixed"
+          label="{{ 'widgets.maps.data-layer.polyline.polyline-key' | translate }}"
+          required
+          requiredText="widgets.maps.data-layer.polyline.polyline-key-required"
+          [datasourceType]="dataLayerFormGroup.get('dsType').value"
+          [entityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
+          [deviceId]="dataLayerFormGroup.get('dsDeviceId').value"
+          [aliasController]="context.aliasController"
+          [widgetType]="widgetType.latest"
+          [dataKeyType]="context.functionsOnly ? DataKeyType.function : null"
+          [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+          [callbacks]="context.callbacks"
+          [generateKey]="context.generateDataKey"
+          (keyEdit)="editKey('polylineKey')"
+          formControlName="polylineKey">
+        </tb-data-key-input>
         <tb-data-keys
           formControlName="additionalDataKeys"
           appearance="outline"
@@ -370,6 +390,8 @@
             </ng-template>
           </mat-expansion-panel>
         </div>
+      </ng-container>
+      <ng-container *ngIf="['trips', 'polylines'].includes(dataLayerType)">
         <div class="tb-form-panel tb-slide-toggle stroked">
           <mat-expansion-panel class="tb-settings" [expanded]="dataLayerFormGroup.get('showPoints').value"
                                [disabled]="!dataLayerFormGroup.get('showPoints').value">
