@@ -271,9 +271,8 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       ).subscribe((filters) => {
         let currentFilterId = this.ctx.defaultSubscription.options.datasources?.[0]?.filterId;
         if (currentFilterId && filters.includes(currentFilterId)) {
-          this.paginator.pageIndex = 0;
+          this.paginator.firstPage();
         }
-        this.updateData();
       });
     }
     ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
