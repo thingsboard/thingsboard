@@ -40,6 +40,11 @@ public class AlarmInfo extends Alarm {
 
     @Getter
     @Setter
+    @Schema(description = "Originator display name", example = "Thermostat")
+    private String originatorDisplayName;
+
+    @Getter
+    @Setter
     @Schema(description = "Alarm assignee")
     private AlarmAssignee assignee;
 

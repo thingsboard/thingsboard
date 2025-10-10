@@ -163,6 +163,11 @@ export const entityFields: {[fieldName: string]: EntityField} = {
     name: 'entity-field.label',
     value: 'label'
   },
+  displayName: {
+    keyName: 'displayName',
+    name: 'entity-field.name',
+    value: 'name'
+  },
   queueName: {
     keyName: 'queueName',
     name: 'entity-field.queue-name',

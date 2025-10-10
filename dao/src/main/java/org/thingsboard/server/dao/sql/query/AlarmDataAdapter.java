@@ -121,6 +121,7 @@ public class AlarmDataAdapter {
         AlarmData alarmData = new AlarmData(alarm, entityId);
         alarmData.setOriginatorName(originatorName);
         alarmData.setOriginatorLabel(originatorLabel);
+        alarmData.setOriginatorDisplayName(StringUtils.isBlank(originatorLabel) ? originatorName : originatorLabel);
         if (alarm.getAssigneeId() != null) {
             alarmData.setAssignee(new AlarmAssignee(alarm.getAssigneeId(), assigneeFirstName, assigneeLastName, assigneeEmail));
         }

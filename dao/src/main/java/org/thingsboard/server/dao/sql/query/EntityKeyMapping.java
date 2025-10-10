@@ -65,6 +65,7 @@ public class EntityKeyMapping {
     public static final String NAME = "name";
     public static final String TYPE = "type";
     public static final String LABEL = "label";
+    public static final String DISPLAY_NAME = "displayName";
     public static final String FIRST_NAME = "firstName";
     public static final String LAST_NAME = "lastName";
     public static final String EMAIL = "email";
@@ -83,6 +84,8 @@ public class EntityKeyMapping {
     public static final String SERVICE_ID = "serviceId";
     public static final String OWNER_NAME = "ownerName";
     public static final String OWNER_TYPE = "ownerType";
+    public static final String LABELED_ENTITY_DISPLAY_NAME_SELECT_QUERY = "COALESCE(NULLIF(TRIM(e." + LABEL + "), ''), e." + NAME + ")";
+    public static final String USER_DISPLAY_NAME_SELECT_QUERY  = "COALESCE(NULLIF(TRIM(CONCAT_WS(' ', e.first_name, e.last_name)), ''), e.email)";
     public static final String OWNER_NAME_SELECT_QUERY = "case when e.customer_id = '" + NULL_UUID + "' " +
             "then (select title from tenant where id = e.tenant_id) " +
             "else (select title from customer where id = e.customer_id) end";
@@ -93,6 +96,16 @@ public class EntityKeyMapping {
     public static final Map<String, String> ownerPropertiesFunctions = Map.of(
             OWNER_NAME, OWNER_NAME_SELECT_QUERY,
             OWNER_TYPE, OWNER_TYPE_SELECT_QUERY
+    );
+    public static final Map<String, String> labeledPropertiesFunctions = Map.of(
+            OWNER_NAME, OWNER_NAME_SELECT_QUERY,
+            OWNER_TYPE, OWNER_TYPE_SELECT_QUERY,
+            DISPLAY_NAME, LABELED_ENTITY_DISPLAY_NAME_SELECT_QUERY
+    );
+    public static final Map<String, String> userPropertiesFunctions = Map.of(
+            OWNER_NAME, OWNER_NAME_SELECT_QUERY,
+            OWNER_TYPE, OWNER_TYPE_SELECT_QUERY,
+            DISPLAY_NAME, USER_DISPLAY_NAME_SELECT_QUERY
     );
     public static final Map<String, String> queueStatsPropertiesFunctions = Map.of(NAME, QUEUE_STATS_NAME_QUERY);
 
@@ -153,20 +166,24 @@ public class EntityKeyMapping {
         Map<String, String> contactBasedAliases = new HashMap<>();
         contactBasedAliases.put(NAME, TITLE);
         contactBasedAliases.put(LABEL, TITLE);
+        contactBasedAliases.put(DISPLAY_NAME, TITLE);
         aliases.put(EntityType.TENANT, contactBasedAliases);
         aliases.put(EntityType.CUSTOMER, contactBasedAliases);
         aliases.put(EntityType.DASHBOARD, contactBasedAliases);
+        Map<String, String> deviceAndAssetAliases = new HashMap<>();
+        deviceAndAssetAliases.put(TITLE, NAME);
+        aliases.put(EntityType.DEVICE, deviceAndAssetAliases);
+        aliases.put(EntityType.ASSET, deviceAndAssetAliases);
         Map<String, String> commonEntityAliases = new HashMap<>();
         commonEntityAliases.put(TITLE, NAME);
-        aliases.put(EntityType.DEVICE, commonEntityAliases);
-        aliases.put(EntityType.ASSET, commonEntityAliases);
+        commonEntityAliases.put(DISPLAY_NAME, NAME);
         aliases.put(EntityType.ENTITY_VIEW, commonEntityAliases);
         aliases.put(EntityType.WIDGETS_BUNDLE, commonEntityAliases);
 
-        propertiesFunctions.put(EntityType.DEVICE, ownerPropertiesFunctions);
-        propertiesFunctions.put(EntityType.ASSET, ownerPropertiesFunctions);
+        propertiesFunctions.put(EntityType.DEVICE, labeledPropertiesFunctions);
+        propertiesFunctions.put(EntityType.ASSET, labeledPropertiesFunctions);
         propertiesFunctions.put(EntityType.ENTITY_VIEW, ownerPropertiesFunctions);
-        propertiesFunctions.put(EntityType.USER, ownerPropertiesFunctions);
+        propertiesFunctions.put(EntityType.USER, userPropertiesFunctions);
         propertiesFunctions.put(EntityType.DASHBOARD, ownerPropertiesFunctions);
         propertiesFunctions.put(EntityType.QUEUE_STATS, queueStatsPropertiesFunctions);
 

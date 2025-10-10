@@ -68,6 +68,9 @@ export class EntityListSelectComponent implements ControlValueAccessor, OnInit {
   @Input()
   additionEntityTypes: {[key in string]: string} = {};
 
+  @Input({transform: booleanAttribute})
+  useEntityDisplayName = false;
+
   displayEntityTypeSelect: boolean;
 
   private defaultEntityType: EntityType | AliasEntityType = null;

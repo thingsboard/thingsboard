@@ -140,6 +140,7 @@ export interface AlarmCommentInfo extends AlarmComment {
 export interface AlarmInfo extends Alarm {
   originatorName: string;
   originatorLabel: string;
+  originatorDisplayName?: string;
   assignee: AlarmAssignee;
 }
 
@@ -172,6 +173,7 @@ export const simulatedAlarm: AlarmInfo = {
   clearTs: 0,
   assignTs: 0,
   originatorName: 'Simulated',
+  originatorDisplayName: 'Simulated',
   originatorLabel: 'Simulated',
   assignee: {
     firstName: '',
@@ -240,6 +242,11 @@ export const alarmFields: {[fieldName: string]: AlarmField} = {
   originator: {
     keyName: 'originator',
     value: 'originatorName',
+    name: 'alarm.originator'
+  },
+  originatorDisplayName: {
+    keyName: 'originatorDisplayName',
+    value: 'originatorDisplayName',
     name: 'alarm.originator'
   },
   originatorLabel: {
