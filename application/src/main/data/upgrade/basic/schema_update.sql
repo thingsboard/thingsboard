@@ -47,5 +47,3 @@ WHERE NOT (
 
 -- UPDATE TENANT PROFILE CONFIGURATION END
 
-ALTER TABLE entity_view ADD CONSTRAINT entity_view_name_unq_key UNIQUE (tenant_id, name);
-

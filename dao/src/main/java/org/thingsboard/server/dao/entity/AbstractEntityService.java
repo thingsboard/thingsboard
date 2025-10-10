@@ -51,8 +51,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.UniquifyStrategy.RANDOM;
 
 @Slf4j
 public abstract class AbstractEntityService {
@@ -167,18 +171,23 @@ public abstract class AbstractEntityService {
         return now + TimeUnit.MINUTES.toMillis(DebugModeUtil.getMaxDebugAllDuration(tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
     }
 
-    protected <E extends HasId<?> & HasTenantId & HasName> void uniquifyEntityName(E entity, E oldEntity, Consumer<String> setName, EntityType entityType, NameConflictStrategy nameConflictStrategy) {
+    protected <E extends HasId<?> & HasTenantId & HasName> void uniquifyEntityName(E entity, E oldEntity, Consumer<String> setName, EntityType entityType, NameConflictStrategy strategy) {
         Dao<?> dao = entityDaoRegistry.getDao(entityType);
-        EntityInfo existingEntity = dao.findEntityInfoByName(entity.getTenantId(), entity.getName());
-        if (existingEntity != null && (oldEntity == null || !existingEntity.getId().equals(oldEntity.getId()))) {
-            String suffix = StringUtils.randomAlphanumeric(6);
+        List<EntityInfo> existingEntities = dao.findEntityInfosByNamePrefix(entity.getTenantId(), entity.getName());
+        Set<String> existingNames = existingEntities.stream()
+                .filter(e -> (oldEntity == null || !e.getId().equals(oldEntity.getId())))
+                .map(EntityInfo::getName)
+                .collect(Collectors.toSet());
+        if (!existingNames.isEmpty()) {
+            int idx = 1;
+            String suffix = (strategy.uniquifyStrategy() == RANDOM) ? StringUtils.randomAlphanumeric(6) : String.valueOf(idx);
             while (true) {
-                String newName = entity.getName() + nameConflictStrategy.separator() + suffix;
-                if (dao.findEntityInfoByName(entity.getTenantId(), newName) == null) {
+                String newName = entity.getName() + strategy.separator() + suffix;
+                if (!existingNames.contains(newName)) {
                     setName.accept(newName);
                     break;
                 }
-                suffix = StringUtils.randomAlphanumeric(6);
+                suffix = (strategy.uniquifyStrategy() == RANDOM) ? StringUtils.randomAlphanumeric(6) : String.valueOf(idx++);
             }
         }
     }

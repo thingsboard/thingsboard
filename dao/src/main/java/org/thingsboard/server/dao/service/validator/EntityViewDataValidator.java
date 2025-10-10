@@ -38,6 +38,14 @@ public class EntityViewDataValidator extends DataValidator<EntityView> {
     private final CustomerDao customerDao;
 
     @Override
+    protected void validateCreate(TenantId tenantId, EntityView entityView) {
+        entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName())
+                .ifPresent(e -> {
+                    throw new DataValidationException("Entity view with such name already exists!");
+                });
+    }
+
+    @Override
     protected EntityView validateUpdate(TenantId tenantId, EntityView entityView) {
         var opt = entityViewDao.findEntityViewByTenantIdAndName(entityView.getTenantId().getId(), entityView.getName());
         opt.ifPresent(e -> {

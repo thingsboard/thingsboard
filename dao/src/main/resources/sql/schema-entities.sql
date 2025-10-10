@@ -551,7 +551,6 @@ CREATE TABLE IF NOT EXISTS entity_view (
     additional_info varchar,
     external_id uuid,
     version BIGINT DEFAULT 1,
-    CONSTRAINT entity_view_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT entity_view_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 

@@ -116,8 +116,8 @@ public class JpaDeviceDao extends JpaAbstractDao<DeviceEntity, Device> implement
     }
 
     @Override
-    public EntityInfo findEntityInfoByName(TenantId tenantId, String name) {
-        return deviceRepository.findEntityInfoByName(tenantId.getId(), name);
+    public List<EntityInfo> findEntityInfosByNamePrefix(TenantId tenantId, String name) {
+        return deviceRepository.findEntityInfosByNamePrefix(tenantId.getId(), name);
     }
 
     @Override

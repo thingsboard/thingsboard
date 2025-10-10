@@ -860,16 +860,22 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         view.setEntityId(testDevice.getId());
         view.setTenantId(tenantId);
         view.setType("default");
-        view.setName("Test device view");
+        view.setName("My unique view");
 
         EntityView savedView = doPost("/api/entityView", view, EntityView.class);
 
-        doPost("/api/entityView?policy=FAIL", view).andExpect(status().isBadRequest());
+        doPost("/api/entityView?nameConflictPolicy=FAIL", view).andExpect(status().isBadRequest());
 
-        EntityView secondView = doPost("/api/entityView?policy=UNIQUIFY", view, EntityView.class);
-        assertThat(secondView.getName()).startsWith("Test device view_");
+        EntityView secondView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY", view, EntityView.class);
+        assertThat(secondView.getName()).startsWith("My unique view_");
 
-        EntityView thirdView = doPost("/api/entityView?policy=UNIQUIFY&separator=-", view, EntityView.class);
-        assertThat(thirdView.getName()).startsWith("Test device view-");
+        EntityView thirdView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", view, EntityView.class);
+        assertThat(thirdView.getName()).startsWith("My unique view-");
+
+        EntityView fourthView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", view, EntityView.class);
+        assertThat(fourthView.getName()).isEqualTo("My unique view_1");
+
+        EntityView fifthEntityView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", view, EntityView.class);
+        assertThat(fifthEntityView.getName()).isEqualTo("My unique view_2");
     }
 }

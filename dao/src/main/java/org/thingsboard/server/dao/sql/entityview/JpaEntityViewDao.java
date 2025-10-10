@@ -232,8 +232,8 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
     }
 
     @Override
-    public EntityInfo findEntityInfoByName(TenantId tenantId, String name) {
-        return entityViewRepository.findEntityInfoByName(tenantId.getId(), name);
+    public List<EntityInfo> findEntityInfosByNamePrefix(TenantId tenantId, String name) {
+        return entityViewRepository.findEntityInfosByNamePrefix(tenantId.getId(), name);
     }
 
     @Override

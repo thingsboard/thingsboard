@@ -33,7 +33,7 @@ public interface Dao<T> {
 
     ListenableFuture<T> findByIdAsync(TenantId tenantId, UUID id);
 
-    default EntityInfo findEntityInfoByName(TenantId tenantId, String name) {
+    default List<EntityInfo> findEntityInfosByNamePrefix(TenantId tenantId, String name) {
         throw new UnsupportedOperationException();
     }
 

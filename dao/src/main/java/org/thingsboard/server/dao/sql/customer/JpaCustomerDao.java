@@ -119,8 +119,8 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
-    public EntityInfo findEntityInfoByName(TenantId tenantId, String name) {
-        return customerRepository.findEntityInfoByName(tenantId.getId(), name);
+    public List<EntityInfo> findEntityInfosByNamePrefix(TenantId tenantId, String name) {
+        return customerRepository.findEntityInfosByNamePrefix(tenantId.getId(), name);
     }
 
     @Override

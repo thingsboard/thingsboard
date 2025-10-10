@@ -120,8 +120,8 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
     EntityViewEntity findByTenantIdAndName(UUID tenantId, String name);
 
     @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ENTITY_VIEW', a.name) " +
-            "FROM EntityViewEntity a WHERE a.tenantId = :tenantId AND a.name = :name")
-    EntityInfo findEntityInfoByName(UUID tenantId, String name);
+            "FROM EntityViewEntity a WHERE a.tenantId = :tenantId AND a.name LIKE CONCAT(:prefix, '%')")
+    List<EntityInfo> findEntityInfosByNamePrefix(UUID tenantId, String prefix);
 
     List<EntityViewEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 

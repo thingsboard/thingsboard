@@ -33,6 +33,7 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -465,16 +466,22 @@ public class CustomerControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveCustomerWithUniquifyStrategy() throws Exception {
         Customer customer = new Customer();
-        customer.setTitle("My customer");
+        customer.setTitle("My unique customer");
         Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
 
-        doPost("/api/customer?policy=FAIL", customer).andExpect(status().isBadRequest());
+        doPost("/api/customer?nameConflictPolicy=FAIL", customer).andExpect(status().isBadRequest());
 
-        Customer secondCustomer = doPost("/api/customer?policy=UNIQUIFY", customer, Customer.class);
-        assertThat(secondCustomer.getName()).startsWith("My customer_");
+        Customer secondCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY", customer, Customer.class);
+        assertThat(secondCustomer.getName()).startsWith("My unique customer_");
 
-        Customer thirdCustomer = doPost("/api/customer?policy=UNIQUIFY&separator=-", customer, Customer.class);
-        assertThat(thirdCustomer.getName()).startsWith("My customer-");
+        Customer thirdCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", customer, Customer.class);
+        assertThat(thirdCustomer.getName()).startsWith("My unique customer-");
+
+        Customer fourthCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", customer, Customer.class);
+        assertThat(fourthCustomer.getName()).isEqualTo("My unique customer_1");
+
+        Customer fifthCustomer = doPost("/api/customer?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", customer, Customer.class);
+        assertThat(fifthCustomer.getName()).isEqualTo("My unique customer_2");
     }
 
     private Customer createCustomer(String title) {

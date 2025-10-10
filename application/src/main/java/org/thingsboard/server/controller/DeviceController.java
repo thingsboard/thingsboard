@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.UniquifyStrategy;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -111,7 +112,7 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_ID_PARA
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_ASYNC_FIRST_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
-import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_SEPARATOR_DESC;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -121,6 +122,7 @@ import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHO
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
@@ -184,16 +186,18 @@ public class DeviceController extends BaseController {
                                      "If omitted, access token will be auto-generated.")
                              @RequestParam(name = "accessToken", required = false) String accessToken,
                              @Parameter(description = NAME_CONFLICT_POLICY_DESC)
-                             @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
-                             @Parameter(description = NAME_CONFLICT_SEPARATOR_DESC)
-                             @RequestParam(name = "separator", defaultValue = "_") String separator) throws Exception {
+                             @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+                             @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+                             @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+                             @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+                             @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws Exception {
         device.setTenantId(getCurrentUser().getTenantId());
         if (device.getId() != null) {
             checkDeviceId(device.getId(), Operation.WRITE);
         } else {
             checkEntity(null, device, Resource.DEVICE);
         }
-        return tbDeviceService.save(device, accessToken, new NameConflictStrategy(policy, separator), getCurrentUser());
+        return tbDeviceService.save(device, accessToken, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
     }
 
     @ApiOperation(value = "Create Device (saveDevice) with credentials ",
@@ -220,14 +224,16 @@ public class DeviceController extends BaseController {
     public Device saveDeviceWithCredentials(@Parameter(description = "The JSON object with device and credentials. See method description above for example.")
                                             @Valid @RequestBody SaveDeviceWithCredentialsRequest deviceAndCredentials,
                                             @Parameter(description = NAME_CONFLICT_POLICY_DESC)
-                                            @RequestParam(name = "policy", defaultValue = "FAIL") NameConflictPolicy policy,
-                                            @Parameter(description = NAME_CONFLICT_SEPARATOR_DESC)
-                                            @RequestParam(name = "separator", defaultValue = "_") String separator) throws ThingsboardException {
+                                            @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+                                            @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+                                            @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+                                            @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+                                            @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws ThingsboardException {
         Device device = deviceAndCredentials.getDevice();
         DeviceCredentials credentials = deviceAndCredentials.getCredentials();
         device.setTenantId(getCurrentUser().getTenantId());
         checkEntity(device.getId(), device, Resource.DEVICE);
-        return tbDeviceService.saveDeviceWithCredentials(device, credentials, new NameConflictStrategy(policy, separator), getCurrentUser());
+        return tbDeviceService.saveDeviceWithCredentials(device, credentials, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
     }
 
     @ApiOperation(value = "Delete device (deleteDevice)",
