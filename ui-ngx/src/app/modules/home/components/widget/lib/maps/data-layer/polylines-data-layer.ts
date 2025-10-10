@@ -72,7 +72,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   protected create(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): L.Layer {
     const polyData = this.dataLayer.extractPolylineCoordinates(data);
     const polyConstructor = L.polyline;
-    this.polyline = polyConstructor(polyData as (TbPolygonRawCoordinates & L.LatLngTuple[]), {
+    this.polyline = polyConstructor(polyData as (TbPolylineRawCoordinates & L.LatLngTuple[]), {
       // noClip: true,
       // snapIgnore: !this.dataLayer.isSnappable(),
       bubblingMouseEvents: !this.dataLayer.isEditMode()
@@ -80,6 +80,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
     this.dataLayer.getShapeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
+
       if (this.polyline) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
       }
@@ -107,6 +108,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       this.updatePolylineShape(data);
       this.updateTooltip(data, dsData);
       this.updateLabel(data, dsData);
+
       if (!this.editing || !this.dataLayer.getMap().getMap().pm.globalCutModeEnabled()) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
       }
@@ -143,7 +145,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
       }
     });
     this.polyline.on('pm:dragend', () => {
-      this.savePolygonCoordinates();
+      this.savePolylineCoordinates();
       this.editing = false;
     });
   }
@@ -229,16 +231,16 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     return this.dataLayer.savePolylineCoordinates(this.data, null);
   }
 
-  // private enablePolygonEditMode() {
-  //   this.polyline.on('pm:markerdragstart', () => this.editing = true);
-  //   this.polyline.on('pm:markerdragend', () => setTimeout(() => {
-  //     this.editing = false;
-  //   }) );
-  //   this.polyline.on('pm:edit', () => this.savePolygonCoordinates());
-  //   this.polyline.pm.enable();
-  //   const map = this.dataLayer.getMap();
-  //   map.getEditToolbar().getButton('remove')?.setDisabled(false);
-  // }
+  private enablePolylineEditMode() {
+    this.polyline.on('pm:markerdragstart', () => this.editing = true);
+    this.polyline.on('pm:markerdragend', () => setTimeout(() => {
+      this.editing = false;
+    }) );
+    this.polyline.on('pm:edit', () => this.savePolylineCoordinates());
+    this.polyline.pm.enable();
+    const map = this.dataLayer.getMap();
+    map.getEditToolbar().getButton('remove')?.setDisabled(false);
+  }
 
   // private disablePolygonEditMode() {
   //   this.polyline.pm.disable();
@@ -337,10 +339,10 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   //   rotateButton?.setActive(false);
   // }
 
-  private savePolygonCoordinates() {
-    let coordinates: TbPolygonCoordinates = this.polyline.getLatLngs();
+  private savePolylineCoordinates() {
+    let coordinates: TbPolylineCoordinates = this.polyline.getLatLngs();
     if (coordinates.length === 1) {
-      coordinates = coordinates[0] as TbPolygonCoordinates;
+      coordinates = coordinates[0] as TbPolylineCoordinates;
     }
     if (this.polyline instanceof L.Rectangle && !isCutPolygon(coordinates)) {
       const bounds = this.polyline.getBounds();
@@ -356,9 +358,11 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     if (this.editing) {
       return;
     }
+
     const polyData = this.dataLayer.extractPolylineCoordinates(data) as TbPolylineData;
     if (isCutPolygon(polyData) || polyData.length !== 2) {
       if (this.polyline instanceof L.Rectangle) {
+
         this.polylineContainer.removeLayer(this.polyline);
         this.polyline = L.polyline(polyData, {
           ...this.polylineStyleInfo.style,
@@ -409,7 +413,7 @@ export class TbPolylineDataLayer extends TbShapesDataLayer<PolylinesDataLayerSet
         }
       );
     } else {
-      console.warn('Unable to place item, layer is not a polygon.');
+      console.warn('Unable to place item, layer is not a polyline.');
     }
   }
 

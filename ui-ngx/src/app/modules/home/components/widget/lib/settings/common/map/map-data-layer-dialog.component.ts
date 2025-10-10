@@ -29,7 +29,7 @@ import {
   MarkerType,
   pathDecoratorSymbols,
   pathDecoratorSymbolTranslationMap,
-  PolygonsDataLayerSettings,
+  PolygonsDataLayerSettings, PolylinesDataLayerSettings,
   ShapeDataLayerSettings, ShapeFillType,
   TripsDataLayerSettings,
   updateDataKeyToNewDsType
@@ -113,6 +113,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         return 'widget/lib/map/polygon_label_fn';
       case 'circles':
         return 'widget/lib/map/circle_label_fn';
+      case 'polylines':
+        return 'widget/lib/map/polyline_label_fn';
       default:
         return 'widget/lib/map/label_fn';
     }
@@ -128,6 +130,8 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         return 'widget/lib/map/polygon_tooltip_fn';
       case 'circles':
         return 'widget/lib/map/circle_tooltip_fn';
+      case 'polylines':
+        return 'widget/lib/map/polyline_tooltip_fn';
       default:
         return 'widget/lib/map/tooltip_fn';
     }
@@ -138,18 +142,21 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
       const editEnabledActions: DataLayerEditAction[] =
         this.dataLayerFormGroup.get('edit').get('enabledActions').value;
       if (editEnabledActions && editEnabledActions.length) {
-          switch (this.dataLayerType) {
-            case 'markers':
-              const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
-              const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
-              return (xKey?.type === DataKeyType.attribute || yKey?.type === DataKeyType.attribute);
-            case 'polygons':
-              const polygonKey: DataKey = this.dataLayerFormGroup.get('polygonKey').value;
-              return polygonKey?.type === DataKeyType.attribute;
-            case 'circles':
-              const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
-              return circleKey?.type === DataKeyType.attribute;
-          }
+        switch (this.dataLayerType) {
+          case 'markers':
+            const xKey: DataKey = this.dataLayerFormGroup.get('xKey').value;
+            const yKey: DataKey = this.dataLayerFormGroup.get('yKey').value;
+            return (xKey?.type === DataKeyType.attribute || yKey?.type === DataKeyType.attribute);
+          case 'polygons':
+            const polygonKey: DataKey = this.dataLayerFormGroup.get('polygonKey').value;
+            return polygonKey?.type === DataKeyType.attribute;
+          case 'circles':
+            const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
+            return circleKey?.type === DataKeyType.attribute;
+          case 'polylines':
+            const polylineKey: DataKey = this.dataLayerFormGroup.get('polylineKey').value;
+            return polylineKey?.type === DataKeyType.attribute;
+        }
       } else {
         return false;
       }
@@ -231,11 +238,11 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.addControl('pointColor', this.fb.control(tripsDataLayer.pointColor, Validators.required));
         this.dataLayerFormGroup.addControl('pointTooltip', this.fb.control(tripsDataLayer.pointTooltip));
         merge(this.dataLayerFormGroup.get('showMarker').valueChanges,
-              this.dataLayerFormGroup.get('markerType').valueChanges,
-              this.dataLayerFormGroup.get('rotateMarker').valueChanges,
-              this.dataLayerFormGroup.get('showPath').valueChanges,
-              this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
-              this.dataLayerFormGroup.get('showPoints').valueChanges).pipe(
+          this.dataLayerFormGroup.get('markerType').valueChanges,
+          this.dataLayerFormGroup.get('rotateMarker').valueChanges,
+          this.dataLayerFormGroup.get('showPath').valueChanges,
+          this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
+          this.dataLayerFormGroup.get('showPoints').valueChanges).pipe(
           takeUntilDestroyed(this.destroyRef)
         ).subscribe(() =>
           this.updateValidators()
@@ -291,6 +298,32 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
           this.updateValidators()
         );
         break;
+      case 'polylines':
+        this.dataLayerEditActions = dataLayerEditActions;
+        const polylineShapeDataLayer = this.settings as PolylinesDataLayerSettings;
+        this.dataLayerFormGroup.addControl('strokeColor', this.fb.control(polylineShapeDataLayer.strokeColor, Validators.required));
+        this.dataLayerFormGroup.addControl('strokeWeight', this.fb.control(polylineShapeDataLayer.strokeWeight, [Validators.required, Validators.min(0)]));
+        this.dialogTitle = 'widgets.maps.data-layer.polyline.polyline-configuration';
+        this.dataLayerEditTitle = 'widgets.maps.data-layer.polyline.edit';
+        this.dataLayerFormGroup.addControl('polylineKey', this.fb.control(polylineShapeDataLayer.polylineKey, Validators.required));
+        this.dataLayerFormGroup.addControl('usePathDecorator', this.fb.control(polylineShapeDataLayer.usePathDecorator));
+        this.dataLayerFormGroup.addControl('pathDecoratorSymbol', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbol, Validators.required));
+        this.dataLayerFormGroup.addControl('pathDecoratorSymbolSize', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolSize, [Validators.required, Validators.min(0)]));
+        this.dataLayerFormGroup.addControl('pathDecoratorSymbolColor', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolColor));
+        this.dataLayerFormGroup.addControl('pathDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathDecoratorOffset, [Validators.required, Validators.min(0)]));
+        this.dataLayerFormGroup.addControl('pathEndDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathEndDecoratorOffset, [Validators.required, Validators.min(0)]));
+        this.dataLayerFormGroup.addControl('pathDecoratorRepeat', this.fb.control(polylineShapeDataLayer.pathDecoratorRepeat, [Validators.required, Validators.min(0)]));
+        this.dataLayerFormGroup.addControl('showPoints', this.fb.control(polylineShapeDataLayer.showPoints));
+        this.dataLayerFormGroup.addControl('pointSize', this.fb.control(polylineShapeDataLayer.pointSize, [Validators.required, Validators.min(0)]));
+        this.dataLayerFormGroup.addControl('pointColor', this.fb.control(polylineShapeDataLayer.pointColor, Validators.required));
+        this.dataLayerFormGroup.addControl('pointTooltip', this.fb.control(polylineShapeDataLayer.pointTooltip));
+        merge(this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
+          this.dataLayerFormGroup.get('showPoints').valueChanges).pipe(
+          takeUntilDestroyed(this.destroyRef)
+        ).subscribe(() =>
+          this.updateValidators()
+        );
+        break;
     }
     this.dataLayerFormGroup.get('dsType').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -323,6 +356,12 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
         if (updateDataKeyToNewDsType(circleKey, newDsType)) {
           this.dataLayerFormGroup.get('circleKey').patchValue(circleKey, {emitEvent: false});
+        }
+        break;
+      case 'polylines':
+        const polylineKey: DataKey = this.dataLayerFormGroup.get('polylineKey').value;
+        if (updateDataKeyToNewDsType(polylineKey, newDsType)) {
+          this.dataLayerFormGroup.get('polylineKey').patchValue(polylineKey, {emitEvent: false});
         }
         break;
     }
@@ -433,6 +472,33 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.get('pointColor').disable({emitEvent: false});
         this.dataLayerFormGroup.get('pointTooltip').disable({emitEvent: false});
       }
+    } else if (this.dataLayerType === 'polylines') {
+      const usePathDecorator: boolean = this.dataLayerFormGroup.get('usePathDecorator').value;
+      const showPoints: boolean = this.dataLayerFormGroup.get('showPoints').value;
+      if (usePathDecorator) {
+        this.dataLayerFormGroup.get('pathDecoratorSymbol').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbolSize').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbolColor').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorOffset').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathEndDecoratorOffset').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorRepeat').enable({emitEvent: false});
+      } else {
+        this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorOffset').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
+      }
+      if (showPoints) {
+        this.dataLayerFormGroup.get('pointSize').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointColor').enable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointTooltip').enable({emitEvent: false});
+      } else {
+        this.dataLayerFormGroup.get('pointSize').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointColor').disable({emitEvent: false});
+        this.dataLayerFormGroup.get('pointTooltip').disable({emitEvent: false});
+      }
     }
   }
 
@@ -470,7 +536,7 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
     }
   }
 
-  editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey') {
+  editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey' | 'polylineKey') {
     const targetDataKey: DataKey = this.dataLayerFormGroup.get(keyType).value;
     this.context.editKey(targetDataKey,
       this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value,
@@ -509,6 +575,12 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
         if (circleKey) {
           dataKeys.push(circleKey);
+        }
+        break;
+      case 'polylines':
+        const polylineKey: DataKey = this.dataLayerFormGroup.get('polylineKey').value;
+        if (polylineKey) {
+          dataKeys.push(polylineKey);
         }
         break;
     }

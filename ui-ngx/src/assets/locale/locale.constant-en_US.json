@@ -8432,7 +8432,8 @@
                 "trips": "Trips",
                 "markers": "Markers",
                 "polygons": "Polygons",
-                "circles": "Circles"
+                "circles": "Circles",
+                "polylines": "Polylines"
             },
             "data-layer": {
                 "source": "Source",
@@ -8628,6 +8629,18 @@
                     "place-circle-center-hint": "Circle: click to place circle center",
                     "finish-circle-hint-with-entity": "Circle for '{{entityName}}': click to finish and save circle",
                     "finish-circle-hint": "Circle: click to finish drawing"
+                },
+                "polyline": {
+                    "polyline-key": "Polyline key",
+                    "polyline-key-required": "Polyline key required",
+                    "no-polylines": "No polylines configured",
+                    "add-polylines": "Add polyline",
+                    "polyline-configuration": "Polyline configuration",
+                    "remove-polyline": "Remove polyline",
+                    "edit": "Edit polyline",
+                    "remove-polyline-for": "Remove polyline for '{{entityName}}'",
+                    "draw-polyline": "Draw polyline",
+                    "finish-polyline-hint": "Polyline: click to finish drawing"
                 },
                 "select-entity": "Select entity",
                 "select-entity-hint": "Hint: after selection click at the map to set position"

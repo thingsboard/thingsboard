@@ -151,8 +151,8 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
         this.dataLayerFormGroup.addControl('circleKey', this.fb.control(null, Validators.required));
         break;
       case 'polylines':
-        this.editDataLayerText = 'widgets.maps.data-layer.polylines.polyline-configuration';
-        this.removeDataLayerText = 'widgets.maps.data-layer.polylines.remove-polyline';
+        this.editDataLayerText = 'widgets.maps.data-layer.polyline.polyline-configuration';
+        this.removeDataLayerText = 'widgets.maps.data-layer.polyline.remove-polyline';
         this.dataLayerFormGroup.addControl('polylineKey', this.fb.control(null, Validators.required));
         break;
     }
