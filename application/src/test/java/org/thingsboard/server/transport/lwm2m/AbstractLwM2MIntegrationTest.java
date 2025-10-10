@@ -147,7 +147,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public static final Integer shortServerId = 123;
     public static final Integer shortServerIdBs0 = 0;
     public static final int serverId = 1;
-    public static final int serverIdBs = 0;
 
     public static final String COAP = "coap://";
     public static final String COAPS = "coaps://";
@@ -705,7 +704,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return bootstrap;
     }
 
-    private AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
+    protected AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
         AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
         bootstrapServerCredential.setServerPublicKey("");
         bootstrapServerCredential.setShortServerId(isBootstrap ? shortServerIdBs0 : shortServerId);

@@ -175,12 +175,12 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setIdentity(identity);
         clientCredentials.setKey(keyPsk);
-        Security securityBs = pskBootstrap(SECURE_URI_BS,
+        Security securityPskBs = pskBootstrap(SECURE_URI_BS,
                 identity.getBytes(StandardCharsets.UTF_8),
                 Hex.decodeHex(keyPsk.toCharArray()));
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, null, null, PSK, false);
-        this.basicTestConnection(null, securityBs,
+        this.basicTestConnection(null, securityPskBs,
                 deviceCredentials,
                 clientEndpoint,
                 transportConfiguration,
