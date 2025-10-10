@@ -1080,6 +1080,30 @@ public class AssetControllerTest extends AbstractControllerTest {
         testEntityDaoWithRelationsTransactionalException(assetDao, savedTenant.getId(), assetId, "/api/asset/" + assetId);
     }
 
+    @Test
+    public void testSaveAssetWithUniquifyStrategy() throws Exception {
+        Asset asset = new Asset();
+        asset.setName("My unique asset");
+        asset.setType("default");
+        doPost("/api/asset", asset, Asset.class);
+
+        doPost("/api/asset", asset).andExpect(status().isBadRequest());
+
+        doPost("/api/asset?nameConflictPolicy=FAIL", asset).andExpect(status().isBadRequest());
+
+        Asset secondAsset = doPost("/api/asset?nameConflictPolicy=UNIQUIFY", asset, Asset.class);
+        assertThat(secondAsset.getName()).startsWith("My unique asset_");
+
+        Asset thirdAsset = doPost("/api/asset?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", asset, Asset.class);
+        assertThat(thirdAsset.getName()).startsWith("My unique asset-");
+
+        Asset fourthAsset = doPost("/api/asset?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", asset, Asset.class);
+        assertThat(fourthAsset.getName()).isEqualTo("My unique asset_1");
+
+        Asset fifthAsset = doPost("/api/asset?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", asset, Asset.class);
+        assertThat(fifthAsset.getName()).isEqualTo("My unique asset_2");
+    }
+
     private Asset createAsset(String name) {
         Asset asset = new Asset();
         asset.setName(name);

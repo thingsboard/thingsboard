@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable, ReplaySubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
@@ -28,13 +28,15 @@ import {
   DeviceInfo,
   DeviceInfoQuery,
   DeviceSearchQuery,
-  PublishTelemetryCommand
+  PublishTelemetryCommand,
+  SaveDeviceParams
 } from '@shared/models/device.models';
 import { EntitySubtype } from '@shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
 import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 import { ResourcesService } from '@core/services/resources.service';
+import { SaveEntityParams } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'
@@ -87,15 +89,19 @@ export class DeviceService {
     return this.http.get<DeviceInfo>(`/api/device/info/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveDevice(device: Device, config?: RequestConfig): Observable<Device> {
-    return this.http.post<Device>('/api/device', device, defaultHttpOptionsFromConfig(config));
+  public saveDevice(device: Device, config?: RequestConfig): Observable<Device>;
+  public saveDevice(device: Device, saveParams?: SaveDeviceParams, config?: RequestConfig): Observable<Device>;
+  public saveDevice(device: Device, saveParamsOrConfig?: SaveDeviceParams | RequestConfig, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>('/api/device', device, createDefaultHttpOptions(saveParamsOrConfig, config));
   }
 
-  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device> {
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device>;
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParams: SaveEntityParams, config?: RequestConfig): Observable<Device>;
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParamsOrConfig?: SaveEntityParams | RequestConfig, config?: RequestConfig): Observable<Device> {
     return this.http.post<Device>('/api/device-with-credentials', {
       device,
       credentials
-    }, defaultHttpOptionsFromConfig(config));
+    }, createDefaultHttpOptions(saveParamsOrConfig, config));
   }
 
   public deleteDevice(deviceId: string, config?: RequestConfig) {

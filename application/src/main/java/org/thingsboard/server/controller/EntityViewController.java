@@ -34,6 +34,9 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
+import org.thingsboard.server.common.data.UniquifyStrategy;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -69,6 +72,8 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.MODEL_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -76,6 +81,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
 /**
@@ -128,7 +134,13 @@ public class EntityViewController extends BaseController {
     @ResponseBody
     public EntityView saveEntityView(
             @Parameter(description = "A JSON object representing the entity view.")
-            @RequestBody EntityView entityView) throws Exception {
+            @RequestBody EntityView entityView,
+            @Parameter(description = NAME_CONFLICT_POLICY_DESC)
+            @RequestParam(name = "nameConflictPolicy", defaultValue = "FAIL") NameConflictPolicy nameConflictPolicy,
+            @Parameter(description = UNIQUIFY_SEPARATOR_DESC)
+            @RequestParam(name = "uniquifySeparator", defaultValue = "_") String uniquifySeparator,
+            @Parameter(description = UNIQUIFY_STRATEGY_DESC)
+            @RequestParam(name = "uniquifyStrategy", defaultValue = "RANDOM") UniquifyStrategy uniquifyStrategy) throws Exception {
         entityView.setTenantId(getCurrentUser().getTenantId());
         EntityView existingEntityView = null;
         if (entityView.getId() == null) {
@@ -137,7 +149,7 @@ public class EntityViewController extends BaseController {
         } else {
             existingEntityView = checkEntityViewId(entityView.getId(), Operation.WRITE);
         }
-        return tbEntityViewService.save(entityView, existingEntityView, getCurrentUser());
+        return tbEntityViewService.save(entityView, existingEntityView, new NameConflictStrategy(nameConflictPolicy, uniquifySeparator, uniquifyStrategy), getCurrentUser());
     }
 
     @ApiOperation(value = "Delete entity view (deleteEntityView)",

@@ -1608,6 +1608,30 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(device.getVersion()).isEqualTo(3);
     }
 
+    @Test
+    public void testSaveDeviceWithUniquifyStrategy() throws Exception {
+        Device device = new Device();
+        device.setName("My unique device");
+        device.setType("default");
+        Device savedDevice = doPost("/api/device", device, Device.class);
+
+        doPost("/api/device", device).andExpect(status().isBadRequest());
+
+        doPost("/api/device?nameConflictPolicy=FAIL", device).andExpect(status().isBadRequest());
+
+        Device secondDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY", device, Device.class);
+        assertThat(secondDevice.getName()).startsWith("My unique device_");
+
+        Device thirdDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", device, Device.class);
+        assertThat(thirdDevice.getName()).startsWith("My unique device-");
+
+        Device fourthDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", device, Device.class);
+        assertThat(fourthDevice.getName()).isEqualTo("My unique device_1");
+
+        Device fifthDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", device, Device.class);
+        assertThat(fifthDevice.getName()).isEqualTo("My unique device_2");
+    }
+
     private Device createDevice(String name) {
         Device device = new Device();
         device.setName(name);

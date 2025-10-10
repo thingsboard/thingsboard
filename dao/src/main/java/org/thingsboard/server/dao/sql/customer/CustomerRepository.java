@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.edqs.fields.CustomerFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.CustomerEntity;
@@ -40,6 +41,10 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
                                         Pageable pageable);
 
     CustomerEntity findByTenantIdAndTitle(UUID tenantId, String title);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'CUSTOMER', a.title) " +
+            "FROM CustomerEntity a WHERE a.tenantId = :tenantId AND a.title LIKE CONCAT(:prefix, '%')")
+    List<EntityInfo> findEntityInfosByNamePrefix(UUID tenantId, String prefix);
 
     @Query(value = "SELECT * FROM customer c WHERE c.tenant_id = :tenantId " +
             "AND c.is_public IS TRUE ORDER BY c.id ASC LIMIT 1", nativeQuery = true)

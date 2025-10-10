@@ -13,15 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.customer;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.NameConflictStrategy;
-import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-public interface TbCustomerService extends SimpleTbEntityService<Customer> {
+@Schema
+public record NameConflictStrategy(NameConflictPolicy policy, String separator, UniquifyStrategy uniquifyStrategy) {
 
-    Customer save(Customer customer, NameConflictStrategy nameConflictStrategy, SecurityUser user) throws Exception;
+    public static final NameConflictStrategy DEFAULT = new NameConflictStrategy(NameConflictPolicy.FAIL, null, null);
 
 }

@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.edqs.fields.EntityViewFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
@@ -117,6 +118,10 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
                                                                                  Pageable pageable);
 
     EntityViewEntity findByTenantIdAndName(UUID tenantId, String name);
+
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ENTITY_VIEW', a.name) " +
+            "FROM EntityViewEntity a WHERE a.tenantId = :tenantId AND a.name LIKE CONCAT(:prefix, '%')")
+    List<EntityInfo> findEntityInfosByNamePrefix(UUID tenantId, String prefix);
 
     List<EntityViewEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 

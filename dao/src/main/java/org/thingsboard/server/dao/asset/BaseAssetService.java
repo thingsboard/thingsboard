@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -147,7 +149,16 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
+    public Asset saveAsset(Asset asset, NameConflictStrategy nameConflictStrategy) {
+        return saveAsset(asset, true, nameConflictStrategy);
+    }
+
+    @Override
     public Asset saveAsset(Asset asset, boolean doValidate) {
+        return saveAsset(asset, doValidate, NameConflictStrategy.DEFAULT);
+    }
+
+    private Asset saveAsset(Asset asset, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveAsset [{}]", asset);
         Asset oldAsset = null;
         if (doValidate) {
@@ -176,6 +187,9 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
                 }
             }
             asset.setType(assetProfile.getName());
+            if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
+                uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET, nameConflictStrategy);
+            }
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAsset.getTenantId()).entityId(savedAsset.getId())
