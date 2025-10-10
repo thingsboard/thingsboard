@@ -263,18 +263,18 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
       this.updateData();
     });
 
-    this.ctx.aliasController?.filtersChanged.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((filters) => {
-      let currentFilterId = this.ctx.datasources?.[0]?.filterId;
-      if (this.displayPagination && currentFilterId && filters.includes(currentFilterId)) {
-        this.paginator.pageIndex = 0;
-      }
-      this.updateData();
-    });
-
     if (this.displayPagination) {
       this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
+
+      this.ctx.aliasController?.filtersChanged.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((filters) => {
+        let currentFilterId = this.ctx.defaultSubscription.options.datasources?.[0]?.filterId;
+        if (currentFilterId && filters.includes(currentFilterId)) {
+          this.paginator.pageIndex = 0;
+        }
+        this.updateData();
+      });
     }
     ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
       takeUntil(this.destroy$)
