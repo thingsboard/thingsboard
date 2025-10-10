@@ -687,6 +687,7 @@ export const defaultBasePolylinesDataLayerSettings = (mapType: MapType): Partial
       type: DataLayerColorType.constant,
       color: '#3388ff',
     },
+    strokeWeight: 3,
     // usePathDecorator: false,
     // pathDecoratorSymbol: PathDecoratorSymbol.arrowHead,
     // pathDecoratorSymbolSize: 10,
@@ -701,7 +702,7 @@ export const defaultBasePolylinesDataLayerSettings = (mapType: MapType): Partial
       color: '#307FE5',
     },
     pointTooltip: {
-      show: true,
+      show: false,
       trigger: DataLayerTooltipTrigger.click,
       autoclose: true,
       type: DataLayerPatternType.pattern,

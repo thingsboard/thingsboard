@@ -8640,6 +8640,8 @@
                     "edit": "Edit polyline",
                     "remove-polyline-for": "Remove polyline for '{{entityName}}'",
                     "draw-polyline": "Draw polyline",
+                    "polyline-place-first-point-hint": "Polyline: click to place first point",
+                    "continue-polyline-hint-with-entity": "Polyline for '{{entityName}}': click to continue drawing",
                     "finish-polyline-hint": "Polyline: click to finish drawing"
                 },
                 "select-entity": "Select entity",

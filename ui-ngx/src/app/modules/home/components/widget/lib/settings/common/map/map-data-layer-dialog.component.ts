@@ -474,23 +474,23 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.get('pointTooltip').disable({emitEvent: false});
       }
     } else if (this.dataLayerType === 'polylines') {
-      const usePathDecorator: boolean = this.dataLayerFormGroup.get('usePathDecorator').value;
+      // const usePathDecorator: boolean = this.dataLayerFormGroup.get('usePathDecorator').value;
       const showPoints: boolean = this.dataLayerFormGroup.get('showPoints').value;
-      if (usePathDecorator) {
-        this.dataLayerFormGroup.get('pathDecoratorSymbol').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorSymbolSize').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorSymbolColor').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorOffset').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathEndDecoratorOffset').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorRepeat').enable({emitEvent: false});
-      } else {
-        this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorOffset').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
-      }
+      // if (usePathDecorator) {
+      //   this.dataLayerFormGroup.get('pathDecoratorSymbol').enable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorSymbolSize').enable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorSymbolColor').enable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorOffset').enable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathEndDecoratorOffset').enable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorRepeat').enable({emitEvent: false});
+      // } else {
+      //   this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorOffset').disable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
+      //   this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
+      // }
       if (showPoints) {
         this.dataLayerFormGroup.get('pointSize').enable({emitEvent: false});
         this.dataLayerFormGroup.get('pointColor').enable({emitEvent: false});

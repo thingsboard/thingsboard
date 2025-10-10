@@ -73,14 +73,13 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     const polyData = this.dataLayer.extractPolylineCoordinates(data);
     const polyConstructor = L.polyline;
     this.polyline = polyConstructor(polyData as (TbPolylineRawCoordinates & L.LatLngTuple[]), {
-      // noClip: true,
-      // snapIgnore: !this.dataLayer.isSnappable(),
+      noClip: true,
+      snapIgnore: !this.dataLayer.isSnappable(),
       bubblingMouseEvents: !this.dataLayer.isEditMode()
     });
 
-    this.dataLayer.getShapeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
-
       if (this.polyline) {
         this.polyline.setStyle(this.polylineStyleInfo.style);
       }
@@ -103,7 +102,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
-    this.dataLayer.getShapeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
+    this.dataLayer.getStrokeStyle(data, dsData, this.polylineStyleInfo?.patternId).subscribe((styleInfo) => {
       this.polylineStyleInfo = styleInfo;
       this.updatePolylineShape(data);
       this.updateTooltip(data, dsData);
@@ -159,36 +158,33 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   protected onSelected(): L.TB.ToolbarButtonOptions[] {
     const buttons:  L.TB.ToolbarButtonOptions[] = [];
     if (this.dataLayer.isEditEnabled()) {
-      // this.enablePolygonEditMode();
+      this.enablePolylineEditMode();
       buttons.push(
-        {
-          id: 'cut',
-          title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.cut'),
-          iconClass: 'tb-cut',
-          click: (e, button) => {
-            const map = this.dataLayer.getMap().getMap();
-            // if (!map.pm.globalCutModeEnabled()) {
-            //   this.disablePolygonRotateMode();
-            //   this.disablePolygonEditMode();
-            //   this.enablePolygonCutMode(button);
-            // } else {
-            //   this.disablePolygonCutMode(button);
-            //   this.enablePolygonEditMode();
-            // }
-          }
-        },
+        // {
+        //   id: 'cut',
+        //   title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.cut'),
+        //   iconClass: 'tb-cut',
+        //   click: (e, button) => {
+        //     const map = this.dataLayer.getMap().getMap();
+        //     if (!map.pm.globalCutModeEnabled()) {
+        //       this.disablePolylineRotateMode();
+        //       this.disablePolylineEditMode();
+        //     } else {
+        //       this.enablePolylineEditMode();
+        //     }
+        //   }
+        // },
         {
           id: 'rotate',
           title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.rotate'),
           iconClass: 'tb-rotate',
           click: (e, button) => {
             if (!this.polyline.pm.rotateEnabled()) {
-              // this.disablePolygonCutMode();
-              // this.disablePolygonEditMode();
-              // this.enablePolygonRotateMode(button);
+              this.disablePolylineEditMode();
+              this.enablePolylineRotateMode(button);
             } else {
-              // this.disablePolygonRotateMode(button);
-              // this.enablePolygonEditMode();
+              this.disablePolylineRotateMode(button);
+              this.enablePolylineEditMode();
             }
           }
         }
@@ -199,22 +195,15 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
   protected onDeselected(): void {
     if (this.dataLayer.isEditEnabled()) {
-     // this.disablePolygonEditMode();
-     // this.disablePolygonCutMode();
-     // this.disablePolygonRotateMode();
+     this.disablePolylineEditMode();
+     this.disablePolylineRotateMode();
     }
   }
 
   protected canDeselect(cancel = false): boolean {
-    const map = this.dataLayer.getMap().getMap();
-    if (map.pm.globalCutModeEnabled()) {
+    if (this.polyline.pm.rotateEnabled()) {
       if (cancel) {
-        // this.disablePolygonCutMode();
-      }
-      return false;
-    } else if (this.polyline.pm.rotateEnabled()) {
-      if (cancel) {
-        // this.disablePolygonRotateMode();
+        this.disablePolylineRotateMode();
       }
       return false;
     } else if (this.editing) {
@@ -242,102 +231,36 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     map.getEditToolbar().getButton('remove')?.setDisabled(false);
   }
 
-  // private disablePolygonEditMode() {
-  //   this.polyline.pm.disable();
-  //   this.polyline.off('pm:markerdragstart');
-  //   this.polyline.off('pm:markerdragend');
-  //   this.polyline.off('pm:edit');
-  //   const map = this.dataLayer.getMap();
-  //   map.getEditToolbar().getButton('remove')?.setDisabled(true);
-  // }
+  private disablePolylineEditMode() {
+    this.polyline.pm.disable();
+    this.polyline.off('pm:markerdragstart');
+    this.polyline.off('pm:markerdragend');
+    this.polyline.off('pm:edit');
+    const map = this.dataLayer.getMap();
+    map.getEditToolbar().getButton('remove')?.setDisabled(true);
+  }
 
-  // private enablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
-  //   this.polylineContainer.closePopup();
-  //   this.editing = true;
-  //   this.polyline.options.bubblingMouseEvents = true;
-  //   this.polyline.setStyle({...this.polylineStyleInfo.style, dashArray: '5 5', weight: 3,
-  //     color: '#3388ff', opacity: 1, fillColor: '#3388ff', fillOpacity: 0.2});
-  //   this.addItemClass('tb-cut-mode');
-  //   this.polyline.once('pm:cut', (e) => {
-  //     if (e.layer instanceof L.Polygon) {
-  //       if (this.polyline instanceof L.Rectangle) {
-  //         this.polylineContainer.removeLayer(this.polyline);
-  //         this.polyline = L.polyline(e.layer.getLatLngs(), {
-  //           ...this.polylineStyleInfo.style,
-  //           snapIgnore: !this.dataLayer.isSnappable(),
-  //           bubblingMouseEvents: !this.dataLayer.isEditMode()
-  //         });
-  //         this.polyline.addTo(this.polylineContainer);
-  //       } else {
-  //         this.polyline.setLatLngs(e.layer.getLatLngs());
-  //       }
-  //     }
-  //     // @ts-ignore
-  //     e.layer._pmTempLayer = true;
-  //     e.layer.remove();
-  //     this.polylineContainer.removeLayer(this.polyline);
-  //     // @ts-ignore
-  //     this.polyline._pmTempLayer = false;
-  //     this.polyline.addTo(this.polylineContainer);
-  //     this.updateSelectedState();
-  //     cutButton?.setActive(false);
-  //     this.savePolygonCoordinates()
-  //   });
-  //   const map = this.dataLayer.getMap().getMap();
-  //   map.pm.setLang('en', {
-  //     tooltips: {
-  //       firstVertex: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.polygon-place-first-point-cut-hint'),
-  //       continueLine: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.continue-polygon-cut-hint'),
-  //       finishPoly: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.finish-polygon-cut-hint')
-  //     }
-  //   }, 'en');
-  //   map.pm.enableGlobalCutMode({
-  //     // @ts-ignore
-  //     layersToCut: [this.polyline]
-  //   });
-  //   // @ts-ignore
-  //   L.DomUtil.addClass(map.pm.Draw.Cut._hintMarker.getTooltip()._container, 'tb-place-item-label');
-  //   cutButton?.setActive(true);
-  //   map.once('pm:globalcutmodetoggled', (e) => {
-  //     // if (!e.enabled) {
-  //     //   this.disablePolygonCutMode(cutButton);
-  //     //   this.enablePolygonEditMode();
-  //     // }
-  //   });
-  // }
+  private enablePolylineRotateMode(rotateButton?: L.TB.ToolbarButton) {
+    this.polylineContainer.closePopup();
+    this.editing = true;
+    this.polyline.on('pm:rotateend', () => {
+      this.savePolylineCoordinates();
+    });
+    this.polyline.pm.enableRotate();
+    rotateButton?.setActive(true);
+    this.polyline.on('pm:rotatedisable', () => {
+      this.disablePolylineRotateMode(rotateButton);
+      this.enablePolylineEditMode();
+    });
+  }
 
-  // private disablePolygonCutMode(cutButton?: L.TB.ToolbarButton) {
-  //   this.editing = false;
-  //   this.polyline.options.bubblingMouseEvents = !this.dataLayer.isEditMode();
-  //   this.polyline.setStyle({...this.polylineStyleInfo.style, dashArray: null});
-  //   this.removeItemClass('tb-cut-mode');
-  //   this.polyline.off('pm:cut');
-  //   const map = this.dataLayer.getMap().getMap();
-  //   map.pm.disableGlobalCutMode();
-  //   cutButton?.setActive(false);
-  // }
-
-  // private enablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
-  //   this.polylineContainer.closePopup();
-  //   this.editing = true;
-  //   this.polyline.on('pm:rotateend', () => {
-  //     this.savePolygonCoordinates();
-  //   });
-  //   this.polyline.pm.enableRotate();
-  //   rotateButton?.setActive(true);
-  //   this.polyline.on('pm:rotatedisable', () => {
-  //     this.disablePolygonRotateMode(rotateButton);
-  //     this.enablePolygonEditMode();
-  //   });
-  // }
-  //
-  // private disablePolygonRotateMode(rotateButton?: L.TB.ToolbarButton) {
-  //   this.editing = false;
-  //   this.polyline.pm.disableRotate();
-  //   this.polyline.off('pm:rotateend');
-  //   this.polyline.off('pm:rotatedisable');
-  //   rotateButton?.setActive(false);
-  // }
+  private disablePolylineRotateMode(rotateButton?: L.TB.ToolbarButton) {
+    this.editing = false;
+    this.polyline.pm.disableRotate();
+    this.polyline.off('pm:rotateend');
+    this.polyline.off('pm:rotatedisable');
+    rotateButton?.setActive(false);
+  }
 
   private savePolylineCoordinates() {
     let coordinates: TbPolylineCoordinates = this.polyline.getLatLngs();
@@ -361,20 +284,20 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
     const polyData = this.dataLayer.extractPolylineCoordinates(data) as TbPolylineData;
     if (isCutPolygon(polyData) || polyData.length !== 2) {
-      if (this.polyline instanceof L.Rectangle) {
-
-        this.polylineContainer.removeLayer(this.polyline);
-        this.polyline = L.polyline(polyData, {
-          ...this.polylineStyleInfo.style,
-          snapIgnore: !this.dataLayer.isSnappable(),
-          bubblingMouseEvents: !this.dataLayer.isEditMode(),
-          noClip: true
-        });
-        this.polyline.addTo(this.polylineContainer);
-        this.editModeUpdated();
-      } else {
+    //   if (this.polyline instanceof L.Rectangle) {
+    //
+    //     this.polylineContainer.removeLayer(this.polyline);
+    //     this.polyline = L.polyline(polyData, {
+    //       ...this.polylineStyleInfo.style,
+    //       snapIgnore: !this.dataLayer.isSnappable(),
+    //       bubblingMouseEvents: !this.dataLayer.isEditMode(),
+    //       noClip: true
+    //     });
+    //     this.polyline.addTo(this.polylineContainer);
+    //     this.editModeUpdated();
+    //   } else {
         this.polyline.setLatLngs(polyData);
-      }
+      // }
     } else if (polyData.length === 2) {
       const bounds = new L.LatLngBounds(polyData as L.LatLngTuple[]);
       // (this.polyline as L.Rectangle).setBounds(bounds);
@@ -458,5 +381,4 @@ export class TbPolylineDataLayer extends TbShapesDataLayer<PolylinesDataLayerSet
   protected createLayerItem(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): TbPolylineDataLayerItem {
     return new TbPolylineDataLayerItem(data, dsData, this.settings, this);
   }
-
 }

@@ -465,6 +465,8 @@
             <tb-shape-fill-image-settings formControlName="fillImage"></tb-shape-fill-image-settings>
           </div>
         </div>
+        </ng-container>
+      <ng-container *ngIf="['polygons', 'circles', 'polylines'].includes(dataLayerType)">
         <div class="tb-form-row space-between">
           <div translate>widgets.maps.data-layer.shape.stroke</div>
           <div class="flex flex-row items-center gap-2">
@@ -477,7 +479,9 @@
               [dsType]="dataLayerFormGroup.get('dsType').value"
               [dsEntityAliasId]="dataLayerFormGroup.get('dsEntityAliasId').value"
               [dsDeviceId]="dataLayerFormGroup.get('dsDeviceId').value"
-              helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/circle_stroke_color_fn' }}" formControlName="strokeColor"></tb-data-layer-color-settings>
+              helpId="{{ dataLayerType === 'polygons' ? 'widget/lib/map/polygon_stroke_color_fn' :
+                (dataLayerType === 'circles' ? 'widget/lib/map/polygon_stroke_color_fn' : 'widget/lib/map/polyline_stroke_color_fn') }}"
+              formControlName="strokeColor"></tb-data-layer-color-settings>
           </div>
         </div>
       </ng-container>

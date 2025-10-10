@@ -1,11 +1,11 @@
-#### Path point color function
+#### Polyline stroke color function
 
 <div class="divider"></div>
 <br/>
 
 *function (data, dsData): string*
 
-A JavaScript function used to compute color of the path point.
+A JavaScript function used to compute stroke color of the polyline.
 
 **Parameters:**
 
@@ -15,7 +15,7 @@ A JavaScript function used to compute color of the path point.
 
 **Returns:**
 
-Should return string value presenting color of the path point.
+Should return string value presenting stroke color of the polyline.
 
 In case no data is returned, color value from **Color** settings field will be used.
 

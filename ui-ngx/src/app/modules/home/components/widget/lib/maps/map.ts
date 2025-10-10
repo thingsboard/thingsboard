@@ -125,6 +125,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected addRectangleButton: L.TB.ToolbarButton;
   protected addPolygonButton: L.TB.ToolbarButton;
   protected addCircleButton: L.TB.ToolbarButton;
+  protected addPolylineButton: L.TB.ToolbarButton;
 
   protected timeLineComponentRef: ComponentRef<MapTimelinePanelComponent>;
   protected timeLineComponent: MapTimelinePanelComponent;
@@ -133,6 +134,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   protected addMarkerDataLayers: TbLatestMapDataLayer<any>[];
   protected addPolygonDataLayers: TbLatestMapDataLayer<any>[];
   protected addCircleDataLayers: TbLatestMapDataLayer<any>[];
+  protected addPolylineDataLayers: TbLatestMapDataLayer<any>[];
 
   protected shapePatternStorage: ShapePatternStorage = {};
 
@@ -506,6 +508,18 @@ export abstract class TbMap<S extends BaseMapSettings> {
          });
          this.addCircleButton.setDisabled(true);
        }
+       this.addPolylineDataLayers = addSupportedDataLayers.filter(dl => dl.dataLayerType() === 'polylines');
+       if (this.addPolylineDataLayers.length) {
+         this.addPolylineButton = drawToolbar.toolbarButton({
+           id: 'addPolyline',
+           title: this.ctx.translate.instant('widgets.maps.data-layer.polyline.draw-polyline'),
+           iconClass: 'tb-draw-polyline',
+           click: (e, button) => {
+             this.drawPolyline(e, button);
+           }
+         });
+         this.addPolylineButton.setDisabled(true);
+       }
      }
   }
 
@@ -560,6 +574,13 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.placeItem(e, button, this.addCircleDataLayers, (entity) => this.prepareDrawMode('Circle', {
       startCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.place-circle-center-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
       finishCircle: this.ctx.translate.instant('widgets.maps.data-layer.circle.finish-circle-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+    }));
+  }
+
+  private drawPolyline(e: MouseEvent, button: L.TB.ToolbarButton): void {
+    this.placeItem(e, button, this.addCircleDataLayers, (entity) => this.prepareDrawMode('Polyline', {
+      firstVertex: this.ctx.translate.instant('widgets.maps.data-layer.polyline.polyline-place-first-point-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
+      continueLine: this.ctx.translate.instant('widgets.maps.data-layer.polyline.continue-polyline-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
     }));
   }
 
@@ -683,6 +704,9 @@ export abstract class TbMap<S extends BaseMapSettings> {
         break;
       case MapItemType.circle:
         this.createCircle(actionData);
+        break;
+      case MapItemType.polyline:
+        // this.createPolyline(actionData); // TODO
         break;
     }
   }
