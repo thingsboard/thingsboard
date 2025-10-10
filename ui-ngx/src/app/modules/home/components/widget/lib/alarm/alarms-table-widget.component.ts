@@ -336,9 +336,8 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       ).subscribe((filters) => {
         let currentFilterId = this.ctx.defaultSubscription.options.alarmSource?.filterId;
         if (currentFilterId && filters.includes(currentFilterId)) {
-          this.paginator.pageIndex = 0;
+          this.paginator.firstPage();
         }
-        this.updateData();
       });
     }
     ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
