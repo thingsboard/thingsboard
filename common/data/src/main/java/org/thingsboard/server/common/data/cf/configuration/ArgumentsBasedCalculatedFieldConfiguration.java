@@ -15,10 +15,22 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
     Map<String, Argument> getArguments();
+
+    default List<EntityId> getReferencedEntities() {
+        return getArguments().values().stream()
+                .map(Argument::getRefEntityId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
 }

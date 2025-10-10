@@ -53,6 +53,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         return args;
     }
 
+
     @Override
     public List<EntityId> getReferencedEntities() {
         return zoneGroups.values().stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();

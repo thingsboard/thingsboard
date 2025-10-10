@@ -20,6 +20,7 @@ import lombok.Data;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class SimpleAlarmConditionSpec implements AlarmConditionSpec {
     @Override
     public AlarmConditionSpecType getType() {

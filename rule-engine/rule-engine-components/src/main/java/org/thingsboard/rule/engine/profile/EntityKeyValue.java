@@ -20,6 +20,7 @@ import lombok.Getter;
 import org.thingsboard.server.common.data.kv.DataType;
 
 @EqualsAndHashCode
+@Deprecated
 class EntityKeyValue {
 
     @Getter

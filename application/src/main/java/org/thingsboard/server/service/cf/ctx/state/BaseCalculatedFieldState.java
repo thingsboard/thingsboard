@@ -15,42 +15,53 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
-import java.util.ArrayList;
+import java.io.Closeable;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Data
-@AllArgsConstructor
-public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
+@Getter
+public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
 
+    protected final EntityId entityId;
+    protected CalculatedFieldCtx ctx;
+    protected TbActorRef actorCtx;
     protected List<String> requiredArguments;
-    protected Map<String, ArgumentEntry> arguments;
-    protected boolean sizeExceedsLimit;
 
+    protected Map<String, ArgumentEntry> arguments = new HashMap<>();
+    protected boolean sizeExceedsLimit;
     protected long latestTimestamp = -1;
 
-    public BaseCalculatedFieldState(List<String> requiredArguments) {
-        this.requiredArguments = requiredArguments;
-        this.arguments = new HashMap<>();
-    }
+    @Setter
+    private TopicPartitionInfo partition;
 
-    public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+    public BaseCalculatedFieldState(EntityId entityId) {
+        this.entityId = entityId;
     }
 
     @Override
-    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        this.ctx = ctx;
+        this.actorCtx = actorCtx;
+        this.requiredArguments = ctx.getArgNames();
+    }
 
-        boolean stateUpdated = false;
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        Map<String, ArgumentEntry> updatedArguments = null;
 
         for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
             String key = entry.getKey();
@@ -70,19 +81,33 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             }
 
             if (entryUpdated) {
-                stateUpdated = true;
+                if (updatedArguments == null) {
+                    updatedArguments = new HashMap<>(argumentValues.size());
+                }
+                updatedArguments.put(key, newEntry);
                 updateLastUpdateTimestamp(newEntry);
             }
 
         }
 
-        return stateUpdated;
+        if (updatedArguments == null) {
+            updatedArguments = Collections.emptyMap();
+        }
+        return updatedArguments;
+    }
+
+    @Override
+    public void reset() { // must reset everything dependent on arguments
+        requiredArguments = null;
+        arguments.clear();
+        sizeExceedsLimit = false;
+        latestTimestamp = -1;
     }
 
     @Override
     public boolean isReady() {
         return arguments.keySet().containsAll(requiredArguments) &&
-                arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
     }
 
     @Override
@@ -92,6 +117,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             sizeExceedsLimit = true;
         }
     }
+
+    @Override
+    public void close() {}
 
     protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
 

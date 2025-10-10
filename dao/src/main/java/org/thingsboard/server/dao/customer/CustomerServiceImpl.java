@@ -144,9 +144,10 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
 
     private Customer saveCustomer(Customer customer, boolean doValidate) {
         log.trace("Executing saveCustomer [{}]", customer);
+        Customer oldCustomer = null;
         String oldCustomerTitle = null;
         if (doValidate) {
-            Customer oldCustomer = customerValidator.validate(customer, Customer::getTenantId);
+            oldCustomer = customerValidator.validate(customer, Customer::getTenantId);
             if (oldCustomer != null) {
                 oldCustomerTitle = oldCustomer.getTitle();
             }
@@ -161,8 +162,13 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
                 countService.publishCountEntityEvictEvent(savedCustomer.getTenantId(), EntityType.CUSTOMER);
             }
             publishEvictEvent(evictEvent);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedCustomer.getTenantId())
-                    .entityId(savedCustomer.getId()).entity(savedCustomer).created(customer.getId() == null).build());
+            eventPublisher.publishEvent(SaveEntityEvent.builder()
+                    .tenantId(savedCustomer.getTenantId())
+                    .entityId(savedCustomer.getId())
+                    .entity(savedCustomer)
+                    .oldEntity(oldCustomer)
+                    .created(customer.getId() == null)
+                    .build());
             return savedCustomer;
         } catch (Exception e) {
             handleEvictEvent(evictEvent);
