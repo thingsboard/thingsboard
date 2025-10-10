@@ -26,6 +26,7 @@ import lombok.NoArgsConstructor;
 import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSchedule;
+import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AnyTimeSchedule;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -43,6 +44,10 @@ public abstract class AlarmCondition {
     private AlarmConditionExpression expression;
     @Valid
     private AlarmConditionValue<AlarmSchedule> schedule;
+
+    public boolean hasSchedule() {
+        return schedule != null && !(schedule.getStaticValue() instanceof AnyTimeSchedule);
+    }
 
     @JsonIgnore
     public abstract AlarmConditionType getType();

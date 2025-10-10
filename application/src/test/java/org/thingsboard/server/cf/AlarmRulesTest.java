@@ -21,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
@@ -45,6 +46,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.predic
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate.StringOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSchedule;
+import org.thingsboard.server.common.data.alarm.rule.condition.schedule.SpecificTimeSchedule;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
@@ -63,18 +65,27 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.time.Duration;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "actors.alarms.reevaluation_interval=1"
+})
 public class AlarmRulesTest extends AbstractControllerTest {
 
     @MockitoSpyBean
@@ -209,10 +220,15 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(alarmResult.getConditionRepeats()).isEqualTo(5);
         });
 
-        for (int i = 0; i < 5; i++) {
+        for (int i = 0; i < 4; i++) {
             postTelemetry(deviceId, "{\"temperature\":50}");
             Thread.sleep(10);
         }
+        checkAlarmResult(calculatedField, alarmResult -> alarmResult.getConditionRepeats() == 9, alarmResult -> {
+            assertThat(alarmResult.isUpdated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.MAJOR);
+        });
+        postTelemetry(deviceId, "{\"temperature\":50}");
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isSeverityUpdated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
@@ -420,7 +436,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         scheduleArgument.setDefaultValue("None");
         Map<String, Argument> arguments = Map.of(
                 "temperature", temperatureArgument,
-                "schedule", scheduleArgument // fixme:
+                "schedule", scheduleArgument
         );
 
         Map<AlarmSeverity, Condition> createRules = Map.of(
@@ -638,11 +654,53 @@ public class AlarmRulesTest extends AbstractControllerTest {
         });
     }
 
+    @Test
+    public void testCreateAlarm_scheduleStarted() throws Exception {
+        Argument parkingSpotOccupiedArgument = new Argument();
+        parkingSpotOccupiedArgument.setRefEntityKey(new ReferencedEntityKey("parkingSpotOccupied", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        parkingSpotOccupiedArgument.setDefaultValue("false");
+        Map<String, Argument> arguments = Map.of(
+                "parkingSpotOccupied", parkingSpotOccupiedArgument
+        );
+
+        SpecificTimeSchedule schedule = new SpecificTimeSchedule();
+        schedule.setTimezone(ZoneId.systemDefault().getId());
+        schedule.setDaysOfWeek(Set.of(1, 2, 3, 4, 5, 6, 7));
+        long startsOn = Duration.between(LocalDate.now().atStartOfDay(), LocalDateTime.now())
+                .plus(15, ChronoUnit.SECONDS).toMillis();
+        schedule.setStartsOn(startsOn);
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return parkingSpotOccupied == true;", null, null, null,
+                        new AlarmConditionValue<>(schedule, null))
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "Illegal parking alarm",
+                arguments, createRules, null);
+
+        postAttributes(deviceId, AttributeScope.SERVER_SCOPE, "{\"parkingSpotOccupied\":true}");
+
+        Thread.sleep(10000);
+        assertThat(getLatestAlarmResult(calculatedField.getId())).isNull();
+
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
     // TODO: MSA tests
 
     private void checkAlarmResult(CalculatedField calculatedField, Consumer<TbAlarmResult> assertion) {
+        checkAlarmResult(calculatedField, null, assertion);
+    }
+
+    private void checkAlarmResult(CalculatedField calculatedField,
+                                  Predicate<TbAlarmResult> waitFor,
+                                  Consumer<TbAlarmResult> assertion) {
         TbAlarmResult alarmResult = await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> getLatestAlarmResult(calculatedField.getId()), Objects::nonNull);
+                .until(() -> getLatestAlarmResult(calculatedField.getId()), result ->
+                        result != null && (waitFor == null || waitFor.test(result)));
         assertion.accept(alarmResult);
 
         Alarm alarm = alarmResult.getAlarm();

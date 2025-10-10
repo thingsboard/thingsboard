@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
@@ -142,7 +143,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             initCurrentAlarm(ctx);
             createOrClearAlarms(state -> {
                 if (state.getCondition().getType() == AlarmConditionType.DURATION) {
-                    AlarmEvalResult evalResult = state.reeval(System.currentTimeMillis());
+                    AlarmEvalResult evalResult = state.reeval(System.currentTimeMillis(), ctx);
                     if (evalResult.getStatus() == TRUE || evalResult.getStatus() == NOT_YET_TRUE) {
                         ScheduledFuture<?> future = ctx.scheduleReevaluation(evalResult.getLeftDuration(), actorCtx);
                         if (future != null) {
@@ -161,7 +162,9 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         } else {
             // when restored
             ruleState.setAlarmRule(rule);
-            if (rule.getCondition().getType() == AlarmConditionType.DURATION && !ruleState.isEmpty()) {
+            ruleState.setActive(null);
+            AlarmCondition condition = rule.getCondition();
+            if (condition.hasSchedule() || (condition.getType() == AlarmConditionType.DURATION && !ruleState.isEmpty())) {
                 reevalNeeded.set(true);
             }
         }
@@ -199,7 +202,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 }
                 return evalResult;
             } else {
-                return state.reeval(System.currentTimeMillis());
+                return state.reeval(System.currentTimeMillis(), ctx);
             }
         }, ctx);
         return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
