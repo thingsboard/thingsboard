@@ -50,6 +50,7 @@ import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.util.Map;
 import java.util.Optional;
@@ -92,12 +93,10 @@ public class CalculatedFieldUtils {
                 .setType(state.getType().name());
 
         state.getArguments().forEach((argName, argEntry) -> {
-            if (argEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                builder.addSingleValueArguments(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
-            } else if (argEntry instanceof TsRollingArgumentEntry rollingArgumentEntry) {
-                builder.addRollingValueArguments(toRollingArgumentProto(argName, rollingArgumentEntry));
-            } else if (argEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
-                builder.addGeofencingArguments(toGeofencingArgumentProto(argName, geofencingArgumentEntry));
+            switch (argEntry.getType()) {
+                case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
+                case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
+                case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
             }
         });
         if (state instanceof AlarmCalculatedFieldState alarmState) {
@@ -187,6 +186,7 @@ public class CalculatedFieldUtils {
             case SCRIPT -> new ScriptCalculatedFieldState(id.entityId());
             case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
+            case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
         };
 
         proto.getSingleValueArgumentsList().forEach(argProto ->

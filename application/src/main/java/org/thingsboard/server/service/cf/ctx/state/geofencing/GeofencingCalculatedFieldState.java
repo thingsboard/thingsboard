@@ -146,6 +146,10 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
         lastDynamicArgumentsRefreshTs = -1;
     }
 
+    public void updateLastDynamicArgumentsRefreshTs() {
+        lastDynamicArgumentsRefreshTs = System.currentTimeMillis();
+    }
+
     private Map<String, GeofencingArgumentEntry> getGeofencingArguments() {
         return arguments.entrySet()
                 .stream()
@@ -168,13 +172,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     private JsonNode toResultNode(OutputType outputType, ObjectNode valuesNode) {
-        if (OutputType.ATTRIBUTES.equals(outputType) || latestTimestamp == -1) {
-            return valuesNode;
-        }
-        ObjectNode resultNode = JacksonUtil.newObjectNode();
-        resultNode.put("ts", latestTimestamp);
-        resultNode.set("values", valuesNode);
-        return resultNode;
+        return toSimpleResult(outputType == OutputType.TIME_SERIES, valuesNode);
     }
 
     private GeofencingEvalResult aggregateZoneGroup(List<GeofencingEvalResult> zoneResults) {

@@ -34,7 +34,7 @@ import java.util.Map;
 @EqualsAndHashCode(callSuper = true)
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
-    private CalculatedFieldScriptEngine tbelExpression;
+    protected CalculatedFieldScriptEngine tbelExpression;
 
     public ScriptCalculatedFieldState(EntityId entityId) {
         super(entityId);

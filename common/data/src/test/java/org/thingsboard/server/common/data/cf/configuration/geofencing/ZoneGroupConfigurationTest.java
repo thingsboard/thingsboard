@@ -48,24 +48,6 @@ public class ZoneGroupConfigurationTest {
     @ParameterizedTest
     @ValueSource(strings = "  ")
     @NullAndEmptySource
-    void validateShouldThrowWhenPerimeterKeyNameIsNullEmptyOrBlank(String perimeterKeyName) {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration(perimeterKeyName, REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Perimeter key name must be specified for 'allowedZonesGroup' zone group!");
-    }
-
-    @Test
-    void validateShouldThrowWhenReportStrategyIsNull() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", null, false);
-        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Report strategy must be specified for 'allowedZonesGroup' zone group!");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = "  ")
-    @NullAndEmptySource
     void validateShouldThrowWhenRelationCreationEnabledAndRelationTypeIsNullEmptyOrBlank(String relationType) {
         var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, true);
         zoneGroupConfiguration.setRelationType(relationType);

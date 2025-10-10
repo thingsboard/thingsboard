@@ -13,8 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.script.api.tbel;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, PROPAGATION
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+@Data
+public class TbelCfPropagationArg implements TbelCfArg {
+
+    private final Object value;
+
+    @JsonCreator
+    public TbelCfPropagationArg(@JsonProperty("value") Object value) {
+        this.value = value;
+    }
+
+    @Override
+    public String getType() {
+        return "PROPAGATION_CF_ARGUMENT_VALUE";
+    }
+
+    @Override
+    public long memorySize() {
+        return OBJ_SIZE;
+    }
+
 }

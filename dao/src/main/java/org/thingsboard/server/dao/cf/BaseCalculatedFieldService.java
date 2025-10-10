@@ -61,8 +61,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
-        return doSave(calculatedField, oldCalculatedField);
+        return save(calculatedField, true);
     }
 
     @Override
