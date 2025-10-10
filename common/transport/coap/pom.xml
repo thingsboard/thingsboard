@@ -107,6 +107,10 @@
                         </goals>
                     </execution>
                 </executions>
+                <configuration>
+                    <checkStaleness>false</checkStaleness>
+                    <clearOutputDirectory>false</clearOutputDirectory>
+                </configuration>
             </plugin>
         </plugins>
     </build>
