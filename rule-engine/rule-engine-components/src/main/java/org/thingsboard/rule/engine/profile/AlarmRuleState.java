@@ -55,6 +55,7 @@ import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithout
 
 @Data
 @Slf4j
+
 class AlarmRuleState {
 
     private final AlarmSeverity severity;

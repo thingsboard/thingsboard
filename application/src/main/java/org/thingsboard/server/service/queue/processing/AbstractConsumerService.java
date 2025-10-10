@@ -228,6 +228,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.TB_RESOURCE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             tbResourceDataCache.evictResourceData(tenantId, new TbResourceId(componentLifecycleMsg.getEntityId().getId()));
+            return;
         }
 
         eventPublisher.publishEvent(componentLifecycleMsg);

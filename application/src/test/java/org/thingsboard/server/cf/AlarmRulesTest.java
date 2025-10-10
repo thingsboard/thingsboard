@@ -690,6 +690,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     // TODO: MSA tests
+    // TODO: test when attribute or telemetry is deleted without default value - perform calculation not happens
 
     private void checkAlarmResult(CalculatedField calculatedField, Consumer<TbAlarmResult> assertion) {
         checkAlarmResult(calculatedField, null, assertion);

@@ -165,7 +165,7 @@ public class AppActor extends ContextAwareActor {
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         TbActorRef target = null;
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
-            if (!EntityType.TENANT_PROFILE.equals(msg.getEntityId().getEntityType())) {
+            if (!msg.getEntityId().getEntityType().isOneOf(EntityType.TENANT_PROFILE, EntityType.TB_RESOURCE)) {
                 log.warn("Message has system tenant id: {}", msg);
             }
         } else {
