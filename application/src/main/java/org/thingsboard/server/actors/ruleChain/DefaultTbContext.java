@@ -1063,18 +1063,16 @@ public class DefaultTbContext implements TbContext {
     @Override
     public void checkTenantEntity(EntityId entityId) throws TbNodeException {
         TenantId actualTenantId = TenantIdLoader.findTenantId(this, entityId);
-        assertSameTenantId(actualTenantId, entityId);
+        if (!getTenantId().equals(actualTenantId)) {
+            throw new TbNodeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.", true);
+        }
     }
 
     @Override
-    public <E extends HasId<I> & HasTenantId, I extends EntityId> void checkTenantEntity(E entity) throws TbNodeException {
+    public <E extends HasId<I> & HasTenantId, I extends EntityId> void checkTenantOrSystemEntity(E entity) throws TbNodeException {
         TenantId actualTenantId = entity.getTenantId();
-        assertSameTenantId(actualTenantId, entity.getId());
-    }
-
-    private void assertSameTenantId(TenantId tenantId, EntityId entityId) throws TbNodeException {
-        if (!getTenantId().equals(tenantId)) {
-            throw new TbNodeException("Entity with id: '" + entityId + "' specified in the configuration doesn't belong to the current tenant.", true);
+        if (!getTenantId().equals(actualTenantId) && !actualTenantId.isSysTenantId()) {
+            throw new TbNodeException("Entity with id: '" + entity.getId() + "' specified in the configuration doesn't belong to the current or system tenant.", true);
         }
     }
 

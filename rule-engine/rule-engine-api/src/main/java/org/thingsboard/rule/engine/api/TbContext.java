@@ -255,7 +255,7 @@ public interface TbContext {
 
     void checkTenantEntity(EntityId entityId) throws TbNodeException;
 
-    <E extends HasId<I> & HasTenantId, I extends EntityId> void checkTenantEntity(E entity) throws TbNodeException;
+    <E extends HasId<I> & HasTenantId, I extends EntityId> void checkTenantOrSystemEntity(E entity) throws TbNodeException;
 
     boolean isLocalEntity(EntityId entityId);
 

@@ -459,6 +459,31 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
         assertFalse(callback.isPubAckReceived());
     }
 
+    @Override
+    public void testAckIsReceivedOnFailedPublishMessage() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device proto payload")
+                .gatewayName("Test Post Telemetry gateway proto payload")
+                .transportPayloadType(TransportPayloadType.PROTOBUF)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
+
+        TransportApiProtos.GatewayTelemetryMsg.Builder gatewayTelemetryMsgProtoBuilder = TransportApiProtos.GatewayTelemetryMsg.newBuilder();
+        List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
+        String deviceName1 = "Device A";
+        String deviceName2 = "Device B";
+        TransportApiProtos.TelemetryMsg deviceATelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName1, expectedKeys, 10000, 20000);
+        gatewayTelemetryMsgProtoBuilder.addAllMsg(List.of(deviceATelemetryMsgProto));
+        TransportApiProtos.GatewayTelemetryMsg payload1 = gatewayTelemetryMsgProtoBuilder.build();
+
+        TransportApiProtos.TelemetryMsg deviceBTelemetryMsgProto = getDeviceTelemetryMsgProto(deviceName2, expectedKeys, 10000, 20000);
+        TransportApiProtos.GatewayTelemetryMsg payload2 = TransportApiProtos.GatewayTelemetryMsg.newBuilder()
+                .addAllMsg(List.of(deviceBTelemetryMsgProto))
+                .build();
+        super.testAckIsReceivedOnFailedPublishMessage(deviceName1, payload1.toByteArray(), deviceName2, payload2.toByteArray());
+    }
+
     private DynamicSchema getDynamicSchema() {
         DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
         assertTrue(transportConfiguration instanceof MqttDeviceProfileTransportConfiguration);
