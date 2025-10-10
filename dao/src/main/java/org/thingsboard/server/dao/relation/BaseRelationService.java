@@ -518,7 +518,8 @@ public class BaseRelationService implements RelationService {
                 case FROM -> findByFromAndTypeAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
                 case TO -> findByToAndTypeAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
             };
-            return Futures.transform(relationsFuture, entityRelations -> entityRelations.subList(0, limit), MoreExecutors.directExecutor());
+            return Futures.transform(relationsFuture, entityRelations -> entityRelations.size() > limit ?
+                    entityRelations.subList(0, limit) : entityRelations, MoreExecutors.directExecutor());
         }
         return executor.submit(() -> relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit));
     }

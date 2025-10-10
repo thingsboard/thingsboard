@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
@@ -40,6 +41,16 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
 
     public PropagationCalculatedFieldState(EntityId entityId) {
         super(entityId);
+    }
+
+    @Override
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        this.ctx = ctx;
+        this.actorCtx = actorCtx;
+        this.requiredArguments = ctx.getArgNames();
+        if (ctx.isApplyExpressionForResolvedArguments()) {
+            this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
+        }
     }
 
     @Override
