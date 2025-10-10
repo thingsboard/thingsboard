@@ -42,6 +42,8 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -81,6 +83,8 @@ public class CalculatedFieldCtx {
     private final Map<ReferencedEntityKey, String> mainEntityArguments;
     private final Map<EntityId, Map<ReferencedEntityKey, String>> linkedEntityArguments;
     private final Map<ReferencedEntityKey, String> dynamicEntityArguments;
+    private final List<ReferencedEntityKey> aggInputs;
+    private final Map<String, ReferencedEntityKey> aggregationInputs;
     private final List<String> argNames;
     private Output output;
     private String expression;
@@ -122,6 +126,8 @@ public class CalculatedFieldCtx {
         this.argNames = new ArrayList<>();
         this.mainEntityGeofencingArgumentNames = new ArrayList<>();
         this.linkedEntityAndCurrentOwnerGeofencingArgumentNames = new ArrayList<>();
+        this.aggInputs = new ArrayList<>();
+        this.aggregationInputs = new HashMap<>();
         this.output = calculatedField.getConfiguration().getOutput();
         if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
             this.arguments.putAll(argBasedConfig.getArguments());
@@ -165,6 +171,12 @@ public class CalculatedFieldCtx {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
         this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
+        if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
+            aggInputs.addAll(aggConfig.getInputs().values());
+            aggregationInputs.putAll(aggConfig.getInputs());
+            this.argNames.addAll(aggConfig.getInputs().keySet());
+            this.scheduledUpdateIntervalMillis = aggConfig.getDeduplicationIntervalMillis();
+        }
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();
@@ -195,6 +207,19 @@ public class CalculatedFieldCtx {
                 rules.map(rule -> rule.getCondition().getExpression()).forEach(expression -> {
                     if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
                         initTbelExpression(tbelExpression.getExpression());
+                    }
+                });
+                initialized = true;
+            }
+            case LATEST_VALUES_AGGREGATION -> {
+                LatestValuesAggregationCalculatedFieldConfiguration configuration = (LatestValuesAggregationCalculatedFieldConfiguration) calculatedField.getConfiguration();
+                configuration.getMetrics().forEach((key, metric) -> {
+                    if (metric.getInput() instanceof AggFunctionInput functionInput) {
+                        initTbelExpression(functionInput.getFunction());
+                    }
+                    String filter = metric.getFilter();
+                    if (filter != null && !filter.isEmpty()) {
+                        initTbelExpression(filter);
                     }
                 });
                 initialized = true;
@@ -240,6 +265,24 @@ public class CalculatedFieldCtx {
         args.set(0, new TbelCfCtx(arguments, state.getLatestTimestamp()));
 
         return expression.executeScriptAsync(args.toArray());
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(String expression, Map<String, ArgumentEntry> entries, long latestTimestamp) {
+        Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
+        List<Object> args = new ArrayList<>(argNames.size() + 1);
+        args.add(new Object()); // first element is a ctx, but we will set it later;
+        for (String argName : argNames) {
+            var arg = entries.get(argName).toTbelCfArg();
+            arguments.put(argName, arg);
+            if (arg instanceof TbelCfSingleValueArg svArg) {
+                args.add(svArg.getValue());
+            } else {
+                args.add(arg);
+            }
+        }
+        args.set(0, new TbelCfCtx(arguments, latestTimestamp));
+
+        return tbelExpressions.get(expression).executeScriptAsync(args.toArray());
     }
 
     public ScheduledFuture<?> scheduleReevaluation(long delayMs, TbActorRef actorCtx) {
@@ -451,6 +494,25 @@ public class CalculatedFieldCtx {
         }
     }
 
+    public boolean aggMatches(CalculatedFieldTelemetryMsgProto proto) {
+        if (!proto.getTsDataList().isEmpty()) {
+            List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return matchesAggTimeSeries(updatedTelemetry);
+        } else if (!proto.getAttrDataList().isEmpty()) {
+            AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
+            List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return matchesAggAttributes(updatedTelemetry, scope);
+        } else if (!proto.getRemovedTsKeysList().isEmpty()) {
+            return matchesAggKeys(proto.getRemovedTsKeysList());
+        } else {
+            return matchesAggAttributesKeys(proto.getRemovedAttrKeysList(), AttributeScope.valueOf(proto.getScope().name()));
+        }
+    }
+
     public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
         if (!proto.getTsDataList().isEmpty()) {
             List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
@@ -482,6 +544,67 @@ public class CalculatedFieldCtx {
         return argNames;
     }
 
+    public boolean matchesAggKeys(List<String> values) {
+        if (aggInputs.isEmpty() || values.isEmpty()) {
+            return false;
+        }
+
+        for (String key : values) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(key, ArgumentType.TS_LATEST, null);
+            if (aggInputs.contains(latestKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean matchesAggTimeSeries(List<TsKvEntry> values) {
+        if (aggInputs.isEmpty() || values.isEmpty()) {
+            return false;
+        }
+
+        for (TsKvEntry tsKvEntry : values) {
+            ReferencedEntityKey latestKey = new ReferencedEntityKey(tsKvEntry.getKey(), ArgumentType.TS_LATEST, null);
+            if (aggInputs.contains(latestKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean matchesAggAttributesKeys(List<String> keys, AttributeScope scope) {
+        if (keys == null || keys.isEmpty()) {
+            return false;
+        }
+
+        for (String key : keys) {
+            ReferencedEntityKey attrKey = new ReferencedEntityKey(key, ArgumentType.ATTRIBUTE, scope);
+            if (aggInputs.contains(attrKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public boolean matchesAggAttributes(List<AttributeKvEntry> keys, AttributeScope scope) {
+        if (keys == null || keys.isEmpty()) {
+            return false;
+        }
+
+        for (AttributeKvEntry attributeKvEntry : keys) {
+            ReferencedEntityKey attrKey = new ReferencedEntityKey(attributeKvEntry.getKey(), ArgumentType.ATTRIBUTE, scope);
+            if (aggInputs.contains(attrKey)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+
     public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
@@ -497,6 +620,11 @@ public class CalculatedFieldCtx {
             return true;
         }
         if (scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis) {
+            return true;
+        }
+        if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
+                && other.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig
+                && !thisConfig.getMetrics().equals(otherConfig.getMetrics())) {
             return true;
         }
         return false;
@@ -517,6 +645,9 @@ public class CalculatedFieldCtx {
         if (hasGeofencingZoneGroupConfigurationChanges(other)) {
             return true;
         }
+        if (hasLatestValuesAggregationConfigurationChanges(other)) {
+            return true;
+        }
         return false;
     }
 
@@ -527,6 +658,15 @@ public class CalculatedFieldCtx {
         }
         return false;
     }
+
+    private boolean hasLatestValuesAggregationConfigurationChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig) {
+            return !thisConfig.getInputs().equals(otherConfig.getInputs()) || !thisConfig.getSource().equals(otherConfig.getSource());
+        }
+        return false;
+    }
+
 
     public boolean hasRelationQueryDynamicArguments() {
         return relationQueryDynamicArguments && scheduledUpdateIntervalMillis != -1;

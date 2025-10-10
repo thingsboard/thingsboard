@@ -915,6 +915,11 @@ message GeofencingArgumentProto {
   repeated GeofencingZoneProto zones = 2;
 }
 
+message AggSingleArgumentEntryProto {
+  EntityIdProto entityId = 1;
+  SingleValueArgumentProto value = 2;
+}
+
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   string type = 2;
@@ -922,6 +927,7 @@ message CalculatedFieldStateProto {
   repeated TsRollingArgumentProto rollingValueArguments = 4;
   repeated GeofencingArgumentProto geofencingArguments = 5;
   AlarmStateProto alarmState = 6;
+  repeated AggSingleArgumentEntryProto aggArguments = 7;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1292,6 +1298,7 @@ message ComponentLifecycleMsgProto {
   int64 profileIdLSB = 12;
   optional string info = 13;
   bool ownerChanged = 100;
+  bool relationChanged = 15;
 }
 
 message EdgeEventMsgProto {

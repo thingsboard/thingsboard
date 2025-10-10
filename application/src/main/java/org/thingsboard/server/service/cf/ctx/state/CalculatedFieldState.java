@@ -32,6 +32,7 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculat
 
 import java.io.Closeable;
 import java.util.Map;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
@@ -53,6 +54,8 @@ public interface CalculatedFieldState extends Closeable {
 
     long getLatestTimestamp();
 
+    CalculatedFieldCtx getCtx();
+
     void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx);
 
     void init();
@@ -61,7 +64,7 @@ public interface CalculatedFieldState extends Closeable {
 
     void reset();
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception;
 
     @JsonIgnore
     boolean isReady();

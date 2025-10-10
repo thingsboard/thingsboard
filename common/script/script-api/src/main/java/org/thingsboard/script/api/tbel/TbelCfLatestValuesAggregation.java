@@ -13,8 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.script.api.tbel;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, AGGREGATE_LATEST, AGGREGATE_LATEST_SINGLE
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import lombok.Data;
+
+@Data
+public class TbelCfLatestValuesAggregation implements TbelCfArg {
+
+    private final Object value;
+
+    @JsonCreator
+    public TbelCfLatestValuesAggregation(
+            @JsonProperty("value") Object value
+    ) {
+        this.value = value;
+    }
+
+
+    @Override
+    public String getType() {
+        return "LATEST_VALUES_AGGREGATION";
+    }
+
+    @Override
+    public long memorySize() {
+        return 32;
+    }
 }

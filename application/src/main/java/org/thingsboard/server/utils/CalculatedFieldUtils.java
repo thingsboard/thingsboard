@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos.AggSingleArgumentEntryProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AlarmRuleStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AlarmStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
@@ -45,12 +46,16 @@ import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.AggArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.LatestValuesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -92,7 +97,10 @@ public class CalculatedFieldUtils {
                 .setType(state.getType().name());
 
         state.getArguments().forEach((argName, argEntry) -> {
-            if (argEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            if (argEntry instanceof AggArgumentEntry aggArgumentEntry) {
+                aggArgumentEntry.getAggInputs()
+                        .forEach((entityId, entry) -> builder.addAggArguments(toAggSingleArgumentProto(argName, entityId, entry)));
+            } else if (argEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
                 builder.addSingleValueArguments(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
             } else if (argEntry instanceof TsRollingArgumentEntry rollingArgumentEntry) {
                 builder.addRollingValueArguments(toRollingArgumentProto(argName, rollingArgumentEntry));
@@ -128,6 +136,17 @@ public class CalculatedFieldUtils {
         ruleState.setFirstEventTs(proto.getFirstEventTs());
         ruleState.setLastEventTs(proto.getLastEventTs());
         return ruleState;
+    }
+
+    public static AggSingleArgumentEntryProto toAggSingleArgumentProto(String argName, EntityId entityId, ArgumentEntry argumentEntry) {
+        AggSingleArgumentEntryProto.Builder builder = AggSingleArgumentEntryProto.newBuilder()
+                .setEntityId(ProtoUtils.toProto(entityId));
+
+        if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            builder.setValue(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
+        }
+
+        return builder.build();
     }
 
     public static SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
@@ -187,6 +206,7 @@ public class CalculatedFieldUtils {
             case SCRIPT -> new ScriptCalculatedFieldState(id.entityId());
             case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
+            case LATEST_VALUES_AGGREGATION -> new LatestValuesAggregationCalculatedFieldState(id.entityId());
         };
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
@@ -212,9 +232,35 @@ public class CalculatedFieldUtils {
                     alarmState.setClearRuleState(fromAlarmRuleStateProto(alarmStateProto.getClearRuleState(), alarmState));
                 }
             }
+            case LATEST_VALUES_AGGREGATION -> {
+                LatestValuesAggregationCalculatedFieldState aggState = (LatestValuesAggregationCalculatedFieldState) state;
+                Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
+                proto.getAggArgumentsList().forEach(argProto -> {
+                    AggSingleArgumentEntry entry = fromAggSingleValueArgumentProto(argProto);
+                    arguments.computeIfAbsent(argProto.getValue().getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
+                });
+                arguments.forEach((argName, entityInputs) -> {
+                    aggState.getArguments().put(argName, new AggArgumentEntry(entityInputs, false));
+                });
+            }
         }
 
         return state;
+    }
+
+    public static AggSingleArgumentEntry fromAggSingleValueArgumentProto(AggSingleArgumentEntryProto proto) {
+        if (!proto.hasValue()) {
+            return new AggSingleArgumentEntry();
+        }
+        EntityId entityId = ProtoUtils.fromProto(proto.getEntityId());
+        SingleValueArgumentProto singleValueArgument = proto.getValue();
+        TsValueProto tsValueProto = singleValueArgument.getValue();
+        return new AggSingleArgumentEntry(
+                entityId,
+                tsValueProto.getTs(),
+                (BasicKvEntry) KvProtoUtil.fromTsValueProto(singleValueArgument.getArgName(), tsValueProto),
+                singleValueArgument.getVersion()
+        );
     }
 
     public static SingleValueArgumentEntry fromSingleValueArgumentProto(SingleValueArgumentProto proto) {

@@ -26,7 +26,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggSource;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -36,6 +39,8 @@ import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -44,7 +49,9 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleArgumentEntry;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -98,6 +105,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 }
                 yield futures;
             }
+            case LATEST_VALUES_AGGREGATION -> fetchAggregationArgumentFutures(ctx, entityId);
         };
         return Futures.whenAllComplete(argFutures.values())
                 .call(() -> resolveArgumentFutures(argFutures),
@@ -112,6 +120,19 @@ public abstract class AbstractCalculatedFieldProcessingService {
             return entityId;
         }
         return resolveOwnerArgument(tenantId, entityId);
+    }
+
+    private List<EntityId> resolveRelatedEntities(TenantId tenantId, EntityId entityId, AggSource aggSource) {
+        RelationPathLevel relation = aggSource.getRelation();
+        return switch (relation.direction()) {
+            case FROM -> aggSource.getEntityProfiles().stream()
+                    .map(profile -> relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), profile))
+                    .flatMap(Collection::stream)
+                    .map(EntityRelation::getTo)
+                    .toList();
+            case TO ->
+                    aggSource.getEntityProfiles().stream().map(profile -> relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), profile).getFrom()).toList();
+        };
     }
 
     protected Map<String, ArgumentEntry> resolveArgumentFutures(Map<String, ListenableFuture<ArgumentEntry>> argFutures) {
@@ -174,6 +195,50 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
     private EntityId resolveOwnerArgument(TenantId tenantId, EntityId entityId) {
         return ownerService.getOwner(tenantId, entityId);
+    }
+
+    private Map<String, ListenableFuture<ArgumentEntry>> fetchAggregationArgumentFutures(CalculatedFieldCtx ctx, EntityId entityId) {
+        LatestValuesAggregationCalculatedFieldConfiguration aggConfig = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+
+        List<EntityId> entityIds = resolveRelatedEntities(ctx.getTenantId(), entityId, aggConfig.getSource());
+
+        Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
+        aggConfig.getInputs().forEach((key, refKey) -> {
+            Argument argument = new Argument();
+            argument.setRefEntityKey(refKey);
+            futures.put(key, fetchAggArgumentEntry(ctx.getTenantId(), entityIds, argument, System.currentTimeMillis()));
+        });
+        return futures;
+    }
+
+    public ListenableFuture<ArgumentEntry> fetchAggArgumentEntry(TenantId tenantId, List<EntityId> aggEntities, Argument argument, long startTs) {
+        List<ListenableFuture<Map.Entry<EntityId, ? extends ArgumentEntry>>> futures = aggEntities.stream()
+                .map(entityId -> fetchSingleAggArgumentEntry(tenantId, entityId, argument, startTs))
+                .toList();
+
+        ListenableFuture<List<Map.Entry<EntityId, ? extends ArgumentEntry>>> allFutures = Futures.allAsList(futures);
+
+        return Futures.transform(allFutures,
+                entries -> ArgumentEntry.createAggArgument(
+                        entries.stream().collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))
+                ),
+                MoreExecutors.directExecutor());
+    }
+
+    protected ListenableFuture<Map<String, ArgumentEntry>> fetchAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
+        CalculatedFieldConfiguration configuration = ctx.getCalculatedField().getConfiguration();
+        LatestValuesAggregationCalculatedFieldConfiguration aggConfig = (LatestValuesAggregationCalculatedFieldConfiguration) configuration;
+        Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
+        aggConfig.getInputs().forEach((key, refKey) -> {
+            Argument argument = new Argument();
+            argument.setRefEntityKey(refKey);
+
+            ListenableFuture<ArgumentEntry> argumentEntryListenableFuture = fetchAggArgumentEntry(ctx.getTenantId(), List.of(entityId), argument, System.currentTimeMillis());
+            futures.put(key, argumentEntryListenableFuture);
+        });
+        return Futures.whenAllComplete(futures.values())
+                .call(() -> resolveArgumentFutures(futures),
+                        MoreExecutors.directExecutor());
     }
 
     private ListenableFuture<ArgumentEntry> fetchGeofencingKvEntry(TenantId tenantId, List<EntityId> geofencingEntities, Argument argument) {
@@ -242,6 +307,38 @@ public abstract class AbstractCalculatedFieldProcessingService {
                             log.debug("[{}][{}] Fetched latest timeseries {}: {}", tenantId, entityId, timeseriesKey, result);
                             return result.or(() -> Optional.of(new BasicTsKvEntry(defaultTs, createDefaultKvEntry(argument), SingleValueArgumentEntry.DEFAULT_VERSION)));
                         }, calculatedFieldCallbackExecutor));
+    }
+
+    protected ListenableFuture<Map.Entry<EntityId, ? extends ArgumentEntry>> fetchSingleAggArgumentEntry(TenantId tenantId, EntityId entityId, Argument argument, long startTs) {
+        return switch (argument.getRefEntityKey().getType()) {
+            case TS_ROLLING -> throw new IllegalStateException("TS_ROLLING is not supported for aggregation");
+            case ATTRIBUTE -> fetchAttributeAggEntry(tenantId, entityId, argument, startTs);
+            case TS_LATEST -> fetchTsLatestAggEntry(tenantId, entityId, argument, startTs);
+        };
+    }
+
+    private ListenableFuture<Map.Entry<EntityId, ? extends ArgumentEntry>> fetchAttributeAggEntry(TenantId tenantId, EntityId entityId, Argument argument, long defaultLastUpdateTs) {
+        log.trace("[{}][{}] Fetching attribute for key {}", tenantId, entityId, argument.getRefEntityKey());
+        var attributeOptFuture = attributesService.find(tenantId, entityId, argument.getRefEntityKey().getScope(), argument.getRefEntityKey().getKey());
+        return Futures.transform(attributeOptFuture, attrOpt -> {
+            log.debug("[{}][{}] Fetched attribute for key {}: {}", tenantId, entityId, argument.getRefEntityKey(), attrOpt);
+            AttributeKvEntry attributeKvEntry = attrOpt.orElseGet(() -> new BaseAttributeKvEntry(createDefaultKvEntry(argument), defaultLastUpdateTs, 0L));
+            AggSingleArgumentEntry entry = new AggSingleArgumentEntry(entityId, attributeKvEntry);
+            return Map.entry(entityId, entry);
+        }, calculatedFieldCallbackExecutor);
+    }
+
+    protected ListenableFuture<Map.Entry<EntityId, ? extends ArgumentEntry>> fetchTsLatestAggEntry(TenantId tenantId, EntityId entityId, Argument argument, long defaultTs) {
+        String key = argument.getRefEntityKey().getKey();
+        log.trace("[{}][{}] Fetching latest timeseries {}", tenantId, entityId, key);
+        return Futures.transform(
+                timeseriesService.findLatest(tenantId, entityId, key),
+                result -> {
+                    log.debug("[{}][{}] Fetched latest timeseries {}: {}", tenantId, entityId, key, result);
+                    Optional<TsKvEntry> tsKvEntry = result.or(() -> Optional.of(new BasicTsKvEntry(System.currentTimeMillis(), createDefaultKvEntry(argument), 0L)));
+                    AggSingleArgumentEntry entry = new AggSingleArgumentEntry(entityId, tsKvEntry.get());
+                    return Map.entry(entityId, entry);
+                }, calculatedFieldCallbackExecutor);
     }
 
     private ReadTsKvQuery buildTsRollingQuery(TenantId tenantId, Argument argument, long startTs, long endTs) {

@@ -104,12 +104,22 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
+    public List<EntityRelation> findByFromAndTypeAndProfile(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityId profileId) {
+        return DaoUtil.convertDataList(relationRepository.findByFromAndProfile(from.getId(), from.getEntityType().name(), typeGroup.name(), relationType, profileId.getId()));
+    }
+
+    @Override
     public List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup) {
         return DaoUtil.convertDataList(
                 relationRepository.findAllByToIdAndToTypeAndRelationTypeGroup(
                         to.getId(),
                         to.getEntityType().name(),
                         typeGroup.name()));
+    }
+
+    @Override
+    public EntityRelation findByToAndTypeAndProfile(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup, EntityId profileId) {
+        return DaoUtil.getData(relationRepository.findByToAndProfile(to.getId(), to.getEntityType().name(), typeGroup.name(), relationType, profileId.getId()));
     }
 
     @Override

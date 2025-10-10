@@ -13,20 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
 
-public enum CalculatedFieldType {
+import java.math.BigDecimal;
 
-    SIMPLE,
-    SCRIPT,
-    GEOFENCING,
-    ALARM,
-    LATEST_VALUES_AGGREGATION;
+public class SumAggEntry extends BaseAggEntry {
 
-    public static final Set<CalculatedFieldType> all = Collections.unmodifiableSet(EnumSet.allOf(CalculatedFieldType.class));
+    private BigDecimal sum = BigDecimal.ZERO;
 
+    @Override
+    protected void doUpdate(double value) {
+        if (value != 0.0) {
+            sum = sum.add(BigDecimal.valueOf(value));
+        }
+    }
+
+    @Override
+    protected double prepareResult() {
+        return sum.doubleValue();
+    }
+
+    @Override
+    public AggFunction getType() {
+        return AggFunction.SUM;
+    }
 }

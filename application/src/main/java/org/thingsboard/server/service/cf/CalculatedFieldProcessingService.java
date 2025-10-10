@@ -33,6 +33,8 @@ public interface CalculatedFieldProcessingService {
 
     ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId);
 
+    ListenableFuture<Map<String, ArgumentEntry>> fetchAggArguments(CalculatedFieldCtx ctx, EntityId entityId);
+
     Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId);
 
     Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments);

@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.server.common.data.cf.configuration.aggregation;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, AGGREGATE_LATEST, AGGREGATE_LATEST_SINGLE
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
+
+import java.util.List;
+
+@Data
+public class AggSource {
+
+    private RelationPathLevel relation;
+    private List<EntityId> entityProfiles;
+
 }

@@ -123,7 +123,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
 
-    private void updateLastUpdateTimestamp(ArgumentEntry entry) {
+    protected void updateLastUpdateTimestamp(ArgumentEntry entry) {
         long newTs = this.latestTimestamp;
         if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
             newTs = singleValueArgumentEntry.getTs();

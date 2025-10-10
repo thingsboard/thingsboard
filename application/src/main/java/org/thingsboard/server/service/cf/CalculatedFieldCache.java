@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf;
 
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.CfAggTrigger;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -37,6 +38,8 @@ public interface CalculatedFieldCache {
     CalculatedFieldCtx getCalculatedFieldCtx(CalculatedFieldId calculatedFieldId);
 
     List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
+
+    List<CalculatedFieldCtx> getCalculatedFieldCtxsByTrigger(EntityId profileId, Predicate<CfAggTrigger> cfAggFilter);
 
     boolean hasCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter);
 

@@ -36,7 +36,11 @@ public interface RelationDao {
 
     List<EntityRelation> findAllByFromAndType(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup);
 
+    List<EntityRelation> findByFromAndTypeAndProfile(TenantId tenantId, EntityId from, String relationType, RelationTypeGroup typeGroup, EntityId profileId);
+
     List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup);
+
+    EntityRelation findByToAndTypeAndProfile(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup, EntityId profileId);
 
     List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to);
 

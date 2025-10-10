@@ -86,6 +86,14 @@ public interface RelationService {
 
     ListenableFuture<List<EntityRelation>> findByRelationPathQueryAsync(TenantId tenantId, EntityRelationPathQuery relationPathQuery);
 
+    List<EntityRelation> findByFromAndTypeAndEntityProfile(TenantId tenantId, EntityId from, String relationType, EntityId profileId);
+
+    EntityRelation findByToAndTypeAndEntityProfile(TenantId tenantId, EntityId to, String relationType, EntityId profileId);
+
+    void evictRelationsByProfile(TenantId tenantId, EntityId profileId);
+
+    void evictRelationsByEntityAndProfile(TenantId tenantId, EntityId entityId, EntityId profileId);
+
 //    TODO: This method may be useful for some validations in the future
 //    ListenableFuture<Boolean> checkRecursiveRelation(EntityId from, EntityId to);
 

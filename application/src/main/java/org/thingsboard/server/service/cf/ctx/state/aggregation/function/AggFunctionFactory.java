@@ -13,8 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, AGGREGATE_LATEST, AGGREGATE_LATEST_SINGLE
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
+
+public class AggFunctionFactory {
+
+    public static AggEntry createAggFunction(AggFunction function) {
+        return switch (function) {
+            case MIN -> new MinAggEntry();
+            case MAX -> new MaxAggEntry();
+            case SUM -> new SumAggEntry();
+            case AVG -> new AvgAggEntry();
+            case COUNT -> new CountAggEntry();
+            case COUNT_UNIQUE -> new CountUniqueAggEntry();
+        };
+    }
+
 }

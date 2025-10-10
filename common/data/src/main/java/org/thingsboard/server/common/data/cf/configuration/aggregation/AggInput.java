@@ -13,9 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.tbel;
+package org.thingsboard.server.common.data.cf.configuration.aggregation;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
@@ -25,14 +25,12 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TbelCfSingleValueArg.class, name = "SINGLE_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfTsRollingArg.class, name = "TS_ROLLING"),
-        @JsonSubTypes.Type(value = TbelCfTsGeofencingArg.class, name = "GEOFENCING_CF_ARGUMENT_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfLatestValuesAggregation.class, name = "LATEST_VALUES_AGGREGATION")
+        @JsonSubTypes.Type(value = AggKeyInput.class, name = "key"),
+        @JsonSubTypes.Type(value = AggFunctionInput.class, name = "function")
 })
-public interface TbelCfArg extends TbelCfObject {
+@JsonIgnoreProperties(ignoreUnknown = true)
+public interface AggInput {
 
-    @JsonIgnore
     String getType();
 
 }

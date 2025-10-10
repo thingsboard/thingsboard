@@ -40,9 +40,14 @@ public class RelationCacheKey implements Serializable {
     private final String type;
     private final RelationTypeGroup typeGroup;
     private final EntitySearchDirection direction;
+    private final EntityId entityProfile;
 
     public RelationCacheKey(EntityId from, EntityId to, String type, RelationTypeGroup typeGroup) {
-        this(from, to, type, typeGroup, null);
+        this(from, to, type, typeGroup, null, null);
+    }
+
+    public RelationCacheKey(EntityId from, EntityId to, String type, RelationTypeGroup typeGroup, EntitySearchDirection direction) {
+        this(from, to, type, typeGroup, direction, null);
     }
 
     @Override

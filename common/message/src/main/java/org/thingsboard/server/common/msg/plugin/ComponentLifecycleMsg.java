@@ -47,14 +47,15 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
     private final EntityId oldProfileId;
     private final EntityId profileId;
     private final boolean ownerChanged;
+    private final boolean relationChanged;
     private final JsonNode info;
 
     public ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event) {
-        this(tenantId, entityId, event, null, null, null, null, false, null);
+        this(tenantId, entityId, event, null, null, null, null, false, false, null);
     }
 
     @Builder
-    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId, boolean ownerChanged, JsonNode info) {
+    private ComponentLifecycleMsg(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent event, String oldName, String name, EntityId oldProfileId, EntityId profileId, boolean ownerChanged, boolean relationChanged, JsonNode info) {
         this.tenantId = tenantId;
         this.entityId = entityId;
         this.event = event;
@@ -63,6 +64,7 @@ public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
         this.oldProfileId = oldProfileId;
         this.profileId = profileId;
         this.ownerChanged = ownerChanged;
+        this.relationChanged = relationChanged;
         this.info = info;
     }
 

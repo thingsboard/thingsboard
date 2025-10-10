@@ -514,6 +514,40 @@ public class BaseRelationService implements RelationService {
         return executor.submit(() -> relationDao.findByRelationPathQuery(tenantId, relationPathQuery));
     }
 
+    @Override
+    public List<EntityRelation> findByFromAndTypeAndEntityProfile(TenantId tenantId, EntityId from, String relationType, EntityId profileId) {
+        RelationCacheKey cacheKey = RelationCacheKey.builder().from(from).type(relationType).typeGroup(RelationTypeGroup.COMMON).direction(EntitySearchDirection.FROM).entityProfile(profileId).build();
+        return cache.getAndPutInTransaction(cacheKey,
+                () -> relationDao.findByFromAndTypeAndProfile(tenantId, from, relationType, RelationTypeGroup.COMMON, profileId),
+                RelationCacheValue::getRelations,
+                relations -> RelationCacheValue.builder().relations(relations).build(), false);
+    }
+
+    @Override
+    public EntityRelation findByToAndTypeAndEntityProfile(TenantId tenantId, EntityId to, String relationType, EntityId profileId) {
+        RelationCacheKey cacheKey = RelationCacheKey.builder().to(to).type(relationType).typeGroup(RelationTypeGroup.COMMON).direction(EntitySearchDirection.TO).entityProfile(profileId).build();
+        return cache.getAndPutInTransaction(cacheKey,
+                () -> relationDao.findByToAndTypeAndProfile(tenantId, to, relationType, RelationTypeGroup.COMMON, profileId),
+                RelationCacheValue::getRelation,
+                relation -> RelationCacheValue.builder().relation(relation).build(), false);
+    }
+
+    @Override
+    public void evictRelationsByProfile(TenantId tenantId, EntityId profileId) {
+        RelationCacheKey key = RelationCacheKey.builder().entityProfile(profileId).build();
+        cache.evict(List.of(key));
+        log.debug("Processed evict relations by key: {}", key);
+    }
+
+    @Override
+    public void evictRelationsByEntityAndProfile(TenantId tenantId, EntityId entityId, EntityId profileId) {
+        List<RelationCacheKey> keys = new ArrayList<>(2);
+        keys.add(RelationCacheKey.builder().from(entityId).entityProfile(profileId).build());
+        keys.add(RelationCacheKey.builder().to(entityId).entityProfile(profileId).build());
+        cache.evict(keys);
+        log.debug("Processed evict relations by keys: {}", keys);
+    }
+
     private void validate(EntityRelationPathQuery relationPathQuery) {
         validateId((UUIDBased) relationPathQuery.rootEntityId(), id -> "Invalid root entity id: " + id);
         List<RelationPathLevel> levels = relationPathQuery.levels();

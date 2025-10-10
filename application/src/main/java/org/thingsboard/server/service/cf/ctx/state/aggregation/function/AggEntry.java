@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.tbel;
+package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
+
+import java.util.Optional;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -25,14 +27,19 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TbelCfSingleValueArg.class, name = "SINGLE_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfTsRollingArg.class, name = "TS_ROLLING"),
-        @JsonSubTypes.Type(value = TbelCfTsGeofencingArg.class, name = "GEOFENCING_CF_ARGUMENT_VALUE"),
-        @JsonSubTypes.Type(value = TbelCfLatestValuesAggregation.class, name = "LATEST_VALUES_AGGREGATION")
+        @JsonSubTypes.Type(value = AvgAggEntry.class, name = "AVG"),
+        @JsonSubTypes.Type(value = CountAggEntry.class, name = "COUNT"),
+        @JsonSubTypes.Type(value = CountUniqueAggEntry.class, name = "COUNT_UNIQUE"),
+        @JsonSubTypes.Type(value = MaxAggEntry.class, name = "MAX"),
+        @JsonSubTypes.Type(value = MinAggEntry.class, name = "MIN"),
+        @JsonSubTypes.Type(value = SumAggEntry.class, name = "SUM")
 })
-public interface TbelCfArg extends TbelCfObject {
+public interface AggEntry {
 
-    @JsonIgnore
-    String getType();
+    AggFunction getType();
+
+    void update(Object value);
+
+    Optional<Object> result();
 
 }
