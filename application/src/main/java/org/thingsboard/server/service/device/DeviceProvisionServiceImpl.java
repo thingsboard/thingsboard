@@ -186,7 +186,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         try {
             Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
                     AttributeScope.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
-            if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
+            if (provisionState != null && provisionState.isPresent() && provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
                 notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
                 throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
             } else {
