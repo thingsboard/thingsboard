@@ -61,16 +61,16 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
     return of(map);
   }
 
-  protected onResize(): void {}
+  protected onResize(): void {
+  }
 
   protected fitBounds(bounds: L.LatLngBounds) {
     if (bounds.isValid()) {
       if (!this.settings.fitMapBounds && this.settings.defaultZoomLevel) {
-        this.map.setZoom(this.settings.defaultZoomLevel, { animate: false });
+        this.map.setZoom(this.settings.defaultZoomLevel, {animate: false});
         if (this.settings.useDefaultCenterPosition) {
-          this.map.panTo(this.defaultCenterPosition, { animate: false });
-        }
-        else {
+          this.map.panTo(this.defaultCenterPosition, {animate: false});
+        } else {
           this.map.panTo(bounds.getCenter());
         }
       } else {
@@ -80,13 +80,13 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
             minZoom = Math.max(minZoom, this.settings.defaultZoomLevel);
           }
           if (this.map.getZoom() > minZoom) {
-            this.map.setZoom(minZoom, { animate: false });
+            this.map.setZoom(minZoom, {animate: false});
           }
         });
         if (this.settings.useDefaultCenterPosition) {
           bounds = bounds.extend(this.defaultCenterPosition);
         }
-        this.map.fitBounds(bounds, { padding: [50, 50], animate: false });
+        this.map.fitBounds(bounds, {padding: [50, 50], animate: false});
         this.map.invalidateSize();
       }
     }
@@ -125,12 +125,15 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
     );
   }
 
-  public locationDataToLatLng(position: {x: number; y: number}): L.LatLng {
+  public locationDataToLatLng(position: { x: number; y: number }): L.LatLng {
     return L.latLng(position.x, position.y) as L.LatLng;
   }
 
-  public latLngToLocationData(position: L.LatLng): {x: number; y: number} {
-    position = position ? latLngPointToBounds(position, this.southWest, this.northEast, 0) : {lat: null, lng: null} as L.LatLng;
+  public latLngToLocationData(position: L.LatLng): { x: number; y: number } {
+    position = position ? latLngPointToBounds(position, this.southWest, this.northEast, 0) : {
+      lat: null,
+      lng: null
+    } as L.LatLng;
     return {
       x: position.lat,
       y: position.lng
@@ -187,11 +190,9 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
     return (expression).map((el: TbPolylineRawCoordinate) => {
       if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
         return el;
-      }
-      // else if (Array.isArray(el) && el.length) {
-      //   return this.polylineDataToCoordinates(el as TbPolylineRawCoordinates) as TbPolylineRawCoordinates;
-      // }
-      else {
+      } else if (Array.isArray(el) && el.length) {
+        return this.polylineDataToCoordinates(el as TbPolylineRawCoordinates) as TbPolylineRawCoordinate;
+      } else {
         return null;
       }
     }).filter(el => !!el);

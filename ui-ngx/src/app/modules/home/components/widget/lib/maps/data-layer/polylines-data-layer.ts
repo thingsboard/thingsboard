@@ -15,17 +15,14 @@
 ///
 
 import {
-  defaultBasePolygonsDataLayerSettings,
+  defaultBasePolylinesDataLayerSettings,
   isCutPolygon,
   isJSON,
   MapDataLayerType,
-  PolygonsDataLayerSettings,
   PolylinesDataLayerSettings,
   TbMapDatasource,
-  TbPolyData,
-  TbPolygonCoordinates,
-  TbPolygonRawCoordinates,
-  TbPolylineCoordinates, TbPolylineData,
+  TbPolylineCoordinates,
+  TbPolylineData,
   TbPolylineRawCoordinates
 } from '@shared/models/widget/maps/map.models';
 import L from 'leaflet';
@@ -98,7 +95,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
   protected bindLabel(content: L.Content): void {
     this.polylineContainer.bindTooltip(content, {className: 'tb-polyline-label', permanent: true, direction: 'center'})
-    .openTooltip(this.polylineContainer.getBounds().getCenter());
+      .openTooltip(this.polylineContainer.getBounds().getCenter());
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -156,27 +153,13 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   protected onSelected(): L.TB.ToolbarButtonOptions[] {
-    const buttons:  L.TB.ToolbarButtonOptions[] = [];
+    const buttons: L.TB.ToolbarButtonOptions[] = [];
     if (this.dataLayer.isEditEnabled()) {
       this.enablePolylineEditMode();
       buttons.push(
-        // {
-        //   id: 'cut',
-        //   title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.cut'),
-        //   iconClass: 'tb-cut',
-        //   click: (e, button) => {
-        //     const map = this.dataLayer.getMap().getMap();
-        //     if (!map.pm.globalCutModeEnabled()) {
-        //       this.disablePolylineRotateMode();
-        //       this.disablePolylineEditMode();
-        //     } else {
-        //       this.enablePolylineEditMode();
-        //     }
-        //   }
-        // },
         {
           id: 'rotate',
-          title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polygon.rotate'),
+          title: this.getDataLayer().getCtx().translate.instant('widgets.maps.data-layer.polyline.rotate'),
           iconClass: 'tb-rotate',
           click: (e, button) => {
             if (!this.polyline.pm.rotateEnabled()) {
@@ -195,8 +178,8 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
 
   protected onDeselected(): void {
     if (this.dataLayer.isEditEnabled()) {
-     this.disablePolylineEditMode();
-     this.disablePolylineRotateMode();
+      this.disablePolylineEditMode();
+      this.disablePolylineRotateMode();
     }
   }
 
@@ -213,7 +196,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
   }
 
   protected removeDataItemTitle(): string {
-    return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.polygon.remove-polygon-for', {entityName: this.data.entityName});
+    return this.dataLayer.getCtx().translate.instant('widgets.maps.data-layer.polyline.remove-polyline-for', {entityName: this.data.entityName});
   }
 
   protected removeDataItem(): Observable<any> {
@@ -224,7 +207,7 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     this.polyline.on('pm:markerdragstart', () => this.editing = true);
     this.polyline.on('pm:markerdragend', () => setTimeout(() => {
       this.editing = false;
-    }) );
+    }));
     this.polyline.on('pm:edit', () => this.savePolylineCoordinates());
     this.polyline.pm.enable();
     const map = this.dataLayer.getMap();
@@ -267,13 +250,6 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     if (coordinates.length === 1) {
       coordinates = coordinates[0] as TbPolylineCoordinates;
     }
-    if (this.polyline instanceof L.Rectangle && !isCutPolygon(coordinates)) {
-      const bounds = this.polyline.getBounds();
-      const boundsArray = [bounds.getNorthWest(), bounds.getNorthEast(), bounds.getSouthWest(), bounds.getSouthEast()];
-      if (coordinates.every(point => boundsArray.find(boundPoint => boundPoint.equals(point as L.LatLng)) !== undefined)) {
-        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
-      }
-    }
     this.dataLayer.savePolylineCoordinates(this.data, coordinates).subscribe();
   }
 
@@ -283,24 +259,24 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     }
 
     const polyData = this.dataLayer.extractPolylineCoordinates(data) as TbPolylineData;
-    if (isCutPolygon(polyData) || polyData.length !== 2) {
-    //   if (this.polyline instanceof L.Rectangle) {
-    //
-    //     this.polylineContainer.removeLayer(this.polyline);
-    //     this.polyline = L.polyline(polyData, {
-    //       ...this.polylineStyleInfo.style,
-    //       snapIgnore: !this.dataLayer.isSnappable(),
-    //       bubblingMouseEvents: !this.dataLayer.isEditMode(),
-    //       noClip: true
-    //     });
-    //     this.polyline.addTo(this.polylineContainer);
-    //     this.editModeUpdated();
-    //   } else {
-        this.polyline.setLatLngs(polyData);
-      // }
-    } else if (polyData.length === 2) {
+    if (this.polyline instanceof L.Polyline && !(this.polyline instanceof L.Rectangle)) {
+      this.polyline.setLatLngs(polyData as L.LatLngExpression[] | L.LatLngExpression[][]);
+    } else if (this.polyline instanceof L.Rectangle && polyData.length === 2) {
       const bounds = new L.LatLngBounds(polyData as L.LatLngTuple[]);
-      // (this.polyline as L.Rectangle).setBounds(bounds);
+      this.polyline.setBounds(bounds);
+    } else {
+      this.polylineContainer.removeLayer(this.polyline);
+      if (polyData.length === 2 && isCutPolygon(polyData)) {
+        this.polyline = L.polyline(polyData as L.LatLngExpression[] | L.LatLngExpression[][], {
+          ...this.polylineStyleInfo.style,
+          snapIgnore: !this.dataLayer.isSnappable(),
+          bubblingMouseEvents: !this.dataLayer.isEditMode(),
+          noClip: true
+        });
+      }
+
+      this.polyline.addTo(this.polylineContainer);
+      this.editModeUpdated();
     }
   }
 
@@ -318,16 +294,11 @@ export class TbPolylineDataLayer extends TbShapesDataLayer<PolylinesDataLayerSet
   }
 
   public placeItem(item: UnplacedMapDataItem, layer: L.Layer): void {
-    if (layer instanceof L.Polygon) {
+    if (layer instanceof L.Polyline) {
       let coordinates: TbPolylineCoordinates;
-      if (layer instanceof L.Rectangle) {
-        const bounds = layer.getBounds();
-        coordinates = [bounds.getNorthWest(), bounds.getSouthEast()];
-      } else {
-        coordinates = layer.getLatLngs();
-        if (coordinates.length === 1) {
-          coordinates = coordinates[0] as TbPolygonCoordinates;
-        }
+      coordinates = layer.getLatLngs();
+      if (coordinates.length === 1) {
+        coordinates = coordinates[0] as TbPolylineCoordinates;
       }
       this.savePolylineCoordinates(item.entity, coordinates).subscribe(
         (converted) => {
@@ -340,7 +311,7 @@ export class TbPolylineDataLayer extends TbShapesDataLayer<PolylinesDataLayerSet
     }
   }
 
-  public extractPolylineCoordinates(data: FormattedData<TbMapDatasource>): TbPolygonRawCoordinates {
+  public extractPolylineCoordinates(data: FormattedData<TbMapDatasource>): TbPolylineRawCoordinates {
     let rawPolyData = data[this.settings.polylineKey.label];
     if (isString(rawPolyData)) {
       rawPolyData = JSON.parse(rawPolyData);
@@ -349,7 +320,7 @@ export class TbPolylineDataLayer extends TbShapesDataLayer<PolylinesDataLayerSet
   }
 
   public savePolylineCoordinates(data: FormattedData<TbMapDatasource>, coordinates: TbPolylineCoordinates): Observable<TbPolylineRawCoordinates> {
-    const converted = coordinates ? this.map.coordinatesToPolygonData(coordinates) : null;
+    const converted = coordinates ? this.map.coordinatesToPolylineData(coordinates) : null;
     const polylineData = [
       {
         dataKey: this.settings.polylineKey,
@@ -366,7 +337,7 @@ export class TbPolylineDataLayer extends TbShapesDataLayer<PolylinesDataLayerSet
   }
 
   protected defaultBaseSettings(map: TbMap<any>): Partial<PolylinesDataLayerSettings> {
-    return defaultBasePolygonsDataLayerSettings(map.type());
+    return defaultBasePolylinesDataLayerSettings(map.type());
   }
 
   protected doSetup(): Observable<any> {

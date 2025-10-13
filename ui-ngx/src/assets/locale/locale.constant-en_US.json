@@ -8638,11 +8638,12 @@
                     "polyline-configuration": "Polyline configuration",
                     "remove-polyline": "Remove polyline",
                     "edit": "Edit polyline",
+                    "rotate": "Rotate polyline",
                     "remove-polyline-for": "Remove polyline for '{{entityName}}'",
                     "draw-polyline": "Draw polyline",
+                    "polyline-place-first-point-hint-with-entity": "Polyline for '{{entityName}}': click to place first point",
                     "polyline-place-first-point-hint": "Polyline: click to place first point",
-                    "continue-polyline-hint-with-entity": "Polyline for '{{entityName}}': click to continue drawing",
-                    "finish-polyline-hint": "Polyline: click to finish drawing"
+                    "finish-polyline-hint": "Polyline for '{{entityName}}': click to finish drawing"
                 },
                 "select-entity": "Select entity",
                 "select-entity-hint": "Hint: after selection click at the map to set position"

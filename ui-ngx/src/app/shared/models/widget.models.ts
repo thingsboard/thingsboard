@@ -827,6 +827,8 @@ export interface MapItemTooltips {
   finishRect?: string;
   startCircle?: string;
   finishCircle?: string;
+  startPolyline?: string;
+  finishPolyline?: string;
 }
 
 export const mapItemTooltipsTranslation: Required<MapItemTooltips> = Object.freeze({
@@ -837,7 +839,9 @@ export const mapItemTooltipsTranslation: Required<MapItemTooltips> = Object.free
   startRect: 'widgets.maps.data-layer.polygon.rectangle-place-first-point-hint',
   finishRect: 'widgets.maps.data-layer.polygon.finish-rectangle-hint',
   startCircle: 'widgets.maps.data-layer.circle.place-circle-center-hint',
-  finishCircle: 'widgets.maps.data-layer.circle.finish-circle-hint'
+  finishCircle: 'widgets.maps.data-layer.circle.finish-circle-hint',
+  startPolyline: 'widgets.maps.data-layer.polyline.polyline-place-first-point-hint',
+  finishPolyline: 'widgets.maps.data-layer.polyline.finish-polyline-hint'
 })
 
 export interface WidgetActionDescriptor extends WidgetAction {

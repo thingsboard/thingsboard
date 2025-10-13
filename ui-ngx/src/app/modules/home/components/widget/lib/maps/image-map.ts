@@ -352,8 +352,7 @@ export class TbImageMap extends TbMap<ImageMapSettings> {
         el[1] * this.height
       );
       return [latLng.lat, latLng.lng] as TbPolylineRawCoordinate;
-    }
-    else if (Array.isArray(el) && el.length) {
+    } else if (Array.isArray(el) && el.length) {
       return this.polylineDataToCoordinates(el as TbPolylineRawCoordinates) as TbPolylineRawCoordinate;
     }
     else {
