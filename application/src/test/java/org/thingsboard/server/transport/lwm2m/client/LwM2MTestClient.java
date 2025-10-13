@@ -154,28 +154,30 @@ public class LwM2MTestClient {
 
         if (securityBs != null && security != null) {
             // SECURITIES
-            forceNullSecurityId(securityBs);
-            forceNullSecurityId(security);
+            securityBs.setId(0);
+            security.setId(1);
             LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{securityBs, security};
             initializer.setInstancesForObject(SECURITY, instances);
             log.warn("Security BS section: securityBsId [{}] Security Lwm2m section: securityLwm2mId [{}] ",  securityBs.getId(),  security.getId());
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
+            lwm2mServer.setId(0);
             instances = new LwM2mInstanceEnabler[]{lwm2mServer};
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
             // SECURITY
-;           forceNullSecurityId(securityBs);
+;           securityBs.setId(0);;
             initializer.setInstancesForObject(SECURITY, securityBs);
             // SERVER
             initializer.setClassForObject(SERVER, Server.class);
             log.warn("Security BS section: securityBsId [{}] ",  securityBs.getId());
         } else {
             // SECURITY
-            forceNullSecurityId(security);
+            security.setId(0);
             initializer.setInstancesForObject(SECURITY, security);
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
+            lwm2mServer.setId(0);
             initializer.setInstancesForObject(SERVER, lwm2mServer);
             log.warn("Security Lwm2m section: securityLwm2mId [{}] Server Lwm2m section: securityLwm2mId [{}] ",  security.getId(),  lwm2mServer.getId());
         }

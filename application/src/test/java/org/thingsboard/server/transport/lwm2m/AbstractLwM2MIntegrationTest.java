@@ -124,8 +124,8 @@ import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegra
 
 @Slf4j
 @DaoSqlTest
-@TestInstance(TestInstance.Lifecycle.PER_CLASS)
-@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+//@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+//@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
 @TestPropertySource(properties = {
         "transport.lwm2m.enabled=true"
 })
@@ -324,13 +324,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
-            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
-                log.warn("⚠️ Executor did not terminate cleanly, forcing GC");
-            }
+//            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+//                log.warn("⚠️ Executor did not terminate cleanly, forcing GC");
+//            }
         }
-        Thread.sleep(300);
-        System.gc();
-        log.info("✅ Test teardown completed: {}", this.getClass().getSimpleName());
+//        Thread.sleep(300);
+//        System.gc();
+//        log.info("✅ Test teardown completed: {}", this.getClass().getSimpleName());
     }
 
     private void init() throws Exception {
