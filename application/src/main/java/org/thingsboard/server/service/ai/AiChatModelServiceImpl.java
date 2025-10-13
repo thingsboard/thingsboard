@@ -72,12 +72,12 @@ class AiChatModelServiceImpl implements AiChatModelService {
 
     private Content escapeContent(Content content) {
         if (content instanceof TextContent txt) {
-            return new TextContent(escapeWhitespace(txt.text()));
+            return new TextContent(escapeControlChars(txt.text()));
         }
         return content;
     }
 
-    private String escapeWhitespace(String text) {
+    private String escapeControlChars(String text) {
         return text
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
