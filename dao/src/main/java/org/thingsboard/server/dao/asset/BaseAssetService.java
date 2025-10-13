@@ -160,11 +160,12 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     private Asset saveAsset(Asset asset, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveAsset [{}]", asset);
-        Asset oldAsset = null;
+        Asset oldAsset = (asset.getId() != null) ? findAssetById(asset.getTenantId(), asset.getId()) : null;
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldAsset == null || !oldAsset.getName().equals(asset.getName()))) {
+            uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET, nameConflictStrategy);
+        }
         if (doValidate) {
-            oldAsset = assetValidator.validate(asset, Asset::getTenantId);
-        } else if (asset.getId() != null) {
-            oldAsset = findAssetById(asset.getTenantId(), asset.getId());
+            assetValidator.validate(asset, Asset::getTenantId);
         }
         AssetCacheEvictEvent evictEvent = new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), oldAsset != null ? oldAsset.getName() : null);
         Asset savedAsset;
@@ -187,9 +188,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
                 }
             }
             asset.setType(assetProfile.getName());
-            if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
-                uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET, nameConflictStrategy);
-            }
             savedAsset = assetDao.saveAndFlush(asset.getTenantId(), asset);
             publishEvictEvent(evictEvent);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedAsset.getTenantId()).entityId(savedAsset.getId())

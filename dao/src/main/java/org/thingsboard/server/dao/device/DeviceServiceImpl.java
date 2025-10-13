@@ -229,11 +229,12 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
 
     private Device saveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveDevice [{}]", device);
-        Device oldDevice = null;
+        Device oldDevice = (device.getId() != null) ? findDeviceById(device.getTenantId(), device.getId()) : null;
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldDevice == null || !oldDevice.getName().equals(device.getName()))) {
+            uniquifyEntityName(device, oldDevice, device::setName, EntityType.DEVICE, nameConflictStrategy);
+        }
         if (doValidate) {
-            oldDevice = deviceValidator.validate(device, Device::getTenantId);
-        } else if (device.getId() != null) {
-            oldDevice = findDeviceById(device.getTenantId(), device.getId());
+            deviceValidator.validate(device, Device::getTenantId);
         }
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), oldDevice != null ? oldDevice.getName() : null);
         try {
@@ -256,9 +257,6 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             }
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
-            if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY) {
-                uniquifyEntityName(device, oldDevice, device::setName, EntityType.DEVICE, nameConflictStrategy);
-            }
             Device savedDevice = deviceDao.saveAndFlush(device.getTenantId(), device);
             deviceCacheEvictEvent.setSavedDevice(savedDevice);
             publishEvictEvent(deviceCacheEvictEvent);
