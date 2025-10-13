@@ -32,6 +32,8 @@ import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConf
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.StringUtils.escapeControlChars;
+
 @Service
 @RequiredArgsConstructor
 class AiChatModelServiceImpl implements AiChatModelService {
@@ -50,7 +52,7 @@ class AiChatModelServiceImpl implements AiChatModelService {
 
     private ChatRequest prepareGithubChatRequest(ChatRequest chatRequest) {
         List<ChatMessage> messages = chatRequest.messages().stream()
-                        .map(this::escapeIfUserMessage)
+                        .map(this::prepareUserMessage)
                         .collect(Collectors.toList());
 
         return ChatRequest.builder()
@@ -59,10 +61,10 @@ class AiChatModelServiceImpl implements AiChatModelService {
                 .build();
     }
 
-    private ChatMessage escapeIfUserMessage(ChatMessage message) {
+    private ChatMessage prepareUserMessage(ChatMessage message) {
         if (message instanceof UserMessage userMessage) {
             List<Content> newContents = userMessage.contents().stream()
-                    .map(this::escapeContent)
+                    .map(this::prepareContent)
                     .collect(Collectors.toList());
 
             return UserMessage.from(newContents);
@@ -70,18 +72,11 @@ class AiChatModelServiceImpl implements AiChatModelService {
         return message;
     }
 
-    private Content escapeContent(Content content) {
+    private Content prepareContent(Content content) {
         if (content instanceof TextContent txt) {
             return new TextContent(escapeControlChars(txt.text()));
         }
         return content;
-    }
-
-    private String escapeControlChars(String text) {
-        return text
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
     }
 
 }
