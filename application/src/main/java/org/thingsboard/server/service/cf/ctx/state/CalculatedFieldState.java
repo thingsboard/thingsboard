@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -30,6 +31,7 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgument
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
+import java.io.Closeable;
 import java.util.Map;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
@@ -42,10 +44,12 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArg
         @Type(value = AlarmCalculatedFieldState.class, name = "ALARM"),
         @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION")
 })
-public interface CalculatedFieldState {
+public interface CalculatedFieldState extends Closeable {
 
     @JsonIgnore
     CalculatedFieldType getType();
+
+    EntityId getEntityId();
 
     Map<String, ArgumentEntry> getArguments();
 

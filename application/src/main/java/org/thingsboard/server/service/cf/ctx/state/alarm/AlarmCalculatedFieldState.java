@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmUpdateRequest;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionType;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
@@ -90,6 +91,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private Alarm currentAlarm;
     private boolean initialFetchDone;
 
+    // TODO: deprecate device profile node, describe the differences and improvements
+
     public AlarmCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
@@ -107,7 +110,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public void init() { // todo: properly close state!
+    public void init() {
         super.init();
         AtomicBoolean reevalNeeded = new AtomicBoolean(false);
         Map<AlarmSeverity, AlarmRule> createRules = configuration.getCreateRules();
@@ -140,10 +143,9 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             initCurrentAlarm(ctx);
             createOrClearAlarms(state -> {
                 if (state.getCondition().getType() == AlarmConditionType.DURATION) {
-                    AlarmEvalResult evalResult = state.reeval(System.currentTimeMillis());
+                    AlarmEvalResult evalResult = state.reeval(System.currentTimeMillis(), ctx);
                     if (evalResult.getStatus() == TRUE || evalResult.getStatus() == NOT_YET_TRUE) {
                         ScheduledFuture<?> future = ctx.scheduleReevaluation(evalResult.getLeftDuration(), actorCtx);
-                        // TODO: use single task for multiple durations if durations are close enough. but be careful when cancelling the task in one of the states
                         if (future != null) {
                             state.setDurationCheckFuture(future);
                         }
@@ -160,7 +162,9 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         } else {
             // when restored
             ruleState.setAlarmRule(rule);
-            if (rule.getCondition().getType() == AlarmConditionType.DURATION && !ruleState.isEmpty()) {
+            ruleState.setActive(null);
+            AlarmCondition condition = rule.getCondition();
+            if (condition.hasSchedule() || (condition.getType() == AlarmConditionType.DURATION && !ruleState.isEmpty())) {
                 reevalNeeded.set(true);
             }
         }
@@ -168,14 +172,18 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
-        return super.update(argumentValues, ctx);
-    }
-
-    @Override
     public void reset() {
         super.reset();
         configuration = null;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        for (AlarmRuleState state : createRuleStates.values()) {
+            clearState(state);
+        }
+        clearState(clearRuleState);
     }
 
     @Override
@@ -186,17 +194,15 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 boolean newEvent = !updatedArgs.isEmpty();
                 AlarmEvalResult evalResult = state.eval(newEvent, ctx);
                 if (evalResult.getStatus() == NOT_YET_TRUE && evalResult.getLeftDuration() > 0) {
-                    // rounding up to the closest second
-//                    long leftDuration = (long) Math.ceil(evalResult.getLeftDuration() / 1000.0) * 1000;
                     long leftDuration = evalResult.getLeftDuration();
-                    ScheduledFuture<?> future = ctx.scheduleReevaluation(leftDuration, actorCtx); // TODO: use single task for multiple durations if durations are close enough. but be careful when cancelling the task in one of the states
+                    ScheduledFuture<?> future = ctx.scheduleReevaluation(leftDuration, actorCtx);
                     if (future != null) {
                         state.setDurationCheckFuture(future);
                     }
                 }
                 return evalResult;
             } else {
-                return state.reeval(System.currentTimeMillis());
+                return state.reeval(System.currentTimeMillis(), ctx);
             }
         }, ctx);
         return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()

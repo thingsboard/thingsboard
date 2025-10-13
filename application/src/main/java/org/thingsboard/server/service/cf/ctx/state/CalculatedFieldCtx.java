@@ -86,6 +86,7 @@ public class CalculatedFieldCtx {
     private Output output;
     private String expression;
     private boolean useLatestTs;
+    private boolean requiresScheduledReevaluation;
 
     private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
@@ -172,6 +173,7 @@ public class CalculatedFieldCtx {
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
+        this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();

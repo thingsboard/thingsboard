@@ -664,6 +664,10 @@ public class ActorSystemContext {
     @Getter
     private long cfCalculationResultTimeout;
 
+    @Value("${actors.alarms.reevaluation_interval:120}")
+    @Getter
+    private long alarmRulesReevaluationInterval;
+
     @Autowired
     @Getter
     private MqttClientSettings mqttClientSettings;

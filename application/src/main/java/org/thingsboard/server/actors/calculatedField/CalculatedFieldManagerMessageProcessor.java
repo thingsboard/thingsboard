@@ -66,6 +66,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
@@ -80,6 +82,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new HashMap<>();
     private final Map<EntityId, Set<EntityId>> ownerEntities = new HashMap<>();
+    private ScheduledFuture<?> cfsReevaluationTask;
 
     private final CalculatedFieldProcessingService cfExecService;
     private final CalculatedFieldStateService cfStateService;
@@ -122,6 +125,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         calculatedFields.clear();
         entityIdCalculatedFields.clear();
         entityIdCalculatedFieldLinks.clear();
+        if (cfsReevaluationTask != null) {
+            cfsReevaluationTask.cancel(true);
+            cfsReevaluationTask = null;
+        }
         ctx.stop(ctx.getSelf());
     }
 
@@ -129,6 +136,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         log.debug("[{}] Processing CF actor init message.", msg.getTenantId().getId());
         initEntitiesCache();
         initCalculatedFields();
+        scheduleCfsReevaluation();
         msg.getCallback().onSuccess();
     }
 
@@ -141,12 +149,29 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
         } else {
-            cfStateService.removeState(msg.getId(), msg.getCallback());
+            cfStateService.deleteState(msg.getId(), msg.getCallback());
         }
     }
 
     public void onStatePartitionRestoreMsg(CalculatedFieldStatePartitionRestoreMsg msg) {
         ctx.broadcastToChildren(msg, true);
+    }
+
+    private void scheduleCfsReevaluation() {
+        cfsReevaluationTask = systemContext.getScheduler().scheduleWithFixedDelay(() -> {
+            try {
+                calculatedFields.values().forEach(cf -> {
+                    if (cf.isRequiresScheduledReevaluation()) {
+                        applyToTargetCfEntityActors(cf, TbCallback.EMPTY, (entityId, callback) -> {
+                            log.debug("[{}][{}] Pushing scheduled CF reevaluate msg", entityId, cf.getCfId());
+                            getOrCreateActor(entityId).tell(new CalculatedFieldReevaluateMsg(tenantId, cf));
+                        });
+                    }
+                });
+            } catch (Exception e) {
+                log.warn("[{}] Failed to trigger CFs reevaluation", tenantId, e);
+            }
+        }, systemContext.getAlarmRulesReevaluationInterval(), systemContext.getAlarmRulesReevaluationInterval(), TimeUnit.SECONDS);
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {

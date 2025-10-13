@@ -58,6 +58,7 @@ public class AlarmRuleState {
     private long lastEventTs;
     private transient long duration;
     private ScheduledFuture<?> durationCheckFuture;
+    private Boolean active;
 
     public AlarmRuleState(AlarmSeverity severity, AlarmRule alarmRule, AlarmCalculatedFieldState state) {
         this.severity = severity;
@@ -68,32 +69,42 @@ public class AlarmRuleState {
     }
 
     public AlarmEvalResult eval(boolean newEvent, CalculatedFieldCtx ctx) { // on event or config change
-        boolean active = isActive(state.getLatestTimestamp());
-        return switch (condition.getType()) {
-            case SIMPLE -> evalSimple(active, ctx);
-            case DURATION -> evalDuration(active, ctx);
-            case REPEATING -> evalRepeating(active, newEvent, ctx);
-        };
+        long ts = newEvent ? state.getLatestTimestamp() : System.currentTimeMillis();
+        active = isActive(ts);
+        if (!active) {
+            return AlarmEvalResult.FALSE;
+        }
+        return doEval(newEvent, ctx);
     }
 
-    public AlarmEvalResult reeval(long ts) {
+    public AlarmEvalResult reeval(long ts, CalculatedFieldCtx ctx) { // on scheduled duration check or periodic re-eval for rules with schedule
+        boolean active = isActive(ts);
         switch (condition.getType()) {
             case SIMPLE, REPEATING -> {
-                return AlarmEvalResult.NOT_YET_TRUE;
+                if (this.active == null || active != this.active) {
+                    this.active = active;
+                    if (active) {
+                        return doEval(false, ctx);
+                    }
+                }
+                if (active) {
+                    return AlarmEvalResult.NOT_YET_TRUE;
+                } else {
+                    return AlarmEvalResult.FALSE;
+                }
             }
             case DURATION -> {
+                if (!active) {
+                    return AlarmEvalResult.FALSE;
+                }
                 long requiredDuration = getRequiredDurationInMs();
                 if (requiredDuration > 0 && lastEventTs > 0 && ts > lastEventTs) {
                     duration = ts - firstEventTs;
-                    if (isActive(ts)) {
-                        long leftDuration = requiredDuration - duration;
-                        if (leftDuration <= 0) {
-                            return AlarmEvalResult.TRUE;
-                        } else {
-                            return AlarmEvalResult.notYetTrue(0, leftDuration);
-                        }
+                    long leftDuration = requiredDuration - duration;
+                    if (leftDuration <= 0) {
+                        return AlarmEvalResult.TRUE;
                     } else {
-                        return AlarmEvalResult.FALSE;
+                        return AlarmEvalResult.notYetTrue(0, leftDuration);
                     }
                 }
             }
@@ -101,13 +112,20 @@ public class AlarmRuleState {
         return AlarmEvalResult.FALSE;
     }
 
-    private AlarmEvalResult evalSimple(boolean active, CalculatedFieldCtx ctx) {
-        return (active && eval(condition.getExpression(), ctx)) ?
-                AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+    public AlarmEvalResult doEval(boolean newEvent, CalculatedFieldCtx ctx) {
+        return switch (condition.getType()) {
+            case SIMPLE -> evalSimple(ctx);
+            case DURATION -> evalDuration(ctx);
+            case REPEATING -> evalRepeating(newEvent, ctx);
+        };
     }
 
-    private AlarmEvalResult evalRepeating(boolean active, boolean newEvent, CalculatedFieldCtx ctx) {
-        if (active && eval(condition.getExpression(), ctx)) {
+    private AlarmEvalResult evalSimple(CalculatedFieldCtx ctx) {
+        return eval(condition.getExpression(), ctx) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+    }
+
+    private AlarmEvalResult evalRepeating(boolean newEvent, CalculatedFieldCtx ctx) {
+        if (eval(condition.getExpression(), ctx)) {
             if (newEvent) {
                 eventCount++;
             }
@@ -123,8 +141,8 @@ public class AlarmRuleState {
         }
     }
 
-    private AlarmEvalResult evalDuration(boolean active, CalculatedFieldCtx ctx) {
-        if (active && eval(condition.getExpression(), ctx)) {
+    private AlarmEvalResult evalDuration(CalculatedFieldCtx ctx) {
+        if (eval(condition.getExpression(), ctx)) {
             long eventTs = state.getLatestTimestamp();
             if (lastEventTs > 0) {
                 if (eventTs > lastEventTs) {

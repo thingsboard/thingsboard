@@ -62,6 +62,10 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
 
+  @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
+
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;

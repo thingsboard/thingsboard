@@ -104,6 +104,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         "[{}][{}] Stopping entity actor due to change partition event." :
                         "[{}][{}] Stopping entity actor.",
                 tenantId, entityId);
+        states.values().forEach(this::closeState);
         states.clear();
         actorCtx.stop(actorCtx.getSelf());
     }
@@ -123,7 +124,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             state.setPartition(msg.getPartition());
             states.put(cfId, state);
         } else {
-            states.remove(cfId);
+            removeState(cfId);
         }
     }
 
@@ -141,7 +142,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         var ctx = msg.getCtx();
         CalculatedFieldState state;
         if (msg.getStateAction() == StateAction.RECREATE) {
-            states.remove(ctx.getCfId());
+            removeState(ctx.getCfId());
             state = null;
         } else {
             state = states.get(ctx.getCfId());
@@ -195,14 +196,14 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 msg.getCallback().onSuccess();
             } else {
                 MultipleTbCallback multipleTbCallback = new MultipleTbCallback(states.size(), msg.getCallback());
-                states.forEach((cfId, state) -> cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
+                states.forEach((cfId, state) -> cfStateService.deleteState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), multipleTbCallback));
                 actorCtx.stop(actorCtx.getSelf());
             }
         } else {
             var cfId = new CalculatedFieldId(msg.getEntityId().getId());
-            var state = states.remove(cfId);
+            var state = removeState(cfId);
             if (state != null) {
-                cfStateService.removeState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
+                cfStateService.deleteState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
             } else {
                 msg.getCallback().onSuccess();
             }
@@ -426,14 +427,30 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (state.isSizeOk()) {
                 cfStateService.persistState(ctxId, state, callback);
             } else {
-                removeStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
+                deleteStateAndRaiseSizeException(ctxId, CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build(), callback);
             }
         }
     }
 
-    private void removeStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) throws CalculatedFieldException {
+    private CalculatedFieldState removeState(CalculatedFieldId cfId) {
+        CalculatedFieldState state = states.remove(cfId);
+        closeState(state);
+        return state;
+    }
+
+    private void closeState(CalculatedFieldState state) {
+        if (state != null) {
+            try {
+                state.close();
+            } catch (Exception e) {
+                log.warn("[{}][{}] Failed to close CF state", tenantId, state.getEntityId(), e);
+            }
+        }
+    }
+
+    private void deleteStateAndRaiseSizeException(CalculatedFieldEntityCtxId ctxId, CalculatedFieldException ex, TbCallback callback) throws CalculatedFieldException {
         // We remove the state, but remember that it is over-sized in a local map.
-        cfStateService.removeState(ctxId, new TbCallback() {
+        cfStateService.deleteState(ctxId, new TbCallback() {
             @Override
             public void onSuccess() {
                 callback.onFailure(ex);

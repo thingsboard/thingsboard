@@ -17,11 +17,15 @@ package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SimpleAlarmConditionExpression implements AlarmConditionExpression {
 
     @Valid

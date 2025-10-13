@@ -30,4 +30,8 @@ public class AlarmRule {
     private String alarmDetails;
     private DashboardId dashboardId;
 
+    public boolean requiresScheduledReevaluation() {
+        return condition.hasSchedule();
+    }
+
 }

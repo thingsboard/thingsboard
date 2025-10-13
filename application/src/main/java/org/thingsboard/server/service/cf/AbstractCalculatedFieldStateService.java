@@ -62,7 +62,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
     protected abstract void doPersist(CalculatedFieldEntityCtxId stateId, CalculatedFieldStateProto stateMsgProto, TbCallback callback);
 
     @Override
-    public final void removeState(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
+    public final void deleteState(CalculatedFieldEntityCtxId stateId, TbCallback callback) {
         doRemove(stateId, callback);
     }
 
