@@ -1755,6 +1755,7 @@ public class ControllerConstants {
 
     public static final String UNIQUIFY_STRATEGY_DESC = "Optional value of uniquify strategy used by UNIQUIFY policy. Possible values: RANDOM or INCREMENTAL. " +
             "By default, RANDOM strategy is used, which means random alphanumeric string will be added as a suffix to entity name. " +
+            "INCREMENTAL implies the first possible number starting from 1 will be added as a name suffix. " +
             "For example, strategy is UNIQUIFY, uniquify strategy is INCREMENTAL; if a name conflict occurs for entity name 'test-name', " +
             "created entity will have name like 'test-name-1.";
 }
