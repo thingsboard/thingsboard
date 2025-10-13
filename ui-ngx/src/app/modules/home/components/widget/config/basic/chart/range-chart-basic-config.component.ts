@@ -26,6 +26,7 @@ import {
   legendPositions,
   legendPositionTranslationMap,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -101,6 +102,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
   tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
 
   tooltipDatePreviewFn = this._tooltipDatePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { DataKey, Datasource, WidgetConfig, } from '@shared/models/widget.models';
+import { DataKey, Datasource, WidgetConfig, widgetTitleAutocompleteValues, } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -63,6 +63,8 @@ export class ValueChartCardBasicConfigComponent extends BasicWidgetConfigCompone
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private fb: UntypedFormBuilder) {

@@ -899,6 +899,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
     this.updateTripsAnchors();
     this.updateBounds();
     this.updateEditButtonsStates();
+    this.ctx.updateLabelPatterns()
   }
 
   private updateTrips(subscription: IWidgetSubscription) {

@@ -18,10 +18,14 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="slideToggleWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.common-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.rpc.slide-toggle-label</mat-label>
-      <input matInput formControlName="title">
-    </mat-form-field>
+    <tb-string-pattern-autocomplete class="mat-block flex-1" 
+                                    brackets="curly" 
+                                    predefinedValuesButton="true"
+                                    label="{{'widgets.rpc.slide-toggle-label' | translate }}"
+                                    [predefinedValues]="predefinedValues"
+                                    placeholderText="{{ 'widget-config.set' | translate }}"
+                                    formControlName="title"
+    ></tb-string-pattern-autocomplete>
     <section class="flex flex-row xs:flex-col gt-xs:gap-2">
       <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.rpc.label-position</mat-label>

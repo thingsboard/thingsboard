@@ -28,7 +28,7 @@
       </div>
       <div class="top"></div>
       <div #knobTitleContainer class="title-container flex flex-row items-center justify-center">
-        <span #knobTitle class="knob-title">{{ title }}</span>
+        <span #knobTitle class="knob-title">{{ title$ | async}}</span>
       </div>
       <div #knobMinmaxContainer class="minmax-container flex flex-row items-center justify-start">
         <span class="minmax-label">min</span>

@@ -20,7 +20,7 @@
     <span #switchError class="switch-error">{{ error }}</span>
   </div>
   <div #switchTitleContainer class="title-container flex max-h-30% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
-    <span #switchTitle class="switch-title">{{title}}</span>
+    <span #switchTitle class="switch-title">{{title$ | async}}</span>
   </div>
   <div #switchContainer class="flex flex-full flex-col items-center justify-center"
        [class]="{
@@ -44,7 +44,7 @@
 <ng-template #slideToggle>
   <div class="tb-absolute-fill flex flex-col items-center justify-center" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
     <div>
-      <mat-slide-toggle [disabled]="executingUpdateValue" [labelPosition]="labelPosition" [color]="sliderColor" [(ngModel)]="value" (change)="onValue()">{{title}}</mat-slide-toggle>
+      <mat-slide-toggle [disabled]="executingUpdateValue" [labelPosition]="labelPosition" [color]="sliderColor" [(ngModel)]="value" (change)="onValue()">{{title$ | async}}</mat-slide-toggle>
       <mat-progress-bar style="height: 2px;" [color]="sliderColor" mode="indeterminate" *ngIf="executingUpdateValue"></mat-progress-bar>
       <div style="height: 2px;" *ngIf="!executingUpdateValue"></div>
       <tb-error style="margin-top: -6px; display: block; pointer-events: none;"

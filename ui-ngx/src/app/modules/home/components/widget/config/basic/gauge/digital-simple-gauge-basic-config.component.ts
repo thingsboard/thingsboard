@@ -24,6 +24,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import {
@@ -82,6 +83,8 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
   valuePreviewFn = this._valuePreviewFn.bind(this, true);
   previewFn = this._valuePreviewFn.bind(this, false);
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               protected fb: UntypedFormBuilder) {

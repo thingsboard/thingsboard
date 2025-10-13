@@ -18,10 +18,15 @@
 <section class="tb-widget-settings flex flex-col" [formGroup]="gatewayConfigWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gateway.general-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.gateway.widget-title</mat-label>
-      <input matInput formControlName="widgetTitle">
-    </mat-form-field>
+    <tb-string-pattern-autocomplete class="mat-block flex-1" 
+                                    brackets="curly" 
+                                    subscriptSizing="fixed"
+                                    predefinedValuesButton="true"
+                                    label="{{ 'widgets.gateway.widget-title' | translate }}"
+                                    [predefinedValues]="predefinedValues"
+                                    placeholderText="{{ 'widget-config.set' | translate }}"
+                                    formControlName="widgetTitle"
+    ></tb-string-pattern-autocomplete>
     <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.gateway.default-archive-file-name</mat-label>
       <input matInput formControlName="archiveFileName">

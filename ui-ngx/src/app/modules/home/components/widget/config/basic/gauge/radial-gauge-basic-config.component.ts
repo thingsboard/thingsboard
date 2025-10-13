@@ -23,6 +23,7 @@ import {
 } from '@home/components/widget/config/basic/gauge/analog-gauge-basic-config.component';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
+import { widgetTitleAutocompleteValues } from '@app/shared/public-api';
 
 @Component({
   selector: 'tb-radial-gauge-basic-config',
@@ -33,6 +34,8 @@ export class RadialGaugeBasicConfigComponent extends GaugeBasicConfigComponent {
 
   gaugeType = 'radial';
 
+  predefinedValues = widgetTitleAutocompleteValues;
+ 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               protected fb: UntypedFormBuilder) {

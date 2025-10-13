@@ -26,6 +26,7 @@ import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { ThemePalette } from '@angular/material/core';
+import { Observable } from 'rxjs';
 
 const switchAspectRation = 2.7893;
 
@@ -78,7 +79,7 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
   showTitle = false;
   value = false;
   error = '';
-  title = '';
+  title$: Observable<string>;
   showOnOffLabels = false;
   labelPosition: 'before' | 'after' = 'after';
   sliderColor: ThemePalette = 'accent';
@@ -153,8 +154,9 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
 
   private init() {
     const settings: SwitchSettings = this.ctx.settings;
-    this.title = isDefined(settings.title) ? settings.title : '';
-    this.showTitle = !!(this.title && this.title.length);
+    const settingsTitle = settings.title;
+    this.title$ = this.ctx.registerLabelPattern(settingsTitle,this.title$);
+    this.showTitle = !!(settingsTitle && settingsTitle.length);
     this.showOnOffLabels = isDefined(settings.showOnOffLabels) ? settings.showOnOffLabels : true;
     this.labelPosition = isDefined(settings.labelPosition) ? settings.labelPosition : 'after';
     this.sliderColor = isDefined(settings.sliderColor) ? settings.sliderColor : 'accent';
@@ -240,7 +242,9 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
     this.matSlideToggle.css({width, height, minWidth: width});
 
     if (this.showTitle) {
-      this.setFontSize(this.switchTitle, this.title, this.switchTitleContainer.height() * 2 / 3, this.switchTitleContainer.width());
+      this.title$.subscribe(title => {
+        this.setFontSize(this.switchTitle, title, this.switchTitleContainer.height() * 2 / 3, this.switchTitleContainer.width());
+      }).unsubscribe(); 
     }
 
     if (this.showOnOffLabels) {

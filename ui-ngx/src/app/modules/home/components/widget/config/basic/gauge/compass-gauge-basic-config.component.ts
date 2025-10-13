@@ -24,6 +24,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import {
@@ -51,6 +52,8 @@ export class CompassGaugeBasicConfigComponent extends BasicWidgetConfigComponent
 
   compassGaugeWidgetConfigForm: UntypedFormGroup;
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               protected fb: UntypedFormBuilder) {

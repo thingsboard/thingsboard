@@ -18,10 +18,15 @@
 <section class="tb-widget-settings" [formGroup]="photoCameraInputWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
-      <input matInput formControlName="widgetTitle">
-    </mat-form-field>
+    <tb-string-pattern-autocomplete class="mat-block flex-1" 
+                                              brackets="curly" 
+                                              subscriptSizing="fixed"
+                                              predefinedValuesButton="true"
+                                              label="{{ 'widgets.input-widgets.widget-title' | translate }}"
+                                              [predefinedValues]="predefinedValues"
+                                              placeholderText="{{ 'widget-config.set' | translate }}"
+                                              formControlName="widgetTitle"
+    ></tb-string-pattern-autocomplete>
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.image-settings</legend>

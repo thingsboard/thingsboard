@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { TargetDevice, WidgetConfig, } from '@shared/models/widget.models';
+import { TargetDevice, WidgetConfig, widgetTitleAutocompleteValues, } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import {
   scadaSymbolWidgetDefaultSettings,
@@ -42,6 +42,8 @@ export class ScadaSymbolBasicConfigComponent extends BasicWidgetConfigComponent 
 
   scadaSymbolWidgetConfigForm: UntypedFormGroup;
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private fb: UntypedFormBuilder) {

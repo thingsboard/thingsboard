@@ -17,7 +17,7 @@
 -->
 <div class="tb-round-switch flex flex-col" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'">
   <div #switchTitleContainer class="title-container flex max-h-20% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
-    <span #switchTitle class="switch-title">{{title}}</span>
+    <span #switchTitle class="switch-title">{{title$ | async}}</span>
   </div>
   <div #switchContainer class="flex flex-full flex-col items-center justify-center"
        [class]="{

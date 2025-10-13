@@ -28,6 +28,7 @@ import {
 import { ValueType } from '@shared/models/constants';
 import { BasicActionWidgetComponent, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import GenericOptions = CanvasGauges.GenericOptions;
+import { Observable, of } from 'rxjs';
 
 @Component({
   selector: 'tb-knob',
@@ -52,7 +53,7 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
   ctx: WidgetContext;
 
   value = '0';
-  title = '';
+  title$: Observable<string>;
   minValue: number;
   maxValue: number;
   newValue = 0;
@@ -153,7 +154,7 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
 
     this.minValue = isDefined(settings.minValue) ? settings.minValue : 0;
     this.maxValue = isDefined(settings.maxValue) ? settings.maxValue : 100;
-    this.title = isDefined(settings.title) ? settings.title : '';
+    this.title$ = this.ctx.registerLabelPattern(settings.title, this.title$);
 
     const levelColors = ['#19ff4b', '#ffff19', '#ff3232'];
 
@@ -317,7 +318,9 @@ export class KnobComponent extends BasicActionWidgetComponent implements OnInit,
     if (this.canvasBar) {
       this.canvasBar.update({width: size, height: size} as GenericOptions);
     }
-    this.setFontSize(this.knobTitle, this.title, this.knobTitleContainer.height(), this.knobTitleContainer.width());
+    this.title$.subscribe(title => {
+      this.setFontSize(this.knobTitle, title, this.knobTitleContainer.height(), this.knobTitleContainer.width());
+    }).unsubscribe();
     const minmaxHeight = this.knobMinmaxContainer.height();
     this.minmaxLabel.css({fontSize: minmaxHeight + 'px', lineHeight: minmaxHeight + 'px'});
     this.checkValueSize();
