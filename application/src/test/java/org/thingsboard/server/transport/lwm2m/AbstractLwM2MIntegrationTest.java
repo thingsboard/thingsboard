@@ -33,10 +33,12 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.jupiter.api.TestInstance;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.http.HttpStatus;
+import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
@@ -120,11 +122,13 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
-@TestPropertySource(properties = {
-        "transport.lwm2m.enabled=true",
-})
 @Slf4j
 @DaoSqlTest
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
+@TestPropertySource(properties = {
+        "transport.lwm2m.enabled=true"
+})
 public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
     @SpyBean
@@ -317,9 +321,16 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     @After
     public void after() throws Exception {
         this.clientDestroy(true);
+
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
+            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                log.warn("⚠️ Executor did not terminate cleanly, forcing GC");
+            }
         }
+        Thread.sleep(300);
+        System.gc();
+        log.info("✅ Test teardown completed: {}", this.getClass().getSimpleName());
     }
 
     private void init() throws Exception {

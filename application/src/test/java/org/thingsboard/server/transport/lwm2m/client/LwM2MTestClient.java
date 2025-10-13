@@ -69,6 +69,7 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.reflect.Field;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -153,29 +154,30 @@ public class LwM2MTestClient {
 
         if (securityBs != null && security != null) {
             // SECURITIES
-            securityBs.setId(0);
-            security.setId(1);
+            forceNullSecurityId(securityBs);
+            forceNullSecurityId(security);
             LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{securityBs, security};
             initializer.setInstancesForObject(SECURITY, instances);
+            log.warn("Security BS section: securityBsId [{}] Security Lwm2m section: securityLwm2mId [{}] ",  securityBs.getId(),  security.getId());
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(0);
             instances = new LwM2mInstanceEnabler[]{lwm2mServer};
-
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
             // SECURITY
-            initializer.setClassForObject(SERVER, Server.class);
+;           forceNullSecurityId(securityBs);
             initializer.setInstancesForObject(SECURITY, securityBs);
-            log.warn("Security section: securityBsId [{}] ",  securityBs.getId());
+            // SERVER
+            initializer.setClassForObject(SERVER, Server.class);
+            log.warn("Security BS section: securityBsId [{}] ",  securityBs.getId());
         } else {
             // SECURITY
-            security.setId(0);
+            forceNullSecurityId(security);
             initializer.setInstancesForObject(SECURITY, security);
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(0);
             initializer.setInstancesForObject(SERVER, lwm2mServer);
+            log.warn("Security Lwm2m section: securityLwm2mId [{}] Server Lwm2m section: securityLwm2mId [{}] ",  security.getId(),  lwm2mServer.getId());
         }
 
         initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor, value3_0_9));
@@ -493,6 +495,30 @@ public class LwM2MTestClient {
         }
         LwM2mModel model = new StaticModel(models);
         return new ObjectsInitializer(model);
+    }
+
+    private void forceNullSecurityId(Security securityBs) {
+        if (securityBs == null) {
+            return;
+        }
+        try {
+            Field field = securityBs.getClass().getDeclaredField("id");
+            field.setAccessible(true);
+            field.set(securityBs, null);
+            log.info("[forceNullSecurityId] Set id=null for {}", securityBs);
+        } catch (NoSuchFieldException e) {
+            try {
+                // Якщо поле в батьківському класі (наприклад SecurityObjectInstance)
+                Field field = securityBs.getClass().getSuperclass().getDeclaredField("id");
+                field.setAccessible(true);
+                field.set(securityBs, null);
+                log.info("[forceNullSecurityId] Set id=null for {} (via superclass)", securityBs);
+            } catch (Exception ex) {
+                log.error("[forceNullSecurityId] Field 'id' not found for {}", securityBs.getClass(), ex);
+            }
+        } catch (Exception e) {
+            log.error("[forceNullSecurityId] Failed to set id=null for {}", securityBs.getClass(), e);
+        }
     }
 }
 

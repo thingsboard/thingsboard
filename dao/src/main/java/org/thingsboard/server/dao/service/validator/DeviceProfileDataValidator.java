@@ -69,6 +69,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.BOOTSTRAP;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isLwm2mServer;
+
 @Slf4j
 @Component
 public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<DeviceProfile> {
@@ -339,12 +344,12 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
 
             if (serverConfig.getShortServerId() != null) {
                 if (serverConfig.isBootstrapServerIs()) {
-                    if (serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535) {
-                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+                    if (serverConfig.getShortServerId() != BOOTSTRAP.getId()) {
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [" + BOOTSTRAP.getId() + "]!");
                     }
                 } else {
-                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+                    if (!isLwm2mServer(serverConfig.getShortServerId())) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "!");
                     }
                 }
             } else {

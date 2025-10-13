@@ -1,0 +1,137 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.common.data.device.credentials.lwm2m;
+
+/**
+ * Enum representing predefined LwM2M Short Server Identifiers.
+ * <p>
+ * See OMA Lightweight M2M Specification for details about the server identifier space.
+ */
+public enum Lwm2mServerIdentifier {
+
+    /**
+     * Bootstrap Short Server ID (0).
+     * Reserved for the Bootstrap Server — used exclusively during the bootstrap phase.
+     */
+    BOOTSTRAP(0, "Bootstrap Short Server ID", true),
+
+    /**
+     * Primary LwM2M Server Short Server ID (1).
+     * Upper boundary for valid LwM2M Server Identifiers (1–65534).
+     */
+    PRIMARY_LWM2M_SERVER(1, "LwM2M Server Short Server ID", false),
+
+    /**
+     * Maximum valid LwM2M Server ID (65534).
+     * Upper boundary for valid LwM2M Server Identifiers (1–65534).
+     */
+    LWM2M_SERVER_MAX(65534, "LwM2M Server Short Server ID", false),
+
+    /**
+     * Not used for identifying an LwM2M Server (65535).
+     * Reserved sentinel value representing "no server associated" or "invalid ID".
+     * MUST NOT be assigned to any LwM2M Server according to OMA-TS-LightweightM2M-Core, §6.2.1.
+     * OMA LwM2M Core / v1.2: Server / Short Server ID): «MAX_ID 65535 is a reserved value and MUST NOT be used for identifying an Object»
+     */
+    NOT_USED_IDENTIFYING_LWM2M_SERVER(65535, "Reserved sentinel value (no active server)", false);
+
+    private final int id;
+    private final String description;
+    private final boolean isBootstrap;
+
+    Lwm2mServerIdentifier(int id, String description, boolean isBootstrap) {
+        this.id = id;
+        this.description = description;
+        this.isBootstrap = isBootstrap;
+    }
+
+    /**
+     * @return the integer value of this Short Server ID.
+     */
+    public int getId() {
+        return id;
+    }
+
+    /**
+     * @return a human-readable description of this Server ID.
+     */
+    public String getDescription() {
+        return description;
+    }
+
+    /**
+     * @return true if this ID represents a Bootstrap Server.
+     */
+    public boolean isBootstrap() {
+        return isBootstrap;
+    }
+
+    /**
+     * Checks whether a given numeric ID belongs to the Bootstrap Server (0).
+     * OMA Spec (LwM2M v1.0 / v1.1):
+     * Short Server ID Resource (Resource ID: 0)
+     * The Short Server ID identifies a Server Object Instance.
+     * The value 0 is reserved for the Bootstrap Server.
+     * A value between 1 and 65534 identifies a LwM2M Server.
+     * The value 65535 MUST NOT be used.
+     * @param id Short Server ID value.
+     * @return true if id == 0.
+     */
+    public static boolean isBootstrap(int id) {
+        return id == BOOTSTRAP.id;
+    }
+
+    /**
+     * Checks whether a given ID represents a valid LwM2M Server (1–65534).
+     *
+     * @param id Short Server ID value.
+     * @return true if the ID belongs to a standard LwM2M Server.
+     */
+    public static boolean isLwm2mServer(int id) {
+        return id >= PRIMARY_LWM2M_SERVER.id && id <= LWM2M_SERVER_MAX.id;
+    }
+
+    /**
+     * Checks whether the provided ID is within the valid LwM2M range [0–65535].
+     *
+     * @param id ID to check.
+     * @return true if valid, false otherwise.
+     */
+    public static boolean isValid(int id) {
+        return id >= 0 && id <= 65535;
+    }
+
+    /**
+     * Returns a {@link Lwm2mServerIdentifier} instance matching the given ID.
+     *
+     * @param id numeric ID.
+     * @return corresponding enum constant.
+     * @throws IllegalArgumentException if no constant matches the given ID.
+     */
+    public static Lwm2mServerIdentifier fromId(int id) {
+        for (Lwm2mServerIdentifier s : values()) {
+            if (s.id == id) {
+                return s;
+            }
+        }
+        throw new IllegalArgumentException("Unknown Lwm2mServerIdentifier: " + id);
+    }
+
+    @Override
+    public String toString() {
+        return name() + "(" + id + ") - " + description;
+    }
+}

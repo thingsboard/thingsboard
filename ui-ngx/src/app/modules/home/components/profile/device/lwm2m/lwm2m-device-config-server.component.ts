@@ -76,8 +76,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
 
   readonly shortServerIdMin = 1;
   readonly shortServerIdMax = 65534;
-  readonly shortServerIdBsMin = 0;
-  readonly shortServerIdBsMax = 65535;
+  readonly shortServerIdBs = 0;
 
   @Input()
   @coerceBoolean()
@@ -103,7 +102,7 @@ export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAcc
       serverPublicKey: [''],
       clientHoldOffTime: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],
       shortServerId: ['', this.isBootstrap
-        ? [Validators.required, Validators.pattern('^(' + this.shortServerIdBsMin+ '|' + this.shortServerIdBsMax + ')$' )]
+        ? [Validators.required, Validators.pattern('^(' + this.shortServerIdBs + ')$' )]
         : [Validators.required, Validators.pattern('[0-9]*'), Validators.min(this.shortServerIdMin), Validators.max(this.shortServerIdMax)]
       ],
       bootstrapServerAccountTimeout: ['', [Validators.required, Validators.min(0), Validators.pattern('[0-9]*')]],

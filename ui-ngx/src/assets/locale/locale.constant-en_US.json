@@ -2302,7 +2302,7 @@
             "short-id-required": "Short server ID is required.",
             "short-id-range": "Short server ID should be in a range from {{ min }} to {{ max }}.",
             "short-id-pattern": "Short server ID must be a positive integer.",
-            "short-id-pattern-bs": "Short server ID must be only 0 or 65535",
+            "short-id-pattern-bs": "Short server ID must be only 0",
             "lifetime": "Client registration lifetime",
             "lifetime-required": "Client registration lifetime is required.",
             "lifetime-pattern": "Client registration lifetime must be a positive integer.",

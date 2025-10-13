@@ -48,9 +48,9 @@ import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.BOOTSTRAP_DEFAULT_SHORT_ID_0;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_DEFAULT_SHORT_ID_1;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_DEFAULT_SHORT_ID_65534;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.BOOTSTRAP;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
 
 @Slf4j
 public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTaskProvider {
@@ -147,7 +147,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                             log.error("Invalid lwm2mSecurityInstance [{}] by short server id [{}]", path.getObjectInstanceId(), lwm2mShortServerId);
                         }
                     } else {
-                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(BOOTSTRAP_DEFAULT_SHORT_ID_0, path.getObjectInstanceId());
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(BOOTSTRAP.getId(), path.getObjectInstanceId());
                     }
                 } else if (path.getObjectId() == 1) {
                     if (link.getAttributes().get("ssid") != null) {
@@ -192,7 +192,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
      *  SECURITY = 0; InstanceId = 0
      *  SERVER = 1; InstanceId = 0
      * 2) Both
-     * - Short Server ID == 0 or 65535 bs)
+     * - Short Server ID == 0 bs)
      *  SECURITY = 0; InstanceId = 0
      *  SERVER = 1; InstanceId = null
      * - Short Server ID == 1 - 65534 lwm2m)
@@ -202,8 +202,8 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
     public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfigNew,
                                                                               ContentFormat contentFormat,
                                                                               String endpoint) {
-        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0) == null ?
-                0 : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0);
+        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP.getId()) == null ?
+                0 : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP.getId());
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
         Set<String> pathsDelete = new HashSet<>();
         ConcurrentHashMap<String, BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ConcurrentHashMap<>();
@@ -214,7 +214,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         // bootstrap  Security new - There can only be one instance of bootstrap  at a time.
         /// bs: handle security only
         for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfigNew.security).values()) {
-            if (security.bootstrapServer && security.serverId == BOOTSTRAP_DEFAULT_SHORT_ID_0) {
+            if (security.bootstrapServer && security.serverId == BOOTSTRAP.getId()) {
                 // delete old bootstrap Security
                 String path = "/" + SECURITY + "/" + bootstrapSecurityInstanceId;
                 pathsDelete.add(path);
@@ -231,7 +231,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         /// lwm2m server: handle security & server
         //max Lwm2m Security instance old id if new
         for (Integer shortId : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().keySet()) {
-            if (shortId >= BOOTSTRAP_DEFAULT_SHORT_ID_0 && shortId <= LWM2M_DEFAULT_SHORT_ID_65534) {
+            if (shortId >= BOOTSTRAP.getId() && shortId <= LWM2M_SERVER_MAX.getId()) {
                 lwm2mSecurityInstanceIdMax = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(shortId) >
                         lwm2mSecurityInstanceIdMax ? this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(shortId) :
                         lwm2mSecurityInstanceIdMax;
@@ -239,7 +239,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         }
         //max Lwm2m Server instance old id if new
         for (Integer shortId : this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().keySet()) {
-            if (shortId >= LWM2M_DEFAULT_SHORT_ID_1 && shortId <= LWM2M_DEFAULT_SHORT_ID_65534) {
+            if (shortId >= PRIMARY_LWM2M_SERVER.getId() && shortId <= LWM2M_SERVER_MAX.getId()) {
                 lwm2mServerInstanceIdMax = this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(shortId) >
                         lwm2mServerInstanceIdMax ? this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(shortId) :
                         lwm2mServerInstanceIdMax;
@@ -297,7 +297,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
     }
 
     private boolean validateLwm2mShortServerId(int id){
-        return  id >= LWM2M_DEFAULT_SHORT_ID_1 && id <= LWM2M_DEFAULT_SHORT_ID_65534;
+        return  id >= PRIMARY_LWM2M_SERVER.getId() && id <= LWM2M_SERVER_MAX.getId();
     }
 
     @Override
