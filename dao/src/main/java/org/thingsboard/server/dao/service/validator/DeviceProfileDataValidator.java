@@ -349,7 +349,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                     }
                 } else {
                     if (!isLwm2mServer(serverConfig.getShortServerId())) {
-                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "!");
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!");
                     }
                 }
             } else {

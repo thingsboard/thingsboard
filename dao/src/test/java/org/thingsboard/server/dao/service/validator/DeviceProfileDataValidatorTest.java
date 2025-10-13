@@ -79,7 +79,7 @@ class DeviceProfileDataValidatorTest {
                     "  }";
 
     private static final String msgErrorLwm2mRange = "LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!";
-    private static final String msgErrorBsRange = "Bootstrap Server ShortServerId must be in range [" + BOOTSTRAP.getId() + " - " + NOT_USED_IDENTIFYING_LWM2M_SERVER.getId() + "]!";
+    private static final String msgErrorBsRange = "Bootstrap Server ShortServerId must be in range [" + BOOTSTRAP.getId() + "]!";
     private static final String msgErrorNotNull = " Server ShortServerId must not be null!";
     private static final String host = "localhost";
     private static final String hostBs = "localhost";
