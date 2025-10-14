@@ -8638,6 +8638,7 @@
                     "polyline-configuration": "Polyline configuration",
                     "remove-polyline": "Remove polyline",
                     "edit": "Edit polyline",
+                    "cut": "Cut polyline area",
                     "rotate": "Rotate polyline",
                     "remove-polyline-for": "Remove polyline for '{{entityName}}'",
                     "draw-polyline": "Draw polyline",
