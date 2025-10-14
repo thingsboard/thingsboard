@@ -139,8 +139,8 @@ public class ApiKeyController extends BaseController {
         apiKeyService.deleteApiKey(apiKey.getTenantId(), apiKey, false);
     }
 
-    private String toUserApiKey(String hash) {
-        return API_KEY_HEADER_PREFIX + hash;
+    private String toUserApiKey(String value) {
+        return API_KEY_HEADER_PREFIX + value;
     }
 
 }
