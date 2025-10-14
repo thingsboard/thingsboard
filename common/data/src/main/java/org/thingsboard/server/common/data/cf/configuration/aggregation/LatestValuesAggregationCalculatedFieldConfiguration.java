@@ -17,18 +17,18 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
-import java.util.List;
 import java.util.Map;
 
 @Data
-public class LatestValuesAggregationCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public class LatestValuesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
-    private AggSource source;
-    private Map<String, ReferencedEntityKey> inputs;
+    private RelationPathLevel relation;
+    private Map<String, Argument> arguments;
     private long deduplicationIntervalMillis;
     private Map<String, AggMetric> metrics;
     private Output output;
@@ -40,13 +40,6 @@ public class LatestValuesAggregationCalculatedFieldConfiguration implements Calc
 
     @Override
     public void validate() {
-    }
-
-    public CfAggTrigger buildTrigger() {
-        return CfAggTrigger.builder()
-                .inputs(List.copyOf(inputs.values()))
-                .entityProfiles(List.copyOf(source.getEntityProfiles()))
-                .build();
     }
 
 }

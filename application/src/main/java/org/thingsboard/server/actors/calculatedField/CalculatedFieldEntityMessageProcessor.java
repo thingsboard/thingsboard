@@ -171,8 +171,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 throw cfe;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
-        }
-    }
+        }    }
 
     public void process(CalculatedFieldArgumentResetMsg msg) throws CalculatedFieldException {
         log.debug("[{}] Processing CF argument reset msg.", entityId);
@@ -523,22 +522,21 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
-        return mapToArguments(entityId, ctx.getMainEntityArguments(), ctx.getAggregationInputs(), data);
+        return mapToArguments(entityId, ctx.getMainEntityArguments(), ctx.getRelatedEntityArguments(), data);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, List<TsKvProto> data) {
-        return mapToArguments(entityId, ctx.getLinkedAndDynamicArgs(entityId), ctx.getAggregationInputs(), data);
+        return mapToArguments(entityId, ctx.getLinkedAndDynamicArgs(entityId), ctx.getRelatedEntityArguments(), data);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(EntityId originator, Map<ReferencedEntityKey, String> argNames, Map<String, ReferencedEntityKey> aggArgNames, List<TsKvProto> data) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId originator, Map<ReferencedEntityKey, String> argNames, Map<ReferencedEntityKey, String> aggArgNames, List<TsKvProto> data) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         if (!aggArgNames.isEmpty()) {
-            for (Map.Entry<String, ReferencedEntityKey> entry : aggArgNames.entrySet()) {
-                for (TsKvProto item : data) {
-                    ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
-                    if (key.equals(entry.getValue())) {
-                        arguments.put(entry.getKey(), new AggSingleArgumentEntry(originator, item));
-                    }
+            for (TsKvProto item : data) {
+                ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
+                String argName = aggArgNames.get(key);
+                if (argName != null) {
+                    arguments.put(argName, new AggSingleArgumentEntry(originator, item));
                 }
             }
         }
@@ -560,17 +558,17 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
-        return mapToArguments(entityId, ctx.getMainEntityArguments(), ctx.getMainEntityGeofencingArgumentNames(), ctx.getAggregationInputs(), scope, attrDataList);
+        return mapToArguments(entityId, ctx.getMainEntityArguments(), ctx.getMainEntityGeofencingArgumentNames(), ctx.getRelatedEntityArguments(), scope, attrDataList);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         var argNames = ctx.getLinkedAndDynamicArgs(entityId);
         List<String> geofencingArgumentNames = ctx.getLinkedEntityAndCurrentOwnerGeofencingArgumentNames();
-        Map<String, ReferencedEntityKey> aggregationInputs = ctx.getAggregationInputs();
+        Map<ReferencedEntityKey, String> aggregationInputs = ctx.getRelatedEntityArguments();
         return mapToArguments(entityId, argNames, geofencingArgumentNames, aggregationInputs, scope, attrDataList);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, String> argNames, List<String> geofencingArgNames, Map<String, ReferencedEntityKey> aggArgNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, String> argNames, List<String> geofencingArgNames, Map<ReferencedEntityKey, String> aggArgNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         if (!argNames.isEmpty()) {
             for (AttributeValueProto item : attrDataList) {
@@ -589,10 +587,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (!aggArgNames.isEmpty()) {
             for (AttributeValueProto item : attrDataList) {
                 ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-                for (Map.Entry<String, ReferencedEntityKey> entry : aggArgNames.entrySet()) {
-                    if (key.equals(entry.getValue())) {
-                        arguments.put(entry.getKey(), new AggSingleArgumentEntry(entityId, item));
-                    }
+                String argName = aggArgNames.get(key);
+                if (argName != null) {
+                    arguments.put(argName, new AggSingleArgumentEntry(entityId, item));
                 }
             }
         }

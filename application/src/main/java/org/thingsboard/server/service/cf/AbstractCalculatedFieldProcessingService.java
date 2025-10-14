@@ -27,7 +27,6 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.AggSource;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -39,7 +38,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.ProfileEntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -49,13 +48,11 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleArgumentEntry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -65,6 +62,7 @@ import static org.thingsboard.server.common.data.cf.configuration.geofencing.Ent
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultAttributeEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformAggSingleArgument;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
 
 @Data
@@ -123,30 +121,19 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return resolveOwnerArgument(tenantId, entityId);
     }
 
-    private ListenableFuture<List<EntityId>> resolveRelatedEntities(TenantId tenantId, EntityId entityId, AggSource aggSource) {
-        RelationPathLevel relation = aggSource.getRelation();
+    private ListenableFuture<List<EntityId>> resolveRelatedEntities(TenantId tenantId, EntityId entityId, RelationPathLevel relation) {
+        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findByRelationPathQueryAsync(tenantId, new EntityRelationPathQuery(entityId, List.of(relation)));
 
-        List<ListenableFuture<List<EntityRelation>>> relationListsFut = new ArrayList<>();
-        if (aggSource.getEntityProfiles().isEmpty()) {
-            relationListsFut.add(relationService.findByProfileEntityRelationPathQueryAsync(tenantId, new ProfileEntityRelationPathQuery(entityId, relation, null)));
-        } else {
-            aggSource.getEntityProfiles().forEach(profile -> relationListsFut.add(relationService.findByProfileEntityRelationPathQueryAsync(tenantId, new ProfileEntityRelationPathQuery(entityId, relation, profile))));
-        }
-
-        return Futures.transform(Futures.allAsList(relationListsFut), relationLists -> {
-            if (relationLists == null) {
+        return Futures.transform(relationsFut, relations -> {
+            if (relations == null) {
                 return new ArrayList<>();
             }
-            List<EntityRelation> allRelations = relationLists.stream()
-                    .filter(Objects::nonNull)
-                    .flatMap(List::stream)
-                    .toList();
 
             return switch (relation.direction()) {
-                        case FROM -> allRelations.stream()
+                        case FROM -> relations.stream()
                             .map(EntityRelation::getTo)
                             .toList();
-                        case TO -> allRelations.isEmpty() ? List.of() : List.of(allRelations.get(0).getFrom());
+                        case TO -> relations.isEmpty() ? List.of() : List.of(relations.get(0).getFrom());
                     };
             }, calculatedFieldCallbackExecutor);
     }
@@ -193,28 +180,26 @@ public abstract class AbstractCalculatedFieldProcessingService {
     protected Map<String, ListenableFuture<ArgumentEntry>> fetchAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
         LatestValuesAggregationCalculatedFieldConfiguration aggConfig = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
 
-        ListenableFuture<List<EntityId>> relatedEntities = resolveRelatedEntities(ctx.getTenantId(), entityId, aggConfig.getSource());
+        ListenableFuture<List<EntityId>> relatedEntitiesFut = resolveRelatedEntities(ctx.getTenantId(), entityId, aggConfig.getRelation());
 
-        Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
-        aggConfig.getInputs().forEach((key, refKey) -> {
-            Argument argument = new Argument();
-            argument.setRefEntityKey(refKey);
-            futures.put(key, Futures.transformAsync(relatedEntities, entityIds -> fetchAggArgumentEntry(ctx.getTenantId(), entityIds, argument, System.currentTimeMillis()), MoreExecutors.directExecutor()));
-        });
-        return futures;
+        return aggConfig.getArguments().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> Futures.transformAsync(relatedEntitiesFut, relatedEntities -> fetchAggArgumentEntry(ctx.getTenantId(), relatedEntities, entry.getValue(), ts), MoreExecutors.directExecutor())
+                ));
     }
 
     protected ListenableFuture<Map<String, ArgumentEntry>> fetchEntityAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
         LatestValuesAggregationCalculatedFieldConfiguration aggConfig = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
-        aggConfig.getInputs().forEach((key, refKey) -> {
-            Argument argument = new Argument();
-            argument.setRefEntityKey(refKey);
-            ListenableFuture<ArgumentEntry> argEntryFut = fetchSingleAggArgumentEntry(ctx.getTenantId(), entityId, argument, ts);
-            futures.put(key, argEntryFut);
-        });
-        return Futures.whenAllComplete(futures.values())
-                .call(() -> resolveArgumentFutures(futures),
+
+        Map<String, ListenableFuture<ArgumentEntry>> argsFutures = aggConfig.getArguments().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> fetchSingleAggArgumentEntry(ctx.getTenantId(), entityId, entry.getValue(), ts)
+                ));
+
+        return Futures.whenAllComplete(argsFutures.values())
+                .call(() -> resolveArgumentFutures(argsFutures),
                         MoreExecutors.directExecutor());
     }
 
@@ -347,7 +332,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return Futures.transform(attributeOptFuture, attrOpt -> {
             log.debug("[{}][{}] Fetched attribute for key {}: {}", tenantId, entityId, argument.getRefEntityKey(), attrOpt);
             AttributeKvEntry attributeKvEntry = attrOpt.orElseGet(() -> new BaseAttributeKvEntry(createDefaultKvEntry(argument), defaultLastUpdateTs, 0L));
-            return new AggSingleArgumentEntry(entityId, attributeKvEntry);
+            return transformAggSingleArgument(entityId, Optional.of(attributeKvEntry));
         }, calculatedFieldCallbackExecutor);
     }
 
@@ -359,7 +344,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 result -> {
                     log.debug("[{}][{}] Fetched latest timeseries {}: {}", tenantId, entityId, key, result);
                     Optional<TsKvEntry> tsKvEntry = result.or(() -> Optional.of(new BasicTsKvEntry(defaultTs, createDefaultKvEntry(argument), 0L)));
-                    return new AggSingleArgumentEntry(entityId, tsKvEntry.get());
+                    return transformAggSingleArgument(entityId, tsKvEntry);
                 }, calculatedFieldCallbackExecutor);
     }
 

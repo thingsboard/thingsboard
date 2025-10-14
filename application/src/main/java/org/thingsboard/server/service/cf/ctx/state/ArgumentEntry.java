@@ -74,4 +74,8 @@ public interface ArgumentEntry {
         return new AggArgumentEntry(entityIdkvEntryMap, false);
     }
 
+    static ArgumentEntry createAggSingleArgument(EntityId entityId, KvEntry kvEntry) {
+        return new AggSingleArgumentEntry(entityId, kvEntry);
+    }
+
 }

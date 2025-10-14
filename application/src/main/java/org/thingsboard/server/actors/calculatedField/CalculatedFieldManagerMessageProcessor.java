@@ -24,7 +24,6 @@ import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
 import org.thingsboard.server.actors.calculatedField.EntityInitCalculatedFieldMsg.StateAction;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
@@ -32,20 +31,17 @@ import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.AggSource;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.CfAggTrigger;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.CalculatedFieldStatePartitionRestoreMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
@@ -53,13 +49,11 @@ import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.queue.settings.TbQueueCalculatedFieldSettings;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
@@ -76,8 +70,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
@@ -96,7 +88,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new HashMap<>();
     private final Map<EntityId, Set<EntityId>> ownerEntities = new HashMap<>();
-    private final Map<CalculatedFieldId, CfAggTrigger> cfTriggers = new HashMap<>();
+    private final Map<CalculatedFieldId, CalculatedFieldCtx> aggCalculatedFields = new HashMap<>();
     private ScheduledFuture<?> cfsReevaluationTask;
 
     private final CalculatedFieldProcessingService cfExecService;
@@ -146,7 +138,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             cfsReevaluationTask.cancel(true);
             cfsReevaluationTask = null;
         }
-        cfTriggers.clear();
+        aggCalculatedFields.clear();
         ctx.stop(ctx.getSelf());
     }
 
@@ -252,19 +244,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
         updateEntityOwner(entityId);
 
-        MultipleTbCallback callbackFor2 = new MultipleTbCallback(2, callback);
-
-        // process aggregation cfs(in any)
-        List<CalculatedFieldCtx> cfsRelatedToEntity = getCfsWithRelationToEntity(entityId, profileId);
-        if (!cfsRelatedToEntity.isEmpty()) {
-            MultipleTbCallback multiCallback = new MultipleTbCallback(cfsRelatedToEntity.size(), callbackFor2);
-            cfsRelatedToEntity.forEach(ctx -> {
-                applyToTargetCfEntityActors(ctx, multiCallback, (id, cb) -> initRelatedEntity(id, entityId, ctx, cb));
-            });
-        } else {
-            callbackFor2.onSuccess();
-        }
-
         if (!isMyPartition(entityId, callback)) {
             return;
         }
@@ -272,11 +251,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var profileIdFields = getCalculatedFieldsByEntityId(profileId);
         var fieldsCount = entityIdFields.size() + profileIdFields.size();
         if (fieldsCount > 0) {
-            MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callbackFor2);
+            MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callback);
             entityIdFields.forEach(ctx -> initCfForEntity(entityId, ctx, StateAction.INIT, multiCallback));
             profileIdFields.forEach(ctx -> initCfForEntity(entityId, ctx, StateAction.INIT, multiCallback));
         } else {
-            callbackFor2.onSuccess();
+            callback.onSuccess();
         }
     }
 
@@ -286,35 +265,16 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (!isMyPartition(msg.getEntityId(), callback)) {
                 return;
             }
-            MultipleTbCallback callbackFor2 = new MultipleTbCallback(2, callback);
-
-            // process aggregation cfs(in any)
-            List<CalculatedFieldCtx> oldCfsRelatedToEntity = getCfsWithRelationToEntity(msg.getEntityId(), msg.getOldProfileId());
-            List<CalculatedFieldCtx> newCfsRelatedToEntity = getCfsWithRelationToEntity(msg.getEntityId(), msg.getProfileId());
-            var fieldsWithRelatedEntityCount = oldCfsRelatedToEntity.size() + newCfsRelatedToEntity.size();
-            if (fieldsWithRelatedEntityCount > 0) {
-                MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsWithRelatedEntityCount, callbackFor2);
-                var entityId = msg.getEntityId();
-                oldCfsRelatedToEntity.forEach(ctx -> {
-                    applyToTargetCfEntityActors(ctx, multiCallback, (id, cb) -> deleteRelatedEntity(id, entityId, cb));
-                });
-                newCfsRelatedToEntity.forEach(ctx -> {
-                    applyToTargetCfEntityActors(ctx, multiCallback, (id, cb) -> initRelatedEntity(id, entityId, ctx, cb));
-                });
-            } else {
-                callbackFor2.onSuccess();
-            }
-
             var oldProfileCfs = getCalculatedFieldsByEntityId(msg.getOldProfileId());
             var newProfileCfs = getCalculatedFieldsByEntityId(msg.getProfileId());
             var fieldsCount = oldProfileCfs.size() + newProfileCfs.size();
             if (fieldsCount > 0) {
-                MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callbackFor2);
+                MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsCount, callback);
                 var entityId = msg.getEntityId();
                 oldProfileCfs.forEach(ctx -> deleteCfForEntity(entityId, ctx.getCfId(), multiCallback));
                 newProfileCfs.forEach(ctx -> initCfForEntity(entityId, ctx, StateAction.INIT, multiCallback));
             } else {
-                callbackFor2.onSuccess();
+                callback.onSuccess();
             }
         } else if (msg.isOwnerChanged()) {
             onEntityOwnerChanged(msg, callback);
@@ -334,10 +294,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 case CUSTOMER -> ownerEntities.remove(msg.getEntityId());
             }
             ownerEntities.values().forEach(entities -> entities.remove(msg.getEntityId()));
-
-            getCfsWithRelationToEntity(msg.getEntityId(), msg.getProfileId()).forEach(ctx -> {
-                applyToTargetCfEntityActors(ctx, callback, (id, cb) -> deleteRelatedEntity(id, msg.getEntityId(), cb));
-            });
             if (isMyPartition(msg.getEntityId(), callback)) {
                 log.debug("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
                 getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
@@ -365,9 +321,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
             cfsByToIdOrItsProfileId.forEach(cf -> {
                 var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                AggSource source = configuration.getSource();
-                RelationPathLevel relation = source.getRelation();
-                if (EntitySearchDirection.TO.equals(relation.direction()) && relationType.equals(relation.relationType()) && source.getEntityProfiles().contains(fromIdProfile)) {
+                RelationPathLevel relation = configuration.getRelation();
+                if (EntitySearchDirection.TO.equals(relation.direction()) && relationType.equals(relation.relationType())) {
                     toIdMatches.add(cf);
                 }
             });
@@ -386,9 +341,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
             cfsByFromIdOrItsProfileId.forEach(cf -> {
                 var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                AggSource source = configuration.getSource();
-                RelationPathLevel relation = source.getRelation();
-                if (EntitySearchDirection.FROM.equals(relation.direction()) && relationType.equals(relation.relationType()) && source.getEntityProfiles().contains(toIdProfile)) {
+                RelationPathLevel relation = configuration.getRelation();
+                if (EntitySearchDirection.FROM.equals(relation.direction()) && relationType.equals(relation.relationType())) {
                     fromIdMatches.add(cf);
                 }
             });
@@ -424,9 +378,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
             cfsByToIdOrItsProfileId.forEach(cf -> {
                 var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                AggSource source = configuration.getSource();
-                RelationPathLevel relation = source.getRelation();
-                if (EntitySearchDirection.TO.equals(relation.direction()) && relationType.equals(relation.relationType()) && source.getEntityProfiles().contains(fromIdProfile)) {
+                RelationPathLevel relation = configuration.getRelation();
+                if (EntitySearchDirection.TO.equals(relation.direction()) && relationType.equals(relation.relationType())) {
                     toIdMatches.add(cf);
                 }
             });
@@ -445,9 +398,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
             cfsByFromIdOrItsProfileId.forEach(cf -> {
                 var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                AggSource source = configuration.getSource();
-                RelationPathLevel relation = source.getRelation();
-                if (EntitySearchDirection.FROM.equals(relation.direction()) && relationType.equals(relation.relationType()) && source.getEntityProfiles().contains(toIdProfile)) {
+                RelationPathLevel relation = configuration.getRelation();
+                if (EntitySearchDirection.FROM.equals(relation.direction()) && relationType.equals(relation.relationType())) {
                     fromIdMatches.add(cf);
                 }
             });
@@ -482,7 +434,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 }
                 calculatedFields.put(cf.getId(), cfCtx);
                 if (cf.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-                    cfTriggers.put(cf.getId(), aggConfig.buildTrigger());
+                    aggCalculatedFields.put(cf.getId(), cfCtx);
                 }
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
@@ -515,8 +467,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     throw CalculatedFieldException.builder().ctx(newCfCtx).eventEntity(newCfCtx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
                 } finally {
                     calculatedFields.put(newCf.getId(), newCfCtx);
-                    if (newCf.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-                        cfTriggers.put(newCf.getId(), aggConfig.buildTrigger());
+                    if (newCf.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration) {
+                        aggCalculatedFields.put(newCf.getId(), newCfCtx);
                     }
                     List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
                     List<CalculatedFieldCtx> newCfList = new CopyOnWriteArrayList<>();
@@ -559,7 +511,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onCfDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
         var cfCtx = calculatedFields.remove(cfId); // fixme wtf? why isn't ctx closed properly?
-        cfTriggers.remove(cfId);
+        aggCalculatedFields.remove(cfId);
         if (cfCtx == null) {
             log.debug("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
@@ -614,21 +566,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private List<CalculatedFieldEntityCtxId> filterAggregationCfs(CalculatedFieldTelemetryMsg msg) {
         EntityId entityId = msg.getEntityId();
-        return cfTriggers.entrySet().stream()
-                .filter(entry -> aggMatches(entry.getValue(), msg.getProto()))
-                .map(Entry::getKey)
-                .map(calculatedFields::get)
-                .filter(Objects::nonNull)
+        return aggCalculatedFields.values().stream()
+                .filter(cf -> cf.relatedEntityMatches(msg.getProto()))
                 .flatMap(cf -> findRelationsForCf(entityId, cf).stream())
                 .toList();
     }
 
-    private List<CalculatedFieldCtx> getCfsWithRelationToEntity(EntityId entityId, EntityId profileId) {
-        return cfTriggers.entrySet().stream()
-                .filter(entry -> entry.getValue().matchesProfile(profileId))
-                .map(Entry::getKey)
-                .map(calculatedFields::get)
-                .filter(Objects::nonNull)
+    private List<CalculatedFieldCtx> getCfsWithRelationToEntity(EntityId entityId) {
+        return aggCalculatedFields.values().stream()
                 .filter(cf -> !findRelationsForCf(entityId, cf).isEmpty())
                 .toList();
     }
@@ -636,24 +581,19 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private List<CalculatedFieldEntityCtxId> findRelationsForCf(EntityId entityId, CalculatedFieldCtx cf) {
         List<CalculatedFieldEntityCtxId> result = new ArrayList<>();
         if (cf.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration configuration) {
-            AggSource source = configuration.getSource();
-            RelationPathLevel relation = source.getRelation();
-            EntityId cfEntityId = cf.getEntityId();
-            EntityId targetProfileId = isProfileEntity(cfEntityId.getEntityType())
-                    ? cfEntityId
-                    : getProfileId(tenantId, cfEntityId);
+            RelationPathLevel relation = configuration.getRelation();
             switch (relation.direction()) {
                 case FROM -> {
-                    List<EntityRelation> relationsByTo = relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), targetProfileId);
-                    if (relationsByTo != null && !relationsByTo.isEmpty()) {
-                        EntityRelation entityRelation = relationsByTo.get(0); // only one supported
+                    List<EntityRelation> byToAndType = relationService.findByToAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
+                    if (byToAndType != null && !byToAndType.isEmpty()) {
+                        EntityRelation entityRelation = byToAndType.get(0); // only one supported
                         result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getFrom()));
                     }
                 }
                 case TO -> {
-                    List<EntityRelation> relationsByFrom = relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), targetProfileId);
-                    if (relationsByFrom != null && !relationsByFrom.isEmpty()) {
-                        for (EntityRelation entityRelation : relationsByFrom) {
+                    List<EntityRelation> byFromAndType = relationService.findByFromAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
+                    if (byFromAndType != null && !byFromAndType.isEmpty()) {
+                        for (EntityRelation entityRelation : byFromAndType) {
                             if (entityRelation.getTo().equals(cf.getEntityId())) {
                                 result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo()));
                             }
@@ -663,25 +603,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             }
         }
         return result;
-    }
-
-    private boolean aggMatches(CfAggTrigger cfAggTrigger, CalculatedFieldTelemetryMsgProto proto) {
-        if (!proto.getTsDataList().isEmpty()) {
-            List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
-                    .map(ProtoUtils::fromProto)
-                    .toList();
-            return cfAggTrigger.matchesTimeSeries(updatedTelemetry);
-        } else if (!proto.getAttrDataList().isEmpty()) {
-            AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
-            List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
-                    .map(ProtoUtils::fromProto)
-                    .toList();
-            return cfAggTrigger.matchesAttributes(updatedTelemetry, scope);
-        } else if (!proto.getRemovedTsKeysList().isEmpty()) {
-            return cfAggTrigger.matchesTimeSeriesKeys(proto.getRemovedTsKeysList());
-        } else {
-            return cfAggTrigger.matchesAttributesKeys(proto.getRemovedAttrKeysList(), AttributeScope.valueOf(proto.getScope().name()));
-        }
     }
 
     public void onLinkedTelemetryMsg(CalculatedFieldLinkedTelemetryMsg msg) {
@@ -889,8 +810,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
         } finally {
             calculatedFields.put(cf.getId(), cfCtx);
-            if (cf.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-                cfTriggers.put(cf.getId(), aggConfig.buildTrigger());
+            if (cf.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration) {
+                aggCalculatedFields.put(cf.getId(), cfCtx);
             }
             // We use copy on write lists to safely pass the reference to another actor for the iteration.
             // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)

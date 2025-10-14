@@ -27,8 +27,8 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -36,7 +36,6 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFuncti
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.AggSource;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
@@ -53,9 +52,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -76,8 +73,6 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
     private AssetProfile assetProfile;
     private Asset asset;
-
-    private CalculatedField calculatedField;
 
     private long deduplicationInterval = 10000;
 
@@ -111,10 +106,6 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         createEntityRelation(asset.getId(), device1.getId(), "Contains");
         createEntityRelation(asset.getId(), device2.getId(), "Contains");
-
-        calculatedField = createOccupancyCF("Occupied spaces", asset.getId(), List.of(deviceProfile.getId()));
-
-        checkInitialCalculation();
     }
 
     @After
@@ -125,7 +116,32 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
     }
 
     @Test
+    public void testNoTelemetryOnDevices_checkDefaultValueUsed() throws Exception {
+        Asset asset2 = createAsset("Asset 2", assetProfile.getId());
+        Device device3 = createDevice("Device 3", "1234567890333");
+        Device device4 = createDevice("Device 4", "1234567890444");
+
+        createEntityRelation(asset2.getId(), device3.getId(), "Contains");
+        createEntityRelation(asset2.getId(), device4.getId(), "Contains");
+
+        createOccupancyCF("Occupied spaces", asset2.getId());
+
+        await().alias("create CF and perform aggregation with default values").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode occupancy = getLatestTelemetry(asset2.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
+                    assertThat(occupancy).isNotNull();
+                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("2");
+                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
+                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+                });
+    }
+
+    @Test
     public void testUpdateTelemetry_checkMetricsCalculation() throws Exception {
+        createOccupancyCF("Occupied spaces", asset.getId());
+        checkInitialCalculation();
+
         postTelemetry(device1.getId(), "{\"occupied\":false}");
 
         await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
@@ -141,6 +157,9 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
     @Test
     public void testUpdateTelemetry_checkMetricsCalculationNotExecutedUntilDeduplicationInterval() throws Exception {
+        createOccupancyCF("Occupied spaces", asset.getId());
+        checkInitialCalculation();
+
         postTelemetry(device1.getId(), "{\"occupied\":false}");
 
         await().alias("update telemetry -> no changes").atMost(deduplicationInterval / 2, TimeUnit.MILLISECONDS)
@@ -161,33 +180,13 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
     }
 
     @Test
-    public void testChangeProfile_checkMetricsCalculation() throws Exception {
-        DeviceProfile deviceProfile2 = doPost("/api/deviceProfile", createDeviceProfile("Device Profile 2"), DeviceProfile.class);
-        device1.setDeviceProfileId(deviceProfile2.getId());
-        device1 = doPost("/api/device?accessToken=" + accessToken1, device1, Device.class);
+    public void testCreateRelation_checkMetricsCalculation() throws Exception {
+        createOccupancyCF("Occupied spaces", asset.getId());
+        checkInitialCalculation();
 
-        postTelemetry(device1.getId(), "{\"occupied\":false}");
-
-        await().alias("change profile and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode occupancy = getLatestTelemetry(asset.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
-                    assertThat(occupancy).isNotNull();
-                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
-                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
-                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("1");
-                });
-    }
-
-    @Test
-    public void testAddEntityToProfile_checkMetricsCalculation() throws Exception {
         Device device3 = createDevice("Device 3", deviceProfile.getId(), "1234567890333");
 
         postTelemetry(device3.getId(), "{\"occupied\":true}");
-
-        await().alias("add entity to profile and no calculation (there is no relation between device and asset)").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(this::checkInitialCalculationValues);
 
         createEntityRelation(asset.getId(), device3.getId(), "Contains");
 
@@ -203,6 +202,24 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
     }
 
     @Test
+    public void testDeleteRelation_checkMetricsCalculation() throws Exception {
+        createOccupancyCF("Occupied spaces", asset.getId());
+        checkInitialCalculation();
+
+        deleteEntityRelation(new EntityRelation(asset.getId(), device1.getId(), "Contains", RelationTypeGroup.COMMON));
+
+        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode occupancy = getLatestTelemetry(asset.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
+                    assertThat(occupancy).isNotNull();
+                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
+                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
+                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("1");
+                });
+    }
+
+    @Test
     public void testCfOnProfile_checkMetricsCalculation() throws Exception {
         Asset asset2 = createAsset("Asset 2", assetProfile.getId());
         Device device3 = createDevice("Device 3", deviceProfile.getId(), "1234567890333");
@@ -213,22 +230,22 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         createEntityRelation(asset2.getId(), device3.getId(), "Contains");
         createEntityRelation(asset2.getId(), device4.getId(), "Contains");
 
-        CalculatedField calculatedField2 = createOccupancyCF("Occupied spaces 2", assetProfile.getId(), List.of(deviceProfile.getId()));
+        createOccupancyCF("Occupied spaces 2", assetProfile.getId());
 
         await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode occupancy = getLatestTelemetry(asset.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
-                    assertThat(occupancy).isNotNull();
-                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
-                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("1");
-                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+                    ObjectNode occupancyAsset1 = getLatestTelemetry(asset.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
+                    assertThat(occupancyAsset1).isNotNull();
+                    assertThat(occupancyAsset1.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
+                    assertThat(occupancyAsset1.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("1");
+                    assertThat(occupancyAsset1.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
 
-                    ObjectNode occupancy2 = getLatestTelemetry(asset2.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
-                    assertThat(occupancy2).isNotNull();
-                    assertThat(occupancy2.get("freeSpaces").get(0).get("value").asText()).isEqualTo("2");
-                    assertThat(occupancy2.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
-                    assertThat(occupancy2.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+                    ObjectNode occupancyAsset2 = getLatestTelemetry(asset2.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
+                    assertThat(occupancyAsset2).isNotNull();
+                    assertThat(occupancyAsset2.get("freeSpaces").get(0).get("value").asText()).isEqualTo("2");
+                    assertThat(occupancyAsset2.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
+                    assertThat(occupancyAsset2.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
                 });
 
         postTelemetry(device3.getId(), "{\"occupied\":true}");
@@ -243,23 +260,26 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
                     assertThat(occupancy2.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
                 });
     }
-
-
-    @Test
-    public void testDeleteRelation_checkMetricsCalculation() throws Exception {
-        deleteEntityRelation(new EntityRelation(asset.getId(), device1.getId(), "Contains", RelationTypeGroup.COMMON));
-
-        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode occupancy = getLatestTelemetry(asset.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
-                    assertThat(occupancy).isNotNull();
-                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
-                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
-                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("1");
-                });
-    }
-
+//
+//    @Test
+//    public void testChangeProfile_checkMetricsCalculation() throws Exception {
+//        DeviceProfile deviceProfile2 = doPost("/api/deviceProfile", createDeviceProfile("Device Profile 2"), DeviceProfile.class);
+//        device1.setDeviceProfileId(deviceProfile2.getId());
+//        device1 = doPost("/api/device?accessToken=" + accessToken1, device1, Device.class);
+//
+//        postTelemetry(device1.getId(), "{\"occupied\":false}");
+//
+//        await().alias("change profile and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+//                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+//                .untilAsserted(() -> {
+//                    ObjectNode occupancy = getLatestTelemetry(asset.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
+//                    assertThat(occupancy).isNotNull();
+//                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
+//                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("0");
+//                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("1");
+//                });
+//    }
+//
 //    @Test
 //    public void testCfWithoutTargetProfileSpecified_checkMetricsCalculation() throws Exception {
 //        Device device3 = createDevice("Device 3", "1234567890333");
@@ -296,18 +316,24 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
     }
 
-    private CalculatedField createOccupancyCF(String name, EntityId entityId, List<EntityId> profiles) {
+    private CalculatedField createOccupancyCF(String name, EntityId entityId) {
+        Map<String, Argument> arguments = new HashMap<>();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("occupied", ArgumentType.TS_LATEST, null));
+        argument.setDefaultValue("false");
+        arguments.put("oc", argument);
+
         Map<String, AggMetric> aggMetrics = new HashMap<>();
 
         AggMetric freeSpaces = new AggMetric();
         freeSpaces.setFunction(AggFunction.COUNT);
-        freeSpaces.setFilter("return oc == false");
+        freeSpaces.setFilter("return oc == false;");
         freeSpaces.setInput(new AggKeyInput("oc"));
         aggMetrics.put("freeSpaces", freeSpaces);
 
         AggMetric occupiedSpaces = new AggMetric();
         occupiedSpaces.setFunction(AggFunction.COUNT);
-        occupiedSpaces.setFilter("return oc == true");
+        occupiedSpaces.setFilter("return oc == true;");
         occupiedSpaces.setInput(new AggKeyInput("oc"));
         aggMetrics.put("occupiedSpaces", occupiedSpaces);
 
@@ -320,23 +346,16 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         output.setType(OutputType.TIME_SERIES);
 
         return createAggCf(name, entityId,
-                buildSource(EntitySearchDirection.FROM, "Contains", profiles),
-                Map.of("oc", new ReferencedEntityKey("occupied", ArgumentType.TS_LATEST, null)),
+                new RelationPathLevel(EntitySearchDirection.FROM, "Contains"),
+                arguments,
                 aggMetrics,
                 output);
     }
 
-    private AggSource buildSource(EntitySearchDirection direction, String relationType, List<EntityId> profiles) {
-        AggSource source = new AggSource();
-        source.setRelation(new RelationPathLevel(direction, relationType));
-        source.setEntityProfiles(profiles);
-        return source;
-    }
-
     private CalculatedField createAggCf(String name,
                                         EntityId entityId,
-                                        AggSource aggSource,
-                                        Map<String, ReferencedEntityKey> inputs,
+                                        RelationPathLevel relation,
+                                        Map<String, Argument> inputs,
                                         Map<String, AggMetric> metrics,
                                         Output output) {
         CalculatedField calculatedField = new CalculatedField();
@@ -345,8 +364,8 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         calculatedField.setType(CalculatedFieldType.LATEST_VALUES_AGGREGATION);
 
         LatestValuesAggregationCalculatedFieldConfiguration configuration = new LatestValuesAggregationCalculatedFieldConfiguration();
-        configuration.setSource(aggSource);
-        configuration.setInputs(inputs);
+        configuration.setRelation(relation);
+        configuration.setArguments(inputs);
         configuration.setDeduplicationIntervalMillis(deduplicationInterval);
         configuration.setMetrics(metrics);
         configuration.setOutput(output);
