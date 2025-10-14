@@ -19,6 +19,7 @@ import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.m
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
+import { deepClone } from '@app/core/utils';
 
 @Component({
   selector: 'tb-photo-camera-input-widget-settings',
@@ -42,6 +43,8 @@ export class PhotoCameraInputWidgetSettingsComponent extends WidgetSettingsCompo
     return {
       widgetTitle: '',
 
+      saveToGallery: false,
+      imageVisibility: true,
       imageFormat: 'image/png',
       imageQuality: 0.92,
       maxWidth: 640,
@@ -57,11 +60,28 @@ export class PhotoCameraInputWidgetSettingsComponent extends WidgetSettingsCompo
       widgetTitle: [settings.widgetTitle, []],
 
       // Image settings
-
+      saveToGallery: [settings.saveToGallery],
+      imageVisibility: [settings.imageVisibility],
       imageFormat: [settings.imageFormat, []],
-      imageQuality: [settings.imageQuality, [Validators.min(0), Validators.max(1)]],
+      imageQuality: [settings.imageQuality, [Validators.min(0), Validators.max(100)]],
       maxWidth: [settings.maxWidth, [Validators.min(1)]],
       maxHeight: [settings.maxHeight, [Validators.min(1)]]
     });
+  }
+
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    return {
+      ...settings,
+      saveToGallery: settings.saveToGallery || false,
+      imageQuality: settings.imageQuality * 100
+    }
+  }
+
+  protected prepareOutputSettings(settings: WidgetSettings): WidgetSettings {
+    return {
+      ...settings,
+      saveToGallery: settings.saveToGallery || false,
+      imageQuality: settings.imageQuality / 100
+    }
   }
 }
