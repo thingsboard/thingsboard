@@ -59,7 +59,8 @@ import java.util.concurrent.TimeUnit;
         nodeDescription = "Process device messages based on device profile settings",
         nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
                 "'Alarm Created', 'Alarm Updated', 'Alarm Severity Updated' and 'Alarm Cleared' or simply 'Success' if no alarms were affected.",
-        configDirective = "tbActionNodeDeviceProfileConfig"
+        configDirective = "tbActionNodeDeviceProfileConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/device-profile/"
 )
 public class TbDeviceProfileNode implements TbNode {
 
@@ -137,7 +138,7 @@ public class TbDeviceProfileNode implements TbNode {
                     if (deviceState != null) {
                         deviceState.process(ctx, msg);
                     } else {
-                        log.info("Device was not found! Most probably device [" + deviceId + "] has been removed from the database. Acknowledging msg.");
+                        log.info("Device was not found! Most probably device [{}] has been removed from the database. Acknowledging msg.", deviceId);
                         ctx.ack(msg);
                     }
                 }
@@ -160,7 +161,7 @@ public class TbDeviceProfileNode implements TbNode {
         deviceStates.clear();
     }
 
-    protected DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId, RuleNodeState rns, boolean printNewlyAddedDeviceStates) {
+    private DeviceState getOrCreateDeviceState(TbContext ctx, DeviceId deviceId, RuleNodeState rns, boolean printNewlyAddedDeviceStates) {
         DeviceState deviceState = deviceStates.get(deviceId);
         if (deviceState == null) {
             DeviceProfile deviceProfile = cache.get(ctx.getTenantId(), deviceId);

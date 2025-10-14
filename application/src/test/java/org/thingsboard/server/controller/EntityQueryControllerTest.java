@@ -77,6 +77,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -431,14 +432,17 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         List<EntityKey> alarmFields = new ArrayList<>();
         alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "type"));
+        alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "originatorDisplayName"));
 
         EntityTypeFilter assetTypeFilter = new EntityTypeFilter();
         assetTypeFilter.setEntityType(EntityType.ASSET);
         AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
 
         PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
-        List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
+        List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(AlarmData::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
+        List<String> retrievedAlarmDisplayName = alarmPageData.getData().stream().map(AlarmData::getOriginatorDisplayName).toList();
+        assertThat(retrievedAlarmDisplayName).containsExactlyInAnyOrderElementsOf(assets.stream().map(Asset::getLabel).toList());
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
@@ -517,6 +521,67 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         PageData<AlarmData>  filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
         });
         Assert.assertEquals(1, filteredAssetAlamData.getTotalElements());
+    }
+
+    @Test
+    public void testFindAlarmsWithEntityFilterAndLatestValues() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        List<String> temps = new ArrayList<>();
+        List<String> deviceNames = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Device device = new Device();
+            device.setCustomerId(customerId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            device = doPost("/api/device", device, Device.class);
+            devices.add(device);
+            deviceNames.add(device.getName());
+
+            int temp = i * 10;
+            temps.add(String.valueOf(temp));
+            JsonNode content = JacksonUtil.toJsonNode("{\"temperature\": " + temp + "}");
+            doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + device.getUuidId() + "/timeseries/SERVER_SCOPE", content)
+                    .andExpect(status().isOk());
+            Thread.sleep(1);
+        }
+
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setCustomerId(customerId);
+            alarm.setOriginator(devices.get(i).getId());
+            String type = "device alarm" + i;
+            alarm.setType(type);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            doPost("/api/alarm", alarm, Alarm.class);
+            Thread.sleep(1);
+        }
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(100);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "created_time")));
+
+        List<EntityKey> alarmFields = new ArrayList<>();
+        alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "type"));
+
+        List<EntityKey> entityFields = new ArrayList<>();
+        entityFields.add(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        List<EntityKey> latestValues = new ArrayList<>();
+        latestValues.add(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+
+        EntityTypeFilter deviceTypeFilter = new EntityTypeFilter();
+        deviceTypeFilter.setEntityType(EntityType.DEVICE);
+        AlarmDataQuery deviceAlarmQuery =  new AlarmDataQuery(deviceTypeFilter, pageLink, entityFields, latestValues, null, alarmFields);
+
+        PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(deviceAlarmQuery, 10);
+        List<String> retrievedAlarmTemps = alarmPageData.getData().stream().map(alarmData -> alarmData.getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).toList();
+        assertThat(retrievedAlarmTemps).containsExactlyInAnyOrderElementsOf(temps);
+
+        List<String> retrievedDeviceNames = alarmPageData.getData().stream().map(alarmData -> alarmData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).toList();
+        assertThat(retrievedDeviceNames).containsExactlyInAnyOrderElementsOf(deviceNames);
     }
 
     private void testCountAlarmsByQuery(List<Alarm> alarms) throws Exception {
@@ -1008,6 +1073,119 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindDevicesByDisplayName() throws Exception {
+        loginTenantAdmin();
+        int numOfDevices = 3;
+
+        for (int i = 0; i < numOfDevices; i++) {
+            Device device = new Device();
+            String name = "Device" + i;
+            device.setName(name);
+            device.setLabel("Device Label " + i);
+            device.setType("testFindDevicesByDisplayName");
+
+            Device savedDevice = doPost("/api/device?accessToken=" + name, device, Device.class);
+        }
+
+        DeviceTypeFilter filter = new DeviceTypeFilter();
+        filter.setDeviceTypes(List.of("testFindDevicesByDisplayName"));
+        filter.setDeviceNameFilter("");
+
+        KeyFilter displayNameFilter = getEntityFieldEqualFilter("displayName", "Device Label " + 0);
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "displayName"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = List.of(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "displayName"));
+
+        // all devices with ownerName = TEST TENANT
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, Collections.emptyList(), Collections.emptyList());
+        checkEntitiesByQuery(query, numOfDevices, (i, entity) -> {
+            String name = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("name", new TsValue(0, "Invalid")).getValue();
+            String displayName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("displayName", new TsValue(0, "Invalid")).getValue();
+            Assert.assertEquals("Device" + i, name);
+            Assert.assertEquals("Device Label " + i, displayName);
+        });
+
+        // all devices with ownerName = TEST TENANT
+        EntityDataQuery displayNameFilterQuery = new EntityDataQuery(filter, pageLink, entityFields, Collections.emptyList(), List.of(displayNameFilter));
+        checkEntitiesByQuery(displayNameFilterQuery, 1, (i, entity) -> {
+            String name = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("name", new TsValue(0, "Invalid")).getValue();
+            String displayName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("displayName", new TsValue(0, "Invalid")).getValue();
+            Assert.assertEquals("Device" + i, name);
+            Assert.assertEquals("Device Label " + i, displayName);
+        });
+    }
+
+    @Test
+    public void testFindUsersByDisplayName() throws Exception {
+        loginTenantAdmin();
+
+        User userA = new User();
+        userA.setAuthority(Authority.TENANT_ADMIN);
+        userA.setFirstName("John");
+        userA.setLastName("Doe");
+        userA.setEmail("john.doe@tb.org");
+        userA = doPost("/api/user", userA, User.class);
+        var aId = userA.getId();
+
+        User userB = new User();
+        userB.setAuthority(Authority.TENANT_ADMIN);
+        userB.setFirstName("John");
+        userB.setEmail("john@tb.org");
+        userB = doPost("/api/user", userB, User.class);
+        var bId = userB.getId();
+
+        User userC = new User();
+        userC.setAuthority(Authority.TENANT_ADMIN);
+        userC.setLastName("Doe");
+        userC.setEmail("doe@tb.org");
+        userC = doPost("/api/user", userC, User.class);
+        var cId = userC.getId();
+
+        User userD = new User();
+        userD.setAuthority(Authority.TENANT_ADMIN);
+        userD.setEmail("noname@tb.org");
+        userD = doPost("/api/user", userD, User.class);
+        var dId = userD.getId();
+
+        EntityTypeFilter filter = new EntityTypeFilter();
+        filter.setEntityType(EntityType.USER);
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "displayName"), EntityDataSortOrder.Direction.ASC
+        );
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = List.of(new EntityKey(EntityKeyType.ENTITY_FIELD, "displayName"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, Collections.emptyList(), List.of(getEntityFieldEqualFilter("displayName", "John Doe")));
+        checkEntitiesByQuery(query, 1, (i, entity) -> {
+            Assert.assertEquals(aId, entity.getEntityId());
+            String displayName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("displayName", new TsValue(0, "Invalid")).getValue();
+            Assert.assertEquals("John Doe", displayName);
+        });
+        query = new EntityDataQuery(filter, pageLink, entityFields, Collections.emptyList(), List.of(getEntityFieldEqualFilter("displayName", "John")));
+        checkEntitiesByQuery(query, 1, (i, entity) -> {
+            Assert.assertEquals(bId, entity.getEntityId());
+            String displayName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("displayName", new TsValue(0, "Invalid")).getValue();
+            Assert.assertEquals("John", displayName);
+        });
+        query = new EntityDataQuery(filter, pageLink, entityFields, Collections.emptyList(), List.of(getEntityFieldEqualFilter("displayName", "Doe")));
+        checkEntitiesByQuery(query, 1, (i, entity) -> {
+            Assert.assertEquals(cId, entity.getEntityId());
+            String displayName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("displayName", new TsValue(0, "Invalid")).getValue();
+            Assert.assertEquals("Doe", displayName);
+        });
+        query = new EntityDataQuery(filter, pageLink, entityFields, Collections.emptyList(), List.of(getEntityFieldEqualFilter("displayName", "noname@tb.org")));
+        checkEntitiesByQuery(query, 1, (i, entity) -> {
+            Assert.assertEquals(dId, entity.getEntityId());
+            String displayName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("displayName", new TsValue(0, "Invalid")).getValue();
+            Assert.assertEquals("noname@tb.org", displayName);
+        });
+    }
+
+    @Test
     public void testFindDevicesByOwnerNameAndOwnerType() throws Exception {
         loginTenantAdmin();
         int numOfDevices = 3;
@@ -1044,19 +1222,30 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         // all devices with ownerName = TEST TENANT
         EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, tenantOwnerNameFilter));
-        checkEntitiesByQuery(query, numOfDevices, TEST_TENANT_NAME, "TENANT");
+        BiConsumer<Integer, EntityData> checkFunction = (i, entity) -> {
+            String name = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("name", new TsValue(0, "Invalid")).getValue();
+            String ownerName = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("ownerName", new TsValue(0, "Invalid")).getValue();
+            String ownerType = entity.getLatest().get(EntityKeyType.ENTITY_FIELD).getOrDefault("ownerType", new TsValue(0, "Invalid")).getValue();
+            String alarmActiveTime = entity.getLatest().get(EntityKeyType.ATTRIBUTE).getOrDefault("alarmActiveTime", new TsValue(0, "-1")).getValue();
+
+            Assert.assertEquals("Device" + i, name);
+            Assert.assertEquals(TEST_TENANT_NAME, ownerName);
+            Assert.assertEquals("TENANT", ownerType);
+            Assert.assertEquals("1" + i, alarmActiveTime);
+        };
+        checkEntitiesByQuery(query, numOfDevices, checkFunction);
 
         // all devices with wrong ownerName
         EntityDataQuery wrongTenantNameQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, wrongOwnerNameFilter));
-        checkEntitiesByQuery(wrongTenantNameQuery, 0, null, null);
+        checkEntitiesByQuery(wrongTenantNameQuery, 0, null);
 
         // all devices with owner type = TENANT
         EntityDataQuery tenantEntitiesQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, tenantOwnerTypeFilter));
-        checkEntitiesByQuery(tenantEntitiesQuery, numOfDevices, TEST_TENANT_NAME, "TENANT");
+        checkEntitiesByQuery(tenantEntitiesQuery, numOfDevices, checkFunction);
 
         // all devices with owner type = CUSTOMER
         EntityDataQuery customerEntitiesQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, customerOwnerTypeFilter));
-        checkEntitiesByQuery(customerEntitiesQuery, 0, null, null);
+        checkEntitiesByQuery(customerEntitiesQuery, 0, null);
     }
 
     @Test
@@ -1100,6 +1289,28 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
         findByQueryAndCheck(query, 0);
+    }
+
+    private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, BiConsumer<Integer,EntityData> checkFunction) throws Exception {
+        await()
+                .alias("data by query")
+                .atMost(30, TimeUnit.SECONDS)
+                .until(() -> {
+                    var data = findByQuery(query);
+                    var loadedEntities = new ArrayList<>(data.getData());
+                    return loadedEntities.size() == expectedNumOfDevices;
+                });
+        if (expectedNumOfDevices == 0) {
+            return;
+        }
+        var data = findByQuery(query);
+        var loadedEntities = new ArrayList<>(data.getData());
+
+        Assert.assertEquals(expectedNumOfDevices, loadedEntities.size());
+
+        for (int i = 0; i < expectedNumOfDevices; i++) {
+            checkFunction.accept(i, loadedEntities.get(i));
+        }
     }
 
     private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, String expectedOwnerName, String expectedOwnerType) throws Exception {

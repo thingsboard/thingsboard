@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
@@ -56,7 +55,6 @@ import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_MET
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "save attributes",
@@ -107,7 +105,8 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
                 Output connections: <code>Success</code>, <code>Failure</code>.
                 """,
         configDirective = "tbActionNodeAttributesConfig",
-        icon = "file_upload"
+        icon = "file_upload",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/save-attributes/"
 )
 public class TbMsgAttributesNode implements TbNode {
 

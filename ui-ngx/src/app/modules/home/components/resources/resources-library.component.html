@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons xs:flex xs:flex-col">
+<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
@@ -30,7 +30,7 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
-          (click)="onEntityAction($event, 'delete')"
+          (click)="onEntityAction($event, 'deleteResource')"
           [class.!hidden]="hideDelete() || isEdit">
     {{ 'resource.delete' | translate }}
   </button>
@@ -66,26 +66,29 @@
           {{ 'resource.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-file-input *ngIf="isAdd"
-        formControlName="data"
-        required
-        label="{{ (entityForm.get('resourceType').value === resourceType.LWM2M_MODEL ? 'resource.resource-files' : 'resource.resource-file') | translate }}"
-        [readAsBinary]="true"
-        [maxSizeByte]="maxResourceSize"
-        [allowedExtensions]="getAllowedExtensions()"
-        [contentConvertFunction]="convertToBase64File"
-        [accept]="getAcceptType()"
-        [multipleFile]="entityForm.get('resourceType').value === resourceType.LWM2M_MODEL"
-        dropLabel="{{'resource.drop-resource-file-or' | translate}}"
-        [existingFileName]="entityForm.get('fileName')?.value"
-        (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
-      </tb-file-input>
-      <div *ngIf="!isAdd" class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-md:gap-2">
-        <mat-form-field class="flex-1">
-          <mat-label translate>resource.file-name</mat-label>
-          <input matInput formControlName="fileName" type="text">
-        </mat-form-field>
-      </div>
+      @if (isAdd || ((isAdd || isEdit) && entityForm.get('resourceType').value === resourceType.GENERAL)) {
+        <tb-file-input formControlName="data"
+                       required
+                       label="{{ (entityForm.get('resourceType').value === resourceType.LWM2M_MODEL ? 'resource.resource-files' : 'resource.resource-file') | translate }}"
+                       [readAsBinary]="true"
+                       [maxSizeByte]="maxResourceSize"
+                       [allowedExtensions]="getAllowedExtensions()"
+                       [contentConvertFunction]="convertToBase64File"
+                       [accept]="getAcceptType()"
+                       [multipleFile]="entityForm.get('resourceType').value === resourceType.LWM2M_MODEL"
+                       dropLabel="{{'resource.drop-resource-file-or' | translate}}"
+                       [existingFileName]="entityForm.get('fileName')?.value"
+                       (mediaTypeChanged)="mediaTypeChange($event)"
+                       (fileNameChanged)="entityForm?.get('fileName').patchValue($event)">
+        </tb-file-input>
+      } @else {
+        <div class="flex flex-row xs:flex-col sm:gap-2 md:flex-col gt-md:gap-2">
+          <mat-form-field class="flex-1">
+            <mat-label translate>resource.file-name</mat-label>
+            <input matInput formControlName="fileName" type="text">
+          </mat-form-field>
+        </div>
+      }
     </fieldset>
   </form>
 </div>

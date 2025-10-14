@@ -56,6 +56,9 @@ export const createTooltip = (map: TbMap<any>,
         }
       }
     });
+    layer.on('mousemove', (e) => {
+      tooltip.setLatLng(e.latlng);
+    });
     layer.on('mouseout', () => {
       tooltip.close();
     });

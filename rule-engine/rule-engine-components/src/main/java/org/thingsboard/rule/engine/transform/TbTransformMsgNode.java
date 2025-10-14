@@ -41,7 +41,8 @@ import java.util.List;
                 "<code>{ msg: <i style=\"color: #666;\">new payload</i>,<br/>&nbsp&nbsp&nbspmetadata: <i style=\"color: #666;\">new metadata</i>,<br/>&nbsp&nbsp&nbspmsgType: <i style=\"color: #666;\">new msgType</i> }</code><br/>" +
                 "All fields in resulting object are optional and will be taken from original message if not specified.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbTransformationNodeScriptConfig"
+        configDirective = "tbTransformationNodeScriptConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/script/"
 )
 public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNodeConfiguration> {
 
@@ -71,4 +72,5 @@ public class TbTransformMsgNode extends TbAbstractTransformNode<TbTransformMsgNo
             scriptEngine.destroy();
         }
     }
+
 }

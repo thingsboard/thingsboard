@@ -27,10 +27,13 @@ import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import {
   CompiledTbFunction,
-  compileTbFunction, GenericFunction,
+  compileTbFunction,
+  GenericFunction,
   isNotEmptyTbFunction,
   TbFunction
 } from '@shared/models/js-function.models';
+import { DomSanitizer } from '@angular/platform-browser';
+import { SecurityContext } from '@angular/core';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -191,6 +194,23 @@ export function deleteNullProperties(obj: any) {
     } else if (Array.isArray(obj[propName])) {
       (obj[propName] as any[]).forEach((elem) => {
         deleteNullProperties(elem);
+      });
+    }
+  });
+}
+
+export function deleteFalseProperties(obj: Record<string, any>): void  {
+  if (isUndefinedOrNull(obj)) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === false || isUndefinedOrNull(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteFalseProperties(obj[propName]);
+    } else if (Array.isArray(obj[propName])) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteFalseProperties(elem);
       });
     }
   });
@@ -773,6 +793,33 @@ export function deepTrim<T>(obj: T): T {
   }, (Array.isArray(obj) ? [] : {}) as T);
 }
 
+export function deepClean<T extends Record<string, any> | any[]>(obj: T, {
+  cleanKeys = []
+} = {}): T {
+  return _.transform(obj, (result, value, key) => {
+    if (cleanKeys.includes(key)) {
+      return;
+    }
+    if (Array.isArray(value) || isLiteralObject(value)) {
+      value = deepClean(value, {cleanKeys});
+    }
+    if(isLiteralObject(value) && isEmpty(value)) {
+      return;
+    }
+    if (Array.isArray(value) && !value.length) {
+      return;
+    }
+    if (value === undefined || value === null || value === '' || Number.isNaN(value)) {
+      return;
+    }
+
+    if (Array.isArray(result)) {
+      return result.push(value);
+    }
+    result[key] = value;
+  });
+}
+
 export function generateSecret(length?: number): string {
   if (isUndefined(length) || length == null) {
     length = 1;
@@ -809,7 +856,7 @@ export function getEntityDetailsPageURL(id: string, entityType: EntityType): str
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
-                                      translate: TranslateService, responseType?: string): {message: string; timeout: number} {
+                                      translate: TranslateService, responseType?: string, sanitizer?:DomSanitizer): {message: string; timeout: number} {
   let error = null;
   let errorMessage: string;
   let timeout = 0;
@@ -836,6 +883,9 @@ export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,
     }
     errorText += errorKey ? translate.instant(errorKey) : errorResponse.statusText;
     errorMessage = errorText;
+  }
+  if(sanitizer) {
+    errorMessage = sanitizer.sanitize(SecurityContext.HTML,errorMessage);
   }
   return {message: errorMessage, timeout};
 }

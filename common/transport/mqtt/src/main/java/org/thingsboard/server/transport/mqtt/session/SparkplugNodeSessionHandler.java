@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonSyntaxException;
 import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttPublishMessage;
+import io.netty.handler.codec.mqtt.MqttReasonCodes;
 import io.netty.handler.codec.mqtt.MqttTopicSubscription;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState.ONLINE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.DBIRTH;
@@ -144,37 +147,49 @@ public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<S
 
     public void onDeviceTelemetryProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture,
                                        int msgId, List<TransportProtos.PostTelemetryMsg> postTelemetryMsgList, String deviceName) {
+        if (CollectionUtils.isEmpty(postTelemetryMsgList)) {
+            log.debug("[{}] Device telemetry list is empty for: [{}]", sessionId, gateway.getDeviceId());
+        }
+
+        AtomicInteger remaining = new AtomicInteger(postTelemetryMsgList.size());
+        AtomicBoolean ackSent = new AtomicBoolean(false);
+
         process(contextListenableFuture, deviceCtx -> {
                     for (TransportProtos.PostTelemetryMsg telemetryMsg : postTelemetryMsgList) {
                         try {
-                            processPostTelemetryMsg(deviceCtx, telemetryMsg, deviceName, msgId);
+                            processPostTelemetryMsg(deviceCtx, telemetryMsg, deviceName, msgId, remaining, ackSent);
                         } catch (Throwable e) {
                             log.warn("[{}][{}] Failed to convert telemetry: {}", gateway.getDeviceId(), deviceName, telemetryMsg, e);
-                            ackOrClose(msgId);
+                            ackOrClose(msgId, ackSent);
                         }
                     }
                 },
-                t -> log.debug("[{}] Failed to process device telemetry command: {}", sessionId, deviceName, t));
+                t -> processFailure(msgId, deviceName, "Failed to process device telemetry command", ackSent, t));
     }
 
     private void onDeviceAttributesProto(ListenableFuture<MqttDeviceAwareSessionContext> contextListenableFuture, int msgId,
                                          List<TransportApiProtos.AttributesMsg> attributesMsgList, String deviceName) throws AdaptorException {
         try {
             if (CollectionUtils.isEmpty(attributesMsgList)) {
-                log.debug("[{}] Devices attributes keys list is empty for: [{}]", sessionId, gateway.getDeviceId());
+                log.debug("[{}] Device attribute list is empty for: [{}]", sessionId, gateway.getDeviceId());
             }
+
+            AtomicInteger remaining = new AtomicInteger(attributesMsgList.size());
+            AtomicBoolean ackSent = new AtomicBoolean(false);
+
             process(contextListenableFuture, deviceCtx -> {
                         for (TransportApiProtos.AttributesMsg attributesMsg : attributesMsgList) {
                             TransportProtos.PostAttributeMsg kvListProto = attributesMsg.getMsg();
                             try {
                                 TransportProtos.PostAttributeMsg postAttributeMsg = ProtoConverter.validatePostAttributeMsg(kvListProto);
-                                processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId);
+                                processPostAttributesMsg(deviceCtx, postAttributeMsg, deviceName, msgId, remaining, ackSent);
                             } catch (Throwable e) {
                                 log.warn("[{}][{}] Failed to process device attributes command: {}", gateway.getDeviceId(), deviceName, kvListProto, e);
+                                ackOrClose(msgId, ackSent);
                             }
                         }
                     },
-                    t -> log.debug("[{}] Failed to process device attributes command: {}", sessionId, deviceName, t));
+                    t -> processFailure(msgId, deviceName, "Failed to process device attributes command", ackSent, t));
         } catch (RuntimeException e) {
             throw new AdaptorException(e);
         }

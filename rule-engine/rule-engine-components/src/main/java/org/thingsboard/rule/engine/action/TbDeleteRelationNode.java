@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.action;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -32,8 +31,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
-
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "delete relation",
@@ -55,7 +52,8 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 "Output connections: <code>Success</code> - If the relation(s) successfully deleted, otherwise <code>Failure</code>.",
         configDirective = "tbActionNodeDeleteRelationConfig",
         icon = "remove_circle",
-        version = 1
+        version = 1,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/delete-relation/"
 )
 public class TbDeleteRelationNode extends TbAbstractRelationActionNode<TbDeleteRelationNodeConfiguration> {
 
