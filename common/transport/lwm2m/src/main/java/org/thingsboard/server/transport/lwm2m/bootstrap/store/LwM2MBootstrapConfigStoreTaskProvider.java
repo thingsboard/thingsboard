@@ -48,9 +48,9 @@ import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
-import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.BOOTSTRAP;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isLwm2mServer;
 
 @Slf4j
 public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTaskProvider {
@@ -147,7 +147,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                             log.error("Invalid lwm2mSecurityInstance [{}] by short server id [{}]", path.getObjectInstanceId(), lwm2mShortServerId);
                         }
                     } else {
-                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(BOOTSTRAP.getId(), path.getObjectInstanceId());
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(0, path.getObjectInstanceId());
                     }
                 } else if (path.getObjectId() == 1) {
                     if (link.getAttributes().get("ssid") != null) {
@@ -186,35 +186,35 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
     }
 
 
-    /** Map<serverId ("Short Server ID"), InstanceId>
-     * 1) Only Lwm2m Server
-     * - Short Server ID == 1 - 65534 lwm2m)
+    /** Map<serverId ("Short Server ID"), InstanceId> => LwM2MBootstrapClientInstanceIds
+     * 1) Both
+     * - Short Server ID == null bs)
      *  SECURITY = 0; InstanceId = 0
-     *  SERVER = 1; InstanceId = 0
-     * 2) Both
-     * - Short Server ID == 0 bs)
-     *  SECURITY = 0; InstanceId = 0
-     *  SERVER = 1; InstanceId = null
      * - Short Server ID == 1 - 65534 lwm2m)
      *  SECURITY = 0; InstanceId = 1
+     *  SERVER = 1; InstanceId = 0
+     * 2) Only BS Server
+     * - Short Server ID == null bs)
+     *  SECURITY = 0; InstanceId = 0
+     * 3) Only Lwm2m Server
+     * - Short Server ID == 1 - 65534 lwm2m)
+     *  SECURITY = 0; InstanceId = 0
      *  SERVER = 1; InstanceId = 0
      * */
     public List<BootstrapDownlinkRequest<? extends LwM2mResponse>> toRequests(BootstrapConfig bootstrapConfigNew,
                                                                               ContentFormat contentFormat,
                                                                               String endpoint) {
-        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP.getId()) == null ?
-                0 : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP.getId());
+        Integer bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(null) == null ?
+                -2 : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(null);
         List<BootstrapDownlinkRequest<? extends LwM2mResponse>> requests = new ArrayList<>();
         Set<String> pathsDelete = new HashSet<>();
         ConcurrentHashMap<String, BootstrapDownlinkRequest<? extends LwM2mResponse>> requestsWrite = new ConcurrentHashMap<>();
 
         /// handle security & handle
-        int lwm2mSecurityInstanceIdMax = -1;
-        int lwm2mServerInstanceIdMax = -1;
         // bootstrap  Security new - There can only be one instance of bootstrap  at a time.
         /// bs: handle security only
         for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfigNew.security).values()) {
-            if (security.bootstrapServer && security.serverId == BOOTSTRAP.getId()) {
+            if (security.bootstrapServer && bootstrapSecurityInstanceId > -1) {
                 // delete old bootstrap Security
                 String path = "/" + SECURITY + "/" + bootstrapSecurityInstanceId;
                 pathsDelete.add(path);
@@ -230,19 +230,21 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
 
         /// lwm2m server: handle security & server
         //max Lwm2m Security instance old id if new
+        int lwm2mSecurityInstanceIdMax = -1;
         for (Integer shortId : this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().keySet()) {
-            if (shortId >= BOOTSTRAP.getId() && shortId <= LWM2M_SERVER_MAX.getId()) {
-                lwm2mSecurityInstanceIdMax = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(shortId) >
-                        lwm2mSecurityInstanceIdMax ? this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(shortId) :
-                        lwm2mSecurityInstanceIdMax;
+            if (isLwm2mServer(shortId)) {
+                lwm2mSecurityInstanceIdMax = Math.max(
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(shortId),
+                        lwm2mSecurityInstanceIdMax);
             }
         }
         //max Lwm2m Server instance old id if new
+        int lwm2mServerInstanceIdMax = -1;
         for (Integer shortId : this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().keySet()) {
-            if (shortId >= PRIMARY_LWM2M_SERVER.getId() && shortId <= LWM2M_SERVER_MAX.getId()) {
-                lwm2mServerInstanceIdMax = this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(shortId) >
-                        lwm2mServerInstanceIdMax ? this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(shortId) :
-                        lwm2mServerInstanceIdMax;
+            if (isLwm2mServer(shortId)) {
+                lwm2mServerInstanceIdMax = Math.max(
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(shortId),
+                        lwm2mServerInstanceIdMax);
             }
         }
         // Lwm2m update or new

@@ -23,22 +23,21 @@ package org.thingsboard.server.common.data.device.credentials.lwm2m;
 public enum Lwm2mServerIdentifier {
 
     /**
-     * Bootstrap Short Server ID (0).
-     * Reserved for the Bootstrap Server — used exclusively during the bootstrap phase.
+     * Not used for identifying an LwM2M Server (0).
      */
-    BOOTSTRAP(0, "Bootstrap Short Server ID", true),
+    NOT_USED_IDENTIFYING_LWM2M_SERVER_MIN(0, "Bootstrap Short Server ID", false),
 
     /**
      * Primary LwM2M Server Short Server ID (1).
      * Upper boundary for valid LwM2M Server Identifiers (1–65534).
      */
-    PRIMARY_LWM2M_SERVER(1, "LwM2M Server Short Server ID", false),
+    PRIMARY_LWM2M_SERVER(1, "LwM2M Server Short Server ID", true),
 
     /**
      * Maximum valid LwM2M Server ID (65534).
      * Upper boundary for valid LwM2M Server Identifiers (1–65534).
      */
-    LWM2M_SERVER_MAX(65534, "LwM2M Server Short Server ID", false),
+    LWM2M_SERVER_MAX(65534, "LwM2M Server Short Server ID", true),
 
     /**
      * Not used for identifying an LwM2M Server (65535).
@@ -46,16 +45,16 @@ public enum Lwm2mServerIdentifier {
      * MUST NOT be assigned to any LwM2M Server according to OMA-TS-LightweightM2M-Core, §6.2.1.
      * OMA LwM2M Core / v1.2: Server / Short Server ID): «MAX_ID 65535 is a reserved value and MUST NOT be used for identifying an Object»
      */
-    NOT_USED_IDENTIFYING_LWM2M_SERVER(65535, "Reserved sentinel value (no active server)", false);
+    NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX(65535, "Reserved sentinel value (no active server)", false);
 
     private final int id;
     private final String description;
-    private final boolean isBootstrap;
+    private final boolean isLwm2mServer;
 
-    Lwm2mServerIdentifier(int id, String description, boolean isBootstrap) {
+    Lwm2mServerIdentifier(int id, String description, boolean isLwm2mServer) {
         this.id = id;
         this.description = description;
-        this.isBootstrap = isBootstrap;
+        this.isLwm2mServer = isLwm2mServer;
     }
 
     /**
@@ -73,50 +72,35 @@ public enum Lwm2mServerIdentifier {
     }
 
     /**
-     * @return true if this ID represents a Bootstrap Server.
+     * @return true if this ID represents a Lwm2m Server.
      */
-    public boolean isBootstrap() {
-        return isBootstrap;
-    }
-
-    /**
-     * Checks whether a given numeric ID belongs to the Bootstrap Server (0).
-     * OMA Spec (LwM2M v1.0 / v1.1):
-     * Short Server ID Resource (Resource ID: 0)
-     * The Short Server ID identifies a Server Object Instance.
-     * The value 0 is reserved for the Bootstrap Server.
-     * A value between 1 and 65534 identifies a LwM2M Server.
-     * The value 65535 MUST NOT be used.
-     * @param id Short Server ID value.
-     * @return true if id == 0.
-     */
-    public static boolean isBootstrap(int id) {
-        return id == BOOTSTRAP.id;
+    public boolean isLwm2mServer() {
+        return isLwm2mServer;
     }
 
     /**
      * Checks whether a given ID represents a valid LwM2M Server (1–65534).
-     *
      * @param id Short Server ID value.
      * @return true if the ID belongs to a standard LwM2M Server.
      */
     public static boolean isLwm2mServer(int id) {
         return id >= PRIMARY_LWM2M_SERVER.id && id <= LWM2M_SERVER_MAX.id;
     }
+    public static boolean isNotLwm2mServer(int id) {
+        return id < PRIMARY_LWM2M_SERVER.id || id > LWM2M_SERVER_MAX.id;
+    }
 
     /**
      * Checks whether the provided ID is within the valid LwM2M range [0–65535].
-     *
      * @param id ID to check.
      * @return true if valid, false otherwise.
      */
     public static boolean isValid(int id) {
-        return id >= 0 && id <= 65535;
+        return id >= NOT_USED_IDENTIFYING_LWM2M_SERVER_MIN.getId() && id <= NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId();
     }
 
     /**
      * Returns a {@link Lwm2mServerIdentifier} instance matching the given ID.
-     *
      * @param id numeric ID.
      * @return corresponding enum constant.
      * @throws IllegalArgumentException if no constant matches the given ID.
