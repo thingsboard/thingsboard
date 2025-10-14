@@ -59,7 +59,7 @@ public class ApiKeyAuthenticationProvider implements org.springframework.securit
         if (StringUtils.isEmpty(key)) {
             throw new BadCredentialsException("Empty API key");
         }
-        ApiKey apiKey = apiKeyService.findApiKeyByHash(key);
+        ApiKey apiKey = apiKeyService.findApiKeyByValue(key);
         if (apiKey == null) {
             throw new BadCredentialsException("User not found for the provided API key");
         }

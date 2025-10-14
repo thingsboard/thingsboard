@@ -42,7 +42,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     public void testSaveApiKey() throws Exception {
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("New API key description", true);
 
-        String apiKeyStr = doPost("/api/apiKey", apiKeyInfo, ApiKey.class).getHash();
+        String apiKeyStr = doPost("/api/apiKey", apiKeyInfo, ApiKey.class).getValue();
         Assert.assertTrue(apiKeyStr.startsWith(API_KEY_HEADER_PREFIX));
 
         PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));

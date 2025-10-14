@@ -20,11 +20,9 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.dao.Dao;
 
-import java.util.Set;
-
 public interface ApiKeyDao extends Dao<ApiKey> {
 
-    ApiKey findByHash(String hash);
+    ApiKey findByValue(String value);
 
     void deleteByTenantId(TenantId tenantId);
 

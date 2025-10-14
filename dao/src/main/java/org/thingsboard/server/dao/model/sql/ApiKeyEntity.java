@@ -22,8 +22,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.pat.ApiKey;
 
-import static org.thingsboard.server.dao.model.ModelConstants.API_KEY_HASH_COLUMN_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.API_KEY_TABLE_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.API_KEY_VALUE_COLUMN_NAME;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
@@ -31,8 +31,8 @@ import static org.thingsboard.server.dao.model.ModelConstants.API_KEY_TABLE_NAME
 @Table(name = API_KEY_TABLE_NAME)
 public class ApiKeyEntity extends AbstractApiKeyInfoEntity<ApiKey> {
 
-    @Column(name = API_KEY_HASH_COLUMN_NAME)
-    private String hash;
+    @Column(name = API_KEY_VALUE_COLUMN_NAME)
+    private String value;
 
     public ApiKeyEntity() {
         super();
@@ -40,12 +40,12 @@ public class ApiKeyEntity extends AbstractApiKeyInfoEntity<ApiKey> {
 
     public ApiKeyEntity(ApiKey apiKey) {
         super(apiKey);
-        this.hash = apiKey.getHash();
+        this.value = apiKey.getValue();
     }
 
     @Override
     public ApiKey toData() {
-        return new ApiKey(super.toApiKeyInfo(), hash);
+        return new ApiKey(super.toApiKeyInfo(), value);
     }
 
 }

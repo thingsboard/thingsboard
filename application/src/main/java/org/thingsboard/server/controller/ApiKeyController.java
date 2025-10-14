@@ -74,7 +74,7 @@ public class ApiKeyController extends BaseController {
         apiKeyInfo.setTenantId(securityUser.getTenantId());
         checkEntity(apiKeyInfo.getId(), apiKeyInfo, Resource.API_KEY);
         ApiKey savedApiKey = checkNotNull(apiKeyService.saveApiKey(securityUser.getTenantId(), apiKeyInfo));
-        savedApiKey.setHash(toUserApiKey(savedApiKey.getHash()));
+        savedApiKey.setValue(toUserApiKey(savedApiKey.getValue()));
         return savedApiKey;
     }
 

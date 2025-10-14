@@ -26,7 +26,7 @@ import java.util.UUID;
 
 public interface ApiKeyRepository extends JpaRepository<ApiKeyEntity, UUID> {
 
-    ApiKeyEntity findByHash(String hash);
+    ApiKeyEntity findByValue(String value);
 
     @Transactional
     @Modifying

@@ -59,9 +59,9 @@ public class ApiKeyServiceImpl extends AbstractEntityService implements ApiKeySe
             var old = apiKeyValidator.validate(apiKey, ApiKeyInfo::getTenantId);
             if (old == null) {
                 String hash = generateApiKeySecret();
-                apiKey.setHash(hash);
+                apiKey.setValue(hash);
             } else {
-                apiKey.setHash(old.getHash());
+                apiKey.setValue(old.getValue());
             }
             return apiKeyDao.save(tenantId, apiKey);
         } catch (Exception e) {
@@ -124,9 +124,9 @@ public class ApiKeyServiceImpl extends AbstractEntityService implements ApiKeySe
     }
 
     @Override
-    public ApiKey findApiKeyByHash(String hash) {
-        log.trace("Executing findApiKeyByHash [{}]", hash);
-        return apiKeyDao.findByHash(hash);
+    public ApiKey findApiKeyByValue(String value) {
+        log.trace("Executing findApiKeyByValue [{}]", value);
+        return apiKeyDao.findByValue(value);
     }
 
     private static String generateApiKeySecret() {

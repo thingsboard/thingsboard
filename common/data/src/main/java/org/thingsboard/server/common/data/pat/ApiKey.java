@@ -32,8 +32,8 @@ public class ApiKey extends ApiKeyInfo {
     private static final long serialVersionUID = -2313196723950490263L;
 
     @NoXss
-    @Schema(description = "Api key hash value", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String hash;
+    @Schema(description = "Api key value", requiredMode = Schema.RequiredMode.REQUIRED)
+    private String value;
 
     public ApiKey() {
         super();
@@ -45,17 +45,17 @@ public class ApiKey extends ApiKeyInfo {
 
     public ApiKey(ApiKey apiKey) {
         super(apiKey);
-        this.hash = apiKey.getHash();
+        this.value = apiKey.getValue();
     }
 
     public ApiKey(ApiKeyInfo apiKeyInfo) {
         super(apiKeyInfo);
-        this.hash = null;
+        this.value = null;
     }
 
-    public ApiKey(ApiKeyInfo apiKeyInfo, String hash) {
+    public ApiKey(ApiKeyInfo apiKeyInfo, String value) {
         super(apiKeyInfo);
-        this.hash = hash;
+        this.value = value;
     }
 
 }

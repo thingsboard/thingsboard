@@ -74,7 +74,7 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         Assert.assertEquals(tenantId, savedApiKey.getTenantId());
         Assert.assertEquals(TEST_API_KEY_DESCRIPTION, savedApiKey.getDescription());
         Assert.assertTrue(savedApiKey.isEnabled());
-        Assert.assertNotNull(savedApiKey.getHash());
+        Assert.assertNotNull(savedApiKey.getValue());
     }
 
     @Test
@@ -87,7 +87,7 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         Assert.assertEquals(tenantId, savedApiKey.getTenantId());
         Assert.assertNull(savedApiKey.getDescription());
         Assert.assertTrue(savedApiKey.isEnabled());
-        Assert.assertNotNull(savedApiKey.getHash());
+        Assert.assertNotNull(savedApiKey.getValue());
     }
 
     @Test
@@ -111,7 +111,7 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(updatedApiKey);
         Assert.assertEquals(savedApiKey.getId(), updatedApiKey.getId());
         Assert.assertEquals(newDescription, updatedApiKey.getDescription());
-        Assert.assertEquals(savedApiKey.getHash(), updatedApiKey.getHash());
+        Assert.assertEquals(savedApiKey.getValue(), updatedApiKey.getValue());
     }
 
     @Test
@@ -138,7 +138,7 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedApiKey.getId(), foundApiKey.getId());
         Assert.assertEquals(savedApiKey.getDescription(), foundApiKey.getDescription());
         Assert.assertEquals(savedApiKey.isEnabled(), foundApiKey.isEnabled());
-        Assert.assertEquals(savedApiKey.getHash(), foundApiKey.getHash());
+        Assert.assertEquals(savedApiKey.getValue(), foundApiKey.getValue());
     }
 
     @Test
@@ -146,13 +146,13 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
         ApiKeyInfo apiKeyInfo = createApiKeyInfo(TEST_API_KEY_DESCRIPTION);
         ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
 
-        ApiKey foundApiKey = apiKeyService.findApiKeyByHash(savedApiKey.getHash());
+        ApiKey foundApiKey = apiKeyService.findApiKeyByValue(savedApiKey.getValue());
 
         Assert.assertNotNull(foundApiKey);
         Assert.assertEquals(savedApiKey.getId(), foundApiKey.getId());
         Assert.assertEquals(savedApiKey.getDescription(), foundApiKey.getDescription());
         Assert.assertEquals(savedApiKey.isEnabled(), foundApiKey.isEnabled());
-        Assert.assertEquals(savedApiKey.getHash(), foundApiKey.getHash());
+        Assert.assertEquals(savedApiKey.getValue(), foundApiKey.getValue());
     }
 
     @Test

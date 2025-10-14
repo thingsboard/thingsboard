@@ -83,14 +83,14 @@ public class ApiKeyAuthenticationProviderTest {
         apiKey.setId(new ApiKeyId(UUID.randomUUID()));
         apiKey.setTenantId(tenantId);
         apiKey.setUserId(userId);
-        apiKey.setHash(TEST_API_KEY);
+        apiKey.setValue(TEST_API_KEY);
         apiKey.setEnabled(true);
         apiKey.setExpirationTime(0);
     }
 
     @Test
     public void testSuccessfulAuthentication() {
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         when(userService.findUserById(tenantId, userId)).thenReturn(user);
         when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
 
@@ -117,7 +117,7 @@ public class ApiKeyAuthenticationProviderTest {
 
     @Test(expected = BadCredentialsException.class)
     public void testNonExistentApiKey() {
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(null);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(null);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
 
         provider.authenticate(token);
@@ -126,7 +126,7 @@ public class ApiKeyAuthenticationProviderTest {
     @Test(expected = DisabledException.class)
     public void testDisabledApiKey() {
         apiKey.setEnabled(false);
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
 
         provider.authenticate(token);
@@ -135,7 +135,7 @@ public class ApiKeyAuthenticationProviderTest {
     @Test(expected = CredentialsExpiredException.class)
     public void testExpiredApiKey() {
         apiKey.setExpirationTime(System.currentTimeMillis() - 10000); // Expired 10 seconds ago
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
 
         provider.authenticate(token);
@@ -143,7 +143,7 @@ public class ApiKeyAuthenticationProviderTest {
 
     @Test(expected = UsernameNotFoundException.class)
     public void testNonExistentUser() {
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         when(userService.findUserById(tenantId, userId)).thenReturn(null);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
 
@@ -152,7 +152,7 @@ public class ApiKeyAuthenticationProviderTest {
 
     @Test(expected = UsernameNotFoundException.class)
     public void testNonExistentUserCredentials() {
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         when(userService.findUserById(tenantId, userId)).thenReturn(user);
         when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(null);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
@@ -163,7 +163,7 @@ public class ApiKeyAuthenticationProviderTest {
     @Test(expected = DisabledException.class)
     public void testDisabledUser() {
         userCredentials.setEnabled(false);
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         when(userService.findUserById(tenantId, userId)).thenReturn(user);
         when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
@@ -174,7 +174,7 @@ public class ApiKeyAuthenticationProviderTest {
     @Test(expected = InsufficientAuthenticationException.class)
     public void testUserWithoutAuthority() {
         user.setAuthority(null);
-        when(apiKeyService.findApiKeyByHash(TEST_API_KEY)).thenReturn(apiKey);
+        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
         when(userService.findUserById(tenantId, userId)).thenReturn(user);
         when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
         ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));

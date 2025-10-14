@@ -41,8 +41,8 @@ public class JpaApiKeyDao extends JpaAbstractDao<ApiKeyEntity, ApiKey> implement
     private ApiKeyRepository apiKeyRepository;
 
     @Override
-    public ApiKey findByHash(String hash) {
-        return DaoUtil.getData(apiKeyRepository.findByHash(hash));
+    public ApiKey findByValue(String value) {
+        return DaoUtil.getData(apiKeyRepository.findByValue(value));
     }
 
     @Override

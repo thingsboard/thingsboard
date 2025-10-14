@@ -766,7 +766,7 @@ public class ModelConstants {
     public static final String API_KEY_TABLE_NAME = "api_key";
     public static final String API_KEY_TENANT_ID_COLUMN_NAME = TENANT_ID_COLUMN;
     public static final String API_KEY_USER_ID_COLUMN_NAME = USER_ID_PROPERTY;
-    public static final String API_KEY_HASH_COLUMN_NAME = "hash";
+    public static final String API_KEY_VALUE_COLUMN_NAME = "value";
     public static final String API_KEY_EXPIRATION_TIME_COLUMN_NAME = "expiration_time";
     public static final String API_KEY_ENABLED_COLUMN_NAME = "enabled";
     public static final String API_KEY_DESCRIPTION_COLUMN_NAME = "description";
