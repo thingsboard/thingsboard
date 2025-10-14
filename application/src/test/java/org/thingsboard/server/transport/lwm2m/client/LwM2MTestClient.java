@@ -151,33 +151,33 @@ public class LwM2MTestClient {
 
         ObjectsInitializer initializer = createFreshInitializer();
 
-
+        forceNullSecurityId(securityBs);
+        forceNullSecurityId(security);
         if (securityBs != null && security != null) {
             // SECURITIES
-            securityBs.setId(0);
-            security.setId(1);
+//            securityBs.setId(0);
+//            security.setId(1);
+
             LwM2mInstanceEnabler[] instances = new LwM2mInstanceEnabler[]{securityBs, security};
             initializer.setInstancesForObject(SECURITY, instances);
             log.warn("Security BS section: securityBsId [{}] Security Lwm2m section: securityLwm2mId [{}] ",  securityBs.getId(),  security.getId());
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(0);
+//            lwm2mServer.setId(0);
             instances = new LwM2mInstanceEnabler[]{lwm2mServer};
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
             // SECURITY
-;           securityBs.setId(0);;
             initializer.setInstancesForObject(SECURITY, securityBs);
             // SERVER
             initializer.setClassForObject(SERVER, Server.class);
             log.warn("Security BS section: securityBsId [{}] ",  securityBs.getId());
         } else {
             // SECURITY
-            security.setId(0);
             initializer.setInstancesForObject(SECURITY, security);
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
-            lwm2mServer.setId(0);
+//            lwm2mServer.setId(0);
             initializer.setInstancesForObject(SERVER, lwm2mServer);
             log.warn("Security Lwm2m section: securityLwm2mId [{}] Server Lwm2m section: securityLwm2mId [{}] ",  security.getId(),  lwm2mServer.getId());
         }
@@ -470,7 +470,8 @@ public class LwM2MTestClient {
     }
 
     private ObjectsInitializer createFreshInitializer() {
-        List<ObjectModel> models = new ArrayList<>(ObjectLoader.loadAllDefault());
+//        List<ObjectModel> models = new ArrayList<>(ObjectLoader.loadAllDefault());
+        List<ObjectModel> models = ObjectLoader.loadAllDefault();
         for (String resourceName : lwm2mClientResources) {
             try (InputStream in = LwM2MTestClient.class.getClassLoader()
                     .getResourceAsStream("lwm2m/" + resourceName)) {
@@ -499,27 +500,27 @@ public class LwM2MTestClient {
         return new ObjectsInitializer(model);
     }
 
-    private void forceNullSecurityId(Security securityBs) {
-        if (securityBs == null) {
+    private void forceNullSecurityId(Security security) {
+        if (security == null) {
             return;
         }
         try {
-            Field field = securityBs.getClass().getDeclaredField("id");
+            Field field = security.getClass().getDeclaredField("id");
             field.setAccessible(true);
-            field.set(securityBs, null);
-            log.info("[forceNullSecurityId] Set id=null for {}", securityBs);
+            field.set(security, null);
+            log.info("[forceNullSecurityId] Set id=null for {}", security);
         } catch (NoSuchFieldException e) {
             try {
                 // Якщо поле в батьківському класі (наприклад SecurityObjectInstance)
-                Field field = securityBs.getClass().getSuperclass().getDeclaredField("id");
+                Field field = security.getClass().getSuperclass().getDeclaredField("id");
                 field.setAccessible(true);
-                field.set(securityBs, null);
-                log.info("[forceNullSecurityId] Set id=null for {} (via superclass)", securityBs);
+                field.set(security, null);
+                log.info("[forceNullSecurityId] Set id=null for {} (via superclass)", security);
             } catch (Exception ex) {
-                log.error("[forceNullSecurityId] Field 'id' not found for {}", securityBs.getClass(), ex);
+                log.error("[forceNullSecurityId] Field 'id' not found for {}", security.getClass(), ex);
             }
         } catch (Exception e) {
-            log.error("[forceNullSecurityId] Failed to set id=null for {}", securityBs.getClass(), e);
+            log.error("[forceNullSecurityId] Failed to set id=null for {}", security.getClass(), e);
         }
     }
 }

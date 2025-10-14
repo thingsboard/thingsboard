@@ -324,13 +324,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
-//            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
-//                log.warn("⚠️ Executor did not terminate cleanly, forcing GC");
-//            }
+            if (!executor.awaitTermination(2, TimeUnit.SECONDS)) {
+                log.warn("Executor did not terminate cleanly, forcing GC");
+            }
         }
-//        Thread.sleep(300);
-//        System.gc();
-//        log.info("✅ Test teardown completed: {}", this.getClass().getSimpleName());
+        Thread.sleep(300);
+        System.gc();
+        log.warn("Test lwm2m after completed: {}", this.getClass().getSimpleName());
     }
 
     private void init() throws Exception {
