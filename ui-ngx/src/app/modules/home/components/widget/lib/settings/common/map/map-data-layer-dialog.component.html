@@ -390,8 +390,6 @@
             </ng-template>
           </mat-expansion-panel>
         </div>
-      </ng-container>
-      <ng-container *ngIf="['trips', 'polylines'].includes(dataLayerType)">
         <div class="tb-form-panel tb-slide-toggle stroked">
           <mat-expansion-panel class="tb-settings" [expanded]="dataLayerFormGroup.get('showPoints').value"
                                [disabled]="!dataLayerFormGroup.get('showPoints').value">

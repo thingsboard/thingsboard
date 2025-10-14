@@ -306,24 +306,6 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dialogTitle = 'widgets.maps.data-layer.polyline.polyline-configuration';
         this.dataLayerEditTitle = 'widgets.maps.data-layer.polyline.edit';
         this.dataLayerFormGroup.addControl('polylineKey', this.fb.control(polylineShapeDataLayer.polylineKey, Validators.required));
-        // this.dataLayerFormGroup.addControl('usePathDecorator', this.fb.control(polylineShapeDataLayer.usePathDecorator));
-        // this.dataLayerFormGroup.addControl('pathDecoratorSymbol', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbol, Validators.required));
-        // this.dataLayerFormGroup.addControl('pathDecoratorSymbolSize', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolSize, [Validators.required, Validators.min(0)]));
-        // this.dataLayerFormGroup.addControl('pathDecoratorSymbolColor', this.fb.control(polylineShapeDataLayer.pathDecoratorSymbolColor));
-        // this.dataLayerFormGroup.addControl('pathDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathDecoratorOffset, [Validators.required, Validators.min(0)]));
-        // this.dataLayerFormGroup.addControl('pathEndDecoratorOffset', this.fb.control(polylineShapeDataLayer.pathEndDecoratorOffset, [Validators.required, Validators.min(0)]));
-        // this.dataLayerFormGroup.addControl('pathDecoratorRepeat', this.fb.control(polylineShapeDataLayer.pathDecoratorRepeat, [Validators.required, Validators.min(0)]));
-        this.dataLayerFormGroup.addControl('showPoints', this.fb.control(polylineShapeDataLayer.showPoints));
-        this.dataLayerFormGroup.addControl('pointSize', this.fb.control(polylineShapeDataLayer.pointSize, [Validators.required, Validators.min(0)]));
-        this.dataLayerFormGroup.addControl('pointColor', this.fb.control(polylineShapeDataLayer.pointColor, Validators.required));
-        this.dataLayerFormGroup.addControl('pointTooltip', this.fb.control(polylineShapeDataLayer.pointTooltip));
-        merge(
-          // this.dataLayerFormGroup.get('usePathDecorator').valueChanges,
-          this.dataLayerFormGroup.get('showPoints').valueChanges).pipe(
-          takeUntilDestroyed(this.destroyRef)
-        ).subscribe(() =>
-          this.updateValidators()
-        );
         break;
     }
     this.dataLayerFormGroup.get('dsType').valueChanges.pipe(
@@ -464,33 +446,6 @@ export class MapDataLayerDialogComponent extends DialogComponent<MapDataLayerDia
         this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
         this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
       }
-      if (showPoints) {
-        this.dataLayerFormGroup.get('pointSize').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pointColor').enable({emitEvent: false});
-        this.dataLayerFormGroup.get('pointTooltip').enable({emitEvent: false});
-      } else {
-        this.dataLayerFormGroup.get('pointSize').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pointColor').disable({emitEvent: false});
-        this.dataLayerFormGroup.get('pointTooltip').disable({emitEvent: false});
-      }
-    } else if (this.dataLayerType === 'polylines') {
-      // const usePathDecorator: boolean = this.dataLayerFormGroup.get('usePathDecorator').value;
-      const showPoints: boolean = this.dataLayerFormGroup.get('showPoints').value;
-      // if (usePathDecorator) {
-      //   this.dataLayerFormGroup.get('pathDecoratorSymbol').enable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorSymbolSize').enable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorSymbolColor').enable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorOffset').enable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathEndDecoratorOffset').enable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorRepeat').enable({emitEvent: false});
-      // } else {
-      //   this.dataLayerFormGroup.get('pathDecoratorSymbol').disable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorSymbolSize').disable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorSymbolColor').disable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorOffset').disable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathEndDecoratorOffset').disable({emitEvent: false});
-      //   this.dataLayerFormGroup.get('pathDecoratorRepeat').disable({emitEvent: false});
-      // }
       if (showPoints) {
         this.dataLayerFormGroup.get('pointSize').enable({emitEvent: false});
         this.dataLayerFormGroup.get('pointColor').enable({emitEvent: false});

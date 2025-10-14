@@ -443,7 +443,13 @@ export const pathDecoratorSymbolTranslationMap = new Map<PathDecoratorSymbol, st
   ]
 );
 
-export interface PathDataLayerSettings {
+export interface TripsDataLayerSettings extends MarkersDataLayerSettings {
+  showMarker: boolean;
+  rotateMarker: boolean;
+  offsetAngle: number;
+  showPath: boolean;
+  pathStrokeWeight?: number;
+  pathStrokeColor?: DataLayerColorSettings;
   usePathDecorator?: boolean;
   pathDecoratorSymbol?: PathDecoratorSymbol;
   pathDecoratorSymbolSize?: number;
@@ -455,15 +461,6 @@ export interface PathDataLayerSettings {
   pointSize?: number;
   pointColor?: DataLayerColorSettings;
   pointTooltip?: DataLayerTooltipSettings;
-}
-
-export interface TripsDataLayerSettings extends MarkersDataLayerSettings, PathDataLayerSettings {
-  showMarker: boolean;
-  rotateMarker: boolean;
-  offsetAngle: number;
-  showPath: boolean;
-  pathStrokeWeight?: number;
-  pathStrokeColor?: DataLayerColorSettings;
 }
 
 export const defaultTripsDataLayerSettings = (mapType: MapType, functionsOnly = false): TripsDataLayerSettings => mergeDeep(
@@ -673,7 +670,7 @@ export const defaultBaseCirclesDataLayerSettings = (mapType: MapType): Partial<C
     tooltip: {show: false, pattern: '<b>${entityName}</b><br/><br/><b>TimeStamp:</b> ${ts:7}'}
   } as Partial<CirclesDataLayerSettings>)
 
-export interface PolylinesDataLayerSettings extends ShapeDataLayerSettings, PathDataLayerSettings {
+export interface PolylinesDataLayerSettings extends ShapeDataLayerSettings {
   polylineKey: DataKey;
 }
 
@@ -699,31 +696,7 @@ export const defaultBasePolylinesDataLayerSettings = (mapType: MapType): Partial
       type: DataLayerColorType.constant,
       color: '#3388ff',
     },
-    strokeWeight: 3,
-    // usePathDecorator: false,
-    // pathDecoratorSymbol: PathDecoratorSymbol.arrowHead,
-    // pathDecoratorSymbolSize: 10,
-    // pathDecoratorSymbolColor: '#307FE5',
-    // pathDecoratorOffset: 20,
-    // pathEndDecoratorOffset: 20,
-    // pathDecoratorRepeat: 20,
-    showPoints: false,
-    pointSize: 10,
-    pointColor: {
-      type: DataLayerColorType.constant,
-      color: '#307FE5',
-    },
-    pointTooltip: {
-      show: false,
-      trigger: DataLayerTooltipTrigger.click,
-      autoclose: true,
-      type: DataLayerPatternType.pattern,
-      pattern: mapType === MapType.geoMap ?
-        '<b>${entityName}</b><br/><br/><b>Latitude:</b> ${latitude:7}<br/><b>Longitude:</b> ${longitude:7}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}'
-        : '<b>${entityName}</b><br/><br/><b>X Pos:</b> ${xPos:2}<br/><b>Y Pos:</b> ${yPos:2}<br/><b>End Time:</b> ${maxTime}<br/><b>Start Time:</b> ${minTime}',
-      offsetX: 0,
-      offsetY: -1
-    },
+    strokeWeight: 3
   } as Partial<PolylinesDataLayerSettings>, defaultBaseDataLayerSettings(mapType),
   {
     label: {show: false},

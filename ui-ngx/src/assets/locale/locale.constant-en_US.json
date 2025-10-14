@@ -8643,7 +8643,9 @@
                     "draw-polyline": "Draw polyline",
                     "polyline-place-first-point-hint-with-entity": "Polyline for '{{entityName}}': click to place first point",
                     "polyline-place-first-point-hint": "Polyline: click to place first point",
-                    "finish-polyline-hint": "Polyline for '{{entityName}}': click to finish drawing"
+                    "finish-polyline-hint": "Polyline for '{{entityName}}': click to finish drawing",
+                    "polyline-place-first-point-cut-hint": "Click to place first point",
+                    "finish-polyline-cut-hint": "Click first marker to finish and save"
                 },
                 "select-entity": "Select entity",
                 "select-entity-hint": "Hint: after selection click at the map to set position"
