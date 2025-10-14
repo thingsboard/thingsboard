@@ -178,18 +178,25 @@ public abstract class AbstractEntityService {
                 .filter(e -> (oldEntity == null || !e.getId().equals(oldEntity.getId())))
                 .map(EntityInfo::getName)
                 .collect(Collectors.toSet());
-        if (!existingNames.isEmpty()) {
-            int idx = 1;
-            String suffix = (strategy.uniquifyStrategy() == RANDOM) ? StringUtils.randomAlphanumeric(6) : String.valueOf(idx);
-            while (true) {
-                String newName = entity.getName() + strategy.separator() + suffix;
-                if (!existingNames.contains(newName)) {
-                    setName.accept(newName);
-                    break;
-                }
-                suffix = (strategy.uniquifyStrategy() == RANDOM) ? StringUtils.randomAlphanumeric(6) : String.valueOf(idx++);
-            }
+
+        if (existingNames.contains(entity.getName())) {
+            String uniqueName = generateUniqueName(entity.getName(), existingNames, strategy);
+            setName.accept(uniqueName);
         }
+    }
+
+    private String generateUniqueName(String baseName, Set<String> existingNames, NameConflictStrategy strategy) {
+        String newName;
+        int index = 1;
+        String separator = strategy.separator();
+        boolean isRandom = strategy.uniquifyStrategy() == RANDOM;
+
+        do {
+            String suffix = isRandom ? StringUtils.randomAlphanumeric(6) : String.valueOf(index++);
+            newName = baseName + separator + suffix;
+        } while (existingNames.contains(newName));
+
+        return newName;
     }
 
 }

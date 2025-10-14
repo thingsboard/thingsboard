@@ -139,8 +139,7 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
             return saved;
         } catch (Exception t) {
             checkConstraintViolation(t,
-                    "entity_view_external_id_unq_key", "Entity View with such external id already exists!",
-                    "entity_view_name_unq_key", "Entity View with such name already exists!");
+                    "entity_view_external_id_unq_key", "Entity View with such external id already exists!");
             throw t;
         }
     }
