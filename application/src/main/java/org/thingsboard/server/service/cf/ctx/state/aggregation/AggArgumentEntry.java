@@ -18,6 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state.aggregation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfLatestValuesAggregation;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
@@ -66,7 +67,7 @@ public class AggArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return null;
+        return new TbelCfLatestValuesAggregation(aggInputs.values());
     }
 
 }

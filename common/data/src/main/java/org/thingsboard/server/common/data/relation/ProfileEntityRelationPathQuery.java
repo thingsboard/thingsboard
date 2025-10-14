@@ -13,32 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.script.api.tbel;
+package org.thingsboard.server.common.data.relation;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import org.thingsboard.server.common.data.id.EntityId;
 
-@Data
-public class TbelCfLatestValuesAggregation implements TbelCfArg {
-
-    private final Object value;
-
-    @JsonCreator
-    public TbelCfLatestValuesAggregation(
-            @JsonProperty("value") Object value
-    ) {
-        this.value = value;
-    }
-
-
-    @Override
-    public String getType() {
-        return "LATEST_VALUES_AGGREGATION";
-    }
-
-    @Override
-    public long memorySize() {
-        return OBJ_SIZE;
-    }
+public record ProfileEntityRelationPathQuery(EntityId rootEntityId, RelationPathLevel level, EntityId targetEntityProfileId) {
 }

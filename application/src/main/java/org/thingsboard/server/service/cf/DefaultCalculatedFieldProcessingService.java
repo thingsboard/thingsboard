@@ -91,8 +91,8 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public ListenableFuture<Map<String, ArgumentEntry>> fetchAggArguments(CalculatedFieldCtx ctx, EntityId entityId) {
-        return super.fetchAggArguments(ctx, entityId, System.currentTimeMillis());
+    public ListenableFuture<Map<String, ArgumentEntry>> fetchAggEntityArguments(CalculatedFieldCtx ctx, EntityId entityId) {
+        return super.fetchEntityAggArguments(ctx, entityId, System.currentTimeMillis());
     }
 
     @Override

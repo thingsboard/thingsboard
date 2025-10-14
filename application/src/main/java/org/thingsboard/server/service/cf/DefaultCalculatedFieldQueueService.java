@@ -27,6 +27,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggSource;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.CfAggTrigger;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
@@ -191,19 +193,27 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         for (CalculatedFieldCtx cfCtx : cfCtxs) {
             EntityId cfEntityId = cfCtx.getEntityId();
             if (cfCtx.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-                RelationPathLevel relation = aggConfig.getSource().getRelation();
+                AggSource source = aggConfig.getSource();
+                RelationPathLevel relation = source.getRelation();
                 EntityId cfEntityProfileId = isProfileEntity(cfEntityId.getEntityType())
                         ? cfEntityId
                         : calculatedFieldCache.getProfileId(tenantId, cfEntityId);
-                EntityRelation entityRelation = switch (relation.direction()) {
-                    case FROM ->
-                            relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId);
-                    case TO ->
-                            relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId).get(0);
+                switch (relation.direction()) {
+                    case FROM -> {
+                        List<EntityRelation> byToAndType = relationService.findByToAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
+//                        List<EntityRelation> byTo = relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId);
+                        if (!byToAndType.isEmpty()) {
+                            return true;
+                        }
+                    }
+                    case TO -> {
+                        List<EntityRelation> byFromAndType = relationService.findByFromAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
+//                        List<EntityRelation> byFrom = relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId);
+                        if (!byFromAndType.isEmpty()) {
+                            return true;
+                        }
+                    }
                 };
-                if (entityRelation != null) {
-                    return true;
-                }
             }
         }
 

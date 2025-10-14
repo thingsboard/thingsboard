@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.ProfileEntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
@@ -41,9 +42,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.dao.model.ModelConstants.ASSET_TABLE_NAME;
+import static org.thingsboard.server.dao.model.ModelConstants.DEVICE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TABLE_NAME;
@@ -118,8 +122,14 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
-    public EntityRelation findByToAndTypeAndProfile(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup, EntityId profileId) {
-        return DaoUtil.getData(relationRepository.findByToAndProfile(to.getId(), to.getEntityType().name(), typeGroup.name(), relationType, profileId.getId()));
+    public List<EntityRelation> findByToAndTypeAndProfile(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup, EntityId profileId) {
+        return DaoUtil.convertDataList(
+                relationRepository.findByToAndProfile(
+                        to.getId(),
+                        to.getEntityType().name(),
+                        typeGroup.name(),
+                        relationType,
+                        profileId.getId()));
     }
 
     @Override
@@ -398,6 +408,94 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                 .append("JOIN ").append(prevForLast).append(" p ON ").append(lastJoin).append("\n")
                 .append("WHERE r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n")
                 .append("  AND r.relation_type = ?");
+
+        return sb.toString();
+    }
+
+    @Override
+    public List<EntityRelation> findByProfileEntityRelationPathQuery(TenantId tenantId, ProfileEntityRelationPathQuery query) {
+        String sql = buildProfileEntityRelationPathSql(query);
+        Object[] params = buildProfileEntityRelationPathParams(query);
+
+        log.trace("[{}] profile entity relation path query: {}", tenantId, sql);
+
+        return jdbcTemplate.queryForList(sql, params).stream()
+                .map(row -> {
+                    var entityRelation = new EntityRelation();
+                    var fromId = (UUID) row.get(RELATION_FROM_ID_PROPERTY);
+                    var fromType = (String) row.get(RELATION_FROM_TYPE_PROPERTY);
+                    var toId = (UUID) row.get(RELATION_TO_ID_PROPERTY);
+                    var toType = (String) row.get(RELATION_TO_TYPE_PROPERTY);
+                    var grp = (String) row.get(RELATION_TYPE_GROUP_PROPERTY);
+                    var type = (String) row.get(RELATION_TYPE_PROPERTY);
+                    var version = (Long) row.get(VERSION_COLUMN);
+
+                    entityRelation.setFrom(EntityIdFactory.getByTypeAndUuid(fromType, fromId));
+                    entityRelation.setTo(EntityIdFactory.getByTypeAndUuid(toType, toId));
+                    entityRelation.setType(type);
+                    entityRelation.setTypeGroup(RelationTypeGroup.valueOf(grp));
+                    entityRelation.setVersion(version);
+                    return entityRelation;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Object[] buildProfileEntityRelationPathParams(ProfileEntityRelationPathQuery query) {
+        final List<Object> params = new ArrayList<>();
+
+        params.add(query.rootEntityId().getId());
+        params.add(query.rootEntityId().getEntityType().name());
+
+        params.add(query.level().relationType());
+
+        if (query.targetEntityProfileId() != null) {
+            params.add(query.targetEntityProfileId().getId());
+            params.add(query.targetEntityProfileId().getId());
+        }
+
+        return params.toArray();
+    }
+
+    private static String buildProfileEntityRelationPathSql(ProfileEntityRelationPathQuery query) {
+        EntitySearchDirection direction = query.level().direction();
+
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("\n")
+                .append("SELECT r.from_id, r.from_type, r.to_id, r.to_type,\n")
+                .append("       r.relation_type_group, r.relation_type, r.version\n")
+                .append("FROM ").append(RELATION_TABLE_NAME).append(" r\n");
+
+        sb.append("JOIN ").append(DEVICE_TABLE_NAME).append(" d ON ");
+        if (EntitySearchDirection.FROM == direction) {
+            sb.append("r.to_id = d.id AND r.to_type = 'DEVICE'").append("\n");
+        } else {
+            sb.append("r.from_id = d.id AND r.from_type = 'DEVICE'").append("\n");
+        }
+
+        sb.append("JOIN ").append(ASSET_TABLE_NAME).append(" a ON ");
+        if (EntitySearchDirection.FROM == direction) {
+            sb.append("r.to_id = a.id AND r.to_type = 'ASSET'").append("\n");
+        } else {
+            sb.append("r.from_id = a.id AND r.from_type = 'ASSET'").append("\n");
+        }
+
+        if (EntitySearchDirection.FROM == direction) {
+            sb.append("WHERE r.from_id = ?").append("\n")
+                    .append("AND r.from_type = ?").append("\n");
+        } else {
+            sb.append("WHERE r.to_id = ?").append("\n")
+                    .append("AND r.to_type = ?").append("\n");
+        }
+
+        sb.append("AND r.relation_type = ?").append("\n")
+                .append("AND r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n");
+
+        if (query.targetEntityProfileId() != null) {
+            sb.append("AND ((d.device_profile_id = ?) OR (a.asset_profile_id = ?))").append("\n");
+        }
+
+        sb.append("AND (d.id IS NOT NULL OR a.id IS NOT NULL)");
 
         return sb.toString();
     }

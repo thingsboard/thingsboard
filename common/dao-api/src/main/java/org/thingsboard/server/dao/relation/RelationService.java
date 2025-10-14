@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.ProfileEntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 
@@ -86,11 +87,17 @@ public interface RelationService {
 
     ListenableFuture<List<EntityRelation>> findByRelationPathQueryAsync(TenantId tenantId, EntityRelationPathQuery relationPathQuery);
 
+    ListenableFuture<List<EntityRelation>> findByProfileEntityRelationPathQueryAsync(TenantId tenantId, ProfileEntityRelationPathQuery relationPathQuery);
+
+    List<EntityRelation> findByProfileEntityRelationPathQuery(TenantId tenantId, ProfileEntityRelationPathQuery relationPathQuery);
+
+    ListenableFuture<List<EntityRelation>> findByFromAndTypeAndEntityProfileAsync(TenantId tenantId, EntityId from, String relationType, EntityId targetProfileId);
+
     List<EntityRelation> findByFromAndTypeAndEntityProfile(TenantId tenantId, EntityId from, String relationType, EntityId profileId);
 
-    EntityRelation findByToAndTypeAndEntityProfile(TenantId tenantId, EntityId to, String relationType, EntityId profileId);
+    ListenableFuture<List<EntityRelation>> findByToAndTypeAndEntityProfileAsync(TenantId tenantId, EntityId to, String relationType, EntityId targetProfileId);
 
-    void evictRelationsByProfile(TenantId tenantId, EntityId profileId);
+    List<EntityRelation> findByToAndTypeAndEntityProfile(TenantId tenantId, EntityId to, String relationType, EntityId profileId);
 
     void evictRelationsByEntityAndProfile(TenantId tenantId, EntityId entityId, EntityId profileId);
 

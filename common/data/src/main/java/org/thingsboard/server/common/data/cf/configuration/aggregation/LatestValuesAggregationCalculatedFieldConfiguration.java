@@ -45,7 +45,7 @@ public class LatestValuesAggregationCalculatedFieldConfiguration implements Calc
     public CfAggTrigger buildTrigger() {
         return CfAggTrigger.builder()
                 .inputs(List.copyOf(inputs.values()))
-                .entityProfiles(source.getEntityProfiles())
+                .entityProfiles(List.copyOf(source.getEntityProfiles()))
                 .build();
     }
 

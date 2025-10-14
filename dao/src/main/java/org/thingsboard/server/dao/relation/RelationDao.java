@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.ProfileEntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 
@@ -40,7 +41,7 @@ public interface RelationDao {
 
     List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to, RelationTypeGroup typeGroup);
 
-    EntityRelation findByToAndTypeAndProfile(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup, EntityId profileId);
+    List<EntityRelation> findByToAndTypeAndProfile(TenantId tenantId, EntityId to, String relationType, RelationTypeGroup typeGroup, EntityId profileId);
 
     List<EntityRelation> findAllByTo(TenantId tenantId, EntityId to);
 
@@ -77,5 +78,7 @@ public interface RelationDao {
     List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit);
 
     List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery relationPathQuery);
+
+    List<EntityRelation> findByProfileEntityRelationPathQuery(TenantId tenantId, ProfileEntityRelationPathQuery query);
 
 }

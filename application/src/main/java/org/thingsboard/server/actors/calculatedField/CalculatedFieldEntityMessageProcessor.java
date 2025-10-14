@@ -69,9 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
@@ -264,7 +262,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     @SneakyThrows
     private Map<String, ArgumentEntry> fetchAggArguments(CalculatedFieldCtx ctx, EntityId entityId) {
-        ListenableFuture<Map<String, ArgumentEntry>> argumentsFuture = cfService.fetchAggArguments(ctx, entityId);
+        ListenableFuture<Map<String, ArgumentEntry>> argumentsFuture = cfService.fetchAggEntityArguments(ctx, entityId);
         // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
         // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
         // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,

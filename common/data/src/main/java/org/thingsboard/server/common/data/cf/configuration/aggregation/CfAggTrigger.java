@@ -42,7 +42,7 @@ public class CfAggTrigger {
     }
 
     public boolean matchesProfile(EntityId profileId) {
-        return entityProfiles.contains(profileId);
+        return entityProfiles.isEmpty() || entityProfiles.contains(profileId);
     }
 
     public boolean matchesTimeSeries(List<TsKvEntry> telemetry) {

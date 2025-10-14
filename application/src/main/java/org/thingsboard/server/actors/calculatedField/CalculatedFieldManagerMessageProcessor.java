@@ -24,8 +24,8 @@ import org.thingsboard.server.actors.TbCalculatedFieldEntityActorId;
 import org.thingsboard.server.actors.calculatedField.EntityInitCalculatedFieldMsg.StateAction;
 import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
@@ -255,7 +255,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         MultipleTbCallback callbackFor2 = new MultipleTbCallback(2, callback);
 
         // process aggregation cfs(in any)
-        List<CalculatedFieldCtx> cfsRelatedToEntity = getCalculatedFieldsRelatedToEntity(entityId, profileId);
+        List<CalculatedFieldCtx> cfsRelatedToEntity = getCfsWithRelationToEntity(entityId, profileId);
         if (!cfsRelatedToEntity.isEmpty()) {
             MultipleTbCallback multiCallback = new MultipleTbCallback(cfsRelatedToEntity.size(), callbackFor2);
             cfsRelatedToEntity.forEach(ctx -> {
@@ -289,8 +289,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             MultipleTbCallback callbackFor2 = new MultipleTbCallback(2, callback);
 
             // process aggregation cfs(in any)
-            List<CalculatedFieldCtx> oldCfsRelatedToEntity = getCalculatedFieldsRelatedToEntity(msg.getEntityId(), msg.getOldProfileId());
-            List<CalculatedFieldCtx> newCfsRelatedToEntity = getCalculatedFieldsRelatedToEntity(msg.getEntityId(), msg.getProfileId());
+            List<CalculatedFieldCtx> oldCfsRelatedToEntity = getCfsWithRelationToEntity(msg.getEntityId(), msg.getOldProfileId());
+            List<CalculatedFieldCtx> newCfsRelatedToEntity = getCfsWithRelationToEntity(msg.getEntityId(), msg.getProfileId());
             var fieldsWithRelatedEntityCount = oldCfsRelatedToEntity.size() + newCfsRelatedToEntity.size();
             if (fieldsWithRelatedEntityCount > 0) {
                 MultipleTbCallback multiCallback = new MultipleTbCallback(fieldsWithRelatedEntityCount, callbackFor2);
@@ -335,7 +335,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             }
             ownerEntities.values().forEach(entities -> entities.remove(msg.getEntityId()));
 
-            getCalculatedFieldsRelatedToEntity(msg.getEntityId(), msg.getProfileId()).forEach(ctx -> {
+            getCfsWithRelationToEntity(msg.getEntityId(), msg.getProfileId()).forEach(ctx -> {
                 applyToTargetCfEntityActors(ctx, callback, (id, cb) -> deleteRelatedEntity(id, msg.getEntityId(), cb));
             });
             if (isMyPartition(msg.getEntityId(), callback)) {
@@ -559,6 +559,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onCfDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
         var cfCtx = calculatedFields.remove(cfId); // fixme wtf? why isn't ctx closed properly?
+        cfTriggers.remove(cfId);
         if (cfCtx == null) {
             log.debug("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
@@ -613,76 +614,55 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private List<CalculatedFieldEntityCtxId> filterAggregationCfs(CalculatedFieldTelemetryMsg msg) {
         EntityId entityId = msg.getEntityId();
-
-        List<CalculatedFieldCtx> aggregationCalculatedFields = cfTriggers.entrySet().stream()
+        return cfTriggers.entrySet().stream()
                 .filter(entry -> aggMatches(entry.getValue(), msg.getProto()))
                 .map(Entry::getKey)
                 .map(calculatedFields::get)
                 .filter(Objects::nonNull)
+                .flatMap(cf -> findRelationsForCf(entityId, cf).stream())
                 .toList();
-
-        List<CalculatedFieldEntityCtxId> filteredByRelationCfs = new ArrayList<>();
-        for (CalculatedFieldCtx cf : aggregationCalculatedFields) {
-            EntityId cfEntityId = cf.getEntityId();
-            if (cf.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-                RelationPathLevel relation = aggConfig.getSource().getRelation();
-                EntityId cfEntityProfileId = isProfileEntity(cfEntityId.getEntityType())
-                        ? cfEntityId
-                        : getProfileId(tenantId, cfEntityId);
-                EntityId targetEntity = switch (relation.direction()) {
-                    case FROM ->
-                            relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId).getFrom();
-                    case TO ->
-                            relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId).get(0).getTo();
-                };
-                if (targetEntity != null) {
-                    filteredByRelationCfs.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), targetEntity));
-                }
-            }
-        }
-        return filteredByRelationCfs;
     }
 
-    private List<CalculatedFieldCtx> getCalculatedFieldsRelatedToEntity(EntityId entityId, EntityId profileId) {
-        List<CalculatedFieldCtx> aggCFsUsedProfile = cfTriggers.entrySet().stream()
+    private List<CalculatedFieldCtx> getCfsWithRelationToEntity(EntityId entityId, EntityId profileId) {
+        return cfTriggers.entrySet().stream()
                 .filter(entry -> entry.getValue().matchesProfile(profileId))
                 .map(Entry::getKey)
                 .map(calculatedFields::get)
                 .filter(Objects::nonNull)
+                .filter(cf -> !findRelationsForCf(entityId, cf).isEmpty())
                 .toList();
-
-        List<CalculatedFieldCtx> filteredByRelationCfs = new ArrayList<>();
-        for (CalculatedFieldCtx cf : aggCFsUsedProfile) {
-            CalculatedFieldEntityCtxId calculatedFieldEntityCtxId = filterCfByRelationWithEntity(entityId, cf);
-            if (calculatedFieldEntityCtxId != null) {
-                filteredByRelationCfs.add(cf);
-            }
-        }
-        return filteredByRelationCfs;
     }
 
-    private CalculatedFieldEntityCtxId filterCfByRelationWithEntity(EntityId entityId, CalculatedFieldCtx cf) {
-        EntityId cfEntityId = cf.getEntityId();
-        if (cf.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-            RelationPathLevel relation = aggConfig.getSource().getRelation();
-            EntityId cfEntityProfileId = isProfileEntity(cfEntityId.getEntityType())
+    private List<CalculatedFieldEntityCtxId> findRelationsForCf(EntityId entityId, CalculatedFieldCtx cf) {
+        List<CalculatedFieldEntityCtxId> result = new ArrayList<>();
+        if (cf.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration configuration) {
+            AggSource source = configuration.getSource();
+            RelationPathLevel relation = source.getRelation();
+            EntityId cfEntityId = cf.getEntityId();
+            EntityId targetProfileId = isProfileEntity(cfEntityId.getEntityType())
                     ? cfEntityId
                     : getProfileId(tenantId, cfEntityId);
-            EntityId targetEntity = switch (relation.direction()) {
+            switch (relation.direction()) {
                 case FROM -> {
-                    EntityRelation entityRelation = relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId);
-                    yield entityRelation == null ? null : entityRelation.getFrom();
+                    List<EntityRelation> relationsByTo = relationService.findByToAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), targetProfileId);
+                    if (relationsByTo != null && !relationsByTo.isEmpty()) {
+                        EntityRelation entityRelation = relationsByTo.get(0); // only one supported
+                        result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getFrom()));
+                    }
                 }
                 case TO -> {
-                    EntityRelation entityRelation = relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), cfEntityProfileId).get(0);
-                    yield entityRelation == null ? null : entityRelation.getTo();
+                    List<EntityRelation> relationsByFrom = relationService.findByFromAndTypeAndEntityProfile(tenantId, entityId, relation.relationType(), targetProfileId);
+                    if (relationsByFrom != null && !relationsByFrom.isEmpty()) {
+                        for (EntityRelation entityRelation : relationsByFrom) {
+                            if (entityRelation.getTo().equals(cf.getEntityId())) {
+                                result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo()));
+                            }
+                        }
+                    }
                 }
-            };
-            if (targetEntity != null) {
-                return new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), targetEntity);
             }
         }
-        return null;
+        return result;
     }
 
     private boolean aggMatches(CfAggTrigger cfAggTrigger, CalculatedFieldTelemetryMsgProto proto) {

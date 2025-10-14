@@ -184,7 +184,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.DEVICE_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             deviceProfileCache.evict(tenantId, new DeviceProfileId(componentLifecycleMsg.getEntityId().getId()));
-            actorContext.getRelationService().evictRelationsByProfile(tenantId, componentLifecycleMsg.getEntityId());
         } else if (EntityType.DEVICE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             deviceProfileCache.evict(tenantId, new DeviceId(componentLifecycleMsg.getEntityId().getId()));
             if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
@@ -200,7 +199,6 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             }
         } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             assetProfileCache.evict(tenantId, new AssetProfileId(componentLifecycleMsg.getEntityId().getId()));
-            actorContext.getRelationService().evictRelationsByProfile(tenantId, componentLifecycleMsg.getEntityId());
         } else if (EntityType.ASSET.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             assetProfileCache.evict(tenantId, new AssetId(componentLifecycleMsg.getEntityId().getId()));
             if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {

@@ -126,9 +126,8 @@ public interface RelationRepository
                   AND r.relation_type_group = :relationTypeGroup
                   AND ((d.device_profile_id = :profileId) OR (a.asset_profile_id = :profileId))
                   AND (d.id IS NOT NULL OR a.id IS NOT NULL)
-                LIMIT 1
             """, nativeQuery = true)
-    Optional<RelationEntity> findByToAndProfile(@Param("toId") UUID toId,
+    List<RelationEntity> findByToAndProfile(@Param("toId") UUID toId,
                                                 @Param("toType") String toType,
                                                 @Param("relationTypeGroup") String relationTypeGroup,
                                                 @Param("relationType") String relationType,
