@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="userFilterFormGroup" (ngSubmit)="save()" style="width: 400px;" class="user-filter-dialog">
   <mat-toolbar color="primary">
-    <h2>{{ filter.filter }}</h2>
+    <h2>{{ filter.filter | customTranslate }}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -34,13 +34,13 @@
         <div [ngSwitch]="userInputControl.get('valueType').value">
           <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
             <mat-form-field class="mat-block">
-              <mat-label>{{ userInputControl.get('label').value }}</mat-label>
+              <mat-label>{{ userInputControl.get('label').value  | customTranslate }}</mat-label>
               <input matInput [formControl]="userInputControl.get('value')">
             </mat-form-field>
           </ng-template>
           <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
             <mat-form-field class="mat-block">
-              <mat-label>{{ userInputControl.get('label').value }}</mat-label>
+              <mat-label>{{ userInputControl.get('label').value  | customTranslate }}</mat-label>
               <input required type="number" matInput [formControl]="userInputControl.get('value')">
               <div matSuffix class="mr-2"
                    [class.!hidden]="!userInputControl.get('unitSymbol').value">
@@ -49,14 +49,14 @@
             </mat-form-field>
           </ng-template>
           <ng-template [ngSwitchCase]="valueTypeEnum.DATE_TIME">
-            <label class="tb-title no-padding tb-required">{{ userInputControl.get('label').value }}</label>
+            <label class="tb-title no-padding tb-required">{{ userInputControl.get('label').value  | customTranslate }}</label>
             <tb-datetime [formControl]="userInputControl.get('value')"
                          dateText="{{ 'filter.date' | translate }}"
                          required [showLabel]="false"></tb-datetime>
           </ng-template>
           <ng-template [ngSwitchCase]="valueTypeEnum.BOOLEAN">
             <mat-checkbox labelPosition="before" [formControl]="userInputControl.get('value')">
-              {{ userInputControl.get('label').value }}
+              {{ userInputControl.get('label').value  | customTranslate }}
             </mat-checkbox>
           </ng-template>
         </div>
