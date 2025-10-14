@@ -24,7 +24,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -152,7 +151,7 @@ public class AiModelEdgeTest extends AbstractEdgeTest {
         aiModel.setTenantId(tenantId);
         aiModel.setName(name);
         aiModel.setConfiguration(OpenAiChatModelConfig.builder()
-                .providerConfig(new OpenAiProviderConfig("test-api-key"))
+                .providerConfig(new OpenAiProviderConfig(null, "test-api-key"))
                 .modelId("gpt-4o")
                 .temperature(0.5)
                 .topP(0.3)
