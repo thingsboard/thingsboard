@@ -214,3 +214,19 @@ export interface EntityTestScriptResult {
 }
 
 export type VersionedEntity = EntityInfoData & HasVersion | RuleChainMetaData;
+
+export enum NameConflictPolicy {
+  FAIL = 'FAIL',
+  UNIQUIFY = 'UNIQUIFY',
+}
+
+export enum UniquifyStrategy {
+  RANDOM = 'RANDOM',
+  INCREMENTAL = 'INCREMENTAL'
+}
+
+export interface SaveEntityParams {
+  nameConflictPolicy?: NameConflictPolicy;
+  uniquifyStrategy?: UniquifyStrategy;
+  uniquifySeparator?: string;
+}
