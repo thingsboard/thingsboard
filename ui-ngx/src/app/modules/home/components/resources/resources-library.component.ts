@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Input, OnDestroy, OnInit, Optional } from '@angular/core';
 import { Subject } from 'rxjs';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -40,8 +40,16 @@ import { getCurrentAuthState } from '@core/auth/auth.selectors';
 })
 export class ResourcesLibraryComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 
+  @Input()
+  standalone = false;
+
+  @Input()
+  resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS, ResourceType.GENERAL];
+
+  @Input()
+  defaultResourceType = ResourceType.LWM2M_MODEL;
+
   readonly resourceType = ResourceType;
-  readonly resourceTypes = [ResourceType.LWM2M_MODEL, ResourceType.PKCS_12, ResourceType.JKS];
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
   readonly maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
@@ -49,8 +57,8 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
-              @Inject('entity') protected entityValue: Resource,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Resource>,
+              @Optional() @Inject('entity') protected entityValue: Resource,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Resource>,
               public fb: FormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
@@ -82,8 +90,17 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
-      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
+      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []],
+      descriptor: this.fb.group({
+        mediaType: ['']
+      })
     });
+  }
+
+  mediaTypeChange(mediaType: string): void {
+    if (this.entityForm.get('resourceType').value === ResourceType.GENERAL) {
+      this.entityForm.get('descriptor').get('mediaType').patchValue(mediaType);
+    }
   }
 
   updateForm(entity: Resource): void {
@@ -95,6 +112,10 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     if (this.isEdit && this.entityForm && !this.isAdd) {
       this.entityForm.get('resourceType').disable({ emitEvent: false });
       this.entityForm.get('fileName').disable({ emitEvent: false });
+      this.entityForm.get('data').disable({ emitEvent: false });
+    }
+    if (this.isAdd && this.resourceTypes.length === 1) {
+      this.entityForm.get('resourceType').disable({ emitEvent: false });
     }
   }
 
@@ -138,7 +159,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   private observeResourceTypeChange(): void {
     this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.LWM2M_MODEL),
+      startWith(this.defaultResourceType || ResourceType.LWM2M_MODEL),
       takeUntil(this.destroy$)
     ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
   }

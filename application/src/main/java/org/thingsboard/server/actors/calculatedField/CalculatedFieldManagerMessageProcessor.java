@@ -35,9 +35,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldInitMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldInitProfileEntityMsg;
-import org.thingsboard.server.common.msg.cf.CalculatedFieldLinkInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -117,37 +114,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         log.debug("[{}] Processing CF actor init message.", msg.getTenantId().getId());
         initEntityProfileCache();
         initCalculatedFields();
-        msg.getCallback().onSuccess();
-    }
-
-    public void onProfileEntityMsg(CalculatedFieldInitProfileEntityMsg msg) {
-        log.debug("[{}] Processing profile entity message.", msg.getTenantId().getId());
-        entityProfileCache.add(msg.getProfileEntityId(), msg.getEntityId());
-        msg.getCallback().onSuccess();
-    }
-
-    public void onFieldInitMsg(CalculatedFieldInitMsg msg) throws CalculatedFieldException {
-        log.debug("[{}] Processing CF init message.", msg.getCf().getId());
-        var cf = msg.getCf();
-        var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
-        try {
-            cfCtx.init();
-        } catch (Exception e) {
-            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
-        }
-        calculatedFields.put(cf.getId(), cfCtx);
-        // We use copy on write lists to safely pass the reference to another actor for the iteration.
-        // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-        entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
-        msg.getCallback().onSuccess();
-    }
-
-    public void onLinkInitMsg(CalculatedFieldLinkInitMsg msg) {
-        log.debug("[{}] Processing CF link init message for entity [{}].", msg.getLink().getCalculatedFieldId(), msg.getLink().getEntityId());
-        var link = msg.getLink();
-        // We use copy on write lists to safely pass the reference to another actor for the iteration.
-        // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link);
         msg.getCallback().onSuccess();
     }
 
@@ -321,29 +287,29 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     newCfCtx.init();
                 } catch (Exception e) {
                     throw CalculatedFieldException.builder().ctx(newCfCtx).eventEntity(newCfCtx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
-                }
-                calculatedFields.put(newCf.getId(), newCfCtx);
-                List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
-                List<CalculatedFieldCtx> newCfList = new CopyOnWriteArrayList<>();
-                boolean found = false;
-                for (CalculatedFieldCtx oldCtx : oldCfList) {
-                    if (oldCtx.getCfId().equals(newCf.getId())) {
-                        newCfList.add(newCfCtx);
-                        found = true;
-                    } else {
-                        newCfList.add(oldCtx);
+                } finally {
+                    calculatedFields.put(newCf.getId(), newCfCtx);
+                    List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
+                    List<CalculatedFieldCtx> newCfList = new CopyOnWriteArrayList<>();
+                    boolean found = false;
+                    for (CalculatedFieldCtx oldCtx : oldCfList) {
+                        if (oldCtx.getCfId().equals(newCf.getId())) {
+                            newCfList.add(newCfCtx);
+                            found = true;
+                        } else {
+                            newCfList.add(oldCtx);
+                        }
                     }
+                    if (!found) {
+                        newCfList.add(newCfCtx);
+                    }
+                    // We use copy on write lists to safely pass the reference to another actor for the iteration.
+                    // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
+                    entityIdCalculatedFields.put(newCf.getEntityId(), newCfList);
+                    deleteLinks(oldCfCtx);
+                    addLinks(newCf);
                 }
-                if (!found) {
-                    newCfList.add(newCfCtx);
-                }
-                entityIdCalculatedFields.put(newCf.getEntityId(), newCfList);
 
-                deleteLinks(oldCfCtx);
-                addLinks(newCf);
-
-                // We use copy on write lists to safely pass the reference to another actor for the iteration.
-                // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 var stateChanges = newCfCtx.hasStateChanges(oldCfCtx);
                 if (stateChanges || newCfCtx.hasOtherSignificantChanges(oldCfCtx)) {
                     initCf(newCfCtx, callback, stateChanges);
@@ -566,18 +532,36 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         cfs.forEach(cf -> {
             log.trace("Processing calculated field record: {}", cf);
             try {
-                onFieldInitMsg(new CalculatedFieldInitMsg(cf.getTenantId(), cf));
+                initCalculatedField(cf);
             } catch (CalculatedFieldException e) {
                 log.error("Failed to process calculated field record: {}", cf, e);
             }
         });
-        calculatedFields.values().forEach(cf -> {
-            entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf);
-        });
         PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(pageLink -> cfDaoService.findAllCalculatedFieldLinksByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
         cfls.forEach(link -> {
-            onLinkInitMsg(new CalculatedFieldLinkInitMsg(link.getTenantId(), link));
+            log.trace("Processing calculated field link record: {}", link);
+            initCalculatedFieldLink(link);
         });
+    }
+
+    private void initCalculatedField(CalculatedField cf) throws CalculatedFieldException {
+        var cfCtx = new CalculatedFieldCtx(cf, systemContext.getTbelInvokeService(), systemContext.getApiLimitService());
+        try {
+            cfCtx.init();
+        } catch (Exception e) {
+            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
+        } finally {
+            calculatedFields.put(cf.getId(), cfCtx);
+            // We use copy on write lists to safely pass the reference to another actor for the iteration.
+            // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
+            entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
+        }
+    }
+
+    private void initCalculatedFieldLink(CalculatedFieldLink link) {
+        // We use copy on write lists to safely pass the reference to another actor for the iteration.
+        // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
+        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link);
     }
 
     private void initEntityProfileCache() {

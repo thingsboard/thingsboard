@@ -13,22 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.dao.resource;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import com.google.common.util.concurrent.FluentFuture;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 
-@Data
-public class CalculatedFieldLinkInitMsg implements ToCalculatedFieldSystemMsg {
+public interface TbResourceDataCache {
 
-    private final TenantId tenantId;
-    private final CalculatedFieldLink link;
+    FluentFuture<TbResourceDataInfo> getResourceDataInfoAsync(TenantId tenantId, TbResourceId resourceId);
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_LINK_INIT_MSG;
-    }
+    void evictResourceData(TenantId tenantId, TbResourceId resourceId);
 }

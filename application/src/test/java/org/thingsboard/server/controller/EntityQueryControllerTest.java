@@ -519,6 +519,67 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         Assert.assertEquals(1, filteredAssetAlamData.getTotalElements());
     }
 
+    @Test
+    public void testFindAlarmsWithEntityFilterAndLatestValues() throws Exception {
+        loginTenantAdmin();
+        List<Device> devices = new ArrayList<>();
+        List<String> temps = new ArrayList<>();
+        List<String> deviceNames = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Device device = new Device();
+            device.setCustomerId(customerId);
+            device.setName("Device" + i);
+            device.setType("default");
+            device.setLabel("testLabel" + (int) (Math.random() * 1000));
+            device = doPost("/api/device", device, Device.class);
+            devices.add(device);
+            deviceNames.add(device.getName());
+
+            int temp = i * 10;
+            temps.add(String.valueOf(temp));
+            JsonNode content = JacksonUtil.toJsonNode("{\"temperature\": " + temp + "}");
+            doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + device.getUuidId() + "/timeseries/SERVER_SCOPE", content)
+                    .andExpect(status().isOk());
+            Thread.sleep(1);
+        }
+
+        for (int i = 0; i < devices.size(); i++) {
+            Alarm alarm = new Alarm();
+            alarm.setCustomerId(customerId);
+            alarm.setOriginator(devices.get(i).getId());
+            String type = "device alarm" + i;
+            alarm.setType(type);
+            alarm.setSeverity(AlarmSeverity.WARNING);
+            doPost("/api/alarm", alarm, Alarm.class);
+            Thread.sleep(1);
+        }
+
+        AlarmDataPageLink pageLink = new AlarmDataPageLink();
+        pageLink.setPage(0);
+        pageLink.setPageSize(100);
+        pageLink.setSortOrder(new EntityDataSortOrder(new EntityKey(EntityKeyType.ALARM_FIELD, "created_time")));
+
+        List<EntityKey> alarmFields = new ArrayList<>();
+        alarmFields.add(new EntityKey(EntityKeyType.ALARM_FIELD, "type"));
+
+        List<EntityKey> entityFields = new ArrayList<>();
+        entityFields.add(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        List<EntityKey> latestValues = new ArrayList<>();
+        latestValues.add(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+
+        EntityTypeFilter deviceTypeFilter = new EntityTypeFilter();
+        deviceTypeFilter.setEntityType(EntityType.DEVICE);
+        AlarmDataQuery deviceAlarmQuery =  new AlarmDataQuery(deviceTypeFilter, pageLink, entityFields, latestValues, null, alarmFields);
+
+        PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(deviceAlarmQuery, 10);
+        List<String> retrievedAlarmTemps = alarmPageData.getData().stream().map(alarmData -> alarmData.getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).toList();
+        assertThat(retrievedAlarmTemps).containsExactlyInAnyOrderElementsOf(temps);
+
+        List<String> retrievedDeviceNames = alarmPageData.getData().stream().map(alarmData -> alarmData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).toList();
+        assertThat(retrievedDeviceNames).containsExactlyInAnyOrderElementsOf(deviceNames);
+    }
+
     private void testCountAlarmsByQuery(List<Alarm> alarms) throws Exception {
         AlarmCountQuery countQuery = new AlarmCountQuery();
 
@@ -953,7 +1014,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         });
 
-        EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter);
+        EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter, keyFilters);
         countByQueryAndCheck(countQuery, 97);
     }
 

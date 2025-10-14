@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form (ngSubmit)="save()" style="width: 600px;">
+  <mat-toolbar color="primary">
+    <h2>{{ 'resource.add' | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <tb-resources-library #resourcesComponent
+                          [standalone]="true"
+                          [entity]="resources"
+                          [defaultResourceType]="ResourceType.GENERAL"
+                          [resourceTypes]="[ResourceType.GENERAL]"
+                          [isEdit]="true">
+    </tb-resources-library>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || resourcesComponent.entityForm?.invalid || !resourcesComponent.entityForm?.dirty">
+      {{ (isAdd  ? 'action.add' : 'action.save') | translate }}
+    </button>
+  </div>
+</form>

@@ -13,24 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import lombok.NoArgsConstructor;
 
 @Data
-public class CalculatedFieldInitProfileEntityMsg implements ToCalculatedFieldSystemMsg {
+@AllArgsConstructor
+@NoArgsConstructor
+public class TbResourceDataInfo {
 
-    private final TenantId tenantId;
-    private final EntityId profileEntityId;
-    private final EntityId entityId;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_INIT_PROFILE_ENTITY_MSG;
-    }
+    private byte[] data;
+    private JsonNode descriptor;
 
 }

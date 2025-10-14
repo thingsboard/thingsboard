@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.cf;
+package org.thingsboard.server.common.data;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
 @Data
-public class CalculatedFieldInitMsg implements ToCalculatedFieldSystemMsg {
-
-    private final TenantId tenantId;
-    private final CalculatedField cf;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_INIT_MSG;
-    }
+@EqualsAndHashCode
+@AllArgsConstructor
+@NoArgsConstructor
+public class GeneralFileDescriptor {
+    private String mediaType;
 }

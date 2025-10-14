@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -31,7 +30,6 @@ import org.thingsboard.server.common.data.util.TbPair;
 
 import java.util.Arrays;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "related entity data",
@@ -42,7 +40,9 @@ import java.util.Arrays;
                 "If multiple related entities are found, only first entity is used for message enrichment, other entities are discarded. " +
                 "Useful when you need to retrieve data from an entity that has a relation to the message originator and use them for further message processing.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeRelatedAttributesConfig")
+        configDirective = "tbEnrichmentNodeRelatedAttributesConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/related-entity-data/"
+)
 public class TbGetRelatedAttributeNode extends TbAbstractGetEntityDataNode<EntityId> {
 
     private static final String RELATED_ENTITY_NOT_FOUND_MESSAGE = "Failed to find related entity to message originator using relation query specified in the configuration!";

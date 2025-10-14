@@ -186,4 +186,15 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
         assertFalse(callback.isPubAckReceived());
     }
 
+    @Override
+    public void testAckIsReceivedOnFailedPublishMessage() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device json payload")
+                .gatewayName("Test Post Telemetry gateway json payload")
+                .transportPayloadType(TransportPayloadType.JSON)
+                .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
+                .build();
+        processBeforeTest(configProperties);
+        super.testAckIsReceivedOnFailedPublishMessage();
+    }
 }
