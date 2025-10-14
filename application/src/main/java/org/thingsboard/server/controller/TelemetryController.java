@@ -31,6 +31,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.annotation.Nullable;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -45,6 +46,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.rule.engine.api.AttributesDeleteRequest;
@@ -84,11 +86,15 @@ import org.thingsboard.server.service.telemetry.AttributeData;
 import org.thingsboard.server.service.telemetry.TbTelemetryService;
 import org.thingsboard.server.service.telemetry.TsData;
 
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -208,12 +214,12 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getAttributes(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
+            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) List<String> keysStr, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keysStr));
+                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keys));
     }
-
 
     @ApiOperation(value = "Get attributes by scope (getAttributesByScope)",
             notes = "Returns all attributes of a specified scope that belong to specified entity." +
@@ -231,10 +237,11 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED)) @PathVariable("scope") AttributeScope scope,
-            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr) throws ThingsboardException {
+            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) List<String> strKeys, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_ATTRIBUTES, entityType, entityIdStr,
-                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
+                (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keys));
     }
 
     @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
@@ -268,12 +275,13 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getLatestTimeseries(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = TELEMETRY_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) String keysStr,
+            @Parameter(description = TELEMETRY_KEYS_DESCRIPTION) @RequestParam(name = "keys", required = false) List<String> strKeys,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
-            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.READ_TELEMETRY, entityType, entityIdStr,
-                (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictDataTypes));
+                (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keys, useStrictDataTypes));
     }
 
     @ApiOperation(value = "Get time series data (getTimeseries)",
@@ -291,7 +299,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> getTimeseries(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = TELEMETRY_KEYS_BASE_DESCRIPTION, required = true) @RequestParam(name = "keys") String keys,
+            @Parameter(description = TELEMETRY_KEYS_BASE_DESCRIPTION, required = true) @RequestParam(name = "keys") List<String> strkeys,
             @Parameter(description = "A long value representing the start timestamp of the time range in milliseconds, UTC.")
             @RequestParam(name = "startTs") Long startTs,
             @Parameter(description = "A long value representing the end timestamp of the time range in milliseconds, UTC.")
@@ -312,9 +320,10 @@ public class TelemetryController extends BaseController {
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(name = "orderBy", defaultValue = "DESC") String orderBy,
             @Parameter(description = STRICT_DATA_TYPES_DESCRIPTION)
-            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes) throws ThingsboardException {
+            @RequestParam(name = "useStrictDataTypes", required = false, defaultValue = "false") Boolean useStrictDataTypes, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         DeferredResult<ResponseEntity> response = new DeferredResult<>();
-        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), toKeysList(keys), startTs, endTs,
+        Futures.addCallback(tbTelemetryService.getTimeseries(EntityIdFactory.getByTypeAndId(entityType, entityIdStr), keys, startTs, endTs,
                         intervalType, interval, timeZone, limit, Aggregation.valueOf(aggStr), orderBy, useStrictDataTypes, getCurrentUser()),
                 getTsKvListCallback(response, useStrictDataTypes), MoreExecutors.directExecutor());
         return response;
@@ -466,7 +475,7 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> deleteEntityTimeseries(
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
-            @Parameter(description = TELEMETRY_KEYS_DESCRIPTION, required = true) @RequestParam(name = "keys") String keysStr,
+            @Parameter(description = TELEMETRY_KEYS_DESCRIPTION, required = true) @RequestParam(name = "keys") List<String> keysStr,
             @Parameter(description = "A boolean value to specify if should be deleted all data for selected keys or only data that are in the selected time range.")
             @RequestParam(name = "deleteAllDataForKeys", defaultValue = "false") boolean deleteAllDataForKeys,
             @Parameter(description = "A long value representing the start timestamp of removal time range in milliseconds.")
@@ -476,16 +485,16 @@ public class TelemetryController extends BaseController {
             @Parameter(description = "If the parameter is set to true, the latest telemetry can be removed, otherwise, in case that parameter is set to false the latest value will not removed.")
             @RequestParam(name = "deleteLatest", required = false, defaultValue = "true") boolean deleteLatest,
             @Parameter(description = "If the parameter is set to true, the latest telemetry will be rewritten in case that current latest value was removed, otherwise, in case that parameter is set to false the new latest value will not set.")
-            @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted) throws ThingsboardException {
+            @RequestParam(name = "rewriteLatestIfDeleted", defaultValue = "false") boolean rewriteLatestIfDeleted, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-        return deleteTimeseries(entityId, keysStr, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted, deleteLatest);
+        return deleteTimeseries(entityId, keys, deleteAllDataForKeys, startTs, endTs, rewriteLatestIfDeleted, deleteLatest);
     }
 
-    private DeferredResult<ResponseEntity> deleteTimeseries(EntityId entityIdStr, String keysStr, boolean deleteAllDataForKeys,
+    private DeferredResult<ResponseEntity> deleteTimeseries(EntityId entityIdStr, List<String> keys, boolean deleteAllDataForKeys,
                                                             Long startTs, Long endTs, boolean rewriteLatestIfDeleted, boolean deleteLatest) throws ThingsboardException {
-        List<String> keys = toKeysList(keysStr);
         if (keys.isEmpty()) {
-            return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
+            return getImmediateDeferredResult("Empty keys: " + keys, HttpStatus.BAD_REQUEST);
         }
         SecurityUser user = getCurrentUser();
 
@@ -547,9 +556,10 @@ public class TelemetryController extends BaseController {
     public DeferredResult<ResponseEntity> deleteDeviceAttributes(
             @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION, required = true) @PathVariable(DEVICE_ID) String deviceIdStr,
             @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"}, requiredMode = Schema.RequiredMode.REQUIRED)) @PathVariable("scope") AttributeScope scope,
-            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION, required = true) @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
+            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION, required = true) @RequestParam(name = "keys") List<String> strKeys, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, deviceIdStr);
-        return deleteAttributes(entityId, scope, keysStr);
+        return deleteAttributes(entityId, scope, keys);
     }
 
     @ApiOperation(value = "Delete entity attributes (deleteEntityAttributes)",
@@ -570,15 +580,15 @@ public class TelemetryController extends BaseController {
             @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true, schema = @Schema(defaultValue = "DEVICE")) @PathVariable("entityType") String entityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @PathVariable("entityId") String entityIdStr,
             @Parameter(description = ATTRIBUTES_SCOPE_DESCRIPTION, required = true, schema = @Schema(allowableValues = {"SERVER_SCOPE", "SHARED_SCOPE", "CLIENT_SCOPE"})) @PathVariable("scope") AttributeScope scope,
-            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION, required = true) @RequestParam(name = "keys") String keysStr) throws ThingsboardException {
+            @Parameter(description = ATTRIBUTES_KEYS_DESCRIPTION, required = true) @RequestParam(name = "keys") List<String> keysStr, HttpServletRequest request) throws ThingsboardException {
+        List<String> keys = getKeysFromRequest(request);
         EntityId entityId = EntityIdFactory.getByTypeAndId(entityType, entityIdStr);
-        return deleteAttributes(entityId, scope, keysStr);
+        return deleteAttributes(entityId, scope, keys);
     }
 
-    private DeferredResult<ResponseEntity> deleteAttributes(EntityId entityIdSrc, AttributeScope scope, String keysStr) throws ThingsboardException {
-        List<String> keys = toKeysList(keysStr);
+    private DeferredResult<ResponseEntity> deleteAttributes(EntityId entityIdSrc, AttributeScope scope, List<String> keys) throws ThingsboardException {
         if (keys.isEmpty()) {
-            return getImmediateDeferredResult("Empty keys: " + keysStr, HttpStatus.BAD_REQUEST);
+            return getImmediateDeferredResult("Empty keys: " + keys, HttpStatus.BAD_REQUEST);
         }
         SecurityUser user = getCurrentUser();
 
@@ -709,18 +719,17 @@ public class TelemetryController extends BaseController {
         });
     }
 
-    private void getLatestTimeseriesValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, String keys, Boolean useStrictDataTypes) {
+    private void getLatestTimeseriesValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, List<String> keys, Boolean useStrictDataTypes) {
         ListenableFuture<List<TsKvEntry>> future;
-        if (StringUtils.isEmpty(keys)) {
+        if (keys.isEmpty()) {
             future = tsService.findAllLatest(user.getTenantId(), entityId);
         } else {
-            future = tsService.findLatest(user.getTenantId(), entityId, toKeysList(keys));
+            future = tsService.findLatest(user.getTenantId(), entityId, keys);
         }
         Futures.addCallback(future, getTsKvListCallback(result, useStrictDataTypes), MoreExecutors.directExecutor());
     }
 
-    private void getAttributeValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, AttributeScope scope, String keys) {
-        List<String> keyList = toKeysList(keys);
+    private void getAttributeValuesCallback(@Nullable DeferredResult<ResponseEntity> result, SecurityUser user, EntityId entityId, AttributeScope scope, List<String> keyList) {
         FutureCallback<List<AttributeKvEntry>> callback = getAttributeValuesToResponseCallback(result, user, scope, entityId, keyList);
         if (scope != null) {
             if (keyList != null && !keyList.isEmpty()) {
@@ -871,14 +880,6 @@ public class TelemetryController extends BaseController {
                 }, executor);
     }
 
-    private List<String> toKeysList(String keys) {
-        List<String> keyList = null;
-        if (!StringUtils.isEmpty(keys)) {
-            keyList = Arrays.asList(keys.split(","));
-        }
-        return keyList;
-    }
-
     private DeferredResult<ResponseEntity> getImmediateDeferredResult(String message, HttpStatus status) {
         DeferredResult<ResponseEntity> result = new DeferredResult<>();
         result.setResult(new ResponseEntity<>(message, status));
@@ -898,6 +899,16 @@ public class TelemetryController extends BaseController {
             return toJsonNode(entry.getJsonValue().get());
         }
         return entry.getValue();
+    }
+
+    // the method introduced to deal with keys containing comma
+    private static List<String> getKeysFromRequest(HttpServletRequest request) {
+        String encodedKeys = UriComponentsBuilder.fromUriString(request.getRequestURL().toString() + "?" + request.getQueryString())
+                .build()
+                .getQueryParams()
+                .getFirst("keys");
+        return StringUtils.isNotEmpty(encodedKeys) ? Arrays.stream(encodedKeys.split(","))
+                .map(k -> URLDecoder.decode(k, StandardCharsets.UTF_8)).toList() : Collections.emptyList();
     }
 
 }
