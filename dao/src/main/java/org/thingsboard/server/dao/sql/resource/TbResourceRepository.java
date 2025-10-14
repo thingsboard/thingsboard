@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.TbResourceEntity;
 
@@ -101,4 +102,6 @@ public interface TbResourceRepository extends JpaRepository<TbResourceEntity, UU
     @Query("SELECT r.id FROM TbResourceInfoEntity r WHERE r.tenantId = :tenantId")
     Page<UUID> findIdsByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
+    @Query("SELECT new org.thingsboard.server.common.data.TbResourceDataInfo(r.data, r.descriptor) FROM TbResourceEntity r WHERE r.id = :id")
+    TbResourceDataInfo getDataInfoById(UUID id);
 }

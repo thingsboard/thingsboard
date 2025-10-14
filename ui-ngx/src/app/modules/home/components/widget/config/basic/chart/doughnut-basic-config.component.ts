@@ -86,9 +86,11 @@ export class DoughnutBasicConfigComponent extends LatestChartBasicConfigComponen
     if (totalEnabled) {
       latestChartWidgetConfigForm.get('totalValueFont').enable();
       latestChartWidgetConfigForm.get('totalValueColor').enable();
+      latestChartWidgetConfigForm.get('legendShowTotal').disable();
     } else {
       latestChartWidgetConfigForm.get('totalValueFont').disable();
       latestChartWidgetConfigForm.get('totalValueColor').disable();
+      latestChartWidgetConfigForm.get('legendShowTotal').enable();
     }
   }
 }

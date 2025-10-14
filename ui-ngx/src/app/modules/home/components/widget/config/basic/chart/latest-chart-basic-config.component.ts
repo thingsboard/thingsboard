@@ -179,6 +179,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
       legendLabelColor: [settings.legendLabelColor, []],
       legendValueFont: [settings.legendValueFont, []],
       legendValueColor: [settings.legendValueColor, []],
+      legendShowTotal: [settings.legendShowTotal, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipValueType: [settings.tooltipValueType, []],
@@ -228,6 +229,7 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
     this.widgetConfig.config.settings.legendLabelColor = config.legendLabelColor;
     this.widgetConfig.config.settings.legendValueFont = config.legendValueFont;
     this.widgetConfig.config.settings.legendValueColor = config.legendValueColor;
+    this.widgetConfig.config.settings.legendShowTotal = config.legendShowTotal;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
     this.widgetConfig.config.settings.tooltipValueType = config.tooltipValueType;
@@ -287,12 +289,14 @@ export abstract class LatestChartBasicConfigComponent<S extends LatestChartWidge
       this.latestChartWidgetConfigForm.get('legendLabelColor').enable();
       this.latestChartWidgetConfigForm.get('legendValueFont').enable();
       this.latestChartWidgetConfigForm.get('legendValueColor').enable();
+      this.latestChartWidgetConfigForm.get('legendShowTotal').enable();
     } else {
       this.latestChartWidgetConfigForm.get('legendPosition').disable();
       this.latestChartWidgetConfigForm.get('legendLabelFont').disable();
       this.latestChartWidgetConfigForm.get('legendLabelColor').disable();
       this.latestChartWidgetConfigForm.get('legendValueFont').disable();
       this.latestChartWidgetConfigForm.get('legendValueColor').disable();
+      this.latestChartWidgetConfigForm.get('legendShowTotal').disable();
     }
     if (showTooltip) {
       this.latestChartWidgetConfigForm.get('tooltipValueType').enable();

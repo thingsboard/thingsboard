@@ -20,11 +20,16 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 
 import java.util.List;
 import java.util.Map;
+
+import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
@@ -34,6 +39,7 @@ import java.util.Map;
 @JsonSubTypes({
         @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
+        @JsonSubTypes.Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
 })
 public interface CalculatedFieldState {
 
@@ -48,7 +54,7 @@ public interface CalculatedFieldState {
 
     boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();
@@ -62,6 +68,15 @@ public interface CalculatedFieldState {
 
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
 
-    void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx);
+    default void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx) {
+        if (entry instanceof TsRollingArgumentEntry || entry instanceof GeofencingArgumentEntry) {
+            return;
+        }
+        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, singleValueArgumentEntry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
+                throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
+            }
+        }
+    }
 
 }

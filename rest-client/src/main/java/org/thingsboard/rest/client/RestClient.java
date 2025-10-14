@@ -74,6 +74,7 @@ import org.thingsboard.server.common.data.UpdateMessage;
 import org.thingsboard.server.common.data.UsageInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.UserEmailInfo;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
@@ -98,6 +99,7 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -3133,7 +3135,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypes?" + getUrlParams(pageLink) +
-                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -3221,7 +3223,7 @@ public class RestClient implements Closeable {
         addWidgetInfoFiltersToParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList, params);
         return restTemplate.exchange(
                 baseURL + "/api/widgetTypesInfos?widgetsBundleId={widgetsBundleId}&" + getUrlParams(pageLink) +
-                getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
+                        getWidgetTypeInfoPageRequestUrlParams(tenantOnly, fullSearch, deprecatedFilter, widgetTypeList),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<WidgetTypeInfo>>() {
@@ -4402,6 +4404,29 @@ public class RestClient implements Closeable {
             }
         }
     }
+
+    public AiModel saveAiModel(AiModel aiModel) {
+        return restTemplate.postForEntity(baseURL + "/api/ai/model", aiModel, AiModel.class).getBody();
+    }
+
+    public Optional<AiModel> getAiModel(AiModelId aiModelId) {
+        try {
+            ResponseEntity<AiModel> response = restTemplate.getForEntity(
+                    baseURL + "/api/aiModel/{aiModelId}", AiModel.class, aiModelId.getId());
+            return Optional.ofNullable(response.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public void deleteAiModel(AiModelId aiModelId) {
+        restTemplate.delete(baseURL + "/api/aiModel/{aiModelId}", aiModelId.getId());
+    }
+
 
     private String getTimeUrlParams(TimePageLink pageLink) {
         String urlParams = getUrlParams(pageLink);

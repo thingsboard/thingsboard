@@ -64,6 +64,7 @@ export const pieChartWidgetPieChartSettings = (settings: PieChartWidgetSettings)
   showTotal: false,
   animation: settings.animation,
   showLegend: settings.showLegend,
+  legendShowTotal: settings.legendShowTotal,
   showLabel: settings.showLabel,
   labelPosition: settings.labelPosition,
   labelFont: settings.labelFont,
