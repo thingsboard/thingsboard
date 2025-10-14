@@ -158,9 +158,10 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   private getExpressionLabel(entity: CalculatedField): string {
     if (entity.type === CalculatedFieldType.SCRIPT) {
       return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
-    } else {
-      return entity.configuration?.expression ?? '';
+    } else if (entity.type === CalculatedFieldType.SIMPLE) {
+      return entity.configuration.expression ?? '';
     }
+    return '';
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
@@ -287,6 +288,9 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
+    if (calculatedField.type === CalculatedFieldType.GEOFENCING || calculatedField.type === CalculatedFieldType.SIMPLE) {
+      return of(null);
+    }
     const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
       const type = calculatedField.configuration.arguments[key].refEntityKey.type;
       acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)

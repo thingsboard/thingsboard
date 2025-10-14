@@ -1053,7 +1053,8 @@
         "type": {
             "simple": "Simple",
             "script": "Script",
-            "geofencing" : "Geofencing"
+            "geofencing" : "Geofencing",
+            "propagation": "Propagation"
         },
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",

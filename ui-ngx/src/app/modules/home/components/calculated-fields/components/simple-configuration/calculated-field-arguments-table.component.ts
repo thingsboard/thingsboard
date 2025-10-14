@@ -43,7 +43,9 @@ import {
   CalculatedFieldArgumentValue,
   CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
-import { CalculatedFieldArgumentPanelComponent } from '@home/components/calculated-fields/components/public-api';
+import {
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/simple-configuration/calculated-field-argument-panel.component';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
