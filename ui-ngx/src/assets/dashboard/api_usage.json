@@ -98,7 +98,8 @@
                     "settings": {
                         "showTimestamp": true,
                         "displayPagination": true,
-                        "defaultPageSize": 10
+                        "defaultPageSize": 10,
+                        "tabSortKey": "timestamp"
                     },
                     "title": "{i18n:api-usage.exceptions}",
                     "dropShadow": true,
