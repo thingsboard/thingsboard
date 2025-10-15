@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors.calculatedField;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
@@ -27,16 +28,18 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 public class CalculatedFieldRelatedEntityMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
-    private final EntityId entityId;
+    private final EntityId relatedEntityId;
+    private final ActionType action;
     private final CalculatedFieldCtx calculatedField;
     private final TbCallback callback;
 
     public CalculatedFieldRelatedEntityMsg(TenantId tenantId,
-                                           EntityId entityId,
+                                           EntityId relatedEntityId, ActionType action,
                                            CalculatedFieldCtx calculatedField,
                                            TbCallback callback) {
         this.tenantId = tenantId;
-        this.entityId = entityId;
+        this.relatedEntityId = relatedEntityId;
+        this.action = action;
         this.calculatedField = calculatedField;
         this.callback = callback;
     }

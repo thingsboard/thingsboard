@@ -171,7 +171,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 throw cfe;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
-        }    }
+        }
+    }
 
     public void process(CalculatedFieldArgumentResetMsg msg) throws CalculatedFieldException {
         log.debug("[{}] Processing CF argument reset msg.", entityId);
@@ -202,61 +203,89 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 actorCtx.stop(actorCtx.getSelf());
             }
         } else {
-            EntityId msgEntityId = msg.getEntityId();
-            if (msgEntityId instanceof CalculatedFieldId cfId) {
-                var state = removeState(cfId);
-                if (state != null) {
-                    cfStateService.deleteState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
-                } else {
-                    msg.getCallback().onSuccess();
-                }
+            var cfId = new CalculatedFieldId(msg.getEntityId().getId());
+            var state = removeState(cfId);
+            if (state != null) {
+                cfStateService.deleteState(new CalculatedFieldEntityCtxId(tenantId, cfId, entityId), msg.getCallback());
             } else {
-                if (states.isEmpty()) {
-                    msg.getCallback().onSuccess();
-                }
-                for (Map.Entry<CalculatedFieldId, CalculatedFieldState> entry : states.entrySet()) {
-                    LatestValuesAggregationCalculatedFieldState state = (LatestValuesAggregationCalculatedFieldState) entry.getValue();
-                    state.getArguments().forEach((argName, argEntry) -> {
-                        AggArgumentEntry aggArgEntry = (AggArgumentEntry) argEntry;
-                        aggArgEntry.getAggInputs().remove(msgEntityId);
-                    });
-                    state.getInputs().remove(msgEntityId);
-                    state.setLastMetricsEvalTs(-1);
-                    processStateIfReady(state, Collections.emptyMap(), state.getCtx(), Collections.emptyList(), null, null, msg.getCallback());
-                }
+                msg.getCallback().onSuccess();
             }
         }
     }
 
     public void process(CalculatedFieldRelatedEntityMsg msg) throws CalculatedFieldException {
-        log.debug("[{}] Processing CF related entity msg.", msg.getEntityId());
-        CalculatedFieldCtx cfCtx = msg.getCalculatedField();
-        var state = states.get(cfCtx.getCfId());
-        Map<String, ArgumentEntry> fetchedArguments = fetchAggArguments(msg.getCalculatedField(), msg.getEntityId());
+        log.debug("[{}] Processing CF {} related entity msg.", msg.getRelatedEntityId(), msg.getAction());
+        switch (msg.getAction()) {
+            case UPDATED -> handleRelationUpdate(msg);
+            case DELETED -> handleRelationDelete(msg);
+            default -> msg.getCallback().onSuccess();
+        }
+    }
+
+    private void handleRelationUpdate(CalculatedFieldRelatedEntityMsg msg) throws CalculatedFieldException {
+        CalculatedFieldCtx ctx = msg.getCalculatedField();
+        var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
+        var state = states.get(ctx.getCfId());
         try {
+            boolean justRestored = false;
             if (state == null) {
-                state = createState(cfCtx);
-            } else {
-                state.setCtx(cfCtx, actorCtx);
+                state = createState(ctx);
+                justRestored = true;
             }
             if (state.isSizeOk()) {
-                if (state instanceof LatestValuesAggregationCalculatedFieldState latestValuesState) {
-                    latestValuesState.setLastMetricsEvalTs(-1);
+                Map<String, ArgumentEntry> updatedArgs = new HashMap<>();
+                if (!justRestored) {
+                    updatedArgs = updateAggregationState(msg.getRelatedEntityId(), state, ctx);
                 }
-                state.update(fetchedArguments, cfCtx);
-                state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, cfCtx.getCfId(), entityId), cfCtx.getMaxStateSize());
-                states.put(cfCtx.getCfId(), state);
-                processStateIfReady(state, fetchedArguments, cfCtx, Collections.singletonList(cfCtx.getCfId()), null, null, msg.getCallback());
+                processStateIfReady(state, updatedArgs, ctx, new ArrayList<>(), null, null, callback);
             } else {
-                throw new RuntimeException(cfCtx.getSizeExceedsLimitMessage());
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
             }
         } catch (Exception e) {
-            log.debug("[{}][{}] Failed to initialize CF state", entityId, cfCtx.getCfId(), e);
+            log.debug("[{}][{}] Failed to initialize CF state", entityId, ctx.getCfId(), e);
             if (e instanceof CalculatedFieldException cfe) {
                 throw cfe;
             }
-            throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(entityId).cause(e).build();
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
+    }
+
+    private Map<String, ArgumentEntry> updateAggregationState(EntityId relatedEntityId, CalculatedFieldState state, CalculatedFieldCtx ctx) {
+        Map<String, ArgumentEntry> fetchedArgs = fetchAggArguments(ctx, relatedEntityId);
+        Map<String, ArgumentEntry> updatedArgs = state.update(fetchedArgs, ctx);
+
+        if (state instanceof LatestValuesAggregationCalculatedFieldState latestValuesState) {
+            latestValuesState.setLastMetricsEvalTs(-1);
+        }
+
+        state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
+
+        return updatedArgs;
+    }
+
+    private void handleRelationDelete(CalculatedFieldRelatedEntityMsg msg) throws CalculatedFieldException {
+        CalculatedFieldCtx ctx = msg.getCalculatedField();
+        CalculatedFieldId cfId = ctx.getCfId();
+        CalculatedFieldState state = states.get(cfId);
+        if (state == null) {
+            msg.getCallback().onSuccess();
+            return;
+        }
+        if (state instanceof LatestValuesAggregationCalculatedFieldState aggState) {
+            cleanupAggregationState(msg.getRelatedEntityId(), aggState);
+            processStateIfReady(state, Collections.emptyMap(), state.getCtx(), Collections.emptyList(), null, null, msg.getCallback());
+        } else {
+            msg.getCallback().onSuccess();
+        }
+    }
+
+    private void cleanupAggregationState(EntityId relatedEntityId, LatestValuesAggregationCalculatedFieldState state) {
+        state.getArguments().values().forEach(argEntry -> {
+            AggArgumentEntry aggEntry = (AggArgumentEntry) argEntry;
+            aggEntry.getAggInputs().remove(relatedEntityId);
+        });
+        state.getInputs().remove(relatedEntityId);
+        state.setLastMetricsEvalTs(-1);
     }
 
     @SneakyThrows

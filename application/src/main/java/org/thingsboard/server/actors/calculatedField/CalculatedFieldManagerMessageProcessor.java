@@ -16,6 +16,7 @@
 package org.thingsboard.server.actors.calculatedField;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.logging.log4j.util.TriConsumer;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.actors.TbActorCtx;
@@ -29,6 +30,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
@@ -303,56 +305,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onRelationUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
         try {
-            MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
             EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
-
             EntityId toId = entityRelation.getTo();
             EntityId fromId = entityRelation.getFrom();
             String relationType = entityRelation.getType();
-            EntityId toIdProfile = getProfileId(tenantId, toId);
-            EntityId fromIdProfile = getProfileId(tenantId, fromId);
 
-            List<CalculatedFieldCtx> toIdMatches = new ArrayList<>();
-            List<CalculatedFieldCtx> cfsByToId = getCalculatedFieldsByEntityId(toId);
-            List<CalculatedFieldCtx> cfsByToProfileId = getCalculatedFieldsByEntityId(toIdProfile);
-            List<CalculatedFieldCtx> cfsByToIdOrItsProfileId = new ArrayList<>();
-            cfsByToIdOrItsProfileId.addAll(cfsByToId);
-            cfsByToIdOrItsProfileId.addAll(cfsByToProfileId);
-
-            cfsByToIdOrItsProfileId.forEach(cf -> {
-                var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                RelationPathLevel relation = configuration.getRelation();
-                if (EntitySearchDirection.TO.equals(relation.direction()) && relationType.equals(relation.relationType())) {
-                    toIdMatches.add(cf);
-                }
-            });
-
-            MultipleTbCallback toCfsCallback = new MultipleTbCallback(toIdMatches.size(), callbackForToAndFrom);
-            toIdMatches.forEach(ctx -> {
-                applyToTargetCfEntityActors(ctx, toCfsCallback, (entityId, cb) -> initRelatedEntity(entityId, fromId, ctx, cb));
-            });
-
-            List<CalculatedFieldCtx> fromIdMatches = new ArrayList<>();
-            List<CalculatedFieldCtx> cfsByFromId = getCalculatedFieldsByEntityId(fromId);
-            List<CalculatedFieldCtx> cfsByFromProfileId = getCalculatedFieldsByEntityId(fromIdProfile);
-            List<CalculatedFieldCtx> cfsByFromIdOrItsProfileId = new ArrayList<>();
-            cfsByFromIdOrItsProfileId.addAll(cfsByFromId);
-            cfsByFromIdOrItsProfileId.addAll(cfsByFromProfileId);
-
-            cfsByFromIdOrItsProfileId.forEach(cf -> {
-                var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                RelationPathLevel relation = configuration.getRelation();
-                if (EntitySearchDirection.FROM.equals(relation.direction()) && relationType.equals(relation.relationType())) {
-                    fromIdMatches.add(cf);
-                }
-            });
-
-            MultipleTbCallback fromCfsCallback = new MultipleTbCallback(fromIdMatches.size(), callbackForToAndFrom);
-            fromIdMatches.forEach(ctx -> {
-                applyToTargetCfEntityActors(ctx, fromCfsCallback, (entityId, cb) -> initRelatedEntity(entityId, toId, ctx, cb));
-            });
-
-
+            MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
+            processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, (entityId, ctx, cb) -> initRelatedEntity(entityId, fromId, ctx, cb));
+            processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, (entityId, ctx, cb) -> initRelatedEntity(entityId, toId, ctx, cb));
         } catch (Exception e) {
             callback.onSuccess();
         }
@@ -360,59 +320,43 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onRelationDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         try {
-            MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
             EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
-
             EntityId toId = entityRelation.getTo();
             EntityId fromId = entityRelation.getFrom();
             String relationType = entityRelation.getType();
-            EntityId toIdProfile = getProfileId(tenantId, toId);
-            EntityId fromIdProfile = getProfileId(tenantId, fromId);
 
-            List<CalculatedFieldCtx> toIdMatches = new ArrayList<>();
-            List<CalculatedFieldCtx> cfsByToId = getCalculatedFieldsByEntityId(toId);
-            List<CalculatedFieldCtx> cfsByToProfileId = getCalculatedFieldsByEntityId(toIdProfile);
-            List<CalculatedFieldCtx> cfsByToIdOrItsProfileId = new ArrayList<>();
-            cfsByToIdOrItsProfileId.addAll(cfsByToId);
-            cfsByToIdOrItsProfileId.addAll(cfsByToProfileId);
-
-            cfsByToIdOrItsProfileId.forEach(cf -> {
-                var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                RelationPathLevel relation = configuration.getRelation();
-                if (EntitySearchDirection.TO.equals(relation.direction()) && relationType.equals(relation.relationType())) {
-                    toIdMatches.add(cf);
-                }
-            });
-
-            MultipleTbCallback toCfsCallback = new MultipleTbCallback(toIdMatches.size(), callbackForToAndFrom);
-            toIdMatches.forEach(ctx -> {
-                applyToTargetCfEntityActors(ctx, toCfsCallback, (entityId, cb) -> deleteRelatedEntity(entityId, fromId, cb));
-            });
-
-            List<CalculatedFieldCtx> fromIdMatches = new ArrayList<>();
-            List<CalculatedFieldCtx> cfsByFromId = getCalculatedFieldsByEntityId(fromId);
-            List<CalculatedFieldCtx> cfsByFromProfileId = getCalculatedFieldsByEntityId(fromIdProfile);
-            List<CalculatedFieldCtx> cfsByFromIdOrItsProfileId = new ArrayList<>();
-            cfsByFromIdOrItsProfileId.addAll(cfsByFromId);
-            cfsByFromIdOrItsProfileId.addAll(cfsByFromProfileId);
-
-            cfsByFromIdOrItsProfileId.forEach(cf -> {
-                var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                RelationPathLevel relation = configuration.getRelation();
-                if (EntitySearchDirection.FROM.equals(relation.direction()) && relationType.equals(relation.relationType())) {
-                    fromIdMatches.add(cf);
-                }
-            });
-
-            MultipleTbCallback fromCfsCallback = new MultipleTbCallback(fromIdMatches.size(), callbackForToAndFrom);
-            fromIdMatches.forEach(ctx -> {
-                applyToTargetCfEntityActors(ctx, fromCfsCallback, (entityId, cb) -> deleteRelatedEntity(entityId, toId, cb));
-            });
-
-
+            MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
+            processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, (entityId, ctx, cb) -> deleteRelatedEntity(entityId, fromId, ctx, cb));
+            processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, (entityId, ctx, cb) -> deleteRelatedEntity(entityId, toId, ctx, cb));
         } catch (Exception e) {
             callback.onSuccess();
         }
+    }
+
+    private void processRelationByDirection(EntitySearchDirection direction,
+                                            String relationType,
+                                            EntityId mainId,
+                                            MultipleTbCallback parentCallback,
+                                            TriConsumer<EntityId, CalculatedFieldCtx, TbCallback> relationAction) {
+        List<CalculatedFieldCtx> cfsByEntityIdAndProfile = getCalculatedFieldsByEntityIdAndProfile(mainId);
+        if (cfsByEntityIdAndProfile.isEmpty()) {
+            parentCallback.onSuccess();
+            return;
+        }
+
+        List<CalculatedFieldCtx> matchingCfs = cfsByEntityIdAndProfile.stream()
+                .filter(cf -> {
+                    var config = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
+                    RelationPathLevel relation = config.getRelation();
+                    return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
+                })
+                .toList();
+
+        MultipleTbCallback directionCallback = new MultipleTbCallback(matchingCfs.size(), parentCallback);
+
+        matchingCfs.forEach(ctx ->
+                applyToTargetCfEntityActors(ctx, directionCallback, (entityId, cb) -> relationAction.accept(entityId, ctx, cb))
+        );
     }
 
     private void onCfCreated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
@@ -629,9 +573,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         EntityId entityId = msg.getEntityId();
         log.debug("Received changed owner msg from entity [{}]", entityId);
         updateEntityOwner(entityId);
-        List<CalculatedFieldCtx> cfs = new ArrayList<>();
-        cfs.addAll(getCalculatedFieldsByEntityId(entityId));
-        cfs.addAll(getCalculatedFieldsByEntityId(getProfileId(tenantId, entityId)));
+        List<CalculatedFieldCtx> cfs = getCalculatedFieldsByEntityIdAndProfile(entityId);
         if (cfs.isEmpty()) {
             msgCallback.onSuccess();
             return;
@@ -695,6 +637,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         return result;
     }
 
+    private List<CalculatedFieldCtx> getCalculatedFieldsByEntityIdAndProfile(EntityId entityId) {
+        List<CalculatedFieldCtx> cfsByEntityIdAndProfile = new ArrayList<>();
+        cfsByEntityIdAndProfile.addAll(getCalculatedFieldsByEntityId(entityId));
+        cfsByEntityIdAndProfile.addAll(getCalculatedFieldsByEntityId(getProfileId(tenantId, entityId)));
+        return cfsByEntityIdAndProfile;
+    }
+
     private List<CalculatedFieldLink> getCalculatedFieldLinksByEntityId(EntityId entityId) {
         if (entityId == null) {
             return Collections.emptyList();
@@ -722,14 +671,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         getOrCreateActor(entityId).tell(msg);
     }
 
-    private void deleteRelatedEntity(EntityId entityId, EntityId relatedEntityId, TbCallback callback) {
+    private void deleteRelatedEntity(EntityId entityId, EntityId relatedEntityId, CalculatedFieldCtx cf, TbCallback callback) {
         log.debug("Pushing delete related entity msg to specific actor [{}]", relatedEntityId);
-        getOrCreateActor(entityId).tell(new CalculatedFieldEntityDeleteMsg(tenantId, relatedEntityId, callback));
+        getOrCreateActor(entityId).tell(new CalculatedFieldRelatedEntityMsg(tenantId, relatedEntityId, ActionType.DELETED, cf, callback));
     }
 
     private void initRelatedEntity(EntityId entityId, EntityId relatedEntityId, CalculatedFieldCtx cf, TbCallback callback) {
         log.debug("Pushing init related entity msg to specific actor [{}]", relatedEntityId);
-        getOrCreateActor(entityId).tell(new CalculatedFieldRelatedEntityMsg(tenantId, relatedEntityId, cf, callback));
+        getOrCreateActor(entityId).tell(new CalculatedFieldRelatedEntityMsg(tenantId, relatedEntityId, ActionType.UPDATED, cf, callback));
     }
 
     private void deleteCfForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {
