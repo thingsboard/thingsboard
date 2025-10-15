@@ -250,7 +250,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue))), MoreExecutors.directExecutor());
     }
 
-    public ListenableFuture<ArgumentEntry> fetchAggArgumentEntry(TenantId tenantId, List<EntityId> aggEntities, Argument argument, long startTs) {List<ListenableFuture<Map.Entry<EntityId, ArgumentEntry>>> futures = aggEntities.stream()
+    public ListenableFuture<ArgumentEntry> fetchAggArgumentEntry(TenantId tenantId, List<EntityId> aggEntities, Argument argument, long startTs) {
+        List<ListenableFuture<Map.Entry<EntityId, ArgumentEntry>>> futures = aggEntities.stream()
                 .map(entityId -> {
                     ListenableFuture<ArgumentEntry> singleAggEntryFut = fetchSingleAggArgumentEntry(tenantId, entityId, argument, startTs);
                     return Futures.transform(singleAggEntryFut, singleAggEntry -> Map.entry(entityId, singleAggEntry), MoreExecutors.directExecutor());

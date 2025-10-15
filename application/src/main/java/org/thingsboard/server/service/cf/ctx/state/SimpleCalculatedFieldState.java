@@ -62,16 +62,6 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
                 .build());
     }
 
-    private Object formatResult(double expressionResult, Integer decimals) {
-        if (decimals == null) {
-            return expressionResult;
-        }
-        if (decimals.equals(0)) {
-            return TbUtils.toInt(expressionResult);
-        }
-        return TbUtils.toFixed(expressionResult, decimals);
-    }
-
     private JsonNode createResultJson(boolean useLatestTs, String outputName, Object result) {
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
         if (result instanceof Double doubleValue) {

@@ -107,6 +107,7 @@ public class CalculatedFieldCtx {
     private boolean relationQueryDynamicArguments;
     private List<String> mainEntityGeofencingArgumentNames;
     private List<String> linkedEntityAndCurrentOwnerGeofencingArgumentNames;
+    private List<String> relatedEntityArgumentNames;
 
     private long scheduledUpdateIntervalMillis;
 
@@ -126,6 +127,7 @@ public class CalculatedFieldCtx {
         this.argNames = new ArrayList<>();
         this.mainEntityGeofencingArgumentNames = new ArrayList<>();
         this.linkedEntityAndCurrentOwnerGeofencingArgumentNames = new ArrayList<>();
+        this.relatedEntityArgumentNames = new ArrayList<>();
         this.output = calculatedField.getConfiguration().getOutput();
         if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
             this.arguments.putAll(argBasedConfig.getArguments());
@@ -153,6 +155,7 @@ public class CalculatedFieldCtx {
                 }
             }
             this.argNames.addAll(arguments.keySet());
+            this.relatedEntityArgumentNames.addAll(relatedEntityArguments.values());
             if (argBasedConfig instanceof ExpressionBasedCalculatedFieldConfiguration expressionBasedConfig) {
                 this.expression = expressionBasedConfig.getExpression();
                 this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) argBasedConfig).isUseLatestTs();
@@ -174,7 +177,7 @@ public class CalculatedFieldCtx {
         }
         this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
-            this.scheduledUpdateIntervalMillis = aggConfig.getDeduplicationIntervalMillis();
+            this.useLatestTs = aggConfig.isUseLatestTs();
         }
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
@@ -578,6 +581,7 @@ public class CalculatedFieldCtx {
         }
         if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
                 && other.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig
+                && thisConfig.getDeduplicationIntervalMillis() != otherConfig.getDeduplicationIntervalMillis()
                 && !thisConfig.getMetrics().equals(otherConfig.getMetrics())) {
             return true;
         }

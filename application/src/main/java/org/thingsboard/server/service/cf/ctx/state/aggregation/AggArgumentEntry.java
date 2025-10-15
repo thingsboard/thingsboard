@@ -48,11 +48,11 @@ public class AggArgumentEntry implements ArgumentEntry {
         if (entry instanceof AggArgumentEntry aggArgumentEntry) {
             aggInputs.putAll(aggArgumentEntry.aggInputs);
             return true;
-        } else if (entry instanceof AggSingleArgumentEntry aggSingleArgumentEntry) {
-            if (aggSingleArgumentEntry.isDeleted()) {
-                aggInputs.remove(aggSingleArgumentEntry.getEntityId());
+        } else if (entry instanceof AggSingleEntityArgumentEntry aggSingleEntityArgumentEntry) {
+            if (aggSingleEntityArgumentEntry.isDeleted()) {
+                aggInputs.remove(aggSingleEntityArgumentEntry.getEntityId());
             } else {
-                aggInputs.put(aggSingleArgumentEntry.getEntityId(), aggSingleArgumentEntry);
+                aggInputs.put(aggSingleEntityArgumentEntry.getEntityId(), aggSingleEntityArgumentEntry);
             }
             return true;
         } else {

@@ -15,10 +15,12 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
@@ -43,10 +45,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 @Slf4j
-@Data
+@Getter
 public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
     private long lastArgsRefreshTs = -1;
+    @Setter
     private long lastMetricsEvalTs = -1;
     private long deduplicationInterval = -1;
     private Map<String, AggMetric> metrics;
@@ -76,8 +79,7 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
     @Override
     public void init() {
         super.init();
-//        long scheduledUpdateIntervalMillis = ctx.getScheduledUpdateIntervalMillis();
-//        ctx.scheduleReevaluation(scheduledUpdateIntervalMillis, actorCtx);
+        ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
     }
 
     @Override
@@ -102,41 +104,51 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
-        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - deduplicationInterval;
-        boolean argsUpdatedDuringInterval = lastArgsRefreshTs > lastMetricsEvalTs;
-        if (intervalPassed && argsUpdatedDuringInterval) {
-            ObjectNode aggResult = JacksonUtil.newObjectNode();
-            for (Entry<String, AggMetric> entry : metrics.entrySet()) {
-                String metricKey = entry.getKey();
-                AggMetric metric = entry.getValue();
-
-                AggEntry aggMetric = AggFunctionFactory.createAggFunction(metric.getFunction());
-
-                for (Map<String, ArgumentEntry> entityInputs : inputs.values()) {
-                    if (applyAggregation(metric.getFilter(), entityInputs)) {
-                        Object arg = resolveAggregationInput(metric.getInput(), entityInputs);
-                        if (arg != null) {
-                            aggMetric.update(arg);
-                        }
-                    }
-                }
-
-                aggMetric.result().ifPresent(result -> {
-                    aggResult.set(metricKey, JacksonUtil.valueToTree(result));
-                });
-            }
-            Output output = ctx.getOutput();
-            lastMetricsEvalTs = System.currentTimeMillis();
-            ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
-            return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
-                    .type(output.getType())
-                    .scope(output.getScope())
-                    .result(aggResult)
-                    .build());
-        } else {
+        if (!shouldRecalculate()) {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                     .result(null)
                     .build());
+        }
+        Output output = ctx.getOutput();
+        ObjectNode aggResult = aggregateMetrics(output);
+        lastMetricsEvalTs = System.currentTimeMillis();
+        ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
+        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .type(output.getType())
+                .scope(output.getScope())
+                .result(createResultJson(ctx.isUseLatestTs(), aggResult))
+                .build());
+    }
+
+    private boolean shouldRecalculate() {
+        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - deduplicationInterval;
+        boolean argsUpdatedDuringInterval = lastArgsRefreshTs > lastMetricsEvalTs;
+        return intervalPassed && argsUpdatedDuringInterval;
+    }
+
+    private ObjectNode aggregateMetrics(Output output) throws Exception {
+        ObjectNode aggResult = JacksonUtil.newObjectNode();
+        for (Entry<String, AggMetric> entry : metrics.entrySet()) {
+            String metricKey = entry.getKey();
+            AggMetric metric = entry.getValue();
+
+            AggEntry aggMetricEntry = AggFunctionFactory.createAggFunction(metric.getFunction());
+            aggregateMetric(metric, aggMetricEntry);
+            aggMetricEntry.result().ifPresent(result -> {
+                aggResult.set(metricKey, JacksonUtil.valueToTree(formatResult(result, output.getDecimalsByDefault())));
+            });
+        }
+        return aggResult;
+    }
+
+    private void aggregateMetric(AggMetric metric, AggEntry aggEntry) throws Exception {
+        for (Map<String, ArgumentEntry> entityInputs : inputs.values()) {
+            if (applyAggregation(metric.getFilter(), entityInputs)) {
+                Object arg = resolveAggregationInput(metric.getInput(), entityInputs);
+                if (arg != null) {
+                    aggEntry.update(arg);
+                }
+            }
         }
     }
 
@@ -155,6 +167,27 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
         } else {
             String inputKey = ((AggKeyInput) aggInput).getKey();
             return entityInputs.get(inputKey).getValue();
+        }
+    }
+
+    private Object formatResult(Object aggregationResult, Integer decimals) {
+        try {
+            double result = Double.parseDouble(aggregationResult.toString());
+            return formatResult(result, decimals);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("Aggregation result cannot be parsed: " + aggregationResult, e);
+        }
+    }
+
+    protected JsonNode createResultJson(boolean useLatestTs, JsonNode result) {
+        long latestTs = getLatestTimestamp();
+        if (useLatestTs && latestTs != -1) {
+            ObjectNode resultNode = JacksonUtil.newObjectNode();
+            resultNode.put("ts", latestTs);
+            resultNode.set("values", result);
+            return resultNode;
+        } else {
+            return result;
         }
     }
 

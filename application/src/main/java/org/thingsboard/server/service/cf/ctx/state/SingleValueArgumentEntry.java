@@ -45,6 +45,15 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     public static final Long DEFAULT_VERSION = -1L;
 
+    public SingleValueArgumentEntry(ArgumentEntry entry) {
+        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            this.ts = singleValueArgumentEntry.ts;
+            this.kvEntryValue = singleValueArgumentEntry.kvEntryValue;
+            this.version = singleValueArgumentEntry.version;
+            this.forceResetPrevious = singleValueArgumentEntry.forceResetPrevious;
+        }
+    }
+
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
         if (entry.hasVersion()) {

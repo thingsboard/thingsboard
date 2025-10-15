@@ -7,8 +7,8 @@
     "allEnabledUntil": 1769907492297
   },
   "entityId": {
-    "entityType": "ASSET_PROFILE",
-    "id": "2b759c60-a8f4-11f0-be29-7fa922118588"
+    "entityType": "ASSET",
+    "id": "f8ad0800-a9a6-11f0-bbe6-459b63b420fe"
   },
   "configuration": {
     "type": "LATEST_VALUES_AGGREGATION",

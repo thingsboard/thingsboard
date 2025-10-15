@@ -30,34 +30,39 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class AggSingleArgumentEntry extends SingleValueArgumentEntry {
+public class AggSingleEntityArgumentEntry extends SingleValueArgumentEntry {
 
     private EntityId entityId;
     private boolean deleted;
 
-    public AggSingleArgumentEntry(EntityId entityId, TsKvProto entry) {
+    public AggSingleEntityArgumentEntry(EntityId entityId, ArgumentEntry entry) {
         super(entry);
         this.entityId = entityId;
     }
 
-    public AggSingleArgumentEntry(EntityId entityId, AttributeValueProto entry) {
+    public AggSingleEntityArgumentEntry(EntityId entityId, TsKvProto entry) {
         super(entry);
         this.entityId = entityId;
     }
 
-    public AggSingleArgumentEntry(EntityId entityId, KvEntry entry) {
+    public AggSingleEntityArgumentEntry(EntityId entityId, AttributeValueProto entry) {
         super(entry);
         this.entityId = entityId;
     }
 
-    public AggSingleArgumentEntry(EntityId entityId, long ts, BasicKvEntry kvEntryValue, Long version) {
+    public AggSingleEntityArgumentEntry(EntityId entityId, KvEntry entry) {
+        super(entry);
+        this.entityId = entityId;
+    }
+
+    public AggSingleEntityArgumentEntry(EntityId entityId, long ts, BasicKvEntry kvEntryValue, Long version) {
         super(ts, kvEntryValue, version);
         this.entityId = entityId;
     }
 
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
-        if (entry instanceof AggSingleArgumentEntry singleValueEntry) {
+        if (entry instanceof AggSingleEntityArgumentEntry singleValueEntry) {
             if (singleValueEntry.getTs() <= ts) {
                 return false;
             }

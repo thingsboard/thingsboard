@@ -34,7 +34,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.LatestValuesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -59,7 +59,7 @@ public class CalculatedFieldArgumentUtils {
         if (kvEntry.isPresent() && kvEntry.get().getValue() != null) {
             return ArgumentEntry.createAggSingleArgument(entityId, kvEntry.get());
         } else {
-            return new AggSingleArgumentEntry();
+            return new AggSingleEntityArgumentEntry();
         }
     }
 

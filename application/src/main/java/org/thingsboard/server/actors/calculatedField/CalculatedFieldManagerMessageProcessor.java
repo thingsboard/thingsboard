@@ -516,12 +516,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 .toList();
     }
 
-    private List<CalculatedFieldCtx> getCfsWithRelationToEntity(EntityId entityId) {
-        return aggCalculatedFields.values().stream()
-                .filter(cf -> !findRelationsForCf(entityId, cf).isEmpty())
-                .toList();
-    }
-
     private List<CalculatedFieldEntityCtxId> findRelationsForCf(EntityId entityId, CalculatedFieldCtx cf) {
         List<CalculatedFieldEntityCtxId> result = new ArrayList<>();
         if (cf.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration configuration) {

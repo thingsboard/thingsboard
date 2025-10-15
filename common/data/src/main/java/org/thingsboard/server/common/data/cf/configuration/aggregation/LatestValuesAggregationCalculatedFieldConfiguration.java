@@ -32,6 +32,7 @@ public class LatestValuesAggregationCalculatedFieldConfiguration implements Argu
     private long deduplicationIntervalMillis;
     private Map<String, AggMetric> metrics;
     private Output output;
+    private boolean useLatestTs;
 
     @Override
     public CalculatedFieldType getType() {

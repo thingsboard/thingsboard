@@ -47,7 +47,7 @@ import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.LatestValuesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
@@ -236,7 +236,7 @@ public class CalculatedFieldUtils {
                 LatestValuesAggregationCalculatedFieldState aggState = (LatestValuesAggregationCalculatedFieldState) state;
                 Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
                 proto.getAggArgumentsList().forEach(argProto -> {
-                    AggSingleArgumentEntry entry = fromAggSingleValueArgumentProto(argProto);
+                    AggSingleEntityArgumentEntry entry = fromAggSingleValueArgumentProto(argProto);
                     arguments.computeIfAbsent(argProto.getValue().getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
                 });
                 arguments.forEach((argName, entityInputs) -> {
@@ -248,14 +248,14 @@ public class CalculatedFieldUtils {
         return state;
     }
 
-    public static AggSingleArgumentEntry fromAggSingleValueArgumentProto(AggSingleArgumentEntryProto proto) {
+    public static AggSingleEntityArgumentEntry fromAggSingleValueArgumentProto(AggSingleArgumentEntryProto proto) {
         if (!proto.hasValue()) {
-            return new AggSingleArgumentEntry();
+            return new AggSingleEntityArgumentEntry();
         }
         EntityId entityId = ProtoUtils.fromProto(proto.getEntityId());
         SingleValueArgumentProto singleValueArgument = proto.getValue();
         TsValueProto tsValueProto = singleValueArgument.getValue();
-        return new AggSingleArgumentEntry(
+        return new AggSingleEntityArgumentEntry(
                 entityId,
                 tsValueProto.getTs(),
                 (BasicKvEntry) KvProtoUtil.fromTsValueProto(singleValueArgument.getArgName(), tsValueProto),

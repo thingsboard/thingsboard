@@ -35,7 +35,7 @@ public class AvgAggEntry extends BaseAggEntry {
 
     @Override
     protected double prepareResult() {
-        return sum.divide(BigDecimal.valueOf(count), 2, RoundingMode.HALF_UP).doubleValue();
+        return sum.divide(BigDecimal.valueOf(count), 10, RoundingMode.HALF_UP).doubleValue();
     }
 
     @Override
