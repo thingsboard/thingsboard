@@ -189,10 +189,9 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
     const shapeHeight = this.chartShape.nativeElement.getBoundingClientRect().height;
     const size = Math.min(shapeWidth, shapeHeight);
     if (this.legendHorizontal) {
-      this.renderer.setStyle(this.chartShape.nativeElement, 'max-width', `${size}px`);
+      this.renderer.setStyle(this.chartShape.nativeElement, 'max-width', `100%`);
       this.renderer.setStyle(this.chartShape.nativeElement, 'min-width', `${size}px`);
-      this.renderer.setStyle(this.chartLegend.nativeElement, 'flex', '1');
-    }
+      this.renderer.setStyle(this.chartLegend.nativeElement, 'flex', '1');    }
   }
 
 }

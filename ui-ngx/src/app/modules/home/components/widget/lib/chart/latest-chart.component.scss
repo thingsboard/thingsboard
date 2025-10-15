@@ -51,7 +51,8 @@
       flex-direction: row-reverse;
     }
     .tb-latest-chart-shape {
-      flex: 1;
+      flex-grow: 1;
+      flex-basis: 100%;
       min-width: 10px;
       min-height: 10px;
       display: flex;
