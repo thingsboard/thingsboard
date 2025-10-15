@@ -45,7 +45,8 @@ import static com.google.common.util.concurrent.Futures.transformAsync;
                 Message payload can be accessed via <code>msg</code> property. For example <code>'temperature = ' + msg.temperature ;</code>.
                 Message metadata can be accessed via <code>metadata</code> property. For example <code>'name = ' + metadata.customerName;</code>.""",
         configDirective = "tbActionNodeClearAlarmConfig",
-        icon = "notifications_off"
+        icon = "notifications_off",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/clear-alarm/"
 )
 public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfiguration> {
 

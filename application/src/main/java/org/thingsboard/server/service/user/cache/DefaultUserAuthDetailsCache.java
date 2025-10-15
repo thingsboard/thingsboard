@@ -41,9 +41,9 @@ public class DefaultUserAuthDetailsCache implements UserAuthDetailsCache {
 
     private final UserService userService;
 
-    @Value("${cache.userEnabled.maxSize:1000}")
+    @Value("${cache.userAuthDetails.maxSize:1000}")
     private int cacheMaxSize;
-    @Value("${cache.userEnabled.timeToLiveInMinutes:30}")
+    @Value("${cache.userAuthDetails.timeToLiveInMinutes:30}")
     private int cacheValueTtl;
     private Cache<UserId, UserAuthDetails> cache;
 
@@ -70,7 +70,7 @@ public class DefaultUserAuthDetailsCache implements UserAuthDetailsCache {
     public UserAuthDetails findUserEnabled(TenantId tenantId, UserId userId) {
         lock.readLock().lock();
         try {
-            log.trace("Retrieving user with enabled credentials status with id {} for tenant {} from cache", userId, tenantId);
+            log.trace("Retrieving user with enabled credentials status for id {} for tenant {} from cache", userId, tenantId);
             return cache.get(userId, id -> userService.findUserAuthDetailsByUserId(tenantId, id));
         } finally {
             lock.readLock().unlock();

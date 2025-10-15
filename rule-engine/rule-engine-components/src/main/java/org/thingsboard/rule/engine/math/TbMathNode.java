@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
 import net.objecthunter.exp4j.ExpressionBuilder;
 import org.springframework.util.ConcurrentReferenceHashMap;
@@ -56,8 +55,6 @@ import java.util.stream.Collectors;
 import static org.thingsboard.common.util.ExpressionFunctionsUtil.userDefinedFunctions;
 import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
 
-@SuppressWarnings("UnstableApiUsage")
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "math function",
@@ -78,8 +75,8 @@ import static org.thingsboard.rule.engine.math.TbMathArgumentType.CONSTANT;
                 "The execution is synchronized in scope of message originator (e.g. device) and server node. " +
                 "If you have rule nodes in different rule chains, they will process messages from the same originator synchronously in the scope of the server node.",
         configDirective = "tbActionNodeMathFunctionConfig",
-        icon = "calculate"
-
+        icon = "calculate",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/math-function/"
 )
 public class TbMathNode implements TbNode {
 

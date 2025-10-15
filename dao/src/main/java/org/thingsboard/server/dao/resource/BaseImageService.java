@@ -50,6 +50,7 @@ import org.thingsboard.server.dao.ImageContainerDao;
 import org.thingsboard.server.dao.asset.AssetProfileDao;
 import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
+import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.util.ImageUtils;
@@ -109,8 +110,8 @@ public class BaseImageService extends BaseResourceService implements ImageServic
 
     public BaseImageService(TbResourceDao resourceDao, TbResourceInfoDao resourceInfoDao, ResourceDataValidator resourceValidator,
                             AssetProfileDao assetProfileDao, DeviceProfileDao deviceProfileDao, WidgetsBundleDao widgetsBundleDao,
-                            WidgetTypeDao widgetTypeDao, DashboardInfoDao dashboardInfoDao) {
-        super(resourceDao, resourceInfoDao, resourceValidator, widgetTypeDao, dashboardInfoDao);
+                            WidgetTypeDao widgetTypeDao, DashboardInfoDao dashboardInfoDao, RuleChainDao ruleChainDao) {
+        super(resourceDao, resourceInfoDao, resourceValidator, widgetTypeDao, dashboardInfoDao, ruleChainDao);
         this.assetProfileDao = assetProfileDao;
         this.deviceProfileDao = deviceProfileDao;
         this.widgetsBundleDao = widgetsBundleDao;

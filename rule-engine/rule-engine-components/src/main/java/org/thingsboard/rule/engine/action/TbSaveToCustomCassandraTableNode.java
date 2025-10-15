@@ -50,7 +50,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
-@RuleNode(type = ComponentType.ACTION,
+@RuleNode(
+        type = ComponentType.ACTION,
         name = "save to custom table",
         configClazz = TbSaveToCustomCassandraTableNodeConfiguration.class,
         version = 1,
@@ -64,7 +65,9 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 " otherwise, the message will be routed via <b>success</b> chain.",
         configDirective = "tbActionNodeCustomTableConfig",
         icon = "file_upload",
-        ruleChainTypes = RuleChainType.CORE)
+        ruleChainTypes = RuleChainType.CORE,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/save-to-custom-table/"
+)
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";

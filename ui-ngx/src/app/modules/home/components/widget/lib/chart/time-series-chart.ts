@@ -212,7 +212,8 @@ export class TbTimeSeriesChart {
       this.ctx.sanitizer,
       this.settings,
       this.tooltipDateFormat,
-      tooltipValueFormatFunction
+      tooltipValueFormatFunction,
+      this.ctx.translate
     );
     this.onResize();
     if (this.autoResize) {

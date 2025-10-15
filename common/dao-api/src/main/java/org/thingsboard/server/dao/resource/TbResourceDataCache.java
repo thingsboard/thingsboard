@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.calculatedField;
+package org.thingsboard.server.dao.resource;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import com.google.common.util.concurrent.FluentFuture;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
+import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
-import org.thingsboard.server.common.msg.queue.TbCallback;
 
-@Data
-public class EntityCalculatedFieldDynamicArgumentsRefreshMsg implements ToCalculatedFieldSystemMsg {
+public interface TbResourceDataCache {
 
-    private final TenantId tenantId;
-    private final CalculatedFieldId cfId;
-    private final TbCallback callback;
+    FluentFuture<TbResourceDataInfo> getResourceDataInfoAsync(TenantId tenantId, TbResourceId resourceId);
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.CF_ENTITY_DYNAMIC_ARGUMENTS_REFRESH_MSG;
-    }
-
+    void evictResourceData(TenantId tenantId, TbResourceId resourceId);
 }
