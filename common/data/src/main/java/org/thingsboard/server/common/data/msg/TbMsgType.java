@@ -38,7 +38,7 @@ public enum TbMsgType {
     ENTITY_UNASSIGNED("Entity Unassigned"),
     ATTRIBUTES_UPDATED("Attributes Updated"),
     ATTRIBUTES_DELETED("Attributes Deleted"),
-    ALARM,
+    ALARM("Alarm"),
     ALARM_ACK("Alarm Acknowledged"),
     ALARM_CLEAR("Alarm Cleared"),
     ALARM_DELETE,
