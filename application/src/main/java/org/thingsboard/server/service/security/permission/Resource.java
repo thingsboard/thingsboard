@@ -53,7 +53,8 @@ public enum Resource {
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
     MOBILE_APP_SETTINGS,
     JOB(EntityType.JOB),
-    AI_MODEL(EntityType.AI_MODEL);
+    AI_MODEL(EntityType.AI_MODEL),
+    API_KEY(EntityType.API_KEY);
 
     private final Set<EntityType> entityTypes;
 

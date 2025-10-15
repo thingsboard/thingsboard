@@ -13,10 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.jwt.extractor;
+package org.thingsboard.server.service.security.model.token;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-public interface TokenExtractor {
-    String extract(HttpServletRequest request);
-}
+public record RawApiKey(String apiKey) {}
