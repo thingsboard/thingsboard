@@ -1,0 +1,11 @@
+You are a senior software designer. 
+Analyze the code in the module named “rule-engine" and generate detailed **design documentation** including:
+
+1. **Module Purpose** – what this module is responsible for in the system.
+2. **Public Interfaces / APIs** – list all public classes, methods, or endpoints and describe their roles.
+3. **Internal Design** – explain key classes, data structures, algorithms, and their relationships.
+4. **Dependencies** – list internal and external dependencies (other modules, libraries, services).
+5. **Data Flow / Sequence** – describe the flow of data or control inside the module, optionally using a sequence diagram.
+6. **UML Diagram** – represent class/component relationships using PlantUML diagram.
+
+Write the document in Markdown using clear section headers and concise technical explanations.

@@ -1,0 +1,64 @@
+name: docgen-after-merge
+
+on:
+  push:
+    branches: [ main ]             # triggers after PRs merge to main
+    paths-ignore:
+      - 'docs/**'                  # prevent loops when the docs PR merges
+  workflow_dispatch: {}            # allow manual run
+
+jobs:
+  docgen:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write              # create branch/commit
+      pull-requests: write         # open PR
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install Claude Code CLI
+        run: npm i -g @anthropic-ai/claude-code
+
+      - name: Generate design docs (Markdown with PlantUML)
+        run: bash tools/gen_docs.sh
+
+      - name: Detect changes
+        id: diff
+        run: |
+          git add -A
+          if git diff --cached --quiet; then
+            echo "changed=false" >> $GITHUB_OUTPUT
+          else
+            echo "changed=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create branch & PR (only if changed)
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          BR="docgen/update-$(date +%Y%m%d-%H%M%S)"
+          git config user.name "ci-docgen-bot"
+          git config user.email "ci@users.noreply.github.com"
+          git checkout -b "$BR"
+          git commit -m "docs: automated design doc update [skip ci]"
+          git push -u origin "$BR"
+
+          # Use GitHub CLI (pre-installed on hosted runners)
+          gh pr create \
+            --title "Automated design docs update" \
+            --body "Automated docgen (Claude Code). Please review Markdown + PlantUML diagrams for correctness." \
+            --label "docs" \
+            --base main \
+            --head "$BR"
+        env:
+          GH_TOKEN: ${{ github.token }}
+
