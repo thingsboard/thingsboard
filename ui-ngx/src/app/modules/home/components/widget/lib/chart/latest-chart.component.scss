@@ -51,7 +51,7 @@
       flex-direction: row-reverse;
     }
     .tb-latest-chart-shape {
-      flex: 1;
+      flex: 1 1 100%;
       min-width: 10px;
       min-height: 10px;
       display: flex;
@@ -95,8 +95,14 @@
     &.legend-right, &.legend-left {
       gap: 24px;
       .tb-latest-chart-legend {
+        flex: 0 1 auto;
+        overflow: hidden auto;
+        max-height: 100%;
+        flex-wrap: nowrap;
+        min-width: fit-content;
+        max-width: 100%;
         flex-direction: column;
-        justify-content: center;
+        justify-content: flex-start;
         align-items: stretch;
         .tb-latest-chart-legend-item {
           flex-direction: row;
