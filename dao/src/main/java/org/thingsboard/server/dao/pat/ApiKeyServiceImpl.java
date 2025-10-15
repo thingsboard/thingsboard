@@ -60,7 +60,7 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
     @Value("${security.api_key.value_prefix:}")
     private String prefix;
 
-    @Value("${security.api_key.value_bytes_size:}")
+    @Value("${security.api_key.value_bytes_size:64}")
     private int valueBytesSize;
 
     @Override
