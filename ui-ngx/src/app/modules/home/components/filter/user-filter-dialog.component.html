@@ -33,13 +33,13 @@
            *ngFor="let userInputControl of userInputsFormArray().controls; let $index = index">
         <div [ngSwitch]="userInputControl.get('valueType').value">
           <ng-template [ngSwitchCase]="valueTypeEnum.STRING">
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{ userInputControl.get('label').value  | customTranslate }}</mat-label>
               <input matInput [formControl]="userInputControl.get('value')">
             </mat-form-field>
           </ng-template>
           <ng-template [ngSwitchCase]="valueTypeEnum.NUMERIC">
-            <mat-form-field class="mat-block">
+            <mat-form-field class="mat-block" appearance="outline">
               <mat-label>{{ userInputControl.get('label').value  | customTranslate }}</mat-label>
               <input required type="number" matInput [formControl]="userInputControl.get('value')">
               <div matSuffix class="mr-2"
