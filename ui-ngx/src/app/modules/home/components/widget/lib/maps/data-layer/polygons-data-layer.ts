@@ -253,8 +253,6 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     });
     this.addItemClass('tb-cut-mode');
     this.polygon.once('pm:cut', (e) => {
-      console.log("(e.layer in polygon", e.layer )
-      console.log("this.polygon instanceof L.Rectangle", this.polygon instanceof L.Rectangle)
       if (e.layer instanceof L.Polygon) {
         if (this.polygon instanceof L.Rectangle) {
           this.polygonContainer.removeLayer(this.polygon);

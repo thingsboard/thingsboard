@@ -36,9 +36,6 @@ import {
   UnplacedMapDataItem
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { map } from 'rxjs/operators';
-import { PointItem } from '@home/components/widget/lib/maps/data-layer/trips-data-layer';
-import _ from 'lodash';
-import { createTooltip, updateTooltip } from '@home/components/widget/lib/maps/data-layer/data-layer-utils';
 
 class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSettings, TbPolylineDataLayer> {
 
@@ -260,7 +257,6 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
     this.addItemClass('tb-cut-mode');
     this.polyline.once('pm:cut', (e) => {
       if (e.layer instanceof L.Polyline) {
-        // fallback for single segment case
         this.polyline = L.polyline(e.layer.getLatLngs() as L.LatLngExpression[] | L.LatLngExpression[][] , {
           ...this.polylineStyleInfo.style,
           snapIgnore: !this.dataLayer.isSnappable(),
@@ -268,46 +264,26 @@ class TbPolylineDataLayerItem extends TbLatestDataLayerItem<PolylinesDataLayerSe
         });
         this.polyline.addTo(this.polylineContainer);
       } else if (e.layer instanceof L.LayerGroup) {
-        if(e.layer.getLayers){
-          console.log(e.layer, e.layer.getLayers, e.layer.getLayers())
-          const cutSegments = e.layer.getLayers() as L.Polyline[];
-          this.polylineContainer.removeLayer(this.polyline);
-          cutSegments.forEach(segment => {
-            console.log(segment instanceof L.Polyline)
-            segment.setStyle({
-              ...this.polylineStyleInfo.style,
-              snapIgnore: !this.dataLayer.isSnappable(),
-              bubblingMouseEvents: !this.dataLayer.isEditMode()
-            });
-            // segment.setStyle({
-            //   ...this.polylineStyleInfo.style,
-            //   snapIgnore: !this.dataLayer.isSnappable(),
-            //   bubblingMouseEvents: !this.dataLayer.isEditMode()
-            // });
-            segment.addTo(this.polylineContainer);
-          });
+        const parts: L.LatLngExpression[][] = [];
 
+        if (e.layer && typeof e.layer.getLayers === 'function') {
+          const segments: L.Polyline[] = e.layer.getLayers() as L.Polyline[];
+          segments.forEach(segment => {
+            parts.push(segment.getLatLngs() as L.LatLngExpression[]);
+          });
+        } else if (e.layer instanceof L.Polyline) {
+          parts.push(e.layer.getLatLngs() as L.LatLngExpression[]);
         }
 
-
-
+        if (parts.length > 0) {
+          this.polyline = L.polyline(parts, {
+            ...this.polylineStyleInfo.style,
+            snapIgnore: !this.dataLayer.isSnappable(),
+            bubblingMouseEvents: !this.dataLayer.isEditMode()
+          });
+          this.polyline.addTo(this.polylineContainer);
+        }
       }
-        // if (e.layer instanceof L.Polyline) {
-      //   // if (this.polyline instanceof L.Polyline) {
-      //     this.polylineContainer.removeLayer(this.polyline);
-      //     this.polyline = L.polyline(e.layer.getLatLngs() as L.LatLngExpression[] | L.LatLngExpression[][] , {
-      //       ...this.polylineStyleInfo.style,
-      //       snapIgnore: !this.dataLayer.isSnappable(),
-      //       bubblingMouseEvents: !this.dataLayer.isEditMode()
-      //     });
-      //     this.polyline.addTo(this.polylineContainer);
-      //   } else {
-      //     // @ts-ignore
-      //     this.polyline.setLatLngs(e.layer.getLatLngs());
-      //     // @ts-ignore
-      //     console.log("ELSE :", this.polyline)
-      //   // }
-      // }
       // @ts-ignore
       e.layer._pmTempLayer = true;
       e.layer.remove();
