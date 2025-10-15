@@ -249,7 +249,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         assertThatThrownBy(() -> calculatedFieldService.save(calculatedField))
                 .isInstanceOf(DataValidationException.class)
-                .hasMessage("Calculated Field with such name is already in exists!");
+                .hasMessage("Calculated field with such name and type already exists");
     }
 
     @Test
