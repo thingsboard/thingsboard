@@ -61,9 +61,9 @@ import org.thingsboard.server.service.security.auth.rest.RestLoginProcessingFilt
 import org.thingsboard.server.service.security.auth.rest.RestPublicLoginProcessingFilter;
 import org.thingsboard.server.transport.http.config.PayloadSizeFilter;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Stream;
 
 @Configuration
 @EnableWebSecurity
@@ -72,8 +72,8 @@ import java.util.List;
 @TbCoreComponent
 public class ThingsboardSecurityConfiguration {
 
-    public static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
-    public static final String JWT_TOKEN_HEADER_PARAM_V2 = "Authorization";
+    public static final String AUTHORIZATION_HEADER = "X-Authorization";
+    public static final String AUTHORIZATION_HEADER_V2 = "Authorization";
     public static final String JWT_TOKEN_QUERY_PARAM = "token";
 
     public static final String API_KEY_HEADER_PREFIX = "ApiKey ";
@@ -192,10 +192,16 @@ public class ThingsboardSecurityConfiguration {
     }
 
     private SkipPathRequestMatcher buildSkipPathRequestMatcher() {
-        List<String> pathsToSkip = new ArrayList<>(Arrays.asList(NON_TOKEN_BASED_AUTH_ENTRY_POINTS));
-        pathsToSkip.addAll(Arrays.asList(WS_ENTRY_POINT, TOKEN_REFRESH_ENTRY_POINT, FORM_BASED_LOGIN_ENTRY_POINT,
-                PUBLIC_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, MAIL_OAUTH2_PROCESSING_ENTRY_POINT,
-                DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT));
+        List<String> pathsToSkip = Stream.concat(
+                Arrays.stream(NON_TOKEN_BASED_AUTH_ENTRY_POINTS),
+                Stream.of(
+                        WS_ENTRY_POINT,
+                        TOKEN_REFRESH_ENTRY_POINT,
+                        FORM_BASED_LOGIN_ENTRY_POINT,
+                        PUBLIC_LOGIN_ENTRY_POINT,
+                        DEVICE_API_ENTRY_POINT,
+                        MAIL_OAUTH2_PROCESSING_ENTRY_POINT,
+                        DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT)).toList();
         return new SkipPathRequestMatcher(pathsToSkip, TOKEN_BASED_AUTH_ENTRY_POINT);
     }
 

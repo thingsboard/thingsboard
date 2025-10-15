@@ -28,28 +28,29 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.customer.CustomerService;
-import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.service.security.auth.RefreshAuthenticationToken;
 import org.thingsboard.server.service.security.auth.TokenOutdatingService;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
+import org.thingsboard.server.service.user.cache.UserAuthDetailsCache;
 
 import java.util.UUID;
 
 @Component
 @RequiredArgsConstructor
 public class RefreshTokenAuthenticationProvider implements AuthenticationProvider {
+
     private final JwtTokenFactory tokenFactory;
-    private final UserService userService;
+    private final UserAuthDetailsCache userEnabledCache;
     private final CustomerService customerService;
     private final TokenOutdatingService tokenOutdatingService;
 
@@ -61,7 +62,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
         UserPrincipal principal = unsafeUser.getUserPrincipal();
 
         SecurityUser securityUser;
-        if (principal.getType() ==  UserPrincipal.Type.USER_NAME) {
+        if (principal.getType() == UserPrincipal.Type.USER_NAME) {
             securityUser = authenticateByUserId(unsafeUser.getId());
         } else {
             securityUser = authenticateByPublicId(principal.getValue());
@@ -75,26 +76,21 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByUserId(UserId userId) {
-        TenantId systemId = TenantId.SYS_TENANT_ID;
-        User user = userService.findUserById(systemId, userId);
-        if (user == null) {
-            throw new UsernameNotFoundException("User not found by refresh token");
+        UserAuthDetails userAuthDetails = userEnabledCache.findUserEnabled(TenantId.SYS_TENANT_ID, userId);
+        if (userAuthDetails == null) {
+            throw new UsernameNotFoundException("User with credentials not found");
         }
-
-        UserCredentials userCredentials = userService.findUserCredentialsByUserId(systemId, user.getId());
-        if (userCredentials == null) {
-            throw new UsernameNotFoundException("User credentials not found");
-        }
-
-        if (!userCredentials.isEnabled()) {
+        if (!userAuthDetails.credentialsEnabled()) {
             throw new DisabledException("User is not active");
         }
 
-        if (user.getAuthority() == null) throw new InsufficientAuthenticationException("User has no authority assigned");
+        User user = userAuthDetails.user();
+        if (user.getAuthority() == null) {
+            throw new InsufficientAuthenticationException("User has no authority assigned");
+        }
 
         UserPrincipal userPrincipal = new UserPrincipal(UserPrincipal.Type.USER_NAME, user.getEmail());
-
-        return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
+        return new SecurityUser(user, true, userPrincipal);
     }
 
     private SecurityUser authenticateByPublicId(String publicId) {

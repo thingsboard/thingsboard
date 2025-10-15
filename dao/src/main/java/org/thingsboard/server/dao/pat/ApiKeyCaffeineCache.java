@@ -15,21 +15,19 @@
  */
 package org.thingsboard.server.dao.pat;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.cache.CacheManager;
+import org.springframework.stereotype.Service;
+import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.pat.ApiKey;
-import org.thingsboard.server.dao.Dao;
 
-import java.util.Set;
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
+@Service("ApiKeyCache")
+public class ApiKeyCaffeineCache extends CaffeineTbTransactionalCache<ApiKeyCacheKey, ApiKey> {
 
-public interface ApiKeyDao extends Dao<ApiKey> {
-
-    ApiKey findByValue(String value);
-
-    Set<String> deleteByTenantId(TenantId tenantId);
-
-    Set<String> deleteByUserId(TenantId tenantId, UserId userId);
-
-    int deleteAllByExpirationTimeBefore(long ts);
+    public ApiKeyCaffeineCache(CacheManager cacheManager) {
+        super(cacheManager, CacheConstants.API_KEYS_CACHE);
+    }
 
 }

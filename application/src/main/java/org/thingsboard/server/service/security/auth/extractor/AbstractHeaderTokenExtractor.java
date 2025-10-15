@@ -30,9 +30,9 @@ public abstract class AbstractHeaderTokenExtractor implements TokenExtractor {
 
     @Override
     public String extract(HttpServletRequest request) {
-        String header = request.getHeader(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM);
+        String header = request.getHeader(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER);
         if (StringUtils.isBlank(header)) {
-            header = request.getHeader(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM_V2);
+            header = request.getHeader(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER_V2);
             if (StringUtils.isBlank(header)) {
                 throw new AuthenticationServiceException("Authorization header cannot be blank!");
             }

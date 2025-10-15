@@ -16,15 +16,12 @@
 package org.thingsboard.server.service.ttl;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.dao.pat.ApiKeyDao;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
@@ -34,9 +31,6 @@ public class ApiKeysCleanUpService extends AbstractCleanUpService {
 
     public static final String RANDOM_DELAY_INTERVAL_MS_EXPRESSION =
             "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.api_keys.checking_interval_ms})}";
-
-    @Value("${sql.ttl.api_keys.ttl:2592000}")
-    private long ttl;
 
     private final ApiKeyDao apiKeyDao;
 
@@ -50,7 +44,7 @@ public class ApiKeysCleanUpService extends AbstractCleanUpService {
             fixedDelayString = "${sql.ttl.api_keys.checking_interval_ms:86400000}"
     )
     public void cleanUp() {
-        long threshold = System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(ttl);
+        long threshold = System.currentTimeMillis();
         if (isSystemTenantPartitionMine()) {
             int deleted = apiKeyDao.deleteAllByExpirationTimeBefore(threshold);
             if (deleted > 0) {

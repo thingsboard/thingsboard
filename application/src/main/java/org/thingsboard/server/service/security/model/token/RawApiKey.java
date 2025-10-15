@@ -15,6 +15,4 @@
  */
 package org.thingsboard.server.service.security.model.token;
 
-public record RawApiKeyToken(String token) {
-
-}
+public record RawApiKey(String apiKey) {}

@@ -82,11 +82,10 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         Assert.notNull(authentication, "No authentication data provided");
 
         Object principal = authentication.getPrincipal();
-        if (!(principal instanceof UserPrincipal)) {
+        if (!(principal instanceof UserPrincipal userPrincipal)) {
             throw new BadCredentialsException("Authentication Failed. Bad user principal.");
         }
 
-        UserPrincipal userPrincipal = (UserPrincipal) principal;
         SecurityUser securityUser;
         if (userPrincipal.getType() == UserPrincipal.Type.USER_NAME) {
             String username = userPrincipal.getValue();

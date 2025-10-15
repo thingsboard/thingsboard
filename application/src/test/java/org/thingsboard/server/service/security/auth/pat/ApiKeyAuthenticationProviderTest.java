@@ -15,176 +15,98 @@
  */
 package org.thingsboard.server.service.security.auth.pat;
 
+import org.junit.After;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.authentication.CredentialsExpiredException;
-import org.springframework.security.authentication.DisabledException;
-import org.springframework.security.authentication.InsufficientAuthenticationException;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.ApiKeyId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
+import org.mockito.Mockito;
+import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.pat.ApiKey;
-import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.dao.pat.ApiKeyService;
-import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.token.RawApiKeyToken;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.controller.AbstractControllerTest;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.UUID;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.when;
+@DaoSqlTest
+public class ApiKeyAuthenticationProviderTest extends AbstractControllerTest {
 
-@RunWith(MockitoJUnitRunner.class)
-public class ApiKeyAuthenticationProviderTest {
-
-    private static final String TEST_API_KEY = "test_api_key";
-    private static final String USER_EMAIL = "tenant@thingsboard.org";
-
-    @Mock
-    private ApiKeyService apiKeyService;
-
-    @Mock
-    private UserService userService;
-
-    private ApiKeyAuthenticationProvider provider;
-    private TenantId tenantId;
-    private UserId userId;
-    private User user;
-    private UserCredentials userCredentials;
-    private ApiKey apiKey;
+    ApiKey savedApiKey;
 
     @Before
-    public void setUp() {
-        provider = new ApiKeyAuthenticationProvider(apiKeyService, userService);
-        tenantId = TenantId.fromUUID(UUID.randomUUID());
-        userId = new UserId(UUID.randomUUID());
+    public void setUp() throws Exception {
+        loginTenantAdmin();
 
-        user = new User();
-        user.setId(userId);
-        user.setTenantId(tenantId);
-        user.setEmail(USER_EMAIL);
-        user.setAuthority(Authority.TENANT_ADMIN);
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo();
+        savedApiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+        setApiKey(savedApiKey.getValue());
+    }
 
-        userCredentials = new UserCredentials();
-        userCredentials.setEnabled(true);
-
-        apiKey = new ApiKey();
-        apiKey.setId(new ApiKeyId(UUID.randomUUID()));
-        apiKey.setTenantId(tenantId);
-        apiKey.setUserId(userId);
-        apiKey.setValue(TEST_API_KEY);
-        apiKey.setEnabled(true);
-        apiKey.setExpirationTime(0);
+    @After
+    public void cleanUp() throws Exception {
+        resetApiKey();
+        doDelete("/api/apiKey/" + savedApiKey.getId()).andExpect(status().isOk());
     }
 
     @Test
-    public void testSuccessfulAuthentication() {
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        when(userService.findUserById(tenantId, userId)).thenReturn(user);
-        when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
+    public void testSaveEdgeWithApiKey() throws Exception {
+        Edge edge = constructEdge("My edge", "default");
 
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
+        Mockito.reset(tbClusterService, auditLogService);
 
-        Authentication authentication = provider.authenticate(token);
+        Edge savedEdge = doPostWithApiKey("/api/edge", edge, Edge.class);
 
-        assertNotNull(authentication);
-        assertTrue(authentication.isAuthenticated());
-        assertTrue(authentication instanceof ApiKeyAuthenticationToken);
-        SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
-        assertEquals(userId, securityUser.getId());
-        assertEquals(tenantId, securityUser.getTenantId());
-        assertEquals(USER_EMAIL, securityUser.getEmail());
-        assertEquals(Authority.TENANT_ADMIN, securityUser.getAuthority());
-    }
+        Assert.assertNotNull(savedEdge);
+        Assert.assertNotNull(savedEdge.getId());
+        Assert.assertTrue(savedEdge.getCreatedTime() > 0);
+        Assert.assertEquals(tenantId, savedEdge.getTenantId());
+        Assert.assertNotNull(savedEdge.getCustomerId());
+        Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
+        Assert.assertEquals(edge.getName(), savedEdge.getName());
 
-    @Test(expected = BadCredentialsException.class)
-    public void testEmptyApiKey() {
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(""));
+        testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+                tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
+                ActionType.ADDED, 2);
 
-        provider.authenticate(token);
-    }
+        savedEdge.setName("My new edge");
+        doPostWithApiKey("/api/edge", savedEdge, Edge.class);
 
-    @Test(expected = BadCredentialsException.class)
-    public void testNonExistentApiKey() {
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(null);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
+        Edge foundEdge = doGetWithApiKey("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
+        Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
 
-        provider.authenticate(token);
-    }
+        testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
+                tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
+                ActionType.UPDATED, 1);
 
-    @Test(expected = DisabledException.class)
-    public void testDisabledApiKey() {
-        apiKey.setEnabled(false);
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
-
-        provider.authenticate(token);
-    }
-
-    @Test(expected = CredentialsExpiredException.class)
-    public void testExpiredApiKey() {
-        apiKey.setExpirationTime(System.currentTimeMillis() - 10000); // Expired 10 seconds ago
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
-
-        provider.authenticate(token);
-    }
-
-    @Test(expected = UsernameNotFoundException.class)
-    public void testNonExistentUser() {
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        when(userService.findUserById(tenantId, userId)).thenReturn(null);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
-
-        provider.authenticate(token);
-    }
-
-    @Test(expected = UsernameNotFoundException.class)
-    public void testNonExistentUserCredentials() {
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        when(userService.findUserById(tenantId, userId)).thenReturn(user);
-        when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(null);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
-
-        provider.authenticate(token);
-    }
-
-    @Test(expected = DisabledException.class)
-    public void testDisabledUser() {
-        userCredentials.setEnabled(false);
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        when(userService.findUserById(tenantId, userId)).thenReturn(user);
-        when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
-
-        provider.authenticate(token);
-    }
-
-    @Test(expected = InsufficientAuthenticationException.class)
-    public void testUserWithoutAuthority() {
-        user.setAuthority(null);
-        when(apiKeyService.findApiKeyByValue(TEST_API_KEY)).thenReturn(apiKey);
-        when(userService.findUserById(tenantId, userId)).thenReturn(user);
-        when(userService.findUserCredentialsByUserId(tenantId, userId)).thenReturn(userCredentials);
-        ApiKeyAuthenticationToken token = new ApiKeyAuthenticationToken(new RawApiKeyToken(TEST_API_KEY));
-
-        provider.authenticate(token);
+        doDeleteWithApiKey("/api/edge/" + savedEdge.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void testSupports() {
-        assertTrue(provider.supports(ApiKeyAuthenticationToken.class));
+    public void testUnauthorizedWhenKeyDisabled() throws Exception {
+        ApiKeyInfo disabledApiKeyInfo = doPut("/api/apiKey/" + savedApiKey.getId().getId() + "/enabled/false", Boolean.FALSE, ApiKeyInfo.class);
+        Assert.assertFalse(disabledApiKeyInfo.isEnabled());
+        doGetWithApiKey("/api/admin/featuresInfo").andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testUnauthorizedWhenKeyExpired() throws Exception {
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo();
+        apiKeyInfo.setExpirationTime(System.currentTimeMillis() - 1000);
+        ApiKey savedApiKeyWithBad = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+        setApiKey(savedApiKeyWithBad.getValue());
+        doPost("/api/apiKey", savedApiKey, ApiKeyInfo.class);
+        doGetWithApiKey("/api/admin/featuresInfo").andExpect(status().isUnauthorized());
+    }
+
+    private ApiKeyInfo constructApiKeyInfo() {
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setDescription("New API key description");
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setUserId(tenantAdminUserId);
+        return apiKeyInfo;
     }
 
 }

@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.pat;
+package org.thingsboard.server.service.user.cache;
 
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.pat.ApiKey;
-import org.thingsboard.server.dao.Dao;
 
-import java.util.Set;
+public interface UserAuthDetailsCache {
 
-public interface ApiKeyDao extends Dao<ApiKey> {
-
-    ApiKey findByValue(String value);
-
-    Set<String> deleteByTenantId(TenantId tenantId);
-
-    Set<String> deleteByUserId(TenantId tenantId, UserId userId);
-
-    int deleteAllByExpirationTimeBefore(long ts);
+    UserAuthDetails findUserEnabled(TenantId tenantId, UserId userId);
 
 }

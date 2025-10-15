@@ -28,7 +28,6 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.UUID;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.API_KEY_HEADER_PREFIX;
 
 @DaoSqlTest
 public class ApiKeyControllerTest extends AbstractControllerTest {
@@ -42,8 +41,7 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     public void testSaveApiKey() throws Exception {
         ApiKeyInfo apiKeyInfo = constructApiKeyInfo("New API key description", true);
 
-        String apiKeyStr = doPost("/api/apiKey", apiKeyInfo, ApiKey.class).getValue();
-        Assert.assertTrue(apiKeyStr.startsWith(API_KEY_HEADER_PREFIX));
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
 
         PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
         Assert.assertEquals(1, pageData.getData().size());

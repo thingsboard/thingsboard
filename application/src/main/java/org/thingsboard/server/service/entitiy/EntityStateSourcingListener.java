@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -54,6 +55,7 @@ import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNotificationMsg;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
+import org.thingsboard.server.dao.eventsourcing.ActionCause;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -99,7 +101,7 @@ public class EntityStateSourcingListener {
             case ASSET -> {
                 onAssetUpdate(event.getEntity(), event.getOldEntity());
             }
-            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
+            case ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE, USER -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
             }
             case RULE_CHAIN -> {
@@ -164,7 +166,7 @@ public class EntityStateSourcingListener {
                 Asset asset = (Asset) event.getEntity();
                 tbClusterService.onAssetDeleted(tenantId, asset, null);
             }
-            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
+            case ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE, USER -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
             }
             case NOTIFICATION_REQUEST -> {
@@ -228,6 +230,8 @@ public class EntityStateSourcingListener {
                 tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
             }
             pushAssignedFromNotification(tenant, event.getTenantId(), device);
+        } else if (event.getActionType() == ActionType.CREDENTIALS_UPDATED && event.getEntityId() != null && event.getEntityId().getEntityType() == EntityType.USER) {
+            tbClusterService.broadcastEntityStateChangeEvent(event.getTenantId(), event.getEntityId(), ComponentLifecycleEvent.UPDATED);
         }
     }
 

@@ -15,21 +15,4 @@
  */
 package org.thingsboard.server.dao.pat;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.pat.ApiKey;
-import org.thingsboard.server.dao.Dao;
-
-import java.util.Set;
-
-public interface ApiKeyDao extends Dao<ApiKey> {
-
-    ApiKey findByValue(String value);
-
-    Set<String> deleteByTenantId(TenantId tenantId);
-
-    Set<String> deleteByUserId(TenantId tenantId, UserId userId);
-
-    int deleteAllByExpirationTimeBefore(long ts);
-
-}
+public record ApiKeyEvictEvent(String value) {}

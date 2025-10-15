@@ -34,6 +34,7 @@ import org.thingsboard.server.cache.user.UserCacheKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -296,7 +297,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public UserCredentials checkUserActivationToken(TenantId tenantId, UserCredentials userCredentials) {
-        if (userCredentials.getActivationTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
+        if (userCredentials.getActivationTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew a link if less than 15 minutes before expiration
             userCredentials = generateUserActivationToken(userCredentials);
             userCredentials = saveUserCredentials(tenantId, userCredentials);
             log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userCredentials.getUserId());
@@ -486,6 +487,13 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
             ((ObjectNode) userSettings.getSettings().get("sessions")).remove(mobileToken);
             userSettingsService.saveUserSettings(tenantId, userSettings);
         }
+    }
+
+    @Override
+    public UserAuthDetails findUserAuthDetailsByUserId(TenantId tenantId, UserId userId) {
+        log.trace("Executing findUserEnabled [{}]", userId);
+        validateId(userId, id -> INCORRECT_USER_ID + id);
+        return userDao.findUserAuthDetailsByUserId(tenantId.getId(), userId.getId());
     }
 
     private Optional<UserMobileSessionInfo> findMobileSessionInfo(TenantId tenantId, UserId userId) {

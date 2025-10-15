@@ -22,22 +22,22 @@ import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.pat.ApiKeyDao;
 import org.thingsboard.server.dao.service.DataValidator;
-import org.thingsboard.server.dao.tenant.TenantDao;
-import org.thingsboard.server.dao.user.UserDao;
+import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.dao.user.UserService;
 
 @Component
 @RequiredArgsConstructor
 public class ApiKeyDataValidator extends DataValidator<ApiKey> {
 
     private final ApiKeyDao apiKeyDao;
-    private final TenantDao tenantDao;
-    private final UserDao userDao;
+    private final TenantService tenantService;
+    private final UserService userService;
 
     @Override
     protected void validateDataImpl(TenantId tenantId, ApiKey apiKey) {
         if (apiKey.getId() != null) {
             if (apiKey.getUuidId() == null) {
-                throw new DataValidationException("Api Key UUID should be specified!");
+                throw new DataValidationException("API Key UUID should be specified!");
             }
             if (apiKey.getId().isNullUid()) {
                 throw new DataValidationException("API key UUID must not be the reserved null value!");
@@ -47,14 +47,14 @@ public class ApiKeyDataValidator extends DataValidator<ApiKey> {
         if (apiKey.getTenantId() == null || apiKey.getTenantId().getId() == null) {
             throw new DataValidationException("API key should be assigned to tenant!");
         }
-        if (!TenantId.SYS_TENANT_ID.equals(apiKey.getTenantId()) && tenantDao.findById(apiKey.getTenantId(), apiKey.getTenantId().getId()) == null) {
+        if (!TenantId.SYS_TENANT_ID.equals(apiKey.getTenantId()) && !tenantService.tenantExists(apiKey.getTenantId())) {
             throw new DataValidationException("API key reference a non-existent tenant!");
         }
 
         if (apiKey.getUserId() == null || apiKey.getUserId().getId() == null) {
             throw new DataValidationException("API key should be assigned to user!");
         }
-        if (userDao.findById(apiKey.getTenantId(), apiKey.getUserId().getId()) == null) {
+        if (userService.findUserById(apiKey.getTenantId(), apiKey.getUserId()) == null) {
             throw new DataValidationException("API key reference a non-existent user!");
         }
     }
@@ -66,10 +66,10 @@ public class ApiKeyDataValidator extends DataValidator<ApiKey> {
             throw new DataValidationException("Cannot update non-existent API key!");
         }
         if (!old.getUserId().equals(apiKey.getUserId())) {
-            throw new DataValidationException("Cannot update api key user id!");
+            throw new DataValidationException("Cannot update API key user id!");
         }
         if (old.getExpirationTime() != apiKey.getExpirationTime()) {
-            throw new DataValidationException("Cannot update api key expiration time!");
+            throw new DataValidationException("Cannot update API key expiration time!");
         }
         return old;
     }

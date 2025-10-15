@@ -33,9 +33,9 @@ import org.thingsboard.server.service.security.model.token.RawAccessJwtToken;
 
 import java.io.IOException;
 
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER;
+import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER_V2;
 import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.BEARER_HEADER_PREFIX;
-import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM;
-import static org.thingsboard.server.config.ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM_V2;
 
 public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticationProcessingFilter {
 
@@ -70,9 +70,9 @@ public class JwtTokenAuthenticationProcessingFilter extends AbstractAuthenticati
         if (!super.requiresAuthentication(request, response)) {
             return false;
         }
-        String header = request.getHeader(JWT_TOKEN_HEADER_PARAM);
+        String header = request.getHeader(AUTHORIZATION_HEADER);
         if (header == null) {
-            header = request.getHeader(JWT_TOKEN_HEADER_PARAM_V2);
+            header = request.getHeader(AUTHORIZATION_HEADER_V2);
         }
         if (header == null) {
             // If there is NO auth header at all, let the JWT filter try to attempt Authentication and failure in the process.

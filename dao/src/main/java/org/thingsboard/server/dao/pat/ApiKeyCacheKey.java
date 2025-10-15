@@ -15,21 +15,26 @@
  */
 package org.thingsboard.server.dao.pat;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.pat.ApiKey;
-import org.thingsboard.server.dao.Dao;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
-import java.util.Set;
+import java.io.Serializable;
 
-public interface ApiKeyDao extends Dao<ApiKey> {
+import static java.util.Objects.requireNonNull;
 
-    ApiKey findByValue(String value);
+record ApiKeyCacheKey(String value) implements Serializable {
 
-    Set<String> deleteByTenantId(TenantId tenantId);
+    ApiKeyCacheKey {
+        requireNonNull(value);
+    }
 
-    Set<String> deleteByUserId(TenantId tenantId, UserId userId);
+    static ApiKeyCacheKey of(String value) {
+        return new ApiKeyCacheKey(value);
+    }
 
-    int deleteAllByExpirationTimeBefore(long ts);
+    @NonNull
+    @Override
+    public String toString() {
+        return /* cache name */ "_" + value;
+    }
 
 }
