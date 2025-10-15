@@ -50,7 +50,7 @@ import java.util.UUID;
 public class RefreshTokenAuthenticationProvider implements AuthenticationProvider {
 
     private final JwtTokenFactory tokenFactory;
-    private final UserAuthDetailsCache userEnabledCache;
+    private final UserAuthDetailsCache userAuthDetailsCache;
     private final CustomerService customerService;
     private final TokenOutdatingService tokenOutdatingService;
 
@@ -76,7 +76,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByUserId(UserId userId) {
-        UserAuthDetails userAuthDetails = userEnabledCache.findUserEnabled(TenantId.SYS_TENANT_ID, userId);
+        UserAuthDetails userAuthDetails = userAuthDetailsCache.findUserEnabled(TenantId.SYS_TENANT_ID, userId);
         if (userAuthDetails == null) {
             throw new UsernameNotFoundException("User with credentials not found");
         }
