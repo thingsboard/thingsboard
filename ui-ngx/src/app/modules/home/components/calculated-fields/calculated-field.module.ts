@@ -17,13 +17,9 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
 import {
   CalculatedFieldDialogComponent
 } from '@home/components/calculated-fields/components/dialog/calculated-field-dialog.component';
-import {
-  CalculatedFieldDebugDialogComponent
-} from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
 import {
   CalculatedFieldScriptTestDialogComponent
 } from '@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component';
@@ -33,7 +29,6 @@ import {
 import {
   EntityDebugSettingsButtonComponent
 } from '@home/components/entity/debug/entity-debug-settings-button.component';
-import { HomeComponentsModule } from '@home/components/home-components.module';
 import {
   GeofencingConfigurationModule
 } from '@home/components/calculated-fields/components/geofencing-configuration/geofencing-configuration.module';
@@ -46,9 +41,7 @@ import {
 
 @NgModule({
   declarations: [
-    CalculatedFieldsTableComponent,
     CalculatedFieldDialogComponent,
-    CalculatedFieldDebugDialogComponent,
     CalculatedFieldScriptTestDialogComponent,
     CalculatedFieldTestArgumentsComponent,
   ],
@@ -57,12 +50,12 @@ import {
     SharedModule,
     GeofencingConfigurationModule,
     EntityDebugSettingsButtonComponent,
-    HomeComponentsModule,
     SimpleConfigurationModule,
     PropagationConfigurationModule,
   ],
   exports: [
-    CalculatedFieldsTableComponent,
+    CalculatedFieldDialogComponent,
+    CalculatedFieldScriptTestDialogComponent,
   ]
 })
 export class CalculatedFieldsModule {}
