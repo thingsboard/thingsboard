@@ -511,7 +511,7 @@ public class BaseRelationService implements RelationService {
         validateId(tenantId, id -> "Invalid tenant id: " + id);
         validate(relationPathQuery);
         int limit = (int) apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
-        validatePositiveNumber(limit, "Invalid entities limit: " + limit);
+        validatePositiveNumber(limit, "Max related entities limit for relation path query must be positive!");
         if (relationPathQuery.levels().size() == 1) {
             RelationPathLevel relationPathLevel = relationPathQuery.levels().get(0);
             var relationsFuture = switch (relationPathLevel.direction()) {
