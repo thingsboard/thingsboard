@@ -48,6 +48,7 @@ import java.util.Map.Entry;
 @Getter
 public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
+    @Setter
     private long lastArgsRefreshTs = -1;
     @Setter
     private long lastMetricsEvalTs = -1;
@@ -74,6 +75,7 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
         lastArgsRefreshTs = -1;
         lastMetricsEvalTs = -1;
         metrics = null;
+        inputs.clear();
     }
 
     @Override
@@ -104,7 +106,8 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
-        if (!shouldRecalculate()) {
+        boolean shouldRecalculate = updatedArgs == null || updatedArgs.isEmpty();
+        if (!shouldRecalculate() && !shouldRecalculate) {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                     .result(null)
                     .build());

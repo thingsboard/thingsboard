@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.cf;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.Tenant;
@@ -61,6 +64,7 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.cf.CalculatedFieldIntegrationTest.POLL_INTERVAL;
 
+@Slf4j
 @DaoSqlTest
 public class LatestValuesAggregationCalculatedFieldTest extends AbstractControllerTest {
 
@@ -341,13 +345,17 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         createEntityRelation(asset2.getId(), device3.getId(), "Contains");
         createEntityRelation(asset2.getId(), device4.getId(), "Contains");
 
-        postTelemetry(device3.getId(), "{\"occupied\":false}");
-        postTelemetry(device4.getId(), "{\"occupied\":true}");
-        postTelemetry(device3.getId(), "{\"occupied\":true}");
+        long currentTime = System.currentTimeMillis();
+        long firstTs = currentTime - 10;
+        long secondTs = currentTime - 10;
+        long thirdTs = currentTime - 5;
+        postTelemetry(device3.getId(), "{\"ts\": " + firstTs + ", \"values\": {\"occupied\":true}}");
+        postTelemetry(device4.getId(), "{\"ts\": " + secondTs + ", \"values\": {\"occupied\":true}}");
+        postTelemetry(device3.getId(), "{\"ts\": " + thirdTs + ", \"values\": {\"occupied\":true}}");
 
         createOccupancyCF(asset2.getId());
 
-        await().alias("create CF and perform aggregation with default values").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -357,15 +365,15 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
                     ));
                 });
 
-        doDelete("/api/plugins/telemetry/DEVICE/" + device3.getId() + "/timeseries/delete?keys=occupied&deleteAllDataForKeys=false&rewriteLatestIfDeleted=true&deleteLatest=true&startTs=0&endTs=" + System.currentTimeMillis(), String.class);
-        doDelete("/api/plugins/telemetry/DEVICE/" + device4.getId() + "/timeseries/delete?keys=occupied&deleteAllDataForKeys=false&rewriteLatestIfDeleted=true&deleteLatest=true&startTs=0&endTs=" + System.currentTimeMillis(), String.class);
+        doDelete("/api/plugins/telemetry/DEVICE/" + device3.getId() + "/timeseries/delete?keys=occupied&deleteAllDataForKeys=false&rewriteLatestIfDeleted=true&deleteLatest=true&startTs=" + thirdTs + "&endTs=" + thirdTs + 1, String.class);
+        doDelete("/api/plugins/telemetry/DEVICE/" + device4.getId() + "/timeseries/delete?keys=occupied&deleteAllDataForKeys=false&rewriteLatestIfDeleted=true&deleteLatest=true&startTs=" + secondTs + "&endTs=" + secondTs + 1, String.class);
 
         await().alias("delete latest telemetry and perform aggregation with previous or default values").atMost(deduplicationInterval * 2, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
-                            "freeSpaces", "2",
-                            "occupiedSpaces", "0",
+                            "freeSpaces", "1",
+                            "occupiedSpaces", "1",
                             "totalSpaces", "2"
                     ));
                 });
@@ -411,6 +419,140 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
                 });
     }
 
+    @Test
+    public void testUpdateRelationPath_checkAggregation() throws Exception {
+        CalculatedField cf = createOccupancyCF(asset.getId());
+        checkInitialCalculation();
+
+        Device device3 = createDevice("Device 3", "1234567890333");
+        createEntityRelation(asset.getId(), device3.getId(), "Has");
+        postTelemetry(device3.getId(), "{\"occupied\":true}");
+
+        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        configuration.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, "Has"));
+        saveCalculatedField(cf);
+
+        await().alias("update relation path and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of(
+                            "freeSpaces", "0",
+                            "occupiedSpaces", "1",
+                            "totalSpaces", "1"
+                    ));
+                });
+    }
+
+    @Test
+    public void testUpdateArguments_checkAggregation() throws Exception {
+        CalculatedField cf = createOccupancyCF(asset.getId());
+        checkInitialCalculation();
+
+        postTelemetry(device1.getId(), "{\"occupiedStatus\":false}");
+        postTelemetry(device2.getId(), "{\"occupiedStatus\":false}");
+
+        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("oc", ArgumentType.TS_LATEST, null));
+        argument.setDefaultValue("false");
+        configuration.setArguments(Map.of("oc", argument));
+        saveCalculatedField(cf);
+
+        await().alias("update arguments and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of(
+                            "freeSpaces", "2",
+                            "occupiedSpaces", "0",
+                            "totalSpaces", "2"
+                    ));
+                });
+    }
+
+    @Test
+    public void testUpdateMetrics_checkAggregation() throws Exception {
+        postTelemetry(device1.getId(), "{\"temperature\":24.2}");
+        postTelemetry(device2.getId(), "{\"temperature\":19.6}");
+        CalculatedField cf = createAvgTemperatureCF(asset.getId());
+
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
+                });
+
+        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        AggMetric aggMetric = new AggMetric();
+        aggMetric.setInput(new AggKeyInput("temp"));
+        aggMetric.setFilter("return temp < 100;");
+        aggMetric.setFunction(AggFunction.MAX);
+        configuration.setMetrics(Map.of("maxTemperature", aggMetric));
+        saveCalculatedField(cf);
+
+        postTelemetry(device1.getId(), "{\"temperature\":101.3}");
+        postTelemetry(device2.getId(), "{\"temperature\":25.8}");
+
+        await().alias("update metrics and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("maxTemperature", "26"));
+                });
+    }
+
+    @Test
+    public void testUpdateOutput_checkAggregation() throws Exception {
+        postTelemetry(device1.getId(), "{\"temperature\":24.2}");
+        postTelemetry(device2.getId(), "{\"temperature\":19.6}");
+        CalculatedField cf = createAvgTemperatureCF(asset.getId());
+
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
+                });
+
+        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        Output output = new Output();
+        output.setType(OutputType.ATTRIBUTES);
+        output.setScope(AttributeScope.SERVER_SCOPE);
+        configuration.setOutput(output);
+        saveCalculatedField(cf);
+
+        await().alias("update output and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode avgTemperature = getServerAttributes(asset.getId(), "avgTemperature");
+                    assertThat(avgTemperature).isNotNull();
+                    assertThat(avgTemperature.get(0)).isNotNull();
+                    assertThat(avgTemperature.get(0).get("value").asText()).isEqualTo("24.2");
+                });
+    }
+
+    @Test
+    public void testUpdateDeduplicationInterval_checkAggregationNotExecutedUntilDeduplicationInterval() throws Exception {
+        postTelemetry(device1.getId(), "{\"temperature\":24.2}");
+        postTelemetry(device2.getId(), "{\"temperature\":19.6}");
+        CalculatedField cf = createAvgTemperatureCF(asset.getId());
+
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
+                });
+
+        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        configuration.setDeduplicationIntervalMillis(2 * deduplicationInterval);
+        saveCalculatedField(cf);
+
+        postTelemetry(device2.getId(), "{\"temperature\":32.1}");
+
+        await().alias("update deduplication interval and perform aggregation").atMost(2 * deduplicationInterval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("avgTemperature", "28"));
+                });
+    }
+
     private void checkInitialCalculation() {
         await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -423,6 +565,32 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
         assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("1");
         assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+    }
+
+    private CalculatedField createAvgTemperatureCF(EntityId entityId) {
+        Map<String, Argument> arguments = new HashMap<>();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        argument.setDefaultValue("20");
+        arguments.put("temp", argument);
+
+        Map<String, AggMetric> aggMetrics = new HashMap<>();
+
+        AggMetric avgMetric = new AggMetric();
+        avgMetric.setFunction(AggFunction.AVG);
+        avgMetric.setFilter("return temp >= 20;");
+        avgMetric.setInput(new AggKeyInput("temp"));
+        aggMetrics.put("avgTemperature", avgMetric);
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        output.setDecimalsByDefault(0);
+
+        return createAggCf("Average temperature", entityId,
+                new RelationPathLevel(EntitySearchDirection.FROM, "Contains"),
+                arguments,
+                aggMetrics,
+                output);
     }
 
     private CalculatedField createOccupancyCF(EntityId entityId) {
@@ -511,6 +679,10 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
     private ObjectNode getLatestTelemetry(EntityId entityId, String... keys) throws Exception {
         return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/timeseries?keys=" + String.join(",", keys), ObjectNode.class);
+    }
+
+    private ArrayNode getServerAttributes(EntityId entityId, String... keys) throws Exception {
+        return doGetAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() + "/values/attributes/SERVER_SCOPE?keys=" + String.join(",", keys), ArrayNode.class);
     }
 
 }

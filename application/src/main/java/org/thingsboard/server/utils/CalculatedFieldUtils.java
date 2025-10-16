@@ -96,6 +96,9 @@ public class CalculatedFieldUtils {
                 .setId(toProto(stateId))
                 .setType(state.getType().name());
 
+        if (state instanceof LatestValuesAggregationCalculatedFieldState aggState) {
+            builder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
+        }
         state.getArguments().forEach((argName, argEntry) -> {
             if (argEntry instanceof AggArgumentEntry aggArgumentEntry) {
                 aggArgumentEntry.getAggInputs()
@@ -242,6 +245,7 @@ public class CalculatedFieldUtils {
                 arguments.forEach((argName, entityInputs) -> {
                     aggState.getArguments().put(argName, new AggArgumentEntry(entityInputs, false));
                 });
+                aggState.setLastArgsRefreshTs(proto.getLastArgsUpdateTs());
             }
         }
 

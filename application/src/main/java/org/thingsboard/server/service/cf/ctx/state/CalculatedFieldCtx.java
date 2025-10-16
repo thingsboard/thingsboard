@@ -581,8 +581,7 @@ public class CalculatedFieldCtx {
         }
         if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
                 && other.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig
-                && thisConfig.getDeduplicationIntervalMillis() != otherConfig.getDeduplicationIntervalMillis()
-                && !thisConfig.getMetrics().equals(otherConfig.getMetrics())) {
+                && (thisConfig.getDeduplicationIntervalMillis() != otherConfig.getDeduplicationIntervalMillis() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
             return true;
         }
         return false;
@@ -596,7 +595,7 @@ public class CalculatedFieldCtx {
             var thisConfig = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
             var otherConfig = (AlarmCalculatedFieldConfiguration) other.getCalculatedField().getConfiguration();
             if (!thisConfig.getCreateRules().equals(otherConfig.getCreateRules()) ||
-                !Objects.equals(thisConfig.getClearRule(), otherConfig.getClearRule())) {
+                    !Objects.equals(thisConfig.getClearRule(), otherConfig.getClearRule())) {
                 return true;
             }
         }
@@ -611,7 +610,7 @@ public class CalculatedFieldCtx {
 
     private boolean hasGeofencingZoneGroupConfigurationChanges(CalculatedFieldCtx other) {
         if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration thisConfig
-            && other.calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration otherConfig) {
+                && other.calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration otherConfig) {
             return !thisConfig.getZoneGroups().equals(otherConfig.getZoneGroups());
         }
         return false;
@@ -663,10 +662,10 @@ public class CalculatedFieldCtx {
     @Override
     public String toString() {
         return "CalculatedFieldCtx{" +
-               "cfId=" + cfId +
-               ", cfType=" + cfType +
-               ", entityId=" + entityId +
-               '}';
+                "cfId=" + cfId +
+                ", cfType=" + cfType +
+                ", entityId=" + entityId +
+                '}';
     }
 
 }
