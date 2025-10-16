@@ -50,10 +50,16 @@ export interface CalculatedFieldGeofencing extends BaseCalculatedField {
   configuration: CalculatedFieldGeofencingConfiguration;
 }
 
+export interface CalculatedFieldPropagation extends BaseCalculatedField {
+  type: CalculatedFieldType.PROPAGATION;
+  configuration: CalculatedFieldPropagationConfiguration;
+}
+
 export type CalculatedField =
   | CalculatedFieldSimple
   | CalculatedFieldScript
-  | CalculatedFieldGeofencing;
+  | CalculatedFieldGeofencing
+  | CalculatedFieldPropagation;
 
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
@@ -74,29 +80,51 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, stri
 export type CalculatedFieldConfiguration =
   | CalculatedFieldSimpleConfiguration
   | CalculatedFieldScriptConfiguration
-  | CalculatedFieldGeofencingConfiguration;
+  | CalculatedFieldGeofencingConfiguration
+  | CalculatedFieldPropagationConfiguration;
 
 export interface CalculatedFieldSimpleConfiguration {
   type: CalculatedFieldType.SIMPLE;
-  expression?: string;
-  arguments?: Record<string, CalculatedFieldArgument>;
+  expression: string;
+  arguments: Record<string, CalculatedFieldArgument>;
   output: CalculatedFieldSimpleOutput;
 }
 
 export interface CalculatedFieldScriptConfiguration {
   type: CalculatedFieldType.SCRIPT;
-  expression?: string;
-  arguments?: Record<string, CalculatedFieldArgument>;
+  expression: string;
+  arguments: Record<string, CalculatedFieldArgument>;
   output: CalculatedFieldOutput;
 }
 
 export interface CalculatedFieldGeofencingConfiguration {
   type: CalculatedFieldType.GEOFENCING;
-  zoneGroups?: Record<string, CalculatedFieldGeofencing>;
-  scheduledUpdateEnabled?: boolean;
+  zoneGroups: Record<string, CalculatedFieldGeofencing>;
+  scheduledUpdateEnabled: boolean;
   scheduledUpdateInterval?: number;
   output: CalculatedFieldOutput;
 }
+
+interface BasePropagationConfiguration {
+  type: CalculatedFieldType.PROPAGATION;
+  direction: EntitySearchDirection;
+  relationType: string;
+  arguments: Record<string, CalculatedFieldArgument>;
+  output: CalculatedFieldOutput;
+}
+
+export interface PropagationWithNoExpression extends BasePropagationConfiguration {
+  applyExpressionToResolvedArguments: false;
+}
+
+export interface PropagationWithExpression extends BasePropagationConfiguration {
+  applyExpressionToResolvedArguments: true;
+  expression: string;
+}
+
+export type CalculatedFieldPropagationConfiguration =
+  | PropagationWithNoExpression
+  | PropagationWithExpression;
 
 export interface CalculatedFieldOutput {
   type: OutputType;
@@ -153,6 +181,13 @@ export const GeofencingDirectionLevelTranslations = new Map<EntitySearchDirectio
   [
     [EntitySearchDirection.FROM, 'calculated-fields.direction-down'],
     [EntitySearchDirection.TO, 'calculated-fields.direction-up'],
+  ]
+)
+
+export const PropagationDirectionTranslations = new Map<EntitySearchDirection, string>(
+  [
+    [EntitySearchDirection.FROM, 'calculated-fields.direction-down-child'],
+    [EntitySearchDirection.TO, 'calculated-fields.direction-up-parent'],
   ]
 )
 

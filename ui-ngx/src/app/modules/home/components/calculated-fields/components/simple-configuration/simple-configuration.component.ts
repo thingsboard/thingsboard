@@ -66,17 +66,17 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   @Input()
   isScript: boolean;
 
-  @Input()
+  @Input({required: true})
   entityId: EntityId;
 
-  @Input()
+  @Input({required: true})
   tenantId: string;
 
-  @Input()
+  @Input({required: true})
   entityName: string;
 
-  @Input()
-  testScript$: Observable<string>;
+  @Input({required: true})
+  testScript: () => Observable<string>;
 
   simpleConfiguration = this.fb.group({
     arguments: this.fb.control({}),
@@ -92,7 +92,6 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   });
 
   readonly ScriptLanguage = ScriptLanguage;
-  readonly CalculatedFieldType = CalculatedFieldType;
   readonly OutputType = OutputType;
 
   functionArgs$ = this.simpleConfiguration.get('arguments').valueChanges.pipe(
@@ -141,19 +140,21 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   validate(): ValidationErrors | null {
-    return this.simpleConfiguration.valid ? null : {invalidSimpleConfig: false};
+    return this.simpleConfiguration.valid || this.simpleConfiguration.status === "DISABLED" ? null : {invalidSimpleConfig: false};
   }
 
   writeValue(value: SimpeConfiguration): void {
     const formValue: any = deepClone(value);
     if (this.isScript) {
-      formValue.expressionSCRIPT = formValue.expression;
+      formValue.expressionSCRIPT = formValue.expression ?? calculatedFieldDefaultScript;
     } else {
       formValue.expressionSIMPLE = formValue.expression;
     }
     this.simpleConfiguration.patchValue(formValue, {emitEvent: false});
-    this.simpleConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
     this.updatedFormWithScript();
+    setTimeout(() => {
+      this.simpleConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
+    });
   }
 
   registerOnChange(fn: (config: SimpeConfiguration) => void): void {
@@ -173,7 +174,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   onTestScript() {
-    this.testScript$?.subscribe((expression) => {
+    this.testScript().subscribe((expression) => {
       this.simpleConfiguration.get('expressionSCRIPT').setValue(expression);
       this.simpleConfiguration.get('expressionSCRIPT').markAsDirty();
     })

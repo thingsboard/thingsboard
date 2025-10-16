@@ -18,27 +18,28 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import {
-  SimpleConfigurationComponent
-} from '@home/components/calculated-fields/components/simple-configuration/simple-configuration.component';
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-argument-panel.component';
 import {
-  CalculatedFieldOutputModule
-} from '@home/components/calculated-fields/components/output/calculated-field-output.module';
+  CalculatedFieldArgumentsTableComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.component';
 import {
-  CalculatedFieldArgumentsTableModule
-} from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.module';
+  PropagateArgumentsTableComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/propagate-arguments-table.component';
 
 @NgModule({
   imports: [
     CommonModule,
     SharedModule,
-    CalculatedFieldOutputModule,
-    CalculatedFieldArgumentsTableModule,
   ],
   declarations: [
-    SimpleConfigurationComponent,
+    CalculatedFieldArgumentPanelComponent,
+    CalculatedFieldArgumentsTableComponent,
+    PropagateArgumentsTableComponent
   ],
   exports: [
-    SimpleConfigurationComponent
+    CalculatedFieldArgumentsTableComponent,
+    PropagateArgumentsTableComponent
   ]
 })
-export class SimpleConfigurationModule {}
+export class CalculatedFieldArgumentsTableModule {}

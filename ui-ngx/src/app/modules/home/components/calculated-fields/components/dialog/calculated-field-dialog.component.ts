@@ -83,6 +83,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.observeIsLoading();
+    this.observeType();
     this.applyDialogData();
   }
 
@@ -131,6 +132,16 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
         if (this.data.isDirty) {
           this.fieldFormGroup.markAsDirty();
         }
+      }
+    });
+  }
+
+  private observeType(): void {
+    this.fieldFormGroup.get('type').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((type) => {
+      if (type !== CalculatedFieldType.SIMPLE && type !== CalculatedFieldType.SCRIPT) {
+        this.fieldFormGroup.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
       }
     });
   }

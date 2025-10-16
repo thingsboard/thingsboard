@@ -67,13 +67,21 @@
           <tb-geofencing-configuration formControlName="configuration" [entityId]="data.entityId" [entityName]="data.entityName" [tenantId]="data.tenantId">
           </tb-geofencing-configuration>
         }
+        @case (CalculatedFieldType.PROPAGATION) {
+          <tb-propagation-configuration formControlName="configuration"
+                                        [entityId]="data.entityId"
+                                        [entityName]="data.entityName"
+                                        [tenantId]="data.tenantId"
+                                        [testScript]="onTestScript.bind(this)">
+          </tb-propagation-configuration>
+        }
         @default {
           <tb-simple-configuration formControlName="configuration"
                                    [entityId]="data.entityId"
                                    [entityName]="data.entityName"
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
-                                   [testScript$]="onTestScript.bind(this)"
+                                   [testScript]="onTestScript.bind(this)"
           >
           </tb-simple-configuration>
         }

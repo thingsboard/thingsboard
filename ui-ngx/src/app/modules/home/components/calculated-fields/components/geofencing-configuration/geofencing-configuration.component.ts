@@ -114,7 +114,7 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
   }
 
   validate(): ValidationErrors | null {
-    return this.geofencingConfiguration.valid ? null : { geofencingConfigError: false };
+    return this.geofencingConfiguration.valid || this.geofencingConfiguration.status === "DISABLED" ? null : { geofencingConfigError: false };
   }
 
   writeValue(config: CalculatedFieldGeofencingConfiguration): void {

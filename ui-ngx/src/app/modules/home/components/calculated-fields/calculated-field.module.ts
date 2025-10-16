@@ -40,6 +40,9 @@ import {
 import {
   SimpleConfigurationModule
 } from '@home/components/calculated-fields/components/simple-configuration/simple-configuration.module';
+import {
+  PropagationConfigurationModule
+} from '@home/components/calculated-fields/components/propagation-configuration/propagation-configuration.module';
 
 @NgModule({
   declarations: [
@@ -55,7 +58,8 @@ import {
     GeofencingConfigurationModule,
     EntityDebugSettingsButtonComponent,
     HomeComponentsModule,
-    SimpleConfigurationModule
+    SimpleConfigurationModule,
+    PropagationConfigurationModule,
   ],
   exports: [
     CalculatedFieldsTableComponent,

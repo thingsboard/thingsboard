@@ -28,7 +28,7 @@ import {
 } from '@home/components/calculated-fields/components/geofencing-configuration/geofencing-configuration.component';
 import {
   CalculatedFieldOutputModule
-} from '@home/components/calculated-fields/components/output/caclculate-field-output.module';
+} from '@home/components/calculated-fields/components/output/calculated-field-output.module';
 
 @NgModule({
   imports: [
