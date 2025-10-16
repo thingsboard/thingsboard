@@ -36,6 +36,7 @@ import { SnmpDeviceTransportConfigurationComponent } from './data/snmp-device-tr
 import { DeviceCredentialsModule } from '@home/components/device/device-credentials.module';
 import { DeviceProfileCommonModule } from '@home/components/profile/device/common/device-profile-common.module';
 import { DeviceCheckConnectivityDialogComponent } from './device-check-connectivity-dialog.component';
+import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 
 @NgModule({
   declarations: [
@@ -61,6 +62,7 @@ import { DeviceCheckConnectivityDialogComponent } from './device-check-connectiv
     HomeDialogsModule,
     DeviceCredentialsModule,
     DeviceProfileCommonModule,
+    CalculatedFieldsModule,
     DeviceRoutingModule
   ]
 })

@@ -17,21 +17,20 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { HomeComponentsModule } from '@modules/home/components/home-components.module';
-import { DeviceProfileTabsComponent } from './device-profile-tabs.component';
-import { DeviceProfileRoutingModule } from './device-profile-routing.module';
-import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
+import {
+  CalculatedFieldOutputComponent
+} from '@home/components/calculated-fields/components/output/calculated-field-output.component';
 
 @NgModule({
-  declarations: [
-    DeviceProfileTabsComponent
-  ],
   imports: [
     CommonModule,
     SharedModule,
-    HomeComponentsModule,
-    CalculatedFieldsModule,
-    DeviceProfileRoutingModule
+  ],
+  declarations: [
+    CalculatedFieldOutputComponent
+  ],
+  exports: [
+    CalculatedFieldOutputComponent
   ]
 })
-export class DeviceProfileModule { }
+export class CalculatedFieldOutputModule { }

@@ -183,36 +183,13 @@ import {
 } from '@home/components/dashboard-page/layout/select-dashboard-breakpoint.component';
 import { EntityChipsComponent } from '@home/components/entity/entity-chips.component';
 import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
-import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
-import { CalculatedFieldDialogComponent } from '@home/components/calculated-fields/components/dialog/calculated-field-dialog.component';
 import {
   EntityDebugSettingsButtonComponent
 } from '@home/components/entity/debug/entity-debug-settings-button.component';
-import {
-  CalculatedFieldArgumentsTableComponent
-} from '@home/components/calculated-fields/components/arguments-table/calculated-field-arguments-table.component';
-import {
-  CalculatedFieldArgumentPanelComponent
-} from '@home/components/calculated-fields/components/panel/calculated-field-argument-panel.component';
-import {
-  CalculatedFieldDebugDialogComponent
-} from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
-import {
-  CalculatedFieldScriptTestDialogComponent
-} from '@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component';
-import {
-  CalculatedFieldTestArgumentsComponent
-} from '@home/components/calculated-fields/components/test-arguments/calculated-field-test-arguments.component';
 import { CheckConnectivityDialogComponent } from '@home/components/ai-model/check-connectivity-dialog.component';
 import { AIModelDialogComponent } from '@home/components/ai-model/ai-model-dialog.component';
 import { ResourcesDialogComponent } from "@home/components/resources/resources-dialog.component";
 import { ResourcesLibraryComponent } from "@home/components/resources/resources-library.component";
-import {
-  CalculatedFieldGeofencingZoneGroupsTableComponent
-} from '@home/components/calculated-fields/components/geofencing-zone-grups-table/calculated-field-geofencing-zone-groups-table.component';
-import {
-  CalculatedFieldGeofencingZoneGroupsPanelComponent
-} from '@home/components/calculated-fields/components/panel/calculated-field-geofencing-zone-groups-panel.component';
 
 @NgModule({
   declarations:
@@ -357,15 +334,6 @@ import {
       SendNotificationButtonComponent,
       EntityChipsComponent,
       DashboardViewComponent,
-      CalculatedFieldsTableComponent,
-      CalculatedFieldDialogComponent,
-      CalculatedFieldArgumentsTableComponent,
-      CalculatedFieldArgumentPanelComponent,
-      CalculatedFieldDebugDialogComponent,
-      CalculatedFieldScriptTestDialogComponent,
-      CalculatedFieldTestArgumentsComponent,
-      CalculatedFieldGeofencingZoneGroupsTableComponent,
-      CalculatedFieldGeofencingZoneGroupsPanelComponent,
       CheckConnectivityDialogComponent,
       AIModelDialogComponent,
       ResourcesDialogComponent,
@@ -508,15 +476,6 @@ import {
     SendNotificationButtonComponent,
     EntityChipsComponent,
     DashboardViewComponent,
-    CalculatedFieldsTableComponent,
-    CalculatedFieldDialogComponent,
-    CalculatedFieldArgumentsTableComponent,
-    CalculatedFieldArgumentPanelComponent,
-    CalculatedFieldDebugDialogComponent,
-    CalculatedFieldScriptTestDialogComponent,
-    CalculatedFieldTestArgumentsComponent,
-    CalculatedFieldGeofencingZoneGroupsTableComponent,
-    CalculatedFieldGeofencingZoneGroupsPanelComponent,
     CheckConnectivityDialogComponent,
     AIModelDialogComponent,
     ResourcesDialogComponent,

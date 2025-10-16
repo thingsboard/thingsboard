@@ -23,6 +23,7 @@ import { AssetTableHeaderComponent } from './asset-table-header.component';
 import { AssetRoutingModule } from './asset-routing.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
 import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
+import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 
 @NgModule({
   declarations: [
@@ -35,7 +36,8 @@ import { AssetTabsComponent } from '@home/pages/asset/asset-tabs.component';
     SharedModule,
     HomeComponentsModule,
     HomeDialogsModule,
-    AssetRoutingModule
+    CalculatedFieldsModule,
+    AssetRoutingModule,
   ]
 })
 export class AssetModule { }

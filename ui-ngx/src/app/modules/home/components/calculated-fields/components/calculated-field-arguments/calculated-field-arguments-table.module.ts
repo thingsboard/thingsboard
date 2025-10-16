@@ -17,21 +17,29 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { HomeComponentsModule } from '@modules/home/components/home-components.module';
-import { DeviceProfileTabsComponent } from './device-profile-tabs.component';
-import { DeviceProfileRoutingModule } from './device-profile-routing.module';
-import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
+import {
+  CalculatedFieldArgumentPanelComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-argument-panel.component';
+import {
+  CalculatedFieldArgumentsTableComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.component';
+import {
+  PropagateArgumentsTableComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/propagate-arguments-table.component';
 
 @NgModule({
-  declarations: [
-    DeviceProfileTabsComponent
-  ],
   imports: [
     CommonModule,
     SharedModule,
-    HomeComponentsModule,
-    CalculatedFieldsModule,
-    DeviceProfileRoutingModule
+  ],
+  declarations: [
+    CalculatedFieldArgumentPanelComponent,
+    CalculatedFieldArgumentsTableComponent,
+    PropagateArgumentsTableComponent
+  ],
+  exports: [
+    CalculatedFieldArgumentsTableComponent,
+    PropagateArgumentsTableComponent
   ]
 })
-export class DeviceProfileModule { }
+export class CalculatedFieldArgumentsTableModule {}
