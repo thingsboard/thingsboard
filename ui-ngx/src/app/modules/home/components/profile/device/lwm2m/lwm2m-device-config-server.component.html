@@ -24,7 +24,7 @@
             'device-profile.lwm2m.bootstrap-server' : 'device-profile.lwm2m.lwm2m-server') | translate }}</div>
           <div *ngIf="!serverPanel.expanded" style="font-size:14px" class="no-wrap flex flex-row">
             <div style="margin-left:32px">{{ ('device-profile.lwm2m.short-id' | translate) + ': ' }}
-              <span style="font-style: italic">{{ serverFormGroup.get('shortServerId').value }}</span>
+              <span style="font-style: italic">{{ serverFormGroup.get('shortServerId').value ? serverFormGroup.get('shortServerId').value : '' }}</span>
             </div>
             <div style="margin-left:32px">{{ ('device-profile.lwm2m.mode' | translate) + ': ' }}
               <span style="font-style: italic">{{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[serverFormGroup.get('securityMode').value]) }}</span>
@@ -54,7 +54,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" *ngIf="!isBootstrap">
           <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
           <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
                     matTooltip="{{ (isBootstrap ? 'device-profile.lwm2m.short-id-tooltip-bootstrap': 'device-profile.lwm2m.short-id-tooltip') | translate }}">help</mat-icon>

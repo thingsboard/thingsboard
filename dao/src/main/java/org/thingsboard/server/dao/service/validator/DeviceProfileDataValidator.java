@@ -343,7 +343,11 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
 
             if (serverConfig.isBootstrapServerIs()){
                 if (serverConfig.getShortServerId() != null) {
-                    throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null!");
+                    if (serverConfig.getShortServerId() == 0) {
+                        serverConfig.setShortServerId(null);
+                    } else {
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null!");
+                    }
                 }
             } else {
                 if (serverConfig.getShortServerId() != null) {

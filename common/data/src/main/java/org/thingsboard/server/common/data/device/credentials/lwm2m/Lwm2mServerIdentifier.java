@@ -47,11 +47,11 @@ public enum Lwm2mServerIdentifier {
      */
     NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX(65535, "Reserved sentinel value (no active server)", false);
 
-    private final int id;
+    private final Integer id;
     private final String description;
     private final boolean isLwm2mServer;
 
-    Lwm2mServerIdentifier(int id, String description, boolean isLwm2mServer) {
+    Lwm2mServerIdentifier(Integer id, String description, boolean isLwm2mServer) {
         this.id = id;
         this.description = description;
         this.isLwm2mServer = isLwm2mServer;
@@ -60,7 +60,7 @@ public enum Lwm2mServerIdentifier {
     /**
      * @return the integer value of this Short Server ID.
      */
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
@@ -83,20 +83,11 @@ public enum Lwm2mServerIdentifier {
      * @param id Short Server ID value.
      * @return true if the ID belongs to a standard LwM2M Server.
      */
-    public static boolean isLwm2mServer(int id) {
-        return id >= PRIMARY_LWM2M_SERVER.id && id <= LWM2M_SERVER_MAX.id;
+    public static boolean isLwm2mServer(Integer id) {
+        return id != null && id >= PRIMARY_LWM2M_SERVER.id && id <= LWM2M_SERVER_MAX.id;
     }
-    public static boolean isNotLwm2mServer(int id) {
-        return id < PRIMARY_LWM2M_SERVER.id || id > LWM2M_SERVER_MAX.id;
-    }
-
-    /**
-     * Checks whether the provided ID is within the valid LwM2M range [0–65535].
-     * @param id ID to check.
-     * @return true if valid, false otherwise.
-     */
-    public static boolean isValid(int id) {
-        return id >= NOT_USED_IDENTIFYING_LWM2M_SERVER_MIN.getId() && id <= NOT_USED_IDENTIFYING_LWM2M_SERVER_MAX.getId();
+    public static boolean isNotLwm2mServer(Integer id) {
+        return id == null || id < PRIMARY_LWM2M_SERVER.id || id > LWM2M_SERVER_MAX.id;
     }
 
     /**
@@ -105,7 +96,7 @@ public enum Lwm2mServerIdentifier {
      * @return corresponding enum constant.
      * @throws IllegalArgumentException if no constant matches the given ID.
      */
-    public static Lwm2mServerIdentifier fromId(int id) {
+    public static Lwm2mServerIdentifier fromId(Integer id) {
         for (Lwm2mServerIdentifier s : values()) {
             if (s.id == id) {
                 return s;

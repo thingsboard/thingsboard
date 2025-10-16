@@ -147,7 +147,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                             log.error("Invalid lwm2mSecurityInstance [{}] by short server id [{}]", path.getObjectInstanceId(), lwm2mShortServerId);
                         }
                     } else {
-                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(0, path.getObjectInstanceId());
+                        this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().putIfAbsent(null, path.getObjectInstanceId());
                     }
                 } else if (path.getObjectId() == 1) {
                     if (link.getAttributes().get("ssid") != null) {
