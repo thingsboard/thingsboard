@@ -89,8 +89,9 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    "calculated_field_unq_key", "Calculated Field with such name is already in exists!",
-                    "calculated_field_external_id_unq_key", "Calculated Field with such external id already exists!");
+                    "calculated_field_unq_key", calculatedField.getType() == CalculatedFieldType.ALARM ?
+                            "Alarm rule with such type already exists" : "Calculated field with such name and type already exists",
+                    "calculated_field_external_id_unq_key", "Calculated field with such external id already exists");
             throw e;
         }
     }
@@ -104,10 +105,10 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
-        log.trace("Executing findByEntityIdAndName [{}], calculatedFieldName[{}]", entityId, name);
+    public CalculatedField findByEntityIdAndTypeAndName(EntityId entityId, CalculatedFieldType type, String name) {
+        log.trace("Executing findByEntityIdAndTypeAndName entityId [{}], type [{}], name [{}]", entityId, type, name);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
-        return calculatedFieldDao.findByEntityIdAndName(entityId, name);
+        return calculatedFieldDao.findByEntityIdAndTypeAndName(entityId, type, name);
     }
 
     @Override
