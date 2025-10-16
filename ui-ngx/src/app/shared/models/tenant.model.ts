@@ -19,6 +19,11 @@ import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { QueueInfo } from '@shared/models/queue.models';
+import { FormControl } from '@angular/forms';
+
+export type FormControlsFrom<T> = {
+  [K in keyof T]-?: FormControl<T[K] | null>;
+};
 
 export enum TenantProfileType {
   DEFAULT = 'DEFAULT'
@@ -101,6 +106,9 @@ export interface DefaultTenantProfileConfiguration {
 
   maxCalculatedFieldsPerEntity: number;
   maxArgumentsPerCF: number;
+  maxRelationLevelPerCfArgument: number;
+  maxRelatedEntitiesToReturnPerCfArgument: number;
+  minAllowedScheduledUpdateIntervalInSecForCF: number;
   maxDataPointsPerRollingArg: number;
   maxStateSizeInKBytes: number;
   maxSingleValueArgumentSizeInKBytes: number;
@@ -165,6 +173,9 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxCalculatedFieldsPerEntity: 5,
           maxArgumentsPerCF: 10,
           maxDataPointsPerRollingArg: 1000,
+          maxRelationLevelPerCfArgument: 10,
+          maxRelatedEntitiesToReturnPerCfArgument: 100,
+          minAllowedScheduledUpdateIntervalInSecForCF: 0,
           maxStateSizeInKBytes: 32,
           maxSingleValueArgumentSizeInKBytes: 2,
           calculatedFieldDebugEventsRateLimit: ''

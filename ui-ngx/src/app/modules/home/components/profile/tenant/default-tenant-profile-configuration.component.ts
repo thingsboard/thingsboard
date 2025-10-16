@@ -14,16 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { DefaultTenantProfileConfiguration, TenantProfileConfiguration } from '@shared/models/tenant.model';
+import { Component, forwardRef, Input } from '@angular/core';
+import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import { DefaultTenantProfileConfiguration, FormControlsFrom } from '@shared/models/tenant.model';
 import { isDefinedAndNotNull } from '@core/utils';
 import { RateLimitsType } from './rate-limits/rate-limits.models';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-default-tenant-profile-configuration',
@@ -35,112 +32,107 @@ import { Subject } from 'rxjs';
     multi: true
   }]
 })
-export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class DefaultTenantProfileConfigurationComponent implements ControlValueAccessor {
 
-  defaultTenantProfileConfigurationFormGroup: UntypedFormGroup;
-
-  private requiredValue: boolean;
-  private destroy$ = new Subject<void>();
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  tenantProfileConfigurationForm: FormGroup<FormControlsFrom<DefaultTenantProfileConfiguration>>;
 
   @Input()
+  @coerceBoolean()
+  required: boolean;
+
+  @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   rateLimitsType = RateLimitsType;
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = (_v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
-    this.defaultTenantProfileConfigurationFormGroup = this.fb.group({
-      maxDevices: [null, [Validators.required, Validators.min(0)]],
-      maxAssets: [null, [Validators.required, Validators.min(0)]],
-      maxCustomers: [null, [Validators.required, Validators.min(0)]],
-      maxUsers: [null, [Validators.required, Validators.min(0)]],
-      maxDashboards: [null, [Validators.required, Validators.min(0)]],
-      maxRuleChains: [null, [Validators.required, Validators.min(0)]],
-      maxEdges: [null, [Validators.required, Validators.min(0)]],
-      maxResourcesInBytes: [null, [Validators.required, Validators.min(0)]],
-      maxOtaPackagesInBytes: [null, [Validators.required, Validators.min(0)]],
-      maxResourceSize: [null, [Validators.required, Validators.min(0)]],
-      transportTenantMsgRateLimit: [null, []],
-      transportTenantTelemetryMsgRateLimit: [null, []],
-      transportTenantTelemetryDataPointsRateLimit: [null, []],
-      transportDeviceMsgRateLimit: [null, []],
-      transportDeviceTelemetryMsgRateLimit: [null, []],
-      transportDeviceTelemetryDataPointsRateLimit: [null, []],
-      transportGatewayMsgRateLimit: [null, []],
-      transportGatewayTelemetryMsgRateLimit: [null, []],
-      transportGatewayTelemetryDataPointsRateLimit: [null, []],
-      transportGatewayDeviceMsgRateLimit: [null, []],
-      transportGatewayDeviceTelemetryMsgRateLimit: [null, []],
-      transportGatewayDeviceTelemetryDataPointsRateLimit: [null, []],
-      tenantEntityExportRateLimit: [null, []],
-      tenantEntityImportRateLimit: [null, []],
-      tenantNotificationRequestsRateLimit: [null, []],
-      tenantNotificationRequestsPerRuleRateLimit: [null, []],
-      maxTransportMessages: [null, [Validators.required, Validators.min(0)]],
-      maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
-      maxREExecutions: [null, [Validators.required, Validators.min(0)]],
-      maxJSExecutions: [null, [Validators.required, Validators.min(0)]],
-      maxTbelExecutions: [null, [Validators.required, Validators.min(0)]],
-      maxDPStorageDays: [null, [Validators.required, Validators.min(0)]],
-      maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]],
-      maxEmails: [null, [Validators.required, Validators.min(0)]],
-      maxSms: [null, []],
-      smsEnabled: [null, []],
-      maxCreatedAlarms: [null, [Validators.required, Validators.min(0)]],
-      maxDebugModeDurationMinutes: [null, [Validators.min(0)]],
-      defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
-      alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
-      rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
-      queueStatsTtlDays: [null, [Validators.required, Validators.min(0)]],
-      ruleEngineExceptionsTtlDays: [null, [Validators.required, Validators.min(0)]],
-      tenantServerRestLimitsConfiguration: [null, []],
-      customerServerRestLimitsConfiguration: [null, []],
-      maxWsSessionsPerTenant: [null, [Validators.min(0)]],
-      maxWsSessionsPerCustomer: [null, [Validators.min(0)]],
-      maxWsSessionsPerRegularUser: [null, [Validators.min(0)]],
-      maxWsSessionsPerPublicUser: [null, [Validators.min(0)]],
-      wsMsgQueueLimitPerSession: [null, [Validators.min(0)]],
-      maxWsSubscriptionsPerTenant: [null, [Validators.min(0)]],
-      maxWsSubscriptionsPerCustomer: [null, [Validators.min(0)]],
-      maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
-      maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
-      wsUpdatesPerSessionRateLimit: [null, []],
-      cassandraWriteQueryTenantCoreRateLimits: [null, []],
-      cassandraReadQueryTenantCoreRateLimits: [null, []],
-      cassandraWriteQueryTenantRuleEngineRateLimits: [null, []],
-      cassandraReadQueryTenantRuleEngineRateLimits: [null, []],
-      edgeEventRateLimits: [null, []],
-      edgeEventRateLimitsPerEdge: [null, []],
-      edgeUplinkMessagesRateLimits: [null, []],
-      edgeUplinkMessagesRateLimitsPerEdge: [null, []],
-      maxCalculatedFieldsPerEntity: [null, [Validators.required, Validators.min(0)]],
-      maxArgumentsPerCF: [null, [Validators.required, Validators.min(0)]],
-      maxRelationLevelPerCfArgument: [null, [Validators.required, Validators.min(1)]],
-      minAllowedScheduledUpdateIntervalInSecForCF: [null, [Validators.required, Validators.min(0)]],
-      maxDataPointsPerRollingArg: [null, [Validators.required, Validators.min(0)]],
-      maxStateSizeInKBytes: [null, [Validators.required, Validators.min(0)]],
-      calculatedFieldDebugEventsRateLimit: [null, []],
-      maxSingleValueArgumentSizeInKBytes: [null, [Validators.required, Validators.min(0)]],
+  constructor(private fb: FormBuilder) {
+    this.tenantProfileConfigurationForm = this.fb.group({
+      maxDevices: [0, [Validators.required, Validators.min(0)]],
+      maxAssets: [0, [Validators.required, Validators.min(0)]],
+      maxCustomers: [0, [Validators.required, Validators.min(0)]],
+      maxUsers: [0, [Validators.required, Validators.min(0)]],
+      maxDashboards: [0, [Validators.required, Validators.min(0)]],
+      maxRuleChains: [0, [Validators.required, Validators.min(0)]],
+      maxEdges: [0, [Validators.required, Validators.min(0)]],
+      maxResourcesInBytes: [0, [Validators.required, Validators.min(0)]],
+      maxOtaPackagesInBytes: [0, [Validators.required, Validators.min(0)]],
+      maxResourceSize: [0, [Validators.required, Validators.min(0)]],
+      transportTenantMsgRateLimit: [''],
+      transportTenantTelemetryMsgRateLimit: [''],
+      transportTenantTelemetryDataPointsRateLimit: [''],
+      transportDeviceMsgRateLimit: [''],
+      transportDeviceTelemetryMsgRateLimit: [''],
+      transportDeviceTelemetryDataPointsRateLimit: [''],
+      transportGatewayMsgRateLimit: [''],
+      transportGatewayTelemetryMsgRateLimit: [''],
+      transportGatewayTelemetryDataPointsRateLimit: [''],
+      transportGatewayDeviceMsgRateLimit: [''],
+      transportGatewayDeviceTelemetryMsgRateLimit: [''],
+      transportGatewayDeviceTelemetryDataPointsRateLimit: [''],
+      tenantEntityExportRateLimit: [''],
+      tenantEntityImportRateLimit: [''],
+      tenantNotificationRequestsRateLimit: [''],
+      tenantNotificationRequestsPerRuleRateLimit: [''],
+      maxTransportMessages: [0, [Validators.required, Validators.min(0)]],
+      maxTransportDataPoints: [0, [Validators.required, Validators.min(0)]],
+      maxREExecutions: [0, [Validators.required, Validators.min(0)]],
+      maxJSExecutions: [0, [Validators.required, Validators.min(0)]],
+      maxTbelExecutions: [0, [Validators.required, Validators.min(0)]],
+      maxDPStorageDays: [0, [Validators.required, Validators.min(0)]],
+      maxRuleNodeExecutionsPerMessage: [0, [Validators.required, Validators.min(0)]],
+      maxEmails: [0, [Validators.required, Validators.min(0)]],
+      maxSms: [0],
+      smsEnabled: [false],
+      maxCreatedAlarms: [0, [Validators.required, Validators.min(0)]],
+      maxDebugModeDurationMinutes: [0, [Validators.min(0)]],
+      defaultStorageTtlDays: [0, [Validators.required, Validators.min(0)]],
+      alarmsTtlDays: [0, [Validators.required, Validators.min(0)]],
+      rpcTtlDays: [0, [Validators.required, Validators.min(0)]],
+      queueStatsTtlDays: [0, [Validators.required, Validators.min(0)]],
+      ruleEngineExceptionsTtlDays: [0, [Validators.required, Validators.min(0)]],
+      tenantServerRestLimitsConfiguration: [''],
+      customerServerRestLimitsConfiguration: [''],
+      maxWsSessionsPerTenant: [0, [Validators.min(0)]],
+      maxWsSessionsPerCustomer: [0, [Validators.min(0)]],
+      maxWsSessionsPerRegularUser: [0, [Validators.min(0)]],
+      maxWsSessionsPerPublicUser: [0, [Validators.min(0)]],
+      wsMsgQueueLimitPerSession: [0, [Validators.min(0)]],
+      maxWsSubscriptionsPerTenant: [0, [Validators.min(0)]],
+      maxWsSubscriptionsPerCustomer: [0, [Validators.min(0)]],
+      maxWsSubscriptionsPerRegularUser: [0, [Validators.min(0)]],
+      maxWsSubscriptionsPerPublicUser: [0, [Validators.min(0)]],
+      wsUpdatesPerSessionRateLimit: [''],
+      cassandraWriteQueryTenantCoreRateLimits: [''],
+      cassandraReadQueryTenantCoreRateLimits: [''],
+      cassandraWriteQueryTenantRuleEngineRateLimits: [''],
+      cassandraReadQueryTenantRuleEngineRateLimits: [''],
+      edgeEventRateLimits: [''],
+      edgeEventRateLimitsPerEdge: [''],
+      edgeUplinkMessagesRateLimits: [''],
+      edgeUplinkMessagesRateLimitsPerEdge: [''],
+      maxCalculatedFieldsPerEntity: [0, [Validators.required, Validators.min(0)]],
+      maxArgumentsPerCF: [0, [Validators.required, Validators.min(0)]],
+      maxRelationLevelPerCfArgument: [1, [Validators.required, Validators.min(1)]],
+      maxRelatedEntitiesToReturnPerCfArgument: [1, [Validators.required, Validators.min(1)]],
+      minAllowedScheduledUpdateIntervalInSecForCF: [0, [Validators.required, Validators.min(0)]],
+      maxDataPointsPerRollingArg: [0, [Validators.required, Validators.min(0)]],
+      maxStateSizeInKBytes: [0, [Validators.required, Validators.min(0)]],
+      calculatedFieldDebugEventsRateLimit: [''],
+      maxSingleValueArgumentSizeInKBytes: [0, [Validators.required, Validators.min(0)]],
     });
 
-    this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(
-      takeUntil(this.destroy$)
+    this.tenantProfileConfigurationForm.get('smsEnabled').valueChanges.pipe(
+      takeUntilDestroyed()
     ).subscribe((value: boolean) => {
         this.maxSmsValidation(value);
       }
     );
 
-    this.defaultTenantProfileConfigurationFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
+    this.tenantProfileConfigurationForm.valueChanges.pipe(
+      takeUntilDestroyed()
     ).subscribe(() => {
       this.updateModel();
     });
@@ -148,48 +140,40 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   private maxSmsValidation(smsEnabled: boolean) {
     if (smsEnabled) {
-      this.defaultTenantProfileConfigurationFormGroup.get('maxSms').addValidators([Validators.required, Validators.min(0)]);
+      this.tenantProfileConfigurationForm.get('maxSms').addValidators([Validators.required, Validators.min(0)]);
     } else {
-      this.defaultTenantProfileConfigurationFormGroup.get('maxSms').clearValidators();
+      this.tenantProfileConfigurationForm.get('maxSms').clearValidators();
     }
-    this.defaultTenantProfileConfigurationFormGroup.get('maxSms').updateValueAndValidity({emitEvent: false});
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
+    this.tenantProfileConfigurationForm.get('maxSms').updateValueAndValidity({emitEvent: false});
   }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit() {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
-      this.defaultTenantProfileConfigurationFormGroup.disable({emitEvent: false});
+      this.tenantProfileConfigurationForm.disable({emitEvent: false});
     } else {
-      this.defaultTenantProfileConfigurationFormGroup.enable({emitEvent: false});
+      this.tenantProfileConfigurationForm.enable({emitEvent: false});
     }
   }
 
   writeValue(value: DefaultTenantProfileConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
       this.maxSmsValidation(value.smsEnabled);
-      this.defaultTenantProfileConfigurationFormGroup.patchValue(value, {emitEvent: false});
+      this.tenantProfileConfigurationForm.patchValue(value, {emitEvent: false});
     }
   }
 
   private updateModel() {
-    let configuration: TenantProfileConfiguration = null;
-    if (this.defaultTenantProfileConfigurationFormGroup.valid) {
-      configuration = this.defaultTenantProfileConfigurationFormGroup.getRawValue();
+    let configuration: DefaultTenantProfileConfiguration = null;
+    if (this.tenantProfileConfigurationForm.valid) {
+      configuration = this.tenantProfileConfigurationForm.getRawValue();
     }
     this.propagateChange(configuration);
   }
