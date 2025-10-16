@@ -188,13 +188,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             deviceProfileCache.evict(tenantId, new DeviceId(componentLifecycleMsg.getEntityId().getId()));
             if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
                 calculatedFieldCache.addOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                actorContext.getRelationService().evictRelationsByEntityAndProfile(tenantId, componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getOldProfileId());
-                if (componentLifecycleMsg.isOwnerChanged()) {
-                    calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-                }
+            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED) && componentLifecycleMsg.isOwnerChanged()) {
+                calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
             } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                actorContext.getRelationService().evictRelationsByEntityAndProfile(tenantId, componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getOldProfileId());
                 calculatedFieldCache.evictEntity(componentLifecycleMsg.getEntityId());
             }
         } else if (EntityType.ASSET_PROFILE.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
@@ -203,13 +199,9 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             assetProfileCache.evict(tenantId, new AssetId(componentLifecycleMsg.getEntityId().getId()));
             if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.CREATED)) {
                 calculatedFieldCache.addOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
-                actorContext.getRelationService().evictRelationsByEntityAndProfile(tenantId, componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getOldProfileId());
-                if (componentLifecycleMsg.isOwnerChanged()) {
-                    calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
-                }
+            } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED) && componentLifecycleMsg.isOwnerChanged()) {
+                calculatedFieldCache.updateOwnerEntity(tenantId, componentLifecycleMsg.getEntityId());
             } else if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.DELETED)) {
-                actorContext.getRelationService().evictRelationsByEntityAndProfile(tenantId, componentLifecycleMsg.getEntityId(), componentLifecycleMsg.getOldProfileId());
                 calculatedFieldCache.evictEntity(componentLifecycleMsg.getEntityId());
             }
         } else if (EntityType.ENTITY_VIEW.equals(componentLifecycleMsg.getEntityId().getEntityType())) {

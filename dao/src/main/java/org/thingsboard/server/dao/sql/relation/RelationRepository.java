@@ -27,7 +27,6 @@ import org.thingsboard.server.dao.model.sql.RelationCompositeKey;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 
 public interface RelationRepository
@@ -97,39 +96,4 @@ public interface RelationRepository
                                        @Param("toType") String toType,
                                        @Param("batchSize") int batchSize);
 
-    @Query(value = """
-                SELECT r.from_id, r.from_type, r.relation_type_group, r.relation_type, r.to_id, r.to_type, r.additional_info, r.version
-                FROM relation r
-                LEFT JOIN device d ON r.to_id = d.id AND r.to_type = 'DEVICE'
-                LEFT JOIN asset a  ON r.to_id = a.id AND r.to_type = 'ASSET'
-                WHERE r.from_id = :fromId
-                  AND r.from_type = :fromType
-                  AND r.relation_type = :relationType
-                  AND r.relation_type_group = :relationTypeGroup
-                  AND ((d.device_profile_id = :profileId) OR (a.asset_profile_id = :profileId))
-                  AND (d.id IS NOT NULL OR a.id IS NOT NULL)
-            """, nativeQuery = true)
-    List<RelationEntity> findByFromAndProfile(@Param("fromId") UUID fromId,
-                                              @Param("fromType") String fromType,
-                                              @Param("relationTypeGroup") String relationTypeGroup,
-                                              @Param("relationType") String relationType,
-                                              @Param("profileId") UUID profileId);
-
-    @Query(value = """
-                SELECT r.from_id, r.from_type, r.relation_type_group, r.relation_type, r.to_id, r.to_type, r.additional_info, r.version
-                FROM relation r
-                LEFT JOIN device d ON r.from_id = d.id AND r.from_type = 'DEVICE'
-                LEFT JOIN asset a ON r.from_id = a.id AND r.from_type = 'ASSET'
-                WHERE r.to_id = :toId
-                  AND r.to_type = :toType
-                  AND r.relation_type = :relationType
-                  AND r.relation_type_group = :relationTypeGroup
-                  AND ((d.device_profile_id = :profileId) OR (a.asset_profile_id = :profileId))
-                  AND (d.id IS NOT NULL OR a.id IS NOT NULL)
-            """, nativeQuery = true)
-    List<RelationEntity> findByToAndProfile(@Param("toId") UUID toId,
-                                                @Param("toType") String toType,
-                                                @Param("relationTypeGroup") String relationTypeGroup,
-                                                @Param("relationType") String relationType,
-                                                @Param("profileId") UUID profileId);
 }

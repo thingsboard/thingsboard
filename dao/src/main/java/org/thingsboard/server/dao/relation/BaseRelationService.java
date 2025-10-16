@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
-import org.thingsboard.server.common.data.relation.ProfileEntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -513,105 +512,6 @@ public class BaseRelationService implements RelationService {
             };
         }
         return executor.submit(() -> relationDao.findByRelationPathQuery(tenantId, relationPathQuery));
-    }
-
-    @Override
-    public ListenableFuture<List<EntityRelation>> findByProfileEntityRelationPathQueryAsync(TenantId tenantId, ProfileEntityRelationPathQuery relationPathQuery) {
-        log.trace("Executing findByProfileEntityRelationPathQueryAsync, tenantId [{}], relationPathQuery {}", tenantId, relationPathQuery);
-        validateId(tenantId, id -> "Invalid tenant id: " + id);
-        validate(relationPathQuery);
-        RelationPathLevel relationPathLevel = relationPathQuery.level();
-        return switch (relationPathLevel.direction()) {
-            case FROM -> findByFromAndTypeAndEntityProfileAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), relationPathQuery.targetEntityProfileId());
-            case TO -> findByToAndTypeAndEntityProfileAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), relationPathQuery.targetEntityProfileId());
-        };
-    }
-
-    @Override
-    public List<EntityRelation> findByProfileEntityRelationPathQuery(TenantId tenantId, ProfileEntityRelationPathQuery relationPathQuery) {
-        log.trace("Executing findByProfileEntityRelationPathQuery, tenantId [{}], relationPathQuery {}", tenantId, relationPathQuery);
-        validateId(tenantId, id -> "Invalid tenant id: " + id);
-        validate(relationPathQuery);
-        return relationDao.findByProfileEntityRelationPathQuery(tenantId, relationPathQuery);
-//        RelationPathLevel relationPathLevel = relationPathQuery.level();
-//        return switch (relationPathLevel.direction()) {
-//            case FROM -> findByFromAndTypeAndEntityProfile(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), relationPathQuery.targetEntityProfileId());
-//            case TO -> findByToAndTypeAndEntityProfile(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), relationPathQuery.targetEntityProfileId());
-//        };
-    }
-
-    @Override
-    public ListenableFuture<List<EntityRelation>> findByFromAndTypeAndEntityProfileAsync(TenantId tenantId, EntityId from, String relationType, EntityId targetProfileId) {
-        log.trace("Executing findByFromAndTypeAndEntityProfileAsync [{}][{}][{}]", from, relationType, targetProfileId);
-        validate(from);
-        validateType(relationType);
-        if (targetProfileId == null) {
-            return findByFromAndTypeAsync(tenantId, from, relationType, RelationTypeGroup.COMMON);
-        }
-        return executor.submit(() -> findByFromAndTypeAndEntityProfile(tenantId, from, relationType, targetProfileId));
-    }
-
-    @Override
-    public List<EntityRelation> findByFromAndTypeAndEntityProfile(TenantId tenantId, EntityId from, String relationType, EntityId targetProfileId) {
-        if (targetProfileId == null) {
-            return findByFromAndType(tenantId, from, relationType, RelationTypeGroup.COMMON);
-        }
-//        RelationCacheKey cacheKey = RelationCacheKey.builder().from(from).type(relationType).typeGroup(RelationTypeGroup.COMMON).direction(EntitySearchDirection.FROM).entityProfile(targetProfileId).build();
-//        return cache.getAndPutInTransaction(cacheKey,
-//                () -> relationDao.findByFromAndTypeAndProfile(tenantId, from, relationType, RelationTypeGroup.COMMON, targetProfileId),
-//                RelationCacheValue::getRelations,
-//                relations -> RelationCacheValue.builder().relations(relations).build(), false);
-
-        return relationDao.findByFromAndTypeAndProfile(tenantId, from, relationType, RelationTypeGroup.COMMON, targetProfileId);
-    }
-
-    @Override
-    public ListenableFuture<List<EntityRelation>> findByToAndTypeAndEntityProfileAsync(TenantId tenantId, EntityId to, String relationType, EntityId targetProfileId) {
-        log.trace("Executing findByToAndTypeAndEntityProfileAsync [{}][{}][{}]", to, relationType, targetProfileId);
-        validate(to);
-        validateType(relationType);
-        if (targetProfileId == null) {
-            return findByToAndTypeAsync(tenantId, to, relationType, RelationTypeGroup.COMMON);
-        }
-        return executor.submit(() -> findByToAndTypeAndEntityProfile(tenantId, to, relationType, targetProfileId));
-    }
-
-    @Override
-    public List<EntityRelation> findByToAndTypeAndEntityProfile(TenantId tenantId, EntityId to, String relationType, EntityId targetProfileId) {
-        if (targetProfileId == null) {
-            return findByFromAndType(tenantId, to, relationType, RelationTypeGroup.COMMON);
-        }
-//        RelationCacheKey cacheKey = RelationCacheKey.builder().to(to).type(relationType).typeGroup(RelationTypeGroup.COMMON).direction(EntitySearchDirection.TO).entityProfile(targetProfileId).build();
-//        return cache.getAndPutInTransaction(cacheKey,
-//                () -> relationDao.findByToAndTypeAndProfile(tenantId, to, relationType, RelationTypeGroup.COMMON, targetProfileId),
-//                RelationCacheValue::getRelations,
-//                relations -> RelationCacheValue.builder().relations(relations).build(), false);
-
-        return relationDao.findByToAndTypeAndProfile(tenantId, to, relationType, RelationTypeGroup.COMMON, targetProfileId);
-    }
-
-    @Override
-    public void evictRelationsByEntityAndProfile(TenantId tenantId, EntityId entityId, EntityId profileId) {
-
-//        List<RelationCacheKey> keys = new ArrayList<>(5);
-//        keys.add(new RelationCacheKey(entityId, null, event.getType(), event.getTypeGroup()));
-//        keys.add(new RelationCacheKey(event.getFrom(), null, event.getType(), event.getTypeGroup(), EntitySearchDirection.FROM));
-//        keys.add(new RelationCacheKey(event.getFrom(), null, null, event.getTypeGroup(), EntitySearchDirection.FROM));
-//        keys.add(new RelationCacheKey(null, event.getTo(), event.getType(), event.getTypeGroup(), EntitySearchDirection.TO));
-//        keys.add(new RelationCacheKey(null, event.getTo(), null, event.getTypeGroup(), EntitySearchDirection.TO));
-//        cache.evict(keys);
-//        log.debug("Processed evict event: {}", event);
-
-        List<RelationCacheKey> keys = new ArrayList<>(2);
-        keys.add(RelationCacheKey.builder().from(entityId).entityProfile(profileId).build());
-        keys.add(RelationCacheKey.builder().to(entityId).entityProfile(profileId).build());
-        cache.evict(keys);
-        log.debug("Processed evict relations by keys: {}", keys);
-    }
-
-    private void validate(ProfileEntityRelationPathQuery relationPathQuery) {
-        validateId((UUIDBased) relationPathQuery.rootEntityId(), id -> "Invalid root entity id: " + id);
-        relationPathQuery.level().validate();
     }
 
     private void validate(EntityRelationPathQuery relationPathQuery) {
