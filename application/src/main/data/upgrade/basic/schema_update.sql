@@ -40,7 +40,7 @@ SET profile_data = jsonb_set(
                             WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
                                 THEN NULL
                             ELSE to_jsonb(100)
-                            END,
+                            END
                 )
                ),
         false
