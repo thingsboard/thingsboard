@@ -22,6 +22,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
@@ -73,7 +74,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             ArgumentEntry existingEntry = arguments.get(key);
             boolean entryUpdated;
 
-            if (existingEntry == null || newEntry.isForceResetPrevious()) {
+            if (existingEntry == null || !(newEntry instanceof AggSingleEntityArgumentEntry) && newEntry.isForceResetPrevious()) {
                 validateNewEntry(key, newEntry);
                 arguments.put(key, newEntry);
                 entryUpdated = true;

@@ -67,7 +67,6 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -686,9 +685,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                             Map.Entry::getKey,
                             argEntry -> new AggSingleEntityArgumentEntry(entityId, argEntry.getValue())
                     ));
-        } else {
-            fetchedArgs.values().forEach(arg -> arg.setForceResetPrevious(true));
         }
+        fetchedArgs.values().forEach(arg -> arg.setForceResetPrevious(true));
 
         return fetchedArgs;
     }

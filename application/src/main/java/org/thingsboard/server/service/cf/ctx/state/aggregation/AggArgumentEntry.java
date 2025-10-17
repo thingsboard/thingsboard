@@ -52,7 +52,12 @@ public class AggArgumentEntry implements ArgumentEntry {
             if (aggSingleEntityArgumentEntry.isDeleted()) {
                 aggInputs.remove(aggSingleEntityArgumentEntry.getEntityId());
             } else {
-                aggInputs.put(aggSingleEntityArgumentEntry.getEntityId(), aggSingleEntityArgumentEntry);
+                ArgumentEntry argumentEntry = aggInputs.get(aggSingleEntityArgumentEntry.getEntityId());
+                if (argumentEntry != null) {
+                    argumentEntry.updateEntry(aggSingleEntityArgumentEntry);
+                } else {
+                    aggInputs.put(aggSingleEntityArgumentEntry.getEntityId(), aggSingleEntityArgumentEntry);
+                }
             }
             return true;
         } else {

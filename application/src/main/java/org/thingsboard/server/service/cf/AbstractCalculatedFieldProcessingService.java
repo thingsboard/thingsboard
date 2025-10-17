@@ -332,7 +332,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         var attributeOptFuture = attributesService.find(tenantId, entityId, argument.getRefEntityKey().getScope(), argument.getRefEntityKey().getKey());
         return Futures.transform(attributeOptFuture, attrOpt -> {
             log.debug("[{}][{}] Fetched attribute for key {}: {}", tenantId, entityId, argument.getRefEntityKey(), attrOpt);
-            AttributeKvEntry attributeKvEntry = attrOpt.orElseGet(() -> new BaseAttributeKvEntry(createDefaultKvEntry(argument), defaultLastUpdateTs, 0L));
+            AttributeKvEntry attributeKvEntry = attrOpt.orElseGet(() -> new BaseAttributeKvEntry(createDefaultKvEntry(argument), defaultLastUpdateTs, SingleValueArgumentEntry.DEFAULT_VERSION));
             return transformAggSingleArgument(entityId, Optional.of(attributeKvEntry));
         }, calculatedFieldCallbackExecutor);
     }
@@ -344,7 +344,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 timeseriesService.findLatest(tenantId, entityId, key),
                 result -> {
                     log.debug("[{}][{}] Fetched latest timeseries {}: {}", tenantId, entityId, key, result);
-                    Optional<TsKvEntry> tsKvEntry = result.or(() -> Optional.of(new BasicTsKvEntry(defaultTs, createDefaultKvEntry(argument), 0L)));
+                    Optional<TsKvEntry> tsKvEntry = result.or(() -> Optional.of(new BasicTsKvEntry(defaultTs, createDefaultKvEntry(argument), SingleValueArgumentEntry.DEFAULT_VERSION)));
                     return transformAggSingleArgument(entityId, tsKvEntry);
                 }, calculatedFieldCallbackExecutor);
     }

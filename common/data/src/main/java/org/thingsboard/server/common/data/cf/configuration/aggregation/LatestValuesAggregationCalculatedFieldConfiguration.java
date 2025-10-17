@@ -41,6 +41,19 @@ public class LatestValuesAggregationCalculatedFieldConfiguration implements Argu
 
     @Override
     public void validate() {
+        if (relation == null) {
+            throw new IllegalArgumentException("Relation must be specified!");
+        }
+        relation.validate();
+        if (arguments.containsKey("ctx")) {
+            throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
+        }
+        if (arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
+        }
+        if (metrics.isEmpty()) {
+            throw new IllegalArgumentException("Latest value aggregation calculated field must have at least one metric.");
+        }
     }
 
 }

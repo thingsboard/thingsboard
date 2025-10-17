@@ -62,23 +62,33 @@ public class AggSingleEntityArgumentEntry extends SingleValueArgumentEntry {
 
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
-        if (entry instanceof AggSingleEntityArgumentEntry singleValueEntry) {
-            if (singleValueEntry.getTs() <= ts) {
-                return false;
+        if (entry instanceof AggSingleEntityArgumentEntry aggSingleEntityEntry) {
+            if (aggSingleEntityEntry.isForceResetPrevious()) {
+                return applyNewEntry(aggSingleEntityEntry);
             }
 
-            Long newVersion = singleValueEntry.getVersion();
+            if (aggSingleEntityEntry.getTs() < this.ts) {
+                if (!isDefaultValue()) {
+                    return false;
+                }
+            }
+
+            Long newVersion = aggSingleEntityEntry.getVersion();
             if (newVersion == null || this.version == null || newVersion > this.version) {
-                this.ts = singleValueEntry.getTs();
-                this.version = newVersion;
-                this.kvEntryValue = singleValueEntry.getKvEntryValue();
-                this.entityId = singleValueEntry.getEntityId();
-                return true;
+               return applyNewEntry(aggSingleEntityEntry);
             }
         } else {
-            throw new IllegalArgumentException("Unsupported argument entry type for single value argument entry: " + entry.getType());
+            throw new IllegalArgumentException("Unsupported argument entry type for aggregation single entity argument entry: " + entry.getType());
         }
         return false;
+    }
+
+    private boolean applyNewEntry(AggSingleEntityArgumentEntry entry) {
+        this.ts = entry.getTs();
+        this.version = entry.getVersion();
+        this.kvEntryValue = entry.getKvEntryValue();
+        this.entityId = entry.getEntityId();
+        return true;
     }
 
     @Override

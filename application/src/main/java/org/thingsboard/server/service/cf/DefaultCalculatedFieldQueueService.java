@@ -37,8 +37,9 @@ import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
@@ -191,20 +192,15 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         for (CalculatedFieldCtx cfCtx : cfCtxs) {
             if (cfCtx.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
                 RelationPathLevel relation = aggConfig.getRelation();
-                switch (relation.direction()) {
-                    case FROM -> {
-                        List<EntityRelation> byToAndType = relationService.findByToAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
-                        if (!byToAndType.isEmpty()) {
-                            return true;
-                        }
-                    }
-                    case TO -> {
-                        List<EntityRelation> byFromAndType = relationService.findByFromAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
-                        if (!byFromAndType.isEmpty()) {
-                            return true;
-                        }
-                    }
+                EntitySearchDirection inverseDirection = switch (relation.direction()) {
+                    case FROM -> EntitySearchDirection.TO;
+                    case TO -> EntitySearchDirection.FROM;
                 };
+                RelationPathLevel inverseRelation = new RelationPathLevel(inverseDirection, relation.relationType());
+                List<EntityRelation> byRelationPathQuery = relationService.findByRelationPathQuery(tenantId, new EntityRelationPathQuery(entityId, List.of(inverseRelation)));
+                if (!byRelationPathQuery.isEmpty()) {
+                    return true;
+                }
             }
         }
 
