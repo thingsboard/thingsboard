@@ -103,18 +103,18 @@
     }
     &.selected {
       .tb-image-cards-option-background {
-        background: #305680;
+        background: #e6e6e6;
         opacity: 0.04;
       }
       &:before {
         content: "";
-        border: 1px solid #305680;
+        border: 1px solid #e6e6e6;
         opacity: 0.32;
       }
       .tb-image-cards-option-title {
         font-size: 13px;
         font-weight: 500;
-        color: #305680;
+        color: #e6e6e6;
       }
     }
   }

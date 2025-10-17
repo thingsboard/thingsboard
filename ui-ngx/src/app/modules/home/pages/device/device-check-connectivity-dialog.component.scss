@@ -122,7 +122,7 @@
         pre[class*=language-] {
           margin: 0;
           background: #F3F6FA;
-          border-color: #305680;
+          border-color: #e6e6e6;
           padding-right: 38px;
           padding-bottom: 4px;
           min-height: 42px;
@@ -137,7 +137,7 @@
       button.clipboard-btn {
         right: -2px;
         p {
-          color: #305680;
+          color: #e6e6e6;
         }
         p, div {
           background-color: #F3F6FA;
@@ -152,7 +152,7 @@
             display: block;
             width: 18px;
             height: 18px;
-            background: #305680;
+            background: #e6e6e6;
             mask-image: url(/assets/copy-code-icon.svg);
             -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;
