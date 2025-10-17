@@ -156,7 +156,7 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
 
     private Customer saveCustomer(Customer customer, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveCustomer [{}]", customer);
-        Customer oldCustomer = (customer.getId() != null) ? findCustomerById(customer.getTenantId(), customer.getId()) : null;
+        Customer oldCustomer = (customer.getId() != null) ? customerDao.findById(customer.getTenantId(), customer.getId().getId()) : null;
         if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldCustomer == null || !oldCustomer.getTitle().equals(customer.getTitle()))) {
             uniquifyEntityName(customer, oldCustomer, customer::setTitle, EntityType.CUSTOMER, nameConflictStrategy);
         }
