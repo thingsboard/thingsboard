@@ -188,7 +188,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
 
     /** Map<serverId ("Short Server ID"), InstanceId> => LwM2MBootstrapClientInstanceIds
      * 1) Both
-     * - Short Server ID == null bs)
+     * - (Short) Server ID == null bs)
      *  SECURITY = 0; InstanceId = 0
      * - Short Server ID == 1 - 65534 lwm2m)
      *  SECURITY = 0; InstanceId = 1
@@ -218,7 +218,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                 // delete old bootstrap Security
                 String path = "/" + SECURITY + "/" + bootstrapSecurityInstanceId;
                 pathsDelete.add(path);
-                // add new bootstrap  Security
+                security.serverId = null;
                 requestsWrite.put(path, toWriteRequest(bootstrapSecurityInstanceId, security, contentFormat));
             }
         }
@@ -251,26 +251,31 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfigNew.security).values()) {
             if (!security.bootstrapServer) {
                 // Security
-                boolean isUpdate = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(security.serverId);
-                Integer secureInstanceId;
-                Integer serverInstanceId;
-                if (isUpdate) {
-                    secureInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId);
-                    serverInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(security.serverId);
+                Integer secureInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(security.serverId);
+                if (secureInstanceId != null) {
                     pathsDelete.add("/" + SECURITY + "/" + secureInstanceId);
-                    pathsDelete.add("/" + SERVER + "/" + serverInstanceId);
+                    requestsWrite.put("/" + SECURITY + "/" + secureInstanceId, toWriteRequest(secureInstanceId, security, contentFormat));
                 } else {
                     secureInstanceId = ++lwm2mSecurityInstanceIdMax;
+                    if (bootstrapSecurityInstanceId.equals(secureInstanceId)) {
+                        secureInstanceId = ++lwm2mSecurityInstanceIdMax;
+                    }
+                    requestsWrite.put("/" + SECURITY + "/" + secureInstanceId, toWriteRequest(secureInstanceId, security, contentFormat));
+                }
+                Integer serverInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getServerInstances().get(security.serverId);
+                if (serverInstanceId != null) {
+                    pathsDelete.add("/" + SERVER + "/" + serverInstanceId);
+                } else {
                     serverInstanceId = ++lwm2mServerInstanceIdMax;
                 }
-                requestsWrite.put("/" + SECURITY + "/" + secureInstanceId, toWriteRequest(secureInstanceId, security, contentFormat));
+                Integer finalServerInstanceId = serverInstanceId;
                 new TreeMap<>(bootstrapConfigNew.servers).values().stream()
                         .filter(server -> server.shortId == security.serverId)
                         .findFirst()
                         .ifPresent(server ->
                                 requestsWrite.put(
-                                        "/" + SERVER + "/" + serverInstanceId,
-                                        toWriteRequest(serverInstanceId, server, contentFormat)
+                                        "/" + SERVER + "/" + finalServerInstanceId,
+                                        toWriteRequest(finalServerInstanceId, server, contentFormat)
                                 )
                         );
             }
@@ -289,7 +294,6 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         }
         return (requests);
     }
-
 
     private void initSupportedObjectsDefault() {
         this.supportedObjects = new HashMap<>();

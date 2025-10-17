@@ -522,7 +522,7 @@ public class LwM2MTestClient {
             log.info("[forceNullSecurityId] Set id=null for {}", security);
         } catch (NoSuchFieldException e) {
             try {
-                // Якщо поле в батьківському класі (наприклад SecurityObjectInstance)
+                //(SecurityObjectInstance)
                 Field field = security.getClass().getSuperclass().getDeclaredField("id");
                 field.setAccessible(true);
                 field.set(security, null);
