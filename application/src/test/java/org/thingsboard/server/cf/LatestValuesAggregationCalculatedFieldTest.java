@@ -489,10 +489,16 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         configuration.setMetrics(Map.of("maxTemperature", aggMetric));
         saveCalculatedField(cf);
 
+        await().alias("update metrics and perform aggregation").atMost(deduplicationInterval / 2, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("maxTemperature", "24"));
+                });
+
         postTelemetry(device1.getId(), "{\"temperature\":101.3}");
         postTelemetry(device2.getId(), "{\"temperature\":25.8}");
 
-        await().alias("update metrics and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("maxTemperature", "26"));
@@ -544,9 +550,15 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         configuration.setDeduplicationIntervalMillis(2 * deduplicationInterval);
         saveCalculatedField(cf);
 
+        await().alias("update deduplication interval and perform aggregation").atMost(deduplicationInterval / 2, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
+                });
+
         postTelemetry(device2.getId(), "{\"temperature\":32.1}");
 
-        await().alias("update deduplication interval and perform aggregation").atMost(2 * deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(2 * deduplicationInterval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "28"));

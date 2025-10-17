@@ -106,21 +106,22 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
-        boolean shouldRecalculate = updatedArgs == null || updatedArgs.isEmpty();
-        if (!shouldRecalculate() && !shouldRecalculate) {
+        boolean cfUpdated = updatedArgs != null && updatedArgs.isEmpty();
+        if (shouldRecalculate() || cfUpdated) {
+            Output output = ctx.getOutput();
+            ObjectNode aggResult = aggregateMetrics(output);
+            lastMetricsEvalTs = System.currentTimeMillis();
+            ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
+            return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                    .type(output.getType())
+                    .scope(output.getScope())
+                    .result(createResultJson(ctx.isUseLatestTs(), aggResult))
+                    .build());
+        } else {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                     .result(null)
                     .build());
         }
-        Output output = ctx.getOutput();
-        ObjectNode aggResult = aggregateMetrics(output);
-        lastMetricsEvalTs = System.currentTimeMillis();
-        ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
-        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
-                .type(output.getType())
-                .scope(output.getScope())
-                .result(createResultJson(ctx.isUseLatestTs(), aggResult))
-                .build());
     }
 
     private boolean shouldRecalculate() {
