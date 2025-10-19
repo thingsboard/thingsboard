@@ -32,12 +32,11 @@ import {
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap
 } from '@shared/models/lwm2m-security-config.models';
-import {Subject, throwError, timeout, catchError, of} from 'rxjs';
-import {map, takeUntil} from 'rxjs/operators';
+import {Subject} from 'rxjs';
+import {takeUntil} from 'rxjs/operators';
 import { isDefinedAndNotNull } from '@core/utils';
-import { HttpClient } from '@angular/common/http';
 import {DeviceId} from "@shared/models/id/device-id";
-import {Observable} from "rxjs/internal/Observable";
+import {DeviceService} from "@core/http/device.service";
 
 @Component({
   selector: 'tb-device-credentials-lwm2m',
@@ -72,7 +71,7 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   deviceId: DeviceId;
 
   constructor(private fb: UntypedFormBuilder,
-              private http: HttpClient) {
+              private deviceService: DeviceService) {
     this.lwm2mConfigFormGroup = this.initLwm2mConfigForm();
   }
 
@@ -115,110 +114,13 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
    * - DiscoveryAll
    * requestBody =  "{\"method\":\"DiscoverAll\"}";
    * - "Registration Update Trigger",
-   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1_1.2/0/8\"}}
+   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1/0/8\"}}
    * - "Bootstrap-Request Trigger"
-   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1_1.2/0/9\"}}
+   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1/0/9\"}}
    */
+
   public rebootDevice(isBootstrapServer: boolean): void {
-    const urlApi = `/api/plugins/rpc/twoway/${this.deviceId.id}`;
-    // DiscoveryAll}
-    this.http.post(urlApi, { method: "DiscoverAll" })
-      .pipe(
-        timeout(10000), // 10 sec
-        catchError(err => {
-          console.error('DiscoverAll timeout or error', err);
-          return throwError(() => err);
-        })
-      )
-      .subscribe({
-        next: (response: any) => {
-          console.log('success: Discovery');
-          console.log(response);
-          // result = 'CONTENT'
-          if (response.result && response.result.toUpperCase() === 'CONTENT') {
-            const verId = this.getVerId(response.value);
-            console.log("ObjectId=1 ver:", verId);
-            const resourceId = isBootstrapServer ? 9 : 8;
-            const resourcePath = `/1_${verId}/0/${resourceId}`;
-
-            // first rebootTrigger
-            this.rebootTrigger(resourcePath, urlApi).subscribe(first => {
-              if (first.result === 'CHANGED') {
-                console.log('Reboot success first');
-              }
-              else if (first.result === 'BAD_REQUEST' && first.newVersionId && first.newVersionId !== verId) {
-                // Retry with new version
-                const correctedPath = `/1_${first.newVersionId}/0/${resourceId}`;
-                console.log(`Retrying with version ${first.newVersionId}`);
-
-                this.rebootTrigger(correctedPath, urlApi).subscribe(second => {
-                  if (second.result === 'CHANGED') {
-                    console.log('Success reboot after retry');
-                  } else {
-                    console.error(`error1: Reboot second failed: ${second.toString()}`);
-                  }
-                });
-              } else {
-                console.error(`error2: Reboot first failed: ${first.toString()}`);
-              }
-            });
-          }
-
-          else {
-            console.error(`error3: Bad registration device with id = ${this.deviceId.id} ❗ RPC result is not CONTENT`);
-          }
-        },
-        error: (e) => {
-          console.error(`error4: Bad registration device with id = ${this.deviceId.id} ${e.toString()}`);
-          return throwError(() => e);
-        },
-        complete: () => {
-          console.log('Discovery stream complete'); }
-      });
-  }
-
-  private getVerId(value: string): string {
-    const verDef = '1.1';
-    try {
-      const arr = JSON.parse(value);
-      if (!Array.isArray(arr)) return verDef;
-      const obj1 = arr.find((s: string) => s.startsWith('</1'));
-      const match = obj1?.match(/ver="?([\d.]+)"?/);
-      return match ? match[1] : verDef;
-    } catch {
-      return verDef;
-    }
-  }
-
-  private rebootTrigger(resourcePath: string, urlApi: string): Observable<{ result: string; newVersionId?: string | null }> {
-    console.log(`Sending reboot command to ${resourcePath}`);
-
-    return this.http.post<any>(urlApi, {
-      method: 'Execute',
-      params: { id: resourcePath }
-    }).pipe(
-      timeout(10000),
-      map(res => {
-        console.log(`Reboot for ${resourcePath}`);
-        console.log(res);
-        if (res?.result?.toUpperCase() === 'CHANGED') {
-          return { result: 'CHANGED' };
-        }
-
-        if (res?.result?.toUpperCase() === 'BAD_REQUEST' && res?.error) {
-          const match = (res.error as string).match(/version[:=]\s*([\d.]+)/i);
-          const newVersionId = match ? match[1] : null;
-          console.warn(`BAD_REQUEST: suggested version ${newVersionId ?? 'unknown'}`);
-          return { result: 'BAD_REQUEST', newVersionId };
-        }
-
-        return { result: 'ERROR' };
-      }),
-      catchError(err => {
-        console.error(`Execute error5 for ${resourcePath}:`, err);
-        return of({ result: 'ERROR' });
-      })
-    );
+    this.deviceService.rebootDevice(this.deviceId.id, isBootstrapServer);
   }
 
   private initClientSecurityConfig(config: Lwm2mSecurityConfigModels): void {
