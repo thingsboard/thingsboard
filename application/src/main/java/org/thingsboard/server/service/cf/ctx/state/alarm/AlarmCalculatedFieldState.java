@@ -189,8 +189,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
         initCurrentAlarm(ctx);
-        // FIXME: don't create alarm if attrs were deleted, or config is updated
-        // TODO: what if expression is changed? do we reevaluate? or only on new events?
         TbAlarmResult result = createOrClearAlarms(state -> {
             if (updatedArgs != null) {
                 boolean newEvent = !updatedArgs.isEmpty();
