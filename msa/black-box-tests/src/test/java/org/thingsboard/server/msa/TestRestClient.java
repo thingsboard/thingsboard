@@ -415,7 +415,6 @@ public class TestRestClient {
         queryParams.put("toType", toId.getEntityType().name());
         return given().spec(requestSpec)
                 .queryParams(queryParams)
-                //.delete("/api/v2/relation?fromId={fromId}&fromType={fromType}&relationType={relationType}&toId={toId}&toType={toType}")
                 .delete("/api/v2/relation")
                 .then()
                 .statusCode(HTTP_OK)
