@@ -18,12 +18,20 @@
 :host {
   display: flex;
   flex: 1 1 0;
+  width: 100%;
+  height: 100%;
 
   .tb-two-factor-auth-login-content {
     background-color: #eee;
 
     .tb-two-factor-auth-login-card {
+      max-height: 100vh;
+      overflow: auto;
       padding: 48px 48px 48px 16px;
+
+      @media #{$mat-xs} {
+        height: 100%;
+      }
 
       @media #{$mat-gt-xs} {
         width: 450px !important;
@@ -33,39 +41,44 @@
         font: 400 28px / 36px Roboto, "Helvetica Neue", sans-serif;
       }
 
+      .mat-mdc-card-header {
+        padding: 0;
+      }
+
       .mat-mdc-card-content {
-        margin-top: 44px;
+        margin-top: 34px;
         margin-left: 40px;
+        padding: 0;
       }
 
       .mat-body {
         letter-spacing: 0.25px;
         line-height: 16px;
-        margin: 0;
       }
 
-      .code-block {
-        margin-top: 16px;
-      }
-
-      .providers-container {
-        padding: 0;
-
-        .mat-body {
-          padding-bottom: 8px;
+      .backup-code {
+        p {
+          text-align: justify;
         }
-      }
 
-      .timer {
-        font: 500 12px / 14px Roboto, "Helvetica Neue", sans-serif;
-        color: rgba(255, 255, 255, 0.8);
-      }
+        .container {
+          border: 1px solid;
+          border-radius: 4px;
+          gap: 16px;
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          justify-items: center;
+          padding: 16px 0;
+          margin-bottom: 16px;
 
-      .action-row:nth-child(n) {
-        min-height: 36px;
+          .code {
+            letter-spacing: 0.25px;
+            font-family: Roboto Mono, "Helvetica Neue", monospace;
+          }
+        }
 
-        .action-resend {
-          min-width: 50%;
+        .action-buttons {
+          margin-bottom: 40px;
         }
       }
     }
@@ -80,18 +93,18 @@
           }
         }
       }
+      .mat-mdc-form-field .mat-mdc-form-field-hint-wrapper {
+        color: rgba(255, 255, 255, 0.8);
+      }
     }
-    button.provider {
+
+    button.provider, button.navigation {
       text-align: start;
       font-weight: 400;
       color: rgba(255, 255, 255, 0.8);
       &:not([disabled][disabled]) {
         border-color: rgba(255, 255, 255, .8);
       }
-    }
-
-    .mat-form-field-invalid .mat-mdc-form-field-hint {
-      margin-top: 20px;
     }
   }
 }
