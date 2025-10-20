@@ -55,6 +55,7 @@ import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -99,15 +100,15 @@ public class CalculatedFieldUtils {
 
         LatestValuesAggregationStateProto.Builder aggBuilder = LatestValuesAggregationStateProto.newBuilder();
         state.getArguments().forEach((argName, argEntry) -> {
-            if (argEntry instanceof AggArgumentEntry aggArgumentEntry) {
-                aggArgumentEntry.getAggInputs()
-                        .forEach((entityId, entry) -> aggBuilder.addAggArguments(toAggSingleArgumentProto(argName, entityId, entry)));
-            } else if (argEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                builder.addSingleValueArguments(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
-            } else if (argEntry instanceof TsRollingArgumentEntry rollingArgumentEntry) {
-                builder.addRollingValueArguments(toRollingArgumentProto(argName, rollingArgumentEntry));
-            } else if (argEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
-                builder.addGeofencingArguments(toGeofencingArgumentProto(argName, geofencingArgumentEntry));
+            switch (argEntry.getType()) {
+                case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
+                case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
+                case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
+                case AGGREGATE_LATEST -> {
+                    AggArgumentEntry aggArgumentEntry = (AggArgumentEntry) argEntry;
+                    aggArgumentEntry.getAggInputs()
+                            .forEach((entityId, entry) -> aggBuilder.addAggArguments(toAggSingleArgumentProto(argName, entityId, entry)));
+                }
             }
         });
         if (state instanceof AlarmCalculatedFieldState alarmState) {
@@ -212,6 +213,7 @@ public class CalculatedFieldUtils {
             case SCRIPT -> new ScriptCalculatedFieldState(id.entityId());
             case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
+            case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
             case LATEST_VALUES_AGGREGATION -> new LatestValuesAggregationCalculatedFieldState(id.entityId());
         };
 

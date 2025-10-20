@@ -423,13 +423,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state == null) {
             state = createState(ctx);
             justRestored = true;
-        } else if (ctx.shouldFetchDynamicArgumentsFromDb(state)) {
+        } else if (ctx.shouldFetchRelationQueryDynamicArgumentsFromDb(state)) {
             log.debug("[{}][{}] Going to update dynamic arguments for CF.", entityId, ctx.getCfId());
             try {
                 Map<String, ArgumentEntry> dynamicArgsFromDb = cfService.fetchDynamicArgsFromDb(ctx, entityId);
                 dynamicArgsFromDb.forEach(newArgValues::putIfAbsent);
-                var geofencingState = (GeofencingCalculatedFieldState) state;
-                geofencingState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
+                if (ctx.getCfType() == CalculatedFieldType.GEOFENCING) {
+                    var geofencingState = (GeofencingCalculatedFieldState) state;
+                    geofencingState.updateLastDynamicArgumentsRefreshTs();
+                }
             } catch (Exception e) {
                 throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
             }
@@ -457,9 +459,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     private void initState(CalculatedFieldState state, CalculatedFieldCtx ctx) {
         state.setCtx(ctx, actorCtx);
         state.init();
-        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.hasRelationQueryDynamicArguments()) {
+
+        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isRelationQueryDynamicArguments()) {
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
-            geofencingState.setLastDynamicArgumentsRefreshTs(System.currentTimeMillis());
+            geofencingState.updateLastDynamicArgumentsRefreshTs();
         }
 
         Map<String, ArgumentEntry> arguments = fetchArguments(ctx);

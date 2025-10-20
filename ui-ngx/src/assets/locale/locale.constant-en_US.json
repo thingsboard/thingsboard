@@ -1053,7 +1053,8 @@
         "type": {
             "simple": "Simple",
             "script": "Script",
-            "geofencing" : "Geofencing"
+            "geofencing" : "Geofencing",
+            "propagation": "Propagation"
         },
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
@@ -1063,6 +1064,7 @@
         "datasource": "Datasource",
         "add-argument": "Add argument",
         "test-script-function": "Test script function",
+        "test-expression-function": "Test expression function",
         "no-arguments": "No arguments configured",
         "argument-settings": "Argument settings",
         "argument-current": "Current entity",
@@ -1138,14 +1140,26 @@
         "level": "Level",
         "direction-level": "Direction",
         "direction-up": "Up",
+        "direction-up-parent": "Up to parent",
         "direction-down": "Down",
+        "direction-down-child": "Down to child",
         "add-level": "Add level",
         "delete-level": "Delete level",
         "no-level": "No level configured",
         "levels-required": "At least one level must be configured.",
         "max-allowed-levels-error": "Relation level exceeds the maximum allowed.",
+        "propagation-path-related-entities": "Propagation path to related entities",
+        "propagate-type": {
+            "arguments-only": "Arguments only",
+            "expression-result": "Expression result"
+        },
+        "data-propagate": "Data to propagate",
+        "output-key": "Output key",
+        "copy-output-key": "Copy output key",
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
+            "arguments-propagate-arguments-with-rolling": "'Time series rolling' type is incompatible with 'Arguments only' propagation.",
+            "arguments-propagate-argument-entity-type": "Entity type is incompatible with 'Arguments only' propagation.",
             "arguments-empty": "Arguments should not be empty.",
             "expression-required": "Expression is required.",
             "expression-invalid": "Expression is invalid",
@@ -1155,6 +1169,12 @@
             "argument-name-duplicate": "Argument with such name already exists.",
             "argument-name-max-length": "Argument name should be less than 256 characters.",
             "argument-name-forbidden": "Argument name is reserved and cannot be used.",
+            "output-key-required": "Output key is required.",
+            "output-key-pattern": "Output key is invalid.",
+            "output-key-duplicate": "Key with such name already exists.",
+            "output-key-max-length": "Output key should be less than 256 characters.",
+            "output-key-forbidden": "Output key is reserved and cannot be used.",
+            "entity-type-required": "Entity type is required",
             "name-required": "Mame is required.",
             "name-pattern": "Name is invalid.",
             "name-duplicate": "Name with such name already exists.",
@@ -1180,7 +1200,9 @@
             "max-geofencing-zone": "Maximum number of geofencing zones reached.",
             "zone-group-refresh-interval": "Defines how often zone groups configured via related entities are refreshed.",
             "zone-group-refresh-interval-required": "Zone groups refresh interval is required.",
-            "zone-group-refresh-interval-min": "Zone group refresh interval should be at least {{ min }} second."
+            "zone-group-refresh-interval-min": "Zone group refresh interval should be at least {{ min }} second.",
+            "propagation-path-related-entities": "Defines a direct, single-level path to a related entity based on the selected direction and relation type.",
+            "data-propagate": "Defines the data to be propagated from the arguments configured below. 'Arguments only' uses the retrieved data directly, while 'Expression result' calculates a new value from that data."
         }
     },
     "ai-models": {
@@ -5930,6 +5952,10 @@
         "ws-limit-max-subscriptions-per-regular-user": "Subscriptions per regular user maximum number",
         "ws-limit-max-subscriptions-per-public-user": "Subscriptions per public user maximum number",
         "ws-limit-updates-per-session": "WS updates per session",
+        "relation-search-entity-limit": "Relation search entity limit",
+        "relation-search-entity-limit-hint": "Limits the number of entities resolved at the last level of the relation path. Applies to 'Related entities' arguments and Propagation fields.",
+        "relation-search-entity-limit-required": "Relation search entity limit",
+        "relation-search-entity-limit-range": "Relation search entity limit can't be less than '1'",
         "rate-limits": {
             "add-limit": "Add limit",
             "and-also-less-than": "and also less than",

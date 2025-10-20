@@ -58,6 +58,8 @@ import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
+import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultAttributeEntry;
@@ -93,22 +95,27 @@ public abstract class AbstractCalculatedFieldProcessingService {
     protected abstract String getExecutorNamePrefix();
 
     protected ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        Map<String, ListenableFuture<ArgumentEntry>> argFutures = switch (ctx.getCalculatedField().getType()) {
+        Map<String, ListenableFuture<ArgumentEntry>> argFutures = switch (ctx.getCfType()) {
             case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false, ts);
-            case SIMPLE, SCRIPT, ALARM -> {
-                Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
-                for (var entry : ctx.getArguments().entrySet()) {
-                    var argEntityId = resolveEntityId(ctx.getTenantId(), entityId, entry.getValue());
-                    var argValueFuture = fetchArgumentValue(ctx.getTenantId(), argEntityId, entry.getValue(), ts);
-                    futures.put(entry.getKey(), argValueFuture);
-                }
-                yield futures;
-            }
+            case SIMPLE, SCRIPT, ALARM, PROPAGATION -> getBaseCalculatedFieldArguments(ctx, entityId, ts);
             case LATEST_VALUES_AGGREGATION -> fetchAggArguments(ctx, entityId, ts);
         };
+        if (ctx.getCfType() == PROPAGATION) {
+            argFutures.put(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId));
+        }
         return Futures.whenAllComplete(argFutures.values())
                 .call(() -> resolveArgumentFutures(argFutures),
                         MoreExecutors.directExecutor());
+    }
+
+    private Map<String, ListenableFuture<ArgumentEntry>> getBaseCalculatedFieldArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
+        Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
+        for (var entry : ctx.getArguments().entrySet()) {
+            var argEntityId = resolveEntityId(ctx.getTenantId(), entityId, entry.getValue());
+            var argValueFuture = fetchArgumentValue(ctx.getTenantId(), argEntityId, entry.getValue(), ts);
+            futures.put(entry.getKey(), argValueFuture);
+        }
+        return futures;
     }
 
     protected EntityId resolveEntityId(TenantId tenantId, EntityId entityId, Argument argument) {
@@ -153,6 +160,11 @@ public abstract class AbstractCalculatedFieldProcessingService {
                             }
                         }
                 ));
+    }
+
+    protected ListenableFuture<ArgumentEntry> fetchPropagationCalculatedFieldArgument(CalculatedFieldCtx ctx, EntityId entityId) {
+        ListenableFuture<List<EntityId>> propagationEntityIds = fromDynamicSource(ctx.getTenantId(), entityId, ctx.getPropagationArgument());
+        return Futures.transform(propagationEntityIds, ArgumentEntry::createPropagationArgument, MoreExecutors.directExecutor());
     }
 
     protected Map<String, ListenableFuture<ArgumentEntry>> fetchGeofencingCalculatedFieldArguments(CalculatedFieldCtx ctx, EntityId entityId, boolean dynamicArgumentsOnly, long startTs) {
@@ -211,6 +223,10 @@ public abstract class AbstractCalculatedFieldProcessingService {
         if (!value.hasDynamicSource()) {
             return Futures.immediateFuture(List.of(entityId));
         }
+        return fromDynamicSource(tenantId, entityId, value);
+    }
+
+    private ListenableFuture<List<EntityId>> fromDynamicSource(TenantId tenantId, EntityId entityId, Argument value) {
         var refDynamicSourceConfiguration = value.getRefDynamicSourceConfiguration();
         return switch (refDynamicSourceConfiguration.getType()) {
             case CURRENT_OWNER -> Futures.immediateFuture(List.of(resolveOwnerArgument(tenantId, entityId)));

@@ -29,6 +29,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
@@ -689,16 +690,49 @@ public class AlarmRulesTest extends AbstractControllerTest {
         });
     }
 
-    // TODO: MSA tests
-    // TODO: test when attribute or telemetry is deleted without default value - perform calculation not happens
+    @Test
+    public void testManualClearAlarm() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
 
-    private void checkAlarmResult(CalculatedField calculatedField, Consumer<TbAlarmResult> assertion) {
-        checkAlarmResult(calculatedField, null, assertion);
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"temperature\":50}");
+        Alarm alarm = checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        }).getAlarm();
+
+        doPost("/api/alarm/" + alarm.getId() + "/clear", AlarmInfo.class);
+        Thread.sleep(1000);
+        postTelemetry(deviceId, "{\"temperature\":50}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.getAlarm().getId()).isNotEqualTo(alarm.getId());
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
     }
 
-    private void checkAlarmResult(CalculatedField calculatedField,
-                                  Predicate<TbAlarmResult> waitFor,
-                                  Consumer<TbAlarmResult> assertion) {
+    // TODO: MSA tests
+
+    private TbAlarmResult checkAlarmResult(CalculatedField calculatedField, Consumer<TbAlarmResult> assertion) {
+        return checkAlarmResult(calculatedField, null, assertion);
+    }
+
+    private TbAlarmResult checkAlarmResult(CalculatedField calculatedField,
+                                           Predicate<TbAlarmResult> waitFor,
+                                           Consumer<TbAlarmResult> assertion) {
         TbAlarmResult alarmResult = await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getLatestAlarmResult(calculatedField.getId()), result ->
                         result != null && (waitFor == null || waitFor.test(result)));
@@ -707,6 +741,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Alarm alarm = alarmResult.getAlarm();
         assertThat(alarm.getOriginator()).isEqualTo(originatorId);
         assertThat(alarm.getType()).isEqualTo(calculatedField.getName());
+        return alarmResult;
     }
 
     private TbAlarmResult getLatestAlarmResult(CalculatedFieldId calculatedFieldId) {

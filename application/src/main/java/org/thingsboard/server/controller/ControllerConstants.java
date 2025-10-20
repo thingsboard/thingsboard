@@ -1744,4 +1744,18 @@ public class ControllerConstants {
             MARKDOWN_CODE_BLOCK_END ;
 
     protected static final String SECURITY_WRITE_CHECK = " Security check is performed to verify that the user has 'WRITE' permission for the entity (entities).";
+
+    public static final String NAME_CONFLICT_POLICY_DESC = "Optional value of name conflict policy. Possible values: FAIL or UNIQUIFY. " +
+            " If omitted, FAIL policy is applied. FAIL policy implies exception will be thrown if an entity with the same name already exists. " +
+            " UNIQUIFY policy appends a suffix to the entity name, if a name conflict occurs.";
+
+    public static final String UNIQUIFY_SEPARATOR_DESC = "Optional value of name suffix separator used by UNIQUIFY policy. By default, underscore separator is used. " +
+            "For example, strategy is UNIQUIFY, separator is '-'; if a name conflict occurs for entity name 'test-name', " +
+            "created entity will have name like 'test-name-7fsh4f'.";
+
+    public static final String UNIQUIFY_STRATEGY_DESC = "Optional value of uniquify strategy used by UNIQUIFY policy. Possible values: RANDOM or INCREMENTAL. " +
+            "By default, RANDOM strategy is used, which means random alphanumeric string will be added as a suffix to entity name. " +
+            "INCREMENTAL implies the first possible number starting from 1 will be added as a name suffix. " +
+            "For example, strategy is UNIQUIFY, uniquify strategy is INCREMENTAL; if a name conflict occurs for entity name 'test-name', " +
+            "created entity will have name like 'test-name-1.";
 }

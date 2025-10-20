@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.script.api.tbel.TbUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -125,7 +127,21 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
 
-    protected void updateLastUpdateTimestamp(ArgumentEntry entry) {
+    protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
+        if (!useLatestTs) {
+            return valuesNode;
+        }
+        long latestTs = getLatestTimestamp();
+        if (latestTs == -1) {
+            return valuesNode;
+        }
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        resultNode.put("ts", latestTs);
+        resultNode.set("values", valuesNode);
+        return resultNode;
+    }
+
+    private void updateLastUpdateTimestamp(ArgumentEntry entry) {
         long newTs = this.latestTimestamp;
         if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
             newTs = singleValueArgumentEntry.getTs();

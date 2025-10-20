@@ -19,62 +19,34 @@
   <div class="tb-form-panel no-border no-padding mb-2">
     <div class="tb-form-panel-title">{{ 'calculated-fields.argument-settings' | translate }}</div>
     <div class="tb-form-panel no-border no-padding">
-      <div class="tb-form-row">
-        <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
-        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-          <input matInput autocomplete="off" name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
-          @if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('required')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('duplicateName')) {
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'calculated-fields.hint.argument-name-duplicate' | translate"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('pattern')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.argument-name-pattern' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('maxlength')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.argument-name-max-length' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('forbiddenName')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.argument-name-forbidden' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          }
-        </mat-form-field>
-      </div>
-      <ng-container [formGroup]="refEntityIdFormGroup">
+      @if (!isOutputKey) {
+        <ng-container *ngTemplateOutlet="argumentNameTemplate; context: {
+          label: 'calculated-fields.argument-name',
+          required: 'calculated-fields.hint.argument-name-required',
+          duplicate: 'calculated-fields.hint.argument-name-duplicate',
+          pattern: 'calculated-fields.hint.argument-name-pattern',
+          maxlength: 'calculated-fields.hint.argument-name-max-length',
+          forbidden: 'calculated-fields.hint.argument-name-forbidden'
+        }"></ng-container>
+      }
+      <ng-container>
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'entity.entity-type' | translate }}</div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="entityType">
+            <mat-select [formControl]="argumentType">
               @for (type of argumentEntityTypes; track type) {
                 <mat-option [value]="type">{{ ArgumentEntityTypeTranslations.get(type) | translate }}</mat-option>
               }
             </mat-select>
+            @if (argumentType.touched && argumentType.hasError('required')) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.hint.entity-type-required' | translate"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            }
           </mat-form-field>
         </div>
         @if (ArgumentEntityTypeParamsMap.has(entityType)) {
@@ -83,7 +55,8 @@
             <tb-entity-autocomplete
               class="flex flex-1"
               #entityAutocomplete
-              formControlName="id"
+              formControlName="refEntityId"
+              useFullEntityId
               inlineField
               [placeholder]="'action.set' | translate"
               [required]="true"
@@ -158,6 +131,16 @@
           }
         }
       </ng-container>
+      @if (isOutputKey) {
+        <ng-container *ngTemplateOutlet="argumentNameTemplate; context: {
+          label: 'calculated-fields.output-key',
+          required: 'calculated-fields.hint.output-key-required',
+          duplicate: 'calculated-fields.hint.output-key-duplicate',
+          pattern: 'calculated-fields.hint.output-key-pattern',
+          maxlength: 'calculated-fields.hint.output-key-max-length',
+          forbidden: 'calculated-fields.hint.output-key-forbidden'
+        }"></ng-container>
+      }
       @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Rolling) {
         <div class="tb-form-row">
           <div class="fixed-title-width">{{ 'calculated-fields.default-value' | translate }}</div>
@@ -207,3 +190,54 @@
     </button>
   </div>
 </div>
+
+<ng-template #argumentNameTemplate let-label="label" let-required="required" let-duplicate="duplicate"
+  let-pattern="pattern" let-maxlength="maxlength" let-forbidden="forbidden">
+  <div class="tb-form-row" [formGroup]="argumentFormGroup">
+    <div class="fixed-title-width tb-required">{{ label | translate }}</div>
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+      <input matInput autocomplete="off" name="value" formControlName="argumentName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
+      @if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('required')) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="required | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('duplicateName')) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="duplicate | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('pattern')) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="pattern | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('maxlength')) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="maxlength | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      } @else if (argumentFormGroup.get('argumentName').touched && argumentFormGroup.get('argumentName').hasError('forbiddenName')) {
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="forbidden | translate"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      }
+    </mat-form-field>
+  </div>
+</ng-template>

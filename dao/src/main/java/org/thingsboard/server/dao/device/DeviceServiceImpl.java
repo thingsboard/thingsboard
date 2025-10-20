@@ -39,6 +39,8 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -167,6 +169,12 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return doSaveDevice(device, accessToken, true);
     }
 
+    @Transactional
+    @Override
+    public Device saveDeviceWithAccessToken(Device device, String accessToken, NameConflictStrategy nameConflictStrategy) {
+        return doSaveDevice(device, accessToken, true, nameConflictStrategy);
+    }
+
     @Override
     public Device saveDevice(Device device, boolean doValidate) {
         return doSaveDevice(device, null, doValidate);
@@ -181,7 +189,13 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, true);
+        return this.saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
+    }
+
+    @Transactional
+    @Override
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
+        Device savedDevice = this.saveDeviceWithoutCredentials(device, true, nameConflictStrategy);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
             deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
@@ -198,7 +212,11 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate);
+        return doSaveDevice(device, accessToken, doValidate, NameConflictStrategy.DEFAULT);
+    }
+
+    private Device doSaveDevice(Device device, String accessToken, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
+        Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate, nameConflictStrategy);
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
@@ -209,13 +227,14 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return savedDevice;
     }
 
-    private Device saveDeviceWithoutCredentials(Device device, boolean doValidate) {
+    private Device saveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveDevice [{}]", device);
-        Device oldDevice = null;
+        Device oldDevice = (device.getId() != null) ? deviceDao.findById(device.getTenantId(), device.getId().getId()) : null;
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldDevice == null || !oldDevice.getName().equals(device.getName()))) {
+            uniquifyEntityName(device, oldDevice, device::setName, EntityType.DEVICE, nameConflictStrategy);
+        }
         if (doValidate) {
-            oldDevice = deviceValidator.validate(device, Device::getTenantId);
-        } else if (device.getId() != null) {
-            oldDevice = findDeviceById(device.getTenantId(), device.getId());
+            deviceValidator.validate(device, Device::getTenantId);
         }
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), oldDevice != null ? oldDevice.getName() : null);
         try {

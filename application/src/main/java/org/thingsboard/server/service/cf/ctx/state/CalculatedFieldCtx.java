@@ -39,6 +39,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
@@ -111,6 +112,9 @@ public class CalculatedFieldCtx {
 
     private long scheduledUpdateIntervalMillis;
 
+    private Argument propagationArgument;
+    private boolean applyExpressionForResolvedArguments;
+
     public CalculatedFieldCtx(CalculatedField calculatedField,
                               ActorSystemContext systemContext) {
         this.calculatedField = calculatedField;
@@ -171,6 +175,11 @@ public class CalculatedFieldCtx {
                     }
                 });
             }
+            if (calculatedField.getConfiguration() instanceof PropagationCalculatedFieldConfiguration propagationConfig) {
+                propagationArgument = propagationConfig.toPropagationArgument();
+                applyExpressionForResolvedArguments = propagationConfig.isApplyExpressionToResolvedArguments();
+                relationQueryDynamicArguments = true;
+            }
         }
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
@@ -211,6 +220,12 @@ public class CalculatedFieldCtx {
                         initTbelExpression(tbelExpression.getExpression());
                     }
                 });
+                initialized = true;
+            }
+            case PROPAGATION -> {
+                if (applyExpressionForResolvedArguments) {
+                    initTbelExpression(expression);
+                }
                 initialized = true;
             }
             case LATEST_VALUES_AGGREGATION -> {
@@ -566,8 +581,8 @@ public class CalculatedFieldCtx {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
-    public boolean hasContextOnlyChanges(CalculatedFieldCtx other) {
-        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !expression.equals(other.expression)) {
+    public boolean hasContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state reinit and will be picked up by the state on the fly
+        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !Objects.equals(expression, other.expression)) {
             return true;
         }
         if (!Objects.equals(output, other.output)) {
@@ -624,22 +639,29 @@ public class CalculatedFieldCtx {
         return false;
     }
 
-
-    public boolean hasRelationQueryDynamicArguments() {
-        return relationQueryDynamicArguments && scheduledUpdateIntervalMillis != -1;
+    private boolean isScheduledUpdateEnabled() {
+        return scheduledUpdateIntervalMillis != -1;
     }
 
-    public boolean shouldFetchDynamicArgumentsFromDb(CalculatedFieldState state) {
-        if (!hasRelationQueryDynamicArguments()) {
+    public boolean shouldFetchRelationQueryDynamicArgumentsFromDb(CalculatedFieldState state) {
+        if (!relationQueryDynamicArguments) {
             return false;
         }
-        if (!(state instanceof GeofencingCalculatedFieldState geofencingState)) {
-            return false;
-        }
-        if (geofencingState.getLastDynamicArgumentsRefreshTs() == -1L) {
-            return true;
-        }
-        return geofencingState.getLastDynamicArgumentsRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+        return switch (cfType) {
+            case PROPAGATION -> true;
+            case GEOFENCING -> {
+                if (!isScheduledUpdateEnabled()) {
+                    yield false;
+                }
+                var geofencingState = (GeofencingCalculatedFieldState) state;
+                if (geofencingState.getLastDynamicArgumentsRefreshTs() == -1L) {
+                    yield true;
+                }
+                yield geofencingState.getLastDynamicArgumentsRefreshTs() <
+                      System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+            }
+            default -> false;
+        };
     }
 
     public void stop() {

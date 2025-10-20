@@ -35,6 +35,12 @@ SET profile_data = jsonb_set(
                                 THEN NULL
                             ELSE to_jsonb(10)
                             END,
+                        'maxRelatedEntitiesToReturnPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(100)
+                            END,
                         'minAllowedDeduplicationIntervalInSecForCF',
                         CASE
                             WHEN (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
@@ -49,6 +55,8 @@ WHERE NOT (
     (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
         AND
     (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
         AND
     (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
     );
