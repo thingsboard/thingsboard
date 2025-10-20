@@ -41,9 +41,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
-import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.CalculatedFieldStatePartitionRestoreMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
@@ -520,22 +520,22 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         List<CalculatedFieldEntityCtxId> result = new ArrayList<>();
         if (cf.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration configuration) {
             RelationPathLevel relation = configuration.getRelation();
-            switch (relation.direction()) {
-                case FROM -> {
-                    List<EntityRelation> byToAndType = relationService.findByToAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
-                    if (byToAndType != null && !byToAndType.isEmpty()) {
-                        EntityRelation entityRelation = byToAndType.get(0); // only one supported
+            EntitySearchDirection inverseDirection = switch (relation.direction()) {
+                case FROM -> EntitySearchDirection.TO;
+                case TO -> EntitySearchDirection.FROM;
+            };
+            RelationPathLevel inverseRelation = new RelationPathLevel(inverseDirection, relation.relationType());
+            List<EntityRelation> byRelationPathQuery = relationService.findByRelationPathQuery(tenantId, new EntityRelationPathQuery(entityId, List.of(inverseRelation)));
+            if (byRelationPathQuery != null && !byRelationPathQuery.isEmpty()) {
+                switch (relation.direction()) {
+                    case FROM -> {
+                        EntityRelation entityRelation = byRelationPathQuery.get(0); // only one supported
                         result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getFrom()));
                     }
-                }
-                case TO -> {
-                    List<EntityRelation> byFromAndType = relationService.findByFromAndType(tenantId, entityId, relation.relationType(), RelationTypeGroup.COMMON);
-                    if (byFromAndType != null && !byFromAndType.isEmpty()) {
-                        for (EntityRelation entityRelation : byFromAndType) {
-                            if (entityRelation.getTo().equals(cf.getEntityId())) {
-                                result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo()));
-                            }
-                        }
+                    case TO -> {
+                        byRelationPathQuery.stream()
+                                .filter(entityRelation -> entityRelation.getTo().equals(cf.getEntityId()))
+                                .forEach(entityRelation -> result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo())));
                     }
                 }
             }

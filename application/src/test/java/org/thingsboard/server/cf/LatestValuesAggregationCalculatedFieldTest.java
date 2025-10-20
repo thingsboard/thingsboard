@@ -384,6 +384,44 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
     }
 
     @Test
+    public void testDeleteAttr_checkAggregationWithDefault() throws Exception {
+        Asset asset2 = createAsset("Asset 2", assetProfile.getId());
+        Device device3 = createDevice("Device 3", "1234567890333");
+        Device device4 = createDevice("Device 4", "1234567890444");
+
+        createEntityRelation(asset2.getId(), device3.getId(), "Contains");
+        createEntityRelation(asset2.getId(), device4.getId(), "Contains");
+
+        postAttributes(device3.getId(), AttributeScope.SERVER_SCOPE, "{\"occupied\":true}");
+        postAttributes(device4.getId(), AttributeScope.SERVER_SCOPE, "{\"occupied\":true}");
+
+        createOccupancyCFWithAttr(asset2.getId());
+
+        await().alias("create CF and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset2.getId(), Map.of(
+                            "freeSpaces", "0",
+                            "occupiedSpaces", "2",
+                            "totalSpaces", "2"
+                    ));
+                });
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + device3.getUuidId() + "/SERVER_SCOPE?keys=occupied", String.class);
+        doDelete("/api/plugins/telemetry/DEVICE/" + device4.getUuidId() + "/SERVER_SCOPE?keys=occupied", String.class);
+
+        await().alias("delete attribute and perform aggregation with default values").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset2.getId(), Map.of(
+                            "freeSpaces", "2",
+                            "occupiedSpaces", "0",
+                            "totalSpaces", "2"
+                    ));
+                });
+    }
+
+    @Test
     public void testCreateRelation_checkAggregation() throws Exception {
         createOccupancyCF(asset.getId());
         checkInitialCalculation();
@@ -613,6 +651,43 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         Map<String, Argument> arguments = new HashMap<>();
         Argument argument = new Argument();
         argument.setRefEntityKey(new ReferencedEntityKey("occupied", ArgumentType.TS_LATEST, null));
+        argument.setDefaultValue("false");
+        arguments.put("oc", argument);
+
+        Map<String, AggMetric> aggMetrics = new HashMap<>();
+
+        AggMetric freeSpaces = new AggMetric();
+        freeSpaces.setFunction(AggFunction.COUNT);
+        freeSpaces.setFilter("return oc == false;");
+        freeSpaces.setInput(new AggKeyInput("oc"));
+        aggMetrics.put("freeSpaces", freeSpaces);
+
+        AggMetric occupiedSpaces = new AggMetric();
+        occupiedSpaces.setFunction(AggFunction.COUNT);
+        occupiedSpaces.setFilter("return oc == true;");
+        occupiedSpaces.setInput(new AggKeyInput("oc"));
+        aggMetrics.put("occupiedSpaces", occupiedSpaces);
+
+        AggMetric totalSpaces = new AggMetric();
+        totalSpaces.setFunction(AggFunction.COUNT);
+        totalSpaces.setInput(new AggFunctionInput("return 1;"));
+        aggMetrics.put("totalSpaces", totalSpaces);
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        output.setDecimalsByDefault(0);
+
+        return createAggCf("Occupied spaces", entityId,
+                new RelationPathLevel(EntitySearchDirection.FROM, "Contains"),
+                arguments,
+                aggMetrics,
+                output);
+    }
+
+    private CalculatedField createOccupancyCFWithAttr(EntityId entityId) {
+        Map<String, Argument> arguments = new HashMap<>();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("occupied", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
         argument.setDefaultValue("false");
         arguments.put("oc", argument);
 
