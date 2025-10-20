@@ -38,15 +38,20 @@ public class AlarmCalculatedFieldResult implements CalculatedFieldResult {
 
     @Override
     public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
+        TbMsgType msgType;
         TbMsgMetaData metaData = new TbMsgMetaData();
         if (alarmResult.isCreated()) {
+            msgType = TbMsgType.ALARM_CREATED;
             metaData.putValue(DataConstants.IS_NEW_ALARM, Boolean.TRUE.toString());
         } else if (alarmResult.isUpdated()) {
+            msgType = TbMsgType.ALARM_UPDATED;
             metaData.putValue(DataConstants.IS_EXISTING_ALARM, Boolean.TRUE.toString());
         } else if (alarmResult.isSeverityUpdated()) {
+            msgType = TbMsgType.ALARM_SEVERITY_UPDATED;
             metaData.putValue(DataConstants.IS_EXISTING_ALARM, Boolean.TRUE.toString());
             metaData.putValue(DataConstants.IS_SEVERITY_UPDATED_ALARM, Boolean.TRUE.toString());
         } else {
+            msgType = TbMsgType.ALARM_CLEAR;
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
         if (alarmResult.getConditionRepeats() != null) {
@@ -57,7 +62,7 @@ public class AlarmCalculatedFieldResult implements CalculatedFieldResult {
         }
 
         return TbMsg.newMsg()
-                .type(TbMsgType.ALARM)
+                .type(msgType)
                 .originator(entityId)
                 .data(JacksonUtil.toString(alarmResult.getAlarm()))
                 .metaData(metaData)
