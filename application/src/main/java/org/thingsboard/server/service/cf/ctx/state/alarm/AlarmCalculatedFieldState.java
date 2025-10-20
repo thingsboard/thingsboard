@@ -220,10 +220,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
 
     private void processAlarmClear(Alarm alarm) {
         currentAlarm = null;
-        createRuleStates.values().forEach(AlarmRuleState::clear);
-        createRuleStates.clear();
+        createRuleStates.values().forEach(this::clearState);
         clearState(clearRuleState);
-        clearRuleState = null;
     }
 
     private void processAlarmAck(Alarm alarm) {
