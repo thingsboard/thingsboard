@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.customer;
+package org.thingsboard.server.service.edge.rpc.processor.ai;
 
-import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.NameConflictStrategy;
-import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
-import org.thingsboard.server.service.security.model.SecurityUser;
+import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
+import org.thingsboard.server.service.edge.rpc.processor.EdgeProcessor;
 
-public interface TbCustomerService extends SimpleTbEntityService<Customer> {
+public interface AiModelProcessor extends EdgeProcessor {
 
-    Customer save(Customer customer, NameConflictStrategy nameConflictStrategy, SecurityUser user) throws Exception;
+    ListenableFuture<Void> processAiModelMsgFromEdge(TenantId tenantId, Edge edge, AiModelUpdateMsg aiModelUpdateMsg);
 
 }
