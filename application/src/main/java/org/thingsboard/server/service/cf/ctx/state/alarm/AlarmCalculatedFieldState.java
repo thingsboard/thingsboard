@@ -223,6 +223,9 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private void processAlarmClear(Alarm alarm) {
         currentAlarm = null;
         createRuleStates.values().forEach(AlarmRuleState::clear);
+        createRuleStates.clear();
+        clearState(clearRuleState);
+        clearRuleState = null;
     }
 
     private void processAlarmAck(Alarm alarm) {
@@ -231,8 +234,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     private void processAlarmDelete(Alarm alarm) {
-        currentAlarm = null;
-        createRuleStates.values().forEach(AlarmRuleState::clear);
+        processAlarmClear(alarm);
     }
 
     private TbAlarmResult createOrClearAlarms(Function<AlarmRuleState, AlarmEvalResult> evalFunction,
