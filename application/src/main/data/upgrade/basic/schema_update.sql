@@ -34,6 +34,12 @@ SET profile_data = jsonb_set(
                             WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
                                 THEN NULL
                             ELSE to_jsonb(10)
+                            END,
+                        'maxRelatedEntitiesToReturnPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(100)
                             END
                 )
                ),
@@ -43,6 +49,8 @@ WHERE NOT (
     (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
         AND
     (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
     );
 
 -- UPDATE TENANT PROFILE CONFIGURATION END

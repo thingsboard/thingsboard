@@ -31,16 +31,41 @@ import {
 } from '@shared/models/ace/ace.models';
 import { EntitySearchDirection } from '@shared/models/relation.models';
 
-export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
-  configuration: CalculatedFieldConfiguration;
-  type: CalculatedFieldType;
+interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
 }
+
+export interface CalculatedFieldSimple extends BaseCalculatedField {
+  type: CalculatedFieldType.SIMPLE;
+  configuration: CalculatedFieldSimpleConfiguration;
+}
+
+export interface CalculatedFieldScript extends BaseCalculatedField {
+  type: CalculatedFieldType.SCRIPT;
+  configuration: CalculatedFieldScriptConfiguration;
+}
+
+export interface CalculatedFieldGeofencing extends BaseCalculatedField {
+  type: CalculatedFieldType.GEOFENCING;
+  configuration: CalculatedFieldGeofencingConfiguration;
+}
+
+export interface CalculatedFieldPropagation extends BaseCalculatedField {
+  type: CalculatedFieldType.PROPAGATION;
+  configuration: CalculatedFieldPropagationConfiguration;
+}
+
+export type CalculatedField =
+  | CalculatedFieldSimple
+  | CalculatedFieldScript
+  | CalculatedFieldGeofencing
+  | CalculatedFieldPropagation;
 
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
   SCRIPT = 'SCRIPT',
-  GEOFENCING = 'GEOFENCING'
+  GEOFENCING = 'GEOFENCING',
+  PROPAGATION = 'PROPAGATION'
 }
 
 export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, string>(
@@ -48,22 +73,66 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, stri
     [CalculatedFieldType.SIMPLE, 'calculated-fields.type.simple'],
     [CalculatedFieldType.SCRIPT, 'calculated-fields.type.script'],
     [CalculatedFieldType.GEOFENCING, 'calculated-fields.type.geofencing'],
+    [CalculatedFieldType.PROPAGATION, 'calculated-fields.type.propagation'],
   ]
 )
 
-export interface CalculatedFieldConfiguration {
-  type: CalculatedFieldType;
-  expression?: string;
-  arguments?: Record<string, CalculatedFieldArgument>;
-  zoneGroups?: Record<string, CalculatedFieldGeofencing>;
+export type CalculatedFieldConfiguration =
+  | CalculatedFieldSimpleConfiguration
+  | CalculatedFieldScriptConfiguration
+  | CalculatedFieldGeofencingConfiguration
+  | CalculatedFieldPropagationConfiguration;
+
+export interface CalculatedFieldSimpleConfiguration {
+  type: CalculatedFieldType.SIMPLE;
+  expression: string;
+  arguments: Record<string, CalculatedFieldArgument>;
+  output: CalculatedFieldSimpleOutput;
+}
+
+export interface CalculatedFieldScriptConfiguration {
+  type: CalculatedFieldType.SCRIPT;
+  expression: string;
+  arguments: Record<string, CalculatedFieldArgument>;
+  output: CalculatedFieldOutput;
+}
+
+export interface CalculatedFieldGeofencingConfiguration {
+  type: CalculatedFieldType.GEOFENCING;
+  zoneGroups: Record<string, CalculatedFieldGeofencing>;
+  scheduledUpdateEnabled: boolean;
   scheduledUpdateInterval?: number;
   output: CalculatedFieldOutput;
 }
 
+interface BasePropagationConfiguration {
+  type: CalculatedFieldType.PROPAGATION;
+  direction: EntitySearchDirection;
+  relationType: string;
+  arguments: Record<string, CalculatedFieldArgument>;
+  output: CalculatedFieldOutput;
+}
+
+export interface PropagationWithNoExpression extends BasePropagationConfiguration {
+  applyExpressionToResolvedArguments: false;
+}
+
+export interface PropagationWithExpression extends BasePropagationConfiguration {
+  applyExpressionToResolvedArguments: true;
+  expression: string;
+}
+
+export type CalculatedFieldPropagationConfiguration =
+  | PropagationWithNoExpression
+  | PropagationWithExpression;
+
 export interface CalculatedFieldOutput {
   type: OutputType;
-  name: string;
   scope?: AttributeScope;
+}
+
+export interface CalculatedFieldSimpleOutput extends CalculatedFieldOutput {
+  name: string;
   decimalsByDefault?: number;
 }
 
@@ -112,6 +181,13 @@ export const GeofencingDirectionLevelTranslations = new Map<EntitySearchDirectio
   [
     [EntitySearchDirection.FROM, 'calculated-fields.direction-down'],
     [EntitySearchDirection.TO, 'calculated-fields.direction-up'],
+  ]
+)
+
+export const PropagationDirectionTranslations = new Map<EntitySearchDirection, string>(
+  [
+    [EntitySearchDirection.FROM, 'calculated-fields.direction-down-child'],
+    [EntitySearchDirection.TO, 'calculated-fields.direction-up-parent'],
   ]
 )
 

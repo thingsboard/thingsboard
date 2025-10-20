@@ -62,7 +62,7 @@
   }
 
   .arguments-table {
-    .mat-mdc-header-row.mat-row-select .mat-mdc-header-cell.entity-type-header {
+    .mat-mdc-header-row.mat-row-select .mat-mdc-header-cell:nth-child(2) {
       padding: 0 28px 0 0;
     }
   }
