@@ -15,6 +15,10 @@
  */
 package org.thingsboard.server.service.housekeeper;
 
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
@@ -36,9 +40,11 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.housekeeper.processor.HousekeeperTaskProcessor;
 import org.thingsboard.server.service.housekeeper.stats.HousekeeperStatsService;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,6 +68,7 @@ public class HousekeeperService {
 
     private final ExecutorService consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-consumer"));
     private final ExecutorService taskExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("housekeeper-task-processor"));
+    private final ExecutorService parallelTaskExecutor = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors(), ThingsBoardThreadFactory.forName("housekeeper-parallel-task-processor"));
 
     public HousekeeperService(HousekeeperConfig config,
                               HousekeeperReprocessingService reprocessingService,
@@ -90,18 +97,84 @@ public class HousekeeperService {
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> consumer) {
+        List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> sequentialMsgs = new ArrayList<>();
+        List<TbProtoQueueMsg<ToHousekeeperServiceMsg>> parallelMsgs = new ArrayList<>();
         for (TbProtoQueueMsg<ToHousekeeperServiceMsg> msg : msgs) {
-            log.trace("Processing task: {}", msg);
+            HousekeeperTask task = JacksonUtil.fromString(msg.getValue().getTask().getValue(), HousekeeperTask.class);
+            HousekeeperTaskType taskType = task.getTaskType();
+            if (HousekeeperTaskType.DELETE_LATEST_TS == taskType || HousekeeperTaskType.DELETE_TS_HISTORY == taskType) {
+                parallelMsgs.add(msg);
+            } else {
+                sequentialMsgs.add(msg);
+            }
+        }
+
+        CountDownLatch latch = new CountDownLatch(parallelMsgs.size());
+        if (!parallelMsgs.isEmpty()) {
+            for (TbProtoQueueMsg<ToHousekeeperServiceMsg> parallelMsg : parallelMsgs) {
+                parallelTaskExecutor.submit(() -> {
+                    try {
+                        log.trace("Processing parallel task: {}", parallelMsg);
+                        long startTs = System.currentTimeMillis();
+                        ListenableFuture<Void> future = processTaskAsync(parallelMsg.getValue());
+                        Futures.addCallback(future, new FutureCallback<>() {
+                            @Override
+                            public void onSuccess(Void msg) {
+                                latch.countDown();
+                                if (log.isDebugEnabled()) {
+                                    HousekeeperTask task = JacksonUtil.fromString(parallelMsg.getValue().getTask().getValue(), HousekeeperTask.class);
+                                    long timing = System.currentTimeMillis() - startTs;
+                                    log.debug("[{}] Processed {} in {} ms (attempt {})", task.getTenantId(), task.getDescription(), timing, parallelMsg.getValue().getTask().getAttempt());
+                                }
+                            }
+
+                            @Override
+                            public void onFailure(Throwable t) {
+                                log.error("Parallel task processing failed for msg: {}", parallelMsg, t);
+                                reprocessingService.submitForReprocessing(parallelMsg.getValue(), t);
+                            }
+                        }, MoreExecutors.directExecutor());
+                    } catch (Throwable e) {
+                        log.error("Error during parallel task processing [{}]", parallelMsg, e);
+                        reprocessingService.submitForReprocessing(parallelMsg.getValue(), e);
+                    }
+                });
+            }
+        }
+
+        for (TbProtoQueueMsg<ToHousekeeperServiceMsg> seqMsg : sequentialMsgs) {
+            log.trace("Processing task: {}", seqMsg);
             try {
-                processTask(msg.getValue());
+                processTask(seqMsg.getValue());
             } catch (InterruptedException e) {
                 return;
             } catch (Throwable e) {
-                log.error("Unexpected error during message processing [{}]", msg, e);
-                reprocessingService.submitForReprocessing(msg.getValue(), e);
+                log.error("Unexpected error during message processing [{}]", seqMsg, e);
+                reprocessingService.submitForReprocessing(seqMsg.getValue(), e);
             }
         }
+
+        if (!parallelMsgs.isEmpty()) {
+            try {
+                boolean completed = latch.await(config.getTaskProcessingTimeout(), TimeUnit.MILLISECONDS);
+                if (!completed) {
+                    log.warn("Timeout waiting for parallel tasks to complete");
+                    return;
+                }
+            } catch (InterruptedException e) {
+                log.warn("Interrupted while waiting for parallel tasks to complete");
+                return;
+            }
+        }
+
         consumer.commit();
+    }
+
+    protected <T extends HousekeeperTask> ListenableFuture<Void> processTaskAsync(ToHousekeeperServiceMsg msg) {
+        HousekeeperTask task = JacksonUtil.fromString(msg.getTask().getValue(), HousekeeperTask.class);
+        HousekeeperTaskType taskType = task.getTaskType();
+        HousekeeperTaskProcessor<T> taskProcessor = (HousekeeperTaskProcessor<T>) taskProcessors.get(taskType);
+        return taskProcessor.processAsync((T) task);
     }
 
     @SuppressWarnings("unchecked")
@@ -166,6 +239,7 @@ public class HousekeeperService {
         consumer.stop();
         consumerExecutor.shutdownNow();
         taskExecutor.shutdownNow();
+        parallelTaskExecutor.shutdownNow();
         log.info("Stopped Housekeeper service");
     }
 

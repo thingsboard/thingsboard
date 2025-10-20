@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.housekeeper.processor;
 
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
@@ -30,6 +32,10 @@ public abstract class HousekeeperTaskProcessor<T extends HousekeeperTask> {
     public abstract void process(T task) throws Exception;
 
     public abstract HousekeeperTaskType getTaskType();
+
+    public ListenableFuture<Void> processAsync(T task) {
+        return Futures.immediateFuture(null);
+    }
 
     public <V> V wait(Future<V> future) throws Exception {
         try {
