@@ -79,11 +79,15 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
     private AssetProfile assetProfile;
     private Asset asset;
 
-    private long deduplicationInterval = 10000;
+    private long deduplicationInterval = 10;
 
     @Before
     public void beforeTest() throws Exception {
         loginSysAdmin();
+
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setMinAllowedDeduplicationIntervalInSecForCF(1);
+        });
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
@@ -131,7 +135,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         createOccupancyCF(assetProfile.getId());
 
-        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -149,7 +153,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device3.getId(), "{\"occupied\":true}");
 
-        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -171,7 +175,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         Asset asset2 = createAsset("Asset 2", assetProfile.getId());
 
-        await().alias("add entity to profile with no related entities and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("add entity to profile with no related entities and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode occupancy = getLatestTelemetry(asset2.getId(), "freeSpaces", "occupiedSpaces", "totalSpaces");
@@ -184,7 +188,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         createEntityRelation(asset2.getId(), device3.getId(), "Contains");
         createEntityRelation(asset2.getId(), device4.getId(), "Contains");
 
-        await().alias("create relations and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create relations and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -196,7 +200,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device3.getId(), "{\"occupied\":false}");
 
-        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval * 2, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -218,7 +222,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         createOccupancyCF(assetProfile.getId());
 
-        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -240,7 +244,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device3.getId(), "{\"occupied\":true}");
 
-        await().alias("change profile and no aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("change profile and no aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -262,7 +266,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         createOccupancyCF(asset2.getId());
 
-        await().alias("create CF and perform aggregation with default values").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform aggregation with default values").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -280,7 +284,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device1.getId(), "{\"occupied\":false}");
 
-        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -301,7 +305,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device1.getId(), "{\"occupied\":false}");
 
-        await().alias("delete cf and update telemetry and no aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("delete cf and update telemetry and no aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -319,13 +323,13 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device1.getId(), "{\"occupied\":false}");
 
-        await().alias("update telemetry -> no changes").atMost(deduplicationInterval / 2, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry -> no changes").atMost(deduplicationInterval / 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(this::checkInitialCalculationValues);
 
         postTelemetry(device2.getId(), "{\"occupied\":false}");
 
-        await().alias("create CF and perform initial calculation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform initial calculation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -355,7 +359,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         createOccupancyCF(asset2.getId());
 
-        await().alias("create CF and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -368,7 +372,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         doDelete("/api/plugins/telemetry/DEVICE/" + device3.getId() + "/timeseries/delete?keys=occupied&deleteAllDataForKeys=false&rewriteLatestIfDeleted=true&deleteLatest=true&startTs=" + thirdTs + "&endTs=" + thirdTs + 1, String.class);
         doDelete("/api/plugins/telemetry/DEVICE/" + device4.getId() + "/timeseries/delete?keys=occupied&deleteAllDataForKeys=false&rewriteLatestIfDeleted=true&deleteLatest=true&startTs=" + secondTs + "&endTs=" + secondTs + 1, String.class);
 
-        await().alias("delete latest telemetry and perform aggregation with previous or default values").atMost(deduplicationInterval * 2, TimeUnit.MILLISECONDS)
+        await().alias("delete latest telemetry and perform aggregation with previous or default values").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset2.getId(), Map.of(
@@ -390,7 +394,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         createEntityRelation(asset.getId(), device3.getId(), "Contains");
 
-        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -408,7 +412,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         deleteEntityRelation(new EntityRelation(asset.getId(), device1.getId(), "Contains", RelationTypeGroup.COMMON));
 
-        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -432,7 +436,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         configuration.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, "Has"));
         saveCalculatedField(cf);
 
-        await().alias("update relation path and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update relation path and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -458,7 +462,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         configuration.setArguments(Map.of("oc", argument));
         saveCalculatedField(cf);
 
-        await().alias("update arguments and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update arguments and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
@@ -475,7 +479,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         postTelemetry(device2.getId(), "{\"temperature\":19.6}");
         CalculatedField cf = createAvgTemperatureCF(asset.getId());
 
-        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
@@ -489,7 +493,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         configuration.setMetrics(Map.of("maxTemperature", aggMetric));
         saveCalculatedField(cf);
 
-        await().alias("update metrics and perform aggregation").atMost(deduplicationInterval / 2, TimeUnit.MILLISECONDS)
+        await().alias("update metrics and perform aggregation").atMost(deduplicationInterval / 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("maxTemperature", "24"));
@@ -498,7 +502,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         postTelemetry(device1.getId(), "{\"temperature\":101.3}");
         postTelemetry(device2.getId(), "{\"temperature\":25.8}");
 
-        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("maxTemperature", "26"));
@@ -511,7 +515,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         postTelemetry(device2.getId(), "{\"temperature\":19.6}");
         CalculatedField cf = createAvgTemperatureCF(asset.getId());
 
-        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
@@ -524,7 +528,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         configuration.setOutput(output);
         saveCalculatedField(cf);
 
-        await().alias("update output and perform aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update output and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode avgTemperature = getServerAttributes(asset.getId(), "avgTemperature");
@@ -540,17 +544,17 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         postTelemetry(device2.getId(), "{\"temperature\":19.6}");
         CalculatedField cf = createAvgTemperatureCF(asset.getId());
 
-        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
                 });
 
         var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
-        configuration.setDeduplicationIntervalMillis(2 * deduplicationInterval);
+        configuration.setDeduplicationIntervalInSec(2 * deduplicationInterval);
         saveCalculatedField(cf);
 
-        await().alias("update deduplication interval and perform aggregation").atMost(deduplicationInterval / 2, TimeUnit.MILLISECONDS)
+        await().alias("update deduplication interval and perform aggregation").atMost(deduplicationInterval / 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
@@ -558,7 +562,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
 
         postTelemetry(device2.getId(), "{\"temperature\":32.1}");
 
-        await().alias("update telemetry and perform aggregation").atMost(2 * deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("update telemetry and perform aggregation").atMost(2 * deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "28"));
@@ -566,7 +570,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
     }
 
     private void checkInitialCalculation() {
-        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.MILLISECONDS)
+        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(this::checkInitialCalculationValues);
     }
@@ -656,7 +660,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         LatestValuesAggregationCalculatedFieldConfiguration configuration = new LatestValuesAggregationCalculatedFieldConfiguration();
         configuration.setRelation(relation);
         configuration.setArguments(inputs);
-        configuration.setDeduplicationIntervalMillis(deduplicationInterval);
+        configuration.setDeduplicationIntervalInSec(deduplicationInterval);
         configuration.setMetrics(metrics);
         configuration.setOutput(output);
 

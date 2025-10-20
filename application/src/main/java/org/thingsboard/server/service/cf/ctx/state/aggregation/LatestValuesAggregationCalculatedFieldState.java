@@ -66,7 +66,7 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
         super.setCtx(ctx, actorCtx);
         var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         metrics = configuration.getMetrics();
-        deduplicationInterval = configuration.getDeduplicationIntervalMillis();
+        deduplicationInterval = configuration.getDeduplicationIntervalInSec();
     }
 
     @Override

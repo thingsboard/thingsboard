@@ -29,7 +29,7 @@ public class LatestValuesAggregationCalculatedFieldConfiguration implements Argu
 
     private RelationPathLevel relation;
     private Map<String, Argument> arguments;
-    private long deduplicationIntervalMillis;
+    private long deduplicationIntervalInSec;
     private Map<String, AggMetric> metrics;
     private Output output;
     private boolean useLatestTs;

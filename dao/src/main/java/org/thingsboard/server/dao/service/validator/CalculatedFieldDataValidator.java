@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
@@ -46,6 +47,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         validateCalculatedFieldConfiguration(calculatedField);
         validateSchedulingConfiguration(tenantId, calculatedField);
         validateRelationQuerySourceArguments(tenantId, calculatedField);
+        validateAggregationConfiguration(tenantId, calculatedField);
     }
 
     @Override
@@ -87,7 +89,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
 
     private void validateSchedulingConfiguration(TenantId tenantId, CalculatedField calculatedField) {
         if (!(calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledUpdateCfg)
-            || !scheduledUpdateCfg.isScheduledUpdateEnabled()) {
+                || !scheduledUpdateCfg.isScheduledUpdateEnabled()) {
             return;
         }
         long minAllowedScheduledUpdateInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedScheduledUpdateIntervalInSecForCF);
@@ -108,6 +110,17 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         int maxRelationLevel = (int) apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelationLevelPerCfArgument);
         relationQueryBasedArguments.forEach((argumentName, relationQueryDynamicSourceConfiguration) ->
                 wrapAsDataValidation(() -> relationQueryDynamicSourceConfiguration.validateMaxRelationLevel(argumentName, maxRelationLevel)));
+    }
+
+    private void validateAggregationConfiguration(TenantId tenantId, CalculatedField calculatedField) {
+        if (!(calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfiguration)) {
+            return;
+        }
+        long minAllowedDeduplicationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedDeduplicationIntervalInSecForCF);
+        if (aggConfiguration.getDeduplicationIntervalInSec() < minAllowedDeduplicationInterval) {
+            throw new IllegalArgumentException("Deduplication interval is less than configured " +
+                    "minimum allowed interval in tenant profile: " + minAllowedDeduplicationInterval);
+        }
     }
 
     private static void wrapAsDataValidation(Runnable validation) {

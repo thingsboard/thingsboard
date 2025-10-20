@@ -184,6 +184,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxStateSizeInKBytes = 32;
     @Schema(example = "2")
     private long maxSingleValueArgumentSizeInKBytes = 2;
+    @Schema(example = "3600")
+    private long minAllowedDeduplicationIntervalInSecForCF = 3600;
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {

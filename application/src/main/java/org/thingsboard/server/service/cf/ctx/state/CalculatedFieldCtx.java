@@ -581,7 +581,7 @@ public class CalculatedFieldCtx {
         }
         if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
                 && other.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig
-                && (thisConfig.getDeduplicationIntervalMillis() != otherConfig.getDeduplicationIntervalMillis() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
+                && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
             return true;
         }
         return false;
