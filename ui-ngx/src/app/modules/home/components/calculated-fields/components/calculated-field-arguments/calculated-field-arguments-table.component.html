@@ -21,7 +21,7 @@
            [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
       <ng-container [matColumnDef]="'name'">
         <mat-header-cell mat-sort-header *matHeaderCellDef class="!w-1/3 xs:!w-1/2">
-          <div tbTruncateWithTooltip>{{ 'common.name' | translate }}</div>
+          <div tbTruncateWithTooltip>{{ argumentNameColumn | translate }}</div>
         </mat-header-cell>
         <mat-cell *matCellDef="let argument" class="argument-name-cell w-1/3 xs:w-1/2">
           <div class="flex items-center">
@@ -29,7 +29,7 @@
             <tb-copy-button
               class="copy-argument-name"
               [copyText]="argument.argumentName"
-              tooltipText="{{ 'calculated-fields.copy-argument-name' | translate }}"
+              tooltipText="{{ argumentNameColumnCopy | translate }}"
               tooltipPosition="above"
               icon="content_copy"
             />
@@ -37,7 +37,7 @@
         </mat-cell>
       </ng-container>
       <ng-container [matColumnDef]="'entityType'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="entity-type-header w-1/5 xs:hidden">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 xs:hidden">
           {{ 'entity.entity-type' | translate }}
         </mat-header-cell>
         <mat-cell *matCellDef="let argument" class="w-1/5 xs:hidden">
@@ -96,8 +96,7 @@
                     [matTooltip]="'action.edit' | translate"
                     matTooltipPosition="above">
               <mat-icon
-                [matBadgeHidden]="!(argument.refEntityKey.type === ArgumentType.Rolling
-                          && calculatedFieldType === CalculatedFieldType.SIMPLE) && argument.refEntityId?.id !== NULL_UUID"
+                [matBadgeHidden]="isEditButtonShowBadge(argument)"
                 matBadgeColor="warn"
                 matBadgeSize="small"
                 matBadge="*"
@@ -115,10 +114,8 @@
           </div>
         </mat-cell>
       </ng-container>
-      <mat-header-row class="mat-row-select"
-                      *matHeaderRowDef="['name', 'entityType', 'target', 'type', 'key', 'actions']"></mat-header-row>
-      <mat-row
-        *matRowDef="let argument; columns: ['name', 'entityType', 'target', 'type', 'key', 'actions']"></mat-row>
+      <mat-header-row class="mat-row-select" *matHeaderRowDef="displayColumns"></mat-header-row>
+      <mat-row *matRowDef="let argument; columns: displayColumns"></mat-row>
     </table>
     <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
          class="tb-prompt flex flex-1 items-end justify-center">

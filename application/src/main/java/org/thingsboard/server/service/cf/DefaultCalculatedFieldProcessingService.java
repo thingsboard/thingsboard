@@ -23,7 +23,6 @@ import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -50,11 +49,13 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
@@ -89,11 +90,11 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
 
     @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        // only scheduledSupported CF instances supports dynamic arguments scheduled updates
-        if (!ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
-            return Map.of();
-        }
-        return resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
+        return switch (ctx.getCfType()) {
+            case GEOFENCING -> resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
+            case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
+            default -> Collections.emptyMap();
+        };
     }
 
     @Override
@@ -112,13 +113,35 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
 
     @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
-        try {
+        if (!(result instanceof PropagationCalculatedFieldResult propagationCalculatedFieldResult)) {
             TbMsg msg = result.toTbMsg(entityId, cfIds);
+            sendMsgToRuleEngine(tenantId, entityId, callback, msg);
+            return;
+        }
+        List<EntityId> propagationEntityIds = propagationCalculatedFieldResult.getPropagationEntityIds();
+        if (propagationEntityIds.isEmpty()) {
+            callback.onSuccess();
+        }
+        if (propagationEntityIds.size() == 1) {
+            EntityId propagationEntityId = propagationEntityIds.get(0);
+            TbMsg msg = result.toTbMsg(propagationEntityId, cfIds);
+            sendMsgToRuleEngine(tenantId, propagationEntityId, callback, msg);
+            return;
+        }
+        MultipleTbCallback multipleTbCallback = new MultipleTbCallback(propagationEntityIds.size(), callback);
+        for (var propagationEntityId : propagationEntityIds) {
+            TbMsg msg = result.toTbMsg(propagationEntityId, cfIds);
+            sendMsgToRuleEngine(tenantId, propagationEntityId, multipleTbCallback, msg);
+        }
+    }
+
+    private void sendMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbCallback callback, TbMsg msg) {
+        try {
             clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    callback.onSuccess();
                     log.trace("[{}][{}] Pushed message to rule engine: {} ", tenantId, entityId, msg);
+                    callback.onSuccess();
                 }
 
                 @Override
@@ -127,7 +150,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                 }
             });
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, result, e);
+            log.warn("[{}][{}] Failed to push message to rule engine: {}", tenantId, entityId, msg, e);
             callback.onFailure(e);
         }
     }

@@ -29,6 +29,7 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.io.Closeable;
 import java.util.Map;
@@ -40,7 +41,8 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArg
         @Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
         @Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
         @Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
-        @Type(value = AlarmCalculatedFieldState.class, name = "ALARM")
+        @Type(value = AlarmCalculatedFieldState.class, name = "ALARM"),
+        @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION")
 })
 public interface CalculatedFieldState extends Closeable {
 
