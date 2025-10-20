@@ -19,7 +19,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.dao.model.sql.CalculatedFieldEntity;
 
@@ -30,7 +29,7 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
-    CalculatedFieldEntity findByEntityIdAndTypeAndName(UUID entityId, CalculatedFieldType type, String name);
+    CalculatedFieldEntity findByEntityIdAndTypeAndName(UUID entityId, String type, String name);
 
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
