@@ -18,13 +18,12 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
-import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
@@ -76,7 +75,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             ArgumentEntry existingEntry = arguments.get(key);
             boolean entryUpdated;
 
-            if (existingEntry == null || !(newEntry instanceof AggSingleEntityArgumentEntry) && newEntry.isForceResetPrevious()) {
+            if (existingEntry == null || !ctx.getCfType().equals(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) && newEntry.isForceResetPrevious()) {
                 validateNewEntry(key, newEntry);
                 arguments.put(key, newEntry);
                 entryUpdated = true;
@@ -150,16 +149,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
-    }
-
-    protected Object formatResult(double result, Integer decimals) {
-        if (decimals == null) {
-            return result;
-        }
-        if (decimals.equals(0)) {
-            return TbUtils.toInt(result);
-        }
-        return TbUtils.toFixed(result, decimals);
     }
 
 }

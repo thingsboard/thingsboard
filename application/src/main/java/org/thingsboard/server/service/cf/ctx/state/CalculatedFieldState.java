@@ -33,7 +33,6 @@ import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalcul
 
 import java.io.Closeable;
 import java.util.Map;
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 

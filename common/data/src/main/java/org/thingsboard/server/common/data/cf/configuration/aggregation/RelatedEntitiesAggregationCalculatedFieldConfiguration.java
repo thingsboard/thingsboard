@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -27,9 +30,12 @@ import java.util.Map;
 @Data
 public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
+    @NotNull
     private RelationPathLevel relation;
     private Map<String, Argument> arguments;
     private long deduplicationIntervalInSec;
+    @Valid
+    @NotEmpty
     private Map<String, AggMetric> metrics;
     private Output output;
     private boolean useLatestTs;
@@ -41,18 +47,12 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
 
     @Override
     public void validate() {
-        if (relation == null) {
-            throw new IllegalArgumentException("Relation must be specified!");
-        }
         relation.validate();
         if (arguments.containsKey("ctx")) {
             throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
         }
         if (arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
             throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
-        }
-        if (metrics.isEmpty()) {
-            throw new IllegalArgumentException("Latest value aggregation calculated field must have at least one metric.");
         }
     }
 

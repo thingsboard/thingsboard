@@ -634,7 +634,7 @@ public class CalculatedFieldCtx {
     private boolean hasRelatedEntitiesAggregationConfigurationChanges(CalculatedFieldCtx other) {
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
                 && other.calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig) {
-            return !thisConfig.getArguments().equals(otherConfig.getArguments()) || !thisConfig.getRelation().equals(otherConfig.getRelation());
+            return !thisConfig.getRelation().equals(otherConfig.getRelation());
         }
         return false;
     }

@@ -888,6 +888,7 @@ message SingleValueArgumentProto {
   string argName = 1;
   TsValueProto value = 2;
   int64 version = 3;
+  EntityIdProto entityId = 4;
 }
 
 message TsDoubleValProto {
@@ -915,14 +916,9 @@ message GeofencingArgumentProto {
   repeated GeofencingZoneProto zones = 2;
 }
 
-message AggSingleArgumentEntryProto {
-  EntityIdProto entityId = 1;
-  SingleValueArgumentProto value = 2;
-}
-
-message LatestValuesAggregationStateProto {
+message RelatedEntitiesAggregationStateProto {
   int64 lastArgsUpdateTs = 1;
-  repeated AggSingleArgumentEntryProto aggArguments = 2;
+  repeated SingleValueArgumentProto aggArguments = 2;
 }
 
 message CalculatedFieldStateProto {
@@ -932,7 +928,7 @@ message CalculatedFieldStateProto {
   repeated TsRollingArgumentProto rollingValueArguments = 4;
   repeated GeofencingArgumentProto geofencingArguments = 5;
   AlarmStateProto alarmState = 6;
-  LatestValuesAggregationStateProto latestValuesAggregationState = 7;
+  RelatedEntitiesAggregationStateProto relatedEntitiesAggregationState = 7;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1303,7 +1299,7 @@ message ComponentLifecycleMsgProto {
   int64 profileIdLSB = 12;
   optional string info = 13;
   bool ownerChanged = 100;
-  bool relationChanged = 15;
+  bool relationChanged = 14;
 }
 
 message EdgeEventMsgProto {

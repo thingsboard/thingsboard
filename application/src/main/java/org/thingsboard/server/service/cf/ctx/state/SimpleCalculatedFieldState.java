@@ -52,7 +52,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         double expressionResult = ctx.evaluateSimpleExpression(expression.get(), this);
 
         Output output = ctx.getOutput();
-        Object result = formatResult(expressionResult, output.getDecimalsByDefault());
+        Object result = TbUtils.roundResult(expressionResult, output.getDecimalsByDefault());
         JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
 
         return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()

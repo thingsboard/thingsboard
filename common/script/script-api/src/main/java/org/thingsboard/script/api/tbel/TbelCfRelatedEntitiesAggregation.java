@@ -20,12 +20,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
-public class TbelCfLatestValuesAggregation implements TbelCfArg {
+public class TbelCfRelatedEntitiesAggregation implements TbelCfArg {
 
     private final Object value;
 
     @JsonCreator
-    public TbelCfLatestValuesAggregation(
+    public TbelCfRelatedEntitiesAggregation(
             @JsonProperty("value") Object value
     ) {
         this.value = value;

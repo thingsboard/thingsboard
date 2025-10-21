@@ -18,10 +18,11 @@ package org.thingsboard.server.service.cf.ctx.state.aggregation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfLatestValuesAggregation;
+import org.thingsboard.script.api.tbel.TbelCfRelatedEntitiesAggregation;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.Map;
 
@@ -48,12 +49,12 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
         if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
             aggInputs.putAll(relatedEntitiesArgumentEntry.aggInputs);
             return true;
-        } else if (entry instanceof AggSingleEntityArgumentEntry aggSingleEntityArgumentEntry) {
-            ArgumentEntry argumentEntry = aggInputs.get(aggSingleEntityArgumentEntry.getEntityId());
+        } else if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            ArgumentEntry argumentEntry = aggInputs.get(singleValueArgumentEntry.getEntityId());
             if (argumentEntry != null) {
-                argumentEntry.updateEntry(aggSingleEntityArgumentEntry);
+                argumentEntry.updateEntry(singleValueArgumentEntry);
             } else {
-                aggInputs.put(aggSingleEntityArgumentEntry.getEntityId(), aggSingleEntityArgumentEntry);
+                aggInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
             }
             return true;
         } else {
@@ -68,7 +69,7 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfLatestValuesAggregation(aggInputs.values());
+        return new TbelCfRelatedEntitiesAggregation(aggInputs.values());
     }
 
 }

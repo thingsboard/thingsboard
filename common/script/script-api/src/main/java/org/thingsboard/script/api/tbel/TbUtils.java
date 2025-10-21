@@ -1186,6 +1186,17 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
+    // todo: register method
+    public static Object roundResult(double value, Integer precision) {
+        if (precision == null) {
+            return value;
+        }
+        if (precision.equals(0)) {
+            return toInt(value);
+        }
+        return toFixed(value, precision);
+    }
+
     public static boolean isNaN(double value) {
         return Double.isNaN(value);
     }

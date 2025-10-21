@@ -22,7 +22,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -43,8 +42,8 @@ public class RelatedEntitiesArgumentEntryTest {
     @BeforeEach
     void setUp() {
         Map<EntityId, ArgumentEntry> aggInputs = new HashMap<>();
-        aggInputs.put(device1, new AggSingleEntityArgumentEntry(device1, new BasicTsKvEntry(ts - 100, new LongDataEntry("key", 12L), 1L)));
-        aggInputs.put(device2, new AggSingleEntityArgumentEntry(device2, new BasicTsKvEntry(ts - 150, new LongDataEntry("key", 16L), 6L)));
+        aggInputs.put(device1, new SingleValueArgumentEntry(device1, new BasicTsKvEntry(ts - 100, new LongDataEntry("key", 12L), 1L)));
+        aggInputs.put(device2, new SingleValueArgumentEntry(device2, new BasicTsKvEntry(ts - 150, new LongDataEntry("key", 16L), 6L)));
 
         entry = new RelatedEntitiesArgumentEntry(aggInputs, false);
     }
@@ -62,8 +61,8 @@ public class RelatedEntitiesArgumentEntryTest {
         DeviceId device4 = new DeviceId(UUID.randomUUID());
 
         RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = new RelatedEntitiesArgumentEntry(Map.of(
-                device3, new AggSingleEntityArgumentEntry(device3, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 16L), 13L)),
-                device4, new AggSingleEntityArgumentEntry(device4, new BasicTsKvEntry(ts - 60, new LongDataEntry("key", 23L), 7L))
+                device3, new SingleValueArgumentEntry(device3, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 16L), 13L)),
+                device4, new SingleValueArgumentEntry(device4, new BasicTsKvEntry(ts - 60, new LongDataEntry("key", 23L), 7L))
         ), false);
 
         assertThat(entry.updateEntry(relatedEntitiesArgumentEntry)).isTrue();
@@ -75,10 +74,10 @@ public class RelatedEntitiesArgumentEntryTest {
     }
 
     @Test
-    void testUpdateEntryWhenAggSingleEntityArgumentEntryPassedAndNoEntriesById() {
+    void testUpdateEntryWhenSingleValueArgumentEntryPassedAndNoEntriesById() {
         DeviceId device3 = new DeviceId(UUID.randomUUID());
 
-        AggSingleEntityArgumentEntry singleEntityArgumentEntry = new AggSingleEntityArgumentEntry(device3, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 18L), 10L));
+        SingleValueArgumentEntry singleEntityArgumentEntry = new SingleValueArgumentEntry(device3, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 18L), 10L));
 
         assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
 
@@ -88,8 +87,8 @@ public class RelatedEntitiesArgumentEntryTest {
     }
 
     @Test
-    void testUpdateEntryWhenAggSingleEntityArgumentEntryPassedAndEntryByIdExist() {
-        AggSingleEntityArgumentEntry singleEntityArgumentEntry = new AggSingleEntityArgumentEntry(device2, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 18L), 10L));
+    void testUpdateEntryWhenSingleValueArgumentEntryPassedAndEntryByIdExist() {
+        SingleValueArgumentEntry singleEntityArgumentEntry = new SingleValueArgumentEntry(device2, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 18L), 10L));
 
         assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
 

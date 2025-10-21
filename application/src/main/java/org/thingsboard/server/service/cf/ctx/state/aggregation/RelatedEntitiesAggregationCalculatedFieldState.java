@@ -37,7 +37,6 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.function.AggEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.function.AggFunctionFactory;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -150,10 +149,10 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
             String metricKey = entry.getKey();
             AggMetric metric = entry.getValue();
 
-            AggEntry aggMetricEntry = AggFunctionFactory.createAggFunction(metric.getFunction());
+            AggEntry aggMetricEntry = AggEntry.createAggFunction(metric.getFunction());
             aggregateMetric(metric, aggMetricEntry, inputs);
-            aggMetricEntry.result().ifPresent(result -> {
-                aggResult.set(metricKey, JacksonUtil.valueToTree(formatResult(result, output.getDecimalsByDefault())));
+            aggMetricEntry.result(output.getDecimalsByDefault()).ifPresent(result -> {
+                aggResult.set(metricKey, JacksonUtil.valueToTree(result));
             });
         }
         return aggResult;
@@ -185,15 +184,6 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         } else {
             String inputKey = ((AggKeyInput) aggInput).getKey();
             return entityInputs.get(inputKey).getValue();
-        }
-    }
-
-    private Object formatResult(Object aggregationResult, Integer decimals) {
-        try {
-            double result = Double.parseDouble(aggregationResult.toString());
-            return formatResult(result, decimals);
-        } catch (Exception e) {
-            throw new IllegalArgumentException("Aggregation result cannot be parsed: " + aggregationResult, e);
         }
     }
 

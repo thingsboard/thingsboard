@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
-import org.thingsboard.server.gen.transport.TransportProtos.AggSingleArgumentEntryProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AlarmRuleStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AlarmStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
@@ -35,7 +34,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdPro
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
-import org.thingsboard.server.gen.transport.TransportProtos.LatestValuesAggregationStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.RelatedEntitiesAggregationStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentProto;
@@ -47,9 +46,8 @@ import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
@@ -98,7 +96,7 @@ public class CalculatedFieldUtils {
                 .setId(toProto(stateId))
                 .setType(state.getType().name());
 
-        LatestValuesAggregationStateProto.Builder aggBuilder = LatestValuesAggregationStateProto.newBuilder();
+        RelatedEntitiesAggregationStateProto.Builder aggBuilder = RelatedEntitiesAggregationStateProto.newBuilder();
         state.getArguments().forEach((argName, argEntry) -> {
             switch (argEntry.getType()) {
                 case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
@@ -107,7 +105,7 @@ public class CalculatedFieldUtils {
                 case RELATED_ENTITIES -> {
                     RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
                     relatedEntitiesArgumentEntry.getAggInputs()
-                            .forEach((entityId, entry) -> aggBuilder.addAggArguments(toAggSingleArgumentProto(argName, entityId, entry)));
+                            .forEach((entityId, entry) -> aggBuilder.addAggArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
                 }
             }
         });
@@ -122,7 +120,7 @@ public class CalculatedFieldUtils {
         }
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
             aggBuilder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
-            builder.setLatestValuesAggregationState(aggBuilder.build());
+            builder.setRelatedEntitiesAggregationState(aggBuilder.build());
         }
         return builder.build();
     }
@@ -145,17 +143,6 @@ public class CalculatedFieldUtils {
         return ruleState;
     }
 
-    public static AggSingleArgumentEntryProto toAggSingleArgumentProto(String argName, EntityId entityId, ArgumentEntry argumentEntry) {
-        AggSingleArgumentEntryProto.Builder builder = AggSingleArgumentEntryProto.newBuilder()
-                .setEntityId(ProtoUtils.toProto(entityId));
-
-        if (argumentEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            builder.setValue(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
-        }
-
-        return builder.build();
-    }
-
     public static SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
         SingleValueArgumentProto.Builder builder = SingleValueArgumentProto.newBuilder()
                 .setArgName(argName);
@@ -165,6 +152,10 @@ public class CalculatedFieldUtils {
         }
 
         Optional.ofNullable(entry.getVersion()).ifPresent(builder::setVersion);
+
+        if (entry.getEntityId() != null) {
+            builder.setEntityId(ProtoUtils.toProto(entry.getEntityId()));
+        }
 
         return builder.build();
     }
@@ -242,11 +233,11 @@ public class CalculatedFieldUtils {
             }
             case RELATED_ENTITIES_AGGREGATION -> {
                 RelatedEntitiesAggregationCalculatedFieldState aggState = (RelatedEntitiesAggregationCalculatedFieldState) state;
-                LatestValuesAggregationStateProto aggregationStateProto = proto.getLatestValuesAggregationState();
+                RelatedEntitiesAggregationStateProto aggregationStateProto = proto.getRelatedEntitiesAggregationState();
                 Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
                 aggregationStateProto.getAggArgumentsList().forEach(argProto -> {
-                    AggSingleEntityArgumentEntry entry = fromAggSingleValueArgumentProto(argProto);
-                    arguments.computeIfAbsent(argProto.getValue().getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
+                    SingleValueArgumentEntry entry = fromSingleValueArgumentProto(argProto);
+                    arguments.computeIfAbsent(argProto.getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
                 });
                 arguments.forEach((argName, entityInputs) -> {
                     aggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
@@ -258,31 +249,19 @@ public class CalculatedFieldUtils {
         return state;
     }
 
-    public static AggSingleEntityArgumentEntry fromAggSingleValueArgumentProto(AggSingleArgumentEntryProto proto) {
-        if (!proto.hasValue()) {
-            return new AggSingleEntityArgumentEntry();
-        }
-        EntityId entityId = ProtoUtils.fromProto(proto.getEntityId());
-        SingleValueArgumentProto singleValueArgument = proto.getValue();
-        TsValueProto tsValueProto = singleValueArgument.getValue();
-        return new AggSingleEntityArgumentEntry(
-                entityId,
-                tsValueProto.getTs(),
-                (BasicKvEntry) KvProtoUtil.fromTsValueProto(singleValueArgument.getArgName(), tsValueProto),
-                singleValueArgument.getVersion()
-        );
-    }
-
     public static SingleValueArgumentEntry fromSingleValueArgumentProto(SingleValueArgumentProto proto) {
         if (!proto.hasValue()) {
             return new SingleValueArgumentEntry();
         }
         TsValueProto tsValueProto = proto.getValue();
-        return new SingleValueArgumentEntry(
-                tsValueProto.getTs(),
-                (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto),
-                proto.getVersion()
-        );
+        BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto);
+        long ts = tsValueProto.getTs();
+        long version = proto.getVersion();
+        if (proto.hasEntityId()) {
+            EntityId entityId = ProtoUtils.fromProto(proto.getEntityId());
+            return new SingleValueArgumentEntry(entityId, ts, kvEntry, version);
+        }
+        return new SingleValueArgumentEntry(ts, kvEntry, version);
     }
 
     public static TsRollingArgumentEntry fromRollingArgumentProto(TsRollingArgumentProto proto) {

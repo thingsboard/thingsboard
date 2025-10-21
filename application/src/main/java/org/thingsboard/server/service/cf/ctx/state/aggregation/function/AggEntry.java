@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
@@ -36,10 +37,22 @@ import java.util.Optional;
 })
 public interface AggEntry {
 
+    @JsonIgnore
     AggFunction getType();
 
     void update(Object value);
 
-    Optional<Object> result();
+    Optional<Object> result(Integer precision);
+
+    static AggEntry createAggFunction(AggFunction function) {
+        return switch (function) {
+            case MIN -> new MinAggEntry();
+            case MAX -> new MaxAggEntry();
+            case SUM -> new SumAggEntry();
+            case AVG -> new AvgAggEntry();
+            case COUNT -> new CountAggEntry();
+            case COUNT_UNIQUE -> new CountUniqueAggEntry();
+        };
+    }
 
 }

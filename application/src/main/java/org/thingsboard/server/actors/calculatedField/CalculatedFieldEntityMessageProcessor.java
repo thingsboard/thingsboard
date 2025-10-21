@@ -52,7 +52,6 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
@@ -232,7 +231,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             } else {
                 if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
                     Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, msg.getRelatedEntityId(), ctx.getArguments());
-                    updatedArgs = relatedEntitiesAggState.updateEntityData(toAggSingleEntityArguments(msg.getRelatedEntityId(), fetchedArgs));
+                    updatedArgs = relatedEntitiesAggState.updateEntityData(setEntityIdToSingleEntityArguments(msg.getRelatedEntityId(), fetchedArgs));
                 }
 
                 state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
@@ -544,7 +543,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
                 String argName = relatedEntityArgs.get(key);
                 if (argName != null) {
-                    arguments.put(argName, new AggSingleEntityArgumentEntry(originator, item));
+                    arguments.put(argName, new SingleValueArgumentEntry(originator, item));
                 }
             }
         }
@@ -597,7 +596,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
                 String argName = relatedEntityArgs.get(key);
                 if (argName != null) {
-                    arguments.put(argName, new AggSingleEntityArgumentEntry(entityId, item));
+                    arguments.put(argName, new SingleValueArgumentEntry(entityId, item));
                 }
             }
         }
@@ -636,7 +635,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                     SingleValueArgumentEntry argumentEntry = StringUtils.isNotEmpty(defaultValue)
                             ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
                             : new SingleValueArgumentEntry();
-                    arguments.put(argName, new AggSingleEntityArgumentEntry(msgEntityId, argumentEntry));
+                    arguments.put(argName, new SingleValueArgumentEntry(msgEntityId, argumentEntry));
                 }
             }
         }
@@ -668,18 +667,18 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, entityId, deletedArguments);
 
         if (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(ctx.getCfType())) {
-            fetchedArgs = toAggSingleEntityArguments(entityId, fetchedArgs);
+            fetchedArgs = setEntityIdToSingleEntityArguments(entityId, fetchedArgs);
         }
         fetchedArgs.values().forEach(arg -> arg.setForceResetPrevious(true));
 
         return fetchedArgs;
     }
 
-    private Map<String, ArgumentEntry> toAggSingleEntityArguments(EntityId relatedEntityId, Map<String, ArgumentEntry> fetchedArgs) {
+    private Map<String, ArgumentEntry> setEntityIdToSingleEntityArguments(EntityId relatedEntityId, Map<String, ArgumentEntry> fetchedArgs) {
         return fetchedArgs.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        argEntry -> new AggSingleEntityArgumentEntry(relatedEntityId, argEntry.getValue())
+                        argEntry -> new SingleValueArgumentEntry(relatedEntityId, argEntry.getValue())
                 ));
     }
 

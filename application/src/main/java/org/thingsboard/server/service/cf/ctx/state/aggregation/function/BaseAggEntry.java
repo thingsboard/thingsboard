@@ -28,10 +28,10 @@ public abstract class BaseAggEntry implements AggEntry {
     }
 
     @Override
-    public Optional<Object> result() {
+    public Optional<Object> result(Integer precision) {
         if (hasResult) {
             hasResult = false;
-            return Optional.of(prepareResult());
+            return Optional.of(prepareResult(precision));
         } else {
             return Optional.empty();
         }
@@ -39,10 +39,13 @@ public abstract class BaseAggEntry implements AggEntry {
 
     protected abstract void doUpdate(double value);
 
-    protected abstract double prepareResult();
+    protected abstract Object prepareResult(Integer precision);
 
     protected double extractDoubleValue(Object value) {
         try {
+            if (value instanceof Number) {
+                return ((Number) value).doubleValue();
+            }
             return Double.parseDouble(value.toString());
         } catch (Exception e) {
             throw new NumberFormatException("Cannot parse value " + value.toString());

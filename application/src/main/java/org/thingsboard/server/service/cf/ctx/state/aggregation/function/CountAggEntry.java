@@ -29,7 +29,7 @@ public class CountAggEntry implements AggEntry {
     }
 
     @Override
-    public Optional<Object> result() {
+    public Optional<Object> result(Integer precision) {
         return Optional.of(count);
     }
 
