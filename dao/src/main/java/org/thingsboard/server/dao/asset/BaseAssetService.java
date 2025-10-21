@@ -160,7 +160,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     private Asset saveAsset(Asset asset, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveAsset [{}]", asset);
-        Asset oldAsset = (asset.getId() != null) ? findAssetById(asset.getTenantId(), asset.getId()) : null;
+        Asset oldAsset = (asset.getId() != null) ? assetDao.findById(asset.getTenantId(), asset.getId().getId()) : null;
         if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldAsset == null || !oldAsset.getName().equals(asset.getName()))) {
             uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET, nameConflictStrategy);
         }
