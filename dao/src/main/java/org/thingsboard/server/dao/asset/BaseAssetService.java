@@ -148,6 +148,10 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     @Override
     public Asset saveAsset(Asset asset, boolean doValidate) {
+        return saveLimitedEntity(asset, () -> doSaveAsset(asset, doValidate));
+    }
+
+    private Asset doSaveAsset(Asset asset, boolean doValidate) {
         log.trace("Executing saveAsset [{}]", asset);
         Asset oldAsset = null;
         if (doValidate) {

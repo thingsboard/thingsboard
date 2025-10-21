@@ -210,6 +210,10 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     private Device saveDeviceWithoutCredentials(Device device, boolean doValidate) {
+        return saveLimitedEntity(device, () -> doSaveDeviceWithoutCredentials(device, doValidate));
+    }
+
+    private Device doSaveDeviceWithoutCredentials(Device device, boolean doValidate) {
         log.trace("Executing saveDevice [{}]", device);
         Device oldDevice = null;
         if (doValidate) {

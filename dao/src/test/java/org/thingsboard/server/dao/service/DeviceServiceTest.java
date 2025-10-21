@@ -16,6 +16,8 @@
 package org.thingsboard.server.dao.service;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.MoreExecutors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -27,6 +29,8 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
+import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -74,6 +78,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -105,10 +111,12 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
     private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
+    private ListeningExecutorService executor;
 
     @Before
     public void before() {
         anotherTenantId = createTenant().getId();
+        executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope")));
     }
 
     @After
@@ -118,6 +126,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         tenantProfileService.deleteTenantProfiles(tenantId);
         tenantProfileService.deleteTenantProfiles(anotherTenantId);
+        executor.shutdownNow();
     }
 
     @Test
@@ -134,6 +143,28 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         Device device = this.saveDevice(tenantId, "My device");
         deleteDevice(tenantId, device);
+    }
+
+    @Test
+    public void testDeviceLimitOnTenantProfileLevel() {
+        TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
+        defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
+        tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
+
+        for (int i = 0; i < 20; i++) {
+            executor.submit(() -> {
+                Device device = new Device();
+                device.setTenantId(tenantId);
+                device.setName(StringUtils.randomAlphabetic(10));
+                device.setType("default");
+                deviceService.saveDevice(device, true);
+            });
+        }
+
+        Awaitility.await().atMost(10, TimeUnit.SECONDS).until(() -> {
+            long countByTenantId = deviceService.countByTenantId(tenantId);
+            return countByTenantId == 5;
+        });
     }
 
     @Test

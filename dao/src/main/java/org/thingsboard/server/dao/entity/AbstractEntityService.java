@@ -21,13 +21,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasDebugSettings;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -44,13 +47,18 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Supplier;
 
 @Slf4j
 public abstract class AbstractEntityService {
 
     public static final String INCORRECT_EDGE_ID = "Incorrect edgeId ";
     public static final String INCORRECT_PAGE_LINK = "Incorrect page link ";
+
+    private final ConcurrentMap<TenantId, ReentrantLock> entityCreationLocks = new ConcurrentReferenceHashMap<>(16);
 
     @Autowired
     protected ApplicationEventPublisher eventPublisher;
@@ -85,6 +93,21 @@ public abstract class AbstractEntityService {
 
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
+
+    protected <E extends HasId & HasTenantId> E saveLimitedEntity(E entity, Supplier<E> saveFunction) {
+        log.debug("Creating limited entity: {}", entity);
+        if (entity.getId() == null) {
+            ReentrantLock lock = entityCreationLocks.computeIfAbsent(entity.getTenantId(), id -> new ReentrantLock());
+            lock.lock();
+            try {
+                return saveFunction.get();
+            } finally {
+                lock.unlock();
+            }
+        } else {
+            return saveFunction.get();
+        }
+    }
 
     protected void createRelation(TenantId tenantId, EntityRelation relation) {
         log.debug("Creating relation: {}", relation);
