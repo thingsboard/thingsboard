@@ -37,6 +37,9 @@ import {takeUntil} from 'rxjs/operators';
 import { isDefinedAndNotNull } from '@core/utils';
 import {DeviceId} from "@shared/models/id/device-id";
 import {DeviceService} from "@core/http/device.service";
+import {ActionNotificationShow} from "@core/notification/notification.actions";
+import {Store} from "@ngrx/store";
+import {AppState} from "@core/core.state";
 
 @Component({
   selector: 'tb-device-credentials-lwm2m',
@@ -70,7 +73,8 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   @Input()
   deviceId: DeviceId;
 
-  constructor(private fb: UntypedFormBuilder,
+  constructor(protected store: Store<AppState>,
+              private fb: UntypedFormBuilder,
               private deviceService: DeviceService) {
     this.lwm2mConfigFormGroup = this.initLwm2mConfigForm();
   }
@@ -120,7 +124,26 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
    */
 
   public rebootDevice(isBootstrapServer: boolean): void {
-    this.deviceService.rebootDevice(this.deviceId.id, isBootstrapServer);
+    this.deviceService.rebootDevice(this.deviceId.id, isBootstrapServer).subscribe(responseReboot => {
+      if (responseReboot.result === 'SUCCESS') {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: responseReboot.msg,
+            type: 'success',
+            duration: 1500,
+            verticalPosition: 'top',
+            horizontalPosition: 'left'
+          }));
+      } else {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: responseReboot.msg,
+            type: 'error',
+            verticalPosition: 'top',
+            horizontalPosition: 'left'
+          }));
+      }
+    });
   }
 
   private initClientSecurityConfig(config: Lwm2mSecurityConfigModels): void {

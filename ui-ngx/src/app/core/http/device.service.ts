@@ -35,7 +35,7 @@ import { AuthService } from '@core/auth/auth.service';
 import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 import { ResourcesService } from '@core/services/resources.service';
-import {map} from "rxjs/operators";
+import {map, switchMap} from "rxjs/operators";
 
 @Injectable({
   providedIn: 'root'
@@ -221,53 +221,51 @@ export class DeviceService {
     return this.resourcesService.downloadResource(`/api/device-connectivity/gateway-launch/${deviceId}/docker-compose/download`);
   }
 
-  public rebootDevice(deviceId: string = '', isBootstrapServer: boolean): void {
+  public rebootDevice(deviceId: string = '', isBootstrapServer: boolean): Observable<{ result: string, msg: string }> {
     const urlApi = `/api/plugins/rpc/twoway/${deviceId}`;
-    // DiscoveryAll}
-    this.http.post(urlApi, { method: "DiscoverAll" })
-      .pipe(
-        timeout(10000), // 10 sec
-        catchError(err => {
-          console.error('DiscoverAll timeout or error', err);
-          return throwError(() => err);
+    const rebootName = isBootstrapServer ? 'Bootstrap-Request Trigger' : 'Registration Update Trigger';
+    return this.http.post(urlApi, { method: 'DiscoverAll' }).pipe(
+      timeout(10000),
+      switchMap((response: any) => {
+        if (response.result && response.result.toUpperCase() === 'CONTENT') {
+          const resourceId = isBootstrapServer ? 9 : 8;
+          const resourcePath = `/1/0/${resourceId}`;
+          return this.rebootTrigger(resourcePath, urlApi).pipe(
+            map((responseReboot: any) => {
+              if (responseReboot.result === 'CHANGED') {
+                return {
+                  result: 'SUCCESS',
+                  msg: `<b>\"${rebootName}\"</b> - Started Successfully.` };
+              } else {
+                return {
+                  result: 'ERROR',
+                  msg: `<b>\"${rebootName}\"</b> failed:<pre>${JSON.stringify(responseReboot, null, 2)}</pre>`
+                }
+              }
+            }),
+            catchError(err =>
+              of({
+                result: 'ERROR',
+                msg: `<b>\"${rebootName}\"</b> failed.<br>Error: ${err.message || err}` })
+            )
+          );
+        } else {
+          return of({
+            result: 'ERROR',
+            msg: `<b>\"${rebootName}\"</b> failed.<br>Bad registration device with id = ${deviceId}.<br><b>\"DiscoverAll\"</b> - RPC result is not \"CONTENT\"`
+          });
+        }
+      }),
+      catchError(err =>
+        of({
+          result: 'ERROR',
+          msg: `<b>\"${rebootName}\"</b> failed.<br>Bad registration device with id = ${deviceId}.<br>Error: ${err.message || err}`
         })
       )
-      .subscribe({
-        next: (response: any) => {
-          console.log('success: Discovery');
-          console.log(response);
-          // result = 'CONTENT'
-          if (response.result && response.result.toUpperCase() === 'CONTENT') {
-            const resourceId = isBootstrapServer ? 9 : 8;
-            const rebutName = isBootstrapServer ? "Bootstrap-Request Trigger" :
-              "Registration Update Trigger";
-            const resourcePath = `/1/0/${resourceId}`;
-
-            // first rebootTrigger
-            this.rebootTrigger(resourcePath, urlApi).subscribe(responseReboot => {
-              if (responseReboot.result === 'CHANGED') {
-                console.info(`info: ${rebutName} success.`);
-              } else {
-                console.error(`error: ${rebutName} failed: ${responseReboot.toString()}`);
-              }
-            });
-          }
-          else {
-            console.error(`error3: Bad registration device with id = ${deviceId} ❗ RPC result is not CONTENT`);
-          }
-        },
-        error: (e) => {
-          console.error(`error4: Bad registration device with id = ${deviceId} ${e.toString()}`);
-          return throwError(() => new Error('Could not get JWT token from store.'));
-          // return throwError(() => e);
-        },
-        complete: () => {
-          console.log('Discovery stream complete'); }
-      });
+    );
   }
 
-  private rebootTrigger(resourcePath: string, urlApi: string): Observable<{ result: string;}> {
-    console.log(`Sending reboot command to ${resourcePath}`);
+  private rebootTrigger(resourcePath: string, urlApi: string): Observable<{ result: string, msg?: string }> {
     return this.http.post<any>(urlApi, {
       method: 'Execute',
       params: { id: resourcePath }
@@ -278,12 +276,14 @@ export class DeviceService {
         if (res?.result?.toUpperCase() === 'CHANGED') {
           return { result: 'CHANGED' };
         } else {
-        return {result: 'ERROR'}
+          return {
+            result:`${res?.result}`,
+            msg: `${res?.error} `
+          }
         };
       }),
       catchError(err => {
-        console.error(`Execute error5 for ${resourcePath}:`, err);
-        return of({ result: 'ERROR' });
+        return throwError(() => err);
       })
     );
   }
