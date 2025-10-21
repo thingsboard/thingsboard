@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -42,7 +43,6 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -90,10 +90,10 @@ public class CalculatedFieldCtx {
             var refId = entry.getValue().getRefEntityId();
             var refKey = entry.getValue().getRefEntityKey();
             if (refId == null || refId.equals(calculatedField.getEntityId())) {
-                mainEntityArguments.computeIfAbsent(refKey, key -> new HashSet<>()).add(entry.getKey());
+                mainEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
             } else {
                 linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>())
-                        .computeIfAbsent(refKey, key -> new HashSet<>()).add(entry.getKey());
+                        .compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
             }
         }
         this.argNames = new ArrayList<>(arguments.keySet());
