@@ -21,7 +21,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
 
 import java.util.HashMap;
@@ -31,9 +31,9 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-public class AggArgumentEntryTest {
+public class RelatedEntitiesArgumentEntryTest {
 
-    private AggArgumentEntry entry;
+    private RelatedEntitiesArgumentEntry entry;
 
     private final DeviceId device1 = new DeviceId(UUID.fromString("1984e5f4-9ff0-4187-84ae-e4438bba4c8a"));
     private final DeviceId device2 = new DeviceId(UUID.fromString("937fc062-1a9d-438f-aa22-55a93fc908b7"));
@@ -46,7 +46,7 @@ public class AggArgumentEntryTest {
         aggInputs.put(device1, new AggSingleEntityArgumentEntry(device1, new BasicTsKvEntry(ts - 100, new LongDataEntry("key", 12L), 1L)));
         aggInputs.put(device2, new AggSingleEntityArgumentEntry(device2, new BasicTsKvEntry(ts - 150, new LongDataEntry("key", 16L), 6L)));
 
-        entry = new AggArgumentEntry(aggInputs, false);
+        entry = new RelatedEntitiesArgumentEntry(aggInputs, false);
     }
 
     @Test
@@ -61,17 +61,17 @@ public class AggArgumentEntryTest {
         DeviceId device3 = new DeviceId(UUID.randomUUID());
         DeviceId device4 = new DeviceId(UUID.randomUUID());
 
-        AggArgumentEntry aggArgumentEntry = new AggArgumentEntry(Map.of(
+        RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = new RelatedEntitiesArgumentEntry(Map.of(
                 device3, new AggSingleEntityArgumentEntry(device3, new BasicTsKvEntry(ts - 50, new LongDataEntry("key", 16L), 13L)),
                 device4, new AggSingleEntityArgumentEntry(device4, new BasicTsKvEntry(ts - 60, new LongDataEntry("key", 23L), 7L))
         ), false);
 
-        assertThat(entry.updateEntry(aggArgumentEntry)).isTrue();
+        assertThat(entry.updateEntry(relatedEntitiesArgumentEntry)).isTrue();
 
         Map<EntityId, ArgumentEntry> aggInputs = entry.getAggInputs();
         assertThat(aggInputs.size()).isEqualTo(4);
-        assertThat(aggInputs.get(device3)).isEqualTo(aggArgumentEntry.getAggInputs().get(device3));
-        assertThat(aggInputs.get(device4)).isEqualTo(aggArgumentEntry.getAggInputs().get(device4));
+        assertThat(aggInputs.get(device3)).isEqualTo(relatedEntitiesArgumentEntry.getAggInputs().get(device3));
+        assertThat(aggInputs.get(device4)).isEqualTo(relatedEntitiesArgumentEntry.getAggInputs().get(device4));
     }
 
     @Test
@@ -96,17 +96,6 @@ public class AggArgumentEntryTest {
         Map<EntityId, ArgumentEntry> aggInputs = entry.getAggInputs();
         assertThat(aggInputs.size()).isEqualTo(2);
         assertThat(aggInputs.get(device2)).isEqualTo(singleEntityArgumentEntry);
-    }
-
-    @Test
-    void testUpdateEntryWhenDeletedAggSingleEntityArgumentEntryPassed() {
-        AggSingleEntityArgumentEntry singleEntityArgumentEntry = new AggSingleEntityArgumentEntry(device2, true);
-
-        assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
-
-        Map<EntityId, ArgumentEntry> aggInputs = entry.getAggInputs();
-        assertThat(aggInputs.size()).isEqualTo(1);
-        assertThat(aggInputs.get(device2)).isNull();
     }
 
 }

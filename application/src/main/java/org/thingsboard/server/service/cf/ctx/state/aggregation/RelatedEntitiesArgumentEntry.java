@@ -27,7 +27,7 @@ import java.util.Map;
 
 @Data
 @AllArgsConstructor
-public class AggArgumentEntry implements ArgumentEntry {
+public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
 
     private final Map<EntityId, ArgumentEntry> aggInputs;
 
@@ -35,7 +35,7 @@ public class AggArgumentEntry implements ArgumentEntry {
 
     @Override
     public ArgumentEntryType getType() {
-        return ArgumentEntryType.AGGREGATE_LATEST;
+        return ArgumentEntryType.RELATED_ENTITIES;
     }
 
     @Override
@@ -45,19 +45,15 @@ public class AggArgumentEntry implements ArgumentEntry {
 
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
-        if (entry instanceof AggArgumentEntry aggArgumentEntry) {
-            aggInputs.putAll(aggArgumentEntry.aggInputs);
+        if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+            aggInputs.putAll(relatedEntitiesArgumentEntry.aggInputs);
             return true;
         } else if (entry instanceof AggSingleEntityArgumentEntry aggSingleEntityArgumentEntry) {
-            if (aggSingleEntityArgumentEntry.isDeleted()) {
-                aggInputs.remove(aggSingleEntityArgumentEntry.getEntityId());
+            ArgumentEntry argumentEntry = aggInputs.get(aggSingleEntityArgumentEntry.getEntityId());
+            if (argumentEntry != null) {
+                argumentEntry.updateEntry(aggSingleEntityArgumentEntry);
             } else {
-                ArgumentEntry argumentEntry = aggInputs.get(aggSingleEntityArgumentEntry.getEntityId());
-                if (argumentEntry != null) {
-                    argumentEntry.updateEntry(aggSingleEntityArgumentEntry);
-                } else {
-                    aggInputs.put(aggSingleEntityArgumentEntry.getEntityId(), aggSingleEntityArgumentEntry);
-                }
+                aggInputs.put(aggSingleEntityArgumentEntry.getEntityId(), aggSingleEntityArgumentEntry);
             }
             return true;
         } else {

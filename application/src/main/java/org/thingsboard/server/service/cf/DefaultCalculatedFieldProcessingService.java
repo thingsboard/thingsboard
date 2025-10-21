@@ -92,11 +92,6 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public ListenableFuture<Map<String, ArgumentEntry>> fetchAggEntityArguments(CalculatedFieldCtx ctx, EntityId entityId) {
-        return super.fetchEntityAggArguments(ctx, entityId, System.currentTimeMillis());
-    }
-
-    @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
         return switch (ctx.getCfType()) {
             case GEOFENCING -> resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));

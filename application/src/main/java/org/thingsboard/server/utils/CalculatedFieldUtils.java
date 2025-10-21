@@ -47,9 +47,9 @@ import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.AggArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.RelaredEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
@@ -104,9 +104,9 @@ public class CalculatedFieldUtils {
                 case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
                 case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
                 case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
-                case AGGREGATE_LATEST -> {
-                    AggArgumentEntry aggArgumentEntry = (AggArgumentEntry) argEntry;
-                    aggArgumentEntry.getAggInputs()
+                case RELATED_ENTITIES -> {
+                    RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
+                    relatedEntitiesArgumentEntry.getAggInputs()
                             .forEach((entityId, entry) -> aggBuilder.addAggArguments(toAggSingleArgumentProto(argName, entityId, entry)));
                 }
             }
@@ -120,7 +120,7 @@ public class CalculatedFieldUtils {
                 alarmStateProto.setClearRuleState(toAlarmRuleStateProto(alarmState.getClearRuleState()));
             }
         }
-        if (state instanceof RelaredEntitiesAggregationCalculatedFieldState aggState) {
+        if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
             aggBuilder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
             builder.setLatestValuesAggregationState(aggBuilder.build());
         }
@@ -214,7 +214,7 @@ public class CalculatedFieldUtils {
             case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
             case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
-            case RELATED_ENTITIES_AGGREGATION -> new RelaredEntitiesAggregationCalculatedFieldState(id.entityId());
+            case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(id.entityId());
         };
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
@@ -241,7 +241,7 @@ public class CalculatedFieldUtils {
                 }
             }
             case RELATED_ENTITIES_AGGREGATION -> {
-                RelaredEntitiesAggregationCalculatedFieldState aggState = (RelaredEntitiesAggregationCalculatedFieldState) state;
+                RelatedEntitiesAggregationCalculatedFieldState aggState = (RelatedEntitiesAggregationCalculatedFieldState) state;
                 LatestValuesAggregationStateProto aggregationStateProto = proto.getLatestValuesAggregationState();
                 Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
                 aggregationStateProto.getAggArgumentsList().forEach(argProto -> {
@@ -249,7 +249,7 @@ public class CalculatedFieldUtils {
                     arguments.computeIfAbsent(argProto.getValue().getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
                 });
                 arguments.forEach((argName, entityInputs) -> {
-                    aggState.getArguments().put(argName, new AggArgumentEntry(entityInputs, false));
+                    aggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
                 });
                 aggState.setLastArgsRefreshTs(aggregationStateProto.getLastArgsUpdateTs());
             }

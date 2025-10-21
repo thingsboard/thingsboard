@@ -469,8 +469,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     public void onTelemetryMsg(CalculatedFieldTelemetryMsg msg) {
         EntityId entityId = msg.getEntityId();
         log.debug("Received telemetry msg from entity [{}]", entityId);
-        // 3 = 1 for CF processing + 1 for links processing + 1 for owner entity processing
-        MultipleTbCallback callback = new MultipleTbCallback(3, msg.getCallback());
+        // 4 = 1 for CF processing + 1 for links processing + 1 for owner entity processing + 1 for aggregation processing
+        MultipleTbCallback callback = new MultipleTbCallback(4, msg.getCallback());
         // process all cfs related to entity, or it's profile;
         var entityIdFields = getCalculatedFieldsByEntityId(entityId);
         var profileIdFields = getCalculatedFieldsByEntityId(getProfileId(tenantId, entityId));

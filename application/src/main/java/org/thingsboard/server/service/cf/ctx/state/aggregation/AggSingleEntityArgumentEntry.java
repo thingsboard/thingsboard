@@ -33,7 +33,6 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 public class AggSingleEntityArgumentEntry extends SingleValueArgumentEntry {
 
     private EntityId entityId;
-    private boolean deleted;
 
     public AggSingleEntityArgumentEntry(EntityId entityId, ArgumentEntry entry) {
         super(entry);

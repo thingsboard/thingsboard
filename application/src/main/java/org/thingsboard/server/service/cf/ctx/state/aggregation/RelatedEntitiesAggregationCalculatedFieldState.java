@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -46,7 +45,7 @@ import java.util.Map.Entry;
 
 @Slf4j
 @Getter
-public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
+public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Setter
     private long lastArgsRefreshTs = -1;
@@ -55,9 +54,7 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
     private long deduplicationInterval = -1;
     private Map<String, AggMetric> metrics;
 
-    private final Map<EntityId, Map<String, ArgumentEntry>> inputs = new HashMap<>();
-
-    public RelaredEntitiesAggregationCalculatedFieldState(EntityId entityId) {
+    public RelatedEntitiesAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
 
@@ -75,7 +72,6 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
         lastArgsRefreshTs = -1;
         lastMetricsEvalTs = -1;
         metrics = null;
-        inputs.clear();
     }
 
     @Override
@@ -91,17 +87,8 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
 
     @Override
     public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
-        Map<String, ArgumentEntry> updatedArguments = super.update(argumentValues, ctx);
         lastArgsRefreshTs = System.currentTimeMillis();
-        for (Map.Entry<String, ArgumentEntry> argEntry : arguments.entrySet()) {
-            String key = argEntry.getKey();
-            AggArgumentEntry aggArgumentEntry = (AggArgumentEntry) argEntry.getValue();
-            Map<EntityId, ArgumentEntry> aggInputs = aggArgumentEntry.getAggInputs();
-            aggInputs.forEach((entityId, argumentEntry) -> {
-                inputs.computeIfAbsent(entityId, k -> new HashMap<>()).put(key, argumentEntry);
-            });
-        }
-        return updatedArguments;
+        return super.update(argumentValues, ctx);
     }
 
     @Override
@@ -115,7 +102,7 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                     .type(output.getType())
                     .scope(output.getScope())
-                    .result(createResultJson(ctx.isUseLatestTs(), aggResult))
+                    .result(toSimpleResult(ctx.isUseLatestTs(), aggResult))
                     .build());
         } else {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
@@ -124,20 +111,47 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
         }
     }
 
+    public Map<String, ArgumentEntry> updateEntityData(Map<String, ArgumentEntry> fetchedArgs) {
+        lastMetricsEvalTs = -1;
+        return update(fetchedArgs, ctx);
+    }
+
+    public void cleanupEntityData(EntityId relatedEntityId) {
+        arguments.values().forEach(argEntry -> {
+            RelatedEntitiesArgumentEntry aggEntry = (RelatedEntitiesArgumentEntry) argEntry;
+            aggEntry.getAggInputs().remove(relatedEntityId);
+        });
+        lastMetricsEvalTs = -1;
+        lastArgsRefreshTs = System.currentTimeMillis();
+    }
+
     private boolean shouldRecalculate() {
         boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - deduplicationInterval;
         boolean argsUpdatedDuringInterval = lastArgsRefreshTs > lastMetricsEvalTs;
         return intervalPassed && argsUpdatedDuringInterval;
     }
 
+    private Map<EntityId, Map<String, ArgumentEntry>> prepareInputs() {
+        Map<EntityId, Map<String, ArgumentEntry>> inputs = new HashMap<>();
+        for (Map.Entry<String, ArgumentEntry> argEntry : arguments.entrySet()) {
+            String key = argEntry.getKey();
+            RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry.getValue();
+            relatedEntitiesArgumentEntry.getAggInputs().forEach((entityId, argumentEntry) -> {
+                inputs.computeIfAbsent(entityId, k -> new HashMap<>()).put(key, argumentEntry);
+            });
+        }
+        return inputs;
+    }
+
     private ObjectNode aggregateMetrics(Output output) throws Exception {
         ObjectNode aggResult = JacksonUtil.newObjectNode();
+        Map<EntityId, Map<String, ArgumentEntry>> inputs = prepareInputs();
         for (Entry<String, AggMetric> entry : metrics.entrySet()) {
             String metricKey = entry.getKey();
             AggMetric metric = entry.getValue();
 
             AggEntry aggMetricEntry = AggFunctionFactory.createAggFunction(metric.getFunction());
-            aggregateMetric(metric, aggMetricEntry);
+            aggregateMetric(metric, aggMetricEntry, inputs);
             aggMetricEntry.result().ifPresent(result -> {
                 aggResult.set(metricKey, JacksonUtil.valueToTree(formatResult(result, output.getDecimalsByDefault())));
             });
@@ -145,7 +159,7 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
         return aggResult;
     }
 
-    private void aggregateMetric(AggMetric metric, AggEntry aggEntry) throws Exception {
+    private void aggregateMetric(AggMetric metric, AggEntry aggEntry, Map<EntityId, Map<String, ArgumentEntry>> inputs) throws Exception {
         for (Map<String, ArgumentEntry> entityInputs : inputs.values()) {
             if (applyAggregation(metric.getFilter(), entityInputs)) {
                 Object arg = resolveAggregationInput(metric.getInput(), entityInputs);
@@ -180,18 +194,6 @@ public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculat
             return formatResult(result, decimals);
         } catch (Exception e) {
             throw new IllegalArgumentException("Aggregation result cannot be parsed: " + aggregationResult, e);
-        }
-    }
-
-    protected JsonNode createResultJson(boolean useLatestTs, JsonNode result) {
-        long latestTs = getLatestTimestamp();
-        if (useLatestTs && latestTs != -1) {
-            ObjectNode resultNode = JacksonUtil.newObjectNode();
-            resultNode.put("ts", latestTs);
-            resultNode.set("values", result);
-            return resultNode;
-        } else {
-            return result;
         }
     }
 

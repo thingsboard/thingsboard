@@ -201,20 +201,6 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 ));
     }
 
-    protected ListenableFuture<Map<String, ArgumentEntry>> fetchEntityAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-
-        Map<String, ListenableFuture<ArgumentEntry>> argsFutures = aggConfig.getArguments().entrySet().stream()
-                .collect(Collectors.toMap(
-                        Map.Entry::getKey,
-                        entry -> fetchSingleAggArgumentEntry(ctx.getTenantId(), entityId, entry.getValue(), ts)
-                ));
-
-        return Futures.whenAllComplete(argsFutures.values())
-                .call(() -> resolveArgumentFutures(argsFutures),
-                        MoreExecutors.directExecutor());
-    }
-
     private ListenableFuture<List<EntityId>> resolveGeofencingEntityIds(TenantId tenantId, EntityId entityId, Map.Entry<String, Argument> entry) {
         Argument value = entry.getValue();
         if (value.getRefEntityId() != null) {
