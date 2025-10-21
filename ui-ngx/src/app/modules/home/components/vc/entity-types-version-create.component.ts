@@ -186,10 +186,6 @@ export class EntityTypesVersionCreateComponent extends PageComponent implements 
     return !!(entityTypeControl as any).expanded;
   }
 
-  public trackByEntityType(index: number, entityTypeControl: AbstractControl): any {
-    return entityTypeControl;
-  }
-
   public removeEntityType(index: number) {
     (this.entityTypesVersionCreateFormGroup.get('entityTypes') as UntypedFormArray).removeAt(index);
   }

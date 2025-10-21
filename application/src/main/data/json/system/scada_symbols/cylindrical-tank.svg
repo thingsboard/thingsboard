@@ -563,7 +563,7 @@
  </g><g transform="translate(-1,409)" filter="url(#filter0_ii_1687_130892)" tb:tag="value-box">
   <path d="m180 62c0-6.6274 5.373-12 12-12h216c6.627 0 12 5.3726 12 12v56c0 6.627-5.373 12-12 12h-216c-6.627 0-12-5.373-12-12z" fill="#f3f3f3" tb:tag="value-box-background"/>
   <path d="m192 51.5h216c5.799 0 10.5 4.701 10.5 10.5v56c0 5.799-4.701 10.5-10.5 10.5h-216c-5.799 0-10.5-4.701-10.5-10.5v-56c0-5.799 4.701-10.5 10.5-10.5z" stroke="#727171" stroke-width="3"/>
-  <text x="301.5625" y="93.546875" fill="#727171" font-family="Roboto" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
+  <text x="301.5625" y="93.546875" fill="#727171" font-family="Roboto, sans-serif" font-size="32px" font-weight="500" tb:tag="value-text" xml:space="preserve" text-anchor="middle"><tspan dominant-baseline="middle">1660 gal</tspan></text>
  </g><ellipse cx="300" cy="16" rx="292" ry="16" fill="#5D5C5C"/><path d="m201.79 0s-201.79 0-201.79 167.5v820.9c0 6.628 5.3726 11.601 12 11.601h576c6.627 0 12-4.973 12-11.601v-820.9c0-167.5-198.21-167.5-198.21-167.5h-101.79zm201.21 203c-3.866 0-7 3.134-7 7v751c0 3.866 3.134 7 7 7h44c3.866 0 7-3.134 7-7v-751c0-3.866-3.134-7-7-7z" fill="#000" fill-opacity="0" tb:tag="clickArea"/><defs>
   <linearGradient id="paint0_linear_1690_149726" x1="600" x2=".018833" y1="510.96" y2="504.56" gradientUnits="userSpaceOnUse">
    <stop stop-color="#020202" stop-opacity=".35" offset="0"/>

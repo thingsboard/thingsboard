@@ -15,14 +15,12 @@
  */
 package org.thingsboard.rule.engine.filter;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.FILTER,
         name = "entity type switch",
@@ -31,7 +29,9 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
         nodeDescription = "Route incoming messages by Message Originator Type",
         nodeDetails = "Routes messages to chain according to the entity type ('Device', 'Asset', etc.).<br><br>" +
                 "Output connections: <i>Message originator type</i> or <code>Failure</code>",
-        configDirective = "tbNodeEmptyConfig")
+        configDirective = "tbNodeEmptyConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/filter/entity-type-switch/"
+)
 public class TbOriginatorTypeSwitchNode extends TbAbstractTypeSwitchNode {
 
     @Override

@@ -60,7 +60,7 @@
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
     <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
-      <span [innerHTML]="entity.name | highlight:searchText:true:'ig'"></span>
+      <span [innerHTML]="displayEntityFn(entity) | highlight:searchText:true:'ig'"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
       <div (click)="$event.stopPropagation()">
@@ -71,6 +71,11 @@
           <span>
               {{ noEntitiesMatchingText | translate: {entity: searchText} }}
           </span>
+          @if (allowCreateNew) {
+            <span>
+              <a translate (click)="createNewEntity($event, searchText)">entity.create-new-key</a>
+            </span>
+          }
         </ng-template>
       </div>
     </mat-option>

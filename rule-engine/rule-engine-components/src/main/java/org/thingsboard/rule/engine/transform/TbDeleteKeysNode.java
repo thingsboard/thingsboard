@@ -47,22 +47,22 @@ import java.util.stream.Collectors;
                 "keys and/or regular expressions.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeDeleteKeysConfig",
-        icon = "remove_circle"
+        icon = "remove_circle",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/delete-key-value-pairs/"
 )
 public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
-    private TbDeleteKeysNodeConfiguration config;
     private TbMsgSource deleteFrom;
     private List<Pattern> compiledKeyPatterns;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbDeleteKeysNodeConfiguration.class);
-        this.deleteFrom = config.getDeleteFrom();
+        var config = TbNodeUtils.convert(configuration, TbDeleteKeysNodeConfiguration.class);
+        deleteFrom = config.getDeleteFrom();
         if (deleteFrom == null) {
             throw new TbNodeException("DeleteFrom can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
         }
-        this.compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
+        compiledKeyPatterns = config.getKeys().stream().map(Pattern::compile).collect(Collectors.toList());
     }
 
     @Override
@@ -76,7 +76,7 @@ public class TbDeleteKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
                 var mdKeysToDelete = metaDataMap.keySet()
                         .stream()
                         .filter(this::matches)
-                        .collect(Collectors.toList());
+                        .toList();
                 mdKeysToDelete.forEach(metaDataMap::remove);
                 metaDataCopy = new TbMsgMetaData(metaDataMap);
                 hasNoChanges = mdKeysToDelete.isEmpty();

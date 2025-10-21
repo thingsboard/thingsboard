@@ -21,8 +21,10 @@
 <suite name="Connectivity tests">
     <test verbose="2" name="Connectivity tests" preserve-order="false">
         <packages>
-            <package name="org.thingsboard.server.msa.connectivity" />
-            <package name="org.thingsboard.server.msa.edqs" />
+            <package name="org.thingsboard.server.msa.connectivity"/>
+            <package name="org.thingsboard.server.msa.edqs"/>
+            <package name="org.thingsboard.server.msa.cf"/>
+            <package name="org.thingsboard.server.msa.rule.node"/>
         </packages>
     </test>
 </suite>

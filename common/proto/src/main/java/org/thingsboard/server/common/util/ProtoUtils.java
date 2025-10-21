@@ -529,8 +529,10 @@ public class ProtoUtils {
                 .setRequestIdMSB(msg.getMsg().getId().getMostSignificantBits())
                 .setRequestIdLSB(msg.getMsg().getId().getLeastSignificantBits())
                 .setOneway(msg.getMsg().isOneway())
-                .setPersisted(msg.getMsg().isPersisted())
-                .setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+                .setPersisted(msg.getMsg().isPersisted());
+        if (msg.getMsg().getAdditionalInfo() != null) {
+            builder.setAdditionalInfo(msg.getMsg().getAdditionalInfo());
+        }
         if (msg.getMsg().getRetries() != null) {
             builder.setRetries(msg.getMsg().getRetries());
         }
@@ -555,7 +557,9 @@ public class ProtoUtils {
                 toDeviceRpcRequestMsg.getOneway(),
                 toDeviceRpcRequestMsg.getExpirationTime(),
                 new ToDeviceRpcRequestBody(toDeviceRpcRequestMsg.getMethodName(), toDeviceRpcRequestMsg.getParams()),
-                toDeviceRpcRequestMsg.getPersisted(), toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null, toDeviceRpcRequestMsg.getAdditionalInfo());
+                toDeviceRpcRequestMsg.getPersisted(),
+                toDeviceRpcRequestMsg.hasRetries() ? toDeviceRpcRequestMsg.getRetries() : null,
+                toDeviceRpcRequestMsg.hasAdditionalInfo() ? toDeviceRpcRequestMsg.getAdditionalInfo() : null);
         return new ToDeviceRpcRequestActorMsg(proto.getServiceId(), toDeviceRpcRequest);
     }
 
@@ -1371,6 +1375,18 @@ public class ProtoUtils {
     @Deprecated(forRemoval = true, since = "4.1") // inline to TbMsg.fromProto(queueName, ruleEngineMsg.getTbMsgProto(), callback)
     public static TbMsg fromTbMsgProto(String queueName, TransportProtos.ToRuleEngineMsg ruleEngineMsg, TbMsgCallback callback) {
         return TbMsg.fromProto(queueName, getTbMsgProto(ruleEngineMsg), callback);
+    }
+
+    public static TransportProtos.EntityIdProto toProto(EntityId entityId) {
+        return TransportProtos.EntityIdProto.newBuilder()
+                .setEntityIdMSB(getMsb(entityId))
+                .setEntityIdLSB(getLsb(entityId))
+                .setType(toProto(entityId.getEntityType()))
+                .build();
+    }
+
+    public static EntityId fromProto(TransportProtos.EntityIdProto entityIdProto) {
+        return EntityIdFactory.getByTypeAndUuid(fromProto(entityIdProto.getType()), new UUID(entityIdProto.getEntityIdMSB(), entityIdProto.getEntityIdLSB()));
     }
 
     private static boolean isNotNull(Object obj) {

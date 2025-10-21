@@ -19,7 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.nullness.qual.NonNull;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -41,7 +41,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "rpc call reply",
@@ -49,7 +48,8 @@ import java.util.UUID;
         nodeDescription = "Sends reply to RPC call from device",
         nodeDetails = "Expects messages with any message type. Will forward message body to the device.",
         configDirective = "tbActionNodeRpcReplyConfig",
-        icon = "call_merge"
+        icon = "call_merge",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rpc-call-reply/"
 )
 public class TbSendRPCReplyNode implements TbNode {
 
@@ -57,7 +57,7 @@ public class TbSendRPCReplyNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbSendRpcReplyNodeConfiguration.class);
+        config = TbNodeUtils.convert(configuration, TbSendRpcReplyNodeConfiguration.class);
     }
 
     @Override
@@ -103,7 +103,7 @@ public class TbSendRPCReplyNode implements TbNode {
         body.put("requestId", requestIdStr);
         body.put("response", msg.getData());
         EdgeEvent edgeEvent = EdgeUtils.constructEdgeEvent(ctx.getTenantId(), edgeId, EdgeEventType.DEVICE,
-                        EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.valueToTree(body));
+                EdgeEventActionType.RPC_CALL, deviceId, JacksonUtil.valueToTree(body));
         ListenableFuture<Void> future = ctx.getEdgeEventService().saveAsync(edgeEvent);
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
@@ -112,9 +112,10 @@ public class TbSendRPCReplyNode implements TbNode {
             }
 
             @Override
-            public void onFailure(Throwable t) {
+            public void onFailure(@NonNull Throwable t) {
                 ctx.tellFailure(msg, t);
             }
         }, ctx.getDbCallbackExecutor());
     }
+
 }

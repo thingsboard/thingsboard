@@ -58,7 +58,7 @@
           labelText="mobile.android-application"
           [entityType]="entityType.MOBILE_APP"
           [entitySubtype]="platformType.ANDROID"
-          (createNew)="createApplication('androidAppId', platformType.ANDROID)"
+          (createNew)="createApplication($event, 'androidAppId', platformType.ANDROID)"
           formControlName="androidAppId">
         </tb-entity-autocomplete>
         <tb-entity-autocomplete
@@ -68,7 +68,7 @@
           labelText="mobile.ios-application"
           [entityType]="entityType.MOBILE_APP"
           [entitySubtype]="platformType.IOS"
-          (createNew)="createApplication('iosAppId', platformType.IOS)"
+          (createNew)="createApplication($event, 'iosAppId', platformType.IOS)"
           formControlName="iosAppId">
         </tb-entity-autocomplete>
         <mat-form-field appearance="outline">

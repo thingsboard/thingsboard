@@ -35,7 +35,7 @@ public record OpenAiChatModelConfig(
         @Positive @Max(1) Double topP,
         Double frequencyPenalty,
         Double presencePenalty,
-        @Positive Integer maxOutputTokens,
+        Integer maxOutputTokens,
         @With @Positive Integer timeoutSeconds,
         @With @PositiveOrZero Integer maxRetries
 ) implements AiChatModelConfig<OpenAiChatModelConfig> {
