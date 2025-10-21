@@ -1638,7 +1638,8 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(deviceName, savedDevice.getName());
         Assert.assertEquals(deviceType, savedDevice.getType());
 
-        Optional<AttributeKvEntry> retrieved = attributesService.find(tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, "attr").get();
+        Optional<AttributeKvEntry> retrieved = await().atMost(5, TimeUnit.SECONDS)
+                .until(() -> attributesService.find(tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, "attr").get(), Optional::isPresent);
         assertThat(retrieved.get().getJsonValue().get()).isEqualTo(deviceAttr);
         assertThat(retrieved.get().getStrValue()).isNotPresent();
     }
