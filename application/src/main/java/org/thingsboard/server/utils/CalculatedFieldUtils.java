@@ -49,7 +49,7 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.LatestValuesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelaredEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
@@ -120,7 +120,7 @@ public class CalculatedFieldUtils {
                 alarmStateProto.setClearRuleState(toAlarmRuleStateProto(alarmState.getClearRuleState()));
             }
         }
-        if (state instanceof LatestValuesAggregationCalculatedFieldState aggState) {
+        if (state instanceof RelaredEntitiesAggregationCalculatedFieldState aggState) {
             aggBuilder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
             builder.setLatestValuesAggregationState(aggBuilder.build());
         }
@@ -214,7 +214,7 @@ public class CalculatedFieldUtils {
             case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
             case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
-            case LATEST_VALUES_AGGREGATION -> new LatestValuesAggregationCalculatedFieldState(id.entityId());
+            case RELATED_ENTITIES_AGGREGATION -> new RelaredEntitiesAggregationCalculatedFieldState(id.entityId());
         };
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
@@ -240,8 +240,8 @@ public class CalculatedFieldUtils {
                     alarmState.setClearRuleState(fromAlarmRuleStateProto(alarmStateProto.getClearRuleState(), alarmState));
                 }
             }
-            case LATEST_VALUES_AGGREGATION -> {
-                LatestValuesAggregationCalculatedFieldState aggState = (LatestValuesAggregationCalculatedFieldState) state;
+            case RELATED_ENTITIES_AGGREGATION -> {
+                RelaredEntitiesAggregationCalculatedFieldState aggState = (RelaredEntitiesAggregationCalculatedFieldState) state;
                 LatestValuesAggregationStateProto aggregationStateProto = proto.getLatestValuesAggregationState();
                 Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
                 aggregationStateProto.getAggArgumentsList().forEach(argProto -> {

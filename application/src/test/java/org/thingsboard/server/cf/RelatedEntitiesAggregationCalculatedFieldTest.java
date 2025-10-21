@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFuncti
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
@@ -66,7 +66,7 @@ import static org.thingsboard.server.cf.CalculatedFieldIntegrationTest.POLL_INTE
 
 @Slf4j
 @DaoSqlTest
-public class LatestValuesAggregationCalculatedFieldTest extends AbstractControllerTest {
+public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
 
@@ -470,7 +470,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         createEntityRelation(asset.getId(), device3.getId(), "Has");
         postTelemetry(device3.getId(), "{\"occupied\":true}");
 
-        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
         configuration.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, "Has"));
         saveCalculatedField(cf);
 
@@ -493,7 +493,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         postTelemetry(device1.getId(), "{\"occupiedStatus\":false}");
         postTelemetry(device2.getId(), "{\"occupiedStatus\":false}");
 
-        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
         Argument argument = new Argument();
         argument.setRefEntityKey(new ReferencedEntityKey("oc", ArgumentType.TS_LATEST, null));
         argument.setDefaultValue("false");
@@ -523,7 +523,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
                 });
 
-        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
         AggMetric aggMetric = new AggMetric();
         aggMetric.setInput(new AggKeyInput("temp"));
         aggMetric.setFilter("return temp < 100;");
@@ -559,7 +559,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
                 });
 
-        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
         Output output = new Output();
         output.setType(OutputType.ATTRIBUTES);
         output.setScope(AttributeScope.SERVER_SCOPE);
@@ -588,7 +588,7 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
                     verifyTelemetry(asset.getId(), Map.of("avgTemperature", "24"));
                 });
 
-        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
         configuration.setDeduplicationIntervalInSec(2 * deduplicationInterval);
         saveCalculatedField(cf);
 
@@ -730,9 +730,9 @@ public class LatestValuesAggregationCalculatedFieldTest extends AbstractControll
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setName(name);
         calculatedField.setEntityId(entityId);
-        calculatedField.setType(CalculatedFieldType.LATEST_VALUES_AGGREGATION);
+        calculatedField.setType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION);
 
-        LatestValuesAggregationCalculatedFieldConfiguration configuration = new LatestValuesAggregationCalculatedFieldConfiguration();
+        RelatedEntitiesAggregationCalculatedFieldConfiguration configuration = new RelatedEntitiesAggregationCalculatedFieldConfiguration();
         configuration.setRelation(relation);
         configuration.setArguments(inputs);
         configuration.setDeduplicationIntervalInSec(deduplicationInterval);

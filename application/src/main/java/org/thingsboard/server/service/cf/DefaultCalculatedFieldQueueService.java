@@ -27,7 +27,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -190,7 +190,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
         List<CalculatedFieldCtx> cfCtxs = calculatedFieldCache.getAggCalculatedFieldCtxsByFilter(relatedEntityFilter);
         for (CalculatedFieldCtx cfCtx : cfCtxs) {
-            if (cfCtx.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
+            if (cfCtx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
                 RelationPathLevel relation = aggConfig.getRelation();
                 EntitySearchDirection inverseDirection = switch (relation.direction()) {
                     case FROM -> EntitySearchDirection.TO;

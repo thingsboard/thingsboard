@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import java.util.Map;
 
 @Data
-public class LatestValuesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
+public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
 
     private RelationPathLevel relation;
     private Map<String, Argument> arguments;
@@ -36,7 +36,7 @@ public class LatestValuesAggregationCalculatedFieldConfiguration implements Argu
 
     @Override
     public CalculatedFieldType getType() {
-        return CalculatedFieldType.LATEST_VALUES_AGGREGATION;
+        return CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
     }
 
     @Override

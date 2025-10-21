@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFuncti
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
@@ -46,7 +46,7 @@ import java.util.Map.Entry;
 
 @Slf4j
 @Getter
-public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
+public class RelaredEntitiesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Setter
     private long lastArgsRefreshTs = -1;
@@ -57,14 +57,14 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
 
     private final Map<EntityId, Map<String, ArgumentEntry>> inputs = new HashMap<>();
 
-    public LatestValuesAggregationCalculatedFieldState(EntityId entityId) {
+    public RelaredEntitiesAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
 
     @Override
     public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
         super.setCtx(ctx, actorCtx);
-        var configuration = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         metrics = configuration.getMetrics();
         deduplicationInterval = configuration.getDeduplicationIntervalInSec();
     }
@@ -86,7 +86,7 @@ public class LatestValuesAggregationCalculatedFieldState extends BaseCalculatedF
 
     @Override
     public CalculatedFieldType getType() {
-        return CalculatedFieldType.LATEST_VALUES_AGGREGATION;
+        return CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
     }
 
     @Override

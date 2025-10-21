@@ -44,7 +44,7 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -139,7 +139,7 @@ public class CalculatedFieldCtx {
                 var refId = entry.getValue().getRefEntityId();
                 var refKey = entry.getValue().getRefEntityKey();
                 if (refId == null) {
-                    if (CalculatedFieldType.LATEST_VALUES_AGGREGATION.equals(cfType)) {
+                    if (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cfType)) {
                         relatedEntityArguments.put(refKey, entry.getKey());
                         continue;
                     }
@@ -185,7 +185,7 @@ public class CalculatedFieldCtx {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
         this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
-        if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration aggConfig) {
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
         }
         this.systemContext = systemContext;
@@ -228,8 +228,8 @@ public class CalculatedFieldCtx {
                 }
                 initialized = true;
             }
-            case LATEST_VALUES_AGGREGATION -> {
-                LatestValuesAggregationCalculatedFieldConfiguration configuration = (LatestValuesAggregationCalculatedFieldConfiguration) calculatedField.getConfiguration();
+            case RELATED_ENTITIES_AGGREGATION -> {
+                RelatedEntitiesAggregationCalculatedFieldConfiguration configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) calculatedField.getConfiguration();
                 configuration.getMetrics().forEach((key, metric) -> {
                     if (metric.getInput() instanceof AggFunctionInput functionInput) {
                         initTbelExpression(functionInput.getFunction());
@@ -594,8 +594,8 @@ public class CalculatedFieldCtx {
         if (scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis) {
             return true;
         }
-        if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
-                && other.getCalculatedField().getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
+                && other.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig
                 && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
             return true;
         }
@@ -617,7 +617,7 @@ public class CalculatedFieldCtx {
         if (hasGeofencingZoneGroupConfigurationChanges(other)) {
             return true;
         }
-        if (hasLatestValuesAggregationConfigurationChanges(other)) {
+        if (hasRelatedEntitiesAggregationConfigurationChanges(other)) {
             return true;
         }
         return false;
@@ -631,9 +631,9 @@ public class CalculatedFieldCtx {
         return false;
     }
 
-    private boolean hasLatestValuesAggregationConfigurationChanges(CalculatedFieldCtx other) {
-        if (calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration thisConfig
-                && other.calculatedField.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration otherConfig) {
+    private boolean hasRelatedEntitiesAggregationConfigurationChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig) {
             return !thisConfig.getArguments().equals(otherConfig.getArguments()) || !thisConfig.getRelation().equals(otherConfig.getRelation());
         }
         return false;

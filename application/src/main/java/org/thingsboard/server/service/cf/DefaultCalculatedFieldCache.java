@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -83,7 +83,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         cfs.forEach(cf -> {
             if (cf != null) {
                 calculatedFields.putIfAbsent(cf.getId(), cf);
-                if (cf.getConfiguration() instanceof LatestValuesAggregationCalculatedFieldConfiguration) {
+                if (cf.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration) {
                     aggCalculatedFields.put(cf.getId(), cf);
                 }
             }
@@ -200,7 +200,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             entityIdCalculatedFields.computeIfAbsent(cfEntityId, entityId -> new CopyOnWriteArrayList<>()).add(calculatedField);
 
             CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-            if (configuration instanceof LatestValuesAggregationCalculatedFieldConfiguration) {
+            if (configuration instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration) {
                 aggCalculatedFields.put(calculatedField.getId(), calculatedField);
             }
             calculatedFieldLinks.put(calculatedFieldId, configuration.buildCalculatedFieldLinks(tenantId, cfEntityId, calculatedFieldId));

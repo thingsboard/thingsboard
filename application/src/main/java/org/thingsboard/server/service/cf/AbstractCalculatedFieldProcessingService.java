@@ -27,7 +27,7 @@ import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.LatestValuesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -98,7 +98,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = switch (ctx.getCfType()) {
             case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false, ts);
             case SIMPLE, SCRIPT, ALARM, PROPAGATION -> getBaseCalculatedFieldArguments(ctx, entityId, ts);
-            case LATEST_VALUES_AGGREGATION -> fetchAggArguments(ctx, entityId, ts);
+            case RELATED_ENTITIES_AGGREGATION -> fetchAggArguments(ctx, entityId, ts);
         };
         if (ctx.getCfType() == PROPAGATION) {
             argFutures.put(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId));
@@ -190,7 +190,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     protected Map<String, ListenableFuture<ArgumentEntry>> fetchAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        LatestValuesAggregationCalculatedFieldConfiguration aggConfig = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
 
         ListenableFuture<List<EntityId>> relatedEntitiesFut = resolveRelatedEntities(ctx.getTenantId(), entityId, aggConfig.getRelation());
 
@@ -202,7 +202,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     protected ListenableFuture<Map<String, ArgumentEntry>> fetchEntityAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        LatestValuesAggregationCalculatedFieldConfiguration aggConfig = (LatestValuesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
 
         Map<String, ListenableFuture<ArgumentEntry>> argsFutures = aggConfig.getArguments().entrySet().stream()
                 .collect(Collectors.toMap(

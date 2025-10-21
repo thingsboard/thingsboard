@@ -54,7 +54,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.AggSingleEntityArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.LatestValuesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelaredEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -254,8 +254,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         Map<String, ArgumentEntry> fetchedArgs = fetchAggArguments(ctx, relatedEntityId);
         Map<String, ArgumentEntry> updatedArgs = state.update(fetchedArgs, ctx);
 
-        if (state instanceof LatestValuesAggregationCalculatedFieldState latestValuesState) {
-            latestValuesState.setLastMetricsEvalTs(-1);
+        if (state instanceof RelaredEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
+            relatedEntitiesAggState.setLastMetricsEvalTs(-1);
         }
 
         state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
@@ -271,7 +271,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             msg.getCallback().onSuccess();
             return;
         }
-        if (state instanceof LatestValuesAggregationCalculatedFieldState aggState) {
+        if (state instanceof RelaredEntitiesAggregationCalculatedFieldState aggState) {
             cleanupAggregationState(msg.getRelatedEntityId(), aggState);
             processStateIfReady(state, Collections.emptyMap(), state.getCtx(), Collections.emptyList(), null, null, msg.getCallback());
         } else {
@@ -279,7 +279,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
     }
 
-    private void cleanupAggregationState(EntityId relatedEntityId, LatestValuesAggregationCalculatedFieldState state) {
+    private void cleanupAggregationState(EntityId relatedEntityId, RelaredEntitiesAggregationCalculatedFieldState state) {
         state.getArguments().values().forEach(argEntry -> {
             AggArgumentEntry aggEntry = (AggArgumentEntry) argEntry;
             aggEntry.getAggInputs().remove(relatedEntityId);
@@ -691,7 +691,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
         Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, entityId, deletedArguments);
 
-        if (CalculatedFieldType.LATEST_VALUES_AGGREGATION.equals(ctx.getCfType())) {
+        if (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(ctx.getCfType())) {
             fetchedArgs = fetchedArgs.entrySet().stream()
                     .collect(Collectors.toMap(
                             Map.Entry::getKey,
