@@ -346,21 +346,22 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(argNames, data);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, List<TsKvProto> data) {
-        if (argNames.isEmpty()) {
+    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, Set<String>> args, List<TsKvProto> data) {
+        if (args.isEmpty()) {
             return Collections.emptyMap();
         }
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (TsKvProto item : data) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
-            String argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            Set<String> argNames = args.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> arguments.put(argName, new SingleValueArgumentEntry(item)));
             }
+
             key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_ROLLING, null);
-            argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            argNames = args.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> arguments.put(argName, new SingleValueArgumentEntry(item)));
             }
         }
         return arguments;
@@ -378,13 +379,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(argNames, scope, attrDataList);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, Set<String>> args, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-            String argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            Set<String> argNames = args.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> arguments.put(argName, new SingleValueArgumentEntry(item)));
             }
         }
         return arguments;
@@ -402,18 +403,19 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArgumentsWithDefaultValue(ctx.getMainEntityArguments(), ctx.getArguments(), scope, removedAttrKeys);
     }
 
-    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(Map<ReferencedEntityKey, String> argNames, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
+    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(Map<ReferencedEntityKey, Set<String>> args, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (String removedKey : removedAttrKeys) {
             ReferencedEntityKey key = new ReferencedEntityKey(removedKey, ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-            String argName = argNames.get(key);
-            if (argName != null) {
-                Argument argument = configArguments.get(argName);
-                String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
-                arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
-                        ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
-                        : new SingleValueArgumentEntry());
-
+            Set<String> argNames = args.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> {
+                    Argument argument = configArguments.get(argName);
+                    String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
+                    arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
+                            ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
+                            : new SingleValueArgumentEntry());
+                });
             }
         }
         return arguments;
