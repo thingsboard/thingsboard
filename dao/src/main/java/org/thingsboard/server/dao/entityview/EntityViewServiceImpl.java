@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.entityview;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -62,13 +63,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
-/**
- * Created by Victor Basanets on 8/28/2017.
- */
 @Service("EntityViewDaoService")
 @Slf4j
 public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityViewCacheKey, EntityViewCacheValue, EntityViewEvictEvent> implements EntityViewService {
@@ -492,6 +491,12 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findEntityViewById(tenantId, new EntityViewId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findEntityViewByIdAsync(tenantId, new EntityViewId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

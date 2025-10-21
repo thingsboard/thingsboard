@@ -25,7 +25,6 @@ import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesByNameAndTypeLoader;
-import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
@@ -81,7 +80,11 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
         switch (config.getOriginatorSource()) {
             case CUSTOMER:
-                return EntitiesCustomerIdAsyncLoader.findEntityCustomerIdAsync(ctx, msg.getOriginator());
+                if (msg.getOriginator().getEntityType() == EntityType.CUSTOMER) {
+                    return Futures.immediateFuture(msg.getOriginator());
+                }
+                return ctx.getEntityService().fetchEntityCustomerIdAsync(ctx.getTenantId(), msg.getOriginator())
+                        .transform(customerIdOpt -> customerIdOpt.orElse(null), ctx.getDbCallbackExecutor());
             case TENANT:
                 return Futures.immediateFuture(ctx.getTenantId());
             case RELATED:

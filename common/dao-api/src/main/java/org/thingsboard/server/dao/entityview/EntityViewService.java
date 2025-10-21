@@ -32,9 +32,6 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
 
-/**
- * Created by Victor Basanets on 8/27/2017.
- */
 public interface EntityViewService extends EntityDaoService {
 
     EntityView saveEntityView(EntityView entityView);
