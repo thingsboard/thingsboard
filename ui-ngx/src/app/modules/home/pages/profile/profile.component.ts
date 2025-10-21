@@ -25,7 +25,6 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { ActionAuthUpdateUserDetails } from '@core/auth/auth.actions';
 import { environment as env } from '@env/environment';
-import { TranslateService } from '@ngx-translate/core';
 import { ActionSettingsChangeLanguage } from '@core/settings/settings.actions';
 import { ActivatedRoute } from '@angular/router';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
@@ -52,7 +51,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
               private route: ActivatedRoute,
               private userService: UserService,
               private authService: AuthService,
-              private translate: TranslateService,
               private unitService: UnitService,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -82,9 +80,13 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
     if (!this.user.additionalInfo) {
       this.user.additionalInfo = {};
     }
-    this.user.additionalInfo.lang = this.profile.get('language').value;
     this.user.additionalInfo.homeDashboardId = this.profile.get('homeDashboardId').value;
     this.user.additionalInfo.homeDashboardHideToolbar = this.profile.get('homeDashboardHideToolbar').value;
+    if (isNotEmptyStr(this.profile.get('language').value)) {
+      this.user.additionalInfo.lang = this.profile.get('language').value;
+    } else {
+      delete this.user.additionalInfo.lang;
+    }
     if (isNotEmptyStr(this.profile.get('unitSystem').value)) {
       this.user.additionalInfo.unitSystem = this.profile.get('unitSystem').value;
     } else {
@@ -105,7 +107,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
             id: user.id,
             lastName: user.lastName,
           } }));
-        this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang }));
+        this.store.dispatch(new ActionSettingsChangeLanguage({ userLang: user.additionalInfo.lang || env.defaultLang }));
         this.unitService.setUnitSystem(this.user.additionalInfo.unitSystem);
         this.authService.refreshJwtToken(false);
       }
@@ -115,7 +117,7 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
   private userLoaded(user: User) {
     this.user = user;
     this.profile.reset(user);
-    let lang;
+    let lang: string = null;
     let homeDashboardId;
     let homeDashboardHideToolbar = true;
     let unitSystem: UnitSystem = null;
@@ -130,9 +132,6 @@ export class ProfileComponent extends PageComponent implements OnInit, HasConfir
       if (isNotEmptyStr(user.additionalInfo.unitSystem)) {
         unitSystem = user.additionalInfo.unitSystem;
       }
-    }
-    if (!lang) {
-      lang = this.translate.currentLang;
     }
     this.profile.get('language').setValue(lang);
     this.profile.get('unitSystem').setValue(unitSystem);
