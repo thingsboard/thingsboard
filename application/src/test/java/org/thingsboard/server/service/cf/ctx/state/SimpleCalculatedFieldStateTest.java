@@ -123,7 +123,8 @@ public class SimpleCalculatedFieldStateTest {
         Map<String, ArgumentEntry> newArgs = Map.of("key3", new TsRollingArgumentEntry(10, 30000L));
         assertThatThrownBy(() -> state.updateState(ctx, newArgs))
                 .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Rolling argument entry is not supported for simple calculated fields.");
+                .hasMessage("Unsupported argument type detected for argument: key3. " +
+                            "Rolling argument entry is not supported for simple calculated fields.");
     }
 
     @Test

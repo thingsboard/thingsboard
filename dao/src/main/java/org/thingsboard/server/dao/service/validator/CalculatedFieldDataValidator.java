@@ -19,7 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.RelationQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -98,10 +98,10 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (!(calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argumentsBasedCfg)) {
             return;
         }
-        Map<String, RelationQueryDynamicSourceConfiguration> relationQueryBasedArguments = argumentsBasedCfg.getArguments().entrySet()
+        Map<String, RelationPathQueryDynamicSourceConfiguration> relationQueryBasedArguments = argumentsBasedCfg.getArguments().entrySet()
                 .stream()
                 .filter(entry -> entry.getValue().hasDynamicSource())
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (RelationQueryDynamicSourceConfiguration) entry.getValue().getRefDynamicSourceConfiguration()));
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> (RelationPathQueryDynamicSourceConfiguration) entry.getValue().getRefDynamicSourceConfiguration()));
         if (relationQueryBasedArguments.isEmpty()) {
             return;
         }

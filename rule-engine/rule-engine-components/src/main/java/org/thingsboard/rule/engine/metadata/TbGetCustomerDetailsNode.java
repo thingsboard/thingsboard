@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -41,8 +40,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.NoSuchElementException;
 
-@Slf4j
-@RuleNode(type = ComponentType.ENRICHMENT,
+@RuleNode(
+        type = ComponentType.ENRICHMENT,
         name = "customer details",
         configClazz = TbGetCustomerDetailsNodeConfiguration.class,
         version = 1,
@@ -50,7 +49,9 @@ import java.util.NoSuchElementException;
         nodeDetails = "Useful in multi-customer solutions where we need dynamically use customer contact information " +
                 "such as email, phone, address, etc., for notifications via email, SMS, and other notification providers.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeEntityDetailsConfig")
+        configDirective = "tbEnrichmentNodeEntityDetailsConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/customer-details/"
+)
 public class TbGetCustomerDetailsNode extends TbAbstractGetEntityDetailsNode<TbGetCustomerDetailsNodeConfiguration, CustomerId> {
 
     private static final String CUSTOMER_PREFIX = "customer_";

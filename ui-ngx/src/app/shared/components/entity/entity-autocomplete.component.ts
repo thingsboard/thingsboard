@@ -22,7 +22,7 @@ import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/opera
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, getEntityDisplayName } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
@@ -137,6 +137,10 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   @coerceArray()
   additionalClasses: Array<string>;
+
+  @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
 
   @Output()
   entityChanged = new EventEmitter<BaseData<EntityId>>();
@@ -395,7 +399,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
+    return entity ? (this.useEntityDisplayName ? getEntityDisplayName(entity) : entity.name) : undefined;
   }
 
   private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {

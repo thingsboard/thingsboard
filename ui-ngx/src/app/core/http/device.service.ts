@@ -15,8 +15,9 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import {catchError, Observable, of, ReplaySubject, throwError, timeout} from 'rxjs';
+import { createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import { catchError, Observable, of, ReplaySubject, throwError, timeout } from 'rxjs';
+import { map, switchMap } from "rxjs/operators";
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -28,14 +29,15 @@ import {
   DeviceInfo,
   DeviceInfoQuery,
   DeviceSearchQuery,
-  PublishTelemetryCommand
+  PublishTelemetryCommand,
+  SaveDeviceParams
 } from '@shared/models/device.models';
 import { EntitySubtype } from '@shared/models/entity-type.models';
 import { AuthService } from '@core/auth/auth.service';
 import { BulkImportRequest, BulkImportResult } from '@shared/import-export/import-export.models';
 import { PersistentRpc, RpcStatus } from '@shared/models/rpc.models';
 import { ResourcesService } from '@core/services/resources.service';
-import {map, switchMap} from "rxjs/operators";
+import { SaveEntityParams } from '@shared/models/entity.models';
 
 @Injectable({
   providedIn: 'root'
@@ -88,15 +90,19 @@ export class DeviceService {
     return this.http.get<DeviceInfo>(`/api/device/info/${deviceId}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public saveDevice(device: Device, config?: RequestConfig): Observable<Device> {
-    return this.http.post<Device>('/api/device', device, defaultHttpOptionsFromConfig(config));
+  public saveDevice(device: Device, config?: RequestConfig): Observable<Device>;
+  public saveDevice(device: Device, saveParams?: SaveDeviceParams, config?: RequestConfig): Observable<Device>;
+  public saveDevice(device: Device, saveParamsOrConfig?: SaveDeviceParams | RequestConfig, config?: RequestConfig): Observable<Device> {
+    return this.http.post<Device>('/api/device', device, createDefaultHttpOptions(saveParamsOrConfig, config));
   }
 
-  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device> {
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, config?: RequestConfig): Observable<Device>;
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParams: SaveEntityParams, config?: RequestConfig): Observable<Device>;
+  public saveDeviceWithCredentials(device: Device, credentials: DeviceCredentials, saveParamsOrConfig?: SaveEntityParams | RequestConfig, config?: RequestConfig): Observable<Device> {
     return this.http.post<Device>('/api/device-with-credentials', {
       device,
       credentials
-    }, defaultHttpOptionsFromConfig(config));
+    }, createDefaultHttpOptions(saveParamsOrConfig, config));
   }
 
   public deleteDevice(deviceId: string, config?: RequestConfig) {
@@ -221,66 +227,66 @@ export class DeviceService {
     return this.resourcesService.downloadResource(`/api/device-connectivity/gateway-launch/${deviceId}/docker-compose/download`);
   }
 
-  public rebootDevice(deviceId: string = '', isBootstrapServer: boolean): Observable<{ result: string, msg: string }> {
-    const urlApi = `/api/plugins/rpc/twoway/${deviceId}`;
+  public rebootDevice(deviceId: string, isBootstrapServer: boolean, config?: RequestConfig): Observable<{
+    result: string,
+    msg: string
+  }> {
     const rebootName = isBootstrapServer ? 'Bootstrap-Request Trigger' : 'Registration Update Trigger';
-    return this.http.post(urlApi, { method: 'DiscoverAll' }).pipe(
+    return this.sendTwoWayRpcCommand(deviceId, {method: 'DiscoverAll'}, config).pipe(
       timeout(10000),
       switchMap((response: any) => {
         if (response.result && response.result.toUpperCase() === 'CONTENT') {
           const resourceId = isBootstrapServer ? 9 : 8;
           const resourcePath = `/1/0/${resourceId}`;
-          return this.rebootTrigger(resourcePath, urlApi).pipe(
+          return this.rebootTrigger(deviceId, resourcePath, config).pipe(
             map((responseReboot: any) => {
               if (responseReboot.result === 'CHANGED') {
                 return {
                   result: 'SUCCESS',
-                  msg: `<b>\"${rebootName}\"</b> - Started Successfully.` };
+                  msg: `<b>"${rebootName}"</b> - Started Successfully.`
+                };
               } else {
                 return {
                   result: 'ERROR',
-                  msg: `<b>\"${rebootName}\"</b> failed:<pre>${JSON.stringify(responseReboot, null, 2)}</pre>`
+                  msg: `<b>"${rebootName}"</b> failed:<pre>${JSON.stringify(responseReboot, null, 2)}</pre>`
                 }
               }
             }),
             catchError(err =>
               of({
                 result: 'ERROR',
-                msg: `<b>\"${rebootName}\"</b> failed.<br>Error: ${err.message || err}` })
+                msg: `<b>"${rebootName}"</b> failed.<br>Error: ${err.message || err}`
+              })
             )
           );
         } else {
           return of({
             result: 'ERROR',
-            msg: `<b>\"${rebootName}\"</b> failed.<br>Bad registration device with id = ${deviceId}.<br><b>\"DiscoverAll\"</b> - RPC result is not \"CONTENT\"`
+            msg: `<b>"${rebootName}"</b> failed.<br>Bad registration device with id = ${deviceId}.<br><b>"DiscoverAll"</b> - RPC result is not "CONTENT"`
           });
         }
       }),
       catchError(err =>
         of({
           result: 'ERROR',
-          msg: `<b>\"${rebootName}\"</b> failed.<br>Bad registration device with id = ${deviceId}.<br>Error: ${err.message || err}`
+          msg: `<b>"${rebootName}"</b> failed.<br>Bad registration device with id = ${deviceId}.<br>Error: ${err.message || err}`
         })
       )
     );
   }
 
-  private rebootTrigger(resourcePath: string, urlApi: string): Observable<{ result: string, msg?: string }> {
-    return this.http.post<any>(urlApi, {
-      method: 'Execute',
-      params: { id: resourcePath }
-    }).pipe(
+  private rebootTrigger(deviceId: string, resourcePath: string, config?: RequestConfig): Observable<{ result: string, msg?: string }> {
+    return this.sendTwoWayRpcCommand(deviceId, {method: 'Execute', params: {id: resourcePath}}, config).pipe(
       timeout(10000),
       map(res => {
-        console.log(res);
         if (res?.result?.toUpperCase() === 'CHANGED') {
-          return { result: 'CHANGED' };
+          return {result: 'CHANGED'};
         } else {
           return {
-            result:`${res?.result}`,
-            msg: `${res?.error} `
+            result: `${res?.result}`,
+            msg: `${res?.error}`
           }
-        };
+        }
       }),
       catchError(err => {
         return throwError(() => err);

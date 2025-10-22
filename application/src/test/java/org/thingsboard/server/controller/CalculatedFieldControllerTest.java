@@ -29,15 +29,23 @@ import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfig
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS;
 
 @DaoSqlTest
 public class CalculatedFieldControllerTest extends AbstractControllerTest {
@@ -84,7 +92,35 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         assertThat(savedCalculatedField.getEntityId()).isEqualTo(calculatedField.getEntityId());
         assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
         assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
-        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getCalculatedFieldConfig());
+        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getSimpleCalculatedFieldConfig());
+        assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
+
+        savedCalculatedField.setName("Test CF");
+
+        CalculatedField updatedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
+
+        assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
+        assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
+
+        doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testSaveGeofencingCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), getGeofencingCalculatedFieldConfig());
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(savedCalculatedField).isNotNull();
+        assertThat(savedCalculatedField.getId()).isNotNull();
+        assertThat(savedCalculatedField.getCreatedTime()).isGreaterThan(0);
+        assertThat(savedCalculatedField.getTenantId()).isEqualTo(savedTenant.getId());
+        assertThat(savedCalculatedField.getEntityId()).isEqualTo(calculatedField.getEntityId());
+        assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
+        assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getGeofencingCalculatedFieldConfig());
         assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
 
         savedCalculatedField.setName("Test CF");
@@ -128,17 +164,41 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     }
 
     private CalculatedField getCalculatedField(DeviceId deviceId) {
+        return getCalculatedField(deviceId, getSimpleCalculatedFieldConfig());
+    }
+
+    private CalculatedField getCalculatedField(DeviceId deviceId, CalculatedFieldConfiguration configuration) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(deviceId);
         calculatedField.setType(CalculatedFieldType.SIMPLE);
         calculatedField.setName("Test Calculated Field");
         calculatedField.setConfigurationVersion(1);
-        calculatedField.setConfiguration(getCalculatedFieldConfig());
+        calculatedField.setConfiguration(configuration);
         calculatedField.setVersion(1L);
         return calculatedField;
     }
 
-    private CalculatedFieldConfiguration getCalculatedFieldConfig() {
+    private CalculatedFieldConfiguration getGeofencingCalculatedFieldConfig() {
+        var config = new GeofencingCalculatedFieldConfiguration();
+
+        var refDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+        refDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.TO, "FromSafeArea")));
+
+        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration);
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+
+        config.setEntityCoordinates(new EntityCoordinates("latitide", "longitude"));
+        config.setZoneGroups(Map.of("safeArea", zoneGroupConfiguration));
+        config.setScheduledUpdateEnabled(false);
+        config.setOutput(output);
+
+        return config;
+    }
+
+    private CalculatedFieldConfiguration getSimpleCalculatedFieldConfig() {
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
 
         Argument argument = new Argument();

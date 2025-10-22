@@ -25,6 +25,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.DaoUtil;
@@ -43,6 +46,7 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_FROM_TYPE_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TO_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TO_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_GROUP_PROPERTY;
@@ -293,4 +297,99 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit) {
         return DaoUtil.convertDataList(relationRepository.findRuleNodeToRuleChainRelations(ruleChainType, PageRequest.of(0, limit)));
     }
+
+    @Override
+    public List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery query) {
+        List<RelationPathLevel> levels = query.levels();
+        if (levels == null || levels.isEmpty()) {
+            return Collections.emptyList();
+        }
+        String sql = buildRelationPathSql(query);
+        Object[] params = buildRelationPathParams(query);
+
+        log.trace("[{}] relation path query: {}", tenantId, sql);
+
+        return jdbcTemplate.queryForList(sql, params).stream()
+                .map(row -> {
+                    var entityRelation = new EntityRelation();
+                    var fromId = (UUID) row.get(RELATION_FROM_ID_PROPERTY);
+                    var fromType = (String) row.get(RELATION_FROM_TYPE_PROPERTY);
+                    var toId = (UUID) row.get(RELATION_TO_ID_PROPERTY);
+                    var toType = (String) row.get(RELATION_TO_TYPE_PROPERTY);
+                    var grp = (String) row.get(RELATION_TYPE_GROUP_PROPERTY);
+                    var type = (String) row.get(RELATION_TYPE_PROPERTY);
+                    var version = (Long) row.get(VERSION_COLUMN);
+
+                    entityRelation.setFrom(EntityIdFactory.getByTypeAndUuid(fromType, fromId));
+                    entityRelation.setTo(EntityIdFactory.getByTypeAndUuid(toType, toId));
+                    entityRelation.setType(type);
+                    entityRelation.setTypeGroup(RelationTypeGroup.valueOf(grp));
+                    entityRelation.setVersion(version);
+                    return entityRelation;
+                })
+                .collect(Collectors.toList());
+    }
+
+    private Object[] buildRelationPathParams(EntityRelationPathQuery query) {
+        final List<Object> params = new ArrayList<>();
+        // seed
+        params.add(query.rootEntityId().getId());
+        params.add(query.rootEntityId().getEntityType().name());
+
+        // levels
+        for (var lvl : query.levels()) {
+            params.add(lvl.relationType());
+        }
+        return params.toArray();
+    }
+
+    private static String buildRelationPathSql(EntityRelationPathQuery query) {
+        List<RelationPathLevel> levels = query.levels();
+        StringBuilder sb = new StringBuilder();
+
+        sb.append("WITH seed AS (\n")
+                .append("  SELECT ?::uuid AS id, ?::varchar AS type\n")
+                .append(")");
+
+        String prev = "seed";
+        for (int i = 0; i < levels.size() - 1; i++) {
+            RelationPathLevel lvl = levels.get(i);
+            boolean down = lvl.direction() == EntitySearchDirection.FROM;
+
+            String cur = "lvl" + (i + 1);
+            String joinCond = down
+                    ? "r.from_id = p.id AND r.from_type = p.type"
+                    : "r.to_id   = p.id AND r.to_type   = p.type";
+            String selectNext = down
+                    ? "r.to_id   AS id, r.to_type   AS type"
+                    : "r.from_id AS id, r.from_type AS type";
+
+            sb.append(",\n").append(cur).append(" AS (\n")
+                    .append("  SELECT ").append(selectNext).append("\n")
+                    .append("  FROM ").append(RELATION_TABLE_NAME).append(" r\n")
+                    .append("  JOIN ").append(prev).append(" p ON ").append(joinCond).append("\n")
+                    .append("  WHERE r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n")
+                    .append("    AND r.relation_type = ?\n")
+                    .append(")");
+            prev = cur;
+        }
+
+        RelationPathLevel last = levels.get(levels.size() - 1);
+        boolean lastDown = last.direction() == EntitySearchDirection.FROM;
+        String prevForLast = (levels.size() == 1) ? "seed" : prev;
+        String lastJoin = lastDown
+                ? "r.from_id = p.id AND r.from_type = p.type"
+                : "r.to_id   = p.id AND r.to_type   = p.type";
+
+        sb.append("\n")
+                .append("SELECT r.from_id, r.from_type, r.to_id, r.to_type,\n")
+                .append("       r.relation_type_group, r.relation_type, r.version\n")
+                .append("FROM ").append(RELATION_TABLE_NAME).append(" r\n")
+                .append("JOIN ").append(prevForLast).append(" p ON ").append(lastJoin).append("\n")
+                .append("WHERE r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n")
+                .append("  AND r.relation_type = ?");
+
+        return sb.toString();
+    }
+
 }

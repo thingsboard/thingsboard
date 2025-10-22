@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -31,11 +30,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.concurrent.ExecutionException;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Slf4j
-@RuleNode(type = ComponentType.ENRICHMENT,
+@RuleNode(
+        type = ComponentType.ENRICHMENT,
         name = "originator fields",
         configClazz = TbGetOriginatorFieldsConfiguration.class,
         version = 1,
@@ -43,7 +39,9 @@ import java.util.concurrent.ExecutionException;
         nodeDetails = "Fetches fields values specified in the mapping. If specified field is not part of originator fields it will be ignored. " +
                 "Useful when you need to retrieve originator fields and use them for further message processing.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig")
+        configDirective = "tbEnrichmentNodeOriginatorFieldsConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-fields/"
+)
 public class TbGetOriginatorFieldsNode extends TbAbstractGetMappedDataNode<EntityId, TbGetOriginatorFieldsConfiguration> {
 
     protected final static String DATA_MAPPING_PROPERTY_NAME = "dataMapping";

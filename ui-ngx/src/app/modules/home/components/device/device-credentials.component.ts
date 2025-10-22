@@ -36,7 +36,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import {DeviceId} from "@shared/models/id/device-id";
+import { DeviceId } from "@shared/models/id/device-id";
 
 @Component({
   selector: 'tb-device-credentials',

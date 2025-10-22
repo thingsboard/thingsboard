@@ -135,6 +135,7 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
       legendLabelColor: [settings.legendLabelColor, []],
       legendValueFont: [settings.legendValueFont, []],
       legendValueColor: [settings.legendValueColor, []],
+      legendShowTotal: [settings.legendShowTotal, []],
 
       showTooltip: [settings.showTooltip, []],
       tooltipValueType: [settings.tooltipValueType, []],
@@ -164,12 +165,14 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
       this.latestChartWidgetSettingsForm.get('legendLabelColor').enable();
       this.latestChartWidgetSettingsForm.get('legendValueFont').enable();
       this.latestChartWidgetSettingsForm.get('legendValueColor').enable();
+      this.latestChartWidgetSettingsForm.get('legendShowTotal').enable();
     } else {
       this.latestChartWidgetSettingsForm.get('legendPosition').disable();
       this.latestChartWidgetSettingsForm.get('legendLabelFont').disable();
       this.latestChartWidgetSettingsForm.get('legendLabelColor').disable();
       this.latestChartWidgetSettingsForm.get('legendValueFont').disable();
       this.latestChartWidgetSettingsForm.get('legendValueColor').disable();
+      this.latestChartWidgetSettingsForm.get('legendShowTotal').disable();
     }
     if (showTooltip) {
       this.latestChartWidgetSettingsForm.get('tooltipValueType').enable();

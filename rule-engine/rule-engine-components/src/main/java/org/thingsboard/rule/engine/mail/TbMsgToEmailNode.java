@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.mail;
 
 import com.fasterxml.jackson.core.type.TypeReference;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -34,7 +33,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.HashMap;
 import java.util.Map;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "to email",
@@ -43,7 +41,8 @@ import java.util.Map;
         nodeDetails = "Transforms message to email message. If transformation completed successfully output message type will be set to <code>SEND_EMAIL</code>.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         configDirective = "tbTransformationNodeToEmailConfig",
-        icon = "email"
+        icon = "email",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/to-email/"
 )
 public class TbMsgToEmailNode implements TbNode {
 
@@ -55,20 +54,15 @@ public class TbMsgToEmailNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
-        this.dynamicMailBodyType = DYNAMIC.equals(this.config.getMailBodyType());
-     }
+        config = TbNodeUtils.convert(configuration, TbMsgToEmailNodeConfiguration.class);
+        dynamicMailBodyType = DYNAMIC.equals(config.getMailBodyType());
+    }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        try {
-            TbEmail email = convert(msg);
-            TbMsg emailMsg = buildEmailMsg(ctx, msg, email);
-            ctx.tellNext(emailMsg, TbNodeConnectionType.SUCCESS);
-        } catch (Exception ex) {
-            log.warn("Can not convert message to email " + ex.getMessage());
-            ctx.tellFailure(msg, ex);
-        }
+        TbEmail email = convert(msg);
+        TbMsg emailMsg = buildEmailMsg(ctx, msg, email);
+        ctx.tellNext(emailMsg, TbNodeConnectionType.SUCCESS);
     }
 
     private TbMsg buildEmailMsg(TbContext ctx, TbMsg msg, TbEmail email) {

@@ -20,7 +20,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -41,7 +40,6 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "rpc call request",
@@ -50,17 +48,18 @@ import java.util.concurrent.TimeUnit;
         nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes." +
                 "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
         configDirective = "tbActionNodeRpcRequestConfig",
-        icon = "call_made"
+        icon = "call_made",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rpc-call-request/"
 )
 public class TbSendRPCRequestNode implements TbNode {
 
-    private Random random = new Random();
-    private Gson gson = new Gson();
+    private final Random random = new Random();
+    private final Gson gson = new Gson();
     private TbSendRpcRequestNodeConfiguration config;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbSendRpcRequestNodeConfiguration.class);
+        config = TbNodeUtils.convert(configuration, TbSendRpcRequestNodeConfiguration.class);
     }
 
     @Override
