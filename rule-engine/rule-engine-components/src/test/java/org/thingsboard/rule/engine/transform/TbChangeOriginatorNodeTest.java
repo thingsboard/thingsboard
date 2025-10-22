@@ -57,7 +57,6 @@ import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.relation.RelationService;
 
@@ -100,8 +99,6 @@ public class TbChangeOriginatorNodeTest {
     @Mock
     private AssetService assetServiceMock;
     @Mock
-    private DeviceService deviceServiceMock;
-    @Mock
     private RelationService relationServiceMock;
     @Mock
     private RuleEngineAlarmService alarmServiceMock;
@@ -116,7 +113,6 @@ public class TbChangeOriginatorNodeTest {
         lenient().when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
         lenient().when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-        lenient().when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         lenient().when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
         lenient().when(ctxMock.getAlarmService()).thenReturn(alarmServiceMock);
         lenient().when(ctxMock.getEntityService()).thenReturn(entityServiceMock);

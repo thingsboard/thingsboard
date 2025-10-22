@@ -53,12 +53,9 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.dao.user.UserService;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -97,12 +94,6 @@ public class TbGetCustomerAttributeNodeTest {
     @Mock
     private TimeseriesService timeseriesServiceMock;
     @Mock
-    private UserService userServiceMock;
-    @Mock
-    private AssetService assetServiceMock;
-    @Mock
-    private DeviceService deviceServiceMock;
-    @Mock
     private EntityService entityServiceMock;
 
     private TbGetCustomerAttributeNode node;
@@ -120,9 +111,6 @@ public class TbGetCustomerAttributeNodeTest {
         lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
         lenient().when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
         lenient().when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
-        lenient().when(ctxMock.getUserService()).thenReturn(userServiceMock);
-        lenient().when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
-        lenient().when(ctxMock.getDeviceService()).thenReturn(deviceServiceMock);
         lenient().when(ctxMock.getEntityService()).thenReturn(entityServiceMock);
     }
 
