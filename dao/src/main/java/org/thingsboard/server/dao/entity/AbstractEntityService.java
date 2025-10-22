@@ -94,8 +94,7 @@ public abstract class AbstractEntityService {
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
 
-    protected <E extends HasId & HasTenantId> E saveLimitedEntity(E entity, Supplier<E> saveFunction) {
-        log.debug("Creating limited entity: {}", entity);
+    protected <E extends HasId & HasTenantId> E saveEntity(E entity, Supplier<E> saveFunction) {
         if (entity.getId() == null) {
             ReentrantLock lock = entityCreationLocks.computeIfAbsent(entity.getTenantId(), id -> new ReentrantLock());
             lock.lock();

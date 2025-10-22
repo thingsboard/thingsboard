@@ -159,7 +159,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     @Transactional
     public User saveUser(TenantId tenantId, User user) {
-        return saveLimitedEntity(user, () -> doSaveUser(tenantId, user));
+        return saveEntity(user, () -> doSaveUser(tenantId, user));
     }
 
     private User doSaveUser(TenantId tenantId, User user) {

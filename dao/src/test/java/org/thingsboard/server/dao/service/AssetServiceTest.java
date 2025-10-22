@@ -18,9 +18,9 @@ package org.thingsboard.server.dao.service;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import org.junit.After;
+import org.junit.AfterClass;
 import org.junit.Assert;
-import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -93,17 +93,18 @@ public class AssetServiceTest extends AbstractServiceTest {
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
 
+    private static ListeningExecutorService executor;
+
     private IdComparator<Asset> idComparator = new IdComparator<>();
-    ListeningExecutorService executor;
     private TenantId anotherTenantId;
 
-    @Before
-    public void before() {
-        executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope")));
+    @BeforeClass
+    public static void before() {
+        executor = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(10, ThingsBoardThreadFactory.forName("AssetServiceTestScope")));
     }
 
-    @After
-    public void after() {
+    @AfterClass
+    public static void after() {
         executor.shutdownNow();
     }
 
