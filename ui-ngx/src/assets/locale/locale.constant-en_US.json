@@ -2428,7 +2428,9 @@
                 "composite-all-description": "All resources are observed with a single Composite Observe request (more efficient, less flexible)",
                 "composite-by-object": "Composite by objects",
                 "composite-by-object-description": "Resources are grouped by object type and observed using separate Composite Observe requests (balanced approach)"
-            }
+            },
+            "init-attr-tel-as-obs-strategy": "Initialize attributes and telemetry using Observe strategy",
+            "init-attr-tel-as-obs-strategy-hint": "If false - attributes and telemetry are initialized by reading their values one by one.\\nIf true - attributes and telemetry are initialized by subscribing to their values using the Observe strategy."
         },
         "snmp": {
             "add-communication-config": "Add communication config",
