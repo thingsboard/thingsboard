@@ -135,8 +135,13 @@ class DeviceProfileDataValidatorTest {
     }
 
     @Test
-    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_0_Error() {
-        verifyValidationError(123, 0, msgErrorBsRange);
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_validate_0_to_null_Ok() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = 0;
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
+
+        validator.validateDataImpl(tenantId, deviceProfile);
+        verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
 
     @Test
