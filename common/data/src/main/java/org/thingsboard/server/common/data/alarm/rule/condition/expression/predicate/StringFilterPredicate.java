@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
 @Data
 public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
 
+    @NotNull
     private StringOperation operation;
+    @Valid
+    @NotNull
     private AlarmConditionValue<String> value;
     private boolean ignoreCase;
 
@@ -40,4 +45,5 @@ public class StringFilterPredicate implements SimpleKeyFilterPredicate<String> {
         IN,
         NOT_IN
     }
+
 }

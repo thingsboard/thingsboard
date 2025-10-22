@@ -159,7 +159,7 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent) {
         var result = withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
-        if (result.getAlarm() != null) {
+        if (pushEvent && result.getAlarm() != null) {
             eventPublisher.publishEvent(ActionEntityEvent.builder()
                     .tenantId(tenantId)
                     .entityId(result.getAlarm().getId())

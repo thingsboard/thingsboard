@@ -51,10 +51,6 @@ import java.util.UUID;
 
 public interface AlarmService extends EntityDaoService {
 
-    /*
-     *  New API, since 3.5.
-     */
-
     /**
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}

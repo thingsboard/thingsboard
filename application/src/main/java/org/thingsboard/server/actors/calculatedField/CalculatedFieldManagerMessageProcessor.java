@@ -121,7 +121,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     public void stop() {
         log.info("[{}] Stopping CF manager actor.", tenantId);
-        calculatedFields.values().forEach(CalculatedFieldCtx::stop);
+        calculatedFields.values().forEach(CalculatedFieldCtx::close);
         calculatedFields.clear();
         entityIdCalculatedFields.clear();
         entityIdCalculatedFieldLinks.clear();
@@ -326,7 +326,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 log.debug("[{}] Failed to lookup CF by id [{}]", tenantId, cfId);
                 callback.onSuccess();
             } else {
-                var newCfCtx = getCfCtx(newCf); // fixme wtf? why isn't oldCfCtx closed properly? when to close it?
+                var newCfCtx = getCfCtx(newCf);
                 try {
                     newCfCtx.init();
                 } catch (Exception e) {
@@ -366,14 +366,26 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     return;
                 }
 
-                applyToTargetCfEntityActors(newCfCtx, callback, (id, cb) -> initCfForEntity(id, newCfCtx, stateAction, cb));
+                applyToTargetCfEntityActors(newCfCtx, new TbCallback() {
+                    @Override
+                    public void onSuccess() {
+                        oldCfCtx.close();
+                        callback.onSuccess();
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        oldCfCtx.close();
+                        callback.onFailure(t);
+                    }
+                }, (id, cb) -> initCfForEntity(id, newCfCtx, stateAction, cb));
             }
         }
     }
 
     private void onCfDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
-        var cfCtx = calculatedFields.remove(cfId); // fixme wtf? why isn't ctx closed properly?
+        var cfCtx = calculatedFields.remove(cfId);
         if (cfCtx == null) {
             log.debug("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
@@ -381,7 +393,19 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
         entityIdCalculatedFields.get(cfCtx.getEntityId()).remove(cfCtx);
         deleteLinks(cfCtx);
-        applyToTargetCfEntityActors(cfCtx, callback, (id, cb) -> deleteCfForEntity(id, cfId, cb));
+        applyToTargetCfEntityActors(cfCtx, new TbCallback() {
+            @Override
+            public void onSuccess() {
+                cfCtx.close();
+                callback.onSuccess();
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                cfCtx.close();
+                callback.onFailure(t);
+            }
+        }, (id, cb) -> deleteCfForEntity(id, cfId, cb));
     }
 
     public void onTelemetryMsg(CalculatedFieldTelemetryMsg msg) {

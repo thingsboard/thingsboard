@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.queue;
 
-import com.google.protobuf.ProtocolStringList;
 import jakarta.annotation.PreDestroy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,7 +27,6 @@ import org.thingsboard.server.actors.calculatedField.CalculatedFieldLinkedTeleme
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -61,7 +59,6 @@ import org.thingsboard.server.service.queue.processing.AbstractPartitionBasedCon
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -183,8 +180,7 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
     }
 
     private void processMsg(ToCalculatedFieldMsg toCfMsg, UUID id, TbCallback callback) {
-        Set<CalculatedFieldType> cfTypes = getCfTypes(toCfMsg.getCfTypesList());
-        if (toCfMsg.hasTelemetryMsg()) { // TODO: add CF type filter to the message. or just rename the CF strategy to "Process alarms and calculated fields
+        if (toCfMsg.hasTelemetryMsg()) {
             log.trace("[{}] Forwarding regular telemetry message for processing {}", id, toCfMsg.getTelemetryMsg());
             forwardToActorSystem(toCfMsg.getTelemetryMsg(), callback);
         } else if (toCfMsg.hasLinkedTelemetryMsg()) {
@@ -262,18 +258,6 @@ public class DefaultTbCalculatedFieldConsumerService extends AbstractPartitionBa
 
     private TenantId toTenantId(long tenantIdMSB, long tenantIdLSB) {
         return TenantId.fromUUID(new UUID(tenantIdMSB, tenantIdLSB));
-    }
-
-    private Set<CalculatedFieldType> getCfTypes(ProtocolStringList cfTypesList) {
-        Set<CalculatedFieldType> cfTypes;
-        if (cfTypesList.isEmpty()) {
-            cfTypes = EnumSet.allOf(CalculatedFieldType.class);
-        } else {
-            cfTypes = cfTypesList.stream()
-                    .map(CalculatedFieldType::valueOf)
-                    .collect(Collectors.toSet());
-        }
-        return cfTypes;
     }
 
     @Override

@@ -15,13 +15,18 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
 @Data
 public class BooleanFilterPredicate implements SimpleKeyFilterPredicate<Boolean> {
 
+    @NotNull
     private BooleanOperation operation;
+    @Valid
+    @NotNull
     private AlarmConditionValue<Boolean> value;
 
     @Override

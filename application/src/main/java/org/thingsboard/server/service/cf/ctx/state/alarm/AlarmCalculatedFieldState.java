@@ -103,6 +103,18 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         this.configuration = getConfiguration(ctx);
         this.alarmType = ctx.getCalculatedField().getName();
 
+        Map<AlarmSeverity, AlarmRule> createRules = configuration.getCreateRules();
+        createRules.forEach((severity, rule) -> {
+            AlarmRuleState ruleState = createRuleStates.get(severity);
+            if (ruleState != null) {
+                ruleState.setAlarmRule(rule);
+            }
+        });
+        AlarmRule clearRule = configuration.getClearRule();
+        if (clearRule != null && clearRuleState != null) {
+            clearRuleState.setAlarmRule(clearRule);
+        }
+
         if (currentAlarm != null && !currentAlarm.getType().equals(alarmType)) {
             currentAlarm = null;
             initialFetchDone = false;
@@ -265,7 +277,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                     clearState(state);
                 }
                 AlarmApiCallResult clearResult = ctx.getAlarmService().clearAlarm(
-                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), true
+                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), false
                 );
                 if (clearResult.isCleared()) {
                     result = TbAlarmResult.builder()
