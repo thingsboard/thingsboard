@@ -187,9 +187,18 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
+        var event = msg.getData().getEvent();
+        if (msg.getData().isRelationChanged()) {
+            log.debug("Processing relation [{}] event: ", msg.getData().getEvent());
+            switch (event) {
+                case RELATION_UPDATED -> onRelationUpdated(msg.getData(), msg.getCallback());
+                case RELATION_DELETED -> onRelationDeleted(msg.getData(), msg.getCallback());
+                default -> msg.getCallback().onSuccess();
+            }
+            return;
+        }
         log.debug("Processing entity lifecycle event: [{}] for entity: [{}]", msg.getData().getEvent(), msg.getData().getEntityId());
         var entityType = msg.getData().getEntityId().getEntityType();
-        var event = msg.getData().getEvent();
         switch (entityType) {
             case CALCULATED_FIELD -> {
                 switch (event) {
@@ -280,26 +289,20 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             }
         } else if (msg.isOwnerChanged()) {
             onEntityOwnerChanged(msg, callback);
-        } else if (msg.isRelationChanged()) {
-            onRelationUpdated(msg, callback);
         } else {
             callback.onSuccess();
         }
     }
 
     private void onEntityDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
-        if (msg.isRelationChanged()) {
-            onRelationDeleted(msg, callback);
-        } else {
-            switch (msg.getEntityId().getEntityType()) {
-                case DEVICE, ASSET -> entityProfileCache.removeEntityId(msg.getEntityId());
-                case CUSTOMER -> ownerEntities.remove(msg.getEntityId());
-            }
-            ownerEntities.values().forEach(entities -> entities.remove(msg.getEntityId()));
-            if (isMyPartition(msg.getEntityId(), callback)) {
-                log.debug("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
-                getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
-            }
+        switch (msg.getEntityId().getEntityType()) {
+            case DEVICE, ASSET -> entityProfileCache.removeEntityId(msg.getEntityId());
+            case CUSTOMER -> ownerEntities.remove(msg.getEntityId());
+        }
+        ownerEntities.values().forEach(entities -> entities.remove(msg.getEntityId()));
+        if (isMyPartition(msg.getEntityId(), callback)) {
+            log.debug("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
+            getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
         }
     }
 

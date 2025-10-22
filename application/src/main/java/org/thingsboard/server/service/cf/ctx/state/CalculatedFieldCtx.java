@@ -263,33 +263,23 @@ public class CalculatedFieldCtx {
     }
 
     public ListenableFuture<Object> evaluateTbelExpression(String expression, CalculatedFieldState state) {
-        return evaluateTbelExpression(tbelExpressions.get(expression), state);
+        return evaluateTbelExpression(tbelExpressions.get(expression), state.getArguments(), state.getLatestTimestamp());
     }
 
     public ListenableFuture<Object> evaluateTbelExpression(CalculatedFieldScriptEngine expression, CalculatedFieldState state) {
-        Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
-        List<Object> args = new ArrayList<>(argNames.size() + 1);
-        args.add(new Object()); // first element is a ctx, but we will set it later;
-        for (String argName : argNames) {
-            var arg = toTbelArgument(argName, state);
-            arguments.put(argName, arg);
-            if (arg instanceof TbelCfSingleValueArg svArg) {
-                args.add(svArg.getValue());
-            } else {
-                args.add(arg);
-            }
-        }
-        args.set(0, new TbelCfCtx(arguments, state.getLatestTimestamp()));
-
-        return expression.executeScriptAsync(args.toArray());
+        return evaluateTbelExpression(expression, state.getArguments(), state.getLatestTimestamp());
     }
 
     public ListenableFuture<Object> evaluateTbelExpression(String expression, Map<String, ArgumentEntry> entries, long latestTimestamp) {
+        return evaluateTbelExpression(tbelExpressions.get(expression), entries, latestTimestamp);
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(CalculatedFieldScriptEngine expression, Map<String, ArgumentEntry> entries, long latestTimestamp) {
         Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
         List<Object> args = new ArrayList<>(argNames.size() + 1);
         args.add(new Object()); // first element is a ctx, but we will set it later;
         for (String argName : argNames) {
-            var arg = entries.get(argName).toTbelCfArg();
+            var arg = toTbelArgument(argName, entries);
             arguments.put(argName, arg);
             if (arg instanceof TbelCfSingleValueArg svArg) {
                 args.add(svArg.getValue());
@@ -299,7 +289,7 @@ public class CalculatedFieldCtx {
         }
         args.set(0, new TbelCfCtx(arguments, latestTimestamp));
 
-        return tbelExpressions.get(expression).executeScriptAsync(args.toArray());
+        return expression.executeScriptAsync(args.toArray());
     }
 
     public ScheduledFuture<?> scheduleReevaluation(long delayMs, TbActorRef actorCtx) {
@@ -308,8 +298,8 @@ public class CalculatedFieldCtx {
         return systemContext.scheduleMsgWithDelay(actorCtx, new CalculatedFieldReevaluateMsg(tenantId, this), delayMs);
     }
 
-    private TbelCfArg toTbelArgument(String key, CalculatedFieldState state) {
-        return state.getArguments().get(key).toTbelCfArg();
+    private TbelCfArg toTbelArgument(String key, Map<String, ArgumentEntry> arguments) {
+        return arguments.get(key).toTbelCfArg();
     }
 
     private void initTbelExpression(String expression) {
@@ -658,7 +648,7 @@ public class CalculatedFieldCtx {
                     yield true;
                 }
                 yield geofencingState.getLastDynamicArgumentsRefreshTs() <
-                      System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+                        System.currentTimeMillis() - scheduledUpdateIntervalMillis;
             }
             default -> false;
         };

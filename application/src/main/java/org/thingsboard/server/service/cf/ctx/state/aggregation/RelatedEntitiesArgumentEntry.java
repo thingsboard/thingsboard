@@ -50,6 +50,10 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
             aggInputs.putAll(relatedEntitiesArgumentEntry.aggInputs);
             return true;
         } else if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            if (entry.isForceResetPrevious()) {
+                aggInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                return true;
+            }
             ArgumentEntry argumentEntry = aggInputs.get(singleValueArgumentEntry.getEntityId());
             if (argumentEntry != null) {
                 argumentEntry.updateEntry(singleValueArgumentEntry);

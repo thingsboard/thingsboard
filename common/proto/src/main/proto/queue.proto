@@ -916,11 +916,6 @@ message GeofencingArgumentProto {
   repeated GeofencingZoneProto zones = 2;
 }
 
-message RelatedEntitiesAggregationStateProto {
-  int64 lastArgsUpdateTs = 1;
-  repeated SingleValueArgumentProto aggArguments = 2;
-}
-
 message CalculatedFieldStateProto {
   CalculatedFieldEntityCtxIdProto id = 1;
   string type = 2;
@@ -928,7 +923,7 @@ message CalculatedFieldStateProto {
   repeated TsRollingArgumentProto rollingValueArguments = 4;
   repeated GeofencingArgumentProto geofencingArguments = 5;
   AlarmStateProto alarmState = 6;
-  RelatedEntitiesAggregationStateProto relatedEntitiesAggregationState = 7;
+  int64 lastArgsUpdateTs = 7;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1281,6 +1276,8 @@ enum ComponentLifecycleEvent {
     DELETED       = 6;
     FAILED        = 7;
     DEACTIVATED   = 8;
+    RELATION_UPDATED = 9;
+    RELATION_DELETED = 10;
 }
 
 message ComponentLifecycleMsgProto {

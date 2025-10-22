@@ -42,6 +42,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 @Slf4j
 @Getter
 public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
@@ -50,7 +52,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     private long lastArgsRefreshTs = -1;
     @Setter
     private long lastMetricsEvalTs = -1;
-    private long deduplicationInterval = -1;
+    private long deduplicationIntervalMs = -1;
     private Map<String, AggMetric> metrics;
 
     public RelatedEntitiesAggregationCalculatedFieldState(EntityId entityId) {
@@ -62,7 +64,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         super.setCtx(ctx, actorCtx);
         var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         metrics = configuration.getMetrics();
-        deduplicationInterval = configuration.getDeduplicationIntervalInSec();
+        deduplicationIntervalMs = SECONDS.toMillis(configuration.getDeduplicationIntervalInSec());
     }
 
     @Override
@@ -76,7 +78,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     @Override
     public void init() {
         super.init();
-        ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
+        ctx.scheduleReevaluation(deduplicationIntervalMs, actorCtx);
     }
 
     @Override
@@ -97,16 +99,14 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
             Output output = ctx.getOutput();
             ObjectNode aggResult = aggregateMetrics(output);
             lastMetricsEvalTs = System.currentTimeMillis();
-            ctx.scheduleReevaluation(deduplicationInterval, actorCtx);
+            ctx.scheduleReevaluation(deduplicationIntervalMs, actorCtx);
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                     .type(output.getType())
                     .scope(output.getScope())
                     .result(toSimpleResult(ctx.isUseLatestTs(), aggResult))
                     .build());
         } else {
-            return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
-                    .result(null)
-                    .build());
+            return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
         }
     }
 
@@ -125,7 +125,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     private boolean shouldRecalculate() {
-        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - deduplicationInterval;
+        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - deduplicationIntervalMs;
         boolean argsUpdatedDuringInterval = lastArgsRefreshTs > lastMetricsEvalTs;
         return intervalPassed && argsUpdatedDuringInterval;
     }

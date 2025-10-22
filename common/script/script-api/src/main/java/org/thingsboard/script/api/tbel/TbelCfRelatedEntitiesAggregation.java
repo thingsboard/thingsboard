@@ -34,7 +34,7 @@ public class TbelCfRelatedEntitiesAggregation implements TbelCfArg {
 
     @Override
     public String getType() {
-        return "LATEST_VALUES_AGGREGATION";
+        return "RELATED_ENTITIES_AGGREGATION";
     }
 
     @Override

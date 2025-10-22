@@ -34,7 +34,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdPro
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
-import org.thingsboard.server.gen.transport.TransportProtos.RelatedEntitiesAggregationStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsDoubleValProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsRollingArgumentProto;
@@ -96,16 +95,18 @@ public class CalculatedFieldUtils {
                 .setId(toProto(stateId))
                 .setType(state.getType().name());
 
-        RelatedEntitiesAggregationStateProto.Builder aggBuilder = RelatedEntitiesAggregationStateProto.newBuilder();
         state.getArguments().forEach((argName, argEntry) -> {
             switch (argEntry.getType()) {
-                case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
-                case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
-                case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
+                case SINGLE_VALUE ->
+                        builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
+                case TS_ROLLING ->
+                        builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
+                case GEOFENCING ->
+                        builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
                 case RELATED_ENTITIES -> {
                     RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
                     relatedEntitiesArgumentEntry.getAggInputs()
-                            .forEach((entityId, entry) -> aggBuilder.addAggArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
+                            .forEach((entityId, entry) -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
                 }
             }
         });
@@ -119,8 +120,7 @@ public class CalculatedFieldUtils {
             }
         }
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
-            aggBuilder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
-            builder.setRelatedEntitiesAggregationState(aggBuilder.build());
+            builder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
         }
         return builder.build();
     }
@@ -208,6 +208,20 @@ public class CalculatedFieldUtils {
             case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(id.entityId());
         };
 
+        if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
+            Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
+            proto.getSingleValueArgumentsList().forEach(argProto -> {
+                SingleValueArgumentEntry entry = fromSingleValueArgumentProto(argProto);
+                arguments.computeIfAbsent(argProto.getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
+            });
+            arguments.forEach((argName, entityInputs) -> {
+                relatedEntitiesAggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
+            });
+            relatedEntitiesAggState.setLastArgsRefreshTs(proto.getLastArgsUpdateTs());
+
+            return relatedEntitiesAggState;
+        }
+
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
@@ -230,19 +244,6 @@ public class CalculatedFieldUtils {
                 if (alarmStateProto.hasClearRuleState()) {
                     alarmState.setClearRuleState(fromAlarmRuleStateProto(alarmStateProto.getClearRuleState(), alarmState));
                 }
-            }
-            case RELATED_ENTITIES_AGGREGATION -> {
-                RelatedEntitiesAggregationCalculatedFieldState aggState = (RelatedEntitiesAggregationCalculatedFieldState) state;
-                RelatedEntitiesAggregationStateProto aggregationStateProto = proto.getRelatedEntitiesAggregationState();
-                Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
-                aggregationStateProto.getAggArgumentsList().forEach(argProto -> {
-                    SingleValueArgumentEntry entry = fromSingleValueArgumentProto(argProto);
-                    arguments.computeIfAbsent(argProto.getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
-                });
-                arguments.forEach((argName, entityInputs) -> {
-                    aggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
-                });
-                aggState.setLastArgsRefreshTs(aggregationStateProto.getLastArgsUpdateTs());
             }
         }
 

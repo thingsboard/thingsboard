@@ -20,7 +20,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFuncti
 
 public class MaxAggEntry extends BaseAggEntry {
 
-    private double max = -Double.MAX_VALUE;
+    private double max = Double.MIN_VALUE;
 
     @Override
     protected void doUpdate(double value) {
