@@ -199,7 +199,14 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                 RelationPathLevel inverseRelation = new RelationPathLevel(inverseDirection, relation.relationType());
                 List<EntityRelation> byRelationPathQuery = relationService.findByRelationPathQuery(tenantId, new EntityRelationPathQuery(entityId, List.of(inverseRelation)));
                 if (!byRelationPathQuery.isEmpty()) {
-                    return true;
+                    EntityId cfEntityId = cfCtx.getEntityId();
+                    for (EntityRelation entityRelation : byRelationPathQuery) {
+                        EntityId relatedId = (inverseDirection == EntitySearchDirection.FROM) ? entityRelation.getTo() : entityRelation.getFrom();
+                        if (cfEntityId.equals(relatedId) || cfEntityId.equals(calculatedFieldCache.getProfileId(tenantId, relatedId))) {
+                            return true;
+                        }
+                    }
+                    return false;
                 }
             }
         }

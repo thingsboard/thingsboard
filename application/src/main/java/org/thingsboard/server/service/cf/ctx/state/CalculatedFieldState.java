@@ -55,8 +55,6 @@ public interface CalculatedFieldState extends Closeable {
 
     long getLatestTimestamp();
 
-    CalculatedFieldCtx getCtx();
-
     void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx);
 
     void init();
