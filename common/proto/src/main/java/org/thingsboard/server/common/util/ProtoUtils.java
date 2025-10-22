@@ -130,7 +130,6 @@ public class ProtoUtils {
             builder.setOldProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
         }
         builder.setOwnerChanged(msg.isOwnerChanged());
-        builder.setRelationChanged(msg.isRelationChanged());
         if (msg.getName() != null) {
             builder.setName(msg.getName());
         }
@@ -168,7 +167,6 @@ public class ProtoUtils {
             builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
         }
         builder.ownerChanged(proto.getOwnerChanged());
-        builder.relationChanged(proto.getRelationChanged());
         if (proto.hasInfo()) {
             builder.info(JacksonUtil.toJsonNode(proto.getInfo()));
         }

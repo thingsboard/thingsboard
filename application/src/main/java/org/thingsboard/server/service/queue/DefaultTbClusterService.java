@@ -740,7 +740,6 @@ public class DefaultTbClusterService implements TbClusterService {
         ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
                 .tenantId(tenantId)
                 .entityId(entityRelation.getFrom())
-                .relationChanged(true)
                 .event(ComponentLifecycleEvent.RELATION_UPDATED)
                 .info(JacksonUtil.valueToTree(entityRelation))
                 .build();
@@ -752,7 +751,6 @@ public class DefaultTbClusterService implements TbClusterService {
         ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
                 .tenantId(tenantId)
                 .entityId(entityRelation.getFrom())
-                .relationChanged(true)
                 .event(ComponentLifecycleEvent.RELATION_DELETED)
                 .info(JacksonUtil.valueToTree(entityRelation))
                 .build();

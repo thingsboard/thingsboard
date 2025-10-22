@@ -40,6 +40,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
+import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -77,6 +78,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 
@@ -188,16 +190,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
         var event = msg.getData().getEvent();
-        if (msg.getData().isRelationChanged()) {
-            log.debug("Processing relation [{}] event: ", msg.getData().getEvent());
-            switch (event) {
-                case RELATION_UPDATED -> onRelationUpdated(msg.getData(), msg.getCallback());
-                case RELATION_DELETED -> onRelationDeleted(msg.getData(), msg.getCallback());
-                default -> msg.getCallback().onSuccess();
-            }
+        if (ComponentLifecycleEvent.RELATION_UPDATED.equals(event) || ComponentLifecycleEvent.RELATION_DELETED.equals(event)) {
+            log.debug("Processing relation [{}] event from entity: [{}]", event, msg.getData().getEntityId());
+            onRelationChangedEvent(msg.getData(), msg.getCallback());
             return;
         }
-        log.debug("Processing entity lifecycle event: [{}] for entity: [{}]", msg.getData().getEvent(), msg.getData().getEntityId());
+        log.debug("Processing entity lifecycle event: [{}] for entity: [{}]", event, msg.getData().getEntityId());
         var entityType = msg.getData().getEntityId().getEntityType();
         switch (entityType) {
             case CALCULATED_FIELD -> {
@@ -306,35 +304,28 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
-    private void onRelationUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
-        try {
-            EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
-            EntityId toId = entityRelation.getTo();
-            EntityId fromId = entityRelation.getFrom();
-            String relationType = entityRelation.getType();
+    private void onRelationChangedEvent(ComponentLifecycleMsg msg, TbCallback callback) {
+        Function<EntityId, TriConsumer<EntityId, CalculatedFieldCtx, TbCallback>> relationAction = switch (msg.getEvent()) {
+            case RELATION_UPDATED -> relatedId -> (entityId, ctx, cb) -> initRelatedEntity(entityId, relatedId, ctx, cb);
+            case RELATION_DELETED -> relatedId -> (entityId, ctx, cb) -> deleteRelatedEntity(entityId, relatedId, ctx, cb);
+            default -> null;
+        };
 
-            MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
-            processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, (entityId, ctx, cb) -> initRelatedEntity(entityId, fromId, ctx, cb));
-            processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, (entityId, ctx, cb) -> initRelatedEntity(entityId, toId, ctx, cb));
-        } catch (Exception e) {
+        if (relationAction == null) {
             callback.onSuccess();
+            return;
         }
+
+        EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
+        EntityId toId = entityRelation.getTo();
+        EntityId fromId = entityRelation.getFrom();
+        String relationType = entityRelation.getType();
+
+        MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
+        processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, relationAction.apply(fromId));
+        processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, relationAction.apply(toId));
     }
 
-    private void onRelationDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
-        try {
-            EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
-            EntityId toId = entityRelation.getTo();
-            EntityId fromId = entityRelation.getFrom();
-            String relationType = entityRelation.getType();
-
-            MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
-            processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, (entityId, ctx, cb) -> deleteRelatedEntity(entityId, fromId, ctx, cb));
-            processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, (entityId, ctx, cb) -> deleteRelatedEntity(entityId, toId, ctx, cb));
-        } catch (Exception e) {
-            callback.onSuccess();
-        }
-    }
 
     private void processRelationByDirection(EntitySearchDirection direction,
                                             String relationType,

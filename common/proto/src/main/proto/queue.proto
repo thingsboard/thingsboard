@@ -1296,7 +1296,6 @@ message ComponentLifecycleMsgProto {
   int64 profileIdLSB = 12;
   optional string info = 13;
   bool ownerChanged = 100;
-  bool relationChanged = 14;
 }
 
 message EdgeEventMsgProto {
