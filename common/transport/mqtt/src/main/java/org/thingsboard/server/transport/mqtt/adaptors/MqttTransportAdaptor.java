@@ -41,9 +41,6 @@ import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionConte
 
 import java.util.Optional;
 
-/**
- * @author Andrew Shvayka
- */
 public interface MqttTransportAdaptor {
 
     ByteBufAllocator ALLOCATOR = new UnpooledByteBufAllocator(false);
@@ -90,4 +87,5 @@ public interface MqttTransportAdaptor {
         payload.writeBytes(payloadInBytes);
         return new MqttPublishMessage(mqttFixedHeader, header, payload);
     }
+
 }

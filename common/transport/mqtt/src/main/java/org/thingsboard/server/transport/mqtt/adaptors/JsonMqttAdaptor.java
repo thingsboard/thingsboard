@@ -45,10 +45,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_SOFTWARE_FIRMWARE_RESPONSES_TOPIC_FORMAT;
 
-
-/**
- * @author Andrew Shvayka
- */
 @Component
 @Slf4j
 public class JsonMqttAdaptor implements MqttTransportAdaptor {
@@ -122,7 +118,7 @@ public class JsonMqttAdaptor implements MqttTransportAdaptor {
     public Optional<MqttMessage> convertToGatewayPublish(MqttDeviceAwareSessionContext ctx, String deviceName, TransportProtos.GetAttributeResponseMsg responseMsg) throws AdaptorException {
         return processConvertFromGatewayAttributeResponseMsg(ctx, deviceName, responseMsg);
     }
-    
+
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.AttributeUpdateNotificationMsg notificationMsg, String topic) {
         return Optional.of(createMqttPublishMsg(ctx, topic, JsonConverter.toJson(notificationMsg)));

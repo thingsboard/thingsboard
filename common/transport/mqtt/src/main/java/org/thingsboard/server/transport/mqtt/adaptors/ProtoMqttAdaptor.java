@@ -48,7 +48,7 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(MqttDeviceAwareSessionContext ctx, MqttPublishMessage inbound) throws AdaptorException {
         DeviceSessionCtx deviceSessionCtx = (DeviceSessionCtx) ctx;
         byte[] bytes = toBytes(inbound.payload());
-        Descriptors.Descriptor telemetryDynamicMsgDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getTelemetryDynamicMsgDescriptor());
+        Descriptors.Descriptor telemetryDynamicMsgDescriptor = ProtoConverter.validateDescriptor(deviceSessionCtx.getTelemetryDynamicMessageDescriptor());
         try {
             return JsonConverter.convertToTelemetryProto(JsonParser.parseString(ProtoConverter.dynamicMsgToJson(bytes, telemetryDynamicMsgDescriptor)));
         } catch (Exception e) {
@@ -228,4 +228,5 @@ public class ProtoMqttAdaptor implements MqttTransportAdaptor {
     private int getRequestId(String topicName, String topic) {
         return Integer.parseInt(topicName.substring(topic.length()));
     }
+
 }
