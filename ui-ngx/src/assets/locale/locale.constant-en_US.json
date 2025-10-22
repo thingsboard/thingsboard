@@ -5952,6 +5952,10 @@
         "ws-limit-max-subscriptions-per-regular-user": "Subscriptions per regular user maximum number",
         "ws-limit-max-subscriptions-per-public-user": "Subscriptions per public user maximum number",
         "ws-limit-updates-per-session": "WS updates per session",
+        "relation-search-entity-limit": "Relation search entity limit",
+        "relation-search-entity-limit-hint": "Limits the number of entities resolved at the last level of the relation path. Applies to 'Related entities' arguments and Propagation fields.",
+        "relation-search-entity-limit-required": "Relation search entity limit",
+        "relation-search-entity-limit-range": "Relation search entity limit can't be less than '1'",
         "rate-limits": {
             "add-limit": "Add limit",
             "and-also-less-than": "and also less than",
