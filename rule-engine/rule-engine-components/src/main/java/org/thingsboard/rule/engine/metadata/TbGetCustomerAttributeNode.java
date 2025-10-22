@@ -47,8 +47,6 @@ import static com.google.common.util.concurrent.Futures.immediateFuture;
 )
 public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<CustomerId> {
 
-    private static final String CUSTOMER_NOT_FOUND_MESSAGE = "Failed to find customer for entity with id: %s and type: %s";
-
     @Override
     protected TbGetEntityDataNodeConfiguration loadNodeConfiguration(TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbGetEntityDataNodeConfiguration.class);
@@ -64,9 +62,11 @@ public class TbGetCustomerAttributeNode extends TbAbstractGetEntityDataNode<Cust
         }
         return ctx.getEntityService().fetchEntityCustomerIdAsync(ctx.getTenantId(), originator)
                 .transform(customerIdOpt -> {
-                    if (customerIdOpt.isEmpty() || customerIdOpt.get().isNullUid()) {
-                        String message = String.format(CUSTOMER_NOT_FOUND_MESSAGE, originator.getId(), originator.getEntityType().getNormalName());
-                        throw new NoSuchElementException(message);
+                    if (customerIdOpt.isEmpty()) {
+                        throw new NoSuchElementException("Originator not found");
+                    }
+                    if (customerIdOpt.get().isNullUid()) {
+                        throw new IllegalStateException("Originator is not assigned to any customer");
                     }
                     return customerIdOpt.get();
                 }, ctx.getDbCallbackExecutor());

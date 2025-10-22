@@ -35,6 +35,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.NoSuchElementException;
 
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
 
@@ -73,7 +74,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
             if (newOriginator == null || newOriginator.isNullUid()) {
                 return Futures.immediateFailedFuture(new NoSuchElementException("Failed to find new originator!"));
             }
-            return Futures.immediateFuture(List.of(ctx.transformMsgOriginator(msg, newOriginator)));
+            return immediateFuture(List.of(ctx.transformMsgOriginator(msg, newOriginator)));
         }, ctx.getDbCallbackExecutor());
     }
 
@@ -81,12 +82,12 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
         switch (config.getOriginatorSource()) {
             case CUSTOMER:
                 if (msg.getOriginator().getEntityType() == EntityType.CUSTOMER) {
-                    return Futures.immediateFuture(msg.getOriginator());
+                    return immediateFuture(msg.getOriginator());
                 }
                 return ctx.getEntityService().fetchEntityCustomerIdAsync(ctx.getTenantId(), msg.getOriginator())
                         .transform(customerIdOpt -> customerIdOpt.orElse(null), ctx.getDbCallbackExecutor());
             case TENANT:
-                return Futures.immediateFuture(ctx.getTenantId());
+                return immediateFuture(ctx.getTenantId());
             case RELATED:
                 return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery());
             case ALARM_ORIGINATOR:
@@ -96,7 +97,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
                 String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
                 try {
                     EntityId targetEntity = EntitiesByNameAndTypeLoader.findEntityId(ctx, entityType, entityName);
-                    return Futures.immediateFuture(targetEntity);
+                    return immediateFuture(targetEntity);
                 } catch (IllegalStateException e) {
                     return Futures.immediateFailedFuture(e);
                 }
