@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.Nullable;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -32,6 +33,7 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculat
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
@@ -66,7 +68,7 @@ public interface CalculatedFieldState extends Closeable {
     ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
 
     @JsonIgnore
-    boolean isReady();
+    ReadinessStatus getReadinessStatus();
 
     boolean isSizeExceedsLimit();
 
@@ -90,6 +92,33 @@ public interface CalculatedFieldState extends Closeable {
                 throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
             }
         }
+    }
+
+    record ReadinessStatus(boolean status, @Nullable String reason) {
+
+        private static final String MISSING_REQUIRED_ARGUMENTS = "Missing required arguments: ";
+        private static final String EMPTY_ARGUMENTS = "Empty arguments: ";
+
+        public static ReadinessStatus ready() {
+            return new ReadinessStatus(true, null);
+        }
+
+        public static ReadinessStatus notReady(String reason) {
+            return new ReadinessStatus(false, reason);
+        }
+
+        public static ReadinessStatus missingRequiredArguments(List<String> missingArgument) {
+            return notReady(MISSING_REQUIRED_ARGUMENTS + stringValue(missingArgument));
+        }
+
+        private static String stringValue(List<String> missingArgument) {
+            return String.join(", ", missingArgument);
+        }
+
+        public static ReadinessStatus emptyArguments(List<String> emptyArguments) {
+            return notReady(EMPTY_ARGUMENTS + stringValue(emptyArguments));
+        }
+
     }
 
 }
