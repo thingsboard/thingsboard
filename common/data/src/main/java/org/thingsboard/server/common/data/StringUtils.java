@@ -275,8 +275,12 @@ public class StringUtils {
         return result;
     }
 
-    public static String escapeControlChars(String text) {
+    public static String escapeJson(String text) {
         return text
+                .replace("\\", "\\\\")
+                .replace("\"", "\\\"")
+                .replace("\b", "\\b")
+                .replace("\f", "\\f")
                 .replace("\n", "\\n")
                 .replace("\r", "\\r")
                 .replace("\t", "\\t");

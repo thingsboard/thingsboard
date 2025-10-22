@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConf
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.StringUtils.escapeControlChars;
+import static org.thingsboard.server.common.data.StringUtils.escapeJson;
 
 @Service
 @RequiredArgsConstructor
@@ -74,7 +74,7 @@ class AiChatModelServiceImpl implements AiChatModelService {
 
     private Content prepareContent(Content content) {
         if (content instanceof TextContent txt) {
-            return new TextContent(escapeControlChars(txt.text()));
+            return new TextContent(escapeJson(txt.text()));
         }
         return content;
     }
