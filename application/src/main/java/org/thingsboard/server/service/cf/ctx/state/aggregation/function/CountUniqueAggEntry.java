@@ -18,7 +18,6 @@ package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
 
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 

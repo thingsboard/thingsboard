@@ -18,19 +18,21 @@ package org.thingsboard.server.service.cf.ctx.state.aggregation;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfRelatedEntitiesAggregation;
+import org.thingsboard.script.api.tbel.TbelCfRelatedEntitiesArgumentValue;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Data
 @AllArgsConstructor
 public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
 
-    private final Map<EntityId, ArgumentEntry> aggInputs;
+    private final Map<EntityId, ArgumentEntry> entityInputs;
 
     private boolean forceResetPrevious;
 
@@ -41,24 +43,24 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
 
     @Override
     public Object getValue() {
-        return aggInputs;
+        return entityInputs;
     }
 
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
-            aggInputs.putAll(relatedEntitiesArgumentEntry.aggInputs);
+            entityInputs.putAll(relatedEntitiesArgumentEntry.entityInputs);
             return true;
         } else if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
             if (entry.isForceResetPrevious()) {
-                aggInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
                 return true;
             }
-            ArgumentEntry argumentEntry = aggInputs.get(singleValueArgumentEntry.getEntityId());
+            ArgumentEntry argumentEntry = entityInputs.get(singleValueArgumentEntry.getEntityId());
             if (argumentEntry != null) {
                 argumentEntry.updateEntry(singleValueArgumentEntry);
             } else {
-                aggInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
             }
             return true;
         } else {
@@ -68,12 +70,17 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
 
     @Override
     public boolean isEmpty() {
-        return aggInputs.isEmpty();
+        return entityInputs.isEmpty();
     }
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfRelatedEntitiesAggregation(aggInputs.values());
+        var inputs = entityInputs.entrySet().stream()
+                .collect(Collectors.toMap(
+                        e -> e.getKey().getId(),
+                        e -> (TbelCfSingleValueArg) e.getValue().toTbelCfArg()
+                ));
+        return new TbelCfRelatedEntitiesArgumentValue(inputs);
     }
 
 }

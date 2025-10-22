@@ -118,7 +118,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     public void cleanupEntityData(EntityId relatedEntityId) {
         arguments.values().forEach(argEntry -> {
             RelatedEntitiesArgumentEntry aggEntry = (RelatedEntitiesArgumentEntry) argEntry;
-            aggEntry.getAggInputs().remove(relatedEntityId);
+            aggEntry.getEntityInputs().remove(relatedEntityId);
         });
         lastMetricsEvalTs = -1;
         lastArgsRefreshTs = System.currentTimeMillis();
@@ -135,7 +135,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         for (Map.Entry<String, ArgumentEntry> argEntry : arguments.entrySet()) {
             String key = argEntry.getKey();
             RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry.getValue();
-            relatedEntitiesArgumentEntry.getAggInputs().forEach((entityId, argumentEntry) -> {
+            relatedEntitiesArgumentEntry.getEntityInputs().forEach((entityId, argumentEntry) -> {
                 inputs.computeIfAbsent(entityId, k -> new HashMap<>()).put(key, argumentEntry);
             });
         }

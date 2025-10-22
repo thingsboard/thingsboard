@@ -67,10 +67,10 @@ public class RelatedEntitiesArgumentEntryTest {
 
         assertThat(entry.updateEntry(relatedEntitiesArgumentEntry)).isTrue();
 
-        Map<EntityId, ArgumentEntry> aggInputs = entry.getAggInputs();
+        Map<EntityId, ArgumentEntry> aggInputs = entry.getEntityInputs();
         assertThat(aggInputs.size()).isEqualTo(4);
-        assertThat(aggInputs.get(device3)).isEqualTo(relatedEntitiesArgumentEntry.getAggInputs().get(device3));
-        assertThat(aggInputs.get(device4)).isEqualTo(relatedEntitiesArgumentEntry.getAggInputs().get(device4));
+        assertThat(aggInputs.get(device3)).isEqualTo(relatedEntitiesArgumentEntry.getEntityInputs().get(device3));
+        assertThat(aggInputs.get(device4)).isEqualTo(relatedEntitiesArgumentEntry.getEntityInputs().get(device4));
     }
 
     @Test
@@ -81,7 +81,7 @@ public class RelatedEntitiesArgumentEntryTest {
 
         assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
 
-        Map<EntityId, ArgumentEntry> aggInputs = entry.getAggInputs();
+        Map<EntityId, ArgumentEntry> aggInputs = entry.getEntityInputs();
         assertThat(aggInputs.size()).isEqualTo(3);
         assertThat(aggInputs.get(device3)).isEqualTo(singleEntityArgumentEntry);
     }
@@ -92,7 +92,7 @@ public class RelatedEntitiesArgumentEntryTest {
 
         assertThat(entry.updateEntry(singleEntityArgumentEntry)).isTrue();
 
-        Map<EntityId, ArgumentEntry> aggInputs = entry.getAggInputs();
+        Map<EntityId, ArgumentEntry> aggInputs = entry.getEntityInputs();
         assertThat(aggInputs.size()).isEqualTo(2);
         assertThat(aggInputs.get(device2)).isEqualTo(singleEntityArgumentEntry);
     }

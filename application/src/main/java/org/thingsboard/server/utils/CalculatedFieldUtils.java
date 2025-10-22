@@ -105,7 +105,7 @@ public class CalculatedFieldUtils {
                         builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
                 case RELATED_ENTITIES -> {
                     RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
-                    relatedEntitiesArgumentEntry.getAggInputs()
+                    relatedEntitiesArgumentEntry.getEntityInputs()
                             .forEach((entityId, entry) -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
                 }
             }
