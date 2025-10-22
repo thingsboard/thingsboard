@@ -270,12 +270,8 @@ public class TbGetCustomerAttributeNodeTest {
         var actualMessage = actualMessageCaptor.getValue();
         var actualException = actualExceptionCaptor.getValue();
 
-        var expectedExceptionMessage = String.format(
-                "Failed to find customer for entity with id: %s and type: %s",
-                userId.getId(), userId.getEntityType().getNormalName());
-
         assertEquals(msg, actualMessage);
-        assertEquals(expectedExceptionMessage, actualException.getMessage());
+        assertEquals("Originator not found", actualException.getMessage());
         assertInstanceOf(NoSuchElementException.class, actualException);
     }
 
