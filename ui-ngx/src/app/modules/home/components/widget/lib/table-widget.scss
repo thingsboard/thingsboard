@@ -53,11 +53,7 @@
   .mat-mdc-input-element::placeholder {
     color: var(--mat-table-header-headline-color);
   }
-  
 
-}
-
-::ng-deep {
   .mat-mdc-table {
     .mat-mdc-header-row {
       background-color: var(--tb-orig-background-color);
@@ -70,7 +66,6 @@
     }
 
     .mat-mdc-row {
-      background-color: rgba(0,0,0,0); 
       &.tb-current-entity {
         .mat-mdc-cell.mat-mdc-table-sticky {
           background-color: var(--tb-current-entity-sticky-color);
