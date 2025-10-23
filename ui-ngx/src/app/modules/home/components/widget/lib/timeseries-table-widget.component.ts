@@ -982,7 +982,7 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
             let row = rowsMap[timestamp];
             if (!row) {
               row = {
-                formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter)
+                formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter, this.widgetContext.timeWindow.timezone)
               };
               if (this.cellButtonActions.length) {
                 if (this.usedShowCellActionFunction) {
