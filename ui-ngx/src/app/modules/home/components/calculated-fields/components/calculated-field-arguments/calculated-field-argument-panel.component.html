@@ -18,6 +18,11 @@
 <div class="w-full max-w-xl" [formGroup]="argumentFormGroup">
   <div class="tb-form-panel no-border no-padding mb-2">
     <div class="tb-form-panel-title">{{ 'calculated-fields.argument-settings' | translate }}</div>
+    @if (hint) {
+      <div class="tb-form-hint tb-primary-fill hint-container">
+        {{ hint | translate }}
+      </div>
+    }
     <div class="tb-form-panel no-border no-padding">
       @if (!isOutputKey) {
         <ng-container *ngTemplateOutlet="argumentNameTemplate; context: {
@@ -30,25 +35,27 @@
         }"></ng-container>
       }
       <ng-container>
-        <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'entity.entity-type' | translate }}</div>
-          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <mat-select [formControl]="argumentType">
-              @for (type of argumentEntityTypes; track type) {
-                <mat-option [value]="type">{{ ArgumentEntityTypeTranslations.get(type) | translate }}</mat-option>
+        @if (!hiddenEntityTypes) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width">{{ 'entity.entity-type' | translate }}</div>
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-select [formControl]="argumentType">
+                @for (type of argumentEntityTypes; track type) {
+                  <mat-option [value]="type">{{ ArgumentEntityTypeTranslations.get(type) | translate }}</mat-option>
+                }
+              </mat-select>
+              @if (argumentType.touched && argumentType.hasError('required')) {
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'calculated-fields.hint.entity-type-required' | translate"
+                          class="tb-error">
+                  warning
+                </mat-icon>
               }
-            </mat-select>
-            @if (argumentType.touched && argumentType.hasError('required')) {
-              <mat-icon matSuffix
-                        matTooltipPosition="above"
-                        matTooltipClass="tb-error-tooltip"
-                        [matTooltip]="'calculated-fields.hint.entity-type-required' | translate"
-                        class="tb-error">
-                warning
-              </mat-icon>
-            }
-          </mat-form-field>
-        </div>
+            </mat-form-field>
+          </div>
+        }
         @if (ArgumentEntityTypeParamsMap.has(entityType)) {
           <div class="tb-form-row">
             <div class="fixed-title-width tb-required">{{ ArgumentEntityTypeParamsMap.get(entityType).title | translate }}</div>
@@ -143,9 +150,18 @@
       }
       @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Rolling) {
         <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.default-value' | translate }}</div>
+          <div class="fixed-title-width" [class.tb-required]="defaultValueRequired">{{ 'calculated-fields.default-value' | translate }}</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <input matInput autocomplete="off" name="value" formControlName="defaultValue" placeholder="{{ 'action.set' | translate }}"/>
+            @if (argumentFormGroup.get('defaultValue').touched && argumentFormGroup.get('defaultValue').hasError('required')) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.default-value-required' | translate"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            }
           </mat-form-field>
         </div>
       } @else {

@@ -65,7 +65,8 @@ export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
   SCRIPT = 'SCRIPT',
   GEOFENCING = 'GEOFENCING',
-  PROPAGATION = 'PROPAGATION'
+  PROPAGATION = 'PROPAGATION',
+  RELATED_ENTITIES_AGGREGATION = 'RELATED_ENTITIES_AGGREGATION'
 }
 
 export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, string>(
@@ -74,6 +75,7 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, stri
     [CalculatedFieldType.SCRIPT, 'calculated-fields.type.script'],
     [CalculatedFieldType.GEOFENCING, 'calculated-fields.type.geofencing'],
     [CalculatedFieldType.PROPAGATION, 'calculated-fields.type.propagation'],
+    [CalculatedFieldType.RELATED_ENTITIES_AGGREGATION, 'calculated-fields.type.related-entities-aggregation'],
   ]
 )
 
@@ -81,12 +83,14 @@ export type CalculatedFieldConfiguration =
   | CalculatedFieldSimpleConfiguration
   | CalculatedFieldScriptConfiguration
   | CalculatedFieldGeofencingConfiguration
-  | CalculatedFieldPropagationConfiguration;
+  | CalculatedFieldPropagationConfiguration
+  | CalculatedFieldRelatedAggregationConfiguration;
 
 export interface CalculatedFieldSimpleConfiguration {
   type: CalculatedFieldType.SIMPLE;
   expression: string;
   arguments: Record<string, CalculatedFieldArgument>;
+  useLatestTs: boolean;
   output: CalculatedFieldSimpleOutput;
 }
 
@@ -103,6 +107,15 @@ export interface CalculatedFieldGeofencingConfiguration {
   scheduledUpdateEnabled: boolean;
   scheduledUpdateInterval?: number;
   output: CalculatedFieldOutput;
+}
+
+export interface CalculatedFieldRelatedAggregationConfiguration {
+  type: CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
+  relation: RelationPathLevel;
+  arguments: Record<string, CalculatedFieldArgument>;
+  deduplicationIntervalInSec: number;
+  useLatestTs: boolean;
+  output: Omit<CalculatedFieldSimpleOutput, 'name'>;
 }
 
 interface BasePropagationConfiguration {
@@ -250,7 +263,7 @@ export interface CalculatedFieldGeofencing {
 
 export interface RefDynamicSourceConfiguration {
   type?: ArgumentEntityType.RelationQuery;
-  levels?: Array<{direction: EntitySearchDirection; relationType: string;}>;
+  levels?: Array<RelationPathLevel>;
 }
 
 export interface CalculatedFieldGeofencingValue extends CalculatedFieldGeofencing {
@@ -315,6 +328,11 @@ export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entity
 export interface CalculatedFieldArgumentValueBase {
   argumentName: string;
   type: ArgumentType;
+}
+
+export interface RelationPathLevel {
+  direction: EntitySearchDirection;
+  relationType: string;
 }
 
 export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {

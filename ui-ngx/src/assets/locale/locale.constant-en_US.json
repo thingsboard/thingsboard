@@ -1054,7 +1054,8 @@
             "simple": "Simple",
             "script": "Script",
             "geofencing" : "Geofencing",
-            "propagation": "Propagation"
+            "propagation": "Propagation",
+            "related-entities-aggregation": "Related entities aggregation"
         },
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
@@ -1088,6 +1089,7 @@
         "shared-attributes": "Shared attributes",
         "attribute-key": "Attribute key",
         "default-value": "Default value",
+        "default-value-required": "Default value is required.",
         "limit": "Max values",
         "time-window": "Time window",
         "customer-name": "Customer name",
@@ -1156,6 +1158,11 @@
         "data-propagate": "Data to propagate",
         "output-key": "Output key",
         "copy-output-key": "Copy output key",
+        "aggregation-path-related-entities": "Aggregation path to related entities",
+        "metrics": "Metrics",
+        "deduplication-interval": "Deduplication interval",
+        "deduplication-interval-min": "Deduplication interval should be at least {{ sec }} second.",
+        "deduplication-interval-required": "Deduplication interval is required.",
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-propagate-arguments-with-rolling": "'Time series rolling' type is incompatible with 'Arguments only' propagation.",
@@ -1202,7 +1209,11 @@
             "zone-group-refresh-interval-required": "Zone groups refresh interval is required.",
             "zone-group-refresh-interval-min": "Zone group refresh interval should be at least {{ min }} second.",
             "propagation-path-related-entities": "Defines a direct, single-level path to a related entity based on the selected direction and relation type.",
-            "data-propagate": "Defines the data to be propagated from the arguments configured below. 'Arguments only' uses the retrieved data directly, while 'Expression result' calculates a new value from that data."
+            "data-propagate": "Defines the data to be propagated from the arguments configured below. 'Arguments only' uses the retrieved data directly, while 'Expression result' calculates a new value from that data.",
+            "aggregation-path-related-entities": "Defines a single-level aggregation path via direct relations with parent or child entities based on direction and relation type. Only relations between device, asset, customer, and tenant entities are supported.",
+            "arguments-aggregation": "Defines input parameters used for filtering and aggregation.",
+            "setting-arguments-aggregation": "Data will be fetched from related entities configured in aggregation path.",
+            "metrics": "Defines metrics aggregated based on the configured arguments."
         }
     },
     "ai-models": {

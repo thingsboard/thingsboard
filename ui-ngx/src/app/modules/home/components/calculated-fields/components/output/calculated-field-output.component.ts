@@ -35,6 +35,7 @@ import { digitsRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-calculate-field-output',
@@ -55,7 +56,12 @@ import { EntityType } from '@shared/models/entity-type.models';
 export class CalculatedFieldOutputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
   @Input()
+  @coerceBoolean()
   simpleMode = false;
+
+  @Input()
+  @coerceBoolean()
+  hiddenName = false;
 
   @Input({required: true})
   entityId: EntityId;
@@ -137,11 +143,14 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   }
 
   private updatedFormWithMode(): void {
-    if (this.simpleMode) {
+    if (this.simpleMode && !this.hiddenName) {
       this.outputForm.get('name').enable({emitEvent: false});
-      this.outputForm.get('decimalsByDefault').enable({emitEvent: false});
     } else {
       this.outputForm.get('name').disable({emitEvent: false});
+    }
+    if (this.simpleMode) {
+      this.outputForm.get('decimalsByDefault').enable({emitEvent: false});
+    } else {
       this.outputForm.get('decimalsByDefault').disable({emitEvent: false});
     }
   }

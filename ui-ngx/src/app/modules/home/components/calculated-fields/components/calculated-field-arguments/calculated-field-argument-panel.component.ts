@@ -52,6 +52,7 @@ import { Store } from '@ngrx/store';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { deduplicationStrategiesHintTranslations } from '@home/components/rule-node/rule-node-config.models';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
@@ -68,6 +69,9 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() isScript: boolean;
   @Input() usedArgumentNames: string[];
   @Input() isOutputKey = false;
+  @Input() hiddenEntityTypes = false;
+  @Input() defaultValueRequired = false;
+  @Input() hint: string;
   @Input() argumentEntityTypes = Object.values(ArgumentEntityType).filter(value => value !== ArgumentEntityType.RelationQuery) as ArgumentEntityType[];
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
@@ -145,6 +149,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     this.setInitialEntityKeyType();
     this.setInitialEntityType();
     this.setWatchKeyChange();
+
+    if (this.defaultValueRequired) {
+      this.argumentFormGroup.get('defaultValue').addValidators(Validators.required);
+      this.argumentFormGroup.get('defaultValue').updateValueAndValidity({onlySelf: true});
+    }
 
     this.argumentTypes = Object.values(ArgumentType)
       .filter(type => type !== ArgumentType.Rolling || this.isScript);
@@ -311,4 +320,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
       this.entityNameSubject.next(null);
     }
   }
+
+  protected readonly deduplicationStrategiesHintTranslations = deduplicationStrategiesHintTranslations;
 }
