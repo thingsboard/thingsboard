@@ -1,5 +1,4 @@
 ///
-///
 /// Copyright © 2016-2025 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,7 +31,6 @@ import {
   UnplacedMapDataItem
 } from '@home/components/widget/lib/maps/data-layer/latest-map-data-layer';
 import { map } from 'rxjs/operators';
-import { instanceOfSearchableComponent } from '@home/models/searchable-component.models';
 
 class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSettings, TbPolygonsDataLayer> {
 
@@ -149,7 +147,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
   }
 
   protected onSelected(): L.TB.ToolbarButtonOptions[] {
-    const buttons: L.TB.ToolbarButtonOptions[] = [];
+    const buttons:  L.TB.ToolbarButtonOptions[] = [];
     if (this.dataLayer.isEditEnabled()) {
       this.enablePolygonEditMode();
       buttons.push(
@@ -227,7 +225,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     this.polygon.on('pm:markerdragstart', () => this.editing = true);
     this.polygon.on('pm:markerdragend', () => setTimeout(() => {
       this.editing = false;
-    }));
+    }) );
     this.polygon.on('pm:edit', () => this.savePolygonCoordinates());
     this.polygon.pm.enable();
     const map = this.dataLayer.getMap();
@@ -247,10 +245,8 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
     this.polygonContainer.closePopup();
     this.editing = true;
     this.polygon.options.bubblingMouseEvents = true;
-    this.polygon.setStyle({
-      ...this.polygonStyleInfo.style, dashArray: '5 5', weight: 3,
-      color: '#3388ff', opacity: 1, fillColor: '#3388ff', fillOpacity: 0.2
-    });
+    this.polygon.setStyle({...this.polygonStyleInfo.style, dashArray: '5 5', weight: 3,
+      color: '#3388ff', opacity: 1, fillColor: '#3388ff', fillOpacity: 0.2});
     this.addItemClass('tb-cut-mode');
     this.polygon.once('pm:cut', (e) => {
       if (e.layer instanceof L.Polygon) {
@@ -368,7 +364,6 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
         this.polygon.setLatLngs(polyData);
       }
     } else if (polyData.length === 2) {
-
       const bounds = new L.LatLngBounds(polyData as L.LatLngTuple[]);
       (this.polygon as L.Rectangle).setBounds(bounds);
     }

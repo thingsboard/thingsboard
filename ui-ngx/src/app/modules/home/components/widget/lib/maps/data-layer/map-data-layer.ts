@@ -28,6 +28,7 @@ import {
 } from '@shared/models/widget/maps/map.models';
 import {
   createLabelFromPattern,
+  guid,
   isDefined,
   isDefinedAndNotNull,
   isNumber,
@@ -52,8 +53,7 @@ export class DataLayerPatternProcessor {
   private pattern: string;
 
   constructor(private dataLayer: TbMapDataLayer,
-              private settings: DataLayerPatternSettings) {
-  }
+              private settings: DataLayerPatternSettings) {}
 
   public setup(): Observable<void> {
     if (this.settings.type === DataLayerPatternType.function) {
@@ -91,8 +91,7 @@ export class DataLayerColorProcessor {
   private range: ColorRange[];
 
   constructor(private dataLayer: TbMapDataLayer,
-              private settings: DataLayerColorSettings) {
-  }
+              private settings: DataLayerColorSettings) {}
 
   public setup(): Observable<void> {
     this.color = this.settings.color;
@@ -151,8 +150,7 @@ export abstract class TbDataLayerItem<S extends MapDataLayerSettings = MapDataLa
   protected layer: L;
 
   protected constructor(protected settings: S,
-                        protected dataLayer: D) {
-  }
+                        protected dataLayer: D) {}
 
   public getLayer(): L {
     return this.layer;
@@ -180,7 +178,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
 
   protected layerItems = new Map<string, I>();
 
-  protected groupsState: { [group: string]: boolean } = {};
+  protected groupsState: {[group: string]: boolean} = {};
 
   protected enabled = true;
 
@@ -199,7 +197,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     }
     this.dataLayerContainer = this.createDataLayerContainer();
     this.dataLayerLabelProcessor = this.settings.label.show ? new DataLayerPatternProcessor(this, this.settings.label) : null;
-    this.dataLayerTooltipProcessor = this.settings.tooltip.show ? new DataLayerPatternProcessor(this, this.settings.tooltip) : null;
+    this.dataLayerTooltipProcessor = this.settings.tooltip.show ? new DataLayerPatternProcessor(this, this.settings.tooltip): null;
     this.map.getMap().addLayer(this.dataLayerContainer);
   }
 
@@ -318,11 +316,9 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
     return [];
   }
 
-  protected onDataLayerEnabled(): void {
-  }
+  protected onDataLayerEnabled(): void {}
 
-  protected onDataLayerDisabled(): void {
-  }
+  protected onDataLayerDisabled(): void {}
 
   public abstract dataLayerType(): MapDataLayerType;
 
