@@ -298,7 +298,7 @@ export abstract class TbMapDataLayer<S extends MapDataLayerSettings = MapDataLay
   protected calculateDataKeys(): DataKey[] {
     const dataKeys = this.settings.additionalDataKeys ? [...this.settings.additionalDataKeys] : [];
     const colorRangeKeys = this.allColorSettings().filter(settings => settings.type === DataLayerColorType.range && settings.rangeKey)
-      .map(settings => settings.rangeKey);
+            .map(settings => settings.rangeKey);
     dataKeys.push(...colorRangeKeys);
     dataKeys.push(...this.getDataKeys());
     return dataKeys;

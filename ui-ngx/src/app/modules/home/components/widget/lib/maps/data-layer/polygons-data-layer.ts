@@ -90,7 +90,7 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
 
   protected bindLabel(content: L.Content): void {
     this.polygonContainer.bindTooltip(content, {className: 'tb-polygon-label', permanent: true, direction: 'center'})
-      .openTooltip(this.polygonContainer.getBounds().getCenter());
+    .openTooltip(this.polygonContainer.getBounds().getCenter());
   }
 
   protected doUpdate(data: FormattedData<TbMapDatasource>, dsData: FormattedData<TbMapDatasource>[]): void {
@@ -189,9 +189,9 @@ class TbPolygonDataLayerItem extends TbLatestDataLayerItem<PolygonsDataLayerSett
 
   protected onDeselected(): void {
     if (this.dataLayer.isEditEnabled()) {
-      this.disablePolygonEditMode();
-      this.disablePolygonCutMode();
-      this.disablePolygonRotateMode();
+     this.disablePolygonEditMode();
+     this.disablePolygonCutMode();
+     this.disablePolygonRotateMode();
     }
   }
 
