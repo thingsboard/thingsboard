@@ -20,7 +20,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
-import { SortEntityAliasKey } from '@app/modules/home/components/widget/lib/timeseries-table-widget.component'
+import { TabSortKey } from '@app/modules/home/components/widget/lib/timeseries-table-widget.component'
 
 @Component({
   selector: 'tb-timeseries-table-widget-settings',
@@ -29,7 +29,7 @@ import { SortEntityAliasKey } from '@app/modules/home/components/widget/lib/time
 })
 export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  SortEntityAliasKey = SortEntityAliasKey;
+  TabSortKey = TabSortKey;
 
   timeseriesTableWidgetSettingsForm: UntypedFormGroup;
   pageStepSizeValues = [];
@@ -62,7 +62,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       disableStickyHeader: false,
       useRowStyleFunction: false,
       rowStyleFunction: '',
-      sortEntityAliasKey: SortEntityAliasKey.TIMESTAMP
+      sortEntityAliasKey: TabSortKey.TIMESTAMP
     };
   }
 

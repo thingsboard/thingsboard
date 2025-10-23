@@ -107,9 +107,9 @@ import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { DateFormatSettings, ValueFormatProcessor } from '@shared/models/widget-settings.models';
 
-export enum SortEntityAliasKey {
-  ASC = 'ASC',
-  DESC = 'DESC',
+export enum TabSortKey {
+  NAME_ASC = 'NAME_ASC',
+  NAME_DESC = 'NAME_DESC',
   TIMESTAMP = 'timestamp'
 }
 
@@ -118,7 +118,7 @@ export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
   dateFormat: DateFormatSettings;
-  sortEntityAliasKey: SortEntityAliasKey;
+  tabSortKey: TabSortKey;
 }
 
 interface TimeseriesWidgetLatestDataKeySettings extends TableWidgetDataKeySettings {
@@ -400,7 +400,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.updateDatasources();
   }
 
-  private getTabLabel(source: Datasource, entityLabelCache:Map<string,string>){
+  private getTabLabel(source: Datasource, entityLabelCache:Map<string,string>):string {
     if (entityLabelCache.has(source.entityId)) {
       return entityLabelCache.get(source.entityId);
     }
@@ -422,12 +422,11 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     const entityLabelCache = new Map<string,string>();
     const pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
     if (this.datasources) {
-      const sortedDatasources = this.settings.sortEntityAliasKey !== "timestamp" 
+      const sortedDatasources = this.settings.tabSortKey !== TabSortKey.TIMESTAMP 
       ? this.datasources.sort((a,b)=>{
-        const valueA: string = this.getTabLabel(a, entityLabelCache);
-        const valueB: string = this.getTabLabel(b, entityLabelCache);
-        const direction = this.settings.sortEntityAliasKey;
-        return direction === SortEntityAliasKey.ASC  ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+        const valueA = this.getTabLabel(a, entityLabelCache);
+        const valueB = this.getTabLabel(b, entityLabelCache);
+        return this.settings.tabSortKey === TabSortKey.NAME_ASC ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
       }) 
       : this.datasources;
   
