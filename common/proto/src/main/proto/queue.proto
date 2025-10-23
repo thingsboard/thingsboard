@@ -1728,12 +1728,10 @@ message ToCalculatedFieldMsg {
   CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
   CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
   EntityActionEventProto eventMsg = 3;
-  repeated string cfTypes = 4;
 }
 
 message ToCalculatedFieldNotificationMsg {
   CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 1;
-  repeated string cfTypes = 2;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

@@ -45,6 +45,7 @@ public abstract class AlarmCondition {
     @Valid
     private AlarmConditionValue<AlarmSchedule> schedule;
 
+    @JsonIgnore
     public boolean hasSchedule() {
         return schedule != null && !(schedule.getStaticValue() instanceof AnyTimeSchedule);
     }

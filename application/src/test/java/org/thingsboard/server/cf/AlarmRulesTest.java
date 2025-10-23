@@ -458,7 +458,14 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
         schedule = schedule.replace("\"enabled\":false", "\"enabled\":true");
         postAttributes(deviceId, AttributeScope.SERVER_SCOPE, "{\"schedule\":" + schedule + "}");
-        checkAlarmResult(calculatedField, alarmResult -> {
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            // checking multiple debug events due to scheduled reevaluation (which also produces debug events)
+            CalculatedFieldDebugEvent debugEvent = getDebugEvents(calculatedField.getId(), 5).stream()
+                    .filter(event -> event.getResult() != null)
+                    .findFirst().orElse(null);
+            assertThat(debugEvent).isNotNull();
+            TbAlarmResult alarmResult = JacksonUtil.fromString(debugEvent.getResult(), TbAlarmResult.class);
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
@@ -638,11 +645,11 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 AlarmSeverity.CRITICAL, new Condition("return temperature >= 50 && humidity >= 50;", null, null)
         );
         CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature and Humidity Alarm",
-                arguments, createRules, null);
-        AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
-        configuration.getCreateRules().get(AlarmSeverity.CRITICAL).setAlarmDetails("""
-                temperature is ${temperature}, humidity is ${humidity}""");
-        calculatedField = saveCalculatedField(calculatedField);
+                arguments, createRules, null, configuration -> {
+                    configuration.getCreateRules().get(AlarmSeverity.CRITICAL).setAlarmDetails(
+                            "temperature is ${temperature}, humidity is ${humidity}"
+                    );
+                });
 
         postTelemetry(deviceId, "{\"temperature\":50}");
         postAttributes(deviceId, AttributeScope.SERVER_SCOPE, "{\"humidity\":50}");
@@ -652,6 +659,18 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getDetails().get("data").asText())
                     .isEqualTo("temperature is 50, humidity is 50");
+        });
+
+        ((AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration()).getCreateRules().get(AlarmSeverity.CRITICAL).setAlarmDetails(
+                "UPDATED temperature is ${temperature}, humidity is ${humidity}"
+        );
+        calculatedField = saveCalculatedField(calculatedField);
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isFalse();
+            assertThat(alarmResult.isUpdated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getDetails().get("data").asText())
+                    .isEqualTo("UPDATED temperature is 50, humidity is 50");
         });
     }
 
@@ -683,7 +702,12 @@ public class AlarmRulesTest extends AbstractControllerTest {
         Thread.sleep(10000);
         assertThat(getLatestAlarmResult(calculatedField.getId())).isNull();
 
-        checkAlarmResult(calculatedField, alarmResult -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            CalculatedFieldDebugEvent debugEvent = getDebugEvents(calculatedField.getId(), 5).stream()
+                    .filter(event -> event.getResult() != null)
+                    .findFirst().orElse(null);
+            assertThat(debugEvent).isNotNull();
+            TbAlarmResult alarmResult = JacksonUtil.fromString(debugEvent.getResult(), TbAlarmResult.class);
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
@@ -764,24 +788,14 @@ public class AlarmRulesTest extends AbstractControllerTest {
                                           String alarmType,
                                           Map<String, Argument> arguments,
                                           Map<AlarmSeverity, Condition> createConditions,
-                                          Condition clearCondition) {
+                                          Condition clearCondition,
+                                          Consumer<AlarmCalculatedFieldConfiguration>... modifier) {
         Map<AlarmSeverity, AlarmRule> createRules = new HashMap<>();
         createConditions.forEach((severity, condition) -> {
             createRules.put(severity, toAlarmRule(condition));
         });
         AlarmRule clearRule = clearCondition != null ? toAlarmRule(clearCondition) : null;
-        CalculatedField calculatedField = createAlarmCf(entityId, alarmType, arguments, createRules, clearRule);
 
-        CalculatedFieldDebugEvent debugEvent = await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getDebugEvents(calculatedField.getId(), 1), events -> !events.isEmpty()).get(0);
-        latestEventId = debugEvent.getId();
-        return calculatedField;
-    }
-
-    private CalculatedField createAlarmCf(EntityId entityId,
-                                          String alarmType,
-                                          Map<String, Argument> arguments,
-                                          Map<AlarmSeverity, AlarmRule> createRules,
-                                          AlarmRule clearRule) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(entityId);
         calculatedField.setName(alarmType);
@@ -792,7 +806,16 @@ public class AlarmRulesTest extends AbstractControllerTest {
         configuration.setClearRule(clearRule);
         calculatedField.setConfiguration(configuration);
         calculatedField.setDebugSettings(DebugSettings.all());
-        return saveCalculatedField(calculatedField);
+        if (modifier.length > 0) {
+            modifier[0].accept(configuration);
+        }
+        CalculatedField savedCalculatedField = saveCalculatedField(calculatedField);
+
+        CalculatedFieldDebugEvent debugEvent = await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> getDebugEvents(savedCalculatedField.getId(), 1),
+                        events -> !events.isEmpty()).get(0);
+        latestEventId = debugEvent.getId();
+        return savedCalculatedField;
     }
 
     private AlarmRule toAlarmRule(Condition condition) {

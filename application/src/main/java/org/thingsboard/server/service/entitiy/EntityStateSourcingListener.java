@@ -257,7 +257,6 @@ public class EntityStateSourcingListener {
                 if (calculatedFieldCache.hasCalculatedFields(tenantId, alarm.getOriginator(), ctx -> ctx.getCfType() == CalculatedFieldType.ALARM)) {
                     ToCalculatedFieldMsg msg = ToCalculatedFieldMsg.newBuilder()
                             .setEventMsg(toProto(event))
-                            .addCfTypes(CalculatedFieldType.ALARM.name())
                             .build();
                     tbClusterService.pushMsgToCalculatedFields(tenantId, alarm.getOriginator(), msg, new TbQueueCallback() {
                         @Override

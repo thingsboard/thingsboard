@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
-import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -24,7 +23,6 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.predic
 
 import java.io.Serializable;
 
-@Schema
 @Data
 public class AlarmConditionFilter implements Serializable {
 
