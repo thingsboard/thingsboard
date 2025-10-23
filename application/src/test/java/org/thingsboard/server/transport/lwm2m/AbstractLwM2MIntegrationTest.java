@@ -84,6 +84,7 @@ import org.thingsboard.server.transport.lwm2m.server.client.ResourceUpdateResult
 import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -120,11 +121,11 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfil
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
-@TestPropertySource(properties = {
-        "transport.lwm2m.enabled=true",
-})
 @Slf4j
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "transport.lwm2m.enabled=true"
+})
 public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportIntegrationTest {
 
     @SpyBean
@@ -145,9 +146,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public static final String host = "localhost";
     public static final String hostBs = "localhost";
     public static final Integer shortServerId = 123;
-    public static final Integer shortServerIdBs0 = 0;
-    public static final int serverId = 1;
-    public static final int serverIdBs = 0;
 
     public static final String COAP = "coap://";
     public static final String COAPS = "coaps://";
@@ -317,7 +315,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     @After
     public void after() throws Exception {
-        this.clientDestroy(true);
+        this.clientDestroy();
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
         }
@@ -564,7 +562,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
                                 String endpoint, Integer clientDtlsCidLength, boolean queueMode,
                                 String deviceIdStr, Integer value3_0_9) throws Exception {
-        this.clientDestroy(false);
+        this.clientDestroy();
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint, resources);
 
         try (ServerSocket socket = new ServerSocket(0)) {
@@ -651,13 +649,30 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
 
-    private void clientDestroy(boolean isAfter) {
+    private void clientDestroy() {
         try {
             if (lwM2MTestClient != null && lwM2MTestClient.getLeshanClient() != null) {
-                if (isAfter) {
-                    sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
-                    awaitDeleteDevice(lwM2MTestClient.getDeviceIdStr());
+                boolean serverAlive = false;
+                for (int port = AbstractLwM2MIntegrationTest.port; port <= securityPortBs; port++) {
+                    try (ServerSocket socket = new ServerSocket(port)) {
+                         log.info("Port {} is free.", port);
+                    } catch (IOException e) {
+                        log.debug("Port {} is busy — CoAP server still active.", port);
+                        serverAlive = true;
+                        break;
+                    }
                 }
+                if (serverAlive) {
+                    try {
+                        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
+                        awaitDeleteDevice(lwM2MTestClient.getDeviceIdStr());
+                    } catch (Exception e) {
+                        log.warn("Failed to cleanup LwM2M observations before destroy: {}", e.getMessage());
+                    }
+                } else {
+                    log.info("No active CoAP server found on ports 5685–5688. Skipping observe cleanup.");
+                }
+
                 lwM2MTestClient.destroy();
             }
         } catch (Exception e) {
@@ -705,10 +720,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return bootstrap;
     }
 
-    private AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
+    protected AbstractLwM2MBootstrapServerCredential getBootstrapServerCredentialNoSec(boolean isBootstrap) {
         AbstractLwM2MBootstrapServerCredential bootstrapServerCredential = new NoSecLwM2MBootstrapServerCredential();
         bootstrapServerCredential.setServerPublicKey("");
-        bootstrapServerCredential.setShortServerId(isBootstrap ? shortServerIdBs0 : shortServerId);
+        bootstrapServerCredential.setShortServerId(isBootstrap ? null : shortServerId);
         bootstrapServerCredential.setBootstrapServerIs(isBootstrap);
         bootstrapServerCredential.setHost(isBootstrap ? hostBs : host);
         bootstrapServerCredential.setPort(isBootstrap ? portBs : port);

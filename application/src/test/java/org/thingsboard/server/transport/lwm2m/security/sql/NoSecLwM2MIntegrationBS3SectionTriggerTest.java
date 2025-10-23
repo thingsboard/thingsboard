@@ -16,16 +16,14 @@
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
 import org.junit.Test;
-import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.LWM2M_ONLY;
+public class NoSecLwM2MIntegrationBS3SectionTriggerTest extends AbstractSecurityLwM2MIntegrationTest {
 
-public class NoSecLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTest {
-
-    //Lwm2m only
     @Test
-    public void testWithNoSecConnectLwm2mSuccessAndObserveTelemetry() throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC;
-        LwM2MDeviceCredentials clientCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        super.basicTestConnectionObserveSingleTelemetry(SECURITY_NO_SEC, clientCredentials, clientEndpoint, false, false);
+    public void testWithNoSecConnectLwm2mSuccessBootstrapRequestTrigger_3_ConnectBsSuccess_UpdateLwm2mSection_3_AndLm2m_1_ConnectLwm2mSuccess() throws Exception {
+        String clientEndpoint = CLIENT_ENDPOINT_NO_SEC_BS + "Trigger_3" + LWM2M_ONLY.name();
+        String awaitAlias = "await on client state (NoSecBS Trigger Lwm2m section)";
+        basicTestConnectionBootstrapRequestTriggerBefore(clientEndpoint, awaitAlias, LWM2M_ONLY, 3);
     }
 }

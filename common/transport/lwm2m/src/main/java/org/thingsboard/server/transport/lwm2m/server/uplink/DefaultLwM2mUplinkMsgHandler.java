@@ -864,7 +864,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             ResourceUpdateResult updateResource = new ResourceUpdateResult(lwM2MClient);
             request.getObjectInstances().forEach(instance ->
                             instance.getResources().forEach((resId, lwM2mResource) ->{
-                                this.updateResourcesValue(updateResource, lwM2mResource, versionId + "/" + resId, Mode.REPLACE, 0);
+                                String path = versionId.endsWith("/") ? versionId + resId : versionId + "/" + resId;
+                                this.updateResourcesValue(updateResource, lwM2mResource, path, Mode.REPLACE, 0);
                             })
             );
             clientContext.update(lwM2MClient);
