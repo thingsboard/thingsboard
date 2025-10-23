@@ -24,25 +24,25 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
-import { WidgetContext } from '@home/models/widget-component.models';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { UtilsService } from '@core/services/utils.service';
-import { Datasource, DatasourceData, DatasourceType } from '@shared/models/widget.models';
-import { WINDOW } from '@core/services/window.service';
-import { AttributeService } from '@core/http/attribute.service';
-import { EntityId } from '@shared/models/id/entity-id';
-import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { map, Observable, of, switchMap, tap } from 'rxjs';
-import { isFile, isString } from '@core/utils';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
 import { ImageService } from '@app/core/public-api';
+import { AppState } from '@core/core.state';
+import { AttributeService } from '@core/http/attribute.service';
+import { UtilsService } from '@core/services/utils.service';
+import { WINDOW } from '@core/services/window.service';
+import { isString } from '@core/utils';
+import { WidgetContext } from '@home/models/widget-component.models';
+import { Store } from '@ngrx/store';
+import { PageComponent } from '@shared/components/page.component';
+import { EntityId } from '@shared/models/id/entity-id';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { Datasource, DatasourceData, DatasourceType } from '@shared/models/widget.models';
+import { map, Observable, of, switchMap } from 'rxjs';
 
 interface PhotoCameraInputWidgetSettings {
   widgetTitle: string;
   saveToGallery: boolean;
-  imageVisibility: boolean;
+  usePublicGalleryLink: boolean;
   imageQuality: number;
   imageFormat: string;
   maxWidth: number;
@@ -284,8 +284,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
     this.canvasElement.height = this.videoHeight;
     this.canvasElement.getContext('2d').drawImage(this.videoElement, 0, 0, this.videoWidth, this.videoHeight);
 
-    const previewDataUrl = this.canvasElement.toDataURL(this.mimeType, this.quality);
-    this.previewPhoto = previewDataUrl;
+    this.previewPhoto = this.canvasElement.toDataURL(this.mimeType, this.quality);
     this.isPreviewPhoto = true;
   }
 
@@ -310,7 +309,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
         return this.imageService.uploadImage(file, fileName);
       }),
       map((imageInfo) => 
-        this.settings.imageVisibility ? imageInfo.publicLink : imageInfo.link
+        this.settings.usePublicGalleryLink ? imageInfo.publicLink : imageInfo.link
       )
     );
   }

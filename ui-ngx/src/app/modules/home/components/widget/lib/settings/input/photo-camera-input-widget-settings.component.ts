@@ -15,11 +15,10 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { deepClone } from '@app/core/utils';
+import { Store } from '@ngrx/store';
+import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-photo-camera-input-widget-settings',
@@ -44,7 +43,7 @@ export class PhotoCameraInputWidgetSettingsComponent extends WidgetSettingsCompo
       widgetTitle: '',
 
       saveToGallery: false,
-      imageVisibility: true,
+      usePublicGalleryLink: true,
       imageFormat: 'image/png',
       imageQuality: 0.92,
       maxWidth: 640,
@@ -61,7 +60,7 @@ export class PhotoCameraInputWidgetSettingsComponent extends WidgetSettingsCompo
 
       // Image settings
       saveToGallery: [settings.saveToGallery],
-      imageVisibility: [settings.imageVisibility],
+      usePublicGalleryLink: [settings.usePublicGalleryLink],
       imageFormat: [settings.imageFormat, []],
       imageQuality: [settings.imageQuality, [Validators.min(0), Validators.max(100)]],
       maxWidth: [settings.maxWidth, [Validators.min(1)]],
@@ -72,7 +71,8 @@ export class PhotoCameraInputWidgetSettingsComponent extends WidgetSettingsCompo
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     return {
       ...settings,
-      saveToGallery: settings.saveToGallery || false,
+      saveToGallery: settings.saveToGallery ?? false,
+      usePublicGalleryLink: settings.usePublicGalleryLink ?? false,
       imageQuality: settings.imageQuality * 100
     }
   }
@@ -80,7 +80,6 @@ export class PhotoCameraInputWidgetSettingsComponent extends WidgetSettingsCompo
   protected prepareOutputSettings(settings: WidgetSettings): WidgetSettings {
     return {
       ...settings,
-      saveToGallery: settings.saveToGallery || false,
       imageQuality: settings.imageQuality / 100
     }
   }
