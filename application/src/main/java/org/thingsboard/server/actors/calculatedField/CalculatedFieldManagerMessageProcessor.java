@@ -652,7 +652,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private List<CalculatedFieldCtx> getCalculatedFieldsByEntityIdAndProfile(EntityId entityId) {
         List<CalculatedFieldCtx> cfsByEntityIdAndProfile = new ArrayList<>();
         cfsByEntityIdAndProfile.addAll(getCalculatedFieldsByEntityId(entityId));
-        cfsByEntityIdAndProfile.addAll(getCalculatedFieldsByEntityId(getProfileId(tenantId, entityId)));
+        EntityId profileId = getProfileId(tenantId, entityId);
+        if (profileId != null) {
+            cfsByEntityIdAndProfile.addAll(getCalculatedFieldsByEntityId(profileId));
+        }
         return cfsByEntityIdAndProfile;
     }
 

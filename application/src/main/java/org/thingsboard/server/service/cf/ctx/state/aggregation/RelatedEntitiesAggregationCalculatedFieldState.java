@@ -76,12 +76,6 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     @Override
-    public void init() {
-        super.init();
-        ctx.scheduleReevaluation(deduplicationIntervalMs, actorCtx);
-    }
-
-    @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
     }
