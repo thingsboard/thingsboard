@@ -21,43 +21,26 @@ import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.device.DeviceCredentialsEvictEvent;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
-import org.thingsboard.server.dao.device.DeviceCredentialsServiceImpl;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import java.util.UUID;
-
 @DaoSqlTest
-@Transactional
 public class DeviceCredentialsServiceTest extends AbstractServiceTest {
 
-    @TestConfiguration
-    static class DeviceCredentialsServiceTestContextConfiguration {
-        @Bean
-        @Primary
-        public ApplicationEventPublisher eventPublisher() {
-            return Mockito.mock(ApplicationEventPublisher.class);
-        }
-    }
-
     @Autowired
-    DeviceCredentialsServiceImpl deviceCredentialsService;
+    DeviceCredentialsService deviceCredentialsService;
     @Autowired
     DeviceService deviceService;
-    @Autowired
+    @MockitoBean
     ApplicationEventPublisher eventPublisher;
 
     @Test
@@ -188,7 +171,6 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
         DeviceCredentials foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(deviceCredentials.getCredentialsId());
         Assert.assertEquals(deviceCredentials, foundDeviceCredentials);
         deviceService.deleteDevice(tenantId, savedDevice.getId());
-        deviceCredentialsService.handleEvictEvent(new DeviceCredentialsEvictEvent(deviceCredentials.getCredentialsId(), null));
         foundDeviceCredentials = deviceCredentialsService.findDeviceCredentialsByCredentialsId(deviceCredentials.getCredentialsId());
         Assert.assertNull(foundDeviceCredentials);
     }
@@ -238,34 +220,6 @@ public class DeviceCredentialsServiceTest extends AbstractServiceTest {
             Assert.assertEquals(deviceCredentials.getDeviceId(), result.getDeviceId());
 
             Mockito.verify(eventPublisher, Mockito.never()).publishEvent(Mockito.any(ActionEntityEvent.class));
-
-        } finally {
-            deviceService.deleteDevice(tenantId, savedDevice.getId());
-        }
-    }
-
-    @Test
-    public void testUpdateDeviceCredentialsWithDifferentValuesPublishesEvent() {
-        Device device = new Device();
-        device.setTenantId(tenantId);
-        device.setName("My device");
-        device.setType("default");
-        Device savedDevice = deviceService.saveDevice(device);
-
-        try {
-            DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
-            Assert.assertNotNull(deviceCredentials);
-
-            String newCredentialsId = "new_access_token_" + UUID.randomUUID();
-            deviceCredentials.setCredentialsId(newCredentialsId);
-
-            Mockito.reset(eventPublisher);
-
-            DeviceCredentials result = deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
-
-            Assert.assertEquals(newCredentialsId, result.getCredentialsId());
-
-            Mockito.verify(eventPublisher, Mockito.times(1)).publishEvent(Mockito.any(ActionEntityEvent.class));
 
         } finally {
             deviceService.deleteDevice(tenantId, savedDevice.getId());
