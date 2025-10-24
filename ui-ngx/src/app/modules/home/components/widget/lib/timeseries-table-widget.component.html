@@ -41,7 +41,7 @@
                    class="flex-1"
                    mat-stretch-tabs="false"
                    [(selectedIndex)]="sourceIndex" (selectedIndexChange)="onSourceIndexChanged()">
-      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" [label]="getTabLabel(source)">
+      <mat-tab *ngFor="let source of sources; trackBy: trackBySourcesIndex; let index = index;" [label]="source.displayName">
         <ng-template [ngIf]="isActiveTab(index)">
           <div class="table-container flex-1">
             <table mat-table [dataSource]="source.timeseriesDatasource" [trackBy]="trackByRowTimestamp"
