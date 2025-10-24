@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.KeyFilterPredicate;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
 
 import java.io.Serializable;
 
@@ -28,6 +29,8 @@ public class AlarmConditionFilter implements Serializable {
 
     @NotBlank
     private String argument;
+    @NotNull
+    private EntityKeyValueType valueType;
     @Valid
     @NotNull
     private KeyFilterPredicate predicate;
