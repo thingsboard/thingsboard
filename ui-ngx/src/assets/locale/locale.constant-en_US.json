@@ -1159,10 +1159,36 @@
         "output-key": "Output key",
         "copy-output-key": "Copy output key",
         "aggregation-path-related-entities": "Aggregation path to related entities",
-        "metrics": "Metrics",
         "deduplication-interval": "Deduplication interval",
         "deduplication-interval-min": "Deduplication interval should be at least {{ sec }} second.",
         "deduplication-interval-required": "Deduplication interval is required.",
+        "metrics": {
+            "metrics": "Metrics",
+            "metrics-empty": "At least one metric must be configured.",
+            "metric-name": "Metric name",
+            "copy-metric-name": "Copy metric name",
+            "aggregation": "Aggregation",
+            "aggregation-type": {
+                "avg": "Average",
+                "min": "Minimum",
+                "max": "Maximum",
+                "sum": "Sum",
+                "count": "Count",
+                "count-unique": "Count unique"
+            },
+            "filtered": "Filtered",
+            "value-source": "Value source",
+            "value-source-type": {
+                "key": "Key",
+                "function": "Function"
+            },
+            "no-metrics-configured": "No metrics configured",
+            "add-metric": "Add metric",
+            "max-metrics": "Maximum number of metrics reached.",
+            "metric-settings": "Metric settings",
+            "filter": "Filter",
+            "filter-hint": "Enables filtering of entities during aggregation. The filter function must return a boolean value and can use all configured arguments."
+        },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-propagate-arguments-with-rolling": "'Time series rolling' type is incompatible with 'Arguments only' propagation.",
@@ -1182,7 +1208,7 @@
             "output-key-max-length": "Output key should be less than 256 characters.",
             "output-key-forbidden": "Output key is reserved and cannot be used.",
             "entity-type-required": "Entity type is required",
-            "name-required": "Mame is required.",
+            "name-required": "Name is required.",
             "name-pattern": "Name is invalid.",
             "name-duplicate": "Name with such name already exists.",
             "name-max-length": "Name should be less than 256 characters.",

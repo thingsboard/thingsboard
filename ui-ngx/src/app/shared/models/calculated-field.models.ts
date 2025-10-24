@@ -113,6 +113,7 @@ export interface CalculatedFieldRelatedAggregationConfiguration {
   type: CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
   relation: RelationPathLevel;
   arguments: Record<string, CalculatedFieldArgument>;
+  metrics: Record<string, CalculatedFieldAggMetric>;
   deduplicationIntervalInSec: number;
   useLatestTs: boolean;
   output: Omit<CalculatedFieldSimpleOutput, 'name'>;
@@ -249,6 +250,54 @@ export interface CalculatedFieldArgument {
   refEntityId?: RefEntityId;
   limit?: number;
   timeWindow?: number;
+}
+
+export enum AggFunction {
+  AVG='AVG',
+  MIN='MIN',
+  MAX='MAX',
+  SUM='SUM',
+  COUNT='COUNT',
+  COUNT_UNIQUE='COUNT_UNIQUE'
+}
+
+export const AggFunctionTranslations = new Map<AggFunction, string>([
+  [AggFunction.AVG, 'calculated-fields.metrics.aggregation-type.avg'],
+  [AggFunction.MIN, 'calculated-fields.metrics.aggregation-type.min'],
+  [AggFunction.MAX, 'calculated-fields.metrics.aggregation-type.max'],
+  [AggFunction.SUM, 'calculated-fields.metrics.aggregation-type.sum'],
+  [AggFunction.COUNT, 'calculated-fields.metrics.aggregation-type.count'],
+  [AggFunction.COUNT_UNIQUE, 'calculated-fields.metrics.aggregation-type.count-unique'],
+])
+
+export interface CalculatedFieldAggMetric {
+  function: AggFunction;
+  filter?: string;
+  input: AggKeyInput | AggFunctionInput;
+}
+
+export interface CalculatedFieldAggMetricValue extends CalculatedFieldAggMetric {
+  name: string;
+}
+
+export enum AggInputType {
+  key = 'key',
+  function = 'function'
+}
+
+export const AggInputTypeTranslations = new Map<AggInputType, string>([
+  [AggInputType.key, 'calculated-fields.metrics.value-source-type.key'],
+  [AggInputType.function, 'calculated-fields.metrics.value-source-type.function'],
+])
+
+export interface AggKeyInput {
+  type: AggInputType.key;
+  key: string;
+}
+
+export interface AggFunctionInput {
+  type: AggInputType.function;
+  function: string;
 }
 
 export interface CalculatedFieldGeofencing {

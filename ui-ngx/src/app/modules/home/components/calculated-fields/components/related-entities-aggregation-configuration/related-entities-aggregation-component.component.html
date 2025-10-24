@@ -51,8 +51,13 @@
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.metrics' | translate }}">
-      {{ 'calculated-fields.metrics' | translate }}
+      {{ 'calculated-fields.metrics.metrics' | translate }}
     </div>
+    <tb-calculated-field-metrics-table formControlName="metrics"
+                                       [arguments]="arguments$ | async"
+                                       [highlightRules]="argumentsHighlightRules$ | async"
+                                       [editorCompleter]="argumentsEditorCompleter$ | async"
+    ></tb-calculated-field-metrics-table>
     <tb-time-unit-input required
                         appearance="outline"
                         subscriptSizing="dynamic"

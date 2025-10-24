@@ -77,6 +77,7 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
       relationType: ['Contains', Validators.required],
     }),
     arguments: this.fb.control({}),
+    metrics: this.fb.control({}),
     deduplicationIntervalInSec: [],
     output: this.fb.control<CalculatedFieldOutput>({
       scope: AttributeScope.SERVER_SCOPE,
@@ -93,8 +94,8 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   readonly minAllowedDeduplicationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedDeduplicationIntervalInSecForCF;
 
 
-  functionArgs$ = this.relatedAggregationConfiguration.get('arguments').valueChanges.pipe(
-    map(argumentsObj => ['ctx', ...Object.keys(argumentsObj)])
+  arguments$ = this.relatedAggregationConfiguration.get('arguments').valueChanges.pipe(
+    map(argumentsObj => Object.keys(argumentsObj))
   );
 
   argumentsEditorCompleter$ = this.relatedAggregationConfiguration.get('arguments').valueChanges.pipe(
