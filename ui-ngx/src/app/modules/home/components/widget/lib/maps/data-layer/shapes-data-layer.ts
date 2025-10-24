@@ -90,8 +90,7 @@ abstract class ShapePatternProcessor<S = any> {
   }
 
   protected constructor(protected dataLayer: TbMapDataLayer,
-                        protected settings: S) {
-  }
+                        protected settings: S) {}
 
   public abstract setup(): Observable<any>;
 
@@ -122,10 +121,8 @@ abstract class ShapePatternProcessor<S = any> {
     let pattern: L.TB.Pattern;
     if (patternInfo.type === ShapeFillType.color) {
       pattern = new L.TB.Pattern({width: 1, height: 1});
-      const fillRect = new L.TB.PatternRect({
-        x: 0, y: 0, width: 1, height: 1,
-        fillOpacity: 1, stroke: false, fill: true, fillColor: patternInfo.fillColor
-      });
+      const fillRect = new L.TB.PatternRect({x: 0, y: 0, width: 1, height: 1,
+        fillOpacity: 1, stroke: false, fill: true, fillColor: patternInfo.fillColor});
       pattern.addElement(fillRect);
     } else if (patternInfo.type === ShapeFillType.image) {
       const patternOptions: L.TB.PatternOptions = {
@@ -133,7 +130,7 @@ abstract class ShapePatternProcessor<S = any> {
         height: 1,
         patternUnits: 'objectBoundingBox',
         patternContentUnits: 'objectBoundingBox',
-        viewBox: [0, 0, patternInfo.fillImage.width, patternInfo.fillImage.height]
+        viewBox: [0,0,patternInfo.fillImage.width,patternInfo.fillImage.height]
       };
       if (patternInfo.fillImage.preserveAspectRatio) {
         patternOptions.preserveAspectRatioAlign = 'xMidYMid';
@@ -306,7 +303,7 @@ class ShapeStripePatternProcessor extends ShapePatternProcessor<ShapeFillStripeS
 
 }
 
-export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbLatestMapDataLayer<S, L>> extends TbLatestMapDataLayer<S, L> {
+export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L extends TbLatestMapDataLayer<S,L>> extends TbLatestMapDataLayer<S, L> {
 
   private shapePatternProcessor: ShapePatternProcessor;
   private strokeColorProcessor: DataLayerColorProcessor;
@@ -354,7 +351,7 @@ export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L exte
   }
 
   protected allColorSettings(): DataLayerColorSettings[] {
-    const colorSettings: DataLayerColorSettings[] = [this.settings.strokeColor];
+    const colorSettings:  DataLayerColorSettings[] = [this.settings.strokeColor];
     if (this.settings.fillType === ShapeFillType.color) {
       colorSettings.push(this.settings.fillColor)
     } else if (this.settings.fillType === ShapeFillType.stripe) {

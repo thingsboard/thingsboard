@@ -162,6 +162,7 @@ export interface DataLayerEditSettings {
   snappable: boolean;
 }
 
+
 export interface MapDataLayerSettings extends MapDataSourceSettings {
   additionalDataSources?: MapDataSourceSettings[];
   additionalDataKeys?: DataKey[];
@@ -910,7 +911,7 @@ export const defaultBaseMapSettings: BaseMapSettings = {
   tripTimeline: {
     showTimelineControl: false,
     timeStep: 1000,
-    speedOptions: [1, 5, 10, 15, 25],
+    speedOptions: [1,5,10,15,25],
     showTimestamp: true,
     timestampFormat: simpleDateFormat('yyyy-MM-dd HH:mm:ss'),
     snapToRealLocation: false,
@@ -1282,7 +1283,7 @@ export type MapStringFunction = (data: FormattedData<TbMapDatasource>,
                                  dsData: FormattedData<TbMapDatasource>[]) => string;
 
 export type MapBooleanFunction = (data: FormattedData<TbMapDatasource>,
-                                  dsData: FormattedData<TbMapDatasource>[]) => boolean;
+                                 dsData: FormattedData<TbMapDatasource>[]) => boolean;
 
 export type MarkerImageFunction = (data: FormattedData<TbMapDatasource>, markerImages: string[],
                                    dsData: FormattedData<TbMapDatasource>[]) => MarkerImageInfo;
@@ -1342,7 +1343,7 @@ export const isValidLatLng = (latitude: any, longitude: any): boolean =>
   isValidLatitude(latitude) && isValidLongitude(longitude);
 
 export const isCutPolygon = (data: TbPolygonCoordinates | TbPolygonRawCoordinates): boolean => {
-  return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || (isNumber((data[0][0] as any).lat) && isNumber((data[0][0] as any).lng)));
+  return data.length > 1 && Array.isArray(data[0]) && (Array.isArray(data[0][0]) || (isNumber((data[0][0] as any).lat) && isNumber((data[0][0] as any).lng)) );
 }
 
 export const parseCenterPosition = (position: string | [number, number]): [number, number] => {
@@ -1426,7 +1427,7 @@ const mergeMapDatasource = (target: TbMapDatasource, source: TbMapDatasource): T
   return target;
 }
 
-const imageAspectMap: { [key: string]: ImageWithAspect } = {};
+const imageAspectMap: {[key: string]: ImageWithAspect} = {};
 
 const imageLoader = (imageUrl: string): Observable<HTMLImageElement> => new Observable((observer: Observer<HTMLImageElement>) => {
   const image = document.createElement('img'); // support IE
@@ -1473,7 +1474,7 @@ export const loadImageWithAspect = (imagePipe: ImagePipe, imageUrl: string): Obs
                 url,
                 width: size[0],
                 height: size[1],
-                aspect: size[0] / size[1]
+                aspect: size[0]/size[1]
               };
               imageAspectMap[hash] = imageWithAspect;
               return imageWithAspect;
@@ -1551,7 +1552,7 @@ export const latLngPointToBounds = (point: L.LatLng, southWest: L.LatLng, northE
   return point;
 }
 
-export type TripRouteData = { [time: number]: FormattedData<TbMapDatasource> };
+export type TripRouteData = {[time: number]: FormattedData<TbMapDatasource>};
 
 export const calculateInterpolationRatio = (firsMoment: number, secondMoment: number, intermediateMoment: number): number => {
   return (intermediateMoment - firsMoment) / (secondMoment - firsMoment);
