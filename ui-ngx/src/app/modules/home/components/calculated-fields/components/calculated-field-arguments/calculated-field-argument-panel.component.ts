@@ -36,7 +36,7 @@ import {
   CalculatedFieldArgumentValue,
   getCalculatedFieldCurrentEntityFilter
 } from '@shared/models/calculated-field.models';
-import { debounceTime, delay, distinctUntilChanged, filter } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -52,12 +52,11 @@ import { Store } from '@ngrx/store';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { TenantId } from '@shared/models/id/tenant-id';
-import { deduplicationStrategiesHintTranslations } from '@home/components/rule-node/rule-node-config.models';
 
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['./calculated-field-argument-panel.component.scss']
+  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-argument-panel.component.scss']
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 
@@ -122,7 +121,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     this.observeEntityFilterChanges();
     this.observeArgumentTypeChanges();
     this.observeEntityKeyChanges();
-    this.observeUpdatePosition();
   }
 
   get entityType(): ArgumentEntityType {
@@ -302,17 +300,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     };
   }
 
-  private observeUpdatePosition(): void {
-    merge(
-      this.argumentType.valueChanges,
-      this.refEntityKeyFormGroup.get('type').valueChanges,
-      this.argumentFormGroup.get('timeWindow').valueChanges,
-      this.argumentFormGroup.get('refEntityId').valueChanges.pipe(filter(Boolean)),
-    )
-      .pipe(delay(50), takeUntilDestroyed())
-      .subscribe(() => this.popover.updatePosition());
-  }
-
   private updatedRefEntityIdState(type: ArgumentEntityType): void {
     const isEntityWithId = !!type && type !== ArgumentEntityType.Tenant && type !== ArgumentEntityType.Current;
     this.argumentFormGroup.get('refEntityId')[isEntityWithId ? 'enable' : 'disable']();
@@ -320,6 +307,4 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
       this.entityNameSubject.next(null);
     }
   }
-
-  protected readonly deduplicationStrategiesHintTranslations = deduplicationStrategiesHintTranslations;
 }

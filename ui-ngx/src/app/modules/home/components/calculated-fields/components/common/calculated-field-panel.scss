@@ -16,51 +16,43 @@
 @import '../../../../../../../scss/constants';
 
 :host {
-  .level-text {
+  .tb-config-panel {
+    width: 520px;
     display: flex;
-    justify-content: center;
-    width: 25px;
-    color: rgba(0, 0, 0, 0.54);
-  }
-
-  .tb-form-table {
-    .tb-form-row {
-      gap: 12px;
+    flex-direction: column;
+    gap: 16px;
+    @media #{$mat-lt-md} {
+      width: 90vw;
     }
 
-    .tb-form-table-body {
-      gap: unset;
+    .tb-config-panel-title {
+      line-height: 24px;
+      letter-spacing: 0.25px;
+      color: rgba(0, 0, 0, 0.87);
+      font-weight: 500;
+      font-size: 16px;
     }
 
-    .tb-form-table-header {
-      padding: 0;
-    }
-
-    .tb-form-table-header-cell {
-      &.tb-actions-header {
-        width: 40px;
-        min-width: 40px;
-      }
-    }
-  }
-
-  .limit-field-row {
-    @media screen and (max-width: 520px) {
+    .tb-config-panel-content {
       display: flex;
       flex-direction: column;
+      gap: 16px;
+      overflow: auto;
 
       .fixed-title-width {
-        align-self: flex-start;
-        padding-top: 8px;
+        @media #{$mat-xs} {
+          min-width: 120px;
+        }
       }
     }
-  }
-}
 
-:host ::ng-deep {
-  tb-entity-autocomplete {
-    .mat-mdc-form-field-has-icon-suffix .mat-mdc-text-field-wrapper {
-      padding-right: 0 !important;
+    .tb-config-panel-buttons {
+      height: 40px;
+      display: flex;
+      flex-direction: row;
+      gap: 16px;
+      justify-content: flex-end;
+      align-items: flex-end;
     }
   }
 }

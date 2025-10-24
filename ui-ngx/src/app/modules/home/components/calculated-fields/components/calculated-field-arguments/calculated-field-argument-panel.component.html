@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="w-full max-w-xl" [formGroup]="argumentFormGroup">
-  <div class="tb-form-panel no-border no-padding mb-2">
-    <div class="tb-form-panel-title">{{ 'calculated-fields.argument-settings' | translate }}</div>
+<div class="tb-config-panel" [formGroup]="argumentFormGroup">
+  <div class="tb-config-panel-title tb-form-panel-title">{{ 'calculated-fields.metrics.metric-settings' | translate }}</div>
+  <div class="tb-config-panel-content tb-form-panel no-border no-padding">
     @if (hint) {
       <div class="tb-form-hint tb-primary-fill hint-container">
         {{ hint | translate }}
@@ -190,7 +190,7 @@
       }
     </div>
   </div>
-  <div class="flex justify-end gap-2">
+  <div class="tb-config-panel-buttons">
     <button mat-button
             color="primary"
             type="button"

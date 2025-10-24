@@ -13,19 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../../../scss/constants';
+:host ::ng-deep {
+  .simpleMode {
+    min-width: 0;
 
-$panel-width: 520px;
+    .mat-slide {
+      overflow: hidden;
 
-:host {
-  display: flex;
-  width: $panel-width;
-  max-width: 100%;
-  max-height: 80vh;
+      .mdc-form-field {
+        width: 100%;
 
-  .fixed-title-width {
-    @media #{$mat-xs} {
-      min-width: 120px;
+        .mdc-label {
+          min-width: 0;
+        }
+      }
     }
   }
 }

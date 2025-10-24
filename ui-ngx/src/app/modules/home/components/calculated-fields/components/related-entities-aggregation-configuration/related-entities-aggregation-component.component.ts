@@ -47,6 +47,7 @@ import { AppState } from '@core/core.state';
 @Component({
   selector: 'tb-related-entities-aggregation-component',
   templateUrl: './related-entities-aggregation-component.component.html',
+  styleUrl: './related-entities-aggregation-component.component.scss',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,

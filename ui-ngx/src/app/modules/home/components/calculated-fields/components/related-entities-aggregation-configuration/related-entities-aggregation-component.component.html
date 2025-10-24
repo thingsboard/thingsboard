@@ -71,8 +71,8 @@
   <tb-calculate-field-output formControlName="output" [entityId]="entityId" simpleMode hiddenName>
     <div class="tb-form-row simpleMode flex-1">
       <mat-slide-toggle class="mat-slide" formControlName="useLatestTs">
-        <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-latest-timestamp' | translate }}" translate>
-          calculated-fields.use-latest-timestamp
+        <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-latest-timestamp' | translate }}">
+          <div translate tbTruncateWithTooltip>calculated-fields.use-latest-timestamp</div>
         </div>
       </mat-slide-toggle>
     </div>

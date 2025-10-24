@@ -25,10 +25,10 @@ import {
   AggInputTypeTranslations,
   CalculatedFieldAggMetricValue
 } from '@shared/models/calculated-field.models';
-import { delay, map } from 'rxjs/operators';
+import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityFilter } from '@shared/models/query/query.models';
-import { merge, Observable, of } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
@@ -40,7 +40,7 @@ interface CalculatedFieldAggMetricValuePanel extends CalculatedFieldAggMetricVal
 @Component({
   selector: 'tb-calculated-field-metrics-panel',
   templateUrl: './calculated-field-metrics-panel.component.html',
-  styleUrls: ['./calculated-field-metrics-panel.component.scss']
+  styleUrl: '../common/calculated-field-panel.scss',
 })
 export class CalculatedFieldMetricsPanelComponent implements OnInit {
 
@@ -80,7 +80,6 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     private fb: FormBuilder,
     private popover: TbPopoverComponent<CalculatedFieldMetricsPanelComponent>
   ) {
-    this.observeUpdatePosition();
     this.observeFilterAllowChange();
     this.observeInputTypeChange();
   }
@@ -163,14 +162,5 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
       const forbiddenNames = ['ctx', 'e', 'pi'];
       return forbiddenNames.includes(trimmedValue) ? { forbiddenName: true } : null;
     };
-  }
-
-  private observeUpdatePosition(): void {
-    merge(
-      this.metricForm.get('allowFilter').valueChanges,
-      this.metricForm.get('input.type').valueChanges
-    )
-      .pipe(delay(50), takeUntilDestroyed())
-      .subscribe(() => this.popover.updatePosition());
   }
 }

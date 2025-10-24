@@ -20,10 +20,10 @@
     <table mat-table [dataSource]="dataSource" class="overflow-hidden bg-transparent" matSort
            [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
       <ng-container [matColumnDef]="'name'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="!w-1/3 xs:!w-1/2">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="!w-1/5 xs:!w-full sm:!w-1/2">
           <div tbTruncateWithTooltip>{{ 'calculated-fields.metrics.metric-name' | translate }}</div>
         </mat-header-cell>
-        <mat-cell *matCellDef="let metric" class="argument-name-cell w-1/3 xs:w-1/2">
+        <mat-cell *matCellDef="let metric" class="argument-name-cell w-1/5 xs:w-full sm:w-1/2">
           <div class="flex items-center">
             <div tbTruncateWithTooltip class="flex-1">{{ metric.name }}</div>
             <tb-copy-button class="copy-argument-name"
@@ -35,26 +35,28 @@
         </mat-cell>
       </ng-container>
       <ng-container [matColumnDef]="'function'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="entity-type-header w-1/5 xs:hidden">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 xs:hidden lt-md:w-1/2">
           {{ 'calculated-fields.metrics.aggregation' | translate }}
         </mat-header-cell>
-        <mat-cell *matCellDef="let metric" class="w-1/5 xs:hidden">
+        <mat-cell *matCellDef="let metric" class="w-1/5 xs:hidden lt-md:w-1/2">
           <div tbTruncateWithTooltip>{{ AggFunctionTranslations.get(metric.function) | translate }}</div>
         </mat-cell>
       </ng-container>
       <ng-container [matColumnDef]="'filter'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="entity-type-header w-1/5 xs:hidden">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 lt-md:hidden">
           {{ 'calculated-fields.metrics.filtered' | translate }}
         </mat-header-cell>
-        <mat-cell *matCellDef="let metric" class="w-1/5 xs:hidden">
-          <mat-icon>{{ metric.filter ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+        <mat-cell *matCellDef="let metric" class="w-1/5 lt-md:hidden">
+          <div>
+            <mat-icon class="ml-4 align-middle">{{ metric.filter ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+          </div>
         </mat-cell>
       </ng-container>
       <ng-container [matColumnDef]="'valueSource'">
-        <mat-header-cell *matHeaderCellDef class="w-1/4 xs:hidden">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-2/5 lt-md:hidden">
           {{ 'calculated-fields.metrics.value-source' | translate }}
         </mat-header-cell>
-        <mat-cell *matCellDef="let metric" class="w-1/4 xs:hidden">
+        <mat-cell *matCellDef="let metric" class="w-2/5 lt-md:hidden">
           <div tbTruncateWithTooltip>{{ AggInputTypeTranslations.get(metric.input.type) | translate }}</div>
         </mat-cell>
       </ng-container>

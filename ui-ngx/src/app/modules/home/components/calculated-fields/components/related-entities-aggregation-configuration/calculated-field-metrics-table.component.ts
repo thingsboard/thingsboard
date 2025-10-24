@@ -58,7 +58,7 @@ import { AceHighlightRules } from '@shared/models/ace/ace.models';
 @Component({
   selector: 'tb-calculated-field-metrics-table',
   templateUrl: './calculated-field-metrics-table.component.html',
-  styleUrls: [`calculated-field-metrics-table.component.scss`],
+  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -219,6 +219,8 @@ export class CalculatedFieldMetricsTableComponent implements ControlValueAccesso
     switch (column) {
       case 'function':
         return metric.function;
+      case 'valueSource':
+        return metric.input?.type;
       case 'filter':
         return isDefinedAndNotNull(metric.filter).toString();
       default:

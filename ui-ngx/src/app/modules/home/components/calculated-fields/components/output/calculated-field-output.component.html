@@ -43,7 +43,7 @@
   </div>
   @if (simpleMode) {
     @if (hiddenName) {
-      <div class="flex items-start gap-3">
+      <div class="grid grid-cols-2 items-start gap-3">
         <ng-container *ngTemplateOutlet="decimalsByDefaultField"></ng-container>
         <ng-content select=".simpleMode"></ng-content>
       </div>

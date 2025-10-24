@@ -15,23 +15,23 @@
     limitations under the License.
 
 -->
-<div class="w-full max-w-xl" [formGroup]="metricForm">
-  <div class="tb-form-panel no-border no-padding mb-2">
-    <div class="tb-form-panel-title">{{ 'calculated-fields.metrics.metric-settings' | translate }}</div>
-    <div class="tb-form-panel no-border no-padding">
-      <div class="tb-form-row">
-        <div class="fixed-title-width tb-required">{{ 'calculated-fields.metrics.metric-name' | translate }}</div>
-        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-          <input matInput autocomplete="new-name" name="value" formControlName="name" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
-          @if (metricForm.get('name').touched && metricForm.get('name').hasError('required')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.name-required' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('duplicateName')) {
+<div class="tb-config-panel" [formGroup]="metricForm">
+  <div class="tb-config-panel-title">{{ 'calculated-fields.metrics.metric-settings' | translate }}</div>
+  <div class="tb-config-panel-content tb-form-panel no-border no-padding">
+    <div class="tb-form-row">
+      <div class="fixed-title-width tb-required">{{ 'calculated-fields.metrics.metric-name' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput autocomplete="new-name" name="value" formControlName="name" maxlength="255"
+               placeholder="{{ 'action.set' | translate }}"/>
+        @if (metricForm.get('name').touched && metricForm.get('name').hasError('required')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-required' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('duplicateName')) {
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
@@ -40,100 +40,59 @@
             warning
           </mat-icon>
         } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('pattern')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.name-pattern' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('maxlength')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.name-max-length' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
-          } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('forbiddenName')) {
-            <mat-icon matSuffix
-                      matTooltipPosition="above"
-                      matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="'calculated-fields.hint.name-forbidden' | translate"
-                      class="tb-error">
-              warning
-            </mat-icon>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-pattern' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('maxlength')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-max-length' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (metricForm.get('name').touched && metricForm.get('name').hasError('forbiddenName')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-forbidden' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width">{{ 'calculated-fields.metrics.aggregation' | translate }}</div>
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="function">
+          @for (aggFunction of AggFunctions; track aggFunction) {
+            <mat-option [value]="aggFunction">{{ AggFunctionTranslations.get(aggFunction) | translate }}</mat-option>
           }
-        </mat-form-field>
-      </div>
-      <div class="tb-form-row">
-        <div class="fixed-title-width">{{ 'calculated-fields.metrics.aggregation' | translate }}</div>
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="function">
-            @for (aggFunction of AggFunctions; track aggFunction) {
-              <mat-option [value]="aggFunction">{{ AggFunctionTranslations.get(aggFunction) | translate }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+        </mat-select>
+      </mat-form-field>
+    </div>
 
-      <div class="tb-form-panel stroked tb-slide-toggle">
-        <mat-expansion-panel class="tb-settings" [(expanded)]="filterExpanded"
-                             [disabled]="!metricForm.get('allowFilter').value">
-          <mat-expansion-panel-header class="flex flex-row flex-wrap">
-            <mat-panel-title>
-              <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="allowFilter" (click)="$event.stopPropagation()">
-                <div tb-hint-tooltip-icon="{{ 'calculated-fields.metrics.filter-hint' | translate }}">
-                  {{ 'calculated-fields.metrics.filter' | translate }}
-                </div>
-              </mat-slide-toggle>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <tb-js-func required
-                        formControlName="filter"
-                        functionName="filter"
-                        [functionArgs]="functionArgs"
-                        [disableUndefinedCheck]="true"
-                        [scriptLanguage]="ScriptLanguage.TBEL"
-                        [highlightRules]="highlightRules"
-                        [editorCompleter]="editorCompleter"
-                        [helpPopupStyle]="{ width: '1200px' }"
-                        helpId="calculated-field/expression_fn">
-              <div toolbarPrefixButton
-                   class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
+    <div class="tb-form-panel stroked tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" [(expanded)]="filterExpanded"
+                           [disabled]="!metricForm.get('allowFilter').value">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="allowFilter"
+                              (click)="$event.stopPropagation()">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.metrics.filter-hint' | translate }}">
+                {{ 'calculated-fields.metrics.filter' | translate }}
               </div>
-            </tb-js-func>
-          </ng-template>
-        </mat-expansion-panel>
-      </div>
-      <ng-container formGroupName="input">
-        <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.metrics.value-source' | translate }}</div>
-          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="type">
-              @for (inputType of AggInputTypes; track inputType) {
-                <mat-option [value]="inputType">{{ AggInputTypeTranslations.get(inputType) | translate }}</mat-option>
-              }
-            </mat-select>
-          </mat-form-field>
-        </div>
-        @if (this.metricForm.get('input.type').value === AggInputType.key) {
-          <div class="tb-form-row">
-            <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
-            <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
-                                    additionalClass="tb-suffix-show-on-hover"
-                                    class="flex-1"
-                                    appearance="outline"
-                                    panelWidth=""
-                                    required
-                                    [errorText]="'calculated-fields.hint.argument-name-required' | translate"
-                                    formControlName="key">
-            </tb-string-autocomplete>
-          </div>
-        } @else {
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
           <tb-js-func required
-                      formControlName="function"
+                      formControlName="filter"
                       functionName="filter"
                       [functionArgs]="functionArgs"
                       [disableUndefinedCheck]="true"
@@ -146,11 +105,52 @@
                  class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
             </div>
           </tb-js-func>
-        }
-      </ng-container>
+        </ng-template>
+      </mat-expansion-panel>
     </div>
+    <ng-container formGroupName="input">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'calculated-fields.metrics.value-source' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="type">
+            @for (inputType of AggInputTypes; track inputType) {
+              <mat-option [value]="inputType">{{ AggInputTypeTranslations.get(inputType) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @if (this.metricForm.get('input.type').value === AggInputType.key) {
+        <div class="tb-form-row">
+          <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
+          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                  additionalClass="tb-suffix-show-on-hover"
+                                  class="flex-1"
+                                  appearance="outline"
+                                  panelWidth=""
+                                  required
+                                  [errorText]="'calculated-fields.hint.argument-name-required' | translate"
+                                  formControlName="key">
+          </tb-string-autocomplete>
+        </div>
+      } @else {
+        <tb-js-func required
+                    formControlName="function"
+                    functionName="filter"
+                    [functionArgs]="functionArgs"
+                    [disableUndefinedCheck]="true"
+                    [scriptLanguage]="ScriptLanguage.TBEL"
+                    [highlightRules]="highlightRules"
+                    [editorCompleter]="editorCompleter"
+                    [helpPopupStyle]="{ width: '1200px' }"
+                    helpId="calculated-field/expression_fn">
+          <div toolbarPrefixButton
+               class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
+          </div>
+        </tb-js-func>
+      }
+    </ng-container>
   </div>
-  <div class="flex justify-end gap-2">
+  <div class="tb-config-panel-buttons">
     <button mat-button
             color="primary"
             type="button"
