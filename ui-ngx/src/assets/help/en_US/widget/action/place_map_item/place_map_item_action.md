@@ -26,9 +26,9 @@ A JavaScript function triggered after a map item is placed. Optionally uses an H
       <li><b>coordinates:</b> <code>Coordinates</code> - Represents geographical coordinates of the placed map item. The actual format of this parameter depends on the type of the selected map item:
         <ul>
           <li><b>Marker:</b> <code>{x: number; y: number}</code>, where <code>x</code> represents latitude, and <code>y</code> represents longitude.</li>
-          <li><b>Polygon, Rectangle:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/00a0e77e7bb1cf227b4ccfd52cce610f95040697/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1300" target="_blank">TbPolygonRawCoordinates</a></code> contains an array of points defining the shape boundaries.</li>
-          <li><b>Circle:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/00a0e77e7bb1cf227b4ccfd52cce610f95040697/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1311" target="_blank">TbCircleData</a></code> contains center coordinates and radius information.</li>
-          <li><b>Polyline:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/00a0e77e7bb1cf227b4ccfd52cce610f95040697/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1306" target="_blank">TbPolylineRawCoordinates</a></code> contains an array of points defining the polyline.</li>
+          <li><b>Polygon, Rectangle:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e8b2066fb6f38bcc5775ea5b51a0755dfb763df8/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1326" target="_blank">TbPolygonRawCoordinates</a></code> contains an array of points defining the shape boundaries.</li>
+          <li><b>Circle:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e8b2066fb6f38bcc5775ea5b51a0755dfb763df8/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1338" target="_blank">TbCircleData</a></code> contains center coordinates and radius information.</li>
+          <li><b>Polyline:</b> <code><a href="https://github.com/thingsboard/thingsboard/blob/e8b2066fb6f38bcc5775ea5b51a0755dfb763df8/ui-ngx/src/app/shared/models/widget/maps/map.models.ts#L1333" target="_blank">TbPolylineRawCoordinates</a></code> contains an array of points defining the polyline.</li>
         </ul>
         Note: The coordinates will be automatically converted according to the selected map type.
       </li>
