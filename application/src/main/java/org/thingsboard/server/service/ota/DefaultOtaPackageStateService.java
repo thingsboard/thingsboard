@@ -328,7 +328,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
                 attributes.add(new BaseAttributeKvEntry(ts, new LongDataEntry(getAttributeKey(otaPackageType, SIZE), otaPackage.getDataSize())));
             }
 
-            if (otaPackage.getChecksumAlgorithm() != null) {
+            if (otaPackage.getChecksumAlgorithm() == null) {
                 attrToRemove.add(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM));
             } else {
                 attributes.add(new BaseAttributeKvEntry(ts, new StringDataEntry(getAttributeKey(otaPackageType, CHECKSUM_ALGORITHM), otaPackage.getChecksumAlgorithm().name())));

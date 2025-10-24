@@ -395,6 +395,48 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveDeviceWithFirmware() throws Exception {
+        loginTenantAdmin();
+        DeviceProfile profile = createDeviceProfile("Profile to test ota updates");
+        profile = doPost("/api/deviceProfile", profile, DeviceProfile.class);
+
+        SaveOtaPackageInfoRequest firmwareInfo = new SaveOtaPackageInfoRequest();
+        firmwareInfo.setDeviceProfileId(profile.getId());
+        firmwareInfo.setType(FIRMWARE);
+        String title = "title";
+        firmwareInfo.setTitle(title);
+        String fwVersion = "1.0";
+        firmwareInfo.setVersion(fwVersion);
+        String url = "test.url";
+        firmwareInfo.setUrl(url);
+        firmwareInfo.setUsesUrl(true);
+        OtaPackageInfo savedFw = doPost("/api/otaPackage", firmwareInfo, OtaPackageInfo.class);
+
+        Device device = new Device();
+        device.setName("My ota device");
+        device.setDeviceProfileId(profile.getId());
+        device.setFirmwareId(savedFw.getId());
+        device = doPost("/api/device", device, Device.class);
+
+        //check shared attributes
+        Device finalDevice = device;
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
+            List<Map<String, Object>> attributes = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + finalDevice.getId() +
+                    "/values/attributes/SHARED_SCOPE", new TypeReference<List<Map<String, Object>>>() {
+            });
+            return findAttrValue("fw_version", attributes).equals(fwVersion) &&
+                    findAttrValue("fw_title", attributes).equals(title) &&
+                    findAttrValue("fw_url", attributes).equals(url);
+        });
+    }
+
+    private static Object findAttrValue(String key, List<Map<String, Object>> attributes) {
+        Optional<Map<String, Object>> attr = attributes.stream()
+                .filter(att -> att.get("key").equals(key)).findFirst();
+        return attr.isPresent() ? attr.get().get("value") : "";
+    }
+
+    @Test
     public void testSaveDeviceWithFirmwareFromDifferentTenant() throws Exception {
         loginDifferentTenant();
         DeviceProfile differentProfile = createDeviceProfile("Different profile");

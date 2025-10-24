@@ -373,6 +373,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                     arguments.put(argName, new SingleValueArgumentEntry(item));
                 });
             }
+
             key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_ROLLING, null);
             argNames = args.get(key);
             if (argNames != null) {
