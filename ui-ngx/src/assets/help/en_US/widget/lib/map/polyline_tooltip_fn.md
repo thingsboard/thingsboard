@@ -1,11 +1,11 @@
-#### Path point tooltip function
+#### Polyline tooltip function
 
 <div class="divider"></div>
 <br/>
 
 *function (data, dsData): string*
 
-A JavaScript function used to compute text or HTML code to be displayed in the path point tooltip.
+A JavaScript function used to compute text or HTML code to be displayed in the polyline tooltip.
 
 **Parameters:**
 
@@ -15,7 +15,7 @@ A JavaScript function used to compute text or HTML code to be displayed in the p
 
 **Returns:**
 
-Should return string value presenting text or HTML for the tooltip.
+Should return string value presenting text or HTML for the polyline tooltip.
 
 <div class="divider"></div>
 

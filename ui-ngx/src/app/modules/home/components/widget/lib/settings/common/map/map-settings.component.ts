@@ -145,6 +145,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       markers: [null, []],
       polygons: [null, []],
       circles: [null, []],
+      polylines: [null, []],
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
@@ -180,7 +181,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     });
     merge(this.mapSettingsFormGroup.get('markers').valueChanges,
           this.mapSettingsFormGroup.get('polygons').valueChanges,
-          this.mapSettingsFormGroup.get('circles').valueChanges
+          this.mapSettingsFormGroup.get('circles').valueChanges,
+          this.mapSettingsFormGroup.get('polylines').valueChanges
     ).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -280,6 +282,10 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     if (!dragModeButtonSettingsEnabled) {
       const polygons: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('polygons').value;
       dragModeButtonSettingsEnabled = polygons.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
+    }
+    if (!dragModeButtonSettingsEnabled) {
+      const polylines: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('polylines').value;
+      dragModeButtonSettingsEnabled = polylines.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
     }
     if (!dragModeButtonSettingsEnabled) {
       const circles: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('circles').value;
