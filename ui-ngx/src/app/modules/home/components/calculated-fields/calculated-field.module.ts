@@ -38,6 +38,9 @@ import {
 import {
   PropagationConfigurationModule
 } from '@home/components/calculated-fields/components/propagation-configuration/propagation-configuration.module';
+import {
+  RelatedEntitiesAggregationComponentModule
+} from '@home/components/calculated-fields/components/related-entities-aggregation-configuration/related-entities-aggregation-component.module';
 
 @NgModule({
   declarations: [
@@ -52,6 +55,7 @@ import {
     EntityDebugSettingsButtonComponent,
     SimpleConfigurationModule,
     PropagationConfigurationModule,
+    RelatedEntitiesAggregationComponentModule,
   ],
   exports: [
     CalculatedFieldDialogComponent,

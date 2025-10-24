@@ -27,6 +27,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -35,7 +36,12 @@ import org.thingsboard.server.common.data.kv.AttributesSaveResult;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -71,6 +77,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
     private final CalculatedFieldCache calculatedFieldCache;
     private final TbClusterService clusterService;
+    private final RelationService relationService;
 
     @Override
     public void pushRequestToQueue(TimeseriesSaveRequest request, TimeseriesSaveResult result, FutureCallback<Void> callback) {
@@ -81,6 +88,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                 cf -> cf.matches(entries),
                 cf -> cf.linkMatches(entityId, entries),
                 cf -> cf.dynamicSourceMatches(request.getEntries()),
+                cf -> cf.relatedEntityMatches(entries),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -99,6 +107,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                 cf -> cf.matches(entries, scope),
                 cf -> cf.linkMatches(entityId, entries, scope),
                 cf -> cf.dynamicSourceMatches(request.getEntries(), request.getScope()),
+                cf -> cf.relatedEntityMatches(entries, scope),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -116,6 +125,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                 cf -> cf.matchesKeys(result, scope),
                 cf -> cf.linkMatchesAttrKeys(entityId, result, scope),
                 cf -> cf.matchesDynamicSourceKeys(result, request.getScope()),
+                cf -> cf.matchesRelatedEntityKeys(result, scope),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -127,6 +137,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                 cf -> cf.matchesKeys(result),
                 cf -> cf.linkMatchesTsKeys(entityId, result),
                 cf -> cf.matchesDynamicSourceKeys(result),
+                cf -> cf.matchesRelatedEntityKeys(result),
                 () -> toCalculatedFieldTelemetryMsgProto(request, result), callback);
     }
 
@@ -134,11 +145,12 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                                            Predicate<CalculatedFieldCtx> mainEntityFilter,
                                            Predicate<CalculatedFieldCtx> linkedEntityFilter,
                                            Predicate<CalculatedFieldCtx> dynamicSourceFilter,
+                                           Predicate<CalculatedFieldCtx> relatedEntityFilter,
                                            Supplier<ToCalculatedFieldMsg> msg, FutureCallback<Void> callback) {
         if (EntityType.TENANT.equals(entityId.getEntityType())) {
             tenantId = (TenantId) entityId;
         }
-        boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter, dynamicSourceFilter);
+        boolean send = checkEntityForCalculatedFields(tenantId, entityId, mainEntityFilter, linkedEntityFilter, dynamicSourceFilter, relatedEntityFilter);
         if (send) {
             ToCalculatedFieldMsg calculatedFieldMsg = msg.get();
             clusterService.pushMsgToCalculatedFields(tenantId, entityId, calculatedFieldMsg, wrap(callback));
@@ -149,7 +161,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
         }
     }
 
-    private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter, Predicate<CalculatedFieldCtx> dynamicSourceFilter) {
+    private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter, Predicate<CalculatedFieldCtx> dynamicSourceFilter, Predicate<CalculatedFieldCtx> relatedEntityFilter) {
         if (!CalculatedField.SUPPORTED_REFERENCED_ENTITIES.contains(entityId.getEntityType())) {
             return false;
         }
@@ -173,6 +185,29 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             EntityId dynamicEntityProfileId = calculatedFieldCache.getProfileId(tenantId, dynamicEntity);
             if (calculatedFieldCache.getCalculatedFieldCtxsByEntityId(dynamicEntityProfileId).stream().anyMatch(dynamicSourceFilter)) {
                 return true;
+            }
+        }
+
+        List<CalculatedFieldCtx> cfCtxs = calculatedFieldCache.getAggCalculatedFieldCtxsByFilter(relatedEntityFilter);
+        for (CalculatedFieldCtx cfCtx : cfCtxs) {
+            if (cfCtx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
+                RelationPathLevel relation = aggConfig.getRelation();
+                EntitySearchDirection inverseDirection = switch (relation.direction()) {
+                    case FROM -> EntitySearchDirection.TO;
+                    case TO -> EntitySearchDirection.FROM;
+                };
+                RelationPathLevel inverseRelation = new RelationPathLevel(inverseDirection, relation.relationType());
+                List<EntityRelation> byRelationPathQuery = relationService.findByRelationPathQuery(tenantId, new EntityRelationPathQuery(entityId, List.of(inverseRelation)));
+                if (!byRelationPathQuery.isEmpty()) {
+                    EntityId cfEntityId = cfCtx.getEntityId();
+                    for (EntityRelation entityRelation : byRelationPathQuery) {
+                        EntityId relatedId = (inverseDirection == EntitySearchDirection.FROM) ? entityRelation.getTo() : entityRelation.getFrom();
+                        if (cfEntityId.equals(relatedId) || cfEntityId.equals(calculatedFieldCache.getProfileId(tenantId, relatedId))) {
+                            return true;
+                        }
+                    }
+                    return false;
+                }
             }
         }
 

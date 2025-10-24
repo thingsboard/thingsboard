@@ -524,6 +524,23 @@ public class BaseRelationService implements RelationService {
         return executor.submit(() -> relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit));
     }
 
+    @Override
+    public List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery relationPathQuery) {
+        log.trace("Executing findByRelationPathQuery, tenantId [{}], relationPathQuery {}", tenantId, relationPathQuery);
+        validateId(tenantId, id -> "Invalid tenant id: " + id);
+        validate(relationPathQuery);
+        int limit = (int) apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
+        if (relationPathQuery.levels().size() == 1) {
+            RelationPathLevel relationPathLevel = relationPathQuery.levels().get(0);
+            var relations = switch (relationPathLevel.direction()) {
+                case FROM -> findByFromAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
+                case TO -> findByToAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
+            };
+            return relations.size() > limit ? relations.subList(0, limit) : relations;
+        }
+        return relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
+    }
+
     private void validate(EntityRelationPathQuery relationPathQuery) {
         validateId((UUIDBased) relationPathQuery.rootEntityId(), id -> "Invalid root entity id: " + id);
         List<RelationPathLevel> levels = relationPathQuery.levels();

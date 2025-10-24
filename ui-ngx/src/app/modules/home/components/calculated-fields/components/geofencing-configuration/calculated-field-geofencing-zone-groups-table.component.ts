@@ -37,7 +37,6 @@ import {
   ArgumentEntityType,
   CalculatedFieldGeofencing,
   CalculatedFieldGeofencingValue,
-  CalculatedFieldType,
   GeofencingReportStrategyTranslations,
 } from '@shared/models/calculated-field.models';
 import { MatButton } from '@angular/material/button';
@@ -63,7 +62,7 @@ import {
 @Component({
   selector: 'tb-calculated-field-geofencing-zone-groups-table',
   templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
-  styleUrls: [`calculated-field-geofencing-zone-groups-table.component.scss`],
+  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -157,7 +156,6 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
         index,
         zone,
         entityId: this.entityId,
-        calculatedFieldType: CalculatedFieldType.GEOFENCING,
         buttonTitle: isExists ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
@@ -168,7 +166,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
         renderer: this.renderer,
         componentType: CalculatedFieldGeofencingZoneGroupsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: isExists ? ['left', 'leftTop', 'leftBottom'] : ['topRight', 'right', 'rightTop'],
+        preferredPlacement: isExists ? ['leftOnly', 'leftTopOnly', 'leftBottomOnly'] : ['rightOnly', 'rightTopOnly', 'rightBottomOnly'],
         context: ctx,
         isModal: true
       });

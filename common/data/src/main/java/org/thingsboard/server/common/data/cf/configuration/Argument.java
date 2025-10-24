@@ -45,4 +45,8 @@ public class Argument {
         return hasDynamicSource() && refDynamicSourceConfiguration.getType() == CFArgumentDynamicSourceType.CURRENT_OWNER;
     }
 
+    public boolean hasTsRollingArgument() {
+        return ArgumentType.TS_ROLLING.equals(refEntityKey.getType());
+    }
+
 }

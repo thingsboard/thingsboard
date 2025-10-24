@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -40,7 +41,8 @@ import java.util.stream.Collectors;
         @Type(value = ScriptCalculatedFieldConfiguration.class, name = "SCRIPT"),
         @Type(value = GeofencingCalculatedFieldConfiguration.class, name = "GEOFENCING"),
         @Type(value = AlarmCalculatedFieldConfiguration.class, name = "ALARM"),
-        @Type(value = PropagationCalculatedFieldConfiguration.class, name = "PROPAGATION")
+        @Type(value = PropagationCalculatedFieldConfiguration.class, name = "PROPAGATION"),
+        @Type(value = RelatedEntitiesAggregationCalculatedFieldConfiguration.class, name = "RELATED_ENTITIES_AGGREGATION")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface CalculatedFieldConfiguration {

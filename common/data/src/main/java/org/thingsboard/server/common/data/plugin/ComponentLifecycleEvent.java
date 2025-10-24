@@ -32,7 +32,9 @@ public enum ComponentLifecycleEvent implements Serializable {
     STOPPED(5),
     DELETED(6),
     FAILED(7),
-    DEACTIVATED(8);
+    DEACTIVATED(8),
+    RELATION_UPDATED(9),
+    RELATION_DELETED(10);
 
     @Getter
     private final int protoNumber; // corresponds to ComponentLifecycleEvent proto

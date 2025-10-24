@@ -152,6 +152,8 @@ public enum MsgType {
     CF_ENTITY_INIT_CF_MSG,
     CF_ENTITY_DELETE_MSG,
 
+    CF_RELATED_ENTITY_MSG,
+
     CF_ARGUMENT_RESET_MSG, // Sent to reset argument;
     CF_REEVALUATE_MSG;
 

@@ -23,6 +23,7 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
@@ -76,7 +77,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
                 validateNewEntry(key, newEntry);
-                arguments.put(key, newEntry);
+                if (existingEntry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+                    relatedEntitiesArgumentEntry.updateEntry(newEntry);
+                } else {
+                    arguments.put(key, newEntry);
+                }
                 entryUpdated = true;
             } else {
                 entryUpdated = existingEntry.updateEntry(newEntry);
@@ -109,7 +114,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     @Override
     public boolean isReady() {
         return arguments.keySet().containsAll(requiredArguments) &&
-               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+                arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
     }
 
     @Override
@@ -121,9 +126,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     }
 
     @Override
-    public void close() {}
+    public void close() {
+    }
 
-    protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+    }
 
     protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
         if (!useLatestTs) {

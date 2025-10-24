@@ -15,20 +15,7 @@
  */
 @import '../../../../../../../scss/constants';
 
-$panel-width: 520px;
-
 :host {
-  display: flex;
-  width: $panel-width;
-  max-width: 100%;
-  max-height: 80vh;
-
-  .fixed-title-width {
-    @media #{$mat-xs} {
-      min-width: 120px;
-    }
-  }
-
   .level-text {
     display: flex;
     justify-content: center;
@@ -58,7 +45,7 @@ $panel-width: 520px;
   }
 
   .limit-field-row {
-    @media screen and (max-width: $panel-width) {
+    @media screen and (max-width: 520px) {
       display: flex;
       flex-direction: column;
 
@@ -71,11 +58,6 @@ $panel-width: 520px;
 }
 
 :host ::ng-deep {
-  .time-interval-field {
-    .advanced-input {
-      flex-direction: column;
-    }
-  }
   tb-entity-autocomplete {
     .mat-mdc-form-field-has-icon-suffix .mat-mdc-text-field-wrapper {
       padding-right: 0 !important;

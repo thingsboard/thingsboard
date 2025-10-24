@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
@@ -370,6 +371,17 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, EntityId profileId, ComponentLifecycleEvent state) {
+        log.trace("[{}] Processing {} state change event: {}", tenantId, entityId.getEntityType(), state);
+        broadcast(ComponentLifecycleMsg.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .profileId(profileId)
+                .event(state)
+                .build());
+    }
+
+    @Override
     public void onDeviceProfileChange(DeviceProfile deviceProfile, DeviceProfile oldDeviceProfile, TbQueueCallback callback) {
         boolean isFirmwareChanged = false;
         boolean isSoftwareChanged = false;
@@ -420,13 +432,13 @@ public class DefaultTbClusterService implements TbClusterService {
         gatewayNotificationsService.onDeviceDeleted(device);
         broadcastEntityDeleteToTransport(tenantId, deviceId, device.getName(), callback);
         sendDeviceStateServiceEvent(tenantId, deviceId, false, false, true);
-        broadcastEntityStateChangeEvent(tenantId, deviceId, ComponentLifecycleEvent.DELETED);
+        broadcastEntityStateChangeEvent(tenantId, deviceId, device.getDeviceProfileId(), ComponentLifecycleEvent.DELETED);
     }
 
     @Override
     public void onAssetDeleted(TenantId tenantId, Asset asset, TbQueueCallback callback) {
         AssetId assetId = asset.getId();
-        broadcastEntityStateChangeEvent(tenantId, assetId, ComponentLifecycleEvent.DELETED);
+        broadcastEntityStateChangeEvent(tenantId, assetId, asset.getAssetProfileId(), ComponentLifecycleEvent.DELETED);
     }
 
     @Override
@@ -724,6 +736,28 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void onRelationUpdated(TenantId tenantId, EntityRelation entityRelation, TbQueueCallback callback) {
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(tenantId)
+                .entityId(entityRelation.getFrom())
+                .event(ComponentLifecycleEvent.RELATION_UPDATED)
+                .info(JacksonUtil.valueToTree(entityRelation))
+                .build();
+        broadcast(msg);
+    }
+
+    @Override
+    public void onRelationDeleted(TenantId tenantId, EntityRelation entityRelation, TbQueueCallback callback) {
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(tenantId)
+                .entityId(entityRelation.getFrom())
+                .event(ComponentLifecycleEvent.RELATION_DELETED)
+                .info(JacksonUtil.valueToTree(entityRelation))
+                .build();
+        broadcast(msg);
+    }
+
+    @Override
     public void sendNotificationMsgToEdge(TenantId tenantId, EdgeId edgeId, EntityId entityId, String body, EdgeEventType type, EdgeEventActionType action, EdgeId originatorEdgeId) {
         if (!edgesEnabled) {
             return;
@@ -773,7 +807,8 @@ public class DefaultTbClusterService implements TbClusterService {
     private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
         switch (action) {
-            case ASSIGNED_TO_EDGE -> pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
+            case ASSIGNED_TO_EDGE ->
+                    pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
             case UNASSIGNED_FROM_EDGE -> {
                 EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
