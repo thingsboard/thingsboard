@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Data
@@ -33,7 +34,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
     private boolean forceResetPrevious;
 
     public PropagationArgumentEntry(List<EntityId> propagationEntityIds) {
-        this.propagationEntityIds = propagationEntityIds;
+        this.propagationEntityIds = new ArrayList<>(propagationEntityIds);
     }
 
     @Override

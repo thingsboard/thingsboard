@@ -199,7 +199,7 @@ public class GeofencingCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenNotAllArgPresent() {
-        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().status()).isFalse();
     }
 
     @Test
@@ -210,7 +210,7 @@ public class GeofencingCalculatedFieldStateTest {
                 "allowedZones", geofencingAllowedZoneArgEntry,
                 "restrictedZones", geofencingRestrictedZoneArgEntry
         ));
-        assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().status()).isTrue();
     }
 
     @Test
@@ -224,7 +224,7 @@ public class GeofencingCalculatedFieldStateTest {
 
         state.getArguments().put("noParkingZones", new GeofencingArgumentEntry());
 
-        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().status()).isFalse();
     }
 
     @Test

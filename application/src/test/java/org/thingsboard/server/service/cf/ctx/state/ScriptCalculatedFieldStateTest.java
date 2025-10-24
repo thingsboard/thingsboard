@@ -160,21 +160,21 @@ public class ScriptCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenNotAllArgPresent() {
-        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().status()).isFalse();
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().status()).isTrue();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", new TsRollingArgumentEntry(5, 30000L), "assetHumidity", assetHumidityArgEntry));
 
-        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().status()).isFalse();
     }
 
     private TsRollingArgumentEntry createRollingArgEntry() {

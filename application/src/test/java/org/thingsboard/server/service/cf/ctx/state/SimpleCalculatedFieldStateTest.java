@@ -203,7 +203,7 @@ public class SimpleCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenNotAllArgPresent() {
-        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().status()).isFalse();
     }
 
     @Test
@@ -214,7 +214,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().status()).isTrue();
     }
 
     @Test
@@ -225,7 +225,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
         state.getArguments().put("key3", new SingleValueArgumentEntry());
 
-        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().status()).isFalse();
     }
 
     private CalculatedField getCalculatedField() {

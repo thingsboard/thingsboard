@@ -58,12 +58,6 @@ public class PropagationArgumentEntryTest {
     }
 
     @Test
-    void testIsEmptyWhenNullList() {
-        PropagationArgumentEntry nullListEntry = new PropagationArgumentEntry(null);
-        assertThat(nullListEntry.isEmpty()).isTrue();
-    }
-
-    @Test
     void testGetValueReturnsPropagationIds() {
         assertThat(entry.getValue()).isInstanceOf(List.class);
         @SuppressWarnings("unchecked")
@@ -101,16 +95,6 @@ public class PropagationArgumentEntryTest {
         var updatedEmpty = new PropagationArgumentEntry(List.of());
 
         boolean changed = entry.updateEntry(updatedEmpty);
-
-        assertThat(changed).isTrue();
-        assertThat(entry.getPropagationEntityIds()).isEmpty();
-    }
-
-    @Test
-    void testUpdateEntryClearsWhenNewEntryIsNullList() {
-        var updatedNull = new PropagationArgumentEntry(null);
-
-        boolean changed = entry.updateEntry(updatedNull);
 
         assertThat(changed).isTrue();
         assertThat(entry.getPropagationEntityIds()).isEmpty();

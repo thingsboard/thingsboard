@@ -26,6 +26,7 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -107,9 +108,20 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     }
 
     @Override
-    public boolean isReady() {
-        return arguments.keySet().containsAll(requiredArguments) &&
-               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+    public ReadinessStatus getReadinessStatus() {
+        List<String> missing = new ArrayList<>(requiredArguments);
+        missing.removeAll(arguments.keySet());
+        if (!missing.isEmpty()) {
+            return ReadinessStatus.missingRequiredArguments(missing);
+        }
+        List<String> emptyArgs = arguments.entrySet().stream()
+                .filter(e -> e.getValue() == null || e.getValue().isEmpty())
+                .map(Map.Entry::getKey)
+                .toList();
+        if (!emptyArgs.isEmpty()) {
+            return ReadinessStatus.emptyArguments(emptyArgs);
+        }
+        return ReadinessStatus.ready();
     }
 
     @Override
