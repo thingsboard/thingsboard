@@ -115,14 +115,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-
-/**
- * @author Andrew Shvayka
- */
 @Slf4j
 public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcessor {
 
-    static final String SESSION_TIMEOUT_MESSAGE = "session timeout!";
     final TenantId tenantId;
     final DeviceId deviceId;
     final LinkedHashMapRemoveEldest<UUID, SessionInfoMetaData> sessions;
@@ -178,7 +173,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
     private EdgeId findRelatedEdgeId() {
         List<EntityRelation> result =
                 systemContext.getRelationService().findByToAndType(tenantId, deviceId, EntityRelation.CONTAINS_TYPE, RelationTypeGroup.EDGE);
-        if (result != null && result.size() > 0) {
+        if (result != null && !result.isEmpty()) {
             EntityRelation relationToEdge = result.get(0);
             if (relationToEdge.getFrom() != null && relationToEdge.getFrom().getId() != null) {
                 log.trace("[{}][{}] found edge [{}] for device", tenantId, deviceId, relationToEdge.getFrom().getId());
@@ -501,7 +496,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
         UUID sessionId = getSessionId(sessionInfo);
         DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
         ListenableFuture<Void> registrationFuture = systemContext.getClaimDevicesService()
-                        .registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
+                .registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
         Futures.addCallback(registrationFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(Void result) {
@@ -723,7 +718,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                         toDeviceRpcPendingMap.remove(requestId);
                         status = RpcStatus.FAILED;
                         response = JacksonUtil.newObjectNode().put("error", "There was a Timeout and all retry " +
-                                                                            "attempts have been exhausted. Retry attempts set: " + maxRpcRetries);
+                                "attempts have been exhausted. Retry attempts set: " + maxRpcRetries);
                     }
                 } else {
                     md.setRetries(md.getRetries() + 1);

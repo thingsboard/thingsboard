@@ -22,9 +22,6 @@ import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Created by nickAS21 on 26.12.22
- */
 @ToString(callSuper = true)
 public class GatewayDeviceSessionContext extends AbstractGatewayDeviceSessionContext<GatewaySessionHandler> {
 

@@ -28,9 +28,6 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import java.util.Optional;
 import java.util.UUID;
 
-/**
- * Created by nickAS21 on 26.12.22
- */
 @Slf4j
 public class GatewaySessionHandler extends AbstractGatewaySessionHandler<GatewayDeviceSessionContext> {
 

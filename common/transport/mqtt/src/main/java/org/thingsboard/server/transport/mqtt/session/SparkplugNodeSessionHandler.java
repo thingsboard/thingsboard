@@ -64,9 +64,6 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetr
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_SPLIT_REGEXP;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.TOPIC_STATE_REGEXP;
 
-/**
- * Created by nickAS21 on 12.12.22
- */
 @Slf4j
 @SpecVersion(spec = "sparkplug", version = "3.0.0")
 public class SparkplugNodeSessionHandler extends AbstractGatewaySessionHandler<SparkplugDeviceSessionContext> {
