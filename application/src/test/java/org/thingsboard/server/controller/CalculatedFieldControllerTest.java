@@ -271,8 +271,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     private CalculatedFieldConfiguration getPropagationCalculatedFieldConfig(Map<String, Argument> arguments) {
         var config = new PropagationCalculatedFieldConfiguration();
 
-        config.setRelationType(EntityRelation.CONTAINS_TYPE);
-        config.setDirection(EntitySearchDirection.TO);
+        config.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
 
         config.setApplyExpressionToResolvedArguments(false);
         config.setExpression(null);

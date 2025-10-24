@@ -15,13 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.List;
@@ -33,9 +31,7 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
     public static final String PROPAGATION_CONFIG_ARGUMENT = "propagationCtx";
 
     @NotNull
-    private EntitySearchDirection direction;
-    @NotBlank
-    private String relationType;
+    private RelationPathLevel relation;
 
     private boolean applyExpressionToResolvedArguments;
 
@@ -46,6 +42,7 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
 
     @Override
     public void validate() {
+        relation.validate();
         baseCalculatedFieldRestriction();
         propagationRestriction();
         if (!applyExpressionToResolvedArguments) {
@@ -77,7 +74,7 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
 
     public Argument toPropagationArgument() {
         var refDynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
-        refDynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(direction, relationType)));
+        refDynamicSourceConfiguration.setLevels(List.of(relation));
         var propagationArgument = new Argument();
         propagationArgument.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration);
         return propagationArgument;
