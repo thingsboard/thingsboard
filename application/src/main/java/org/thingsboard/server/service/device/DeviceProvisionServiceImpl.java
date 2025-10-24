@@ -186,9 +186,14 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         try {
             Optional<AttributeKvEntry> provisionState = attributesService.find(device.getTenantId(), device.getId(),
                     AttributeScope.SERVER_SCOPE, DEVICE_PROVISION_STATE).get();
-            if (provisionState != null && provisionState.isPresent() && !provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
-                notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
-                throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+            if (provisionState != null && provisionState.isPresent()) {
+                if (provisionState.get().getValueAsString().equals(PROVISIONED_STATE)) {
+                    notify(device, provisionRequest, TbMsgType.PROVISION_FAILURE, false);
+                    throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+                } else {
+                    log.error("[{}][{}] Unknown provision state: {}!", device.getName(), DEVICE_PROVISION_STATE, provisionState.get().getValueAsString());
+                    throw new ProvisionFailedException(ProvisionResponseStatus.FAILURE.name());
+                }
             } else {
                 saveProvisionStateAttribute(device).get();
                 notify(device, provisionRequest, TbMsgType.PROVISION_SUCCESS, true);
