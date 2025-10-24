@@ -31,7 +31,7 @@
       {{ 'widgets.input-widgets.save-to-gallery' | translate }}
     </mat-slide-toggle>
     @if (photoCameraInputWidgetSettingsForm.get('saveToGallery').value) {
-      <mat-slide-toggle class="mat-slide" formControlName="imageVisibility">
+      <mat-slide-toggle class="mat-slide" formControlName="usePublicGalleryLink">
         {{ 'widgets.input-widgets.public-image' | translate }}
       </mat-slide-toggle>
     }
