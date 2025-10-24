@@ -35,7 +35,7 @@ import { BranchInfo } from '@shared/models/vc.models';
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { isNotEmptyStr } from '@core/utils';
 import { MatAutocomplete, MatAutocompleteTrigger } from '@angular/material/autocomplete';
-import { SubscriptSizing } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-branch-autocomplete',
@@ -92,6 +92,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @Input()
   emptyPlaceholder: string;
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('branchAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('branchInput', { read: MatAutocompleteTrigger, static: true }) autoCompleteTrigger: MatAutocompleteTrigger;
