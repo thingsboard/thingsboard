@@ -371,7 +371,7 @@ export abstract class TbShapesDataLayer<S extends ShapeDataLayerSettings, L exte
   protected doSetup(): Observable<any> {
     this.shapePatternProcessor = ShapePatternProcessor.fromSettings(this, this.settings);
     this.strokeColorProcessor = new DataLayerColorProcessor(this, this.settings.strokeColor);
-    return forkJoin([this.shapePatternProcessor ? this.shapePatternProcessor.setup() : of([]), this.strokeColorProcessor.setup()]);
+    return forkJoin([this.shapePatternProcessor.setup(), this.strokeColorProcessor.setup()]);
   }
 
 }
