@@ -20,7 +20,7 @@
     <div [class.!hidden]="isShowCamera" class="flex size-full flex-col items-center justify-between">
       <div class="tb-web-camera__last-photo flex-1">
         <span [class.!hidden]="lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
-        <img [class.!hidden]="!lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto" alt="last photo"/>
+        <img [class.!hidden]="!lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto | image | async" alt="last photo"/>
       </div>
       <button mat-raised-button color="primary" (click)="takePhoto()" *ngIf="!textMessage">
         {{ "widgets.input-widgets.take-photo" | translate }}

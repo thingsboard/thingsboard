@@ -19,29 +19,30 @@ import {
   ElementRef,
   Inject,
   Input,
-  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
+import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { ImageService } from '@app/core/public-api';
+import { AppState } from '@core/core.state';
+import { AttributeService } from '@core/http/attribute.service';
+import { UtilsService } from '@core/services/utils.service';
+import { WINDOW } from '@core/services/window.service';
+import { isString } from '@core/utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { Overlay } from '@angular/cdk/overlay';
-import { UtilsService } from '@core/services/utils.service';
-import { Datasource, DatasourceData, DatasourceType } from '@shared/models/widget.models';
-import { WINDOW } from '@core/services/window.service';
-import { AttributeService } from '@core/http/attribute.service';
+import { PageComponent } from '@shared/components/page.component';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { Observable } from 'rxjs';
-import { isString } from '@core/utils';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { Datasource, DatasourceData, DatasourceType } from '@shared/models/widget.models';
+import { map, Observable, of, switchMap } from 'rxjs';
 
 interface PhotoCameraInputWidgetSettings {
   widgetTitle: string;
+  saveToGallery: boolean;
+  usePublicGalleryLink: boolean;
   imageQuality: number;
   imageFormat: string;
   maxWidth: number;
@@ -59,9 +60,7 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
 
   constructor(@Inject(WINDOW) private window: Window,
               protected store: Store<AppState>,
-              private elementRef: ElementRef,
-              private ngZone: NgZone,
-              private overlay: Overlay,
+              private imageService: ImageService,
               private utils: UtilsService,
               private attributeService: AttributeService,
               private sanitizer: DomSanitizer
@@ -119,6 +118,9 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
   lastPhoto: SafeUrl;
   datasourceDetected = false;
 
+  private mimeType: string;
+  private quality: number;
+
   private static hasGetUserMedia(): boolean {
     return !!(window.navigator.mediaDevices && window.navigator.mediaDevices.getUserMedia);
   }
@@ -160,6 +162,9 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
         this.dataKeyDetected = true;
       }
     }
+    this.mimeType = this.settings.imageFormat || PhotoCameraInputWidgetComponent.DEFAULT_IMAGE_TYPE;
+    this.quality = this.settings.imageQuality || PhotoCameraInputWidgetComponent.DEFAULT_IMAGE_QUALITY;
+
     this.detectAvailableDevices();
   }
 
@@ -169,8 +174,8 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
 
   private updateWidgetData(data: Array<DatasourceData>) {
     const keyData = data[0].data;
-    if (keyData?.length && isString(keyData[0][1]) && keyData[0][1].startsWith('data:image/')) {
-      this.lastPhoto = this.sanitizer.bypassSecurityTrustUrl(keyData[0][1]);
+    if (keyData?.length && isString(keyData[0][1])) {
+      this.lastPhoto = keyData[0][1].startsWith('data:image/') ? this.sanitizer.bypassSecurityTrustUrl(keyData[0][1]) : keyData[0][1];
     }
   }
 
@@ -237,26 +242,34 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
 
   savePhoto() {
     this.updatePhoto = true;
-    let task: Observable<any>;
     const entityId: EntityId = {
       entityType: this.datasource.entityType,
       id: this.datasource.entityId
     };
-    const saveData = [{
-      key: this.datasource.dataKeys[0].name,
-      value: this.previewPhoto
-    }];
-    if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
-      task = this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE, saveData);
-    } else if (this.datasource.dataKeys[0].type === DataKeyType.timeseries) {
-      task = this.attributeService.saveEntityTimeseries(entityId, 'scope', saveData);
-    }
-    task.subscribe(() => {
-      this.isPreviewPhoto = false;
-      this.updatePhoto = false;
-      this.closeCamera();
-    }, () => {
-      this.updatePhoto = false;
+
+    const uploadImage$ = this.settings.saveToGallery ? this.saveImageToGallery() : of(this.previewPhoto);
+
+    uploadImage$.pipe(
+      switchMap((image) => {
+        const saveData = [{
+          key: this.datasource.dataKeys[0].name,
+          value: image
+        }];
+        if (this.datasource.dataKeys[0].type === DataKeyType.attribute) {
+          return this.attributeService.saveEntityAttributes(entityId, AttributeScope.SERVER_SCOPE, saveData);
+        } else if (this.datasource.dataKeys[0].type === DataKeyType.timeseries) {
+          return this.attributeService.saveEntityTimeseries(entityId, 'scope', saveData);
+        }
+      })
+    ).subscribe({
+      next: () => {
+        this.isPreviewPhoto = false;
+        this.updatePhoto = false;
+        this.closeCamera();
+      },
+      error: () => {
+        this.updatePhoto = false;
+      }
     });
   }
 
@@ -271,10 +284,34 @@ export class PhotoCameraInputWidgetComponent extends PageComponent implements On
     this.canvasElement.height = this.videoHeight;
     this.canvasElement.getContext('2d').drawImage(this.videoElement, 0, 0, this.videoWidth, this.videoHeight);
 
-    const mimeType: string = this.settings.imageFormat ? this.settings.imageFormat : PhotoCameraInputWidgetComponent.DEFAULT_IMAGE_TYPE;
-    const quality: number = this.settings.imageQuality ? this.settings.imageQuality : PhotoCameraInputWidgetComponent.DEFAULT_IMAGE_QUALITY;
-    this.previewPhoto = this.canvasElement.toDataURL(mimeType, quality);
+    this.previewPhoto = this.canvasElement.toDataURL(this.mimeType, this.quality);
     this.isPreviewPhoto = true;
+  }
+
+  private saveImageToGallery(): Observable<string> {
+    return new Observable<Blob>((observer) => {
+      this.canvasElement.toBlob(
+        (blob) => {
+          if (blob) {
+            observer.next(blob);
+            observer.complete();
+          } else {
+            observer.error('Failed to create image blob');
+          }
+        },
+        this.mimeType,
+        this.quality
+      );
+    }).pipe(
+      switchMap((blob) => {
+        const fileName = this.datasource.dataKeys[0].name;
+        const file = new File([blob], fileName, { type: this.mimeType });
+        return this.imageService.uploadImage(file, fileName);
+      }),
+      map((imageInfo) => 
+        this.settings.usePublicGalleryLink ? imageInfo.publicLink : imageInfo.link
+      )
+    );
   }
 
   private inititedVideoStream(deviceId?: string, init = false) {
