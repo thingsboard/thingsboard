@@ -700,6 +700,7 @@ export const mapItemTypeTranslationMap = new Map<MapItemType, string>(
     [ MapItemType.polygon, 'widget-action.map-item.polygon' ],
     [ MapItemType.rectangle, 'widget-action.map-item.rectangle' ],
     [ MapItemType.circle, 'widget-action.map-item.circle' ],
+    [ MapItemType.polyline, 'widget-action.map-item.polyline' ]
   ]
 )
 

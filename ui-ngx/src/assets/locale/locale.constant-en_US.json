@@ -7021,7 +7021,8 @@
             "marker": "Marker",
             "polygon": "Polygon",
             "rectangle": "Rectangle",
-            "circle": "Circle"
+            "circle": "Circle",
+            "polyline": "Polyline"
         },
         "place-map-item": "Place map item",
         "map-item-tooltip": {
@@ -7033,7 +7034,9 @@
             "continue-draw-polygon": "Continue draw polygon",
             "finish-draw-polygon": "Finish draw polygon",
             "start-draw-circle": "Start draw circle",
-            "finish-draw-circle": "Finish draw circle"
+            "finish-draw-circle": "Finish draw circle",
+            "start-draw-polyline": "Start draw polyline",
+            "finish-draw-polyline": "Finish draw polyline"
         }
     },
     "widgets-bundle": {
@@ -8644,7 +8647,8 @@
                     "draw-polyline": "Draw polyline",
                     "polyline-place-first-point-hint-with-entity": "Polyline for '{{entityName}}': click to place first point",
                     "polyline-place-first-point-hint": "Polyline: click to place first point",
-                    "finish-polyline-hint": "Polyline for '{{entityName}}': click to finish drawing",
+                    "finish-polyline-hint-with-entity": "Polyline for '{{entityName}}': click to finish drawing",
+                    "finish-polyline-hint": "Polyline: click to finish drawing",
                     "polyline-place-first-point-cut-hint": "Click to place first point",
                     "finish-polyline-cut-hint": "Click first marker to finish and save"
                 },

@@ -582,7 +582,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
   private drawPolyline(e: MouseEvent, button: L.TB.ToolbarButton): void {
     this.placeItem(e, button, this.addPolylineDataLayers, (entity) => this.prepareDrawMode('Line', {
       startPolyline: this.ctx.translate.instant('widgets.maps.data-layer.polyline.polyline-place-first-point-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
-      finishPolyline: this.ctx.translate.instant('widgets.maps.data-layer.polyline.finish-polyline-hint', {entityName: entity.entity.entityDisplayName}),
+      finishPolyline: this.ctx.translate.instant('widgets.maps.data-layer.polyline.finish-polyline-hint-with-entity', {entityName: entity.entity.entityDisplayName}),
     }));
   }
 

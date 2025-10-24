@@ -1302,7 +1302,6 @@ export type TbPolyData = L.LatLngTuple[] | L.LatLngTuple[][] | L.LatLngTuple[][]
 export type TbPolygonCoordinate = L.LatLng | L.LatLng[] | L.LatLng[][];
 export type TbPolygonCoordinates = TbPolygonCoordinate[];
 
-
 export type TbPolylineRawCoordinate = L.LatLngTuple | L.LatLngTuple[] | L.LatLngTuple[][];
 export type TbPolylineRawCoordinates = TbPolylineRawCoordinate[];
 export type TbPolylineData = L.LatLngTuple[] | L.LatLngTuple[][] | L.LatLngTuple[][][];
