@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.queue;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
@@ -41,6 +42,9 @@ import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.List;
 import java.util.Optional;
+
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("QueueDaoService")
 @Slf4j
@@ -127,7 +131,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
 
     @Override
     public void deleteQueuesByTenantId(TenantId tenantId) {
-        Validator.validateId(tenantId, "Incorrect tenant id for delete queues request.");
+        validateId(tenantId, __ -> "Incorrect tenant id for delete queues request.");
         tenantQueuesRemover.removeEntities(tenantId, tenantId);
     }
 
@@ -142,23 +146,29 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     }
 
     @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(queueDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.QUEUE;
     }
 
-    private PaginatedRemover<TenantId, Queue> tenantQueuesRemover =
-            new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, Queue> tenantQueuesRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<Queue> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return queueDao.findQueuesByTenantId(id, pageLink);
-                }
+        @Override
+        protected PageData<Queue> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return queueDao.findQueuesByTenantId(id, pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, Queue entity) {
-                    deleteQueue(tenantId, entity.getId());
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, Queue entity) {
+            deleteQueue(tenantId, entity.getId());
+        }
+
+    };
 
     private TenantId getSystemOrIsolatedTenantId(TenantId tenantId) {
         if (!tenantId.equals(TenantId.SYS_TENANT_ID)) {
@@ -167,7 +177,7 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 return tenantId;
             }
         }
-
         return TenantId.SYS_TENANT_ID;
     }
+
 }

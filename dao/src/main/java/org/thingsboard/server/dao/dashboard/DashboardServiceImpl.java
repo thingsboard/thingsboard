@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +62,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("DashboardDaoService")
@@ -70,6 +72,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     public static final String INCORRECT_DASHBOARD_ID = "Incorrect dashboardId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
+
     @Autowired
     private DashboardDao dashboardDao;
 
@@ -422,6 +425,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDashboardById(tenantId, new DashboardId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findDashboardByIdAsync(tenantId, new DashboardId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

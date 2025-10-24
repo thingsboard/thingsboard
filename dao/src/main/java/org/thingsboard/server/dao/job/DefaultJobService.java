@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.job;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.job.JobStatus.CANCELLED;
 import static org.thingsboard.server.common.data.job.JobStatus.COMPLETED;
 import static org.thingsboard.server.common.data.job.JobStatus.FAILED;
@@ -243,6 +245,12 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findJobById(tenantId, (JobId) entityId));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(jobDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

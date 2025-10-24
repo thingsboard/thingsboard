@@ -39,6 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
@@ -81,14 +82,21 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
         AiModel savedModel;
         try {
             savedModel = aiModelDao.saveAndFlush(aiModel.getTenantId(), aiModel);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedModel.getTenantId()).entityId(savedModel.getId())
-                    .entity(savedModel).oldEntity(oldAiModel).created(oldAiModel == null).broadcastEvent(true).build());
         } catch (Exception e) {
             checkConstraintViolation(e,
                     "ai_model_name_unq_key", "AI model with such name already exist!",
                     "ai_model_external_id_unq_key", "AI model with such external ID already exists!");
             throw e;
         }
+
+        eventPublisher.publishEvent(SaveEntityEvent.builder()
+                .tenantId(savedModel.getTenantId())
+                .entityId(savedModel.getId())
+                .entity(savedModel)
+                .oldEntity(oldAiModel)
+                .created(oldAiModel == null)
+                .broadcastEvent(true)
+                .build());
 
         var cacheKey = AiModelCacheKey.of(savedModel.getTenantId(), savedModel.getId());
         publishEvictEvent(new AiModelCacheEvictEvent.Saved(cacheKey, savedModel));
@@ -133,6 +141,12 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return findAiModelByTenantIdAndId(tenantId, (AiModelId) entityId)
                 .map(model -> model); // necessary to cast to HasId<?>
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findAiModelByTenantIdAndIdAsync(tenantId, new AiModelId(entityId.getId()))
+                .transform(modelOpt -> modelOpt.map(model -> model), directExecutor());  // necessary to cast to HasId<?>
     }
 
     @Override

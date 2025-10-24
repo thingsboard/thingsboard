@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
@@ -36,6 +37,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 @Service
 @RequiredArgsConstructor
@@ -142,6 +145,12 @@ public class DefaultNotificationTemplateService extends AbstractEntityService im
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationTemplateById(tenantId, new NotificationTemplateId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(notificationTemplateDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

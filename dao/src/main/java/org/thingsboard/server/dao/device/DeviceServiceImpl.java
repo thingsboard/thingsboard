@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -91,6 +92,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
@@ -128,23 +130,21 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, id -> INCORRECT_DEVICE_ID + id);
-        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            return cache.get(new DeviceCacheKey(deviceId),
-                    () -> deviceDao.findById(tenantId, deviceId.getId()));
-        } else {
-            return cache.get(new DeviceCacheKey(tenantId, deviceId),
-                    () -> deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId()));
-        }
+        return findDeviceByIdInternal(tenantId, deviceId);
     }
 
     @Override
     public ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceByIdAsync [{}]", deviceId);
         validateId(deviceId, id -> INCORRECT_DEVICE_ID + id);
+        return executor.submit(() -> findDeviceByIdInternal(tenantId, deviceId));
+    }
+
+    private Device findDeviceByIdInternal(TenantId tenantId, DeviceId deviceId) {
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            return deviceDao.findByIdAsync(tenantId, deviceId.getId());
+            return cache.get(new DeviceCacheKey(deviceId), () -> deviceDao.findById(tenantId, deviceId.getId()));
         } else {
-            return deviceDao.findDeviceByTenantIdAndIdAsync(tenantId, deviceId.getId());
+            return cache.get(new DeviceCacheKey(tenantId, deviceId), () -> deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId()));
         }
     }
 
@@ -275,8 +275,8 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         }
     }
 
-    @TransactionalEventListener(classes = DeviceCacheEvictEvent.class)
     @Override
+    @TransactionalEventListener
     public void handleEvictEvent(DeviceCacheEvictEvent event) {
         List<DeviceCacheKey> toEvict = new ArrayList<>(3);
         toEvict.add(new DeviceCacheKey(event.getTenantId(), event.getNewName()));
@@ -746,6 +746,12 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDeviceById(tenantId, new DeviceId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findDeviceByIdAsync(tenantId, new DeviceId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

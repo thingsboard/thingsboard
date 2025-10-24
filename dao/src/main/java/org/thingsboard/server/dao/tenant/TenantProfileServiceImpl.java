@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.common.util.DebugModeUtil.DEBUG_MODE_DEFAULT_DURATION_MINUTES;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -231,22 +233,28 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
     }
 
     @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(tenantProfileDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.TENANT_PROFILE;
     }
 
-    private final PaginatedRemover<String, TenantProfile> tenantProfilesRemover =
-            new PaginatedRemover<>() {
+    private final PaginatedRemover<String, TenantProfile> tenantProfilesRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<TenantProfile> findEntities(TenantId tenantId, String id, PageLink pageLink) {
-                    return tenantProfileDao.findTenantProfiles(tenantId, pageLink);
-                }
+        @Override
+        protected PageData<TenantProfile> findEntities(TenantId tenantId, String id, PageLink pageLink) {
+            return tenantProfileDao.findTenantProfiles(tenantId, pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, TenantProfile entity) {
-                    removeTenantProfile(tenantId, entity, entity.isDefault());
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, TenantProfile entity) {
+            removeTenantProfile(tenantId, entity, entity.isDefault());
+        }
+
+    };
 
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.entity;
 
+import com.google.common.util.concurrent.FluentFuture;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -25,6 +26,8 @@ import java.util.Optional;
 public interface EntityDaoService {
 
     Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId);
+
+    FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId);
 
     default long countByTenantId(TenantId tenantId) {
         throw new IllegalArgumentException("Not implemented for " + getEntityType());
