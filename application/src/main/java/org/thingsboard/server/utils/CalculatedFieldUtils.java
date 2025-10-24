@@ -17,6 +17,7 @@ package org.thingsboard.server.utils;
 
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -26,6 +27,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos.AlarmRuleStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.AlarmStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
@@ -38,13 +41,16 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.util.Map;
 import java.util.Optional;
@@ -87,15 +93,40 @@ public class CalculatedFieldUtils {
                 .setType(state.getType().name());
 
         state.getArguments().forEach((argName, argEntry) -> {
-            if (argEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                builder.addSingleValueArguments(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
-            } else if (argEntry instanceof TsRollingArgumentEntry rollingArgumentEntry) {
-                builder.addRollingValueArguments(toRollingArgumentProto(argName, rollingArgumentEntry));
-            } else if (argEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
-                builder.addGeofencingArguments(toGeofencingArgumentProto(argName, geofencingArgumentEntry));
+            switch (argEntry.getType()) {
+                case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
+                case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
+                case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
             }
         });
+        if (state instanceof AlarmCalculatedFieldState alarmState) {
+            AlarmStateProto.Builder alarmStateProto = AlarmStateProto.newBuilder();
+            alarmState.getCreateRuleStates().forEach((severity, ruleState) -> {
+                alarmStateProto.addCreateRuleStates(toAlarmRuleStateProto(ruleState));
+            });
+            if (alarmState.getClearRuleState() != null) {
+                alarmStateProto.setClearRuleState(toAlarmRuleStateProto(alarmState.getClearRuleState()));
+            }
+        }
         return builder.build();
+    }
+
+    private static AlarmRuleStateProto toAlarmRuleStateProto(AlarmRuleState ruleState) {
+        return AlarmRuleStateProto.newBuilder()
+                .setSeverity(Optional.ofNullable(ruleState.getSeverity()).map(Enum::name).orElse(""))
+                .setEventCount(ruleState.getEventCount())
+                .setFirstEventTs(ruleState.getFirstEventTs())
+                .setLastEventTs(ruleState.getLastEventTs())
+                .build();
+    }
+
+    private static AlarmRuleState fromAlarmRuleStateProto(AlarmRuleStateProto proto, AlarmCalculatedFieldState state) {
+        AlarmSeverity severity = StringUtils.isNotEmpty(proto.getSeverity()) ? AlarmSeverity.valueOf(proto.getSeverity()) : null;
+        AlarmRuleState ruleState = new AlarmRuleState(severity, null, state);
+        ruleState.setEventCount(proto.getEventCount());
+        ruleState.setFirstEventTs(proto.getFirstEventTs());
+        ruleState.setLastEventTs(proto.getLastEventTs());
+        return ruleState;
     }
 
     public static SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
@@ -143,7 +174,7 @@ public class CalculatedFieldUtils {
         return builder.build();
     }
 
-    public static CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
+    public static CalculatedFieldState fromProto(CalculatedFieldEntityCtxId id, CalculatedFieldStateProto proto) {
         if (StringUtils.isEmpty(proto.getType())) {
             return null;
         }
@@ -151,22 +182,36 @@ public class CalculatedFieldUtils {
         CalculatedFieldType type = CalculatedFieldType.valueOf(proto.getType());
 
         CalculatedFieldState state = switch (type) {
-            case SIMPLE -> new SimpleCalculatedFieldState();
-            case SCRIPT -> new ScriptCalculatedFieldState();
-            case GEOFENCING -> new GeofencingCalculatedFieldState();
+            case SIMPLE -> new SimpleCalculatedFieldState(id.entityId());
+            case SCRIPT -> new ScriptCalculatedFieldState(id.entityId());
+            case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
+            case ALARM -> new AlarmCalculatedFieldState(id.entityId());
+            case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
         };
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
-        if (CalculatedFieldType.SCRIPT.equals(type)) {
-            proto.getRollingValueArgumentsList().forEach(argProto ->
-                    state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
-        }
-
-        if (CalculatedFieldType.GEOFENCING.equals(type)) {
-            proto.getGeofencingArgumentsList().forEach(argProto ->
-                    state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
+        switch (type) {
+            case SCRIPT -> {
+                proto.getRollingValueArgumentsList().forEach(argProto ->
+                        state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
+            }
+            case GEOFENCING -> {
+                proto.getGeofencingArgumentsList().forEach(argProto ->
+                        state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
+            }
+            case ALARM -> {
+                AlarmCalculatedFieldState alarmState = (AlarmCalculatedFieldState) state;
+                AlarmStateProto alarmStateProto = proto.getAlarmState();
+                for (AlarmRuleStateProto ruleStateProto : alarmStateProto.getCreateRuleStatesList()) {
+                    AlarmRuleState ruleState = fromAlarmRuleStateProto(ruleStateProto, alarmState);
+                    alarmState.getCreateRuleStates().put(ruleState.getSeverity(), ruleState);
+                }
+                if (alarmStateProto.hasClearRuleState()) {
+                    alarmState.setClearRuleState(fromAlarmRuleStateProto(alarmStateProto.getClearRuleState(), alarmState));
+                }
+            }
         }
 
         return state;

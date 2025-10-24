@@ -43,6 +43,8 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     private boolean forceResetPrevious;
 
+    public static final Long DEFAULT_VERSION = -1L;
+
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
         if (entry.hasVersion()) {
@@ -112,8 +114,10 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
-            if (singleValueEntry.getTs() <= this.ts) {
-                return false;
+            if (singleValueEntry.getTs() < this.ts) {
+                if (!isDefaultValue()) {
+                    return false;
+                }
             }
 
             Long newVersion = singleValueEntry.getVersion();
@@ -128,4 +132,9 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         }
         return false;
     }
+
+    public boolean isDefaultValue() {
+        return DEFAULT_VERSION.equals(this.version);
+    }
+
 }

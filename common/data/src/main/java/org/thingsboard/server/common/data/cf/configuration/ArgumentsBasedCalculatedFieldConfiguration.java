@@ -15,10 +15,29 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
+import org.thingsboard.server.common.data.id.EntityId;
+
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
+    @Valid
+    @NotEmpty
     Map<String, Argument> getArguments();
+
+    default List<EntityId> getReferencedEntities() {
+        if (getArguments() == null) {
+            return List.of();
+        }
+        return getArguments().values().stream()
+                .map(Argument::getRefEntityId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+    }
 
 }

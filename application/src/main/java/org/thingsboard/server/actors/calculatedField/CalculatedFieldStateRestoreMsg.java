@@ -19,7 +19,9 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 
 @Data
@@ -27,6 +29,8 @@ public class CalculatedFieldStateRestoreMsg implements ToCalculatedFieldSystemMs
 
     private final CalculatedFieldEntityCtxId id;
     private final CalculatedFieldState state;
+    private final TopicPartitionInfo partition;
+    private CalculatedFieldCtx ctx;
 
     @Override
     public MsgType getMsgType() {

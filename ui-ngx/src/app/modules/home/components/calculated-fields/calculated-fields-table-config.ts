@@ -40,10 +40,12 @@ import {
   ArgumentType,
   CalculatedField,
   CalculatedFieldEventArguments,
+  CalculatedFieldScriptConfiguration,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
+  PropagationWithExpression,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -122,7 +124,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '70px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '80px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(
@@ -156,11 +158,13 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private getExpressionLabel(entity: CalculatedField): string {
-    if (entity.type === CalculatedFieldType.SCRIPT) {
+    if (entity.type === CalculatedFieldType.SCRIPT ||
+      entity.type === CalculatedFieldType.PROPAGATION && entity.configuration.applyExpressionToResolvedArguments === true) {
       return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
-    } else {
-      return entity.configuration?.expression ?? '';
+    } else if (entity.type === CalculatedFieldType.SIMPLE) {
+      return entity.configuration.expression ?? '';
     }
+    return '';
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
@@ -287,32 +291,42 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
-    const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
-      const type = calculatedField.configuration.arguments[key].refEntityKey.type;
-      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
-        ? { ...argumentsObj[key], type }
-        : type === ArgumentType.Rolling ? { values: [], type } : { value: '', type, ts: new Date().getTime() };
-      return acc;
-    }, {});
-    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
-      {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
-        data: {
-          arguments: resultArguments,
-          expression: calculatedField.configuration.expression,
-          argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
-          argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
-          openCalculatedFieldEdit
-        }
-      }).afterClosed()
-      .pipe(
-        filter(Boolean),
-        tap(expression => {
-          if (openCalculatedFieldEdit) {
-            this.editCalculatedField({ entityId: this.entityId, ...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
+    if (
+      calculatedField.type === CalculatedFieldType.SCRIPT ||
+      (calculatedField.type === CalculatedFieldType.PROPAGATION && calculatedField.configuration.applyExpressionToResolvedArguments === true)
+    ) {
+      const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+        const type = calculatedField.configuration.arguments[key].refEntityKey.type;
+        acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
+          ? {...argumentsObj[key], type}
+          : type === ArgumentType.Rolling ? {values: [], type} : {value: '', type, ts: new Date().getTime()};
+        return acc;
+      }, {});
+      return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
+        {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
+          data: {
+            arguments: resultArguments,
+            expression: (calculatedField.configuration as CalculatedFieldScriptConfiguration | PropagationWithExpression).expression,
+            argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
+            argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
+            openCalculatedFieldEdit
           }
-        }),
-      );
+        }).afterClosed()
+        .pipe(
+          filter(Boolean),
+          tap(expression => {
+            if (openCalculatedFieldEdit) {
+              this.editCalculatedField({
+                entityId: this.entityId, ...calculatedField,
+                configuration: {...calculatedField.configuration, expression} as any
+              }, true)
+            }
+          }),
+        );
+    } else {
+      return of(null);
+    }
   }
 }

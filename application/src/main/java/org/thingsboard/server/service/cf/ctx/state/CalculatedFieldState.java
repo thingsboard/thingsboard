@@ -17,44 +17,53 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
-import java.util.List;
+import java.io.Closeable;
 import java.util.Map;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.PROPERTY,
-        property = "type"
-)
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
-        @JsonSubTypes.Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
-        @JsonSubTypes.Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
+        @Type(value = SimpleCalculatedFieldState.class, name = "SIMPLE"),
+        @Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
+        @Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
+        @Type(value = AlarmCalculatedFieldState.class, name = "ALARM"),
+        @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION")
 })
-public interface CalculatedFieldState {
+public interface CalculatedFieldState extends Closeable {
 
     @JsonIgnore
     CalculatedFieldType getType();
+
+    EntityId getEntityId();
 
     Map<String, ArgumentEntry> getArguments();
 
     long getLatestTimestamp();
 
-    void setRequiredArguments(List<String> requiredArguments);
+    void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx);
 
-    boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues);
+    void init();
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx);
+    Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> arguments, CalculatedFieldCtx ctx);
+
+    void reset();
+
+    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
 
     @JsonIgnore
     boolean isReady();
@@ -65,6 +74,10 @@ public interface CalculatedFieldState {
     default boolean isSizeOk() {
         return !isSizeExceedsLimit();
     }
+
+    TopicPartitionInfo getPartition();
+
+    void setPartition(TopicPartitionInfo partition);
 
     void checkStateSize(CalculatedFieldEntityCtxId ctxId, long maxStateSize);
 

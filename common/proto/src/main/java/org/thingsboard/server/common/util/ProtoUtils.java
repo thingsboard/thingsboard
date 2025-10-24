@@ -129,6 +129,7 @@ public class ProtoUtils {
             builder.setOldProfileIdMSB(msg.getOldProfileId().getId().getMostSignificantBits());
             builder.setOldProfileIdLSB(msg.getOldProfileId().getId().getLeastSignificantBits());
         }
+        builder.setOwnerChanged(msg.isOwnerChanged());
         if (msg.getName() != null) {
             builder.setName(msg.getName());
         }
@@ -165,6 +166,7 @@ public class ProtoUtils {
             var profileType = EntityType.DEVICE.equals(entityId.getEntityType()) ? EntityType.DEVICE_PROFILE : EntityType.ASSET_PROFILE;
             builder.oldProfileId(EntityIdFactory.getByTypeAndUuid(profileType, new UUID(proto.getOldProfileIdMSB(), proto.getOldProfileIdLSB())));
         }
+        builder.ownerChanged(proto.getOwnerChanged());
         if (proto.hasInfo()) {
             builder.info(JacksonUtil.toJsonNode(proto.getInfo()));
         }

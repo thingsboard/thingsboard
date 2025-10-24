@@ -87,8 +87,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
-        super(actorContext, null, null, null, null, null, null, null,
-                null, null);
+        super(actorContext, null, null, null, null, null, null, null, null, null);
         this.edgeCtx = edgeCtx;
         this.stats = new EdgeConsumerStats(statsFactory);
         this.queueFactory = tbCoreQueueFactory;
