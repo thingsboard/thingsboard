@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
+import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,12 +33,16 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -67,6 +72,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.springframework.http.MediaType.MULTIPART_FORM_DATA_VALUE;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.LWM2M_OBJECT_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -215,6 +221,7 @@ public class TbResourceController extends BaseController {
                     "\n\nResource combination of the title with the key is unique in the scope of tenant. " +
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Resource entity." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Deprecated // resource should be save or update with an upload request
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping(value = "/resource")
     public TbResourceInfo saveResource(@Parameter(description = "A JSON value representing the Resource.")
@@ -222,6 +229,66 @@ public class TbResourceController extends BaseController {
         resource.setTenantId(getTenantId());
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
         return tbResourceService.save(resource, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Upload Resource via Multipart File (uploadResource)",
+            notes = "Upload the Resource using multipart file upload. " +
+                    "When creating the Resource, platform generates Resource id as " + UUID_WIKI_LINK +
+                    "The newly created Resource id will be present in the response. " +
+                    "Specify existing Resource id to update the Resource. " +
+                    "Referencing non-existing Resource Id will cause 'Not Found' error. " +
+                    "\n\nResource combination of the title with the key is unique in the scope of tenant. " +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH,
+            requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(content = @Content(mediaType = MULTIPART_FORM_DATA_VALUE)))
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PostMapping(value = "/resource/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public TbResourceInfo uploadResource(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
+                                         @RequestParam(name = RESOURCE_ID, required = false) UUID resourceId,
+                                         @Parameter(description = "Resource title.", example = "Title")
+                                         @RequestParam(name = "title", required = false) String title,
+                                         @Parameter(description = "Resource type.", schema = @Schema(implementation = ResourceType.class, nullable = true, example = "GENERAL"))
+                                         @RequestParam(name = "resourceType") ResourceType resourceType,
+                                         @Parameter(description = "Resource descriptor (JSON).")
+                                         @RequestParam(name = "descriptor", required = false) String descriptor,
+                                         @Parameter(description = "Resource search text.")
+                                         @RequestParam(name = "searchText", required = false) String searchText,
+                                         @Parameter(description = "Resource file.")
+                                         @RequestPart MultipartFile file) throws Exception {
+        TbResource resource = new TbResource();
+        resource.setTenantId(getTenantId());
+        resource.setId(resourceId != null ? new TbResourceId(resourceId) : null);
+        resource.setTitle(StringUtils.isNotEmpty(title) ? title : file.getOriginalFilename());
+        resource.setResourceType(resourceType);
+
+        if (StringUtils.isNotEmpty(descriptor)) {
+            resource.setDescriptor(JacksonUtil.toJsonNode(descriptor));
+        } else {
+            String mediaType = resourceType.getMediaType() != null ? resourceType.getMediaType() : file.getContentType();
+            resource.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mediaType));
+        }
+
+        resource.setSearchText(StringUtils.isNotEmpty(searchText) ? searchText : resource.getTitle());
+        resource.setFileName(file.getOriginalFilename());
+        resource.setData(file.getBytes());
+
+        checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+        return tbResourceService.save(resource, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Update Resource title",
+            notes = "Updates the title of the existing Resource by resourceId. " +
+                    "Only the title can be updated. " +
+                    "Referencing a non-existing Resource Id will cause a 'Not Found' error. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PutMapping(value = "/resource/{id}/title")
+    public TbResourceInfo updateResourceTitle(@Parameter(description = "Unique identifier of the Resource to update", required = true)
+                                              @PathVariable UUID id,
+                                              @Parameter(description = "New title for the Resource", example = "Title", required = true)
+                                              @RequestBody String title) throws Exception {
+        TbResourceId tbResourceId = new TbResourceId(id);
+        TbResource resourceInfo = new TbResource(checkResourceInfoId(tbResourceId, Operation.WRITE));
+        resourceInfo.setTitle(title);
+        return tbResourceService.save(resourceInfo, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Resource Infos (getResources)",
