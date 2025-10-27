@@ -100,7 +100,7 @@
                       [highlightRules]="highlightRules"
                       [editorCompleter]="editorCompleter"
                       [helpPopupStyle]="{ width: '1200px' }"
-                      helpId="calculated-field/expression_fn">
+                      helpId="calculated-field/filter_expression_fn">
             <div toolbarPrefixButton
                  class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
             </div>
@@ -122,15 +122,22 @@
       @if (this.metricForm.get('input.type').value === AggInputType.key) {
         <div class="tb-form-row">
           <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
-          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
-                                  additionalClass="tb-suffix-show-on-hover"
-                                  class="flex-1"
-                                  appearance="outline"
-                                  panelWidth=""
-                                  required
-                                  [errorText]="'calculated-fields.hint.argument-name-required' | translate"
-                                  formControlName="key">
-          </tb-string-autocomplete>
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="key" placeholder="{{ 'action.set' | translate }}">
+              @for (argument of arguments; track argument) {
+                <mat-option [value]="argument">{{ argument }}</mat-option>
+              }
+            </mat-select>
+            @if (metricForm.get('input.key').touched && metricForm.get('input.key').hasError('required')) {
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'calculated-fields.hint.argument-name-required' | translate"
+                        class="tb-error !block">
+                warning
+              </mat-icon>
+            }
+          </mat-form-field>
         </div>
       } @else {
         <tb-js-func required
@@ -160,7 +167,7 @@
     <button mat-raised-button
             color="primary"
             type="button"
-            (click)="saveZone()"
+            (click)="saveMetric()"
             [disabled]="metricForm.invalid || !metricForm.dirty">
       {{ buttonTitle | translate }}
     </button>

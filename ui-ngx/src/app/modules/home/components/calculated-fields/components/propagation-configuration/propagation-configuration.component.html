@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.propagation-path-related-entities' | translate }}">
       {{ 'calculated-fields.propagation-path-related-entities' | translate }}
     </div>
-    <div class="flex gap-3 xs:flex-col">
+    <div class="flex gap-3 xs:flex-col" formGroupName="relation">
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" hideRequiredMarker>
         <mat-label>{{ 'calculated-fields.direction' | translate }}</mat-label>
         <mat-select formControlName="direction">
@@ -41,11 +41,11 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
+    <div class="flex flex-row items-center justify-between gap-2">
       <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.data-propagate' | translate }}">
         {{ 'calculated-fields.data-propagate' | translate }}
       </div>
-      <tb-toggle-select formControlName="applyExpressionToResolvedArguments">
+      <tb-toggle-select formControlName="applyExpressionToResolvedArguments" selectMediaBreakpoint="xs" disablePagination>
         <tb-toggle-option [value]="false">{{ 'calculated-fields.propagate-type.arguments-only' | translate }}</tb-toggle-option>
         <tb-toggle-option [value]="true">{{ 'calculated-fields.propagate-type.expression-result' | translate }}</tb-toggle-option>
       </tb-toggle-select>

@@ -121,8 +121,7 @@ export interface CalculatedFieldRelatedAggregationConfiguration {
 
 interface BasePropagationConfiguration {
   type: CalculatedFieldType.PROPAGATION;
-  direction: EntitySearchDirection;
-  relationType: string;
+  relation: RelationPathLevel;
   arguments: Record<string, CalculatedFieldArgument>;
   output: CalculatedFieldOutput;
 }

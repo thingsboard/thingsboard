@@ -25,10 +25,8 @@ import {
   AggInputTypeTranslations,
   CalculatedFieldAggMetricValue
 } from '@shared/models/calculated-field.models';
-import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityFilter } from '@shared/models/query/query.models';
-import { Observable, of } from 'rxjs';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
@@ -93,13 +91,22 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
 
     this.validateFilter(data.allowFilter);
     this.validateInputTypeFilter(data.input?.type ?? AggInputType.key);
+    this.validateInputKey();
 
     this.functionArgs = ['ctx', ...this.arguments];
   }
 
-  fetchOptions(searchText: string): Observable<Array<string>> {
-    const search = searchText ? searchText?.toLowerCase() : '';
-    return of(this.arguments).pipe(map(name => name?.filter(option => option.toLowerCase().includes(search))));
+  saveMetric(): void {
+    const value = this.metricForm.value as CalculatedFieldAggMetricValuePanel;
+    if (!value.allowFilter) {
+      delete value.filter;
+    }
+    delete value.allowFilter;
+    this.metricDataApplied.emit(value);
+  }
+
+  cancel(): void {
+    this.popover.hide();
   }
 
   private observeFilterAllowChange(): void {
@@ -134,17 +141,11 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     }
   }
 
-  saveZone(): void {
-    const value = this.metricForm.value as CalculatedFieldAggMetricValuePanel;
-    if (!value.allowFilter) {
-      delete value.filter;
+  private validateInputKey() {
+    if (this.metric.input?.type === AggInputType.key && !this.arguments.includes(this.metric.input.key)) {
+      this.metricForm.get('input.key').setValue(null);
+      this.metricForm.get('input.key').markAsTouched();
     }
-    delete value.allowFilter;
-    this.metricDataApplied.emit(value);
-  }
-
-  cancel(): void {
-    this.popover.hide();
   }
 
   private uniqNameRequired(): ValidatorFn {
