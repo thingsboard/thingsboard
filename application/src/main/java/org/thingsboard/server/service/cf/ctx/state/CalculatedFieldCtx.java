@@ -574,6 +574,11 @@ public class CalculatedFieldCtx implements Closeable {
         if (!Objects.equals(output, other.output)) {
             return true;
         }
+        if (calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration otherConfig
+                && thisConfig.isUseLatestTs() != otherConfig.isUseLatestTs()) {
+            return true;
+        }
         if (cfType == CalculatedFieldType.ALARM) {
             if (!calculatedField.getName().equals(other.getCalculatedField().getName())) {
                 return true;

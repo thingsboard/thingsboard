@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
 
 import java.util.Optional;
@@ -28,7 +27,7 @@ public class CountUniqueAggEntry implements AggEntry {
     @Override
     public void update(Object value) {
         if (value != null) {
-            items.add(JacksonUtil.toString(value));
+            items.add(String.valueOf(value));
         }
     }
 
