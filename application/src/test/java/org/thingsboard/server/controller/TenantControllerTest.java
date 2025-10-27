@@ -244,6 +244,29 @@ public class TenantControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDeleteTenantByTenantAdmin() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = saveTenant(tenant);
+
+        //login as tenant admin
+        User tenantAdminUser = new User();
+        tenantAdminUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdminUser.setTenantId(savedTenant.getId());
+        tenantAdminUser.setEmail("tenantToDelete@thingsboard.io");
+
+        createUserAndLogin(tenantAdminUser, TENANT_ADMIN_PASSWORD);
+
+        String tenantIdStr = savedTenant.getId().getId().toString();
+        deleteTenant(savedTenant.getId());
+        loginSysAdmin();
+        doGet("/api/tenant/" + tenantIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Tenant", tenantIdStr))));
+    }
+
+    @Test
     public void testFindTenants() throws Exception {
         loginSysAdmin();
         List<Tenant> tenants = new ArrayList<>();

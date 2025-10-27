@@ -124,4 +124,17 @@ public class CollectionsUtil {
         }
     }
 
+    public static <T> Set<T> addToSet(Set<T> existing, T value) {
+        if (existing == null || existing.isEmpty()) {
+            return Set.of(value);
+        }
+        if (existing.contains(value)) {
+            return existing;
+        }
+        Set<T> newSet = new HashSet<>(existing.size() + 1);
+        newSet.addAll(existing);
+        newSet.add(value);
+        return (Set<T>) Set.of(newSet.toArray());
+    }
+
 }

@@ -1202,7 +1202,7 @@ transport:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
       # Default value in LwM2M client after start in mode Bootstrap for the object : name "LWM2M Security" field: "Short Server ID" (deviceProfile: Bootstrap.BOOTSTRAP SERVER.Short ID)
-      id: "${LWM2M_SERVER_ID_BS:111}"
+      id: "${LWM2M_SERVER_ID_BS:0}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       # LwM2M bootstrap server bind port

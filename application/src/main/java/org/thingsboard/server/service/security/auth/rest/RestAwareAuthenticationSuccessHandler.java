@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
-import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.security.core.Authentication;
@@ -30,6 +30,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
+import org.thingsboard.server.service.security.auth.MfaConfigurationToken;
 import org.thingsboard.server.service.security.auth.mfa.config.TwoFaConfigManager;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
@@ -38,7 +39,7 @@ import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
-@Component(value = "defaultAuthenticationSuccessHandler")
+@Slf4j @Component(value = "defaultAuthenticationSuccessHandler")
 @RequiredArgsConstructor
 public class RestAwareAuthenticationSuccessHandler implements AuthenticationSuccessHandler {
     private final JwtTokenFactory tokenFactory;
@@ -46,18 +47,14 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response,
-                                        Authentication authentication) throws IOException, ServletException {
+                                        Authentication authentication) throws IOException {
         SecurityUser securityUser = (SecurityUser) authentication.getPrincipal();
-        JwtPair tokenPair = new JwtPair();
+        JwtPair tokenPair;
 
         if (authentication instanceof MfaAuthenticationToken) {
-            int preVerificationTokenLifetime = twoFaConfigManager.getPlatformTwoFaSettings(securityUser.getTenantId(), true)
-                    .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
-                            .filter(time -> time > 0))
-                    .orElse((int) TimeUnit.MINUTES.toSeconds(30));
-            tokenPair.setToken(tokenFactory.createPreVerificationToken(securityUser, preVerificationTokenLifetime).getToken());
-            tokenPair.setRefreshToken(null);
-            tokenPair.setScope(Authority.PRE_VERIFICATION_TOKEN);
+            tokenPair = createMfaTokenPair(securityUser, Authority.PRE_VERIFICATION_TOKEN);
+        } else if (authentication instanceof MfaConfigurationToken) {
+            tokenPair = createMfaTokenPair(securityUser, Authority.MFA_CONFIGURATION_TOKEN);
         } else {
             tokenPair = tokenFactory.createTokenPair(securityUser);
         }
@@ -67,6 +64,19 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
         JacksonUtil.writeValue(response.getWriter(), tokenPair);
 
         clearAuthenticationAttributes(request);
+    }
+
+    public JwtPair createMfaTokenPair(SecurityUser securityUser, Authority scope) {
+        log.debug("[{}][{}] Creating {} token", securityUser.getTenantId(), securityUser.getId(), scope);
+        JwtPair tokenPair = new JwtPair();
+        int preVerificationTokenLifetime = twoFaConfigManager.getPlatformTwoFaSettings(securityUser.getTenantId(), true)
+                .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
+                        .filter(time -> time > 0))
+                .orElse((int) TimeUnit.MINUTES.toSeconds(30));
+        tokenPair.setToken(tokenFactory.createMfaToken(securityUser, scope, preVerificationTokenLifetime).getToken());
+        tokenPair.setRefreshToken(null);
+        tokenPair.setScope(scope);
+        return tokenPair;
     }
 
     /**

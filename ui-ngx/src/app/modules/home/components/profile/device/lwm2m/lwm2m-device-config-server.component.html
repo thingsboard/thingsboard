@@ -24,7 +24,7 @@
             'device-profile.lwm2m.bootstrap-server' : 'device-profile.lwm2m.lwm2m-server') | translate }}</div>
           <div *ngIf="!serverPanel.expanded" style="font-size:14px" class="no-wrap flex flex-row">
             <div style="margin-left:32px">{{ ('device-profile.lwm2m.short-id' | translate) + ': ' }}
-              <span style="font-style: italic">{{ serverFormGroup.get('shortServerId').value }}</span>
+              <span style="font-style: italic">{{ serverFormGroup.get('shortServerId').value ? serverFormGroup.get('shortServerId').value : '' }}</span>
             </div>
             <div style="margin-left:32px">{{ ('device-profile.lwm2m.mode' | translate) + ': ' }}
               <span style="font-style: italic">{{ credentialTypeLwM2MNamesMap.get(securityConfigLwM2MType[serverFormGroup.get('securityMode').value]) }}</span>
@@ -54,16 +54,18 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="flex-1">
+        <mat-form-field class="flex-1" *ngIf="!isBootstrap">
           <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
           <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
                     matTooltip="{{ (isBootstrap ? 'device-profile.lwm2m.short-id-tooltip-bootstrap': 'device-profile.lwm2m.short-id-tooltip') | translate }}">help</mat-icon>
-          <input matInput type="number" [min]="shortServerIdMin" [max]="shortServerIdMax" formControlName="shortServerId" required>
+          <input matInput type="number" formControlName="shortServerId" required
+                 [min]="isBootstrap ? undefined : shortServerIdMin"
+                 [max]="isBootstrap ? undefined : shortServerIdMax">
           <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('required')">
             {{ 'device-profile.lwm2m.short-id-required' | translate }}
           </mat-error>
           <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('pattern')">
-            {{ 'device-profile.lwm2m.short-id-pattern' | translate }}
+            {{ (isBootstrap ? 'device-profile.lwm2m.short-id-pattern-bs' : 'device-profile.lwm2m.short-id-pattern') | translate }}
           </mat-error>
           <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('min') ||
                          serverFormGroup.get('shortServerId').hasError('max')">
