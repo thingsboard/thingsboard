@@ -160,21 +160,25 @@ public class ScriptCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenNotAllArgPresent() {
-        assertThat(state.getReadinessStatus().status()).isFalse();
+        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getMissingArguments())
+                .containsExactlyInAnyOrderElementsOf(state.requiredArguments);
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
-
-        assertThat(state.getReadinessStatus().status()).isTrue();
+        state.update(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry), ctx);
+        assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", new TsRollingArgumentEntry(5, 30000L), "assetHumidity", assetHumidityArgEntry));
-
-        assertThat(state.getReadinessStatus().status()).isFalse();
+        state.update(Map.of("deviceTemperature", new TsRollingArgumentEntry(5, 30000L), "assetHumidity", assetHumidityArgEntry), ctx);
+        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly("deviceTemperature");
     }
 
     private TsRollingArgumentEntry createRollingArgEntry() {

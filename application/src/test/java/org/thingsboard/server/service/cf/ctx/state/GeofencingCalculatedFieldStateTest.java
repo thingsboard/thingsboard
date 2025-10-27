@@ -199,32 +199,36 @@ public class GeofencingCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenNotAllArgPresent() {
-        assertThat(state.getReadinessStatus().status()).isFalse();
+        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getMissingArguments())
+                .containsExactlyInAnyOrderElementsOf(state.requiredArguments);
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
                 ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
                 "allowedZones", geofencingAllowedZoneArgEntry,
                 "restrictedZones", geofencingRestrictedZoneArgEntry
-        ));
-        assertThat(state.getReadinessStatus().status()).isTrue();
+        ), ctx);
+        assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
                 ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
                 "allowedZones", geofencingAllowedZoneArgEntry,
-                "restrictedZones", geofencingRestrictedZoneArgEntry
-        ));
-
-        state.getArguments().put("noParkingZones", new GeofencingArgumentEntry());
-
-        assertThat(state.getReadinessStatus().status()).isFalse();
+                "restrictedZones", new GeofencingArgumentEntry()
+        ), ctx);
+        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).contains("restrictedZones");
     }
 
     @Test

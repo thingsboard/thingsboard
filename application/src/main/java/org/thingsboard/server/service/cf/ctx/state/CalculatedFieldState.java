@@ -16,11 +16,14 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
-import jakarta.annotation.Nullable;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -33,8 +36,10 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculat
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.io.Closeable;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
@@ -68,6 +73,8 @@ public interface CalculatedFieldState extends Closeable {
     ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
 
     @JsonIgnore
+    boolean isReady();
+
     ReadinessStatus getReadinessStatus();
 
     boolean isSizeExceedsLimit();
@@ -94,29 +101,52 @@ public interface CalculatedFieldState extends Closeable {
         }
     }
 
-    record ReadinessStatus(boolean status, @Nullable String reason) {
+    @Data
+    @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    class ReadinessStatus {
 
-        private static final String MISSING_REQUIRED_ARGUMENTS = "Missing required arguments: ";
-        private static final String EMPTY_ARGUMENTS = "Empty arguments: ";
+        private Set<String> missingArguments;
+        private Set<String> emptyArguments;
 
-        public static ReadinessStatus ready() {
-            return new ReadinessStatus(true, null);
+        public static ReadinessStatus initialState(List<String> requiredArguments, Map<String, ArgumentEntry> arguments) {
+            if (arguments.isEmpty()) {
+                return new ReadinessStatus(new HashSet<>(requiredArguments), new HashSet<>());
+            }
+            Set<String> missingArguments = new HashSet<>(requiredArguments.size());
+            Set<String> emptyArguments = new HashSet<>(requiredArguments.size());
+            requiredArguments.forEach(requiredArgumentKey -> {
+                ArgumentEntry argumentEntry = arguments.get(requiredArgumentKey);
+                if (argumentEntry == null) {
+                    missingArguments.add(requiredArgumentKey);
+                    return;
+                }
+                if (argumentEntry.isEmpty()) {
+                    emptyArguments.add(requiredArgumentKey);
+                }
+            });
+            return new ReadinessStatus(missingArguments, emptyArguments);
         }
 
-        public static ReadinessStatus notReady(String reason) {
-            return new ReadinessStatus(false, reason);
+        public void onArgumentUpdate(String key, ArgumentEntry newEntry) {
+            if (newEntry == null) {
+                missingArguments.add(key);
+                return;
+            }
+            missingArguments.remove(key);
+            if (newEntry.isEmpty()) {
+                emptyArguments.add(key);
+            } else {
+                emptyArguments.remove(key);
+            }
         }
 
-        public static ReadinessStatus missingRequiredArguments(List<String> missingArgument) {
-            return notReady(MISSING_REQUIRED_ARGUMENTS + stringValue(missingArgument));
+        public boolean isReady() {
+            return missingArguments.isEmpty() && emptyArguments.isEmpty();
         }
 
-        private static String stringValue(List<String> missingArgument) {
-            return String.join(", ", missingArgument);
-        }
-
-        public static ReadinessStatus emptyArguments(List<String> emptyArguments) {
-            return notReady(EMPTY_ARGUMENTS + stringValue(emptyArguments));
+        public String stringValue() {
+            return JacksonUtil.toString(this);
         }
 
     }

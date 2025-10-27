@@ -203,29 +203,34 @@ public class SimpleCalculatedFieldStateTest {
 
     @Test
     void testIsReadyWhenNotAllArgPresent() {
-        assertThat(state.getReadinessStatus().status()).isFalse();
+        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getMissingArguments())
+                .containsExactlyInAnyOrderElementsOf(state.requiredArguments);
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 "key1", key1ArgEntry,
                 "key2", key2ArgEntry,
                 "key3", key3ArgEntry
-        ));
-
-        assertThat(state.getReadinessStatus().status()).isTrue();
+        ), ctx);
+        assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 "key1", key1ArgEntry,
-                "key2", key2ArgEntry
-        ));
-        state.getArguments().put("key3", new SingleValueArgumentEntry());
-
-        assertThat(state.getReadinessStatus().status()).isFalse();
+                "key2", key2ArgEntry,
+                "key3", new SingleValueArgumentEntry()
+        ), ctx);
+        assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly("key3");
     }
 
     private CalculatedField getCalculatedField() {

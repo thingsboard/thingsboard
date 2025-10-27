@@ -399,7 +399,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
         boolean stateSizeChecked = false;
         try {
-            if (ctx.isInitialized() && state.getReadinessStatus().status()) {
+            if (ctx.isInitialized() && state.isReady()) {
                 log.trace("[{}][{}] Performing calculation. Updated args: {}", entityId, ctx.getCfId(), updatedArgs);
                 CalculatedFieldResult calculationResult = state.performCalculation(updatedArgs, ctx).get(systemContext.getCfCalculationResultTimeout(), TimeUnit.SECONDS);
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());
@@ -416,7 +416,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             } else {
                 if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
-                    String errorMsg = ctx.isInitialized() ? state.getReadinessStatus().reason() : "Calculated field state is not initialized!";
+                    String errorMsg = ctx.isInitialized() ? state.getReadinessStatus().stringValue() : "Calculated field state is not initialized!";
                     systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null,  errorMsg);
                 }
                 callback.onSuccess();
