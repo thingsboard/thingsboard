@@ -43,7 +43,6 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenConfigurationDisallowArgumentsWithReferencedEntity() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         Argument argumentWithRefEntityIdSet = new Argument();
         argumentWithRefEntityIdSet.setRefEntityId(new DeviceId(UUID.fromString("bda14084-f40e-4acc-9b85-9d1dd209bb64")));
         cfg.setArguments(Map.of("argumentWithRefEntityIdSet", argumentWithRefEntityIdSet));
@@ -55,7 +54,6 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenConfigurationDisallowArgumentsWithDynamicReferenceConfiguration() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         Argument argumentWithDynamicRefEntitySource = new Argument();
         argumentWithDynamicRefEntitySource.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
         cfg.setArguments(Map.of("argumentWithDynamicRefEntitySource", argumentWithDynamicRefEntitySource));
@@ -67,7 +65,6 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenConfigurationHasNoArgumentsWithCurrentEntitySource() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         Argument argumentWithRefEntityIdSet = new Argument();
         argumentWithRefEntityIdSet.setRefEntityId(new DeviceId(UUID.fromString("3703e895-3f9b-4b75-a715-b68f1ad51944")));
         cfg.setArguments(Map.of("argumentWithRefEntityIdSet", argumentWithRefEntityIdSet));
@@ -75,13 +72,12 @@ public class PropagationCalculatedFieldConfigurationTest {
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("At least one argument must be configured with the 'Current entity' " +
-                            "source entity type for 'Expression result' propagation mode!");
+                        "source entity type for 'Expression result' propagation mode!");
     }
 
     @Test
     void validateShouldThrowWhenUsedReservedPropagationArgumentName() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setArguments(Map.of(PROPAGATION_CONFIG_ARGUMENT, new Argument()));
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
@@ -91,7 +87,6 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenUsedReservedCtxArgumentName() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setArguments(Map.of("ctx", new Argument()));
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
@@ -112,7 +107,6 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenReferencedEntityKeyTypeIsTsRolling() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         ReferencedEntityKey referencedEntityKey = new ReferencedEntityKey("someKey", ArgumentType.TS_ROLLING, null);
         Argument argument = new Argument();
         argument.setRefEntityKey(referencedEntityKey);
@@ -126,7 +120,6 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenExpressionIsNotSet() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setArguments(Map.of("someArgumentName", new Argument()));
         cfg.setApplyExpressionToResolvedArguments(true);
         assertThatThrownBy(cfg::validate)

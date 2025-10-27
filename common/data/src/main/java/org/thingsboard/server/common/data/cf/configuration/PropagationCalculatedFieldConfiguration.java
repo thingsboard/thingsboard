@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -30,6 +31,7 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
 
     public static final String PROPAGATION_CONFIG_ARGUMENT = "propagationCtx";
 
+    @Valid
     @NotNull
     private RelationPathLevel relation;
 
@@ -42,7 +44,6 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
 
     @Override
     public void validate() {
-        relation.validate();
         baseCalculatedFieldRestriction();
         propagationRestriction();
         if (!applyExpressionToResolvedArguments) {
