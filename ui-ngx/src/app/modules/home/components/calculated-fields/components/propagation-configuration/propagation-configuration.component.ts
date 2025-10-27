@@ -76,8 +76,10 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   propagateConfiguration = this.fb.group({
     arguments: this.fb.control({}),
     applyExpressionToResolvedArguments: [false],
-    direction: [EntitySearchDirection.TO, Validators.required],
-    relationType: ['Contains', Validators.required],
+    relation: this.fb.group({
+      direction: [EntitySearchDirection.TO, Validators.required],
+      relationType: ['Contains', Validators.required],
+    }),
     expression: [calculatedFieldDefaultScript],
     output: this.fb.control<CalculatedFieldOutput>({
       scope: AttributeScope.SERVER_SCOPE,

@@ -51,6 +51,9 @@
     --mat-badge-legacy-small-size-container-size: 8px;
     --mat-badge-small-size-container-overlap-offset: -5px;
     --mat-badge-small-size-text-size: 0;
+    width: 100%;
+    display: flex;
+    justify-content: end;
   }
 }
 
