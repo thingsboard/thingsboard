@@ -860,8 +860,9 @@ public class ActorSystemContext {
                 if (errorMessage != null) {
                     eventBuilder.error(errorMessage);
                 }
-
-                ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
+                CalculatedFieldDebugEvent event = eventBuilder.build();
+                log.debug("Persisting calculated field debug event: {}", event);
+                ListenableFuture<Void> future = eventService.saveAsync(event);
                 Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
             } catch (IllegalArgumentException ex) {
                 log.warn("Failed to persist calculated field debug message", ex);

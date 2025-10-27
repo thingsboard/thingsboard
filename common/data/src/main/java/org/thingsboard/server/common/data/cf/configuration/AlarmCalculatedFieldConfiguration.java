@@ -15,15 +15,24 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
+import org.apache.commons.lang3.tuple.Pair;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.function.BiPredicate;
+import java.util.stream.Stream;
+
+import static java.util.Map.Entry.comparingByKey;
 
 @Data
 public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
@@ -51,15 +60,31 @@ public class AlarmCalculatedFieldConfiguration implements ArgumentsBasedCalculat
         return null;
     }
 
-    @Override
-    public void validate() {
-
-    }
-
+    @JsonIgnore
     @Override
     public boolean requiresScheduledReevaluation() {
-        return createRules.values().stream().anyMatch(AlarmRule::requiresScheduledReevaluation) ||
-               (clearRule != null && clearRule.requiresScheduledReevaluation());
+        return getAllRules().anyMatch(entry -> entry.getValue().requiresScheduledReevaluation());
+    }
+
+    @JsonIgnore
+    public Stream<Pair<AlarmSeverity, AlarmRule>> getAllRules() {
+        Stream<Pair<AlarmSeverity, AlarmRule>> rules = createRules.entrySet().stream()
+                .map(entry -> Pair.of(entry.getKey(), entry.getValue()));
+        if (clearRule != null) {
+            rules = Stream.concat(rules, Stream.of(Pair.of(null, clearRule)));
+        }
+        return rules.sorted(comparingByKey(Comparator.nullsLast(Comparator.naturalOrder())));
+    }
+
+    public boolean rulesEqual(AlarmCalculatedFieldConfiguration other, BiPredicate<AlarmRule, AlarmRule> equalityCheck) {
+        List<Pair<AlarmSeverity, AlarmRule>> thisRules = this.getAllRules().toList();
+        List<Pair<AlarmSeverity, AlarmRule>> otherRules = other.getAllRules().toList();
+        return CollectionsUtil.elementsEqual(thisRules, otherRules, (thisRule, otherRule) -> {
+            if (!Objects.equals(thisRule.getKey(), otherRule.getKey())) {
+                return false;
+            }
+            return equalityCheck.test(thisRule.getValue(), otherRule.getValue());
+        });
     }
 
 }

@@ -1025,8 +1025,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cf.setConfigurationVersion(1);
 
         PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setDirection(EntitySearchDirection.TO);
-        cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setApplyExpressionToResolvedArguments(true);
 
         Argument arg = new Argument();
@@ -1105,8 +1104,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cf.setConfigurationVersion(1);
 
         PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setDirection(EntitySearchDirection.TO);
-        cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setApplyExpressionToResolvedArguments(false); // arguments-only mode
 
         Argument arg = new Argument();

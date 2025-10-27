@@ -58,6 +58,7 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -66,11 +67,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 @Data
 @Slf4j
-public class CalculatedFieldCtx {
+public class CalculatedFieldCtx implements Closeable {
 
     private CalculatedField calculatedField;
 
@@ -197,15 +197,12 @@ public class CalculatedFieldCtx {
             }
             case ALARM -> {
                 AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
-                Stream<AlarmRule> rules = configuration.getCreateRules().values().stream();
-                if (configuration.getClearRule() != null) {
-                    rules = Stream.concat(rules, Stream.of(configuration.getClearRule()));
-                }
-                rules.map(rule -> rule.getCondition().getExpression()).forEach(expression -> {
-                    if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
-                        initTbelExpression(tbelExpression.getExpression());
-                    }
-                });
+                configuration.getAllRules().map(rule -> rule.getValue().getCondition().getExpression())
+                        .forEach(expression -> {
+                            if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
+                                initTbelExpression(tbelExpression.getExpression());
+                            }
+                        });
                 initialized = true;
             }
             case PROPAGATION -> {
@@ -259,7 +256,6 @@ public class CalculatedFieldCtx {
 
     public ScheduledFuture<?> scheduleReevaluation(long delayMs, TbActorRef actorCtx) {
         log.debug("[{}] Scheduling CF reevaluation in {} ms", cfId, delayMs);
-        // TODO: use single lazy-loaded instance of CalculatedFieldReevaluateMsg
         return systemContext.scheduleMsgWithDelay(actorCtx, new CalculatedFieldReevaluateMsg(tenantId, this), delayMs);
     }
 
@@ -508,8 +504,17 @@ public class CalculatedFieldCtx {
         if (!Objects.equals(output, other.output)) {
             return true;
         }
-        if (cfType == CalculatedFieldType.ALARM && !calculatedField.getName().equals(other.getCalculatedField().getName())) {
-            return true;
+        if (cfType == CalculatedFieldType.ALARM) {
+            if (!calculatedField.getName().equals(other.getCalculatedField().getName())) {
+                return true;
+            }
+
+            var thisConfig = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+            var otherConfig = (AlarmCalculatedFieldConfiguration) other.getCalculatedField().getConfiguration();
+            if (!thisConfig.rulesEqual(otherConfig, AlarmRule::equals)) {
+                // if the rules have any changes not tracked by hasStateChanges
+                return true;
+            }
         }
         return scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis;
     }
@@ -521,8 +526,10 @@ public class CalculatedFieldCtx {
         if (cfType == CalculatedFieldType.ALARM) {
             var thisConfig = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
             var otherConfig = (AlarmCalculatedFieldConfiguration) other.getCalculatedField().getConfiguration();
-            if (!thisConfig.getCreateRules().equals(otherConfig.getCreateRules()) ||
-                !Objects.equals(thisConfig.getClearRule(), otherConfig.getClearRule())) {
+            if (!thisConfig.rulesEqual(otherConfig, (thisRule, otherRule) -> {
+                return thisRule.getCondition().getType() == otherRule.getCondition().getType();
+            })) {
+                // reinitializing only if the rule list changed, or if a condition type changed for any rule
                 return true;
             }
         }
@@ -562,12 +569,17 @@ public class CalculatedFieldCtx {
         };
     }
 
-    public void stop() {
-        if (tbelExpressions != null) {
-            tbelExpressions.values().forEach(CalculatedFieldScriptEngine::destroy);
-        }
-        if (simpleExpressions != null) {
-            simpleExpressions.values().forEach(ThreadLocal::remove);
+    @Override
+    public void close() {
+        try {
+            if (tbelExpressions != null) {
+                tbelExpressions.values().forEach(CalculatedFieldScriptEngine::destroy);
+            }
+            if (simpleExpressions != null) {
+                simpleExpressions.values().forEach(ThreadLocal::remove);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to stop {}", this, e);
         }
     }
 

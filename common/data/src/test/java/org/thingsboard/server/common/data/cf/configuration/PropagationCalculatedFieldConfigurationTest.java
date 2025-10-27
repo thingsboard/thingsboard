@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.Map;
 import java.util.UUID;
@@ -71,7 +72,7 @@ public class PropagationCalculatedFieldConfigurationTest {
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("At least one argument must be configured with the 'Current entity' " +
-                            "source entity type for 'Expression result' propagation mode!");
+                        "source entity type for 'Expression result' propagation mode!");
     }
 
     @Test
@@ -95,6 +96,7 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateShouldThrowWhenReferencedEntityKeyIsNotSet() {
         var cfg = new PropagationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         Argument argument = new Argument();
         cfg.setArguments(Map.of("someArgumentName", argument));
         assertThatThrownBy(cfg::validate)
@@ -128,8 +130,7 @@ public class PropagationCalculatedFieldConfigurationTest {
     @Test
     void validateToPropagationArgumentMethodCallReturnCorrectArgument() {
         var cfg = new PropagationCalculatedFieldConfiguration();
-        cfg.setDirection(EntitySearchDirection.TO);
-        cfg.setRelationType(EntityRelation.CONTAINS_TYPE);
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
 
         Argument propagationArgument = cfg.toPropagationArgument();
         assertThat(propagationArgument).isNotNull();

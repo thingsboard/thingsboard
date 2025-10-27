@@ -82,6 +82,7 @@ import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
 import org.thingsboard.server.common.data.queue.Queue;
@@ -456,6 +457,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmConditionFilter temperatureAlarmFlagFilter = new AlarmConditionFilter();
         temperatureAlarmFlagFilter.setArgument("temperatureAlarmFlag");
+        temperatureAlarmFlagFilter.setValueType(EntityKeyValueType.BOOLEAN);
         BooleanFilterPredicate temperatureAlarmFlagAttributePredicate = new BooleanFilterPredicate();
         temperatureAlarmFlagAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
         temperatureAlarmFlagAttributePredicate.setValue(new AlarmConditionValue<>(Boolean.TRUE, null));
@@ -463,6 +465,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmConditionFilter temperatureFilter = new AlarmConditionFilter();
         temperatureFilter.setArgument("temperature");
+        temperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate temperatureFilterPredicate = new NumericFilterPredicate();
         temperatureFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
         temperatureFilterPredicate.setValue(new AlarmConditionValue<>(null, "temperatureAlarmThreshold"));
@@ -479,6 +482,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmConditionFilter clearTemperatureFilter = new AlarmConditionFilter();
         clearTemperatureFilter.setArgument("temperature");
+        clearTemperatureFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate clearTemperatureFilterPredicate = new NumericFilterPredicate();
         clearTemperatureFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS_OR_EQUAL);
         clearTemperatureFilterPredicate.setValue(new AlarmConditionValue<>(null, "temperatureAlarmThreshold"));
@@ -517,6 +521,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmConditionFilter humidityAlarmFlagAttributeFilter = new AlarmConditionFilter();
         humidityAlarmFlagAttributeFilter.setArgument("humidityAlarmFlag");
+        humidityAlarmFlagAttributeFilter.setValueType(EntityKeyValueType.BOOLEAN);
         BooleanFilterPredicate humidityAlarmFlagPredicate = new BooleanFilterPredicate();
         humidityAlarmFlagPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
         humidityAlarmFlagPredicate.setValue(new AlarmConditionValue<>(Boolean.TRUE, null));
@@ -524,6 +529,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmConditionFilter humidityFilter = new AlarmConditionFilter();
         humidityFilter.setArgument("humidity");
+        humidityFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate humidityFilterPredicate = new NumericFilterPredicate();
         humidityFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
         humidityFilterPredicate.setValue(new AlarmConditionValue<>(null, "humidityAlarmThreshold"));
@@ -540,6 +546,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
         AlarmConditionFilter clearHumidityFilter = new AlarmConditionFilter();
         clearHumidityFilter.setArgument("humidity");
+        clearHumidityFilter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate clearHumidityFilterPredicate = new NumericFilterPredicate();
         clearHumidityFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER_OR_EQUAL);
         clearHumidityFilterPredicate.setValue(new AlarmConditionValue<>(null, "humidityAlarmThreshold"));

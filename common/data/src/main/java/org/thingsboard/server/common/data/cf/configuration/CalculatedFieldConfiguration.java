@@ -50,7 +50,7 @@ public interface CalculatedFieldConfiguration {
 
     Output getOutput();
 
-    void validate();
+    default void validate() {}
 
     @JsonIgnore
     default List<EntityId> getReferencedEntities() {
@@ -72,6 +72,7 @@ public interface CalculatedFieldConfiguration {
                 .collect(Collectors.toList());
     }
 
+    @JsonIgnore
     default boolean requiresScheduledReevaluation() {
         return false;
     }

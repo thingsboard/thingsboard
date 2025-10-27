@@ -103,6 +103,18 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         this.configuration = getConfiguration(ctx);
         this.alarmType = ctx.getCalculatedField().getName();
 
+        Map<AlarmSeverity, AlarmRule> createRules = configuration.getCreateRules();
+        createRules.forEach((severity, rule) -> {
+            AlarmRuleState ruleState = createRuleStates.get(severity);
+            if (ruleState != null) {
+                ruleState.setAlarmRule(rule);
+            }
+        });
+        AlarmRule clearRule = configuration.getClearRule();
+        if (clearRule != null && clearRuleState != null) {
+            clearRuleState.setAlarmRule(clearRule);
+        }
+
         if (currentAlarm != null && !currentAlarm.getType().equals(alarmType)) {
             currentAlarm = null;
             initialFetchDone = false;
@@ -189,8 +201,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
         initCurrentAlarm(ctx);
-        // FIXME: don't create alarm if attrs were deleted, or config is updated
-        // TODO: what if expression is changed? do we reevaluate? or only on new events?
         TbAlarmResult result = createOrClearAlarms(state -> {
             if (updatedArgs != null) {
                 boolean newEvent = !updatedArgs.isEmpty();
@@ -222,10 +232,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
 
     private void processAlarmClear(Alarm alarm) {
         currentAlarm = null;
-        createRuleStates.values().forEach(AlarmRuleState::clear);
-        createRuleStates.clear();
+        createRuleStates.values().forEach(this::clearState);
         clearState(clearRuleState);
-        clearRuleState = null;
     }
 
     private void processAlarmAck(Alarm alarm) {
@@ -269,7 +277,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                     clearState(state);
                 }
                 AlarmApiCallResult clearResult = ctx.getAlarmService().clearAlarm(
-                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), true
+                        ctx.getTenantId(), currentAlarm.getId(), System.currentTimeMillis(), createDetails(clearRuleState), false
                 );
                 if (clearResult.isCleared()) {
                     result = TbAlarmResult.builder()
