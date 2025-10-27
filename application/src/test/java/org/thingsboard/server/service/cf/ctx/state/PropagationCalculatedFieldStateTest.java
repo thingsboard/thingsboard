@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
@@ -222,8 +223,7 @@ public class PropagationCalculatedFieldStateTest {
     private CalculatedFieldConfiguration getCalculatedFieldConfig(boolean applyExpressionToResolvedArguments) {
         var config = new PropagationCalculatedFieldConfiguration();
 
-        config.setDirection(EntitySearchDirection.TO);
-        config.setRelationType(EntityRelation.CONTAINS_TYPE);
+        config.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         config.setApplyExpressionToResolvedArguments(applyExpressionToResolvedArguments);
 
         Argument temperatureArg = new Argument();

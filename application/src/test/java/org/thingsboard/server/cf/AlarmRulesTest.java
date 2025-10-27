@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -167,6 +168,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         SimpleAlarmConditionExpression simpleExpression = new SimpleAlarmConditionExpression();
         AlarmConditionFilter filter = new AlarmConditionFilter();
         filter.setArgument("temperature");
+        filter.setValueType(EntityKeyValueType.NUMERIC);
         NumericFilterPredicate predicate = new NumericFilterPredicate();
         predicate.setOperation(NumericOperation.GREATER_OR_EQUAL);
         AlarmConditionValue<Double> thresholdValue = new AlarmConditionValue<>();
@@ -854,6 +856,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         SimpleAlarmConditionExpression simpleExpression = new SimpleAlarmConditionExpression();
         AlarmConditionFilter filter = new AlarmConditionFilter();
         filter.setArgument(argument);
+        filter.setValueType(EntityKeyValueType.STRING);
         StringFilterPredicate predicate = new StringFilterPredicate();
         predicate.setOperation(stringOperation);
         predicate.setValue(conditionValue);
