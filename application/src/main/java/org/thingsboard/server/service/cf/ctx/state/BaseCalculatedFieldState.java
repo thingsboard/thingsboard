@@ -112,7 +112,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     @Override
     public boolean isReady() {
-        return readinessStatus != null && readinessStatus.isReady();
+        return readinessStatus.isReady();
     }
 
     @Override
