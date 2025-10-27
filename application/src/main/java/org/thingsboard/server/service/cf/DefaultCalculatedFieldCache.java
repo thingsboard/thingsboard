@@ -26,8 +26,8 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -69,7 +69,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final ConcurrentMap<CalculatedFieldId, List<CalculatedFieldLink>> calculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new ConcurrentHashMap<>();
     private final ConcurrentMap<CalculatedFieldId, CalculatedFieldCtx> calculatedFieldsCtx = new ConcurrentHashMap<>();
-    private final ConcurrentMap<CalculatedFieldId, CalculatedField> aggCalculatedFields = new ConcurrentHashMap<>();
 
     private final ConcurrentMap<EntityId, Set<EntityId>> ownerEntities = new ConcurrentHashMap<>();
 
@@ -83,9 +82,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         cfs.forEach(cf -> {
             if (cf != null) {
                 calculatedFields.putIfAbsent(cf.getId(), cf);
-                if (cf.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration) {
-                    aggCalculatedFields.put(cf.getId(), cf);
-                }
             }
         });
         calculatedFields.values().forEach(cf -> {
@@ -153,8 +149,8 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public List<CalculatedFieldCtx> getAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter) {
-        return aggCalculatedFields.keySet().stream()
-                .map(this::getCalculatedFieldCtx)
+        return calculatedFieldsCtx.values().stream()
+                .filter(ctx -> CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(ctx.getCfType()))
                 .filter(relatedEntityFilter)
                 .toList();
     }
@@ -200,9 +196,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             entityIdCalculatedFields.computeIfAbsent(cfEntityId, entityId -> new CopyOnWriteArrayList<>()).add(calculatedField);
 
             CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-            if (configuration instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration) {
-                aggCalculatedFields.put(calculatedField.getId(), calculatedField);
-            }
             calculatedFieldLinks.put(calculatedFieldId, configuration.buildCalculatedFieldLinks(tenantId, cfEntityId, calculatedFieldId));
 
             configuration.getReferencedEntities().stream()
@@ -234,8 +227,6 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);
         entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.getCalculatedFieldId().equals(calculatedFieldId)));
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
-        aggCalculatedFields.remove(calculatedFieldId);
-        log.debug("[{}] evict calculated field from cached triggers: {}", calculatedFieldId, oldCalculatedField);
     }
 
     @Override

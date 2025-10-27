@@ -25,7 +25,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
 @Data
-public class CalculatedFieldRelatedEntityMsg implements ToCalculatedFieldSystemMsg {
+public class CalculatedFieldRelationActionMsg implements ToCalculatedFieldSystemMsg {
 
     private final TenantId tenantId;
     private final EntityId relatedEntityId;
@@ -33,10 +33,10 @@ public class CalculatedFieldRelatedEntityMsg implements ToCalculatedFieldSystemM
     private final CalculatedFieldCtx calculatedField;
     private final TbCallback callback;
 
-    public CalculatedFieldRelatedEntityMsg(TenantId tenantId,
-                                           EntityId relatedEntityId, ActionType action,
-                                           CalculatedFieldCtx calculatedField,
-                                           TbCallback callback) {
+    public CalculatedFieldRelationActionMsg(TenantId tenantId,
+                                            EntityId relatedEntityId, ActionType action,
+                                            CalculatedFieldCtx calculatedField,
+                                            TbCallback callback) {
         this.tenantId = tenantId;
         this.relatedEntityId = relatedEntityId;
         this.action = action;
@@ -46,7 +46,7 @@ public class CalculatedFieldRelatedEntityMsg implements ToCalculatedFieldSystemM
 
     @Override
     public MsgType getMsgType() {
-        return MsgType.CF_RELATED_ENTITY_MSG;
+        return MsgType.CF_RELATION_ACTION_MSG;
     }
 
 }

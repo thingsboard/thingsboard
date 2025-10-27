@@ -39,7 +39,7 @@ public final class TelemetryCalculatedFieldResult implements CalculatedFieldResu
     private final AttributeScope scope;
     private final JsonNode result;
 
-    public static TelemetryCalculatedFieldResult EMPTY = TelemetryCalculatedFieldResult.builder().result(null).build();
+    public static final TelemetryCalculatedFieldResult EMPTY = TelemetryCalculatedFieldResult.builder().result(null).build();
 
     @Override
     public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {

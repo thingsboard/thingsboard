@@ -264,6 +264,8 @@ public class TbUtils {
                 float.class, int.class)));
         parserConfig.addImport("toInt", new MethodStub(TbUtils.class.getMethod("toInt",
                 double.class)));
+        parserConfig.addImport("roundResult", new MethodStub(TbUtils.class.getMethod("roundResult",
+                double.class, Integer.class)));
         parserConfig.addImport("isNaN", new MethodStub(TbUtils.class.getMethod("isNaN",
                 double.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
@@ -1186,7 +1188,6 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
-    // todo: register method
     public static Object roundResult(double value, Integer precision) {
         if (precision == null) {
             return value;

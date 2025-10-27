@@ -73,8 +73,8 @@ public class CalculatedFieldEntityActor extends AbstractCalculatedFieldActor {
             case CF_ENTITY_DELETE_MSG:
                 processor.process((CalculatedFieldEntityDeleteMsg) msg);
                 break;
-            case CF_RELATED_ENTITY_MSG:
-                processor.process((CalculatedFieldRelatedEntityMsg) msg);
+            case CF_RELATION_ACTION_MSG:
+                processor.process((CalculatedFieldRelationActionMsg) msg);
                 break;
             case CF_ENTITY_TELEMETRY_MSG:
                 processor.process((EntityCalculatedFieldTelemetryMsg) msg);

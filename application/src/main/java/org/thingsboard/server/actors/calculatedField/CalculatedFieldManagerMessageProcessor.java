@@ -688,12 +688,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void deleteRelatedEntity(EntityId entityId, EntityId relatedEntityId, CalculatedFieldCtx cf, TbCallback callback) {
         log.debug("Pushing delete related entity msg to specific actor [{}]", relatedEntityId);
-        getOrCreateActor(entityId).tell(new CalculatedFieldRelatedEntityMsg(tenantId, relatedEntityId, ActionType.DELETED, cf, callback));
+        getOrCreateActor(entityId).tell(new CalculatedFieldRelationActionMsg(tenantId, relatedEntityId, ActionType.DELETED, cf, callback));
     }
 
     private void initRelatedEntity(EntityId entityId, EntityId relatedEntityId, CalculatedFieldCtx cf, TbCallback callback) {
         log.debug("Pushing init related entity msg to specific actor [{}]", relatedEntityId);
-        getOrCreateActor(entityId).tell(new CalculatedFieldRelatedEntityMsg(tenantId, relatedEntityId, ActionType.UPDATED, cf, callback));
+        getOrCreateActor(entityId).tell(new CalculatedFieldRelationActionMsg(tenantId, relatedEntityId, ActionType.UPDATED, cf, callback));
     }
 
     private void deleteCfForEntity(EntityId entityId, CalculatedFieldId cfId, TbCallback callback) {

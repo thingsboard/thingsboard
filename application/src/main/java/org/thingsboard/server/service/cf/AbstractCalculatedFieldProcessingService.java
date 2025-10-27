@@ -49,7 +49,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -188,7 +188,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
         return Futures.transform(relationsFut, relations -> {
             if (relations == null) {
-                return new ArrayList<>();
+                return Collections.emptyList();
             }
 
             return switch (relation.direction()) {
