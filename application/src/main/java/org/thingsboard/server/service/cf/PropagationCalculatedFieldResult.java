@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf;
 
 import lombok.Builder;
 import lombok.Data;
+import org.thingsboard.server.common.data.cf.configuration.OutputStrategy;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
@@ -30,6 +31,11 @@ public final class PropagationCalculatedFieldResult implements CalculatedFieldRe
 
     private final List<EntityId> propagationEntityIds;
     private final TelemetryCalculatedFieldResult result;
+
+    @Override
+    public OutputStrategy getOutputStrategy() {
+        return result.getOutputStrategy();
+    }
 
     @Override
     public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {

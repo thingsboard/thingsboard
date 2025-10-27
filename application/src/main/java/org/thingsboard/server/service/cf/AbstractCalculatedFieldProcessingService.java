@@ -15,18 +15,28 @@
  */
 package org.thingsboard.server.service.cf;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesSkipRuleEngineOutputStrategy;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -34,9 +44,11 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -44,10 +56,13 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -67,6 +82,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
     protected final AttributesService attributesService;
     protected final TimeseriesService timeseriesService;
+    protected final TelemetrySubscriptionService tsSubService;
     protected final ApiLimitService apiLimitService;
     protected final RelationService relationService;
     protected final OwnerService ownerService;
@@ -266,6 +282,67 @@ public abstract class AbstractCalculatedFieldProcessingService {
         int argumentLimit = argument.getLimit();
         int limit = argumentLimit == 0 || argumentLimit > maxDataPoints ? (int) maxDataPoints : argumentLimit;
         return new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE);
+    }
+
+    protected void saveTelemetryResult(TenantId tenantId, EntityId entityId, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+        OutputType type = cfResult.getType();
+        JsonElement jsonResult = JsonParser.parseString(Objects.requireNonNull(cfResult.stringValue()));
+
+        log.trace("[{}][{}] Saving CF result: {}", tenantId, entityId, jsonResult);
+
+        SettableFuture<Void> future = SettableFuture.create();
+        switch (type) {
+            case ATTRIBUTES -> saveAttributes(tenantId, entityId, jsonResult, cfIds, future);
+            case TIME_SERIES -> saveTimeSeries(tenantId, entityId, jsonResult, ((TimeSeriesSkipRuleEngineOutputStrategy) cfResult.getOutputStrategy()).getTtl(), cfIds, System.currentTimeMillis(), TimeseriesSaveRequest.Strategy.PROCESS_ALL, future);
+        }
+
+        if (log.isTraceEnabled()) {
+            Futures.addCallback(future, new FutureCallback<>() {
+                @Override
+                public void onSuccess(Void v) {
+                    callback.onSuccess();
+                    log.debug("[{}][{}] Saved CF result: {}", tenantId, entityId, cfResult);
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                    log.error("[{}][{}] Failed to save CF result {}", tenantId, entityId, cfResult, t);
+                }
+            }, MoreExecutors.directExecutor());
+        }
+    }
+
+    private void saveAttributes(TenantId tenantId, EntityId entityId, JsonElement jsonResult, List<CalculatedFieldId> cfIds, SettableFuture<Void> future) {
+        List<AttributeKvEntry> attributeKvEntries = JsonConverter.convertToAttributes(jsonResult);
+        tsSubService.saveAttributesInternal(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .entries(attributeKvEntries)
+                .strategy(AttributesSaveRequest.Strategy.PROCESS_ALL)
+                .previousCalculatedFieldIds(cfIds)
+                .future(future)
+                .build()
+        );
+    }
+
+    private void saveTimeSeries(TenantId tenantId, EntityId entityId, JsonElement jsonResult, Long ttl,  List<CalculatedFieldId> cfIds, long ts, TimeseriesSaveRequest.Strategy strategy, SettableFuture<Void> future) {
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(jsonResult, ts);
+        List<TsKvEntry> tsEntries = new ArrayList<>();
+        for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
+            for (KvEntry kvEntry : tsKvEntry.getValue()) {
+                tsEntries.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
+            }
+        }
+        tsSubService.saveTimeseriesInternal(TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .entries(tsEntries)
+                .ttl(ttl)
+                .strategy(strategy)
+                .previousCalculatedFieldIds(cfIds)
+                .future(future)
+                .build());
     }
 
 }

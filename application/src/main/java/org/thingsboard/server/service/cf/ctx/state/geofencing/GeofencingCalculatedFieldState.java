@@ -130,6 +130,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
         OutputType outputType = ctx.getOutput().getType();
         var result = TelemetryCalculatedFieldResult.builder()
+                .outputStrategy(ctx.getOutput().getStrategy())
                 .type(outputType)
                 .scope(ctx.getOutput().getScope())
                 .result(toResultNode(outputType, valuesNode))

@@ -52,6 +52,7 @@ public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
         Output output = ctx.getOutput();
         return Futures.transform(resultFuture,
                 result -> TelemetryCalculatedFieldResult.builder()
+                        .outputStrategy(output.getStrategy())
                         .type(output.getType())
                         .scope(output.getScope())
                         .result(JacksonUtil.valueToTree(result))

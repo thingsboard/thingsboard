@@ -15,25 +15,23 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
+
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
 
-@Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Output {
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = SkipRuleEngineOutputStrategy.class, name = "SKIP_RULE_ENGINE"),
+        @JsonSubTypes.Type(value = PushToRuleEngineOutputStrategy.class, name = "PUSH_TO_RULE_ENGINE")
+})
+@JsonIgnoreProperties(ignoreUnknown = true)
+public interface OutputStrategy {
 
-    private String name;
-    private OutputType type;
-    private AttributeScope scope;
-    private Integer decimalsByDefault;
-
-    @JsonTypeInfo(
-            use = JsonTypeInfo.Id.NAME,
-            include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-            property = "type"
-    )
-    private OutputStrategy strategy;
+    OutputStrategyType getType();
 
 }

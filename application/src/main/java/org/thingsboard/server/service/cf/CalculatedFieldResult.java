@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf;
 
+import org.thingsboard.server.common.data.cf.configuration.OutputStrategy;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -22,6 +23,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 
 public interface CalculatedFieldResult {
+
+    OutputStrategy getOutputStrategy();
 
     TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds);
 

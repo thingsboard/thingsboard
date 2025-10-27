@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Builder;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.cf.configuration.OutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -37,6 +38,7 @@ public final class TelemetryCalculatedFieldResult implements CalculatedFieldResu
 
     private final OutputType type;
     private final AttributeScope scope;
+    private final OutputStrategy outputStrategy;
     private final JsonNode result;
 
     @Override
