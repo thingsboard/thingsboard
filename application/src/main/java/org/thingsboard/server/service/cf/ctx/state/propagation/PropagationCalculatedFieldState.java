@@ -50,6 +50,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         this.actorCtx = actorCtx;
         this.requiredArguments = new ArrayList<>(ctx.getArgNames());
         requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
+        this.readinessStatus = checkReadiness(requiredArguments, arguments);
         if (ctx.isApplyExpressionForResolvedArguments()) {
             this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
         }

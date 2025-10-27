@@ -200,7 +200,7 @@ public class GeofencingCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus()).isNull();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactlyInAnyOrderElementsOf(state.getRequiredArguments());
     }
 
     @Test

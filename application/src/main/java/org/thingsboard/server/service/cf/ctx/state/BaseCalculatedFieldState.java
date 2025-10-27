@@ -57,6 +57,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         this.ctx = ctx;
         this.actorCtx = actorCtx;
         this.requiredArguments = ctx.getArgNames();
+        this.readinessStatus = checkReadiness(requiredArguments, arguments);
     }
 
     @Override
@@ -94,11 +95,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
         }
 
-        if (updatedArguments != null) {
-            readinessStatus = checkReadiness(requiredArguments, arguments);
-            return updatedArguments;
+        if (updatedArguments == null) {
+            return Collections.emptyMap();
         }
-        return Collections.emptyMap();
+        readinessStatus = checkReadiness(requiredArguments, arguments);
+        return updatedArguments;
     }
 
     @Override
@@ -153,6 +154,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     }
 
     public ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        if (currentArguments == null) {
+            return new ReadinessStatus(requiredArguments);
+        }
         List<String> emptyArguments = null;
         for (String requiredArgumentKey : requiredArguments) {
             ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
