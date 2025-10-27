@@ -15,25 +15,15 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
+import lombok.NoArgsConstructor;
 
 @Data
-@JsonInclude(JsonInclude.Include.NON_NULL)
-public class Output {
+@NoArgsConstructor
+@AllArgsConstructor
+public class AttributeSkipRuleEngineOutputStrategy extends SkipRuleEngineOutputStrategy {
 
-    private String name;
-    private OutputType type;
-    private AttributeScope scope;
-    private Integer decimalsByDefault;
-
-    @JsonTypeInfo(
-            use = JsonTypeInfo.Id.NAME,
-            include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-            property = "type"
-    )
-    private OutputStrategy strategy;
+    private boolean updateAttributesOnlyOnValueChange;
 
 }
