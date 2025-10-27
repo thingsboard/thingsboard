@@ -131,7 +131,7 @@ public class PropagationCalculatedFieldStateTest {
         initCtxAndState(false);
         state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry), ctx);
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getMissingArguments()).containsExactly(PROPAGATION_CONFIG_ARGUMENT);
+        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
@@ -139,9 +139,8 @@ public class PropagationCalculatedFieldStateTest {
         initCtxAndState(false);
         state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry,
                 PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())), ctx);
-        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly(PROPAGATION_CONFIG_ARGUMENT);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
@@ -149,8 +148,7 @@ public class PropagationCalculatedFieldStateTest {
         initCtxAndState(false);
         state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry, PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry), ctx);
         assertThat(state.isReady()).isTrue();
-        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isNull();
     }
 
 

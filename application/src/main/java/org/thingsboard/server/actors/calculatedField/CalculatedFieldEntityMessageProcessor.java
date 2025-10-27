@@ -416,7 +416,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             } else {
                 if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
-                    String errorMsg = ctx.isInitialized() ? state.getReadinessStatus().stringValue() : "Calculated field state is not initialized!";
+                    String errorMsg = ctx.isInitialized() && state.getReadinessStatus() != null ? state.getReadinessStatus().stringValue() : "Calculated field state is not initialized!";
                     systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null,  errorMsg);
                 }
                 callback.onSuccess();

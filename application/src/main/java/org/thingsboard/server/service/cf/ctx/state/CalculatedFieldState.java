@@ -36,10 +36,8 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculat
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.io.Closeable;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
@@ -103,51 +101,19 @@ public interface CalculatedFieldState extends Closeable {
 
     @Data
     @AllArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_EMPTY)
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     class ReadinessStatus {
 
-        private Set<String> missingArguments;
-        private Set<String> emptyArguments;
-
-        public static ReadinessStatus initialState(List<String> requiredArguments, Map<String, ArgumentEntry> arguments) {
-            if (arguments.isEmpty()) {
-                return new ReadinessStatus(new HashSet<>(requiredArguments), new HashSet<>());
-            }
-            Set<String> missingArguments = new HashSet<>(requiredArguments.size());
-            Set<String> emptyArguments = new HashSet<>(requiredArguments.size());
-            requiredArguments.forEach(requiredArgumentKey -> {
-                ArgumentEntry argumentEntry = arguments.get(requiredArgumentKey);
-                if (argumentEntry == null) {
-                    missingArguments.add(requiredArgumentKey);
-                    return;
-                }
-                if (argumentEntry.isEmpty()) {
-                    emptyArguments.add(requiredArgumentKey);
-                }
-            });
-            return new ReadinessStatus(missingArguments, emptyArguments);
-        }
-
-        public void onArgumentUpdate(String key, ArgumentEntry newEntry) {
-            if (newEntry == null) {
-                missingArguments.add(key);
-                return;
-            }
-            missingArguments.remove(key);
-            if (newEntry.isEmpty()) {
-                emptyArguments.add(key);
-            } else {
-                emptyArguments.remove(key);
-            }
-        }
+        private List<String> emptyArguments;
 
         public boolean isReady() {
-            return missingArguments.isEmpty() && emptyArguments.isEmpty();
+            return emptyArguments == null || emptyArguments.isEmpty();
         }
 
         public String stringValue() {
             return JacksonUtil.toString(this);
         }
+
 
     }
 

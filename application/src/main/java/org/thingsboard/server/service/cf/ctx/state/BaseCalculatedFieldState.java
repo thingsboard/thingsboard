@@ -26,11 +26,11 @@ import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Getter
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
@@ -57,7 +57,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         this.ctx = ctx;
         this.actorCtx = actorCtx;
         this.requiredArguments = ctx.getArgNames();
-        this.readinessStatus = ReadinessStatus.initialState(requiredArguments, arguments);
     }
 
     @Override
@@ -91,12 +90,15 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
                 }
                 updatedArguments.put(key, newEntry);
                 updateLastUpdateTimestamp(newEntry);
-                readinessStatus.onArgumentUpdate(key, newEntry);
             }
 
         }
 
-        return Objects.requireNonNullElse(updatedArguments, Collections.emptyMap());
+        if (updatedArguments != null) {
+            readinessStatus = checkReadiness(requiredArguments, arguments);
+            return updatedArguments;
+        }
+        return Collections.emptyMap();
     }
 
     @Override
@@ -109,7 +111,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     @Override
     public boolean isReady() {
-        return readinessStatus.isReady();
+        return readinessStatus != null && readinessStatus.isReady();
     }
 
     @Override
@@ -148,6 +150,20 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
+    }
+
+    public ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        List<String> emptyArguments = null;
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                if (emptyArguments == null) {
+                    emptyArguments = new ArrayList<>();
+                }
+                emptyArguments.add(requiredArgumentKey);
+            }
+        }
+        return new ReadinessStatus(emptyArguments);
     }
 
 }

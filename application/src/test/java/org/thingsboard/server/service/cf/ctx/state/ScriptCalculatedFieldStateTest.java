@@ -161,17 +161,14 @@ public class ScriptCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getMissingArguments())
-                .containsExactlyInAnyOrderElementsOf(state.requiredArguments);
-        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
+        assertThat(state.getReadinessStatus()).isNull();
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
         state.update(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry), ctx);
         assertThat(state.isReady()).isTrue();
-        assertThat(state.getReadinessStatus().getMissingArguments()).isEmpty();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).isEmpty();
+        assertThat(state.getReadinessStatus().getEmptyArguments()).isNull();
     }
 
     @Test
