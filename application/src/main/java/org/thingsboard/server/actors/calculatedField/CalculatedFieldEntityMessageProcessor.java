@@ -535,23 +535,29 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(entityId, ctx.getLinkedAndDynamicArgs(entityId), ctx.getRelatedEntityArguments(), data);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(EntityId originator, Map<ReferencedEntityKey, String> argNames, Map<ReferencedEntityKey, String> relatedEntityArgs, List<TsKvProto> data) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId originator, Map<ReferencedEntityKey, Set<String>> args, Map<ReferencedEntityKey, Set<String>> relatedEntityArgs, List<TsKvProto> data) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
-        if (!relatedEntityArgs.isEmpty() || !argNames.isEmpty()) {
+        if (!relatedEntityArgs.isEmpty() || !args.isEmpty()) {
             for (TsKvProto item : data) {
                 ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
-                String argName = relatedEntityArgs.get(key);
-                if (argName != null) {
-                    arguments.put(argName, new SingleValueArgumentEntry(originator, item));
+                Set<String> argNames = relatedEntityArgs.get(key);
+                if (argNames != null) {
+                    argNames.forEach(argName -> {
+                        arguments.put(argName, new SingleValueArgumentEntry(originator, item));
+                    });
                 }
-                argName = argNames.get(key);
-                if (argName != null) {
-                    arguments.put(argName, new SingleValueArgumentEntry(item));
+                argNames = args.get(key);
+                if (argNames != null) {
+                    argNames.forEach(argName -> {
+                        arguments.put(argName, new SingleValueArgumentEntry(item));
+                    });
                 }
                 key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_ROLLING, null);
-                argName = argNames.get(key);
-                if (argName != null) {
-                    arguments.put(argName, new SingleValueArgumentEntry(item));
+                argNames = args.get(key);
+                if (argNames != null) {
+                    argNames.forEach(argName -> {
+                        arguments.put(argName, new SingleValueArgumentEntry(item));
+                    });
                 }
             }
         }
@@ -569,24 +575,28 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(entityId, argNames, geofencingArgumentNames, relatedEntityArgs, scope, attrDataList);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, String> argNames, List<String> geofencingArgNames, Map<ReferencedEntityKey, String> relatedEntityArgs, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, Set<String>> args, List<String> geofencingArgNames, Map<ReferencedEntityKey, Set<String>> relatedEntityArgs, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         if (!relatedEntityArgs.isEmpty() || !argNames.isEmpty()) {
             for (AttributeValueProto item : attrDataList) {
                 ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-                String argName = relatedEntityArgs.get(key);
-                if (argName != null) {
-                    arguments.put(argName, new SingleValueArgumentEntry(entityId, item));
+                Set<String> argNames = relatedEntityArgs.get(key);
+                if (argNames != null) {
+                    argNames.forEach(argName -> {
+                        arguments.put(argName, new SingleValueArgumentEntry(entityId, item));
+                    });
                 }
-                argName = argNames.get(key);
-                if (argName == null) {
+                argNames = args.get(key);
+                if (argNames == null) {
                     continue;
                 }
-                if (geofencingArgNames.contains(argName)) {
-                    arguments.put(argName, new GeofencingArgumentEntry(entityId, item));
-                    continue;
-                }
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+                argNames.forEach(argName -> {
+                    if (geofencingArgNames.contains(argName)) {
+                        arguments.put(argName, new GeofencingArgumentEntry(entityId, item));
+                    } else {
+                        arguments.put(argName, new SingleValueArgumentEntry(item));
+                    }
+                });
             }
         }
         return arguments;
@@ -607,38 +617,45 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(EntityId msgEntityId,
-                                                                      Map<ReferencedEntityKey, String> argNames,
+                                                                      Map<ReferencedEntityKey, Set<String>> args,
                                                                       Map<String, Argument> configArguments,
                                                                       List<String> geofencingArgNames,
-                                                                      Map<ReferencedEntityKey, String> relatedEntityArgs,
+                                                                      Map<ReferencedEntityKey, Set<String>> relatedEntityArgs,
                                                                       AttributeScopeProto scope,
                                                                       List<String> removedAttrKeys) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (String removedKey : removedAttrKeys) {
             ReferencedEntityKey key = new ReferencedEntityKey(removedKey, ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-            String argName = relatedEntityArgs.get(key);
-            if (argName != null) {
-                String defaultValue = getDefaultValue(configArguments, argName);
-                SingleValueArgumentEntry argumentEntry = buildSingleValue(removedKey, defaultValue, System.currentTimeMillis());
-                arguments.put(argName, new SingleValueArgumentEntry(msgEntityId, argumentEntry));
+            Set<String> argNames = relatedEntityArgs.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> {
+                    String defaultValue = getDefaultValue(configArguments, argName);
+                    SingleValueArgumentEntry argumentEntry = buildSingleValue(removedKey, defaultValue, System.currentTimeMillis());
+                    arguments.put(argName, new SingleValueArgumentEntry(msgEntityId, argumentEntry));
+                });
                 continue;
             }
-            argName = argNames.get(key);
-            if (argName == null) {
+            argNames = args.get(key);
+            if (argNames == null) {
                 continue;
             }
-            if (geofencingArgNames.contains(argName)) {
-                arguments.put(argName, new GeofencingArgumentEntry());
-                continue;
-            }
-            String defaultValue = getDefaultValue(configArguments, argName);
-            arguments.put(argName, buildSingleValue(removedKey, defaultValue, System.currentTimeMillis()));
+            argNames.forEach(argName -> {
+                if (geofencingArgNames.contains(argName)) {
+                    arguments.put(argName, new GeofencingArgumentEntry());
+                } else {
+                    Argument argument = configArguments.get(argName);
+                    String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
+                    arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
+                            ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
+                            : new SingleValueArgumentEntry());
+                }
+            });
         }
         return arguments;
     }
 
-    private String getDefaultValue(Map<String, Argument> configArguments, String argName) {
-        Argument argument = configArguments.get(argName);
+    private String getDefaultValue(Map<String, Argument> configArguments, String argNames) {
+        Argument argument = configArguments.get(argNames);
         return argument != null ? argument.getDefaultValue() : null;
     }
 

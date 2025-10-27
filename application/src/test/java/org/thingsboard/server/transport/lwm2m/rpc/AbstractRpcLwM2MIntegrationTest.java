@@ -43,12 +43,11 @@ import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
+import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_0;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
@@ -115,6 +114,10 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
             initRpc(0);
         } else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationReadCollectedValueTest")) {
             initRpc(3303);
+        } else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationInitReadCompositeAllTest")) {
+            initRpc(2);
+        }else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationInitReadCompositeByObjectTest")) {
+            initRpc(3);
         } else {
             initRpc(1);
         }
@@ -140,10 +143,10 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 });
             }
         });
-        String ver_Id_0 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_0).version;
-        String ver_Id_1 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(OBJECT_ID_1).version;
-        objectIdVer_0 = "/" + OBJECT_ID_0 + "_" + ver_Id_0;
-        objectIdVer_1 = "/" + OBJECT_ID_1 + "_" + ver_Id_1;
+        String ver_Id_0 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(SECURITY).version;
+        String ver_Id_1 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(SERVER).version;
+        objectIdVer_0 = "/" + SECURITY + "_" + ver_Id_0;
+        objectIdVer_1 = "/" + SERVER + "_" + ver_Id_1;
         objectIdVer_2 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + ACCESS_CONTROL)).findFirst().get();
         objectIdVer_3 = (String) expectedObjectIdVers.stream().filter(PREDICATE_3).findFirst().get();
         objectIdVer_19 = (String) expectedObjectIdVers.stream().filter(path -> ((String) path).startsWith("/" + BINARY_APP_DATA_CONTAINER)).findFirst().get();
@@ -221,10 +224,67 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                         "    ],\n" +
                         "    \"attributeLwm2m\": {}\n" +
                         "  }";
+       String INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_ALL =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\",\n" +
+                       "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+                       "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
+                       "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/20\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [\n" +
+                       "      \"/5_1.2/0/6\",\n" +
+                       "      \"/5_1.2/0/7\"\n" +
+                       "    ],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/5_1.2/0/9\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"initAttrTelAsObsStrategy\": true,\n" +
+                       "    \"observeStrategy\": 1\n" +
+                       "  }";
+    String INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_BY_OBJECT =
+               "    {\n" +
+                       "    \"keyName\": {\n" +
+                       "      \"/3_1.2/0/9\": \"batteryLevel\",\n" +
+                       "      \"/3_1.2/0/20\": \"batteryStatus\",\n" +
+                       "      \"/19_1.1/0/2\": \"dataCreationTime\",\n" +
+                       "      \"/5_1.2/0/6\": \"pkgname\",\n" +
+                       "      \"/5_1.2/0/7\": \"pkgversion\",\n" +
+                       "      \"/5_1.2/0/9\": \"firmwareUpdateDeliveryMethod\"\n" +
+                       "    },\n" +
+                       "    \"observe\": [\n" +
+                       "      \"/3_1.2/0/9\"\n" +
+                       "    ],\n" +
+                       "    \"attribute\": [\n" +
+                       "      \"/5_1.2/0/6\",\n" +
+                       "      \"/5_1.2/0/7\"\n" +
+                       "    ],\n" +
+                       "    \"telemetry\": [\n" +
+                       "      \"/3_1.2/0/9\",\n" +
+                       "      \"/3_1.2/0/20\",\n" +
+                       "      \"/5_1.2/0/9\",\n" +
+                       "      \"/19_1.1/0/2\"\n" +
+                       "    ],\n" +
+                       "    \"attributeLwm2m\": {},\n" +
+                       "    \"initAttrTelAsObsStrategy\": true,\n" +
+                       "    \"observeStrategy\": 2\n" +
+                       "  }";
+
         CONFIG_PROFILE_WITH_PARAMS_RPC =
                 switch (typeConfigProfile) {
                     case 0 -> ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE;
                     case 1 -> TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE;
+                    case 2 -> INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_ALL;
+                    case 3 -> INIT_READ_TELEMETRY_ATTRIBUTE_AS_OBSERVE_STRATEGY_BY_OBJECT;
                     case 3303 -> TELEMETRY_WITH_PARAMS_RPC_COLLECTED_VALUE;
                     default -> throw new IllegalStateException("Unexpected value: " + typeConfigProfile);
                 };

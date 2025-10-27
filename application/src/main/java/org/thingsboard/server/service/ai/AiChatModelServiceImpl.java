@@ -15,7 +15,13 @@
  */
 package org.thingsboard.server.service.ai;
 
+import com.fasterxml.jackson.core.io.JsonStringEncoder;
 import com.google.common.util.concurrent.FluentFuture;
+import dev.langchain4j.data.message.ChatMessage;
+import dev.langchain4j.data.message.Content;
+import dev.langchain4j.data.message.TextContent;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.ModelProvider;
 import dev.langchain4j.model.chat.ChatModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -23,6 +29,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConfigurer;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -34,7 +43,39 @@ class AiChatModelServiceImpl implements AiChatModelService {
     @Override
     public <C extends AiChatModelConfig<C>> FluentFuture<ChatResponse> sendChatRequestAsync(AiChatModelConfig<C> chatModelConfig, ChatRequest chatRequest) {
         ChatModel langChainChatModel = chatModelConfig.configure(chatModelConfigurer);
+        if (langChainChatModel.provider() == ModelProvider.GITHUB_MODELS) {
+            chatRequest = prepareGithubChatRequest(chatRequest);
+        }
         return aiRequestsExecutor.sendChatRequestAsync(langChainChatModel, chatRequest);
+    }
+
+    private ChatRequest prepareGithubChatRequest(ChatRequest chatRequest) {
+        List<ChatMessage> messages = chatRequest.messages().stream()
+                        .map(this::prepareUserMessage)
+                        .collect(Collectors.toList());
+
+        return ChatRequest.builder()
+                .messages(messages)
+                .responseFormat(chatRequest.responseFormat())
+                .build();
+    }
+
+    private ChatMessage prepareUserMessage(ChatMessage message) {
+        if (message instanceof UserMessage userMessage) {
+            List<Content> newContents = userMessage.contents().stream()
+                    .map(this::prepareContent)
+                    .collect(Collectors.toList());
+
+            return UserMessage.from(newContents);
+        }
+        return message;
+    }
+
+    private Content prepareContent(Content content) {
+        if (content instanceof TextContent txt) {
+            return new TextContent(new String(JsonStringEncoder.getInstance().quoteAsString(txt.text())));
+        }
+        return content;
     }
 
 }
