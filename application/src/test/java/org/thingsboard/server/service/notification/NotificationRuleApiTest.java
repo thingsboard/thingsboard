@@ -193,7 +193,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRuleProcessing_alarmTrigger() throws Exception {
         String notificationSubject = "Alarm type: ${alarmType}, status: ${alarmStatus}, " +
-                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}, details: ${data}.";
+                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}, details: ${info.data}.";
         String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
