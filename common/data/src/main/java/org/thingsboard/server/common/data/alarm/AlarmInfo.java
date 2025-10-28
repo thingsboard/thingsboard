@@ -64,7 +64,6 @@ public class AlarmInfo extends Alarm {
         this.originatorName = alarmInfo.getOriginatorName();
         this.originatorLabel = alarmInfo.getOriginatorLabel();
         this.assignee = alarmInfo.getAssignee();
-        this.originatorDisplayName = alarmInfo.getOriginatorDisplayName();
     }
 
     public AlarmInfo(Alarm alarm, String originatorName, String originatorLabel, AlarmAssignee assignee) {
