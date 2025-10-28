@@ -285,6 +285,26 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldNotDeleteLastTenantAdmin() throws Exception {
+        loginSysAdmin();
+
+        User tenantAdmin2 = new User();
+        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin2.setTenantId(tenantId);
+        tenantAdmin2.setEmail("tenant2@thingsboard.io");
+        tenantAdmin2 = doPost("/api/user", tenantAdmin2, User.class);
+
+        // delete second tenant admin - ok
+        doDelete("/api/user/" + tenantAdmin2.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        // delete last tenant admin - forbidden
+        doDelete("/api/user/" + tenantAdminUser.getId().getId().toString())
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("At least one tenant administrator must remain!")));
+    }
+
+    @Test
     public void testSaveUserWithInvalidEmail() throws Exception {
         loginSysAdmin();
 
