@@ -1889,6 +1889,9 @@ queue:
       print-interval-ms: "${TB_QUEUE_RULE_ENGINE_STATS_PRINT_INTERVAL_MS:60000}"
       # Max length of the error message that is printed by statistics
       max-error-message-length: "${TB_QUEUE_RULE_ENGINE_MAX_ERROR_MESSAGE_LENGTH:4096}"
+    prometheus-stats:
+      # Enable/disable Prometheus statistics for individual Rule Engine message processing (records time in ms for success/failure).
+      enabled: "${TB_QUEUE_RULE_ENGINE_PROMETHEUS_STATS_ENABLED:true}"
     # After a queue is deleted (or the profile's isolation option was disabled), Rule Engine will continue reading related topics during this period before deleting the actual topics
     topic-deletion-delay: "${TB_QUEUE_RULE_ENGINE_TOPIC_DELETION_DELAY_SEC:15}"
     # Size of the thread pool that handles such operations as partition changes, config updates, queue deletion
