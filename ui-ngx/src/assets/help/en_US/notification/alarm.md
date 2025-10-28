@@ -16,11 +16,13 @@ Available template parameters:
 * `alarmStatus` - the alarm status;
 * `alarmOriginatorEntityType` - the entity type of the alarm originator, e.g. 'Device';
 * `alarmOriginatorName` - the name of the alarm originator, e.g. 'Sensor T1';
+* `alarmOriginatorLabel` - the label of the alarm originator, e.g. 'Sensor T1';
 * `alarmOriginatorId` - the alarm originator entity id as uuid string;
 * `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;
+* `info.<key>` - any key field from the alarm's additional info. Fox example, if additional info is `{"data": "Temperature is 25"}`, use `${info.data}` to access "Temperature is 25";
 
 Parameter names must be wrapped using `${...}`. For example: `${action}`.
 You may also modify the value of the parameter with one of the suffixes:
