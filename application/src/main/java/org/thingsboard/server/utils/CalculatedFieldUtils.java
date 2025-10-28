@@ -118,6 +118,7 @@ public class CalculatedFieldUtils {
         }
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
             builder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
+            builder.setLastMetricsEvalTs(aggState.getLastMetricsEvalTs());
         }
         return builder.build();
     }
@@ -215,6 +216,7 @@ public class CalculatedFieldUtils {
                 relatedEntitiesAggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
             });
             relatedEntitiesAggState.setLastArgsRefreshTs(proto.getLastArgsUpdateTs());
+            relatedEntitiesAggState.setLastMetricsEvalTs(proto.getLastMetricsEvalTs());
 
             return relatedEntitiesAggState;
         }

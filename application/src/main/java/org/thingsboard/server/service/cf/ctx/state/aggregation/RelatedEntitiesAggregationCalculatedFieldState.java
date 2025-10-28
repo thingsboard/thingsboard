@@ -67,6 +67,10 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         deduplicationIntervalMs = SECONDS.toMillis(configuration.getDeduplicationIntervalInSec());
     }
 
+    public void scheduleReevaluation() {
+        ctx.scheduleReevaluation(deduplicationIntervalMs, actorCtx);
+    }
+
     @Override
     public void reset() { // must reset everything dependent on arguments
         super.reset();

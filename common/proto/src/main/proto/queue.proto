@@ -924,6 +924,7 @@ message CalculatedFieldStateProto {
   repeated GeofencingArgumentProto geofencingArguments = 5;
   AlarmStateProto alarmState = 6;
   int64 lastArgsUpdateTs = 7;
+  int64 lastMetricsEvalTs = 8;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.

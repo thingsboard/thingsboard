@@ -123,6 +123,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state != null) {
             state.setCtx(msg.getCtx(), actorCtx);
             state.setPartition(msg.getPartition());
+            if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
+                relatedEntitiesAggState.scheduleReevaluation();
+            }
             states.put(cfId, state);
         } else {
             removeState(cfId);
