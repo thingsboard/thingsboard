@@ -570,15 +570,15 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         var args = ctx.getLinkedAndDynamicArgs(entityId);
-        Map<ReferencedEntityKey, Set<String>> relatedEntityArgs = ctx.getRelatedEntityArguments();
-        if (args.isEmpty() && relatedEntityArgs.isEmpty()) {
-            return Collections.emptyMap();
-        }
+        var relatedEntityArgs = ctx.getRelatedEntityArguments();
         List<String> geofencingArgumentNames = ctx.getLinkedEntityAndCurrentOwnerGeofencingArgumentNames();
         return mapToArguments(entityId, args, geofencingArgumentNames, relatedEntityArgs, scope, attrDataList);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(EntityId entityId, Map<ReferencedEntityKey, Set<String>> args, List<String> geofencingArgNames, Map<ReferencedEntityKey, Set<String>> relatedEntityArgs, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+        if (args.isEmpty() && relatedEntityArgs.isEmpty()) {
+            return Collections.emptyMap();
+        }
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
@@ -606,9 +606,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(CalculatedFieldCtx ctx, EntityId entityId, AttributeScopeProto scope, List<String> removedAttrKeys) {
         var args = ctx.getLinkedAndDynamicArgs(entityId);
         var relatedEntityArgs = ctx.getRelatedEntityArguments();
-        if (args.isEmpty() && relatedEntityArgs.isEmpty()) {
-            return Collections.emptyMap();
-        }
         List<String> geofencingArgumentNames = ctx.getLinkedEntityAndCurrentOwnerGeofencingArgumentNames();
         return mapToArgumentsWithDefaultValue(entityId, args, ctx.getArguments(), geofencingArgumentNames, relatedEntityArgs, scope, removedAttrKeys);
     }
@@ -624,6 +621,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                                                                       Map<ReferencedEntityKey, Set<String>> relatedEntityArgs,
                                                                       AttributeScopeProto scope,
                                                                       List<String> removedAttrKeys) {
+        if (args.isEmpty() && relatedEntityArgs.isEmpty()) {
+            return Collections.emptyMap();
+        }
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (String removedKey : removedAttrKeys) {
             ReferencedEntityKey key = new ReferencedEntityKey(removedKey, ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
