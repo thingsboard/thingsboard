@@ -13,22 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
+public class CustomInterval extends BaseAggInterval {
 
-public enum CalculatedFieldType {
+    private int multiplier; // number of base units (e.g. 2 hours, 5 days)
+    private AggIntervalType internalIntervalType;
 
-    SIMPLE,
-    SCRIPT,
-    GEOFENCING,
-    ALARM,
-    PROPAGATION,
-    RELATED_ENTITIES_AGGREGATION,
-    ENTITY_AGGREGATION;
+    @Override
+    public AggIntervalType getType() {
+        return AggIntervalType.CUSTOM;
+    }
 
-    public static final Set<CalculatedFieldType> all = Collections.unmodifiableSet(EnumSet.allOf(CalculatedFieldType.class));
+    @Override
+    public long getDelayUntilIntervalEnd() {
+        return super.getDelayUntilIntervalEnd(internalIntervalType, multiplier);
+    }
 
 }

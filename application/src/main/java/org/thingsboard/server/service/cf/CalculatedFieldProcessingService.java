@@ -25,6 +25,7 @@ import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
 
 import java.util.List;
 import java.util.Map;
@@ -36,6 +37,8 @@ public interface CalculatedFieldProcessingService {
     Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId);
 
     Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments);
+
+    Map<String, ArgumentEntry> fetchArgumentValuesDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception;
 
     void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback);
 

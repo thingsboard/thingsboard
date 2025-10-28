@@ -47,6 +47,7 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -109,6 +110,11 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
             argFutures.put(entry.getKey(), argValueFuture);
         }
         return resolveArgumentFutures(argFutures);
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> fetchArgumentValuesDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
+        return super.fetchArgumentValuesDuringInterval(entityId, interval, ctx);
     }
 
     @Override

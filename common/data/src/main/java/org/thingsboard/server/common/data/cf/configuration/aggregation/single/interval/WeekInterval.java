@@ -13,22 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
+public class WeekInterval extends BaseAggInterval {
 
-public enum CalculatedFieldType {
-
-    SIMPLE,
-    SCRIPT,
-    GEOFENCING,
-    ALARM,
-    PROPAGATION,
-    RELATED_ENTITIES_AGGREGATION,
-    ENTITY_AGGREGATION;
-
-    public static final Set<CalculatedFieldType> all = Collections.unmodifiableSet(EnumSet.allOf(CalculatedFieldType.class));
+    @Override
+    public AggIntervalType getType() {
+        return AggIntervalType.WEEK;
+    }
 
 }

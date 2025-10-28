@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf;
+package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
-import java.util.Collections;
-import java.util.EnumSet;
-import java.util.Set;
+import lombok.Data;
 
-public enum CalculatedFieldType {
+@Data
+public class AggIntervalEntry {
 
-    SIMPLE,
-    SCRIPT,
-    GEOFENCING,
-    ALARM,
-    PROPAGATION,
-    RELATED_ENTITIES_AGGREGATION,
-    ENTITY_AGGREGATION;
-
-    public static final Set<CalculatedFieldType> all = Collections.unmodifiableSet(EnumSet.allOf(CalculatedFieldType.class));
+    public Long startTs;
+    public Long endTs;
 
 }
