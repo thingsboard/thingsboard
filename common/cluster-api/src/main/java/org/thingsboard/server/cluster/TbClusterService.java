@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -88,8 +87,6 @@ public interface TbClusterService extends TbQueueClusterService {
     void pushMsgToCalculatedFields(TopicPartitionInfo tpi, UUID msgId, ToCalculatedFieldMsg msg, TbQueueCallback callback);
 
     void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, ComponentLifecycleEvent state);
-
-    void broadcastEntityStateChangeEvent(TenantId tenantId, EntityId entityId, EntityId profileId, ComponentLifecycleEvent state);
 
     void broadcast(ComponentLifecycleMsg componentLifecycleMsg);
 

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -92,7 +93,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final Map<EntityId, List<CalculatedFieldCtx>> entityIdCalculatedFields = new HashMap<>();
     private final Map<EntityId, List<CalculatedFieldLink>> entityIdCalculatedFieldLinks = new HashMap<>();
     private final Map<EntityId, Set<EntityId>> ownerEntities = new HashMap<>();
-    private final Map<CalculatedFieldId, CalculatedFieldCtx> aggCalculatedFields = new HashMap<>();
     private ScheduledFuture<?> cfsReevaluationTask;
 
     private final CalculatedFieldProcessingService cfExecService;
@@ -142,7 +142,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             cfsReevaluationTask.cancel(true);
             cfsReevaluationTask = null;
         }
-        aggCalculatedFields.clear();
         ctx.stop(ctx.getSelf());
     }
 
@@ -371,9 +370,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
                 }
                 calculatedFields.put(cf.getId(), cfCtx);
-                if (cf.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
-                    aggCalculatedFields.put(cf.getId(), cfCtx);
-                }
                 // We use copy on write lists to safely pass the reference to another actor for the iteration.
                 // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
                 entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
@@ -405,9 +401,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     throw CalculatedFieldException.builder().ctx(newCfCtx).eventEntity(newCfCtx.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
                 } finally {
                     calculatedFields.put(newCf.getId(), newCfCtx);
-                    if (newCf.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration) {
-                        aggCalculatedFields.put(newCf.getId(), newCfCtx);
-                    }
                     List<CalculatedFieldCtx> oldCfList = entityIdCalculatedFields.get(newCf.getEntityId());
                     List<CalculatedFieldCtx> newCfList = new CopyOnWriteArrayList<>();
                     boolean found = false;
@@ -461,7 +454,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onCfDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         var cfId = new CalculatedFieldId(msg.getEntityId().getId());
         var cfCtx = calculatedFields.remove(cfId);
-        aggCalculatedFields.remove(cfId);
         if (cfCtx == null) {
             log.debug("[{}] CF was already deleted [{}]", tenantId, cfId);
             callback.onSuccess();
@@ -528,7 +520,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private List<CalculatedFieldEntityCtxId> filterAggregationCfs(CalculatedFieldTelemetryMsg msg) {
         EntityId entityId = msg.getEntityId();
-        return aggCalculatedFields.values().stream()
+        return calculatedFields.values().stream()
+                .filter(cf -> CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cf.getCfType()))
                 .filter(cf -> cf.relatedEntityMatches(msg.getProto()))
                 .flatMap(cf -> findRelationsForCf(entityId, cf).stream())
                 .toList();
@@ -774,9 +767,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             throw CalculatedFieldException.builder().ctx(cfCtx).eventEntity(cf.getEntityId()).cause(e).errorMessage("Failed to initialize CF context").build();
         } finally {
             calculatedFields.put(cf.getId(), cfCtx);
-            if (cf.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration) {
-                aggCalculatedFields.put(cf.getId(), cfCtx);
-            }
             // We use copy on write lists to safely pass the reference to another actor for the iteration.
             // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
             entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cfCtx);
