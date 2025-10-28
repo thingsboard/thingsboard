@@ -643,11 +643,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 if (geofencingArgNames.contains(argName)) {
                     arguments.put(argName, new GeofencingArgumentEntry());
                 } else {
-                    Argument argument = configArguments.get(argName);
-                    String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
-                    arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
-                            ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
-                            : new SingleValueArgumentEntry());
+                    String defaultValue = getDefaultValue(configArguments, argName);
+                    SingleValueArgumentEntry argumentEntry = buildSingleValue(removedKey, defaultValue, System.currentTimeMillis());
+                    arguments.put(argName, new SingleValueArgumentEntry(argumentEntry));
                 }
             });
         }
