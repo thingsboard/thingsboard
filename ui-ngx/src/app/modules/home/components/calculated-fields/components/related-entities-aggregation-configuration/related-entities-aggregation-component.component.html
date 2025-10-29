@@ -47,7 +47,8 @@
     <tb-related-aggregation-arguments-table formControlName="arguments"
                                             [entityId]="entityId"
                                             [tenantId]="tenantId"
-                                            [entityName]="entityName"/>
+                                            [entityName]="entityName"
+                                            [relation]="relatedAggregationConfiguration.get('relation').value"/>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.metrics' | translate }}">

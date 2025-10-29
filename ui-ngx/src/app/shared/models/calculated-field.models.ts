@@ -30,6 +30,7 @@ import {
   endGroupHighlightRule
 } from '@shared/models/ace/ace.models';
 import { EntitySearchDirection } from '@shared/models/relation.models';
+import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 
 interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
@@ -847,3 +848,13 @@ export const calculatedFieldDefaultScript =
   'return {\n' +
   '    "temperatureC": (temperatureF - 32) / 1.8\n' +
   '};'
+
+export function notEmptyObjectValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) {
+      return {emptyObject: true};
+    }
+    return null;
+  };
+}

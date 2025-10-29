@@ -32,6 +32,7 @@ import {
   CalculatedFieldType,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
+  notEmptyObjectValidator,
   OutputType,
   PropagationDirectionTranslations
 } from '@shared/models/calculated-field.models';
@@ -72,21 +73,6 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   @Input({required: true})
   entityName: string;
 
-  relatedAggregationConfiguration = this.fb.group({
-    relation: this.fb.group({
-      direction: [EntitySearchDirection.FROM, Validators.required],
-      relationType: ['Contains', Validators.required],
-    }),
-    arguments: this.fb.control({}),
-    metrics: this.fb.control({}),
-    deduplicationIntervalInSec: [],
-    output: this.fb.control<CalculatedFieldOutput>({
-      scope: AttributeScope.SERVER_SCOPE,
-      type: OutputType.Timeseries,
-    }),
-    useLatestTs: [false]
-  });
-
   readonly ScriptLanguage = ScriptLanguage;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly OutputType = OutputType;
@@ -94,6 +80,20 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   readonly PropagationDirectionTranslations = PropagationDirectionTranslations;
   readonly minAllowedDeduplicationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedDeduplicationIntervalInSecForCF;
 
+  relatedAggregationConfiguration = this.fb.group({
+    relation: this.fb.group({
+      direction: [EntitySearchDirection.FROM, Validators.required],
+      relationType: ['Contains', Validators.required],
+    }),
+    arguments: this.fb.control({}, notEmptyObjectValidator()),
+    metrics: this.fb.control({}, notEmptyObjectValidator()),
+    deduplicationIntervalInSec: [this.minAllowedDeduplicationIntervalInSecForCF],
+    output: this.fb.control<CalculatedFieldOutput>({
+      scope: AttributeScope.SERVER_SCOPE,
+      type: OutputType.Timeseries,
+    }),
+    useLatestTs: [false]
+  });
 
   arguments$ = this.relatedAggregationConfiguration.get('arguments').valueChanges.pipe(
     map(argumentsObj => Object.keys(argumentsObj))
@@ -120,7 +120,7 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   }
 
   validate(): ValidationErrors | null {
-    return this.relatedAggregationConfiguration.valid || this.relatedAggregationConfiguration.status === "DISABLED" ? null : {invalidPropagateConfig: false};
+    return this.relatedAggregationConfiguration.valid || this.relatedAggregationConfiguration.disabled ? null : {invalidPropagateConfig: false};
   }
 
   writeValue(value: CalculatedFieldRelatedAggregationConfiguration): void {

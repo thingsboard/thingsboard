@@ -14,7 +14,15 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, DestroyRef, forwardRef, Renderer2, ViewContainerRef, } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  DestroyRef,
+  forwardRef,
+  Input,
+  Renderer2,
+  ViewContainerRef,
+} from '@angular/core';
 import { FormBuilder, NG_VALIDATORS, NG_VALUE_ACCESSOR, } from '@angular/forms';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { EntityService } from '@core/http/entity.service';
@@ -23,7 +31,9 @@ import { AppState } from '@core/core.state';
 import {
   CalculatedFieldArgumentsTableComponent
 } from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.component';
-import { ArgumentEntityType } from '@shared/models/calculated-field.models';
+import { ArgumentEntityType, RelationPathLevel } from '@shared/models/calculated-field.models';
+import { AliasFilterType } from '@shared/models/alias.models';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-related-aggregation-arguments-table',
@@ -43,6 +53,21 @@ import { ArgumentEntityType } from '@shared/models/calculated-field.models';
   ],
 })
 export class RelatedAggregationArgumentsTableComponent extends CalculatedFieldArgumentsTableComponent {
+
+  @Input({required: true})
+  set relation(value: RelationPathLevel) {
+    this.panelAdditionalCtx.predefinedEntityFilter = {
+      type: AliasFilterType.relationsQuery,
+      rootStateEntity: false,
+      rootEntity: this.entityId,
+      direction: value.direction,
+      filters: [{
+        relationType: value.relationType,
+        entityTypes: [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT]
+      }],
+      maxLevel: 1,
+    };
+  }
 
   constructor(
     protected fb: FormBuilder,

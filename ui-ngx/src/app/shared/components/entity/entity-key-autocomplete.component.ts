@@ -84,7 +84,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
         return this.cachedResult ? of(this.cachedResult) : this.entityService.findEntityKeysByQuery({
           pageLink: { page: 0, pageSize: 100 },
           entityFilter: this.entityFilter(),
-        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType());
+        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType(), {ignoreLoading: true});
       }),
       map(result => {
         this.cachedResult = result;

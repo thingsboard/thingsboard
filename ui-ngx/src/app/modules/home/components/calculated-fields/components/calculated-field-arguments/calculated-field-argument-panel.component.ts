@@ -71,6 +71,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() hiddenEntityTypes = false;
   @Input() defaultValueRequired = false;
   @Input() hint: string;
+  @Input() predefinedEntityFilter: EntityFilter;
   @Input() argumentEntityTypes = Object.values(ArgumentEntityType).filter(value => value !== ArgumentEntityType.RelationQuery) as ArgumentEntityType[];
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
@@ -222,6 +223,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     }
     if (!onInit) {
       this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
+    } else {
+      entityFilter = this.predefinedEntityFilter;
     }
     this.entityFilter = entityFilter;
     this.cd.markForCheck();

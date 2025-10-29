@@ -30,7 +30,7 @@ import {
 } from '@shared/models/calculated-field.models';
 import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { EntityType } from '@shared/models/entity-type.models';
-import { switchMap } from 'rxjs/operators';
+import { pairwise, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { Observable } from 'rxjs';
@@ -106,7 +106,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   onTestScript(): Observable<string> {
     const calculatedFieldId = this.data.value?.id?.id;
     if (calculatedFieldId) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId)
+      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
         .pipe(
           switchMap(event => {
             const args = event?.arguments ? JSON.parse(event.arguments) : null;
@@ -121,6 +121,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   private applyDialogData(): void {
     const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
     this.fieldFormGroup.patchValue({ configuration, type, debugSettings, ...value }, {emitEvent: false});
+    setTimeout(() => this.fieldFormGroup.get('type').updateValueAndValidity({onlySelf: true}));
   }
 
   private observeIsLoading(): void {
@@ -138,9 +139,11 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   private observeType(): void {
     this.fieldFormGroup.get('type').valueChanges.pipe(
+      pairwise(),
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe((type) => {
-      if (type !== CalculatedFieldType.SIMPLE && type !== CalculatedFieldType.SCRIPT) {
+    ).subscribe(([prevType, nextType]) => {
+      if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
+          ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
         this.fieldFormGroup.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
       }
     });
