@@ -152,10 +152,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   registerOnTouched(_): void {}
 
   validate(): ValidationErrors | null {
-    return this.keyControl.valid ? null : { keyControl: false };
+    return this.keyControl.valid || this.keyControl.disabled ? null : { keyControl: false };
   }
 
   writeValue(value: string): void {
     this.keyControl.patchValue(value, {emitEvent: false});
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.keyControl.disable({emitEvent: false});
+    } else {
+      this.keyControl.enable({emitEvent: false});
+    }
   }
 }
