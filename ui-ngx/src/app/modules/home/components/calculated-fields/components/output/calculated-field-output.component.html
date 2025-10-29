@@ -17,70 +17,74 @@
 -->
 <div class="tb-form-panel" [formGroup]="outputForm">
   <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
-  <div class="flex items-center gap-3">
-    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-      <mat-label>{{ 'calculated-fields.output-type' | translate }}</mat-label>
-      <mat-select formControlName="type">
-        @for (type of outputTypes; track type) {
-          <mat-option [value]="type">{{ OutputTypeTranslations.get(type) | translate }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
-    @if (outputForm.get('type').value === OutputType.Attribute
-    && (entityId.entityType === EntityType.DEVICE || entityId.entityType === EntityType.DEVICE_PROFILE)) {
+  <div class="flex flex-col gap-3">
+    <div class="flex gap-3 xs:flex-col">
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
-        <mat-select formControlName="scope" class="w-full">
-          <mat-option [value]="AttributeScope.SERVER_SCOPE">
-            {{ 'calculated-fields.server-attributes' | translate }}
-          </mat-option>
-          <mat-option [value]="AttributeScope.SHARED_SCOPE">
-            {{ 'calculated-fields.shared-attributes' | translate }}
-          </mat-option>
+        <mat-label>{{ 'calculated-fields.output-type' | translate }}</mat-label>
+        <mat-select formControlName="type">
+          @for (type of outputTypes; track type) {
+            <mat-option [value]="type">{{ OutputTypeTranslations.get(type) | translate }}</mat-option>
+          }
         </mat-select>
       </mat-form-field>
+      @if (outputForm.get('type').value === OutputType.Attribute
+      && (entityId.entityType === EntityType.DEVICE || entityId.entityType === EntityType.DEVICE_PROFILE)) {
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
+          <mat-select formControlName="scope" class="w-full">
+            <mat-option [value]="AttributeScope.SERVER_SCOPE">
+              {{ 'calculated-fields.server-attributes' | translate }}
+            </mat-option>
+            <mat-option [value]="AttributeScope.SHARED_SCOPE">
+              {{ 'calculated-fields.shared-attributes' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+    </div>
+    @if (simpleMode) {
+      @if (hiddenName) {
+        <div class="grid grid-cols-2 items-start gap-3 xs:grid-cols-1">
+          <ng-container *ngTemplateOutlet="decimalsByDefaultField"></ng-container>
+          <ng-content select=".simpleMode"></ng-content>
+        </div>
+      } @else {
+        <div class="flex items-start gap-3 xs:flex-col xs:items-stretch">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>
+              {{
+                (outputForm.get('type').value === OutputType.Timeseries
+                  ? 'calculated-fields.timeseries-key'
+                  : 'calculated-fields.attribute-key')
+                  | translate
+              }}
+            </mat-label>
+            <input matInput formControlName="name" required>
+            @if (outputForm.get('name').errors && outputForm.get('name').touched) {
+              <mat-error>
+                @if (outputForm.get('name').hasError('required')) {
+                  {{ 'common.hint.key-required' | translate }}
+                } @else if (outputForm.get('name').hasError('pattern')) {
+                  {{ 'common.hint.key-pattern' | translate }}
+                } @else if (outputForm.get('name').hasError('maxlength')) {
+                  {{ 'common.hint.key-max-length' | translate }}
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+          <ng-container *ngTemplateOutlet="decimalsByDefaultField"></ng-container>
+        </div>
+        <ng-content select=".simpleMode"></ng-content>
+      }
     }
   </div>
-  @if (simpleMode) {
-    <div class="flex items-start gap-3">
-      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-label>
-          {{
-            (outputForm.get('type').value === OutputType.Timeseries
-              ? 'calculated-fields.timeseries-key'
-              : 'calculated-fields.attribute-key')
-              | translate
-          }}
-        </mat-label>
-        <input matInput formControlName="name" required>
-        @if (outputForm.get('name').errors && outputForm.get('name').touched) {
-          <mat-error>
-            @if (outputForm.get('name').hasError('required')) {
-              {{ 'common.hint.key-required' | translate }}
-            } @else if (outputForm.get('name').hasError('pattern')) {
-              {{ 'common.hint.key-pattern' | translate }}
-            } @else if (outputForm.get('name').hasError('maxlength')) {
-              {{ 'common.hint.key-max-length' | translate }}
-            }
-          </mat-error>
-        }
-      </mat-form-field>
-      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <mat-label>{{ 'calculated-fields.decimals-by-default' | translate }}</mat-label>
-        <input matInput type="number" formControlName="decimalsByDefault">
-        @if (outputForm.get('decimalsByDefault').errors && outputForm.get('decimalsByDefault').touched) {
-          <mat-error>{{ 'calculated-fields.hint.decimals-range' | translate }}</mat-error>
-        }
-      </mat-form-field>
-    </div>
-    <ng-content select=".simpleMode"></ng-content>
-<!--    <div class="tb-form-row" [formGroup]="configFormGroup"-->
-<!--         *ngIf="outputFormGroup.get('type').value === OutputType.Timeseries">-->
-<!--      <mat-slide-toggle class="mat-slide" formControlName="useLatestTs">-->
-<!--        <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.use-latest-timestamp' | translate }}" translate>-->
-<!--          calculated-fields.use-latest-timestamp-->
-<!--        </div>-->
-<!--      </mat-slide-toggle>-->
-<!--    </div>-->
-  }
 </div>
+<ng-template #decimalsByDefaultField>
+  <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" [formGroup]="outputForm">
+    <mat-label>{{ 'calculated-fields.decimals-by-default' | translate }}</mat-label>
+    <input matInput type="number" formControlName="decimalsByDefault">
+    @if (outputForm.get('decimalsByDefault').errors && outputForm.get('decimalsByDefault').touched) {
+      <mat-error>{{ 'calculated-fields.hint.decimals-range' | translate }}</mat-error>
+    }
+  </mat-form-field>
+</ng-template>

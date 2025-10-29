@@ -23,6 +23,8 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.mobile.MobileSessionInfo;
+import org.thingsboard.server.common.data.notification.targets.platform.SystemLevelUsersFilter;
+import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.UserCredentials;
@@ -108,5 +110,9 @@ public interface UserService extends EntityDaoService {
     MobileSessionInfo findMobileSession(TenantId tenantId, UserId userId, String mobileToken);
 
     void removeMobileSession(TenantId tenantId, String mobileToken);
+
+    PageData<User> findUsersByFilter(TenantId tenantId, UsersFilter filter, PageLink pageLink);
+
+    boolean matchesFilter(TenantId tenantId, SystemLevelUsersFilter filter, User user);
 
 }

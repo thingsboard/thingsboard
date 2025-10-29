@@ -38,6 +38,8 @@ public interface CalculatedFieldCache {
 
     List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
 
+    List<CalculatedFieldCtx> getAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter);
+
     boolean hasCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter);
 
     void addCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);

@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -47,7 +48,8 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArg
         @Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
         @Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
         @Type(value = AlarmCalculatedFieldState.class, name = "ALARM"),
-        @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION")
+        @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION"),
+        @Type(value = RelatedEntitiesAggregationCalculatedFieldState.class, name = "RELATED_ENTITIES_AGGREGATION")
 })
 public interface CalculatedFieldState extends Closeable {
 
@@ -68,7 +70,7 @@ public interface CalculatedFieldState extends Closeable {
 
     void reset();
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception;
 
     @JsonIgnore
     boolean isReady();
