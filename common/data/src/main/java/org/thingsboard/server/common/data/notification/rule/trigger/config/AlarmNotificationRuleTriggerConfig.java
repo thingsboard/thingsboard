@@ -23,6 +23,7 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.Set;
 
@@ -31,6 +32,9 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    @Serial
+    private static final long serialVersionUID = -7382883720381542344L;
 
     private Set<String> alarmTypes;
     private Set<AlarmSeverity> alarmSeverities;
@@ -46,6 +50,8 @@ public class AlarmNotificationRuleTriggerConfig implements NotificationRuleTrigg
 
     @Data
     public static class ClearRule implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 7922533150038105124L;
         private Set<AlarmSearchStatus> alarmStatuses;
     }
 

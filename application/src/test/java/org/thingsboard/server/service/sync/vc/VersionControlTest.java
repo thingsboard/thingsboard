@@ -244,7 +244,7 @@ public class VersionControlTest extends AbstractControllerTest {
         DeviceProfile deviceProfile = createDeviceProfile(null, null, "Device profile v1.0");
         OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
         OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
-        Device device = createDevice(null, deviceProfile.getId(), "Device v1.0", "test1", newDevice -> {
+        Device device = createDevice(deviceProfile.getId(), "Device v1.0", "test1", newDevice -> {
             newDevice.setFirmwareId(firmware.getId());
             newDevice.setSoftwareId(software.getId());
         });
@@ -267,7 +267,7 @@ public class VersionControlTest extends AbstractControllerTest {
         createVersion("profiles", EntityType.DEVICE_PROFILE);
         OtaPackage firmware = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.FIRMWARE);
         OtaPackage software = createOtaPackage(tenantId1, deviceProfile.getId(), OtaPackageType.SOFTWARE);
-        Device device = createDevice(null, deviceProfile.getId(), "Device of tenant 1", "test1", newDevice -> {
+        Device device = createDevice(deviceProfile.getId(), "Device of tenant 1", "test1", newDevice -> {
             newDevice.setFirmwareId(firmware.getId());
             newDevice.setSoftwareId(software.getId());
         });
@@ -528,7 +528,7 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithRelations_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device = createDevice(null, null, "Device 1", "test1");
+        Device device = createDevice("Device 1", "test1");
         EntityRelation relation = createRelation(asset.getId(), device.getId());
         String versionId = createVersion("assets and devices", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
 
@@ -554,11 +554,11 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithRelations_sameTenant() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device1 = createDevice(null, null, "Device 1", "test1");
+        Device device1 = createDevice("Device 1", "test1");
         EntityRelation relation1 = createRelation(device1.getId(), asset.getId());
         String versionId = createVersion("assets", EntityType.ASSET);
 
-        Device device2 = createDevice(null, null, "Device 2", "test2");
+        Device device2 = createDevice("Device 2", "test2");
         EntityRelation relation2 = createRelation(device2.getId(), asset.getId());
         List<EntityRelation> relations = findRelationsByTo(asset.getId());
         assertThat(relations).contains(relation1, relation2);
@@ -591,7 +591,7 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device = createDevice(null, null, "Device 1", "test1");
+        Device device = createDevice("Device 1", "test1");
         CalculatedField calculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
         String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
 
@@ -617,7 +617,7 @@ public class VersionControlTest extends AbstractControllerTest {
     @Test
     public void testVcWithReferencedCalculatedFields_betweenTenants() throws Exception {
         Asset asset = createAsset(null, null, "Asset 1");
-        Device device = createDevice(null, null, "Device 1", "test1");
+        Device device = createDevice("Device 1", "test1");
         CalculatedField deviceCalculatedField = createCalculatedField("CalculatedField1", device.getId(), asset.getId());
         CalculatedField assetCalculatedField = createCalculatedField("CalculatedField2", asset.getId(), device.getId());
         String versionId = createVersion("calculated fields of asset and device", EntityType.ASSET, EntityType.DEVICE, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE);
@@ -911,9 +911,8 @@ public class VersionControlTest extends AbstractControllerTest {
         login(tenantAdmin2.getEmail(), tenantAdmin2.getEmail());
     }
 
-    private Device createDevice(CustomerId customerId, DeviceProfileId deviceProfileId, String name, String accessToken, Consumer<Device>... modifiers) {
+    private Device createDevice(DeviceProfileId deviceProfileId, String name, String accessToken, Consumer<Device>... modifiers) {
         Device device = new Device();
-        device.setCustomerId(customerId);
         device.setName(name);
         device.setLabel("lbl");
         device.setDeviceProfileId(deviceProfileId);

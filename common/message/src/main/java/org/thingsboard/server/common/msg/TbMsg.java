@@ -41,9 +41,6 @@ import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-/**
- * Created by ashvayka on 13.01.18.
- */
 @Data
 @Slf4j
 public final class TbMsg implements Serializable {
@@ -500,11 +497,11 @@ public final class TbMsg implements Serializable {
 
         public String toString() {
             return "TbMsg.TbMsgBuilder(queueName=" + this.queueName + ", id=" + this.id + ", ts=" + this.ts +
-                   ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
-                   ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
-                   ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
-                   ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", previousCalculatedFields=" + this.previousCalculatedFieldIds +
-                   ", ctx=" + this.ctx + ", callback=" + this.callback + ")";
+                    ", type=" + this.type + ", internalType=" + this.internalType + ", originator=" + this.originator +
+                    ", customerId=" + this.customerId + ", metaData=" + this.metaData + ", dataType=" + this.dataType +
+                    ", data=" + this.data + ", ruleChainId=" + this.ruleChainId + ", ruleNodeId=" + this.ruleNodeId +
+                    ", correlationId=" + this.correlationId + ", partition=" + this.partition + ", previousCalculatedFields=" + this.previousCalculatedFieldIds +
+                    ", ctx=" + this.ctx + ", callback=" + this.callback + ")";
         }
 
     }

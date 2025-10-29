@@ -680,9 +680,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Device createDevice(String name, String accessToken) throws Exception {
+        return createDevice(name, "default", null, accessToken);
+    }
+
+    protected Device createDevice(String name, String type, String label, String accessToken) throws Exception {
         Device device = new Device();
         device.setName(name);
-        device.setType("default");
+        device.setType(type);
+        device.setLabel(label);
         DeviceData deviceData = new DeviceData();
         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
@@ -1117,7 +1122,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
             boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs()
-                              < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+                    < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
         });
@@ -1308,7 +1313,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs(List<JobType> types, List<UUID> entities) throws Exception {
         return doGetTypedWithPageLink("/api/jobs?types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) +
-                                      "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                        "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
                 new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
