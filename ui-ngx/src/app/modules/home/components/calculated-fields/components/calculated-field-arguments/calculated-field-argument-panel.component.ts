@@ -223,7 +223,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     }
     if (!onInit) {
       this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
-    } else {
+    } else if (this.predefinedEntityFilter) {
       entityFilter = this.predefinedEntityFilter;
     }
     this.entityFilter = entityFilter;
