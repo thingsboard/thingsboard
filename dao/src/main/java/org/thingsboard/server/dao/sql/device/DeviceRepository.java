@@ -162,6 +162,16 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
 
     List<DeviceEntity> findDevicesByIdIn(List<UUID> deviceIds);
 
+    @Query("SELECT d FROM DeviceInfoEntity d WHERE d.id IN :deviceIds AND d.tenantId = :tenantId AND (:customerId IS NULL OR d.customerId = :customerId)")
+    List<DeviceInfoEntity> findDeviceInfosByIdIn(UUID tenantId, UUID customerId, List<UUID> deviceIds);
+
+    @Query("SELECT d FROM DeviceInfoEntity d WHERE d.id IN :deviceIds AND d.tenantId = :tenantId")
+    List<DeviceInfoEntity> findDeviceInfosByIdIn(UUID tenantId, List<UUID> deviceIds);
+
+    @Query("SELECT d FROM DeviceInfoEntity d WHERE d.id IN :deviceIds")
+    List<DeviceInfoEntity> findDeviceInfosByIdIn(List<UUID> deviceIds);
+
+
     DeviceEntity findByTenantIdAndId(UUID tenantId, UUID id);
 
     Long countByDeviceProfileId(UUID deviceProfileId);
