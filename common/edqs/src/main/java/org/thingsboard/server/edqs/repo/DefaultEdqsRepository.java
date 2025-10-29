@@ -56,6 +56,10 @@ public class DefaultEdqsRepository implements EdqsRepository {
             repos.remove(event.getTenantId());
             statsService.reportRemoved(ObjectType.TENANT);
         } else {
+            if (event.getTenantId().equals(TenantId.SYS_TENANT_ID)) {
+                log.warn("Event for SYS tenant: {}", event);
+                return;
+            }
             get(event.getTenantId()).processEvent(event);
         }
     }
