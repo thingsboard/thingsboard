@@ -56,6 +56,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
@@ -721,6 +722,28 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onCalculatedFieldDeleted(CalculatedField calculatedField, TbQueueCallback callback) {
         broadcastEntityStateChangeEvent(calculatedField.getTenantId(), calculatedField.getId(), ComponentLifecycleEvent.DELETED);
+    }
+
+    @Override
+    public void onRelationUpdated(TenantId tenantId, EntityRelation entityRelation, TbQueueCallback callback) {
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(tenantId)
+                .entityId(entityRelation.getFrom())
+                .event(ComponentLifecycleEvent.RELATION_UPDATED)
+                .info(JacksonUtil.valueToTree(entityRelation))
+                .build();
+        broadcast(msg);
+    }
+
+    @Override
+    public void onRelationDeleted(TenantId tenantId, EntityRelation entityRelation, TbQueueCallback callback) {
+        ComponentLifecycleMsg msg = ComponentLifecycleMsg.builder()
+                .tenantId(tenantId)
+                .entityId(entityRelation.getFrom())
+                .event(ComponentLifecycleEvent.RELATION_DELETED)
+                .info(JacksonUtil.valueToTree(entityRelation))
+                .build();
+        broadcast(msg);
     }
 
     @Override

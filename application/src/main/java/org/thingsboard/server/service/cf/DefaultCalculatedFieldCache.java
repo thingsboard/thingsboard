@@ -26,6 +26,7 @@ import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -147,6 +148,15 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
+    public List<CalculatedFieldCtx> getAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter) {
+        return calculatedFields.values().stream()
+                .filter(cf -> CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cf.getType()))
+                .map(cf -> getCalculatedFieldCtx(cf.getId()))
+                .filter(relatedEntityFilter)
+                .toList();
+    }
+
+    @Override
     public boolean hasCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter) {
         List<CalculatedFieldCtx> entityCfs = getCalculatedFieldCtxsByEntityId(entityId);
         for (CalculatedFieldCtx ctx : entityCfs) {
@@ -155,6 +165,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
             }
         }
 
+        return hasCalculatedFieldsByProfile(tenantId, entityId, filter);
+    }
+
+    public boolean hasCalculatedFieldsByProfile(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter) {
         EntityId profileId = getProfileId(tenantId, entityId);
         if (profileId != null) {
             List<CalculatedFieldCtx> profileCfs = getCalculatedFieldCtxsByEntityId(profileId);

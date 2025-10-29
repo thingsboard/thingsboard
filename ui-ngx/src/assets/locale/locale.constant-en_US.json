@@ -1056,7 +1056,8 @@
             "simple": "Simple",
             "script": "Script",
             "geofencing" : "Geofencing",
-            "propagation": "Propagation"
+            "propagation": "Propagation",
+            "related-entities-aggregation": "Related entities aggregation"
         },
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
@@ -1090,6 +1091,7 @@
         "shared-attributes": "Shared attributes",
         "attribute-key": "Attribute key",
         "default-value": "Default value",
+        "default-value-required": "Default value is required.",
         "limit": "Max values",
         "time-window": "Time window",
         "customer-name": "Customer name",
@@ -1158,6 +1160,37 @@
         "data-propagate": "Data to propagate",
         "output-key": "Output key",
         "copy-output-key": "Copy output key",
+        "aggregation-path-related-entities": "Aggregation path to related entities",
+        "deduplication-interval": "Deduplication interval",
+        "deduplication-interval-min": "Deduplication interval should be at least {{ sec }} second.",
+        "deduplication-interval-required": "Deduplication interval is required.",
+        "metrics": {
+            "metrics": "Metrics",
+            "metrics-empty": "At least one metric must be configured.",
+            "metric-name": "Metric name",
+            "copy-metric-name": "Copy metric name",
+            "aggregation": "Aggregation",
+            "aggregation-type": {
+                "avg": "Average",
+                "min": "Minimum",
+                "max": "Maximum",
+                "sum": "Sum",
+                "count": "Count",
+                "count-unique": "Count unique"
+            },
+            "filtered": "Filtered",
+            "value-source": "Value source",
+            "value-source-type": {
+                "key": "Key",
+                "function": "Function"
+            },
+            "no-metrics-configured": "No metrics configured",
+            "add-metric": "Add metric",
+            "max-metrics": "Maximum number of metrics reached.",
+            "metric-settings": "Metric settings",
+            "filter": "Filter",
+            "filter-hint": "Enables filtering of entities during aggregation. The filter function must return a boolean value and can use all configured arguments."
+        },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-propagate-arguments-with-rolling": "'Time series rolling' type is incompatible with 'Arguments only' propagation.",
@@ -1177,7 +1210,7 @@
             "output-key-max-length": "Output key should be less than 256 characters.",
             "output-key-forbidden": "Output key is reserved and cannot be used.",
             "entity-type-required": "Entity type is required",
-            "name-required": "Mame is required.",
+            "name-required": "Name is required.",
             "name-pattern": "Name is invalid.",
             "name-duplicate": "Name with such name already exists.",
             "name-max-length": "Name should be less than 256 characters.",
@@ -1204,7 +1237,11 @@
             "zone-group-refresh-interval-required": "Zone groups refresh interval is required.",
             "zone-group-refresh-interval-min": "Zone group refresh interval should be at least {{ min }} second.",
             "propagation-path-related-entities": "Defines a direct, single-level path to a related entity based on the selected direction and relation type.",
-            "data-propagate": "Defines the data to be propagated from the arguments configured below. 'Arguments only' uses the retrieved data directly, while 'Expression result' calculates a new value from that data."
+            "data-propagate": "Defines the data to be propagated from the arguments configured below. 'Arguments only' uses the retrieved data directly, while 'Expression result' calculates a new value from that data.",
+            "aggregation-path-related-entities": "Defines a single-level aggregation path via direct relations with parent or child entities based on direction and relation type. Only relations between device, asset, customer, and tenant entities are supported.",
+            "arguments-aggregation": "Defines input parameters used for filtering and aggregation.",
+            "setting-arguments-aggregation": "Data will be fetched from related entities configured in aggregation path.",
+            "metrics": "Defines metrics aggregated based on the configured arguments."
         }
     },
     "ai-models": {
@@ -5924,6 +5961,9 @@
         "max-related-level-per-argument-required": "Relation level per 'Related entities' argument max number is required",
         "min-allowed-scheduled-update-interval": "Min allowed update interval for 'Related entities' arguments (seconds)",
         "min-allowed-scheduled-update-interval-range": "Min allowed update interval min number can't be negative",
+        "min-allowed-deduplication-interval": "Min allowed deduplication interval (seconds)",
+        "min-allowed-deduplication-interval-range": "Min allowed deduplication interval value can't be negative",
+        "min-allowed-deduplication-interval-required": "Min allowed deduplication interval is required",
         "min-allowed-scheduled-update-interval-required": "Min allowed update interval min number is required",
         "max-state-size": "State maximum size in KB",
         "max-state-size-range": "State maximum size in KB can't be negative",

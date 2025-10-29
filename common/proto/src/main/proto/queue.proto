@@ -888,6 +888,7 @@ message SingleValueArgumentProto {
   string argName = 1;
   TsValueProto value = 2;
   int64 version = 3;
+  EntityIdProto entityId = 4;
 }
 
 message TsDoubleValProto {
@@ -922,6 +923,8 @@ message CalculatedFieldStateProto {
   repeated TsRollingArgumentProto rollingValueArguments = 4;
   repeated GeofencingArgumentProto geofencingArguments = 5;
   AlarmStateProto alarmState = 6;
+  int64 lastArgsUpdateTs = 7;
+  int64 lastMetricsEvalTs = 8;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1274,6 +1277,8 @@ enum ComponentLifecycleEvent {
     DELETED       = 6;
     FAILED        = 7;
     DEACTIVATED   = 8;
+    RELATION_UPDATED = 9;
+    RELATION_DELETED = 10;
 }
 
 message ComponentLifecycleMsgProto {

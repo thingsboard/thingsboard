@@ -15,22 +15,9 @@
  */
 @use '../../../../../../../scss/constants' as constants;
 
-$panel-width: 520px;
-
 :host {
-  display: flex;
-  width: $panel-width;
-  max-width: 100%;
-  max-height: 100vh;
-
-  .fixed-title-width {
-    @media #{constants.$mat-xs} {
-      min-width: 120px;
-    }
-  }
-
   .limit-field-row {
-    @media screen and (max-width: $panel-width) {
+    @media screen and (max-width: 520px) {
       display: flex;
       flex-direction: column;
 
@@ -39,6 +26,10 @@ $panel-width: 520px;
         padding-top: 8px;
       }
     }
+  }
+
+  .tb-primary-fill {
+    overflow: visible;
   }
 }
 

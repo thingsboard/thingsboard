@@ -1069,6 +1069,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doPost("/api/relation", relation);
     }
 
+    protected void deleteEntityRelation(EntityRelation entityRelation) throws Exception {
+        String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                entityRelation.getFrom().getId(),
+                entityRelation.getFrom().getEntityType(),
+                entityRelation.getType(),
+                entityRelation.getTo().getId(),
+                entityRelation.getTo().getEntityType());
+        doDelete(url);
+    }
+
     protected List<EntityRelation> findRelationsByTo(EntityId entityId) throws Exception {
         String url = String.format("/api/relations?toId=%s&toType=%s", entityId.getId(), entityId.getEntityType().name());
         MvcResult mvcResult = doGet(url).andReturn();

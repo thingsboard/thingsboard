@@ -354,7 +354,19 @@
             </mat-error>
             <mat-hint translate>tenant-profile.relation-search-entity-limit-hint</mat-hint>
           </mat-form-field>
-          <div class="flex-1"></div>
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.min-allowed-deduplication-interval</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="minAllowedDeduplicationIntervalInSecForCF"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedDeduplicationIntervalInSecForCF').hasError('required')">
+              {{ 'tenant-profile.min-allowed-deduplication-interval-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedDeduplicationIntervalInSecForCF').hasError('min')">
+              {{ 'tenant-profile.min-allowed-deduplication-interval-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
         </div>
       </ng-template>
     </mat-expansion-panel>

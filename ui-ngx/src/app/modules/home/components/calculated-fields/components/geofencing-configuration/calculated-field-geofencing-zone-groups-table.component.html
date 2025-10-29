@@ -35,7 +35,7 @@
         </mat-cell>
       </ng-container>
       <ng-container [matColumnDef]="'entityType'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="entity-type-header w-1/5 xs:hidden">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 xs:hidden">
           {{ 'entity.entity-type' | translate }}
         </mat-header-cell>
         <mat-cell *matCellDef="let geofenceZone" class="w-1/5 xs:hidden">
@@ -91,7 +91,7 @@
       <ng-container matColumnDef="actions" stickyEnd>
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let geofenceZone;">
-          <div class="tb-form-table-row-cell-buttons flex w-20 min-w-20">
+          <div class="tb-form-table-row-cell-buttons min-w-20">
             <button type="button"
                     mat-icon-button
                     #button
