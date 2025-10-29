@@ -153,7 +153,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
     }
 
-    public ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
         if (currentArguments == null) {
             return new ReadinessStatus(requiredArguments);
         }
