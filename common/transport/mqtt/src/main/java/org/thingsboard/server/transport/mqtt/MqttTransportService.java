@@ -35,9 +35,6 @@ import org.thingsboard.server.common.data.TbTransportService;
 
 import java.net.InetSocketAddress;
 
-/**
- * @author Andrew Shvayka
- */
 @Service("MqttTransportService")
 @TbMqttTransportComponent
 @Slf4j

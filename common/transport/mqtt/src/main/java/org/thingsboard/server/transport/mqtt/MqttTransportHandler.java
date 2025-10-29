@@ -133,9 +133,6 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMetr
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopic.parseTopic;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugTopicService.parseTopicPublish;
 
-/**
- * @author Andrew Shvayka
- */
 @Slf4j
 public class MqttTransportHandler extends ChannelInboundHandlerAdapter implements GenericFutureListener<Future<? super Void>>, SessionMsgListener {
 

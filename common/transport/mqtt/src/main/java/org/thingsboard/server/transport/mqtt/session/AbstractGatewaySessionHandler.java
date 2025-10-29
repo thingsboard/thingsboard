@@ -96,9 +96,6 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 
-/**
- * Created by ashvayka on 19.01.17.
- */
 @Slf4j
 public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDeviceSessionContext> {
 
@@ -116,6 +113,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     @Getter
     protected final UUID sessionId;
     private final ConcurrentMap<String, Lock> deviceCreationLockMap;
+    @Getter
     private final ConcurrentMap<String, T> devices;
     private final ConcurrentMap<String, ListenableFuture<T>> deviceFutures;
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
@@ -821,11 +819,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         transportService.process(sessionInfo, postTelemetryMsg, pubAckCallback);
     }
 
-    public ConcurrentMap<String, T> getDevices() {
-        return this.devices;
-    }
-
-    protected <T>TransportServiceCallback<Void> getAggregatePubAckCallback(
+    protected <T> TransportServiceCallback<Void> getAggregatePubAckCallback(
             final ChannelHandlerContext ctx,
             final int msgId,
             final String deviceName,
@@ -915,4 +909,5 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             log.trace("Failed to send device disconnect to gateway session", e);
         }
     }
+
 }
