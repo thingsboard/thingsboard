@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInp
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -53,6 +55,8 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntryStatus;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationArgumentEntry;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -63,7 +67,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
@@ -106,7 +109,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
             case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false, ts);
             case SIMPLE, SCRIPT, ALARM, PROPAGATION -> getBaseCalculatedFieldArguments(ctx, entityId, ts);
             case RELATED_ENTITIES_AGGREGATION -> fetchRelatedEntitiesAggArguments(ctx, entityId, ts);
-            case ENTITY_AGGREGATION -> null;
+            case ENTITY_AGGREGATION -> fetchEntityAggArguments(ctx, entityId, ts);
         };
         if (ctx.getCfType() == PROPAGATION) {
             argFutures.put(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId));
@@ -198,6 +201,16 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> Futures.transformAsync(relatedEntitiesFut, relatedEntities -> fetchRelatedEntitiesArgumentEntry(ctx.getTenantId(), relatedEntities, entry.getValue(), ts), MoreExecutors.directExecutor())
+                ));
+    }
+
+    protected Map<String, ListenableFuture<ArgumentEntry>> fetchEntityAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
+        EntityAggregationCalculatedFieldConfiguration aggConfig = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+
+        return aggConfig.getArguments().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> fetchTimeSeries(ctx.getTenantId(), entityId, entry.getValue(), aggConfig.getInterval())
                 ));
     }
 
@@ -294,15 +307,21 @@ public abstract class AbstractCalculatedFieldProcessingService {
         };
     }
 
-    protected Map<String, ArgumentEntry> fetchArgumentValuesDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
+    protected Map<String, ArgumentEntry> fetchMetricsDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
         var config = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        Map<String, ArgumentEntry> argumentValues = new HashMap<>();
+        Map<String, ArgumentEntry> metricsResult = new HashMap<>();
 
         for (Entry<String, AggMetric> entry : config.getMetrics().entrySet()) {
             String metricName = entry.getKey();
             AggMetric metric = entry.getValue();
             AggFunction function = metric.getFunction();
-            BaseReadTsKvQuery query = new BaseReadTsKvQuery(((AggKeyInput) metric.getInput()).getKey(), interval.getStartTs(), interval.getEndTs(), 0, 1, Aggregation.valueOf(function.name()));
+
+            AggKeyInput input = (AggKeyInput) metric.getInput();
+            String argName = input.getKey();
+            Argument argument = ctx.getArguments().get(argName);
+            String key = argument.getRefEntityKey().getKey();
+
+            BaseReadTsKvQuery query = new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), 0, 1, Aggregation.valueOf(function.name()));
             log.trace("[{}][{}] Fetching timeseries for query {}", ctx.getTenantId(), entityId, query);
             ListenableFuture<List<TsKvEntry>> tsFuture = timeseriesService.findAll(ctx.getTenantId(), entityId, List.of(query));
             ListenableFuture<ArgumentEntry> argumentEntryFut = Futures.transform(tsFuture, timeSeries -> {
@@ -318,32 +337,61 @@ public abstract class AbstractCalculatedFieldProcessingService {
             // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
             // but this will significantly complicate the code.
             ArgumentEntry argumentEntry = argumentEntryFut.get(1, TimeUnit.MINUTES);
-            argumentValues.put(metricName, argumentEntry);
+            metricsResult.put(metricName, argumentEntry);
         }
 
-        return argumentValues;
+        return metricsResult;
     }
 
-//    protected ListenableFuture<ArgumentEntry> fetchArgumentValuesDuringInterval(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval, long startTs) {
-//        return switch (argument.getRefEntityKey().getType()) {
-//            case ATTRIBUTE -> fetchAttribute(tenantId, entityId, argument, startTs);
-//            case TS_LATEST -> fetchTsLatest(tenantId, entityId, argument, startTs);
-//            default -> throw new IllegalStateException("Unsupported argument key type for entity aggregation calculated field: " + argument.getRefEntityKey().getType());
-//        };
-//    }
-//
-//    private ListenableFuture<ArgumentEntry> fetchTimeSeries(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval) {
-//        long startInterval = System.currentTimeMillis() - interval.getIntervalDuration();
-//
-//        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startInterval, System.currentTimeMillis(), 0, 1, Aggregation.NONE);
-//
-//        log.trace("[{}][{}] Fetching timeseries for query {}", tenantId, entityId, query);
-//        ListenableFuture<List<TsKvEntry>> fetchedTelemetryFut = timeseriesService.findAll(tenantId, entityId, List.of(query));
-//        return Futures.transform(fetchedTelemetryFut, telemetry -> {
-//            log.debug("[{}][{}] Fetched {} timeseries for query {}", tenantId, entityId, telemetry == null ? 0 : telemetry.size(), query);
-//            return new SingleValueArgumentEntry();
-//        }, calculatedFieldCallbackExecutor);
-//    }
+    protected ArgumentEntry fetchMetricDuringInterval(EntityId entityId, AggIntervalEntry interval, String metricName, CalculatedFieldCtx ctx) throws Exception {
+        var config = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+
+        AggMetric metric = config.getMetrics().get(metricName);
+        AggFunction function = metric.getFunction();
+
+        AggKeyInput input = (AggKeyInput) metric.getInput();
+        String argName = input.getKey();
+        Argument argument = ctx.getArguments().get(argName);
+        String key = argument.getRefEntityKey().getKey();
+
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), 0, 1, Aggregation.valueOf(function.name()));
+        log.trace("[{}][{}] Fetching timeseries for query {}", ctx.getTenantId(), entityId, query);
+        ListenableFuture<List<TsKvEntry>> tsFuture = timeseriesService.findAll(ctx.getTenantId(), entityId, List.of(query));
+        ListenableFuture<ArgumentEntry> argumentEntryFut = Futures.transform(tsFuture, timeSeries -> {
+            log.debug("[{}][{}] Fetched {} timeseries for query {}", ctx.getTenantId(), entityId, timeSeries == null ? 0 : timeSeries.size(), query);
+            if (timeSeries == null || timeSeries.isEmpty()) {
+                return new SingleValueArgumentEntry();
+            }
+            return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
+        }, calculatedFieldCallbackExecutor);
+
+        // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
+        // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
+        // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
+        // but this will significantly complicate the code.
+        return argumentEntryFut.get(1, TimeUnit.MINUTES);
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchTimeSeries(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval) {
+        long startInterval = interval.getCurrentIntervalStartTs();
+
+        String key = argument.getRefEntityKey().getKey();
+        ReadTsKvQuery query = new BaseReadTsKvQuery(key, startInterval, System.currentTimeMillis(), 0, 1, Aggregation.NONE);
+
+        log.trace("[{}][{}] Fetching timeseries for query {}", tenantId, entityId, query);
+        ListenableFuture<List<TsKvEntry>> fetchedTelemetryFut = timeseriesService.findAll(tenantId, entityId, List.of(query));
+        return Futures.transform(fetchedTelemetryFut, telemetry -> {
+            log.debug("[{}][{}] Fetched {} timeseries for query {}", tenantId, entityId, telemetry == null ? 0 : telemetry.size(), query);
+            Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals = new HashMap<>();
+            AggIntervalEntry aggIntervalEntry = new AggIntervalEntry(interval.getCurrentIntervalStartTs(), interval.getCurrentIntervalEndTs());
+            if (telemetry == null || telemetry.isEmpty()) {
+                aggIntervals.put(aggIntervalEntry, new AggIntervalEntryStatus());
+            } else {
+                aggIntervals.put(aggIntervalEntry, new AggIntervalEntryStatus(System.currentTimeMillis()));
+            }
+            return new EntityAggregationArgumentEntry(aggIntervals);
+        }, calculatedFieldCallbackExecutor);
+    }
 
     private ListenableFuture<ArgumentEntry> fetchTsRolling(TenantId tenantId, EntityId entityId, Argument argument, long queryEndTs) {
         long argTimeWindow = argument.getTimeWindow() == 0 ? queryEndTs : argument.getTimeWindow();

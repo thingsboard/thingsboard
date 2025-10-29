@@ -31,13 +31,18 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = WeekSunSatInterval.class, name = "WEEK_SUN_SAT"),
         @JsonSubTypes.Type(value = MonthInterval.class, name = "MONTH"),
         @JsonSubTypes.Type(value = YearInterval.class, name = "YEAR"),
-        @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM"),
-        @JsonSubTypes.Type(value = SpecificTimeInterval.class, name = "SPECIFIC_TIME"),
+        @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface AggInterval {
 
     AggIntervalType getType();
+
+    long getIntervalDurationMillis();
+
+    long getCurrentIntervalStartTs();
+
+    long getCurrentIntervalEndTs();
 
     long getDelayUntilIntervalEnd();
 

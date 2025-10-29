@@ -186,7 +186,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (Exception e) {
                 log.warn("[{}] Failed to trigger CFs reevaluation", tenantId, e);
             }
-        }, systemContext.getAlarmRulesReevaluationInterval(), systemContext.getAlarmRulesReevaluationInterval(), TimeUnit.SECONDS);
+        }, systemContext.getCfCheckInterval(), systemContext.getCfCheckInterval(), TimeUnit.SECONDS);
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {

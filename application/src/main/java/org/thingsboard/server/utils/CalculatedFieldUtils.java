@@ -204,6 +204,7 @@ public class CalculatedFieldUtils {
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
             case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
             case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(id.entityId());
+            case ENTITY_AGGREGATION -> null; // todo
         };
 
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {

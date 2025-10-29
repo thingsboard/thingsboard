@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalcula
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.Watermark;
 
 import java.util.Map;
 
@@ -36,8 +37,7 @@ public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsB
     private Map<String, AggMetric> metrics;
 
     private AggInterval interval;
-    private long deduplicationIntervalInSec;
-    private long watermark;
+    private Watermark watermark;
 
     private Output output;
 

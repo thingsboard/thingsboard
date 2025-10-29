@@ -15,12 +15,18 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 @Data
+@AllArgsConstructor
 public class AggIntervalEntry {
 
-    public Long startTs;
-    public Long endTs;
+    private Long startTs;
+    private Long endTs;
+
+    public boolean belongsToInterval(long ts) {
+        return ts >= startTs && ts <= endTs;
+    }
 
 }

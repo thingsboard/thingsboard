@@ -26,6 +26,21 @@ public class CustomInterval extends BaseAggInterval {
     }
 
     @Override
+    public long getIntervalDurationMillis() {
+        return getCurrentIntervalEndTs() - getCurrentIntervalStartTs();
+    }
+
+    @Override
+    public long getCurrentIntervalStartTs() {
+        return super.getCurrentIntervalStartTs(internalIntervalType, multiplier);
+    }
+
+    @Override
+    public long getCurrentIntervalEndTs() {
+        return super.getCurrentIntervalEndTs(internalIntervalType, multiplier);
+    }
+
+    @Override
     public long getDelayUntilIntervalEnd() {
         return super.getDelayUntilIntervalEnd(internalIntervalType, multiplier);
     }

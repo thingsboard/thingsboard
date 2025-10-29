@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldC
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
@@ -46,6 +47,7 @@ import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedField
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -96,6 +98,8 @@ public class CalculatedFieldCtx implements Closeable {
     private String expression;
     private boolean useLatestTs;
     private boolean requiresScheduledReevaluation;
+//
+//    private long lastReevaluationTs;
 
     private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
@@ -194,9 +198,6 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
-        if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration entityAggregationConfig) {
-            this.scheduledUpdateIntervalMillis = entityAggregationConfig.getInterval().getIntervalDuration();
-        }
         this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
@@ -211,6 +212,21 @@ public class CalculatedFieldCtx implements Closeable {
         this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
+//
+//    public boolean isRequiresScheduledReevaluation() {
+//        if (CalculatedFieldType.ENTITY_AGGREGATION.equals(calculatedField.getType())) {
+//            var configuration = (EntityAggregationCalculatedFieldConfiguration) calculatedField.getConfiguration();
+//            AggInterval interval = configuration.getInterval();
+//            long delayUntilIntervalEnd = interval.getDelayUntilIntervalEnd();
+//            if (lastReevaluationTs < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval())) {
+//
+//            }
+//            if (TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval()) >= delayUntilIntervalEnd) {
+//                return true;
+//            }
+//        }
+//        return requiresScheduledReevaluation;
+//    }
 
     public void init() {
         switch (cfType) {
@@ -252,6 +268,7 @@ public class CalculatedFieldCtx implements Closeable {
                 });
                 initialized = true;
             }
+            case ENTITY_AGGREGATION -> initialized = true;
         }
     }
 

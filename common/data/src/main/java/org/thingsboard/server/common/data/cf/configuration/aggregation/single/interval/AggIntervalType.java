@@ -23,7 +23,6 @@ public enum AggIntervalType {
     WEEK_SUN_SAT,
     MONTH,
     YEAR,
-    CUSTOM,
-    SPECIFIC_TIME
+    CUSTOM
 
 }

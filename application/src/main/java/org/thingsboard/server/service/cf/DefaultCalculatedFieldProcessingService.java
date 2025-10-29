@@ -113,8 +113,13 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public Map<String, ArgumentEntry> fetchArgumentValuesDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
-        return super.fetchArgumentValuesDuringInterval(entityId, interval, ctx);
+    public Map<String, ArgumentEntry> fetchMetricsDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
+        return super.fetchMetricsDuringInterval(entityId, interval, ctx);
+    }
+
+    @Override
+    public ArgumentEntry fetchMetricDuringInterval(EntityId entityId, AggIntervalEntry interval, String metricName, CalculatedFieldCtx ctx) throws Exception {
+        return super.fetchMetricDuringInterval(entityId, interval, metricName, ctx);
     }
 
     @Override
