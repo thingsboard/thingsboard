@@ -31,6 +31,7 @@ import {
   CalculatedFieldOutput,
   CalculatedFieldType,
   getCalculatedFieldCurrentEntityFilter,
+  notEmptyObjectValidator,
   OutputType
 } from '@shared/models/calculated-field.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -76,7 +77,7 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
       latitudeKeyName: [null, [Validators.required]],
       longitudeKeyName: [null, [Validators.required]],
     }),
-    zoneGroups: this.fb.control<Record<string, CalculatedFieldGeofencing>>({}),
+    zoneGroups: this.fb.control<Record<string, CalculatedFieldGeofencing>>({}, notEmptyObjectValidator()),
     scheduledUpdateEnabled: [true],
     scheduledUpdateInterval: [this.minAllowedScheduledUpdateIntervalInSecForCF],
     output: this.fb.control<CalculatedFieldOutput>({scope: AttributeScope.SERVER_SCOPE, type: OutputType.Timeseries})
@@ -114,7 +115,7 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
   }
 
   validate(): ValidationErrors | null {
-    return this.geofencingConfiguration.valid || this.geofencingConfiguration.status === "DISABLED" ? null : { geofencingConfigError: false };
+    return this.geofencingConfiguration.valid || this.geofencingConfiguration.disabled ? null : { geofencingConfigError: false };
   }
 
   writeValue(config: CalculatedFieldGeofencingConfiguration): void {

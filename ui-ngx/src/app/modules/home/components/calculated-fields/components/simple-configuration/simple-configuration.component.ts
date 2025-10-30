@@ -140,7 +140,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   validate(): ValidationErrors | null {
-    return this.simpleConfiguration.valid || this.simpleConfiguration.status === "DISABLED" ? null : {invalidSimpleConfig: false};
+    return this.simpleConfiguration.valid || this.simpleConfiguration.disabled ? null : {invalidSimpleConfig: false};
   }
 
   writeValue(value: SimpeConfiguration): void {

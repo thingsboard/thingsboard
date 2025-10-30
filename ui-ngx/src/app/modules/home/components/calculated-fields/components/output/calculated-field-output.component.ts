@@ -113,7 +113,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   }
 
   validate(): ValidationErrors | null {
-    return this.outputForm.valid ? null : {outputConfig: false};
+    return this.outputForm.valid || this.outputForm.disabled ? null : {outputConfig: false};
   }
 
   writeValue(value: CalculatedFieldOutput | CalculatedFieldSimpleOutput): void {
@@ -126,6 +126,16 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   }
 
   registerOnTouched(_: any): void { }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.outputForm.disable({emitEvent: false});
+    } else {
+      this.outputForm.enable({emitEvent: false});
+      this.updatedFormWithMode();
+      this.toggleScopeByOutputType(this.outputForm.get('type').value);
+    }
+  }
 
   private updatedModel(value: CalculatedFieldOutput | CalculatedFieldSimpleOutput) {
     if (this.simpleMode && 'name' in value) {

@@ -200,7 +200,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   }
 
   validate(): ValidationErrors | null {
-    return this.timeInputForm.valid ? null : {
+    return this.timeInputForm.disabled || this.timeInputForm.valid ? null : {
       timeInput: false
     };
   }
