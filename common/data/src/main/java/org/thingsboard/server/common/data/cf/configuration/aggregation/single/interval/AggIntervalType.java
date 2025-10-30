@@ -17,14 +17,13 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 
 public enum AggIntervalType {
 
+    MIN,
     HOUR,
     DAY,
     WEEK,
     WEEK_SUN_SAT,
     MONTH,
     YEAR,
-    CUSTOM,
-
-    MIN// todo: delete
+    CUSTOM
 
 }

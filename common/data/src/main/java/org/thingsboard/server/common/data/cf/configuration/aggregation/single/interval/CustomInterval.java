@@ -16,12 +16,23 @@
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+@EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
 public class CustomInterval extends BaseAggInterval {
 
     private int multiplier; // number of base units (e.g. 2 hours, 5 days)
     private AggIntervalType internalIntervalType;
+
+    public CustomInterval(int multiplier, AggIntervalType internalIntervalType, long offsetMillis, String tz) {
+        this.tz = tz;
+        this.offsetMillis = offsetMillis;
+        this.multiplier = multiplier;
+        this.internalIntervalType = internalIntervalType;
+    }
 
     @Override
     public AggIntervalType getType() {

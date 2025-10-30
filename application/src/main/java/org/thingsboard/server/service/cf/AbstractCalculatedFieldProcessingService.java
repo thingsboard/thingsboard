@@ -127,15 +127,6 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return futures;
     }
 
-    private Map<String, ListenableFuture<ArgumentEntry>> getEntityArgumentsDuringInterval(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        Map<String, ListenableFuture<ArgumentEntry>> futures = new HashMap<>();
-        for (var entry : ctx.getArguments().entrySet()) {
-            var argValueFuture = fetchArgumentValue(ctx.getTenantId(), entityId, entry.getValue(), ts);
-            futures.put(entry.getKey(), argValueFuture);
-        }
-        return futures;
-    }
-
     protected EntityId resolveEntityId(TenantId tenantId, EntityId entityId, Argument argument) {
         if (argument.getRefEntityId() != null) {
             return argument.getRefEntityId();

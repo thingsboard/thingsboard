@@ -102,12 +102,9 @@ public class CalculatedFieldUtils {
 
         state.getArguments().forEach((argName, argEntry) -> {
             switch (argEntry.getType()) {
-                case SINGLE_VALUE ->
-                        builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
-                case TS_ROLLING ->
-                        builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
-                case GEOFENCING ->
-                        builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
+                case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
+                case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
+                case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
                 case RELATED_ENTITIES -> {
                     RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
                     relatedEntitiesArgumentEntry.getEntityInputs()

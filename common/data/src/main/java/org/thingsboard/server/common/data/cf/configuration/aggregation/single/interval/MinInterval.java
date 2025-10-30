@@ -16,13 +16,15 @@
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class MinInterval extends BaseAggInterval {
 
     @Override
     public AggIntervalType getType() {
-        return AggIntervalType.HOUR;
+        return AggIntervalType.MIN;
     }
 
 }

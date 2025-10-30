@@ -16,8 +16,10 @@
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@NoArgsConstructor
 public class DayInterval extends BaseAggInterval {
 
     @Override

@@ -305,10 +305,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onRelationChangedEvent(ComponentLifecycleMsg msg, TbCallback callback) {
         Function<EntityId, TriConsumer<EntityId, CalculatedFieldCtx, TbCallback>> relationAction = switch (msg.getEvent()) {
-            case RELATION_UPDATED ->
-                    relatedId -> (entityId, ctx, cb) -> initRelatedEntity(entityId, relatedId, ctx, cb);
-            case RELATION_DELETED ->
-                    relatedId -> (entityId, ctx, cb) -> deleteRelatedEntity(entityId, relatedId, ctx, cb);
+            case RELATION_UPDATED -> relatedId -> (entityId, ctx, cb) -> initRelatedEntity(entityId, relatedId, ctx, cb);
+            case RELATION_DELETED -> relatedId -> (entityId, ctx, cb) -> deleteRelatedEntity(entityId, relatedId, ctx, cb);
             default -> null;
         };
 

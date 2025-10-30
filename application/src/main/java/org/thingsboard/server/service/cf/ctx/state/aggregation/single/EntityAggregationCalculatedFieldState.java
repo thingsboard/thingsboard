@@ -35,8 +35,10 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldState {
@@ -117,11 +119,13 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         long now = System.currentTimeMillis();
 
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
+        List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
         for (Map.Entry<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> entry : intervals.entrySet()) {
             AggIntervalEntry intervalEntry = entry.getKey();
             Map<String, AggIntervalEntryStatus> args = entry.getValue();
-            processInterval(now, intervalEntry, args, results);
+            processInterval(now, intervalEntry, args, expiredIntervals, results);
         }
+        expiredIntervals.forEach(intervals::remove);
 
         ArrayNode result = toResult(results);
         if (result.isEmpty()) {
@@ -157,14 +161,17 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
     }
 
-    private void processInterval(long now, AggIntervalEntry intervalEntry, Map<String, AggIntervalEntryStatus> args,
+    private void processInterval(long now,
+                                 AggIntervalEntry intervalEntry,
+                                 Map<String, AggIntervalEntryStatus> args,
+                                 List<AggIntervalEntry> expiredIntervals,
                                  Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
         long startTs = intervalEntry.getStartTs();
         long endTs = intervalEntry.getEndTs();
 
         if (now - endTs > watermarkDuration) {
             handleExpiredInterval(intervalEntry, args, results);
-            intervals.remove(intervalEntry);
+            expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalDuration) {
             handleActiveInterval(intervalEntry, args, results);
         }

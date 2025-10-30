@@ -22,6 +22,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
@@ -29,6 +30,7 @@ import java.time.temporal.TemporalAdjusters;
 @Data
 public abstract class BaseAggInterval implements AggInterval {
 
+    protected String tz;
     protected long offsetMillis; // delay millis since start of interval
 
     @Override
@@ -54,7 +56,8 @@ public abstract class BaseAggInterval implements AggInterval {
     }
 
     protected long getCurrentIntervalStartTs(AggIntervalType type, int multiplier) {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZoneId zoneId = ZoneId.of(tz);
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
         ZonedDateTime shiftedNow = now.minus(Duration.ofMillis(offsetMillis));
         ZonedDateTime alignedStart = getAlignedBoundary(type, multiplier, false, shiftedNow);
         ZonedDateTime actualStart = alignedStart.plus(Duration.ofMillis(offsetMillis));
@@ -67,7 +70,8 @@ public abstract class BaseAggInterval implements AggInterval {
     }
 
     protected long getCurrentIntervalEndTs(AggIntervalType type, int multiplier) {
-        ZonedDateTime now = ZonedDateTime.now();
+        ZoneId zoneId = ZoneId.of(tz);
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
         ZonedDateTime shiftedNow = now.minus(Duration.ofMillis(offsetMillis));
         ZonedDateTime alignedEnd = getAlignedBoundary(type, multiplier, true, shiftedNow);
         ZonedDateTime actualEnd = alignedEnd.plus(Duration.ofMillis(offsetMillis));
@@ -100,7 +104,7 @@ public abstract class BaseAggInterval implements AggInterval {
 
     private ZonedDateTime alignByMin(ZonedDateTime now, int multiplier, boolean next) {
         ZonedDateTime startOfHour = now.truncatedTo(ChronoUnit.HOURS);
-        long minsSinceHour = Duration.between(startOfHour, now).toHours();
+        long minsSinceHour = Duration.between(startOfHour, now).toMinutes();
         long aligned = (minsSinceHour / multiplier) * multiplier;
         if (next) aligned += multiplier;
         return startOfHour.plusMinutes(aligned);

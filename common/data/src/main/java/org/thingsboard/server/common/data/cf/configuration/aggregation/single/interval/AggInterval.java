@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -25,27 +26,31 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
+        @JsonSubTypes.Type(value = MinInterval.class, name = "MIN"),
         @JsonSubTypes.Type(value = HourInterval.class, name = "HOUR"),
         @JsonSubTypes.Type(value = DayInterval.class, name = "DAY"),
         @JsonSubTypes.Type(value = WeekInterval.class, name = "WEEK"),
         @JsonSubTypes.Type(value = WeekSunSatInterval.class, name = "WEEK_SUN_SAT"),
         @JsonSubTypes.Type(value = MonthInterval.class, name = "MONTH"),
         @JsonSubTypes.Type(value = YearInterval.class, name = "YEAR"),
-        @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM"),
-
-        @JsonSubTypes.Type(value = MinInterval.class, name = "MIN")// todo: delete. used only for tests
+        @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface AggInterval {
 
+    @JsonIgnore
     AggIntervalType getType();
 
+    @JsonIgnore
     long getIntervalDurationMillis();
 
+    @JsonIgnore
     long getCurrentIntervalStartTs();
 
+    @JsonIgnore
     long getCurrentIntervalEndTs();
 
+    @JsonIgnore
     long getDelayUntilIntervalEnd();
 
 }

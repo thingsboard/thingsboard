@@ -206,21 +206,6 @@ public class CalculatedFieldCtx implements Closeable {
         this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
-//
-//    public boolean isRequiresScheduledReevaluation() {
-//        if (CalculatedFieldType.ENTITY_AGGREGATION.equals(calculatedField.getType())) {
-//            var configuration = (EntityAggregationCalculatedFieldConfiguration) calculatedField.getConfiguration();
-//            AggInterval interval = configuration.getInterval();
-//            long delayUntilIntervalEnd = interval.getDelayUntilIntervalEnd();
-//            if (lastReevaluationTs < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval())) {
-//
-//            }
-//            if (TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval()) >= delayUntilIntervalEnd) {
-//                return true;
-//            }
-//        }
-//        return requiresScheduledReevaluation;
-//    }
 
     public void init() {
         switch (cfType) {
