@@ -96,13 +96,13 @@
       gap: 24px;
       .tb-latest-chart-legend {
         flex: 0 1 auto;
-        overflow: hidden auto;
+        overflow-y: auto;
         max-height: 100%;
         flex-wrap: nowrap;
         min-width: fit-content;
         max-width: 100%;
         flex-direction: column;
-        justify-content: flex-start;
+        justify-content: stretch;
         align-items: stretch;
         .tb-latest-chart-legend-item {
           flex-direction: row;
