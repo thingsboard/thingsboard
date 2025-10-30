@@ -99,7 +99,7 @@
                         "showTimestamp": true,
                         "displayPagination": true,
                         "defaultPageSize": 10,
-                        "tabSortKey": "timestamp"
+                        "tabSortKey": "NAME_ASC"
                     },
                     "title": "{i18n:api-usage.exceptions}",
                     "dropShadow": true,
