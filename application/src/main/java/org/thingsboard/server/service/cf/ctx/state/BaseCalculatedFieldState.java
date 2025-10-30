@@ -117,7 +117,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     @Override
     public boolean isReady() {
-        return readinessStatus.isReady();
+        return readinessStatus.ready();
     }
 
     @Override
@@ -162,7 +162,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
         if (currentArguments == null) {
-            return new ReadinessStatus(requiredArguments);
+            return ReadinessStatus.from(requiredArguments);
         }
         List<String> emptyArguments = null;
         for (String requiredArgumentKey : requiredArguments) {
@@ -174,7 +174,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
                 emptyArguments.add(requiredArgumentKey);
             }
         }
-        return new ReadinessStatus(emptyArguments);
+        return ReadinessStatus.from(emptyArguments);
     }
 
 }

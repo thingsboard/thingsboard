@@ -200,7 +200,7 @@ public class GeofencingCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactlyInAnyOrderElementsOf(state.getRequiredArguments());
+        assertThat(state.getReadinessStatus().errorMsg()).contains(state.getRequiredArguments());
     }
 
     @Test
@@ -212,7 +212,7 @@ public class GeofencingCalculatedFieldStateTest {
                 "restrictedZones", geofencingRestrictedZoneArgEntry
         ), ctx);
         assertThat(state.isReady()).isTrue();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).isNull();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
     @Test
@@ -224,7 +224,7 @@ public class GeofencingCalculatedFieldStateTest {
                 "restrictedZones", new GeofencingArgumentEntry()
         ), ctx);
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).contains("restrictedZones");
+        assertThat(state.getReadinessStatus().errorMsg()).contains("restrictedZones");
     }
 
     @Test

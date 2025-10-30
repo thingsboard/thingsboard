@@ -16,17 +16,14 @@
 package org.thingsboard.server.service.cf.ctx.state;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -101,22 +98,17 @@ public interface CalculatedFieldState extends Closeable {
         }
     }
 
-    @Data
-    @AllArgsConstructor
-    @JsonInclude(JsonInclude.Include.NON_NULL)
-    class ReadinessStatus {
+    record ReadinessStatus(boolean ready, String errorMsg) {
 
-        private List<String> emptyArguments;
+        private static final String ERROR_MESSAGE = "Required arguments are missing: ";
+        private static final ReadinessStatus READY = new ReadinessStatus(true, null);
 
-        public boolean isReady() {
-            return emptyArguments == null || emptyArguments.isEmpty();
+        public static ReadinessStatus from(List<String> emptyOrMissingArguments) {
+            if (CollectionsUtil.isEmpty(emptyOrMissingArguments)) {
+                return ReadinessStatus.READY;
+            }
+            return new ReadinessStatus(false, ERROR_MESSAGE + String.join(", ", emptyOrMissingArguments));
         }
-
-        public String stringValue() {
-            return JacksonUtil.toString(this);
-        }
-
-
     }
 
 }

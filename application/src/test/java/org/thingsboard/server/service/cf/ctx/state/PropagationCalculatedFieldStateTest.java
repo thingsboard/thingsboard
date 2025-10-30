@@ -131,7 +131,7 @@ public class PropagationCalculatedFieldStateTest {
         initCtxAndState(false);
         state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry), ctx);
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly(PROPAGATION_CONFIG_ARGUMENT);
+        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
@@ -140,7 +140,7 @@ public class PropagationCalculatedFieldStateTest {
         state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry,
                 PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())), ctx);
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly(PROPAGATION_CONFIG_ARGUMENT);
+        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
@@ -148,7 +148,7 @@ public class PropagationCalculatedFieldStateTest {
         initCtxAndState(false);
         state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry, PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry), ctx);
         assertThat(state.isReady()).isTrue();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).isNull();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
 

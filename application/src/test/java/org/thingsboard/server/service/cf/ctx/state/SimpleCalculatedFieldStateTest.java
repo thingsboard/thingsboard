@@ -204,7 +204,7 @@ public class SimpleCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactlyInAnyOrderElementsOf(state.getRequiredArguments());
+        assertThat(state.getReadinessStatus().errorMsg()).contains(state.getRequiredArguments());
     }
 
     @Test
@@ -215,7 +215,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ), ctx);
         assertThat(state.isReady()).isTrue();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).isNull();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
     @Test
@@ -226,7 +226,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", new SingleValueArgumentEntry()
         ), ctx);
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().getEmptyArguments()).containsExactly("key3");
+        assertThat(state.getReadinessStatus().errorMsg()).contains("key3");
     }
 
     private CalculatedField getCalculatedField() {
