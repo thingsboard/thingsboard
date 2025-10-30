@@ -68,7 +68,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
-    settings.tabSortKey = settings.sortEntityAliasKey ?? TabSortKey.TIMESTAMP;
+    settings.tabSortKey = settings.tabSortKey ?? TabSortKey.TIMESTAMP;
     this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
     return settings;
   }
@@ -99,7 +99,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       disableStickyHeader: [settings.disableStickyHeader, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]],
-      sortEntityAliasKey: [settings.sortEntityAliasKey, []],
+      tabSortKey: [settings.tabSortKey, []],
     });
   }
 
