@@ -89,15 +89,13 @@ public class DefaultUpdateService implements UpdateService {
         version = buildProperties != null ? buildProperties.getVersion() : "unknown";
         updateMessage = new UpdateMessage(false, version, "", "",
                 "https://thingsboard.io/docs/reference/releases",
-                "https://thingsboard.io/docs/reference/releases");
+                "https://thingsboard.io/docs/reference/releases", 0);
         if (updatesEnabled) {
             try {
                 platform = System.getProperty("platform", "unknown");
                 instanceId = parseInstanceId();
                 checkUpdatesFuture = scheduler.scheduleAtFixedRate(checkUpdatesRunnable, 0, 1, TimeUnit.HOURS);
-            } catch (Exception e) {
-                //Do nothing
-            }
+            } catch (Exception ignored) {}
         }
     }
 
@@ -109,9 +107,7 @@ public class DefaultUpdateService implements UpdateService {
             if (data.length > 0) {
                 try {
                     result = UUID.fromString(new String(data));
-                } catch (IllegalArgumentException e) {
-                    //Do nothing
-                }
+                } catch (IllegalArgumentException ignored) {}
             }
         }
         if (result == null) {
@@ -128,9 +124,7 @@ public class DefaultUpdateService implements UpdateService {
                 checkUpdatesFuture.cancel(true);
             }
             scheduler.shutdownNow();
-        } catch (Exception e) {
-            //Do nothing
-        }
+        } catch (Exception ignored) {}
     }
 
     Runnable checkUpdatesRunnable = () -> {
@@ -168,4 +162,5 @@ public class DefaultUpdateService implements UpdateService {
     public UpdateMessage checkUpdates() {
         return updateMessage;
     }
+
 }
