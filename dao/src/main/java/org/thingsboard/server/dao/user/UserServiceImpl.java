@@ -179,7 +179,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
                 userCredentialsDao.save(user.getTenantId(), userCredentials);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder()
-                    .tenantId(tenantId == null ? TenantId.SYS_TENANT_ID : tenantId)
+                    .tenantId(savedUser.getTenantId())
                     .entity(savedUser)
                     .oldEntity(oldUser)
                     .entityId(savedUser.getId())
