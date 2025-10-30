@@ -92,8 +92,10 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
         return switch (ctx.getCfType()) {
-            case GEOFENCING -> resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
-            case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
+            case GEOFENCING ->
+                    resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
+            case PROPAGATION ->
+                    resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
             default -> Collections.emptyMap();
         };
     }
@@ -110,11 +112,6 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
             argFutures.put(entry.getKey(), argValueFuture);
         }
         return resolveArgumentFutures(argFutures);
-    }
-
-    @Override
-    public Map<String, ArgumentEntry> fetchMetricsDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
-        return super.fetchMetricsDuringInterval(entityId, interval, ctx);
     }
 
     @Override

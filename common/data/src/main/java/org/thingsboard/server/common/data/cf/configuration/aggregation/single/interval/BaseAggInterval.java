@@ -33,7 +33,19 @@ public abstract class BaseAggInterval implements AggInterval {
 
     @Override
     public long getIntervalDurationMillis() {
-        return getCurrentIntervalEndTs() - getCurrentIntervalStartTs();
+        return getIntervalDurationMillis(getType(), 1);
+    }
+
+    public long getIntervalDurationMillis(AggIntervalType type, int multiplier) {
+        return switch (type) {
+            case MIN -> Duration.ofMinutes(multiplier).toMillis();
+            case HOUR -> Duration.ofHours(multiplier).toMillis();
+            case DAY -> Duration.ofDays(multiplier).toMillis();
+            case WEEK, WEEK_SUN_SAT -> Duration.ofDays(7L * multiplier).toMillis();
+            case MONTH -> Duration.ofDays(Math.round(30 * multiplier)).toMillis(); // average
+            case YEAR -> Duration.ofDays(Math.round(365 * multiplier)).toMillis();
+            default -> throw new IllegalArgumentException("Unsupported type: " + type);
+        };
     }
 
     @Override
@@ -42,7 +54,11 @@ public abstract class BaseAggInterval implements AggInterval {
     }
 
     protected long getCurrentIntervalStartTs(AggIntervalType type, int multiplier) {
-        return getAlignedBoundary(type, multiplier, false).toInstant().toEpochMilli();
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime shiftedNow = now.minus(Duration.ofMillis(offsetMillis));
+        ZonedDateTime alignedStart = getAlignedBoundary(type, multiplier, false, shiftedNow);
+        ZonedDateTime actualStart = alignedStart.plus(Duration.ofMillis(offsetMillis));
+        return actualStart.toInstant().toEpochMilli();
     }
 
     @Override
@@ -51,7 +67,11 @@ public abstract class BaseAggInterval implements AggInterval {
     }
 
     protected long getCurrentIntervalEndTs(AggIntervalType type, int multiplier) {
-        return getAlignedBoundary(type, multiplier, true).toInstant().toEpochMilli();
+        ZonedDateTime now = ZonedDateTime.now();
+        ZonedDateTime shiftedNow = now.minus(Duration.ofMillis(offsetMillis));
+        ZonedDateTime alignedEnd = getAlignedBoundary(type, multiplier, true, shiftedNow);
+        ZonedDateTime actualEnd = alignedEnd.plus(Duration.ofMillis(offsetMillis));
+        return actualEnd.toInstant().toEpochMilli();
     }
 
     @Override
@@ -60,38 +80,30 @@ public abstract class BaseAggInterval implements AggInterval {
     }
 
     protected long getDelayUntilIntervalEnd(AggIntervalType type, int multiplier) {
-        ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime currentStart = getAlignedBoundary(type, multiplier, false);
-        ZonedDateTime nextStart = getAlignedBoundary(type, multiplier, true);
-
-        long periodMillis = Duration.between(currentStart, nextStart).toMillis();
-
-        // Apply offset: this shifts the grid
-        long off = offsetMillis % periodMillis;
-        if (off < 0) off += periodMillis;
-
-        // Compute the offset-aligned start times
-        ZonedDateTime offsetCurrentStart = currentStart.plus(Duration.ofMillis(off));
-        ZonedDateTime offsetNextStart = offsetCurrentStart.plus(Duration.ofMillis(periodMillis));
-
-        // If we are already past the current offset start, move to the next
-        ZonedDateTime target = offsetCurrentStart.isAfter(now) ? offsetCurrentStart : offsetNextStart;
-        // todo fix
-        return Math.max(Duration.between(now, target).toMillis(), 0);
+        long currentIntervalEndTs = getCurrentIntervalEndTs(type, multiplier);
+        long now = System.currentTimeMillis();
+        return currentIntervalEndTs - now;
     }
 
-    protected ZonedDateTime getAlignedBoundary(AggIntervalType type, int multiplier, boolean next) {
-        ZonedDateTime now = ZonedDateTime.now();
-
+    protected ZonedDateTime getAlignedBoundary(AggIntervalType type, int multiplier, boolean next, ZonedDateTime reference) {
         return switch (type) {
-            case HOUR -> alignByHour(now, multiplier, next);
-            case DAY -> alignByDay(now, multiplier, next);
-            case WEEK -> alignByWeek(now, multiplier, DayOfWeek.MONDAY, next);
-            case WEEK_SUN_SAT -> alignByWeek(now, multiplier, DayOfWeek.SUNDAY, next);
-            case MONTH -> alignByMonth(now, multiplier, next);
-            case YEAR -> alignByYear(now, multiplier, next);
+            case MIN -> alignByMin(reference, multiplier, next);
+            case HOUR -> alignByHour(reference, multiplier, next);
+            case DAY -> alignByDay(reference, multiplier, next);
+            case WEEK -> alignByWeek(reference, multiplier, DayOfWeek.MONDAY, next);
+            case WEEK_SUN_SAT -> alignByWeek(reference, multiplier, DayOfWeek.SUNDAY, next);
+            case MONTH -> alignByMonth(reference, multiplier, next);
+            case YEAR -> alignByYear(reference, multiplier, next);
             default -> throw new IllegalArgumentException("Unsupported type: " + type);
         };
+    }
+
+    private ZonedDateTime alignByMin(ZonedDateTime now, int multiplier, boolean next) {
+        ZonedDateTime startOfHour = now.truncatedTo(ChronoUnit.HOURS);
+        long minsSinceHour = Duration.between(startOfHour, now).toHours();
+        long aligned = (minsSinceHour / multiplier) * multiplier;
+        if (next) aligned += multiplier;
+        return startOfHour.plusMinutes(aligned);
     }
 
     private ZonedDateTime alignByHour(ZonedDateTime now, int multiplier, boolean next) {

@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import lombok.Data;
+
+@Data
 public class CustomInterval extends BaseAggInterval {
 
     private int multiplier; // number of base units (e.g. 2 hours, 5 days)
@@ -27,7 +30,7 @@ public class CustomInterval extends BaseAggInterval {
 
     @Override
     public long getIntervalDurationMillis() {
-        return getCurrentIntervalEndTs() - getCurrentIntervalStartTs();
+        return getIntervalDurationMillis(internalIntervalType, multiplier);
     }
 
     @Override

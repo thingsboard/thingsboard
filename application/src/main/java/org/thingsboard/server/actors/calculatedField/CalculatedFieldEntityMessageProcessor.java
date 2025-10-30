@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,6 +53,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -126,6 +126,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             state.setPartition(msg.getPartition());
             if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
                 relatedEntitiesAggState.scheduleReevaluation();
+            }
+            if (state instanceof EntityAggregationCalculatedFieldState entityAggState) {
+                entityAggState.scheduleReevaluation();
             }
             states.put(cfId, state);
         } else {
@@ -441,11 +444,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
             geofencingState.updateLastDynamicArgumentsRefreshTs();
         }
-        if (ctx.getCfType() == CalculatedFieldType.ENTITY_AGGREGATION) {
-            var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-            long delayUntilIntervalEnd = configuration.getInterval().getDelayUntilIntervalEnd();
-            ctx.scheduleReevaluation(delayUntilIntervalEnd, actorCtx);
-        }
+
         Map<String, ArgumentEntry> arguments = fetchArguments(ctx);
         state.update(arguments, ctx);
 

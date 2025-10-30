@@ -37,7 +37,6 @@ import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldC
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
@@ -46,8 +45,6 @@ import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSuppor
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -59,7 +56,6 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -98,8 +94,6 @@ public class CalculatedFieldCtx implements Closeable {
     private String expression;
     private boolean useLatestTs;
     private boolean requiresScheduledReevaluation;
-//
-//    private long lastReevaluationTs;
 
     private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;

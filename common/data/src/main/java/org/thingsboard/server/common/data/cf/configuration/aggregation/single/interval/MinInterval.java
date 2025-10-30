@@ -18,9 +18,11 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 import lombok.Data;
 
 @Data
-public class Watermark {
+public class MinInterval extends BaseAggInterval {
 
-    private long duration;
-    private long checkInterval;
+    @Override
+    public AggIntervalType getType() {
+        return AggIntervalType.HOUR;
+    }
 
 }

@@ -35,10 +35,8 @@ public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsB
     @Valid
     @NotEmpty
     private Map<String, AggMetric> metrics;
-
     private AggInterval interval;
     private Watermark watermark;
-
     private Output output;
 
     @Override

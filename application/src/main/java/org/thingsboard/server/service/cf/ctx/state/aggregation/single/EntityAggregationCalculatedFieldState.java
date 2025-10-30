@@ -35,6 +35,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -44,13 +45,52 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     private long intervalDuration;
     private long watermarkDuration;
     private long checkInterval;
-
     private Map<String, AggMetric> metrics;
+
+    private final Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = new HashMap<>();
 
     private CalculatedFieldProcessingService cfProcessingService;
 
     public EntityAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
+    }
+
+    public void scheduleReevaluation() {
+        fillMissingIntervals(interval.getCurrentIntervalEndTs(), intervalDuration);
+        prepareIntervals();
+        long now = System.currentTimeMillis();
+        intervals.forEach((intervalEntry, argumentIntervalStatuses) -> {
+            if (intervalEntry.belongsToInterval(now)) {
+                ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
+            } else {
+                if (intervalEntry.getEndTs() <= now) {
+                    ctx.scheduleReevaluation(checkInterval, actorCtx);
+                }
+            }
+        });
+    }
+
+    private void fillMissingIntervals(long currentIntervalEndTs, long intervalDuration) {
+        AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
+        if (lastIntervalEntry == null) {
+            return;
+        }
+
+        long nextStartTs = lastIntervalEntry.getEndTs();
+        long nextEndTs = nextStartTs + intervalDuration;
+
+        while (nextEndTs <= currentIntervalEndTs) {
+            AggIntervalEntry missingAggIntervalEntry = new AggIntervalEntry(nextStartTs, nextEndTs);
+
+            arguments.forEach((argName, argumentEntry) -> {
+                var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
+                entityAggEntry.getAggIntervals().put(missingAggIntervalEntry, new AggIntervalEntryStatus());
+                intervals.computeIfAbsent(missingAggIntervalEntry, i -> new HashMap<>()).put(argName, new AggIntervalEntryStatus());
+            });
+
+            nextStartTs = nextEndTs;
+            nextEndTs += intervalDuration;
+        }
     }
 
     @Override
@@ -72,67 +112,17 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
+        createIntervalIfNotExist();
+        prepareIntervals();
         long now = System.currentTimeMillis();
-        AggIntervalEntry aggIntervalEntry = new AggIntervalEntry(interval.getCurrentIntervalStartTs(), interval.getCurrentIntervalEndTs());
-        boolean exists = false;
-        for (Map.Entry<String, ArgumentEntry> entry : arguments.entrySet()) {
-            ArgumentEntry argumentEntry = entry.getValue();
-            EntityAggregationArgumentEntry entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
-            Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals = entityAggEntry.getAggIntervals();
-            exists |= aggIntervals.containsKey(aggIntervalEntry);
-        }
-        if (!exists) {
-            arguments.forEach((argName, argumentEntry) -> {
-                EntityAggregationArgumentEntry entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
-                entityAggEntry.getAggIntervals().put(aggIntervalEntry, new AggIntervalEntryStatus());
-            });
-            ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
-        }
 
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
-        for (Map.Entry<String, ArgumentEntry> entry : arguments.entrySet()) {
-            String argName = entry.getKey();
-            ArgumentEntry argumentEntry = entry.getValue();
-
-            EntityAggregationArgumentEntry entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
-            Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals = entityAggEntry.getAggIntervals();
-            for (Map.Entry<AggIntervalEntry, AggIntervalEntryStatus> aggInterval : aggIntervals.entrySet()) {
-                AggIntervalEntry intervalEntry = aggInterval.getKey();
-                AggIntervalEntryStatus entryStatus = aggInterval.getValue();
-
-                Long startTs = intervalEntry.getStartTs();
-                Long endTs = intervalEntry.getEndTs();
-                if (now - endTs > watermarkDuration) {
-                    if (entryStatus.getLastArgsRefreshTs() > entryStatus.getLastMetricsEvalTs()) {
-                        String metricName = null;
-                        for (Map.Entry<String, AggMetric> metricEntry : metrics.entrySet()) {
-                            if (((AggKeyInput) metricEntry.getValue().getInput()).getKey().equals(argName)) {
-                                metricName = metricEntry.getKey();
-                            }
-                        }
-                        ArgumentEntry metric = cfProcessingService.fetchMetricDuringInterval(entityId, intervalEntry, metricName, ctx);
-                        if (!metric.isEmpty()) {
-                            results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, metric);
-                        }
-                    }
-                    aggIntervals.remove(intervalEntry);
-                    continue;
-                } else if (now - startTs >= intervalDuration) {
-                    if (entryStatus.shouldRecalculate(checkInterval)) {
-                        String metricName = null;
-                        for (Map.Entry<String, AggMetric> metricEntry : metrics.entrySet()) {
-                            if (((AggKeyInput) metricEntry.getValue().getInput()).getKey().equals(argName)) {
-                                metricName = metricEntry.getKey();
-                            }
-                        }
-                        ArgumentEntry metric = cfProcessingService.fetchMetricDuringInterval(entityId, intervalEntry, metricName, ctx);
-                        if (!metric.isEmpty()) {
-                            results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, metric);
-                        }
-                    }
-                }
-            }
+        for (Map.Entry<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> entry : intervals.entrySet()) {
+            AggIntervalEntry intervalEntry = entry.getKey();
+            Map<String, AggIntervalEntryStatus> args = entry.getValue();
+            processInterval(now, intervalEntry, args, results);
         }
+
         ArrayNode result = toResult(results);
         if (result.isEmpty()) {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
@@ -143,48 +133,86 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 .scope(output.getScope())
                 .result(result)
                 .build());
+    }
 
-//        long now = System.currentTimeMillis();
-//        AggIntervalEntry aggIntervalEntry = new AggIntervalEntry(interval.getCurrentIntervalStartTs(), interval.getCurrentIntervalEndTs(), false);
-//        if (!intervals.containsKey(aggIntervalEntry)) {
-//            intervals.put(aggIntervalEntry, new AggIntervalEntryStatus());
-//            ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
-//        }
-//        ArrayNode results = JacksonUtil.newArrayNode();
-//        for (Map.Entry<AggIntervalEntry, AggIntervalEntryStatus> entry : intervals.entrySet()) {
-//            AggIntervalEntry intervalEntry = entry.getKey();
-//            AggIntervalEntryStatus entryStatus = entry.getValue();
-//
-//            Long startTs = intervalEntry.getStartTs();
-//            Long endTs = intervalEntry.getEndTs();
-//            if (now - endTs > watermarkDuration) {
-//                if (entryStatus.getLastArgsRefreshTs() > entryStatus.getLastMetricsEvalTs()) {
-//                    ArgumentEntry metric = cfProcessingService.fetchMetricDuringInterval(entityId, intervalEntry, metricName, ctx);
-//                    ObjectNode result = fetchMetrics(intervalEntry);
-//                    if (result != null) {
-//                        results.add(result);
-//                    }
-//                }
-//                intervals.remove(intervalEntry);
-//                continue;
-//            } else if (now - startTs >= intervalDuration) {
-//                if (entryStatus.shouldRecalculate(checkInterval)) {
-//                    ObjectNode result = fetchMetrics(intervalEntry);
-//                    if (result != null) {
-//                        results.add(result);
-//                    }
-//                }
-//            }
-//        }
-//        if (results.isEmpty()) {
-//            return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
-//        }
-//        Output output = ctx.getOutput();
-//        return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
-//                .type(output.getType())
-//                .scope(output.getScope())
-//                .result(results)
-//                .build());
+    private void prepareIntervals() {
+        arguments.forEach((argName, entry) -> {
+            var argEntry = (EntityAggregationArgumentEntry) entry;
+            argEntry.getAggIntervals().forEach((intervalEntry, status) ->
+                    intervals.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, status)
+            );
+        });
+    }
+
+    private void createIntervalIfNotExist() {
+        AggIntervalEntry currentInterval = new AggIntervalEntry(interval.getCurrentIntervalStartTs(), interval.getCurrentIntervalEndTs());
+        if (intervals.containsKey(currentInterval)) {
+            return;
+        }
+        arguments.forEach((argName, argumentEntry) -> {
+            var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
+            entityAggEntry.getAggIntervals().put(currentInterval, new AggIntervalEntryStatus());
+            intervals.computeIfAbsent(currentInterval, i -> new HashMap<>()).put(argName, new AggIntervalEntryStatus());
+        });
+        ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
+    }
+
+    private void processInterval(long now, AggIntervalEntry intervalEntry, Map<String, AggIntervalEntryStatus> args,
+                                 Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
+        long startTs = intervalEntry.getStartTs();
+        long endTs = intervalEntry.getEndTs();
+
+        if (now - endTs > watermarkDuration) {
+            handleExpiredInterval(intervalEntry, args, results);
+            intervals.remove(intervalEntry);
+        } else if (now - startTs >= intervalDuration) {
+            handleActiveInterval(intervalEntry, args, results);
+        }
+    }
+
+    private void handleExpiredInterval(AggIntervalEntry intervalEntry,
+                                       Map<String, AggIntervalEntryStatus> args,
+                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
+        for (Map.Entry<String, AggIntervalEntryStatus> argStatus : args.entrySet()) {
+            String argName = argStatus.getKey();
+            AggIntervalEntryStatus argEntryIntervalStatus = argStatus.getValue();
+            if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
+                processMetric(intervalEntry, argName, results);
+            }
+        }
+    }
+
+    private void handleActiveInterval(AggIntervalEntry intervalEntry,
+                                      Map<String, AggIntervalEntryStatus> args,
+                                      Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
+        for (Map.Entry<String, AggIntervalEntryStatus> argStatus : args.entrySet()) {
+            String argName = argStatus.getKey();
+            AggIntervalEntryStatus argEntryIntervalStatus = argStatus.getValue();
+            if (argEntryIntervalStatus.shouldRecalculate(checkInterval)) {
+                processMetric(intervalEntry, argName, results);
+                ctx.scheduleReevaluation(checkInterval, actorCtx);
+            }
+        }
+    }
+
+    private void processMetric(AggIntervalEntry intervalEntry,
+                               String argName,
+                               Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
+        String metricName = findMetricName(argName);
+        if (metricName != null) {
+            ArgumentEntry metric = cfProcessingService.fetchMetricDuringInterval(entityId, intervalEntry, metricName, ctx);
+            if (!metric.isEmpty()) {
+                results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metric);
+            }
+        }
+    }
+
+    private String findMetricName(String argName) {
+        return metrics.entrySet().stream()
+                .filter(e -> ((AggKeyInput) e.getValue().getInput()).getKey().equals(argName))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(null);
     }
 
     protected ArrayNode toResult(Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {

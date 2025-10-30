@@ -40,7 +40,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -62,7 +61,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
@@ -307,42 +305,6 @@ public abstract class AbstractCalculatedFieldProcessingService {
         };
     }
 
-    protected Map<String, ArgumentEntry> fetchMetricsDuringInterval(EntityId entityId, AggIntervalEntry interval, CalculatedFieldCtx ctx) throws Exception {
-        var config = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        Map<String, ArgumentEntry> metricsResult = new HashMap<>();
-
-        for (Entry<String, AggMetric> entry : config.getMetrics().entrySet()) {
-            String metricName = entry.getKey();
-            AggMetric metric = entry.getValue();
-            AggFunction function = metric.getFunction();
-
-            AggKeyInput input = (AggKeyInput) metric.getInput();
-            String argName = input.getKey();
-            Argument argument = ctx.getArguments().get(argName);
-            String key = argument.getRefEntityKey().getKey();
-
-            BaseReadTsKvQuery query = new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), 0, 1, Aggregation.valueOf(function.name()));
-            log.trace("[{}][{}] Fetching timeseries for query {}", ctx.getTenantId(), entityId, query);
-            ListenableFuture<List<TsKvEntry>> tsFuture = timeseriesService.findAll(ctx.getTenantId(), entityId, List.of(query));
-            ListenableFuture<ArgumentEntry> argumentEntryFut = Futures.transform(tsFuture, timeSeries -> {
-                log.debug("[{}][{}] Fetched {} timeseries for query {}", ctx.getTenantId(), entityId, timeSeries == null ? 0 : timeSeries.size(), query);
-                if (timeSeries == null || timeSeries.isEmpty()) {
-                    return new SingleValueArgumentEntry();
-                }
-                return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
-            }, calculatedFieldCallbackExecutor);
-
-            // Ugly but necessary. We do not expect to often fetch data from DB. Only once per <Entity, CalculatedField> pair lifetime.
-            // This call happens while processing the CF pack from the queue consumer. So the timeout should be relatively low.
-            // Alternatively, we can fetch the state outside the actor system and push separate command to create this actor,
-            // but this will significantly complicate the code.
-            ArgumentEntry argumentEntry = argumentEntryFut.get(1, TimeUnit.MINUTES);
-            metricsResult.put(metricName, argumentEntry);
-        }
-
-        return metricsResult;
-    }
-
     protected ArgumentEntry fetchMetricDuringInterval(EntityId entityId, AggIntervalEntry interval, String metricName, CalculatedFieldCtx ctx) throws Exception {
         var config = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
 
@@ -354,7 +316,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
         Argument argument = ctx.getArguments().get(argName);
         String key = argument.getRefEntityKey().getKey();
 
-        BaseReadTsKvQuery query = new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), 0, 1, Aggregation.valueOf(function.name()));
+        long intervalMs = interval.getEndTs() - interval.getStartTs();
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), intervalMs, 1, Aggregation.valueOf(function.name()));
         log.trace("[{}][{}] Fetching timeseries for query {}", ctx.getTenantId(), entityId, query);
         ListenableFuture<List<TsKvEntry>> tsFuture = timeseriesService.findAll(ctx.getTenantId(), entityId, List.of(query));
         ListenableFuture<ArgumentEntry> argumentEntryFut = Futures.transform(tsFuture, timeSeries -> {

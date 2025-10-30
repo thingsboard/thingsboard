@@ -31,7 +31,9 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = WeekSunSatInterval.class, name = "WEEK_SUN_SAT"),
         @JsonSubTypes.Type(value = MonthInterval.class, name = "MONTH"),
         @JsonSubTypes.Type(value = YearInterval.class, name = "YEAR"),
-        @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM")
+        @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM"),
+
+        @JsonSubTypes.Type(value = MinInterval.class, name = "MIN")// todo: delete. used only for tests
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface AggInterval {

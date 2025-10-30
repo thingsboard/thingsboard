@@ -23,6 +23,8 @@ public enum AggIntervalType {
     WEEK_SUN_SAT,
     MONTH,
     YEAR,
-    CUSTOM
+    CUSTOM,
+
+    MIN// todo: delete
 
 }
