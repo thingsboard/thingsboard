@@ -235,7 +235,7 @@ public class JwtTokenFactory {
         securityUser.setSessionId(UUID.randomUUID().toString());
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
-        return new JwtPair(accessToken.getToken(), refreshToken.getToken());
+        return new JwtPair(accessToken.token(), refreshToken.token());
     }
 
     private SecretKey getSecretKey(boolean forceReload) {
