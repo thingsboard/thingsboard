@@ -18,13 +18,17 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { AuditLogRoutingModule } from '@modules/home/pages/audit-log/audit-log-routing.module';
+import { AuditLogHeaderComponent } from '@home/components/audit-log/audit-log-header.component';
+import { HomeComponentsModule } from '@home/components/public-api';
 
 @NgModule({
   declarations: [
+    AuditLogHeaderComponent,
   ],
   imports: [
     CommonModule,
     SharedModule,
+    HomeComponentsModule,
     AuditLogRoutingModule
   ]
 })

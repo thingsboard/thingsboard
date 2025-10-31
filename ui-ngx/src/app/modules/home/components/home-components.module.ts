@@ -23,6 +23,7 @@ import { DetailsPanelComponent } from '@home/components/details-panel.component'
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { AuditLogDetailsDialogComponent } from '@home/components/audit-log/audit-log-details-dialog.component';
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
+import { AuditLogFilterComponent } from '@home/components/audit-log/audit-log-filter.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { EventFilterPanelComponent } from '@home/components/event/event-filter-panel.component';
@@ -224,6 +225,7 @@ import {
       EntityDetailsPanelComponent,
       EntityDetailsPageComponent,
       AuditLogTableComponent,
+      AuditLogFilterComponent,
       AuditLogDetailsDialogComponent,
       EventContentDialogComponent,
       EventTableHeaderComponent,
@@ -392,6 +394,7 @@ import {
     EntityDetailsPanelComponent,
     EntityDetailsPageComponent,
     AuditLogTableComponent,
+    AuditLogFilterComponent,
     EventTableComponent,
     EdgeDownlinkTableHeaderComponent,
     EdgeDownlinkTableComponent,
