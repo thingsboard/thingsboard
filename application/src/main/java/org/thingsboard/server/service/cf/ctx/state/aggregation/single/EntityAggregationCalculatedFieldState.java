@@ -86,8 +86,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
             arguments.forEach((argName, argumentEntry) -> {
                 var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
-                entityAggEntry.getAggIntervals().put(missingAggIntervalEntry, new AggIntervalEntryStatus());
-                intervals.computeIfAbsent(missingAggIntervalEntry, i -> new HashMap<>()).put(argName, new AggIntervalEntryStatus());
+                AggIntervalEntryStatus intervalEntryStatus = new AggIntervalEntryStatus(System.currentTimeMillis());
+                entityAggEntry.getAggIntervals().put(missingAggIntervalEntry, intervalEntryStatus);
+                intervals.computeIfAbsent(missingAggIntervalEntry, i -> new HashMap<>()).put(argName, intervalEntryStatus);
             });
 
             nextStartTs = nextEndTs;
@@ -114,8 +115,8 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
-        createIntervalIfNotExist();
         prepareIntervals();
+        createIntervalIfNotExist();
         long now = System.currentTimeMillis();
 
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();

@@ -355,7 +355,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     private ReadTsKvQuery buildTimeSeriesQuery(TenantId tenantId, Argument argument, long startTs, long endTs) {
         long maxDataPoints = apiLimitService.getLimit(
                 tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
-        int argumentLimit = argument.getLimit();
+        int argumentLimit = argument.getLimit() == null ? 500000 : argument.getLimit();
         int limit = argumentLimit == 0 || argumentLimit > maxDataPoints ? (int) maxDataPoints : argumentLimit;
         return new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE);
     }
