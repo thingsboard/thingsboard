@@ -87,11 +87,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         }
         job.getResult().setCancellationTs(System.currentTimeMillis());
         JobStatus prevStatus = job.getStatus();
-        if (job.getStatus() == QUEUED) {
-            job.setStatus(CANCELLED); // setting cancelled status right away, because we don't expect stats for cancelled tasks
-        } else if (job.getStatus() == PENDING) {
-            job.setStatus(RUNNING);
-        }
+        job.setStatus(CANCELLED);
         saveJob(tenantId, job, true, prevStatus);
     }
 
@@ -145,7 +141,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
             }
         }
 
-        if (job.getStatus() == RUNNING) {
+        if (job.getStatus().isOneOf(RUNNING, CANCELLED)) {
             if (result.getTotalCount() != null && result.getCompletedCount() >= result.getTotalCount()) {
                 if (result.getCancellationTs() > 0) {
                     job.setStatus(CANCELLED);
@@ -193,7 +189,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     private void checkWaitingJobs(TenantId tenantId, JobType jobType) {
         Job queuedJob = jobDao.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId, jobType, QUEUED);
-        if (queuedJob == null) {
+        if (queuedJob == null || jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, jobType, PENDING, RUNNING)) {
             return;
         }
         queuedJob.setStatus(PENDING);
