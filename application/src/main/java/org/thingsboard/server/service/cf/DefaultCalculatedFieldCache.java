@@ -148,11 +148,20 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public List<CalculatedFieldCtx> getAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter) {
+    public List<CalculatedFieldCtx> getRelatedEntitiesAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter) {
         return calculatedFields.values().stream()
                 .filter(cf -> CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cf.getType()))
                 .map(cf -> getCalculatedFieldCtx(cf.getId()))
                 .filter(relatedEntityFilter)
+                .toList();
+    }
+
+    @Override
+    public List<CalculatedFieldCtx> getEntityAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> entityAggCfFilter) {
+        return calculatedFields.values().stream()
+                .filter(cf -> CalculatedFieldType.ENTITY_AGGREGATION.equals(cf.getType()))
+                .map(cf -> getCalculatedFieldCtx(cf.getId()))
+                .filter(entityAggCfFilter)
                 .toList();
     }
 

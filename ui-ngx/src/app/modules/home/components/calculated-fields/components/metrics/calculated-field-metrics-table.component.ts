@@ -16,11 +16,13 @@
 
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   DestroyRef,
   forwardRef,
   Input,
+  OnInit,
   Renderer2,
   ViewChild,
   ViewContainerRef,
@@ -51,7 +53,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
   CalculatedFieldMetricsPanelComponent
-} from '@home/components/calculated-fields/components/related-entities-aggregation-configuration/calculated-field-metrics-panel.component';
+} from '@home/components/calculated-fields/components/metrics/calculated-field-metrics-panel.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
 
@@ -72,11 +74,12 @@ import { AceHighlightRules } from '@shared/models/ace/ace.models';
     }
   ],
 })
-export class CalculatedFieldMetricsTableComponent implements ControlValueAccessor, Validator, AfterViewInit {
+export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValueAccessor, Validator, AfterViewInit {
 
   @Input() arguments: Array<string>;
   @Input() editorCompleter: TbEditorCompleter;
   @Input() highlightRules: AceHighlightRules;
+  @Input({transform: booleanAttribute}) simpleMode: boolean = false;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -85,7 +88,7 @@ export class CalculatedFieldMetricsTableComponent implements ControlValueAccesso
   sortOrder = { direction: 'asc' as SortDirection, property: '' };
   dataSource = new CalculatedFieldMetricsDatasource();
 
-  displayColumns = ['name', 'function', 'filter', 'valueSource', 'actions']
+  displayColumns = ['name', 'function', 'filter', 'valueSource', 'actions'];
 
   readonly AggFunctionTranslations = AggFunctionTranslations;
   readonly AggInputTypeTranslations = AggInputTypeTranslations;
@@ -107,6 +110,12 @@ export class CalculatedFieldMetricsTableComponent implements ControlValueAccesso
       this.updateDataSource(value);
       this.propagateChange(this.getMetricsObject(value));
     });
+  }
+
+  ngOnInit() {
+    if (this.simpleMode) {
+      this.displayColumns = ['name', 'function', 'actions'];
+    }
   }
 
   ngAfterViewInit(): void {
@@ -155,7 +164,8 @@ export class CalculatedFieldMetricsTableComponent implements ControlValueAccesso
         usedNames: this.metricsFormArray.value.map(({ name }) => name).filter(name => name !== metric.name),
         arguments: this.arguments,
         editorCompleter: this.editorCompleter,
-        highlightRules: this.highlightRules
+        highlightRules: this.highlightRules,
+        simpleMode: this.simpleMode,
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,

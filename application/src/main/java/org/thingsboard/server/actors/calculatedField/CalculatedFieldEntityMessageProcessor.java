@@ -53,6 +53,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -125,6 +126,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             state.setPartition(msg.getPartition());
             if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
                 relatedEntitiesAggState.scheduleReevaluation();
+            }
+            if (state instanceof EntityAggregationCalculatedFieldState entityAggState) {
+                entityAggState.scheduleReevaluation();
             }
             states.put(cfId, state);
         } else {

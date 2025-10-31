@@ -46,6 +46,7 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
   @Input() metric: CalculatedFieldAggMetricValue;
   @Input() usedNames: string[];
   @Input() arguments: Array<string>;
+  @Input() simpleMode: boolean;
   @Input() editorCompleter: TbEditorCompleter;
   @Input() highlightRules: AceHighlightRules;
 

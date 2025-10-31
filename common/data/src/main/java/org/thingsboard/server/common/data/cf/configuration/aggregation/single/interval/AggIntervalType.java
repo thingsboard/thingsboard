@@ -13,8 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, PROPAGATION, RELATED_ENTITIES, ENTITY_AGGREGATION
+public enum AggIntervalType {
+
+    MIN,
+    HOUR,
+    DAY,
+    WEEK,
+    WEEK_SUN_SAT,
+    MONTH,
+    YEAR,
+    CUSTOM
+
 }

@@ -188,8 +188,13 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             }
         }
 
-        List<CalculatedFieldCtx> cfCtxs = calculatedFieldCache.getAggCalculatedFieldCtxsByFilter(relatedEntityFilter);
-        for (CalculatedFieldCtx cfCtx : cfCtxs) {
+        List<CalculatedFieldCtx> entityAggCfCtxs = calculatedFieldCache.getEntityAggCalculatedFieldCtxsByFilter(filter);
+        if (!entityAggCfCtxs.isEmpty()) {
+            return true;
+        }
+
+        List<CalculatedFieldCtx> relatedEntityAggCfCtxs = calculatedFieldCache.getRelatedEntitiesAggCalculatedFieldCtxsByFilter(relatedEntityFilter);
+        for (CalculatedFieldCtx cfCtx : relatedEntityAggCfCtxs) {
             if (cfCtx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
                 RelationPathLevel relation = aggConfig.getRelation();
                 EntitySearchDirection inverseDirection = switch (relation.direction()) {

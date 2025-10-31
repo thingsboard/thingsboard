@@ -13,8 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, PROPAGATION, RELATED_ENTITIES, ENTITY_AGGREGATION
+import lombok.AllArgsConstructor;
+import lombok.Data;
+
+@Data
+@AllArgsConstructor
+public class AggIntervalEntry {
+
+    private Long startTs;
+    private Long endTs;
+
+    public boolean belongsToInterval(long ts) {
+        return ts >= startTs && ts <= endTs;
+    }
+
 }

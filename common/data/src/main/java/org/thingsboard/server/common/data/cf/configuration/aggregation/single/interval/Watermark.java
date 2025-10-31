@@ -13,8 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state;
+package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
-public enum ArgumentEntryType {
-    SINGLE_VALUE, TS_ROLLING, GEOFENCING, PROPAGATION, RELATED_ENTITIES, ENTITY_AGGREGATION
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Watermark {
+
+    private long duration;
+    private long checkInterval;
+
 }
