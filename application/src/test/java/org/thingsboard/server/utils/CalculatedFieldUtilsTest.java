@@ -47,6 +47,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
@@ -91,14 +92,22 @@ class CalculatedFieldUtilsTest {
 
         // Create cf state with the geofencing argument and add it to the state map
         CalculatedFieldState state = new GeofencingCalculatedFieldState(DEVICE_ID);
-        state.update(Map.of("geofencingArgumentTest", geofencingArgumentEntry), mock(CalculatedFieldCtx.class));
+
+        CalculatedFieldCtx cfCtxMock = mock(CalculatedFieldCtx.class);
+        when(cfCtxMock.getArgNames()).thenReturn(List.of("geofencingArgumentTest"));
+
+        state.setCtx(cfCtxMock, null);
+
+        Map<String, ArgumentEntry> updatedArguments = state.update(Map.of("geofencingArgumentTest", geofencingArgumentEntry), cfCtxMock);
+        assertThat(updatedArguments).hasSize(1);
+        assertThat(updatedArguments.get("geofencingArgumentTest")).isEqualTo(geofencingArgumentEntry);
 
         CalculatedFieldStateProto proto = toProto(stateId, state);
         CalculatedFieldState fromProto = CalculatedFieldUtils.fromProto(stateId, proto);
 
         assertThat(fromProto)
                 .usingRecursiveComparison()
-                .ignoringFields("requiredArguments")
+                .ignoringFields("ctx", "requiredArguments", "readinessStatus")
                 .isEqualTo(state);
 
         ArgumentEntry fromProtoArgument = fromProto.getArguments().get("geofencingArgumentTest");
@@ -124,9 +133,16 @@ class CalculatedFieldUtilsTest {
         SingleValueArgumentEntry singleValueArgumentEntry = new SingleValueArgumentEntry(new BaseAttributeKvEntry(new StringDataEntry("state", "active"), lastUpdateTs, 1L));
 
         CalculatedFieldCtx cfCtxMock = mock(CalculatedFieldCtx.class);
+        when(cfCtxMock.getArgNames()).thenReturn(List.of("state"));
 
         CalculatedFieldState state = new PropagationCalculatedFieldState(DEVICE_ID);
-        state.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry, "state", singleValueArgumentEntry), cfCtxMock);
+
+        state.setCtx(cfCtxMock, null);
+
+        Map<String, ArgumentEntry> updatedArguments = state.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry, "state", singleValueArgumentEntry), cfCtxMock);
+        assertThat(updatedArguments).hasSize(2);
+        assertThat(updatedArguments.get(PROPAGATION_CONFIG_ARGUMENT)).isEqualTo(propagationArgumentEntry);
+        assertThat(updatedArguments.get("state")).isEqualTo(singleValueArgumentEntry);
 
         // when
         CalculatedFieldStateProto proto = toProto(stateId, state);
@@ -144,6 +160,8 @@ class CalculatedFieldUtilsTest {
         assertThat(propagationState.getArguments()).isNotNull();
         assertThat(propagationState.getArguments().get(PROPAGATION_CONFIG_ARGUMENT)).isNull();
         assertThat(propagationState.getArguments().get("state")).isNotNull().isEqualTo(singleValueArgumentEntry);
+        assertThat(propagationState.getRequiredArguments()).isNull();
+        assertThat(propagationState.getReadinessStatus()).isNull();
     }
 
 }

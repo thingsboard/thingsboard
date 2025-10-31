@@ -481,6 +481,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                     }
                 }
             } else {
+                if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                    String errorMsg = ctx.isInitialized() ? state.getReadinessStatus().errorMsg() : "Calculated field state is not initialized!";
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null,  errorMsg);
+                }
                 callback.onSuccess();
             }
         } catch (Exception e) {

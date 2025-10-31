@@ -117,7 +117,7 @@ public class PropagationCalculatedFieldStateTest {
     @Test
     void testInitAddsRequiredArgument() {
         initCtxAndState(false);
-        assertThat(state.getRequiredArguments()).containsExactlyInAnyOrder(TEMPERATURE_ARGUMENT_NAME);
+        assertThat(state.getRequiredArguments()).containsExactlyInAnyOrder(TEMPERATURE_ARGUMENT_NAME, PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
@@ -129,24 +129,26 @@ public class PropagationCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenPropagationArgIsNull() {
         initCtxAndState(false);
-        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
+        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
     void testIsReadyWhenPropagationArgIsEmpty() {
         initCtxAndState(false);
-        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
-        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList()));
+        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry,
+                PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
     void testIsReadyWhenPropagationArgHasEntities() {
         initCtxAndState(false);
-        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
-        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry);
+        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry, PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry), ctx);
         assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
 
