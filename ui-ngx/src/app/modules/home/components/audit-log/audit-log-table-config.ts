@@ -25,7 +25,9 @@ import {
   ActionType,
   actionTypeTranslations,
   AuditLog,
-  AuditLogMode
+  AuditLogMode,
+  AuditLogQuery,
+  AuditLogRequestParams
 } from '@shared/models/audit-log.models';
 import {
   AliasEntityType,
@@ -48,6 +50,8 @@ import {
   AuditLogDetailsDialogComponent,
   AuditLogDetailsDialogData
 } from '@home/components/audit-log/audit-log-details-dialog.component';
+import { deepClone, isDefinedAndNotNull } from '@app/core/utils';
+import { AuditLogHeaderComponent } from '@home/components/audit-log/audit-log-header.component';
 
 export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLink> {
 
@@ -71,6 +75,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
     this.searchEnabled = true;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
+    this.headerComponent = AuditLogHeaderComponent;
     this.actionsColumnTitle = 'audit-log.details';
     this.entityTranslations = {
       noEntities: 'audit-log.no-audit-logs-prompt',
@@ -78,6 +83,8 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
     };
     this.entityResources = {
     } as EntityTypeResource<AuditLog>;
+
+    if(!isDefinedAndNotNull(this.componentsData)) this.componentsData = {}
 
     this.entitiesFetchFunction = pageLink => this.fetchAuditLogs(pageLink);
 
@@ -139,15 +146,19 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
   }
 
   fetchAuditLogs(pageLink: TimePageLink): Observable<PageData<AuditLog>> {
+    const auditLogFilter: AuditLogRequestParams = deepClone(this.componentsData?.auditLogFilter) || {};
     switch (this.auditLogMode) {
       case AuditLogMode.TENANT:
-        return this.auditLogService.getAuditLogs(pageLink);
+        return this.auditLogService.getAuditLogs(this.prepareAuditLogQuery(pageLink, auditLogFilter));
       case AuditLogMode.ENTITY:
-        return this.auditLogService.getAuditLogsByEntityId(this.entityId, pageLink);
+        auditLogFilter.id = `${this.entityId.entityType}/${this.entityId.id}`;
+        return this.auditLogService.getAuditLogsByEntityId(this.prepareAuditLogQuery(pageLink, auditLogFilter));
       case AuditLogMode.USER:
-        return this.auditLogService.getAuditLogsByUserId(this.userId.id, pageLink);
+        auditLogFilter.id = this.userId.id;
+        return this.auditLogService.getAuditLogsByUserId(this.prepareAuditLogQuery(pageLink, auditLogFilter));
       case AuditLogMode.CUSTOMER:
-        return this.auditLogService.getAuditLogsByCustomerId(this.customerId.id, pageLink);
+        auditLogFilter.id = this.customerId.id;
+        return this.auditLogService.getAuditLogsByCustomerId(this.prepareAuditLogQuery(pageLink, auditLogFilter));
     }
   }
 
@@ -159,6 +170,10 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
         auditLog: entity
       }
     });
+  }
+
+  prepareAuditLogQuery(pageLink: TimePageLink, auditLogFilter: AuditLogRequestParams): AuditLogQuery {
+    return new AuditLogQuery(pageLink, auditLogFilter);
   }
 
 }
