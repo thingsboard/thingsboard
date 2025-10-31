@@ -20,6 +20,9 @@ import { CustomerId } from './id/customer-id';
 import { EntityId } from './id/entity-id';
 import { UserId } from './id/user-id';
 import { TenantId } from './id/tenant-id';
+import { PageLink } from '@shared/models/page/page-link';
+import { isDefinedAndNotNull } from '@app/core/utils';
+import { StringItemsOption } from '../components/string-items-list.component';
 
 export enum AuditLogMode {
   TENANT,
@@ -131,4 +134,39 @@ export interface AuditLog extends BaseData<AuditLogId> {
   actionData: any;
   actionStatus: ActionStatus;
   actionFailureDetails: string;
+}
+
+
+export interface AuditLogFilter {
+  types?: string[];
+}
+
+export interface AuditLogRequestParams {
+  types?: string[];
+  id?: string;
+}
+
+
+export class AuditLogQuery  {
+
+  pageLink: PageLink;
+  auditLogFilter: AuditLogRequestParams;
+
+  constructor(pageLink: PageLink, auditLogFilter: AuditLogRequestParams) {
+    this.pageLink = pageLink;
+    this.auditLogFilter = auditLogFilter;
+  }
+
+  public toQuery(): string {
+    let query = '';
+    if(isDefinedAndNotNull(this.auditLogFilter.id)) {
+      query += `${this.auditLogFilter.id}`;
+    } 
+    query += this.pageLink.toQuery();
+    if (isDefinedAndNotNull(this.auditLogFilter?.types)) {
+      const types = this.auditLogFilter.types.join(',');
+      query += `&actionTypes=${types}`;
+    }
+    return query;
+  }
 }

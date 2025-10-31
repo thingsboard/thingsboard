@@ -1033,7 +1033,12 @@
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
         "type-timeseries-deleted": "Telemetry deleted",
-        "type-sms-sent": "SMS sent"
+        "type-sms-sent": "SMS sent",
+        "any":"Any",
+        "filter":"Audit Log Filters",
+        "audit-log-filter-title": "Audit Log Filter",
+        "filter-title": "Filter",
+        "filter-type-add": "+ Add type"
     },
     "debug-settings": {
         "label": "Debug Configuration",
