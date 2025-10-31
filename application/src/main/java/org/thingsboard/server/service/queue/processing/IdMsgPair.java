@@ -15,19 +15,9 @@
  */
 package org.thingsboard.server.service.queue.processing;
 
-import lombok.Getter;
+import com.google.protobuf.GeneratedMessageV3;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 
 import java.util.UUID;
 
-public class IdMsgPair<T extends com.google.protobuf.GeneratedMessageV3> {
-    @Getter
-    final UUID uuid;
-    @Getter
-    final TbProtoQueueMsg<T> msg;
-
-    public IdMsgPair(UUID uuid, TbProtoQueueMsg<T> msg) {
-        this.uuid = uuid;
-        this.msg = msg;
-    }
-}
+public record IdMsgPair<T extends GeneratedMessageV3>(UUID uuid, TbProtoQueueMsg<T> msg) {}
