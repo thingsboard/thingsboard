@@ -29,6 +29,9 @@ import {
 import {
   RelatedAggregationArgumentsTableComponent
 } from '@home/components/calculated-fields/components/calculated-field-arguments/related-aggregation-arguments-table.component';
+import {
+  EntityAggregationArgumentsTableComponent
+} from '@home/components/calculated-fields/components/calculated-field-arguments/entity-aggregation-arguments-table.component';
 
 @NgModule({
   imports: [
@@ -39,12 +42,14 @@ import {
     CalculatedFieldArgumentPanelComponent,
     CalculatedFieldArgumentsTableComponent,
     PropagateArgumentsTableComponent,
-    RelatedAggregationArgumentsTableComponent
+    RelatedAggregationArgumentsTableComponent,
+    EntityAggregationArgumentsTableComponent,
   ],
   exports: [
     CalculatedFieldArgumentsTableComponent,
     PropagateArgumentsTableComponent,
-    RelatedAggregationArgumentsTableComponent
+    RelatedAggregationArgumentsTableComponent,
+    EntityAggregationArgumentsTableComponent,
   ]
 })
 export class CalculatedFieldArgumentsTableModule {}

@@ -1057,7 +1057,8 @@
             "script": "Script",
             "geofencing" : "Geofencing",
             "propagation": "Propagation",
-            "related-entities-aggregation": "Related entities aggregation"
+            "related-entities-aggregation": "Related entities aggregation",
+            "entity-aggregation": "Entity aggregation"
         },
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
@@ -1190,6 +1191,37 @@
             "metric-settings": "Metric settings",
             "filter": "Filter",
             "filter-hint": "Enables filtering of entities during aggregation. The filter function must return a boolean value and can use all configured arguments."
+        },
+        "aggregate-interval-type": "Aggregate interval type",
+        "aggregate-interval-value": "Aggregate interval value",
+        "aggregate-interval-value-required": "Aggregate interval value is required",
+        "aggregate-period": {
+            "hour": "Hour",
+            "day": "Day",
+            "week": "Week (Mon - Sun)",
+            "week-sun-sat": "Week (Sun - Sat)",
+            "month": "Month",
+            "year": "Year",
+            "custom": "Custom"
+        },
+        "entity-aggregation": {
+            "argument-hint": "Data will be fetched from selected entity",
+            "argument-setting-hint": "Latest telemetry is the only available argument type for this calculated field",
+            "aggregation-interval": "Aggregation interval",
+            "aggregation-interval-hint": "Defines how often to perform aggregation. Example: every 1 hour aggregates data at 00:00, 01:00, 02:00, etc.",
+            "apply-offset": "Apply offset to aggregation interval",
+            "apply-offset-hint": "Defines how much to shift the start of each aggregation period (e.g., +10 minutes - 00:10, 01:10).",
+            "offset-value": "Offset value",
+            "offset-value-required": "Offset value is required",
+            "wait-delay": "Wait for delayed telemetry",
+            "wait-delay-hint": "Waits for delayed telemetry after the interval ends.",
+            "wait-duration": "Duration",
+            "wait-duration-required": "Duration is required",
+            "wait-duration-hint": "Defines how long to wait for delayed data after the interval ends.",
+            "check-interval": "Check for telemetry every",
+            "check-interval-required": "Check for telemetry every is required",
+            "check-interval-max": "Check interval need be less than the duration",
+            "check-interval-hint": "Defines how often to recheck for late telemetry during the watermark period."
         },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",

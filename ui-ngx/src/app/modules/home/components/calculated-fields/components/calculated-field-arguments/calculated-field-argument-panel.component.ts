@@ -69,6 +69,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() usedArgumentNames: string[];
   @Input() isOutputKey = false;
   @Input() hiddenEntityTypes = false;
+  @Input() hiddenEntityKeyTypes = false;
+  @Input() hiddenDefaultValue = false;
   @Input() defaultValueRequired = false;
   @Input() hint: string;
   @Input() predefinedEntityFilter: EntityFilter;

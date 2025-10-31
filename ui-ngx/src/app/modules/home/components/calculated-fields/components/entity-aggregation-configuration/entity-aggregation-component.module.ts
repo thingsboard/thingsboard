@@ -24,8 +24,8 @@ import {
   CalculatedFieldArgumentsTableModule
 } from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.module';
 import {
-  RelatedEntitiesAggregationComponentComponent
-} from '@home/components/calculated-fields/components/related-entities-aggregation-configuration/related-entities-aggregation-component.component';
+  EntityAggregationComponentComponent
+} from '@home/components/calculated-fields/components/entity-aggregation-configuration/entity-aggregation-component.component';
 import {
   CalculatedFieldMetricsTableModule
 } from '@home/components/calculated-fields/components/metrics/calculated-field-metrics-table.module';
@@ -39,11 +39,11 @@ import {
     CalculatedFieldMetricsTableModule,
   ],
   declarations: [
-    RelatedEntitiesAggregationComponentComponent,
+    EntityAggregationComponentComponent,
   ],
   exports: [
-    RelatedEntitiesAggregationComponentComponent,
+    EntityAggregationComponentComponent,
   ]
 })
-export class RelatedEntitiesAggregationComponentModule {
+export class EntityAggregationComponentModule {
 }
