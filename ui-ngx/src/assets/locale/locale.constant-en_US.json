@@ -2831,7 +2831,7 @@
         "target-entity": "Target entity",
         "attributes-propagation": "Attributes propagation",
         "attributes-propagation-hint": "Entity View will automatically copy specified attributes from Target Entity each time you save or update this entity view. For performance reasons target entity attributes are not propagated to entity view on each attribute change. You can enable automatic propagation by configuring \"copy to view\" rule node in your rule chain and linking \"Post attributes\" and \"Attributes Updated\" messages to the new rule node.",
-        "timeseries-data": "Times eries data",
+        "timeseries-data": "Time series data",
         "timeseries-data-hint": "Configure time series data keys of the target entity that will be accessible to the entity view. This time series data is read-only.",
         "search": "Search entity views",
         "selected-entity-views": "{ count, plural, =1 {1 entity view} other {# entity views} } selected",
