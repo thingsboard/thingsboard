@@ -15,8 +15,10 @@
  */
 package org.thingsboard.rule.engine.transform;
 
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -35,6 +37,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -54,21 +57,24 @@ import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
-import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Collections;
 import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.ALARM_ORIGINATOR;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.CUSTOMER;
 import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
@@ -93,16 +99,23 @@ public class TbChangeOriginatorNodeTest {
     @Mock
     private AssetService assetServiceMock;
     @Mock
-    private DeviceService deviceServiceMock;
-    @Mock
     private RelationService relationServiceMock;
     @Mock
     private RuleEngineAlarmService alarmServiceMock;
+    @Mock
+    private EntityService entityServiceMock;
 
     @BeforeEach
-    public void before() throws TbNodeException {
+    public void setup() {
         node = new TbChangeOriginatorNode();
         config = new TbChangeOriginatorNodeConfiguration().defaultConfiguration();
+
+        lenient().when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        lenient().when(ctxMock.getAssetService()).thenReturn(assetServiceMock);
+        lenient().when(ctxMock.getRelationService()).thenReturn(relationServiceMock);
+        lenient().when(ctxMock.getAlarmService()).thenReturn(alarmServiceMock);
+        lenient().when(ctxMock.getEntityService()).thenReturn(entityServiceMock);
     }
 
     @Test
@@ -172,8 +185,13 @@ public class TbChangeOriginatorNodeTest {
     }
 
     @Test
-    public void givenOriginatorSourceIsCustomer_whenOnMsg_thenTellSuccess() throws TbNodeException {
-        Device device = new Device(DEVICE_ID);
+    @DisplayName("""
+            Given a device assigned to a customer and node configured to change originator to customer,
+            when processing the message,
+            then should change message originator from device to customer""")
+    public void givenDeviceAssignedToCustomer_whenProcessingMessage_thenChangesOriginatorToCustomer() throws TbNodeException {
+        // GIVEN
+        var device = new Device(DEVICE_ID);
         device.setCustomerId(CUSTOMER_ID);
 
         TbMsg msg = TbMsg.newMsg()
@@ -186,16 +204,52 @@ public class TbChangeOriginatorNodeTest {
                 .originator(CUSTOMER_ID)
                 .build();
 
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getDeviceService()).willReturn(deviceServiceMock);
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
-        given(deviceServiceMock.findDeviceById(any(TenantId.class), any(DeviceId.class))).willReturn(device);
+        given(entityServiceMock.fetchEntityCustomerIdAsync(TENANT_ID, device.getId())).willReturn(
+                FluentFuture.from(immediateFuture(Optional.of(CUSTOMER_ID)))
+        );
+
         given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // WHEN
         node.onMsg(ctxMock, msg);
 
-        then(deviceServiceMock).should().findDeviceById(TENANT_ID, DEVICE_ID);
+        // THEN
+        then(ctxMock).should().transformMsgOriginator(msg, CUSTOMER_ID);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    @Test
+    @DisplayName("""
+            Given a customer as message originator and node configured to change originator to customer,
+            when processing the message,
+            then should keep the customer as originator""")
+    public void givenCustomerAsOriginator_whenProcessingMessage_thenKeepsCustomerAsOriginator() throws TbNodeException {
+        // GIVEN
+        var customer = new Customer(CUSTOMER_ID);
+
+        var msg = TbMsg.newMsg()
+                .type(TbMsgType.POST_TELEMETRY_REQUEST)
+                .originator(customer.getId())
+                .metaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+
+        var expectedMsg = msg.transform()
+                .originator(CUSTOMER_ID)
+                .build();
+
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // WHEN
+        node.onMsg(ctxMock, msg);
+
+        // THEN
         then(ctxMock).should().transformMsgOriginator(msg, CUSTOMER_ID);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
@@ -216,8 +270,6 @@ public class TbChangeOriginatorNodeTest {
                 .originator(TENANT_ID)
                 .build();
 
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -240,9 +292,6 @@ public class TbChangeOriginatorNodeTest {
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getRelationService()).willReturn(relationServiceMock);
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(relationServiceMock.findByQuery(any(TenantId.class), any(EntityRelationsQuery.class))).willReturn(Futures.immediateFuture(Collections.emptyList()));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -282,9 +331,6 @@ public class TbChangeOriginatorNodeTest {
                 .originator(DEVICE_ID)
                 .build();
 
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(alarmServiceMock.findAlarmByIdAsync(any(TenantId.class), any(AlarmId.class))).willReturn(Futures.immediateFuture(alarm));
         given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
 
@@ -315,9 +361,6 @@ public class TbChangeOriginatorNodeTest {
                 .originator(ASSET_ID)
                 .build();
 
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(assetServiceMock.findAssetByTenantIdAndName(any(TenantId.class), any(String.class))).willReturn(new Asset(ASSET_ID));
         given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
 
@@ -355,9 +398,6 @@ public class TbChangeOriginatorNodeTest {
                 .data(TbMsg.EMPTY_JSON_OBJECT)
                 .build();
 
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
-        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
         given(assetServiceMock.findAssetByTenantIdAndName(any(TenantId.class), any(String.class))).willReturn(null);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
