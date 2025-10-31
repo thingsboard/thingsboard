@@ -9207,7 +9207,11 @@
             "alarm-column-error": "At least one alarm column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode",
-            "disable-sorting": "Disable sorting"
+            "disable-sorting": "Disable sorting",
+            "sort-by": "Sort tabs by",
+            "sort-asc": "Name Ascending",
+            "sort-desc": "Name Descending",
+            "sort-timestamp-option": "Created time"
         },
         "latest-chart": {
             "total": "Total",
