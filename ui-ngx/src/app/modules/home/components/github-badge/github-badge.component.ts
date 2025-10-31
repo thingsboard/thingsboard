@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { AdminService } from '@core/http/admin.service';
+import { GitHubService } from '@core/http/git-hub.service';
 
 @Component({
   selector: 'tb-github-badge',
@@ -26,8 +26,8 @@ export class GithubBadgeComponent {
 
   githubStar = 0;
 
-  constructor(private adminService: AdminService) {
-    this.adminService.getGitHubStar().subscribe(star => {
+  constructor(private gitHubService: GitHubService) {
+    this.gitHubService.getGitHubStar().subscribe(star => {
       this.githubStar = star;
     });
   }
