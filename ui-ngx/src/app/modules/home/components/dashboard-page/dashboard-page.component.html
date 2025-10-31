@@ -73,9 +73,8 @@
               <mat-icon>layers</mat-icon>
               {{'dashboard.states-short' | translate}}
             </button>
-        </ng-container>
-          <img *ngIf="showDashboardLogo()" [src]="dashboardLogo | image | async"
-               aria-label="dashboard_logo" class="dashboard_logo"/>
+          </ng-container>
+          <tb-logo *ngIf="showDashboardLogo()" [link]="dashboardLogoLink" [src]="dashboardLogo | image | async" class="dashboard_logo"></tb-logo>
         </div>
         <div class="tb-dashboard-action-panel">
           <button [class.!hidden]="!showCloseToolbar()" mat-icon-button class="close-action"
