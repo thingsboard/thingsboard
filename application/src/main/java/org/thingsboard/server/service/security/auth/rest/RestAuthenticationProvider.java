@@ -44,6 +44,7 @@ import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
+import org.thingsboard.server.service.security.auth.MfaConfigurationToken;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
 import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -102,8 +103,10 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
             }
 
             securityUser = authenticateByUsernameAndPassword(authentication, userPrincipal, username, password);
-            if (twoFactorAuthService.isTwoFaEnabled(securityUser.getTenantId(), securityUser.getId())) {
+            if (twoFactorAuthService.isTwoFaEnabled(securityUser.getTenantId(), securityUser)) {
                 return new MfaAuthenticationToken(securityUser);
+            } else if (twoFactorAuthService.isEnforceTwoFaEnabled(securityUser.getTenantId(), securityUser)) {
+                return new MfaConfigurationToken(securityUser);
             } else {
                 systemSecurityService.logLoginAction(securityUser, authentication.getDetails(), ActionType.LOGIN, null);
             }

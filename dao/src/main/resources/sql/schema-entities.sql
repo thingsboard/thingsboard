@@ -717,7 +717,7 @@ CREATE TABLE IF NOT EXISTS api_key (
     value varchar(512),
     enabled boolean NOT NULL DEFAULT TRUE,
     expiration_time bigint DEFAULT 0,
-    description varchar(1024),
+    description varchar(255),
     CONSTRAINT api_key_value_unq_key UNIQUE (value)
 );
 

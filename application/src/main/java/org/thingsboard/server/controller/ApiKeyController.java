@@ -63,7 +63,7 @@ public class ApiKeyController extends BaseController {
     private final ApiKeyService apiKeyService;
 
     @ApiOperation(value = "Save API key for user (saveApiKey)",
-            notes = "Creates an API key for the given user and returns the token ONCE as 'ApiKey <hash>'." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+            notes = "Creates an API key for the given user and returns the token ONCE as 'ApiKey <value>'." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping(value = "/apiKey")
     public ApiKey saveApiKey(

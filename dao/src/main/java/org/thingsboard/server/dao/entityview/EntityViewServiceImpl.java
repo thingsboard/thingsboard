@@ -124,7 +124,7 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
 
     private EntityView saveEntityView(EntityView entityView, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing save entity view [{}]", entityView);
-        EntityView old = (entityView.getId() != null) ? findEntityViewById(entityView.getTenantId(), entityView.getId(), false) : null;
+        EntityView old = (entityView.getId() != null) ? entityViewDao.findById(entityView.getTenantId(), entityView.getId().getId()) : null;
         if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (old == null || !entityView.getName().equals(old.getName()))) {
             uniquifyEntityName(entityView, old, entityView::setName, EntityType.ENTITY_VIEW, nameConflictStrategy);
         }
