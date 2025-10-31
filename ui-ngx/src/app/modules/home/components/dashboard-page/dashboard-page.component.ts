@@ -272,7 +272,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     {width: '100%', height: '100%', maxWidth: '100%', minWidth: '100%'};
   rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
 
-  dashboardLogoUrl = this.getDashboardLogoUrl();
+  dashboardLogoLink = this.getDashboardLogoLink();
 
   private dashboardLogoCache: SafeUrl;
   private defaultDashboardLogo = 'assets/logo_title_white.svg';
@@ -1829,7 +1829,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return false;
   }
 
-  private getDashboardLogoUrl(): UrlTree {
+  private getDashboardLogoLink(): UrlTree {
     return this.forceFullscreen ? null : this.router.createUrlTree([], {relativeTo: this.route});
   }
 }

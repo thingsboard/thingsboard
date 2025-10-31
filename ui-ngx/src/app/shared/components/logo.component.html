@@ -20,12 +20,12 @@
     <ng-container *ngTemplateOutlet="logo"></ng-container>
   </a>
 } @else {
-  <a [routerLink]="logoUrl">
+  <a [routerLink]="link">
     <ng-container *ngTemplateOutlet="logo"></ng-container>
   </a>
 }
 
 <ng-template #logo>
-  <img [src]="logoSrc" aria-label="logo" alt="Logo"/>
+  <img [src]="src" aria-label="logo" alt="Logo"/>
 </ng-template>
 

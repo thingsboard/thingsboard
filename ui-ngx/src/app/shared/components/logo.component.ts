@@ -35,19 +35,19 @@ export class LogoComponent implements OnInit {
   isLogin: boolean = false;
 
   @Input()
-  logoSrc: string | UrlHolder = 'assets/logo_title_white.svg';
+  src: string | UrlHolder = 'assets/logo_title_white.svg';
 
   @Input()
-  logoUrl: string | UrlTree;
+  link: string | UrlTree;
 
   constructor(private authService: AuthService,
               private store: Store<AppState>) {
   }
 
   ngOnInit() {
-    if (!this.isLogin && !this.logoUrl) {
+    if (!this.isLogin && !this.link) {
       const authState = getCurrentAuthState(this.store);
-      this.logoUrl = this.authService.defaultUrl(true, authState);
+      this.link = this.authService.defaultUrl(true, authState);
     }
   }
 }
