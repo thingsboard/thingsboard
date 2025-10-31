@@ -127,7 +127,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertArrayEquals(resource.getData(), download(savedResource.getId()));
 
         String resourceTitle = "My new resource";
-        savedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/title", resourceTitle, TbResourceInfo.class);
+        savedResource.setTitle(resourceTitle);
+        savedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", savedResource, TbResourceInfo.class);
         assertThat(savedResource.getTitle()).isEqualTo(resourceTitle);
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedResource, savedResource.getId(), savedResource.getId(),
@@ -856,7 +857,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString("can't be updated")));
 
         String resourceTitle = "Updated resource";
-        savedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/title", resourceTitle, TbResourceInfo.class);
+        savedResource.setTitle(resourceTitle);
+        savedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", savedResource, TbResourceInfo.class);
         assertThat(savedResource.getTitle()).isEqualTo(resourceTitle);
         assertThat(savedResource.getFileName()).isEqualTo(resource.getFileName());
         assertThat(savedResource.getEtag()).isEqualTo(resource.getEtag());
@@ -921,18 +923,14 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         byte[] data = tbResource.getData() != null ? tbResource.getData() : tbResource.getEncodedData() != null ? Base64.getDecoder().decode(tbResource.getEncodedData()) : null;
         List<MockPart> parts = new ArrayList<>();
         parts.add(new MockPart("resourceType", tbResource.getResourceType().name().getBytes()));
-
-        if (tbResource.getId() != null) {
-            parts.add(new MockPart("resourceId", tbResource.getId().getId().toString().getBytes()));
-        }
         if (tbResource.getTitle() != null) {
             parts.add(new MockPart("title", tbResource.getTitle().getBytes()));
         }
         if (tbResource.getDescriptor() != null) {
             parts.add(new MockPart("descriptor", tbResource.getDescriptor().toString().getBytes()));
         }
-        if (tbResource.getSearchText() != null) {
-            parts.add(new MockPart("searchText", tbResource.getSearchText().getBytes()));
+        if (tbResource.getResourceSubType() != null) {
+            parts.add(new MockPart("resourceSubType", tbResource.getResourceSubType().name().getBytes()));
         }
 
         return uploadResource(HttpMethod.POST, "/api/resource/upload", tbResource.getFileName(), tbResource.getResourceType().getMediaType(), data, parts);
