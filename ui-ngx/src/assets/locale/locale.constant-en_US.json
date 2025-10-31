@@ -9742,6 +9742,7 @@
         "items-per-page-separator": "of"
     },
     "language": {
+        "auto": "Auto",
         "language": "Language",
         "locales": {
             "ar_AE": "العربية (الإمارات العربية المتحدة)",
