@@ -121,10 +121,6 @@ public class LwM2MTransportUtil {
         }
     }
 
-    public static List<LwM2MBootstrapServerCredential> getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
-        return toLwM2MClientProfile(deviceProfile).getBootstrap();
-    }
-
     public static String fromVersionedIdToObjectId(String pathIdVer) {
         try {
             if (pathIdVer == null) {
@@ -397,13 +393,6 @@ public class LwM2MTransportUtil {
         } else {
             serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
         }
-    }
-
-    public static int calculateSzx(int size) {
-        if (size < 16 || size > 1024 || (size & (size - 1)) != 0) {
-            throw new IllegalArgumentException("Size must be a power of 2 between 16 and 1024.");
-        }
-        return (int) (Math.log(size / 16) / Math.log(2));
     }
 
     public static ConcurrentHashMap<Integer, String[]> groupByObjectIdVersionedIds(Set<String> targetIds) {

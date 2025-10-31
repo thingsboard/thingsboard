@@ -34,21 +34,15 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FIRMWARE_UPDATE_COAP_RESOURCE;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SOFTWARE_UPDATE_COAP_RESOURCE;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.calculateSzx;
 
 @Slf4j
 public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
-    private final ConcurrentMap<String, ObserveRelation> tokenToObserveRelationMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, AtomicInteger> tokenToObserveNotificationSeqMap = new ConcurrentHashMap<>();
     private final OtaPackageDataCache otaPackageDataCache;
-    private final int chunkSize;
-    private final int maxResourceBodySize;
 
-    public LwM2mTransportCoapResource(OtaPackageDataCache otaPackageDataCache, String name, int chunkSize, int maxResourceBodySize) {
+    public LwM2mTransportCoapResource(OtaPackageDataCache otaPackageDataCache, String name) {
         super(name);
         this.otaPackageDataCache = otaPackageDataCache;
-        this.chunkSize = chunkSize;
-        this.maxResourceBodySize = maxResourceBodySize;
         this.setObservable(true); // enable observing
         this.addObserver(new CoapResourceObserver());
     }
@@ -141,29 +135,23 @@ public class LwM2mTransportCoapResource extends AbstractLwM2mTransportResource {
         String idStr = exchange.getRequestOptions().getUriPath().get(exchange.getRequestOptions().getUriPath().size() - 1
         );
         UUID currentId = UUID.fromString(idStr);
-        log.info("Start Read ota data (path): [{}]", exchange.getRequestOptions().getUriPath().toString());
         Response response = new Response(CoAP.ResponseCode.CONTENT);
         byte[] otaData = this.getOtaData(currentId);
         if (otaData != null && otaData.length > 0) {
-            if (otaData.length <= this.maxResourceBodySize) {
-                log.info("Read ota data (length): [{}]", otaData.length);
-                response.setPayload(otaData);
-                int chunkSize = calculateSzx(this.chunkSize);
-                if (exchange.getRequestOptions().hasBlock2()) {
-                    chunkSize = exchange.getRequestOptions().getBlock2().getSzx();
-                } else if (exchange.getRequestOptions().hasBlock1()) {
-                    chunkSize = exchange.getRequestOptions().getBlock1().getSzx();
-                }
-                log.info("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], moreFlag [{}]", currentId.toString(), otaData.length, chunkSize, false);
-                boolean lastFlag = otaData.length <= this.chunkSize;
-                response.getOptions().setBlock2(chunkSize, lastFlag, 0);
-                response.setType(CoAP.Type.CON);
-                exchange.respond(response);
+            log.debug("Read ota data (length): [{}]", otaData.length);
+            response.setPayload(otaData);
+            if (exchange.getRequestOptions().getBlock2() != null) {
+                int szx = exchange.getRequestOptions().getBlock2().getSzx();
+                int chunkSize = exchange.getRequestOptions().getBlock2().getSize();
+                boolean lastFlag = otaData.length <= chunkSize;
+                response.getOptions().setBlock2(szx, lastFlag, 0);
+                log.trace("With block2 Send currentId: [{}], length: [{}], chunkSize [{}], szx [{}], moreFlag [{}]", currentId, otaData.length, chunkSize, szx, lastFlag);
             } else {
-                log.info("Ota package size: [{}] is larger than server's MAX_RESOURCE_BODY_SIZE [{}]", otaData.length, this.maxResourceBodySize);
+                log.trace("With block1 Send currentId: [{}], length: [{}], ", currentId, otaData.length);
             }
+            exchange.respond(response);
         } else {
-            log.info("Ota packaged currentId: [{}] is not found.", currentId.toString());
+            log.trace("Ota packaged currentId: [{}] is not found.", currentId);
         }
     }
 
