@@ -67,10 +67,17 @@ public class CalculatedFieldArgumentUtils {
         return ArgumentEntry.createTsRollingArgument(tsRolling, limit, argTimeWindow);
     }
 
-    public static ArgumentEntry transformAggregationArgument(List<TsKvEntry> telemetry, long startIntervalTs, long endIntervalTs) {
+    public static ArgumentEntry transformAggMetricArgument(List<TsKvEntry> timeSeries) {
+        if (timeSeries == null || timeSeries.isEmpty()) {
+            return new SingleValueArgumentEntry();
+        }
+        return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
+    }
+
+    public static ArgumentEntry transformAggregationArgument(List<TsKvEntry> timeSeries, long startIntervalTs, long endIntervalTs) {
         Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals = new HashMap<>();
         AggIntervalEntry aggIntervalEntry = new AggIntervalEntry(startIntervalTs, endIntervalTs);
-        if (telemetry == null || telemetry.isEmpty()) {
+        if (timeSeries == null || timeSeries.isEmpty()) {
             aggIntervals.put(aggIntervalEntry, new AggIntervalEntryStatus());
         } else {
             aggIntervals.put(aggIntervalEntry, new AggIntervalEntryStatus(System.currentTimeMillis()));

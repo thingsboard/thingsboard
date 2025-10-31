@@ -24,6 +24,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -113,8 +114,8 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public ArgumentEntry fetchMetricDuringInterval(EntityId entityId, AggIntervalEntry interval, String metricName, CalculatedFieldCtx ctx) throws Exception {
-        return super.fetchMetricDuringInterval(entityId, interval, metricName, ctx);
+    public ArgumentEntry fetchMetricDuringInterval(TenantId tenantId, EntityId entityId, String argKey, AggMetric metric, AggIntervalEntry interval) {
+        return super.fetchMetricDuringInterval(tenantId, entityId, argKey, metric, interval);
     }
 
     @Override

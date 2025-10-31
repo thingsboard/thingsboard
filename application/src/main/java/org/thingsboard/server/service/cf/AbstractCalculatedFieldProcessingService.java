@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
@@ -54,6 +53,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.utils.CalculatedFieldArgumentUtils;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -145,14 +145,14 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 ));
     }
 
-    protected ArgumentEntry resolveArgumentValue(String argName, ListenableFuture<ArgumentEntry> future) {
+    protected ArgumentEntry resolveArgumentValue(String key, ListenableFuture<ArgumentEntry> future) {
         try {
             return future.get();
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            throw new RuntimeException("Failed to fetch " + argName + ": " + cause.getMessage(), cause);
+            throw new RuntimeException("Failed to fetch " + key + ": " + cause.getMessage(), cause);
         } catch (InterruptedException e) {
-            throw new RuntimeException("Failed to fetch" + argName, e);
+            throw new RuntimeException("Failed to fetch" + key, e);
         }
     }
 
@@ -298,30 +298,12 @@ public abstract class AbstractCalculatedFieldProcessingService {
         };
     }
 
-    protected ArgumentEntry fetchMetricDuringInterval(EntityId entityId, AggIntervalEntry interval, String metricName, CalculatedFieldCtx ctx) throws Exception {
-        var config = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-
-        AggMetric metric = config.getMetrics().get(metricName);
+    protected ArgumentEntry fetchMetricDuringInterval(TenantId tenantId, EntityId entityId, String argKey, AggMetric metric, AggIntervalEntry interval) {
         AggFunction function = metric.getFunction();
-
-        AggKeyInput input = (AggKeyInput) metric.getInput();
-        String argName = input.getKey();
-        Argument argument = ctx.getArguments().get(argName);
-        String key = argument.getRefEntityKey().getKey();
-
         long intervalMs = interval.getEndTs() - interval.getStartTs();
-        BaseReadTsKvQuery query = new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), intervalMs, 1, Aggregation.valueOf(function.name()));
-        log.trace("[{}][{}] Fetching timeseries for query {}", ctx.getTenantId(), entityId, query);
-        ListenableFuture<List<TsKvEntry>> tsFuture = timeseriesService.findAll(ctx.getTenantId(), entityId, List.of(query));
-        ListenableFuture<ArgumentEntry> argumentEntryFut = Futures.transform(tsFuture, timeSeries -> {
-            log.debug("[{}][{}] Fetched {} timeseries for query {}", ctx.getTenantId(), entityId, timeSeries == null ? 0 : timeSeries.size(), query);
-            if (timeSeries == null || timeSeries.isEmpty()) {
-                return new SingleValueArgumentEntry();
-            }
-            return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
-        }, calculatedFieldCallbackExecutor);
-
-        return resolveArgumentValue(argName, argumentEntryFut);
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(argKey, interval.getStartTs(), interval.getEndTs(), intervalMs, 1, Aggregation.valueOf(function.name()));
+        ListenableFuture<ArgumentEntry> argumentEntryFut = fetchTimeSeriesInternal(tenantId, entityId, query, CalculatedFieldArgumentUtils::transformAggMetricArgument);
+        return resolveArgumentValue(argKey, argumentEntryFut);
     }
 
     private ListenableFuture<ArgumentEntry> fetchTimeSeries(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval, long queryEndTs) {

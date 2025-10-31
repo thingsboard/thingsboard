@@ -18,6 +18,7 @@ package org.thingsboard.server.service.cf;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,7 +39,7 @@ public interface CalculatedFieldProcessingService {
 
     Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments);
 
-    ArgumentEntry fetchMetricDuringInterval(EntityId entityId, AggIntervalEntry interval, String argName, CalculatedFieldCtx ctx) throws Exception;
+    ArgumentEntry fetchMetricDuringInterval(TenantId tenantId, EntityId entityId, String argKey, AggMetric metric, AggIntervalEntry interval);
 
     void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback);
 

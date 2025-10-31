@@ -120,11 +120,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
-        for (Map.Entry<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> entry : intervals.entrySet()) {
-            AggIntervalEntry intervalEntry = entry.getKey();
-            Map<String, AggIntervalEntryStatus> args = entry.getValue();
-            processInterval(now, intervalEntry, args, expiredIntervals, results);
-        }
+        intervals.forEach((intervalEntry, argIntervalStatuses) -> {
+            processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
+        });
         expiredIntervals.forEach(intervals::remove);
 
         ArrayNode result = toResult(results);
@@ -165,7 +163,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                                  AggIntervalEntry intervalEntry,
                                  Map<String, AggIntervalEntryStatus> args,
                                  List<AggIntervalEntry> expiredIntervals,
-                                 Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
+                                 Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         long startTs = intervalEntry.getStartTs();
         long endTs = intervalEntry.getEndTs();
 
@@ -179,37 +177,35 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
     private void handleExpiredInterval(AggIntervalEntry intervalEntry,
                                        Map<String, AggIntervalEntryStatus> args,
-                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
-        for (Map.Entry<String, AggIntervalEntryStatus> argStatus : args.entrySet()) {
-            String argName = argStatus.getKey();
-            AggIntervalEntryStatus argEntryIntervalStatus = argStatus.getValue();
+                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
+        args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
                 processMetric(intervalEntry, argName, results);
             }
-        }
+        });
     }
 
     private void handleActiveInterval(AggIntervalEntry intervalEntry,
                                       Map<String, AggIntervalEntryStatus> args,
-                                      Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
-        for (Map.Entry<String, AggIntervalEntryStatus> argStatus : args.entrySet()) {
-            String argName = argStatus.getKey();
-            AggIntervalEntryStatus argEntryIntervalStatus = argStatus.getValue();
+                                      Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
+        args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.shouldRecalculate(checkInterval)) {
                 processMetric(intervalEntry, argName, results);
                 ctx.scheduleReevaluation(checkInterval, actorCtx);
             }
-        }
+        });
     }
 
     private void processMetric(AggIntervalEntry intervalEntry,
                                String argName,
-                               Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) throws Exception {
+                               Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         String metricName = findMetricName(argName);
         if (metricName != null) {
-            ArgumentEntry metric = cfProcessingService.fetchMetricDuringInterval(entityId, intervalEntry, metricName, ctx);
-            if (!metric.isEmpty()) {
-                results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metric);
+            AggMetric metric = metrics.get(metricName);
+            String argKey = ctx.getArguments().get(argName).getRefEntityKey().getKey();
+            ArgumentEntry metricEntry = cfProcessingService.fetchMetricDuringInterval(ctx.getTenantId(), entityId, argKey, metric, intervalEntry);
+            if (!metricEntry.isEmpty()) {
+                results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metricEntry);
             }
         }
     }
