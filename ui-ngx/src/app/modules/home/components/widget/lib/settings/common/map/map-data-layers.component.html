@@ -29,8 +29,13 @@
       <div *ngIf="dataLayerType === 'circles'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.circle.circle-key</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
-    <div *ngIf="dataLayersFormArray().controls.length; else noDataLayers" class="tb-form-table-body">
-      <div *ngFor="let dataLayerControl of dataLayersFormArray().controls; trackBy: trackByDataLayer; let $index = index;">
+    <div *ngIf="dataLayersFormArray().controls.length; else noDataLayers" class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"
+         cdkDropList cdkDropListOrientation="vertical"
+         [cdkDropListDisabled]="!dragEnabled"
+         (cdkDropListDropped)="layerDrop($event)">
+      <div cdkDrag [cdkDragDisabled]="!dragEnabled"
+           class="tb-draggable-form-table-row" 
+           *ngFor="let dataLayerControl of dataLayersFormArray().controls; trackBy: trackByDataLayer; let $index = index;">
         <tb-map-data-layer-row class="flex-1"
                                [mapType]="mapType"
                                [dataLayerType]="dataLayerType"
@@ -38,6 +43,16 @@
                                [formControl]="dataLayerControl"
                                (dataLayerRemoved)="removeDataLayer($index)">
         </tb-map-data-layer-row>
+        <div class="tb-form-table-row-cell-buttons">
+          <button [class.tb-hidden]="!dragEnabled"
+                  mat-icon-button
+                  type="button"
+                  cdkDragHandle
+                  matTooltip="{{ 'action.drag' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>drag_indicator</mat-icon>
+          </button>
+        </div>
       </div>
     </div>
   </div>
