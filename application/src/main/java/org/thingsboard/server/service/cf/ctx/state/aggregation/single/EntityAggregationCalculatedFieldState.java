@@ -123,7 +123,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         intervals.forEach((intervalEntry, argIntervalStatuses) -> {
             processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
-        expiredIntervals.forEach(intervals::remove);
+        removeExpiredIntervals(expiredIntervals);
 
         ArrayNode result = toResult(results);
         if (result.isEmpty()) {
@@ -143,6 +143,15 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             argEntry.getAggIntervals().forEach((intervalEntry, status) ->
                     intervals.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, status)
             );
+        });
+    }
+
+    private void removeExpiredIntervals(List<AggIntervalEntry> expiredIntervals) {
+        expiredIntervals.forEach(expiredInterval -> {
+            arguments.values().stream()
+                    .map(EntityAggregationArgumentEntry.class::cast)
+                    .forEach(arg -> arg.getAggIntervals().remove(expiredInterval));
+            intervals.remove(expiredInterval);
         });
     }
 
