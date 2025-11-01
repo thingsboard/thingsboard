@@ -17,6 +17,11 @@
 .calculated-field-dialog-container {
   width: 869px;
   max-width: 100%;
+  display: grid;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+  --mdc-outlined-text-field-outline-color: rgba(0,0,0,0.12);
+  --mdc-outlined-text-field-container-shape: 6px;
+  --mat-form-field-trailing-icon-color: rgba(0, 0, 0, 0.56);
 }
 
 .tbel-script-lang-chip {

@@ -299,13 +299,16 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     }
 
     @Override
-    public List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery query) {
+    public List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery query, int limit) {
         List<RelationPathLevel> levels = query.levels();
         if (levels == null || levels.isEmpty()) {
-            return Collections.emptyList();
+            return List.of();
+        }
+        if (limit <= 0) {
+            return List.of();
         }
         String sql = buildRelationPathSql(query);
-        Object[] params = buildRelationPathParams(query);
+        Object[] params = buildRelationPathParams(query, limit);
 
         log.trace("[{}] relation path query: {}", tenantId, sql);
 
@@ -330,7 +333,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                 .collect(Collectors.toList());
     }
 
-    private Object[] buildRelationPathParams(EntityRelationPathQuery query) {
+    private Object[] buildRelationPathParams(EntityRelationPathQuery query, int limit) {
         final List<Object> params = new ArrayList<>();
         // seed
         params.add(query.rootEntityId().getId());
@@ -340,6 +343,10 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
         for (var lvl : query.levels()) {
             params.add(lvl.relationType());
         }
+
+        // limit
+        params.add(limit);
+
         return params.toArray();
     }
 
@@ -387,7 +394,8 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                 .append("FROM ").append(RELATION_TABLE_NAME).append(" r\n")
                 .append("JOIN ").append(prevForLast).append(" p ON ").append(lastJoin).append("\n")
                 .append("WHERE r.relation_type_group = '").append(RelationTypeGroup.COMMON).append("'\n")
-                .append("  AND r.relation_type = ?");
+                .append("  AND r.relation_type = ?\n")
+                .append("LIMIT ?");
 
         return sb.toString();
     }

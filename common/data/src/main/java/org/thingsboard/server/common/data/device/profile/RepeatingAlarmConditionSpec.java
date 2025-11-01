@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class RepeatingAlarmConditionSpec implements AlarmConditionSpec {
 
     private FilterPredicateValue<Integer> predicate;

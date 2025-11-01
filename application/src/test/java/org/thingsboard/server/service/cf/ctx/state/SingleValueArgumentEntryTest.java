@@ -58,6 +58,11 @@ public class SingleValueArgumentEntryTest {
     }
 
     @Test
+    void testUpdateEntryWithTheSameTsAndDifferentVersion() {
+        assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts, new LongDataEntry("key", 13L), 364L))).isTrue();
+    }
+
+    @Test
     void testUpdateEntryWhenNewVersionIsNull() {
         assertThat(entry.updateEntry(new SingleValueArgumentEntry(ts + 16, new LongDataEntry("key", 13L), null))).isTrue();
         assertThat(entry.getValue()).isEqualTo(13L);
@@ -115,4 +120,5 @@ public class SingleValueArgumentEntryTest {
         expectedList.add(Map.of("test2", 20));
         assertThat(singleValueArg.getValue()).isEqualTo(expectedList);
     }
+
 }

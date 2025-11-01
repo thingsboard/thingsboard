@@ -17,14 +17,15 @@ package org.thingsboard.server.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeEach;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
@@ -69,15 +71,10 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     public static final int TIMEOUT = 60;
     public static final int POLL_INTERVAL = 1;
 
-    @BeforeEach
-    void setUp() throws Exception {
-        loginTenantAdmin();
-    }
-
     @Test
     public void testSimpleCalculatedFieldWhenAllTelemetryPresent() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":25}"));
+        postTelemetry(testDevice.getId(), "{\"temperature\":25}");
         doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/attributes/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"deviceTemperature\":40}"));
 
         CalculatedField calculatedField = new CalculatedField();
@@ -114,7 +111,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("77.0");
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+        postTelemetry(testDevice.getId(), "{\"temperature\":30}");
 
         await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -135,6 +132,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .untilAsserted(() -> {
                     ArrayNode temperatureF = getServerAttributes(testDevice.getId(), "temperatureF");
                     assertThat(temperatureF).isNotNull();
+                    assertThat(temperatureF.get(0)).isNotNull();
                     assertThat(temperatureF.get(0).get("value").asText()).isEqualTo("86.0");
                 });
 
@@ -199,7 +197,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+        postTelemetry(testDevice.getId(), "{\"temperature\":30}");
 
         await().alias("update telemetry -> perform calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -248,7 +246,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("53.6");
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+        postTelemetry(testDevice.getId(), "{\"temperature\":30}");
 
         await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -433,7 +431,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     @Test
     public void testSimpleCalculatedFieldWhenExpressionIsInvalid() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":25}"));
+        postTelemetry(testDevice.getId(), "{\"temperature\":25}");
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
@@ -469,7 +467,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").isNull()).isTrue();
                 });
 
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"temperature\":30}"));
+        postTelemetry(testDevice.getId(), "{\"temperature\":30}");
 
         await().alias("update telemetry -> ctx is not initialized -> no calculation perform").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -484,7 +482,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     public void testSimpleCalculatedFieldWhenUseLatestTsIsTrue() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis() - 300000L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts));
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
@@ -528,10 +526,10 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         long ts = System.currentTimeMillis();
 
         long tsA = ts - 300000L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":1}}", tsA)));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"a\":1}}", tsA));
 
         long tsB = ts - 300L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"b\":5}}", tsB)));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"b\":5}}", tsB));
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
@@ -572,7 +570,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 });
 
         long tsABeforeTsB = tsB - 300L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"a\":10}}", tsABeforeTsB)));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"a\":10}}", tsABeforeTsB));
 
         await().alias("update telemetry with ts less than latest -> save result with latest ts").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -588,7 +586,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     public void testScriptCalculatedFieldWhenUsedLatestTsInScript() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         long ts = System.currentTimeMillis() - 300000L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
+        postTelemetry(testDevice.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts));
 
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
@@ -999,6 +997,166 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     Map<String, String> m = kv(attrs);
                     assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
                             .containsEntry("allowedZonesStatus", "INSIDE");
+                });
+    }
+
+    @Test
+    public void testPropagationCalculatedField_withExpression() throws Exception {
+        // --- Arrange entities ---
+        Device device = createDevice("Propagation Device With Expression", "sn-prop-1");
+        Asset asset1 = createAsset("Propagated Asset 1", null);
+        Asset asset2 = createAsset("Propagated Asset 2", null);
+
+        // Create relations FROM assets TO device
+        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        doPost("/api/relation", rel1).andExpect(status().isOk());
+        doPost("/api/relation", rel2).andExpect(status().isOk());
+
+        // Telemetry on device
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"temperature\":12.5}")).andExpect(status().isOk());
+
+        // --- Build CF: PROPAGATION with expression ---
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.PROPAGATION);
+        cf.setName("Propagation CF (expr)");
+        cf.setConfigurationVersion(1);
+
+        PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
+        cfg.setApplyExpressionToResolvedArguments(true);
+
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("t", arg));
+
+        cfg.setExpression("{\"testResult\": t * 2}");
+
+        Output output = new Output();
+        output.setType(OutputType.ATTRIBUTES);
+        output.setScope(AttributeScope.SERVER_SCOPE);
+        cfg.setOutput(output);
+
+        cf.setConfiguration(cfg);
+
+        doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        // --- Assert propagated calculation (expression applied) ---
+        await().alias("propagation expr mode evaluation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs1 = getServerAttributes(asset1.getId(), "testResult");
+                    ArrayNode attrs2 = getServerAttributes(asset2.getId(), "testResult");
+                    assertThat(attrs1).isNotNull();
+                    assertThat(attrs2).isNotNull();
+                    assertThat(attrs1.get(0).get("value").asDouble()).isEqualTo(25.0);
+                    assertThat(attrs2.get(0).get("value").asDouble()).isEqualTo(25.0);
+                });
+
+        String deleteUrl = String.format("/api/v2/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                asset1.getId().getId(), EntityType.ASSET,
+                EntityRelation.CONTAINS_TYPE, device.getId().getId(), EntityType.DEVICE
+        );
+        doDelete(deleteUrl).andExpect(status().isOk());
+        doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/SERVER_SCOPE?keys=testResult").andExpect(status().isOk());
+
+        doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
+                JacksonUtil.toJsonNode("{\"temperature\":25}")).andExpect(status().isOk());
+
+        // --- Assert propagated calculation (expression applied with new temperature argument and one relation removed) ---
+        await().alias("propagation expr mode evaluation after temperature update")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs1 = getServerAttributes(asset1.getId(), "testResult");
+                    ArrayNode attrs2 = getServerAttributes(asset2.getId(), "testResult");
+                    assertThat(attrs1).isNullOrEmpty();
+                    assertThat(attrs2).isNotNull();
+                    assertThat(attrs2.get(0).get("value").asDouble()).isEqualTo(50);
+                });
+    }
+
+    @Test
+    public void testPropagationCalculatedField_withoutExpression() throws Exception {
+        // --- Arrange entities ---
+        Device device = createDevice("Propagation Device Without Expression", "sn-prop-2");
+        Asset asset1 = createAsset("Propagated Asset 1", null);
+        Asset asset2 = createAsset("Propagated Asset 2", null);
+
+        // Create relations FROM assets TO device
+        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        doPost("/api/relation", rel1).andExpect(status().isOk());
+        doPost("/api/relation", rel2).andExpect(status().isOk());
+
+        // Telemetry on device
+        long ts = System.currentTimeMillis() - 300000L;
+        postTelemetry(device.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":12.5}}", ts));
+
+        // --- Build CF: PROPAGATION without expression ---
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.PROPAGATION);
+        cf.setName("Propagation CF (args-only)");
+        cf.setConfigurationVersion(1);
+
+        PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
+        cfg.setApplyExpressionToResolvedArguments(false); // arguments-only mode
+
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("temperatureComputed", arg));
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        cfg.setOutput(output);
+
+        cf.setConfiguration(cfg);
+
+        doPost("/api/calculatedField", cf, CalculatedField.class);
+
+        // --- Assert propagated calculation (arguments-only mode) ---
+        await().alias("propagation args-only evaluation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed");
+                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed");
+                    assertThat(telemetry1).isNotNull();
+                    assertThat(telemetry2).isNotNull();
+                    assertThat(telemetry1.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry1.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(12.5);
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(12.5);
+                });
+
+        String deleteUrl = String.format("/api/v2/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                asset1.getId().getId(), EntityType.ASSET,
+                EntityRelation.CONTAINS_TYPE, device.getId().getId(), EntityType.DEVICE
+        );
+        doDelete(deleteUrl).andExpect(status().isOk());
+        doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/timeseries/delete?keys=temperatureComputed&deleteAllDataForKeys=true").andExpect(status().isOk());
+
+        // Update telemetry on device
+        long newTs = System.currentTimeMillis() - 300000L;
+        postTelemetry(device.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":25}}", newTs));
+
+        // --- Assert propagated calculation (arguments-only mode after update) ---
+        await().alias("propagation args-only evaluation after temperature update")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed");
+                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed");
+                    assertThat(telemetry1).isNotNull();
+                    assertThat(telemetry2).isNotNull();
+                    assertThat(telemetry1.get("temperatureComputed").get(0).get("value")).isEqualTo(NullNode.instance);
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
+                    assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(25);
                 });
     }
 

@@ -18,7 +18,7 @@
 <section [formGroup]="timeInputForm" class="flex gap-4">
   <mat-form-field [class]="{'number': inlineField, 'max-w-66%': !inlineField, 'flex-full': !inlineField}"
                   [appearance]="inlineField ? 'outline' : appearance"
-                  [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
+                  subscriptSizing="dynamic">
     @if (labelText && !inlineField) {
       <mat-label>{{ labelText }}</mat-label>
     }
@@ -41,7 +41,9 @@
       {{ hasError }}
     </mat-error>
   </mat-form-field>
-  <mat-form-field [class.h-fit.max-w-33%.flex-full]="!inlineField"
+  <mat-form-field [class.h-fit]="!inlineField"
+                  [class.max-w-33%]="!inlineField"
+                  [class.flex-full]="!inlineField"
                   [appearance]="inlineField ? 'outline' : appearance"
                   [subscriptSizing]="inlineField ? 'dynamic' : subscriptSizing">
     @if (!inlineField) {
