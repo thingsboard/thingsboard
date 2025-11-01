@@ -89,7 +89,9 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Primary
 public class BaseResourceService extends AbstractCachedEntityService<ResourceInfoCacheKey, TbResourceInfo, ResourceInfoEvictEvent> implements ResourceService {
 
-    public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
+    protected static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
+    protected static final int MAX_ENTITIES_TO_FIND = 10;
+
     protected final TbResourceDao resourceDao;
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
@@ -98,7 +100,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final RuleChainDao ruleChainDao;
     private final Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap = new HashMap<>();
     private final Map<EntityType, ResourceContainerDao<?>> generalResourceContainerDaoMap = new HashMap<>();
-    protected static final int MAX_ENTITIES_TO_FIND = 10;
 
     @PostConstruct
     public void init() {
@@ -275,7 +276,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResource toResource(TenantId tenantId, ResourceExportData exportData) {
         if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
-            || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
+                || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
             throw new IllegalArgumentException("Image import not supported");
         }
 

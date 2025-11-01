@@ -25,11 +25,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.mock.web.MockPart;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
-import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
@@ -47,15 +48,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
-import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -64,7 +64,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class TbResourceControllerTest extends AbstractControllerTest {
 
-    private IdComparator<TbResourceInfo> idComparator = new IdComparator<>();
+    private final IdComparator<TbResourceInfo> idComparator = new IdComparator<>();
 
     private static final String DEFAULT_FILE_NAME = "test.jks";
     private static final String DEFAULT_FILE_NAME_2 = "test2.jks";
@@ -126,13 +126,10 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(DEFAULT_FILE_NAME, savedResource.getResourceKey());
         Assert.assertArrayEquals(resource.getData(), download(savedResource.getId()));
 
-        TbResource foundResource = doGet("/api/resource/" + savedResource.getId().getId().toString(), TbResource.class);
-        foundResource.setTitle("My new resource");
-        foundResource.setData(null);
-
-        savedResource = save(foundResource);
-
-        Assert.assertEquals(foundResource.getTitle(), savedResource.getTitle());
+        String resourceTitle = "My new resource";
+        savedResource.setTitle(resourceTitle);
+        savedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", savedResource, TbResourceInfo.class);
+        assertThat(savedResource.getTitle()).isEqualTo(resourceTitle);
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(savedResource, savedResource.getId(), savedResource.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
@@ -501,8 +498,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
-        Collections.sort(resources, idComparator);
-        Collections.sort(loadedResources, idComparator);
+        resources.sort(idComparator);
+        loadedResources.sort(idComparator);
 
         Assert.assertEquals(resources, loadedResources);
     }
@@ -549,8 +546,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED,
                 jksCntEntity + lwm2mCntEntity, jksCntEntity + lwm2mCntEntity, jksCntEntity + lwm2mCntEntity);
 
-        Collections.sort(resources, idComparator);
-        Collections.sort(loadedResources, idComparator);
+        resources.sort(idComparator);
+        loadedResources.sort(idComparator);
 
         Assert.assertEquals(resources, loadedResources);
     }
@@ -581,8 +578,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(resources, idComparator);
-        Collections.sort(loadedResources, idComparator);
+        resources.sort(idComparator);
+        loadedResources.sort(idComparator);
 
         Assert.assertEquals(resources, loadedResources);
 
@@ -654,8 +651,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(jksResources, idComparator);
-        Collections.sort(loadedResources, idComparator);
+        jksResources.sort(idComparator);
+        loadedResources.sort(idComparator);
 
         Assert.assertEquals(jksResources, loadedResources);
 
@@ -736,8 +733,8 @@ public class TbResourceControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Collections.sort(expectedResources, idComparator);
-        Collections.sort(loadedResources, idComparator);
+        expectedResources.sort(idComparator);
+        loadedResources.sort(idComparator);
 
         Assert.assertEquals(expectedResources, loadedResources);
 
@@ -770,7 +767,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         MockHttpServletResponse response = resultActions.andReturn().getResponse();
         String eTag = response.getHeader("ETag");
         Assert.assertNotNull(eTag);
-        Assert.assertEquals(Base64.getEncoder().encodeToString(response.getContentAsByteArray()), TEST_DATA);
+        Assert.assertEquals(TEST_DATA, Base64.getEncoder().encodeToString(response.getContentAsByteArray()));
 
         //download with if-none-match header
         HttpHeaders headers = new HttpHeaders();
@@ -814,7 +811,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
         MockHttpServletResponse response = resultActions.andReturn().getResponse();
         String eTag = response.getHeader("ETag");
         Assert.assertNotNull(eTag);
-        Assert.assertEquals(Base64.getEncoder().encodeToString(response.getContentAsByteArray()), TEST_DATA);
+        Assert.assertEquals(TEST_DATA, Base64.getEncoder().encodeToString(response.getContentAsByteArray()));
 
         //download with if-none-match header
         HttpHeaders headers = new HttpHeaders();
@@ -859,10 +856,10 @@ public class TbResourceControllerTest extends AbstractControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("can't be updated")));
 
-        foundResource.setData(null);
-        foundResource.setTitle("Updated resource");
-        savedResource = doPost("/api/resource", foundResource, TbResource.class);
-        assertThat(savedResource.getTitle()).isEqualTo("Updated resource");
+        String resourceTitle = "Updated resource";
+        savedResource.setTitle(resourceTitle);
+        savedResource = doPut("/api/resource/" + savedResource.getUuidId() + "/info", savedResource, TbResourceInfo.class);
+        assertThat(savedResource.getTitle()).isEqualTo(resourceTitle);
         assertThat(savedResource.getFileName()).isEqualTo(resource.getFileName());
         assertThat(savedResource.getEtag()).isEqualTo(resource.getEtag());
         assertThat(download(savedResource.getId())).asBase64Encoded().isEqualTo(TEST_DATA);
@@ -923,8 +920,20 @@ public class TbResourceControllerTest extends AbstractControllerTest {
     }
 
     private TbResourceInfo save(TbResource tbResource) throws Exception {
-        return doPostWithTypedResponse("/api/resource", tbResource, new TypeReference<>() {
-        });
+        byte[] data = tbResource.getData() != null ? tbResource.getData() : tbResource.getEncodedData() != null ? Base64.getDecoder().decode(tbResource.getEncodedData()) : null;
+        List<MockPart> parts = new ArrayList<>();
+        parts.add(new MockPart("resourceType", tbResource.getResourceType().name().getBytes()));
+        if (tbResource.getTitle() != null) {
+            parts.add(new MockPart("title", tbResource.getTitle().getBytes()));
+        }
+        if (tbResource.getDescriptor() != null) {
+            parts.add(new MockPart("descriptor", tbResource.getDescriptor().toString().getBytes()));
+        }
+        if (tbResource.getResourceSubType() != null) {
+            parts.add(new MockPart("resourceSubType", tbResource.getResourceSubType().name().getBytes()));
+        }
+
+        return uploadResource(HttpMethod.POST, "/api/resource/upload", tbResource.getFileName(), tbResource.getResourceType().getMediaType(), data, parts);
     }
 
     private TbResourceInfo findResourceInfo(TbResourceId id) throws Exception {
@@ -949,7 +958,7 @@ public class TbResourceControllerTest extends AbstractControllerTest {
 
         for (String model : models) {
             String fileName = model + ".xml";
-            byte[] bytes = IOUtils.toByteArray(getClass().getClassLoader().getResourceAsStream("lwm2m/" + fileName));
+            byte[] bytes = IOUtils.toByteArray(Objects.requireNonNull(getClass().getClassLoader().getResourceAsStream("lwm2m/" + fileName)));
 
             TbResource resource = new TbResource();
             resource.setResourceType(ResourceType.LWM2M_MODEL);
