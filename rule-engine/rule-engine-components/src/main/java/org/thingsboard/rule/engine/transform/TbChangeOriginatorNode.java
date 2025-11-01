@@ -23,10 +23,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
-import org.thingsboard.rule.engine.util.EntitiesByNameAndTypeLoader;
-import org.thingsboard.rule.engine.util.EntitiesCustomerIdAsyncLoader;
-import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
+import org.thingsboard.rule.engine.util.*;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -36,8 +33,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.*;
 
 @Slf4j
 @RuleNode(
@@ -59,6 +55,13 @@ import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
         docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/change-originator/"
 )
 public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOriginatorNodeConfiguration> {
+
+    private static final List<EntityType> AVAILABLE_ENTITY_TYPES = List.of(
+            EntityType.DEVICE,
+            EntityType.ASSET,
+            EntityType.ENTITY_VIEW,
+            EntityType.EDGE,
+            EntityType.USER);
 
     @Override
     protected TbChangeOriginatorNodeConfiguration loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -88,7 +91,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
                 return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery());
             case ALARM_ORIGINATOR:
                 return EntitiesAlarmOriginatorIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
-            case ENTITY:
+            case ENTITY: {
                 EntityType entityType = EntityType.valueOf(config.getEntityType());
                 String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
                 try {
@@ -97,6 +100,18 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
                 } catch (IllegalStateException e) {
                     return Futures.immediateFailedFuture(e);
                 }
+            }
+            case ID: {
+                EntityType entityType = EntityType.valueOf(TbNodeUtils.processPattern(config.getEntityTypePattern(), msg));
+                String id = TbNodeUtils.processPattern(config.getEntityIdPattern(), msg);
+                try {
+                    checkEntityType(entityType);
+                    EntityId targetEntity = EntitiesByIdAndTypeLoader.findEntityId(ctx, entityType, id);
+                    return Futures.immediateFuture(targetEntity);
+                } catch (Exception e) {
+                    return Futures.immediateFailedFuture(e);
+                }
+            }
             default:
                 return Futures.immediateFailedFuture(new IllegalStateException("Unexpected originator source " + config.getOriginatorSource()));
         }
@@ -120,7 +135,23 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
                 log.debug("Name pattern should be specified if '{}' source is selected.", ENTITY);
                 throw new IllegalArgumentException("Name pattern should be specified if 'Entity by name pattern' source is selected.");
             }
-            EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
+            checkEntityType(EntityType.valueOf(conf.getEntityType()));
+        }
+        if (conf.getOriginatorSource().equals(ID)) {
+            if (StringUtils.isEmpty(conf.getEntityTypePattern())) {
+                log.debug("Type pattern should be specified if '{}' source is selected.", ID);
+                throw new IllegalArgumentException("Type pattern should be specified if 'Entity by id pattern' source is selected.");
+            }
+            if (StringUtils.isEmpty(conf.getEntityIdPattern())) {
+                log.debug("ID pattern should be specified if '{}' source is selected.", ID);
+                throw new IllegalArgumentException("ID pattern should be specified if 'Entity by id pattern' source is selected.");
+            }
+        }
+    }
+
+    public static void checkEntityType(EntityType entityType) {
+        if (!AVAILABLE_ENTITY_TYPES.contains(entityType)) {
+            throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
     }
 
