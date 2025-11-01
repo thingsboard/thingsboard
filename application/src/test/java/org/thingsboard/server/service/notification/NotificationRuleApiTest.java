@@ -709,7 +709,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         for (int i = 1; i <= 10; i++) {
             notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
                     .updateInfo(new UpdateMessage(true, "test", "test",
-                            "test", "test", "test"))
+                            "test", "test", "test", 0))
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
@@ -718,7 +718,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
                 .updateInfo(new UpdateMessage(true, "CHANGED", "test",
-                        "test", "test", "test"))
+                        "test", "test", "test", 0))
                 .build());
         await().atMost(5, TimeUnit.SECONDS)
                 .untilAsserted(() -> {

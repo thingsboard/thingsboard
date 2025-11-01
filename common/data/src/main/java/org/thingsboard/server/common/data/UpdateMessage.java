@@ -18,11 +18,15 @@ package org.thingsboard.server.common.data;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Schema
 @Data
 public class UpdateMessage implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = -7789639011255343195L;
 
     @Schema(description = "'True' if new platform update is available.")
     private final boolean updateAvailable;
@@ -36,5 +40,7 @@ public class UpdateMessage implements Serializable {
     private final String currentVersionReleaseNotesUrl;
     @Schema(description = "Latest ThingsBoard version release notes URL.")
     private final String latestVersionReleaseNotesUrl;
+    @Schema(description = "GitHub stargazers counter for ThingsBoard repo.")
+    private final int stargazersCount;
 
 }
