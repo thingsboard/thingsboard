@@ -992,6 +992,9 @@ export const trimDefaultValues = (input: Record<string, any>, defaults: Record<s
 }
 
 export const validateEmail = (control: AbstractControl): ValidationErrors | null => {
+  if (isUndefinedOrNull(control.value) || (typeof control.value === 'string' && control.value.length === 0)) {
+    return null;
+  }
   return emailRegex.test(control.value) ? null : {email: true};
 };
 
