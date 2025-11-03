@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
@@ -34,6 +35,11 @@ public abstract class BaseAggInterval implements AggInterval {
     protected String tz;
     protected Long offsetSec; // delay seconds since start of interval
 
+    @JsonIgnore
+    protected long getOffsetSec() {
+        return offsetSec != null ? offsetSec : 0L;
+    }
+
     @Override
     public long getIntervalDurationMillis() {
         return switch (getType()) {
@@ -50,9 +56,10 @@ public abstract class BaseAggInterval implements AggInterval {
     public long getCurrentIntervalStartTs() {
         ZoneId zoneId = ZoneId.of(tz);
         ZonedDateTime now = ZonedDateTime.now(zoneId);
-        ZonedDateTime shiftedNow = now.minusSeconds(offsetSec);
+        long offset = getOffsetSec();
+        ZonedDateTime shiftedNow = now.minusSeconds(offset);
         ZonedDateTime alignedStart = getAlignedBoundary(shiftedNow, false);
-        ZonedDateTime actualStart = alignedStart.plusSeconds(offsetSec);
+        ZonedDateTime actualStart = alignedStart.plusSeconds(offset);
         return actualStart.toInstant().toEpochMilli();
     }
 
@@ -60,9 +67,10 @@ public abstract class BaseAggInterval implements AggInterval {
     public long getCurrentIntervalEndTs() {
         ZoneId zoneId = ZoneId.of(tz);
         ZonedDateTime now = ZonedDateTime.now(zoneId);
-        ZonedDateTime shiftedNow = now.minusSeconds(offsetSec);
+        long offset = getOffsetSec();
+        ZonedDateTime shiftedNow = now.minusSeconds(offset);
         ZonedDateTime alignedEnd = getAlignedBoundary(shiftedNow, true);
-        ZonedDateTime actualEnd = alignedEnd.plusSeconds(offsetSec);
+        ZonedDateTime actualEnd = alignedEnd.plusSeconds(offset);
         return actualEnd.toInstant().toEpochMilli();
     }
 
