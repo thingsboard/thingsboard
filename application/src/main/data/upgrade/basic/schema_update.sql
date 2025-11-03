@@ -69,3 +69,22 @@ ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
 ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
 
 -- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPGRADE START
+
+UPDATE calculated_field
+SET configuration = jsonb_set(
+        configuration::jsonb,
+        '{output}',
+        (configuration::jsonb -> 'output')
+            || jsonb_build_object(
+                'strategy',
+                jsonb_build_object(
+                        'type', 'PUSH_TO_RULE_ENGINE'
+                )
+               ),
+        false
+                    )
+WHERE (configuration::jsonb -> 'output' -> 'strategy') IS NULL;
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPGRADE END

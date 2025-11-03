@@ -26,4 +26,9 @@ public class TimeSeriesSkipRuleEngineOutputStrategy extends SkipRuleEngineOutput
 
     private long ttl;
 
+    private boolean saveTimeSeries;
+    private boolean saveLatest;
+    private boolean sendWsUpdate;
+    private boolean processCfs;
+
 }

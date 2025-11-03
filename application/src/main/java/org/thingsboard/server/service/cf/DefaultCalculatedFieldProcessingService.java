@@ -17,7 +17,7 @@ package org.thingsboard.server.service.cf;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.logging.log4j.util.TriConsumer;
+import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;

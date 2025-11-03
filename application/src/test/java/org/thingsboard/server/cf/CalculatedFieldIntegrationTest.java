@@ -1235,7 +1235,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         output.setName("fahrenheitTemp");
         output.setType(OutputType.TIME_SERIES);
         output.setDecimalsByDefault(1);
-        output.setStrategy(new TimeSeriesSkipRuleEngineOutputStrategy(1000L));
+        output.setStrategy(new TimeSeriesSkipRuleEngineOutputStrategy(1000L, true, true, true, true));
 
         config.setOutput(output);
 

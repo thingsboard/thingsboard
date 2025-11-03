@@ -26,4 +26,8 @@ public class AttributeSkipRuleEngineOutputStrategy extends SkipRuleEngineOutputS
 
     private boolean updateAttributesOnlyOnValueChange;
 
+    private boolean saveAttribute;
+    private boolean sendWsUpdate;
+    private boolean processCfs;
+
 }
