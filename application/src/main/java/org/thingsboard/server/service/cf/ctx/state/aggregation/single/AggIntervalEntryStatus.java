@@ -45,4 +45,12 @@ public class AggIntervalEntryStatus {
         return false;
     }
 
+    public boolean intervalPassed(long checkInterval) {
+        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - checkInterval;
+        if (intervalPassed) {
+            lastMetricsEvalTs = System.currentTimeMillis();
+        }
+        return intervalPassed;
+    }
+
 }
