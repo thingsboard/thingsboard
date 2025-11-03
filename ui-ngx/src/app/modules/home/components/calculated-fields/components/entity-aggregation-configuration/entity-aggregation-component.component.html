@@ -62,30 +62,32 @@
       </div>
       @if (entityAggregationConfiguration.get('interval.type').value === AggIntervalType.CUSTOM) {
         <tb-time-unit-input required
-                            [minTime]="0"
+                            [minTime]="60"
                             sameWidthInputs
                             appearance="outline"
                             subscriptSizing="dynamic"
                             labelText="{{ 'calculated-fields.aggregate-interval-value' | translate }}"
+                            minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate }}"
                             requiredText="{{ 'calculated-fields.aggregate-interval-value-required' | translate }}"
-                            formControlName="multiplier">
+                            formControlName="durationSec">
         </tb-time-unit-input>
       }
       <div class="tb-form-panel stroked">
-        <mat-slide-toggle class="mat-slide flex" formControlName="allowOffsetMillis">
+        <mat-slide-toggle class="mat-slide flex" formControlName="allowOffsetSec">
           <div tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.apply-offset-hint' | translate }}">
             {{ 'calculated-fields.entity-aggregation.apply-offset' | translate }}
           </div>
         </mat-slide-toggle>
-        @if (entityAggregationConfiguration.get('interval.allowOffsetMillis').value) {
+        @if (entityAggregationConfiguration.get('interval.allowOffsetSec').value) {
           <tb-time-unit-input required
-                              [minTime]="1"
+                              [minTime]="0"
                               sameWidthInputs
                               appearance="outline"
                               subscriptSizing="dynamic"
                               labelText="{{ 'calculated-fields.entity-aggregation.offset-value' | translate }}"
+                              minErrorText="{{ 'calculated-fields.entity-aggregation.offset-value-min' | translate }}"
                               requiredText="{{ 'calculated-fields.entity-aggregation.offset-value-required' | translate }}"
-                              formControlName="offsetMillis">
+                              formControlName="offsetSec">
           </tb-time-unit-input>
         }
       </div>
@@ -99,21 +101,23 @@
       @if (entityAggregationConfiguration.get('allowWatermark').value) {
         <ng-container formGroupName="watermark">
           <tb-time-unit-input required
-                              [minTime]="1"
+                              [minTime]="60"
                               sameWidthInputs
                               appearance="outline"
-                              labelText="{{ 'calculated-fields.entity-aggregation.wait-duration' | translate }}"
-                              hintText="{{ 'calculated-fields.entity-aggregation.wait-duration-hint' | translate }}"
-                              requiredText="{{ 'calculated-fields.entity-aggregation.wait-duration-required' | translate }}"
+                              labelText="{{ 'calculated-fields.entity-aggregation.duration' | translate }}"
+                              minErrorText="{{ 'calculated-fields.entity-aggregation.duration-min' | translate }}"
+                              hintText="{{ 'calculated-fields.entity-aggregation.duration-hint' | translate }}"
+                              requiredText="{{ 'calculated-fields.entity-aggregation.duration-required' | translate }}"
                               formControlName="duration">
           </tb-time-unit-input>
           <tb-time-unit-input required
-                              [minTime]="0"
+                              [minTime]="30"
                               [maxTime]="entityAggregationConfiguration.get('watermark.duration').value"
                               sameWidthInputs
                               appearance="outline"
                               labelText="{{ 'calculated-fields.entity-aggregation.check-interval' | translate }}"
                               hintText="{{ 'calculated-fields.entity-aggregation.check-interval-hint' | translate }}"
+                              minErrorText="{{ 'calculated-fields.entity-aggregation.check-interval-min' | translate }}"
                               maxErrorText="{{ 'calculated-fields.entity-aggregation.check-interval-max' | translate }}"
                               requiredText="{{ 'calculated-fields.entity-aggregation.check-interval-required' | translate }}"
                               formControlName="checkInterval">

@@ -1195,6 +1195,7 @@
         "aggregate-interval-type": "Aggregate interval type",
         "aggregate-interval-value": "Aggregate interval value",
         "aggregate-interval-value-required": "Aggregate interval value is required",
+        "aggregate-interval-value-min": "Aggregate interval value should be at least 1 minute",
         "aggregate-period": {
             "hour": "Hour",
             "day": "Day",
@@ -1213,15 +1214,18 @@
             "apply-offset-hint": "Defines how much to shift the start of each aggregation period (e.g., +10 minutes - 00:10, 01:10).",
             "offset-value": "Offset value",
             "offset-value-required": "Offset value is required",
+            "offset-value-min": "Offset value must be a positive integer",
             "wait-delay": "Wait for delayed telemetry",
-            "wait-delay-hint": "Waits for delayed telemetry after the interval ends.",
-            "wait-duration": "Duration",
-            "wait-duration-required": "Duration is required",
-            "wait-duration-hint": "Defines how long to wait for delayed data after the interval ends.",
+            "wait-delay-hint": "Waits for delayed telemetry after the interval ends",
+            "duration": "Duration",
+            "duration-required": "Duration is required",
+            "duration-min": "Duration should be at least 1 minute",
+            "duration-hint": "Defines how long to wait for delayed data after the interval ends",
             "check-interval": "Check for telemetry every",
             "check-interval-required": "Check for telemetry every is required",
+            "check-interval-min": "Check interval should be at least 30 seconds",
             "check-interval-max": "Check interval need be less than the duration",
-            "check-interval-hint": "Defines how often to recheck for late telemetry during the watermark period."
+            "check-interval-hint": "Defines how often to recheck for late telemetry during the watermark period"
         },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",

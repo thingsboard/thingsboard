@@ -160,6 +160,14 @@
         </tb-js-func>
       }
     </ng-container>
+    @if (simpleMode) {
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'calculated-fields.default-value' | translate }}</div>
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <input matInput autocomplete="off" type="number" name="value" formControlName="defaultValue" placeholder="{{ 'action.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+    }
   </div>
   <div class="tb-config-panel-buttons">
     <button mat-button

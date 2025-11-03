@@ -24,7 +24,6 @@ import {
   CalculatedFieldMetricsPanelComponent
 } from '@home/components/calculated-fields/components/metrics/calculated-field-metrics-panel.component';
 
-
 @NgModule({
   imports: [
     CommonModule,

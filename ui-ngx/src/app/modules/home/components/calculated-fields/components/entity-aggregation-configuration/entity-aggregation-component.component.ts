@@ -41,7 +41,7 @@ import { HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
 interface CalculatedFieldEntityAggregationConfigurationValue extends CalculatedFieldEntityAggregationConfiguration {
-  interval: AggInterval & {allowOffsetMillis?: boolean};
+  interval: AggInterval & {allowOffsetSec?: boolean};
   allowWatermark: boolean;
 }
 
@@ -79,14 +79,14 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     interval: this.fb.group({
       type: [AggIntervalType.HOUR],
       tz: ['', Validators.required],
-      multiplier: [HOUR/SECOND, Validators.required],
-      allowOffsetMillis: [false],
-      offsetMillis: [MINUTE/SECOND, Validators.required],
+      durationSec: [HOUR/SECOND, Validators.required],
+      allowOffsetSec: [false],
+      offsetSec: [MINUTE/SECOND, Validators.required],
     }),
     allowWatermark: [false],
     watermark: this.fb.group({
-      duration: [6 * MINUTE / SECOND, Validators.required],
-      checkInterval: [MINUTE / SECOND, Validators.required],
+      duration: [HOUR/SECOND, Validators.required],
+      checkInterval: [10 * MINUTE / SECOND, Validators.required],
     }),
     output: this.fb.control<CalculatedFieldOutput>({
       type: OutputType.Timeseries,
@@ -111,7 +111,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
       this.checkAggIntervalType(type);
     });
 
-    this.entityAggregationConfiguration.get('interval.allowOffsetMillis').valueChanges.pipe(
+    this.entityAggregationConfiguration.get('interval.allowOffsetSec').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((allow: boolean) => {
       this.checkIntervalDuration(allow);
@@ -138,11 +138,11 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     const data: CalculatedFieldEntityAggregationConfigurationValue = {
       ...value,
       allowWatermark: isDefinedAndNotNull(value.watermark),
-      interval: {...value.interval, allowOffsetMillis: isDefinedAndNotNull(value?.interval?.offsetMillis)}
+      interval: {...value.interval, allowOffsetSec: isDefinedAndNotNull(value?.interval?.offsetSec)}
     }
     this.entityAggregationConfiguration.patchValue(data, {emitEvent: false});
     this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
-    this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetMillis').value);
+    this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
     this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
     setTimeout(() => {
       this.entityAggregationConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
@@ -161,17 +161,17 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     } else {
       this.entityAggregationConfiguration.enable({emitEvent: false});
       this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
-      this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetMillis').value);
+      this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
       this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
     }
   }
 
   private updatedModel(value: CalculatedFieldEntityAggregationConfigurationValue): void {
     value.type = CalculatedFieldType.ENTITY_AGGREGATION;
-    if (!value.interval.allowOffsetMillis) {
-      delete value.interval.offsetMillis;
+    if (!value.interval.allowOffsetSec) {
+      delete value.interval.offsetSec;
     }
-    delete value.interval.offsetMillis;
+    delete value.interval.offsetSec;
     if (!value.allowWatermark) {
       delete value.watermark;
     }
@@ -181,17 +181,17 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
 
   private checkAggIntervalType(type: AggIntervalType) {
     if (type === AggIntervalType.CUSTOM) {
-      this.entityAggregationConfiguration.get('interval.multiplier').enable({emitEvent: false});
+      this.entityAggregationConfiguration.get('interval.durationSec').enable({emitEvent: false});
     } else {
-      this.entityAggregationConfiguration.get('interval.multiplier').disable({emitEvent: false});
+      this.entityAggregationConfiguration.get('interval.durationSec').disable({emitEvent: false});
     }
   }
 
   private checkIntervalDuration(allow: boolean) {
     if (allow) {
-      this.entityAggregationConfiguration.get('interval.offsetMillis').enable({emitEvent: false});
+      this.entityAggregationConfiguration.get('interval.offsetSec').enable({emitEvent: false});
     } else {
-      this.entityAggregationConfiguration.get('interval.offsetMillis').disable({emitEvent: false});
+      this.entityAggregationConfiguration.get('interval.offsetSec').disable({emitEvent: false});
     }
   }
 

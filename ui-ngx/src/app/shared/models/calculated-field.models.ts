@@ -314,14 +314,15 @@ export const AggIntervalTypeTranslations = new Map<AggIntervalType, string>(
 export interface AggInterval {
   type: AggIntervalType;
   tz: string;
-  offsetMillis?: number
-  multiplier?: number
+  offsetSec?: number
+  durationSec?: number
 }
 
 export interface CalculatedFieldAggMetric {
   function: AggFunction;
   filter?: string;
   input: AggKeyInput | AggFunctionInput;
+  defaultValue?: number;
 }
 
 export interface CalculatedFieldAggMetricValue extends CalculatedFieldAggMetric {
