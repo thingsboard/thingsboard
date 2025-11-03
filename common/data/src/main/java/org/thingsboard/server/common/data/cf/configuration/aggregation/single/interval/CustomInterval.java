@@ -51,13 +51,13 @@ public class CustomInterval extends BaseAggInterval {
     public long getCurrentIntervalStartTs() {
         ZoneId zoneId = ZoneId.of(tz);
         ZonedDateTime now = ZonedDateTime.now(zoneId);
-        ZonedDateTime shiftedNow = now.minusSeconds(offsetSec);
+        ZonedDateTime shiftedNow = now.minusSeconds(getOffsetSec());
 
         long durationMillis = getIntervalDurationMillis();
         long shiftedNowMillis = shiftedNow.toInstant().toEpochMilli();
         long alignedStartMillis = (shiftedNowMillis / durationMillis) * durationMillis;
 
-        long offsetMillis = TimeUnit.SECONDS.toMillis(offsetSec);
+        long offsetMillis = TimeUnit.SECONDS.toMillis(getOffsetSec());
         return alignedStartMillis + offsetMillis;
     }
 
