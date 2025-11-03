@@ -33,6 +33,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
@@ -47,19 +48,12 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
     public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
         this.ctx = ctx;
         this.actorCtx = actorCtx;
-        this.requiredArguments = ctx.getArgNames();
+        this.requiredArguments = new ArrayList<>(ctx.getArgNames());
+        requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
+        this.readinessStatus = checkReadiness(requiredArguments, arguments);
         if (ctx.isApplyExpressionForResolvedArguments()) {
             this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
         }
-    }
-
-    @Override
-    public boolean isReady() {
-        if (!super.isReady()) {
-            return false;
-        }
-        ArgumentEntry propagationArg = arguments.get(PROPAGATION_CONFIG_ARGUMENT);
-        return propagationArg != null && !propagationArg.isEmpty();
     }
 
     @Override

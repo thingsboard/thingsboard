@@ -23,15 +23,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.io.Closeable;
+import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
@@ -42,7 +45,8 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArg
         @Type(value = ScriptCalculatedFieldState.class, name = "SCRIPT"),
         @Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
         @Type(value = AlarmCalculatedFieldState.class, name = "ALARM"),
-        @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION")
+        @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION"),
+        @Type(value = RelatedEntitiesAggregationCalculatedFieldState.class, name = "RELATED_ENTITIES_AGGREGATION")
 })
 public interface CalculatedFieldState extends Closeable {
 
@@ -63,10 +67,12 @@ public interface CalculatedFieldState extends Closeable {
 
     void reset();
 
-    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx);
+    ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception;
 
     @JsonIgnore
     boolean isReady();
+
+    ReadinessStatus getReadinessStatus();
 
     boolean isSizeExceedsLimit();
 
@@ -89,6 +95,19 @@ public interface CalculatedFieldState extends Closeable {
             if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, singleValueArgumentEntry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
                 throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
             }
+        }
+    }
+
+    record ReadinessStatus(boolean ready, String errorMsg) {
+
+        private static final String ERROR_MESSAGE = "Required arguments are missing: ";
+        private static final ReadinessStatus READY = new ReadinessStatus(true, null);
+
+        public static ReadinessStatus from(List<String> emptyOrMissingArguments) {
+            if (CollectionsUtil.isEmpty(emptyOrMissingArguments)) {
+                return ReadinessStatus.READY;
+            }
+            return new ReadinessStatus(false, ERROR_MESSAGE + String.join(", ", emptyOrMissingArguments));
         }
     }
 

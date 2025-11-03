@@ -36,7 +36,7 @@ import {
   CalculatedFieldArgumentValue,
   getCalculatedFieldCurrentEntityFilter
 } from '@shared/models/calculated-field.models';
-import { debounceTime, delay, distinctUntilChanged, filter } from 'rxjs/operators';
+import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DatasourceType } from '@shared/models/widget.models';
@@ -56,7 +56,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 @Component({
   selector: 'tb-calculated-field-argument-panel',
   templateUrl: './calculated-field-argument-panel.component.html',
-  styleUrls: ['./calculated-field-argument-panel.component.scss']
+  styleUrls: ['../common/calculated-field-panel.scss', './calculated-field-argument-panel.component.scss']
 })
 export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewInit {
 
@@ -68,6 +68,10 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() isScript: boolean;
   @Input() usedArgumentNames: string[];
   @Input() isOutputKey = false;
+  @Input() hiddenEntityTypes = false;
+  @Input() defaultValueRequired = false;
+  @Input() hint: string;
+  @Input() predefinedEntityFilter: EntityFilter;
   @Input() argumentEntityTypes = Object.values(ArgumentEntityType).filter(value => value !== ArgumentEntityType.RelationQuery) as ArgumentEntityType[];
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
@@ -118,7 +122,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     this.observeEntityFilterChanges();
     this.observeArgumentTypeChanges();
     this.observeEntityKeyChanges();
-    this.observeUpdatePosition();
   }
 
   get entityType(): ArgumentEntityType {
@@ -145,6 +148,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     this.setInitialEntityKeyType();
     this.setInitialEntityType();
     this.setWatchKeyChange();
+
+    if (this.defaultValueRequired) {
+      this.argumentFormGroup.get('defaultValue').addValidators(Validators.required);
+      this.argumentFormGroup.get('defaultValue').updateValueAndValidity({onlySelf: true});
+    }
 
     this.argumentTypes = Object.values(ArgumentType)
       .filter(type => type !== ArgumentType.Rolling || this.isScript);
@@ -215,6 +223,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     }
     if (!onInit) {
       this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
+    } else if (this.predefinedEntityFilter) {
+      entityFilter = this.predefinedEntityFilter;
     }
     this.entityFilter = entityFilter;
     this.cd.markForCheck();
@@ -291,17 +301,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
       const forbiddenArgumentNames = ['ctx', 'e', 'pi', 'propagationCtx'];
       return forbiddenArgumentNames.includes(trimmedValue) ? { forbiddenName: true } : null;
     };
-  }
-
-  private observeUpdatePosition(): void {
-    merge(
-      this.argumentType.valueChanges,
-      this.refEntityKeyFormGroup.get('type').valueChanges,
-      this.argumentFormGroup.get('timeWindow').valueChanges,
-      this.argumentFormGroup.get('refEntityId').valueChanges.pipe(filter(Boolean)),
-    )
-      .pipe(delay(50), takeUntilDestroyed())
-      .subscribe(() => this.popover.updatePosition());
   }
 
   private updatedRefEntityIdState(type: ArgumentEntityType): void {

@@ -111,7 +111,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
-    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '300px');
+    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '250px');
     expressionColumn.sortable = false;
     expressionColumn.cellContentFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
@@ -124,7 +124,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '80px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '170px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type)), () => ({whiteSpace: 'nowrap' })));
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(

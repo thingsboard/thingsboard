@@ -34,6 +34,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
@@ -81,6 +82,7 @@ public class CalculatedFieldArgumentUtils {
             case GEOFENCING -> new GeofencingCalculatedFieldState(entityId);
             case ALARM -> new AlarmCalculatedFieldState(entityId);
             case PROPAGATION -> new PropagationCalculatedFieldState(entityId);
+            case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(entityId);
         };
     }
 

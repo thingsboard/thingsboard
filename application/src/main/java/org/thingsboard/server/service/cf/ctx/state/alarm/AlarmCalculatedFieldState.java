@@ -402,26 +402,25 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 operation = ComplexOperation.AND;
             }
             return switch (operation) {
-                case OR -> {
-                    for (AlarmConditionFilter filter : simpleExpression.getFilters()) {
-                        SingleValueArgumentEntry argument = getArgument(filter.getArgument());
-                        if (eval(argument, filter.getPredicate())) {
-                            yield true;
-                        }
-                    }
-                    yield false;
-                }
-                case AND -> {
-                    for (AlarmConditionFilter filter : simpleExpression.getFilters()) {
-                        SingleValueArgumentEntry argument = getArgument(filter.getArgument());
-                        if (!eval(argument, filter.getPredicate())) {
-                            yield false;
-                        }
-                    }
-                    yield true;
-                }
+                case AND -> simpleExpression.getFilters().stream()
+                        .allMatch(filter -> eval(getArgument(filter.getArgument()), filter));
+                case OR -> simpleExpression.getFilters().stream()
+                        .anyMatch(filter -> eval(getArgument(filter.getArgument()), filter));
             };
         }
+    }
+
+    private boolean eval(SingleValueArgumentEntry argument, AlarmConditionFilter filter) {
+        ComplexOperation operation = filter.getOperation();
+        if (operation == null) {
+            operation = ComplexOperation.AND;
+        }
+        return switch (operation) {
+            case AND -> filter.getPredicates().stream()
+                    .allMatch(predicate -> eval(argument, predicate));
+            case OR -> filter.getPredicates().stream()
+                    .anyMatch(predicate -> eval(argument, predicate));
+        };
     }
 
     private boolean eval(SingleValueArgumentEntry argument, KeyFilterPredicate predicate) {

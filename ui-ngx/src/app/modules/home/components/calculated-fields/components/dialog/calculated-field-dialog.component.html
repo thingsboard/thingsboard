@@ -64,16 +64,26 @@
       </div>
       @switch (fieldFormGroup.get('type').value) {
         @case (CalculatedFieldType.GEOFENCING) {
-          <tb-geofencing-configuration formControlName="configuration" [entityId]="data.entityId" [entityName]="data.entityName" [tenantId]="data.tenantId">
-          </tb-geofencing-configuration>
+          <tb-geofencing-configuration formControlName="configuration"
+                                       [entityId]="data.entityId"
+                                       [entityName]="data.entityName"
+                                       [tenantId]="data.tenantId"
+          ></tb-geofencing-configuration>
         }
         @case (CalculatedFieldType.PROPAGATION) {
           <tb-propagation-configuration formControlName="configuration"
                                         [entityId]="data.entityId"
                                         [entityName]="data.entityName"
                                         [tenantId]="data.tenantId"
-                                        [testScript]="onTestScript.bind(this)">
-          </tb-propagation-configuration>
+                                        [testScript]="onTestScript.bind(this)"
+          ></tb-propagation-configuration>
+        }
+        @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
+          <tb-related-entities-aggregation-component formControlName="configuration"
+                                                     [entityId]="data.entityId"
+                                                     [entityName]="data.entityName"
+                                                     [tenantId]="data.tenantId"
+          ></tb-related-entities-aggregation-component>
         }
         @default {
           <tb-simple-configuration formControlName="configuration"
@@ -82,8 +92,7 @@
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"
-          >
-          </tb-simple-configuration>
+          ></tb-simple-configuration>
         }
       }
     </div>

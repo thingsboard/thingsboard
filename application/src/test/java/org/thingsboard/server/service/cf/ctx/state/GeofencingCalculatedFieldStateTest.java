@@ -200,31 +200,31 @@ public class GeofencingCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(state.getRequiredArguments());
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
                 ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
                 "allowedZones", geofencingAllowedZoneArgEntry,
                 "restrictedZones", geofencingRestrictedZoneArgEntry
-        ));
+        ), ctx);
         assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
                 ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
                 "allowedZones", geofencingAllowedZoneArgEntry,
-                "restrictedZones", geofencingRestrictedZoneArgEntry
-        ));
-
-        state.getArguments().put("noParkingZones", new GeofencingArgumentEntry());
-
+                "restrictedZones", new GeofencingArgumentEntry()
+        ), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains("restrictedZones");
     }
 
     @Test

@@ -35,6 +35,7 @@ import { digitsRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-calculate-field-output',
@@ -55,7 +56,12 @@ import { EntityType } from '@shared/models/entity-type.models';
 export class CalculatedFieldOutputComponent implements ControlValueAccessor, Validator, OnInit, OnChanges {
 
   @Input()
+  @coerceBoolean()
   simpleMode = false;
+
+  @Input()
+  @coerceBoolean()
+  hiddenName = false;
 
   @Input({required: true})
   entityId: EntityId;
@@ -107,7 +113,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   }
 
   validate(): ValidationErrors | null {
-    return this.outputForm.valid ? null : {outputConfig: false};
+    return this.outputForm.valid || this.outputForm.disabled ? null : {outputConfig: false};
   }
 
   writeValue(value: CalculatedFieldOutput | CalculatedFieldSimpleOutput): void {
@@ -120,6 +126,16 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   }
 
   registerOnTouched(_: any): void { }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.outputForm.disable({emitEvent: false});
+    } else {
+      this.outputForm.enable({emitEvent: false});
+      this.updatedFormWithMode();
+      this.toggleScopeByOutputType(this.outputForm.get('type').value);
+    }
+  }
 
   private updatedModel(value: CalculatedFieldOutput | CalculatedFieldSimpleOutput) {
     if (this.simpleMode && 'name' in value) {
@@ -137,11 +153,14 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   }
 
   private updatedFormWithMode(): void {
-    if (this.simpleMode) {
+    if (this.simpleMode && !this.hiddenName) {
       this.outputForm.get('name').enable({emitEvent: false});
-      this.outputForm.get('decimalsByDefault').enable({emitEvent: false});
     } else {
       this.outputForm.get('name').disable({emitEvent: false});
+    }
+    if (this.simpleMode) {
+      this.outputForm.get('decimalsByDefault').enable({emitEvent: false});
+    } else {
       this.outputForm.get('decimalsByDefault').disable({emitEvent: false});
     }
   }

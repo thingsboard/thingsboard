@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
@@ -116,7 +117,7 @@ public class PropagationCalculatedFieldStateTest {
     @Test
     void testInitAddsRequiredArgument() {
         initCtxAndState(false);
-        assertThat(state.getRequiredArguments()).containsExactlyInAnyOrder(TEMPERATURE_ARGUMENT_NAME);
+        assertThat(state.getRequiredArguments()).containsExactlyInAnyOrder(TEMPERATURE_ARGUMENT_NAME, PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
@@ -128,24 +129,26 @@ public class PropagationCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenPropagationArgIsNull() {
         initCtxAndState(false);
-        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
+        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
     void testIsReadyWhenPropagationArgIsEmpty() {
         initCtxAndState(false);
-        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
-        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList()));
+        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry,
+                PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
     }
 
     @Test
     void testIsReadyWhenPropagationArgHasEntities() {
         initCtxAndState(false);
-        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
-        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry);
+        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry, PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry), ctx);
         assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
 
@@ -222,8 +225,7 @@ public class PropagationCalculatedFieldStateTest {
     private CalculatedFieldConfiguration getCalculatedFieldConfig(boolean applyExpressionToResolvedArguments) {
         var config = new PropagationCalculatedFieldConfiguration();
 
-        config.setDirection(EntitySearchDirection.TO);
-        config.setRelationType(EntityRelation.CONTAINS_TYPE);
+        config.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         config.setApplyExpressionToResolvedArguments(applyExpressionToResolvedArguments);
 
         Argument temperatureArg = new Argument();

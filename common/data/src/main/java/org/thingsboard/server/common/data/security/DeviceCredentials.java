@@ -24,11 +24,15 @@ import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 
+import java.io.Serial;
+
 @Schema
 @EqualsAndHashCode(callSuper = true)
 public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements DeviceCredentialsFilter, HasVersion {
 
+    @Serial
     private static final long serialVersionUID = -7869261127032877765L;
+
     private DeviceId deviceId;
     private DeviceCredentialsType credentialsType;
     private String credentialsId;

@@ -33,6 +33,7 @@ import {
   CalculatedFieldType,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
+  notEmptyObjectValidator,
   OutputType,
   PropagationDirectionTranslations,
   PropagationWithExpression
@@ -74,10 +75,12 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   testScript: () => Observable<string>;
 
   propagateConfiguration = this.fb.group({
-    arguments: this.fb.control({}),
+    arguments: this.fb.control({}, notEmptyObjectValidator()),
     applyExpressionToResolvedArguments: [false],
-    direction: [EntitySearchDirection.TO, Validators.required],
-    relationType: ['Contains', Validators.required],
+    relation: this.fb.group({
+      direction: [EntitySearchDirection.TO, Validators.required],
+      relationType: ['Contains', Validators.required],
+    }),
     expression: [calculatedFieldDefaultScript],
     output: this.fb.control<CalculatedFieldOutput>({
       scope: AttributeScope.SERVER_SCOPE,
@@ -120,7 +123,7 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   }
 
   validate(): ValidationErrors | null {
-    return this.propagateConfiguration.valid || this.propagateConfiguration.status === "DISABLED" ? null : {invalidPropagateConfig: false};
+    return this.propagateConfiguration.valid || this.propagateConfiguration.disabled ? null : {invalidPropagateConfig: false};
   }
 
   writeValue(value: PropagationWithExpression): void {

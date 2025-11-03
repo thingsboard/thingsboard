@@ -41,6 +41,8 @@ public final class TelemetryCalculatedFieldResult implements CalculatedFieldResu
     private final OutputStrategy outputStrategy;
     private final JsonNode result;
 
+    public static final TelemetryCalculatedFieldResult EMPTY = TelemetryCalculatedFieldResult.builder().result(null).build();
+
     @Override
     public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
         TbMsgType msgType = switch (type) {
@@ -68,9 +70,9 @@ public final class TelemetryCalculatedFieldResult implements CalculatedFieldResu
     @Override
     public boolean isEmpty() {
         return result == null || result.isMissingNode() || result.isNull() ||
-               (result.isObject() && result.isEmpty()) ||
-               (result.isArray() && result.isEmpty()) ||
-               (result.isTextual() && result.asText().isEmpty());
+                (result.isObject() && result.isEmpty()) ||
+                (result.isArray() && result.isEmpty()) ||
+                (result.isTextual() && result.asText().isEmpty());
     }
 
 }

@@ -23,9 +23,11 @@ import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -42,6 +44,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
     protected long latestTimestamp = -1;
+    protected ReadinessStatus readinessStatus;
 
     @Setter
     private TopicPartitionInfo partition;
@@ -55,6 +58,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         this.ctx = ctx;
         this.actorCtx = actorCtx;
         this.requiredArguments = ctx.getArgNames();
+        this.readinessStatus = checkReadiness(requiredArguments, arguments);
     }
 
     @Override
@@ -76,7 +80,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
                 validateNewEntry(key, newEntry);
-                arguments.put(key, newEntry);
+                if (existingEntry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+                    relatedEntitiesArgumentEntry.updateEntry(newEntry);
+                } else {
+                    arguments.put(key, newEntry);
+                }
                 entryUpdated = true;
             } else {
                 entryUpdated = existingEntry.updateEntry(newEntry);
@@ -93,8 +101,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         }
 
         if (updatedArguments == null) {
-            updatedArguments = Collections.emptyMap();
+            return Collections.emptyMap();
         }
+        readinessStatus = checkReadiness(requiredArguments, arguments);
         return updatedArguments;
     }
 
@@ -108,8 +117,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     @Override
     public boolean isReady() {
-        return arguments.keySet().containsAll(requiredArguments) &&
-               arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+        return readinessStatus.ready();
     }
 
     @Override
@@ -121,9 +129,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     }
 
     @Override
-    public void close() {}
+    public void close() {
+    }
 
-    protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+    }
 
     protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
         if (!useLatestTs) {
@@ -148,6 +158,23 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
+    }
+
+    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        if (currentArguments == null) {
+            return ReadinessStatus.from(requiredArguments);
+        }
+        List<String> emptyArguments = null;
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                if (emptyArguments == null) {
+                    emptyArguments = new ArrayList<>();
+                }
+                emptyArguments.add(requiredArgumentKey);
+            }
+        }
+        return ReadinessStatus.from(emptyArguments);
     }
 
 }
