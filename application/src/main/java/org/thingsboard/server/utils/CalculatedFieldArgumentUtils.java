@@ -70,9 +70,17 @@ public class CalculatedFieldArgumentUtils {
 
     public static ArgumentEntry transformAggMetricArgument(List<TsKvEntry> timeSeries, String argKey, AggMetric aggMetric) {
         if (timeSeries == null || timeSeries.isEmpty()) {
-            return ArgumentEntry.createSingleValueArgument(createDefaultKvEntry(argKey, aggMetric.getDefaultValue()));
+            return createDefaultMetricArgumentEntry(argKey, aggMetric);
         }
         return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
+    }
+
+    public static ArgumentEntry createDefaultMetricArgumentEntry(String argKey, AggMetric metric) {
+        Long defaultValue = metric.getDefaultValue();
+        if (defaultValue != null) {
+            ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue.doubleValue()));
+        }
+        return ArgumentEntry.createSingleValueArgument(new StringDataEntry(argKey, null));
     }
 
     public static ArgumentEntry transformAggregationArgument(List<TsKvEntry> timeSeries, long startIntervalTs, long endIntervalTs) {
@@ -87,10 +95,8 @@ public class CalculatedFieldArgumentUtils {
     }
 
     public static KvEntry createDefaultKvEntry(Argument argument) {
-        return createDefaultKvEntry(argument.getRefEntityKey().getKey(), argument.getDefaultValue());
-    }
-
-    public static KvEntry createDefaultKvEntry(String key, String defaultValue) {
+        String key = argument.getRefEntityKey().getKey();
+        String defaultValue = argument.getDefaultValue();
         if (StringUtils.isBlank(defaultValue)) {
             return new StringDataEntry(key, null);
         }

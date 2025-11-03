@@ -53,7 +53,6 @@ public class EntityAggregationArgumentEntry implements ArgumentEntry {
             for (Map.Entry<AggIntervalEntry, AggIntervalEntryStatus> aggIntervalEntry : aggIntervals.entrySet()) {
                 if (aggIntervalEntry.getKey().belongsToInterval(entryTs)) {
                     aggIntervalEntry.getValue().setLastArgsRefreshTs(System.currentTimeMillis());
-                    aggIntervals.put(aggIntervalEntry.getKey(), aggIntervalEntry.getValue());
                     return true;
                 }
             }

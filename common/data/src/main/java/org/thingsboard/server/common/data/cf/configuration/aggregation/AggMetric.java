@@ -27,6 +27,6 @@ public class AggMetric {
     private AggFunction function;
     private String filter;
     private AggInput input;
-    private String defaultValue;
+    private Long defaultValue;
 
 }

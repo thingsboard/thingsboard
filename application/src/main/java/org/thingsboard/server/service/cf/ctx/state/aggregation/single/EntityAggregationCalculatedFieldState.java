@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInp
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.Watermark;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
@@ -40,8 +41,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultMetricArgumentEntry;
 
 public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
@@ -104,8 +106,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         this.cfProcessingService = ctx.getCfProcessingService();
         var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         intervalDuration = configuration.getInterval().getIntervalDurationMillis();
-        watermarkDuration = configuration.getWatermark().getDuration();
-        checkInterval = configuration.getWatermark().getCheckInterval();
+        Watermark watermark = configuration.getWatermark();
+        watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
+        checkInterval = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
     }
@@ -221,7 +224,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             AggMetric metric = metrics.get(metricName);
             String argKey = ctx.getArguments().get(argName).getRefEntityKey().getKey();
             ArgumentEntry metricEntry = useDefault
-                    ? ArgumentEntry.createSingleValueArgument(createDefaultKvEntry(argKey, metric.getDefaultValue()))
+                    ? createDefaultMetricArgumentEntry(argKey, metric)
                     : cfProcessingService.fetchMetricDuringInterval(ctx.getTenantId(), entityId, argKey, metric, intervalEntry);
             if (!metricEntry.isEmpty()) {
                 results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metricEntry);
