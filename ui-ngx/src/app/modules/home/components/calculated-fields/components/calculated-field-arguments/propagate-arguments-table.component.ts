@@ -31,7 +31,12 @@ import { AppState } from '@core/core.state';
 import {
   CalculatedFieldArgumentsTableComponent
 } from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.component';
-import { ArgumentEntityType, ArgumentType, CalculatedFieldArgumentValue } from '@shared/models/calculated-field.models';
+import {
+  ArgumentEntityType,
+  ArgumentType,
+  CalculatedFieldArgumentValue,
+  FORBIDDEN_NAMES
+} from '@shared/models/calculated-field.models';
 import { isDefined } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
@@ -88,7 +93,8 @@ export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTa
       this.displayColumns = ['name', 'type', 'key', 'actions'];
       this.panelAdditionalCtx = {
         argumentEntityTypes: [ArgumentEntityType.Current],
-        isOutputKey: true
+        isOutputKey: true,
+        forbiddenNames: [...FORBIDDEN_NAMES, 'propagationCtx'],
       };
     }
   }

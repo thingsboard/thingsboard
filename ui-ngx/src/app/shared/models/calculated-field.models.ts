@@ -30,7 +30,9 @@ import {
   endGroupHighlightRule
 } from '@shared/models/ace/ace.models';
 import { EntitySearchDirection } from '@shared/models/relation.models';
-import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+
+export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
 
 interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
@@ -902,5 +904,28 @@ export function notEmptyObjectValidator(): ValidatorFn {
       return {emptyObject: true};
     }
     return null;
+  };
+}
+
+export function forbiddenNamesValidator(forbiddenNames: string[]): ValidatorFn {
+  const forbiddenNameSet = new Set(forbiddenNames);
+
+  return (control: FormControl) => {
+    const trimmedValue = (control.value || '').trim();
+    return forbiddenNameSet.has(trimmedValue) ? { forbiddenName: true } : null;
+  };
+}
+
+export function uniqueNameValidator(existingNames: string[]): ValidatorFn {
+  const namesSet = new Set((existingNames || []).map(name => name.toLowerCase()));
+
+  return (control: FormControl) => {
+    const newName = (control.value || '').trim().toLowerCase();
+
+    if (!newName) {
+      return null;
+    }
+
+    return namesSet.has(newName) ? { duplicateName: true } : null;
   };
 }
