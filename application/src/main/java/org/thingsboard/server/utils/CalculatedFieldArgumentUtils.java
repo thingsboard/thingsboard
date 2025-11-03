@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -67,9 +68,9 @@ public class CalculatedFieldArgumentUtils {
         return ArgumentEntry.createTsRollingArgument(tsRolling, limit, argTimeWindow);
     }
 
-    public static ArgumentEntry transformAggMetricArgument(List<TsKvEntry> timeSeries) {
+    public static ArgumentEntry transformAggMetricArgument(List<TsKvEntry> timeSeries, String argKey, AggMetric aggMetric) {
         if (timeSeries == null || timeSeries.isEmpty()) {
-            return new SingleValueArgumentEntry();
+            return ArgumentEntry.createSingleValueArgument(createDefaultKvEntry(argKey, aggMetric.getDefaultValue()));
         }
         return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
     }
@@ -86,8 +87,10 @@ public class CalculatedFieldArgumentUtils {
     }
 
     public static KvEntry createDefaultKvEntry(Argument argument) {
-        String key = argument.getRefEntityKey().getKey();
-        String defaultValue = argument.getDefaultValue();
+        return createDefaultKvEntry(argument.getRefEntityKey().getKey(), argument.getDefaultValue());
+    }
+
+    public static KvEntry createDefaultKvEntry(String key, String defaultValue) {
         if (StringUtils.isBlank(defaultValue)) {
             return new StringDataEntry(key, null);
         }
