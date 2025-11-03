@@ -283,9 +283,13 @@ public class TbResourceController extends BaseController {
 
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PutMapping("/resource/{id}/info")
-    public TbResourceInfo updateResourceInfo(@Parameter(description = "A JSON value representing the Resource Info.")
+    public TbResourceInfo updateResourceInfo(@Parameter(description = "Unique identifier of the Resource to update", required = true)
+                                             @PathVariable UUID id,
+                                             @Parameter(description = "A JSON value representing the Resource Info.")
                                              @RequestBody TbResourceInfo resourceInfo) throws Exception {
-        checkResourceInfoId(resourceInfo.getId(), Operation.WRITE);
+        TbResourceId tbResourceId = new TbResourceId(id);
+        checkResourceInfoId(tbResourceId, Operation.WRITE);
+        resourceInfo.setId(tbResourceId);
         TbResource resource = new TbResource(resourceInfo);
         return tbResourceService.save(resource, getCurrentUser());
     }
