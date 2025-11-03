@@ -461,7 +461,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         BooleanFilterPredicate temperatureAlarmFlagAttributePredicate = new BooleanFilterPredicate();
         temperatureAlarmFlagAttributePredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
         temperatureAlarmFlagAttributePredicate.setValue(new AlarmConditionValue<>(Boolean.TRUE, null));
-        temperatureAlarmFlagFilter.setPredicate(temperatureAlarmFlagAttributePredicate);
+        temperatureAlarmFlagFilter.setPredicates(List.of(temperatureAlarmFlagAttributePredicate));
 
         AlarmConditionFilter temperatureFilter = new AlarmConditionFilter();
         temperatureFilter.setArgument("temperature");
@@ -469,7 +469,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         NumericFilterPredicate temperatureFilterPredicate = new NumericFilterPredicate();
         temperatureFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
         temperatureFilterPredicate.setValue(new AlarmConditionValue<>(null, "temperatureAlarmThreshold"));
-        temperatureFilter.setPredicate(temperatureFilterPredicate);
+        temperatureFilter.setPredicates(List.of(temperatureFilterPredicate));
         temperatureCondition.setExpression(new SimpleAlarmConditionExpression(List.of(temperatureAlarmFlagFilter, temperatureFilter), ComplexOperation.AND));
         temperatureRule.setCondition(temperatureCondition);
         temperatureRule.setAlarmDetails("Current temperature = ${temperature}");
@@ -486,7 +486,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         NumericFilterPredicate clearTemperatureFilterPredicate = new NumericFilterPredicate();
         clearTemperatureFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS_OR_EQUAL);
         clearTemperatureFilterPredicate.setValue(new AlarmConditionValue<>(null, "temperatureAlarmThreshold"));
-        clearTemperatureFilter.setPredicate(clearTemperatureFilterPredicate);
+        clearTemperatureFilter.setPredicates(List.of(clearTemperatureFilterPredicate));
         clearTemperatureCondition.setExpression(new SimpleAlarmConditionExpression(List.of(clearTemperatureFilter), ComplexOperation.AND));
         clearTemperatureRule.setCondition(clearTemperatureCondition);
         clearTemperatureRule.setAlarmDetails("Current temperature = ${temperature}");
@@ -525,7 +525,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         BooleanFilterPredicate humidityAlarmFlagPredicate = new BooleanFilterPredicate();
         humidityAlarmFlagPredicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
         humidityAlarmFlagPredicate.setValue(new AlarmConditionValue<>(Boolean.TRUE, null));
-        humidityAlarmFlagAttributeFilter.setPredicate(humidityAlarmFlagPredicate);
+        humidityAlarmFlagAttributeFilter.setPredicates(List.of(humidityAlarmFlagPredicate));
 
         AlarmConditionFilter humidityFilter = new AlarmConditionFilter();
         humidityFilter.setArgument("humidity");
@@ -533,7 +533,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         NumericFilterPredicate humidityFilterPredicate = new NumericFilterPredicate();
         humidityFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.LESS);
         humidityFilterPredicate.setValue(new AlarmConditionValue<>(null, "humidityAlarmThreshold"));
-        humidityFilter.setPredicate(humidityFilterPredicate);
+        humidityFilter.setPredicates(List.of(humidityFilterPredicate));
         humidityCondition.setExpression(new SimpleAlarmConditionExpression(List.of(humidityAlarmFlagAttributeFilter, humidityFilter), ComplexOperation.AND));
         humidityRule.setCondition(humidityCondition);
         humidityRule.setAlarmDetails("Current humidity = ${humidity}");
@@ -550,7 +550,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         NumericFilterPredicate clearHumidityFilterPredicate = new NumericFilterPredicate();
         clearHumidityFilterPredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER_OR_EQUAL);
         clearHumidityFilterPredicate.setValue(new AlarmConditionValue<>(null, "humidityAlarmThreshold"));
-        clearHumidityFilter.setPredicate(clearHumidityFilterPredicate);
+        clearHumidityFilter.setPredicates(List.of(clearHumidityFilterPredicate));
         clearHumidityCondition.setExpression(new SimpleAlarmConditionExpression(List.of(clearHumidityFilter), ComplexOperation.AND));
         clearHumidityRule.setCondition(clearHumidityCondition);
         clearHumidityRule.setAlarmDetails("Current humidity = ${humidity}");

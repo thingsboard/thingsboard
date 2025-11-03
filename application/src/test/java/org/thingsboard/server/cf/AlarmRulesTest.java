@@ -174,7 +174,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         AlarmConditionValue<Double> thresholdValue = new AlarmConditionValue<>();
         thresholdValue.setStaticValue(100.0);
         predicate.setValue(thresholdValue);
-        filter.setPredicate(predicate);
+        filter.setPredicates(List.of(predicate));
         simpleExpression.setFilters(List.of(filter));
         simpleExpression.setOperation(ComplexOperation.AND);
         Map<AlarmSeverity, Condition> createRules = Map.of(
@@ -860,7 +860,7 @@ public class AlarmRulesTest extends AbstractControllerTest {
         StringFilterPredicate predicate = new StringFilterPredicate();
         predicate.setOperation(stringOperation);
         predicate.setValue(conditionValue);
-        filter.setPredicate(predicate);
+        filter.setPredicates(List.of(predicate));
         simpleExpression.setFilters(List.of(filter));
         return simpleExpression;
     }
