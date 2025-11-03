@@ -19,19 +19,22 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.time.Duration;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.concurrent.TimeUnit;
+
 @EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 public class CustomInterval extends BaseAggInterval {
 
-    private int multiplier; // number of base units (e.g. 2 hours, 5 days)
-    private AggIntervalType internalIntervalType;
+    private Long durationSec;
 
-    public CustomInterval(int multiplier, AggIntervalType internalIntervalType, long offsetMillis, String tz) {
+    public CustomInterval(Long durationSec, Long offsetMillis, String tz) {
         this.tz = tz;
-        this.offsetMillis = offsetMillis;
-        this.multiplier = multiplier;
-        this.internalIntervalType = internalIntervalType;
+        this.offsetSec = offsetMillis;
+        this.durationSec = durationSec;
     }
 
     @Override
@@ -41,22 +44,31 @@ public class CustomInterval extends BaseAggInterval {
 
     @Override
     public long getIntervalDurationMillis() {
-        return getIntervalDurationMillis(internalIntervalType, multiplier);
+        return Duration.ofSeconds(durationSec).toMillis();
     }
 
     @Override
     public long getCurrentIntervalStartTs() {
-        return super.getCurrentIntervalStartTs(internalIntervalType, multiplier);
+        ZoneId zoneId = ZoneId.of(tz);
+        ZonedDateTime now = ZonedDateTime.now(zoneId);
+        ZonedDateTime shiftedNow = now.minusSeconds(offsetSec);
+
+        long durationMillis = getIntervalDurationMillis();
+        long shiftedNowMillis = shiftedNow.toInstant().toEpochMilli();
+        long alignedStartMillis = (shiftedNowMillis / durationMillis) * durationMillis;
+
+        long offsetMillis = TimeUnit.SECONDS.toMillis(offsetSec);
+        return alignedStartMillis + offsetMillis;
     }
 
     @Override
     public long getCurrentIntervalEndTs() {
-        return super.getCurrentIntervalEndTs(internalIntervalType, multiplier);
+        return getCurrentIntervalStartTs() + getIntervalDurationMillis();
     }
 
     @Override
     public long getDelayUntilIntervalEnd() {
-        return super.getDelayUntilIntervalEnd(internalIntervalType, multiplier);
+        return getCurrentIntervalEndTs() - System.currentTimeMillis();
     }
 
 }

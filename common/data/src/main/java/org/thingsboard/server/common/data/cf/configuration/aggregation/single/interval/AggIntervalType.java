@@ -17,7 +17,6 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 
 public enum AggIntervalType {
 
-    MIN,
     HOUR,
     DAY,
     WEEK,

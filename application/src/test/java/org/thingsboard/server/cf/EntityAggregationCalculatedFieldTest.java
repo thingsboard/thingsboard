@@ -35,7 +35,6 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInp
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
-import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggIntervalType;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.CustomInterval;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.Watermark;
 import org.thingsboard.server.common.data.debug.DebugSettings;
@@ -92,7 +91,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     public void testCreateCf_checkAggregation() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval(1, AggIntervalType.MIN, 0, "Europe/Kyiv");
+        CustomInterval customInterval = new CustomInterval(60L, 0L, "Europe/Kyiv");
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
         long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 

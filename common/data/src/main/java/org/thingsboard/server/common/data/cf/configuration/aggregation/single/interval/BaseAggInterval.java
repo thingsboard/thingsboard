@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Data;
 
 import java.time.DayOfWeek;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -28,127 +28,90 @@ import java.time.temporal.ChronoUnit;
 import java.time.temporal.TemporalAdjusters;
 
 @Data
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public abstract class BaseAggInterval implements AggInterval {
 
     protected String tz;
-    protected long offsetMillis; // delay millis since start of interval
+    protected Long offsetSec; // delay seconds since start of interval
 
     @Override
     public long getIntervalDurationMillis() {
-        return getIntervalDurationMillis(getType(), 1);
-    }
-
-    public long getIntervalDurationMillis(AggIntervalType type, int multiplier) {
-        return switch (type) {
-            case MIN -> Duration.ofMinutes(multiplier).toMillis();
-            case HOUR -> Duration.ofHours(multiplier).toMillis();
-            case DAY -> Duration.ofDays(multiplier).toMillis();
-            case WEEK, WEEK_SUN_SAT -> Duration.ofDays(7L * multiplier).toMillis();
-            case MONTH -> Duration.ofDays(Math.round(30 * multiplier)).toMillis(); // average
-            case YEAR -> Duration.ofDays(Math.round(365 * multiplier)).toMillis();
-            default -> throw new IllegalArgumentException("Unsupported type: " + type);
+        return switch (getType()) {
+            case HOUR -> Duration.ofHours(1).toMillis();
+            case DAY -> Duration.ofDays(1).toMillis();
+            case WEEK, WEEK_SUN_SAT -> Duration.ofDays(7L).toMillis();
+            case MONTH -> Duration.ofDays(Math.round(30)).toMillis(); // average
+            case YEAR -> Duration.ofDays(Math.round(365)).toMillis();
+            default -> throw new IllegalArgumentException("Unsupported type: " + getType());
         };
     }
 
     @Override
     public long getCurrentIntervalStartTs() {
-        return getCurrentIntervalStartTs(getType(), 1);
-    }
-
-    protected long getCurrentIntervalStartTs(AggIntervalType type, int multiplier) {
         ZoneId zoneId = ZoneId.of(tz);
         ZonedDateTime now = ZonedDateTime.now(zoneId);
-        ZonedDateTime shiftedNow = now.minus(Duration.ofMillis(offsetMillis));
-        ZonedDateTime alignedStart = getAlignedBoundary(type, multiplier, false, shiftedNow);
-        ZonedDateTime actualStart = alignedStart.plus(Duration.ofMillis(offsetMillis));
+        ZonedDateTime shiftedNow = now.minusSeconds(offsetSec);
+        ZonedDateTime alignedStart = getAlignedBoundary(shiftedNow, false);
+        ZonedDateTime actualStart = alignedStart.plusSeconds(offsetSec);
         return actualStart.toInstant().toEpochMilli();
     }
 
     @Override
     public long getCurrentIntervalEndTs() {
-        return getCurrentIntervalEndTs(getType(), 1);
-    }
-
-    protected long getCurrentIntervalEndTs(AggIntervalType type, int multiplier) {
         ZoneId zoneId = ZoneId.of(tz);
         ZonedDateTime now = ZonedDateTime.now(zoneId);
-        ZonedDateTime shiftedNow = now.minus(Duration.ofMillis(offsetMillis));
-        ZonedDateTime alignedEnd = getAlignedBoundary(type, multiplier, true, shiftedNow);
-        ZonedDateTime actualEnd = alignedEnd.plus(Duration.ofMillis(offsetMillis));
+        ZonedDateTime shiftedNow = now.minusSeconds(offsetSec);
+        ZonedDateTime alignedEnd = getAlignedBoundary(shiftedNow, true);
+        ZonedDateTime actualEnd = alignedEnd.plusSeconds(offsetSec);
         return actualEnd.toInstant().toEpochMilli();
     }
 
     @Override
     public long getDelayUntilIntervalEnd() {
-        return getDelayUntilIntervalEnd(getType(), 1);
-    }
-
-    protected long getDelayUntilIntervalEnd(AggIntervalType type, int multiplier) {
-        long currentIntervalEndTs = getCurrentIntervalEndTs(type, multiplier);
+        long currentIntervalEndTs = getCurrentIntervalEndTs();
         long now = System.currentTimeMillis();
         return currentIntervalEndTs - now;
     }
 
-    protected ZonedDateTime getAlignedBoundary(AggIntervalType type, int multiplier, boolean next, ZonedDateTime reference) {
-        return switch (type) {
-            case MIN -> alignByMin(reference, multiplier, next);
-            case HOUR -> alignByHour(reference, multiplier, next);
-            case DAY -> alignByDay(reference, multiplier, next);
-            case WEEK -> alignByWeek(reference, multiplier, DayOfWeek.MONDAY, next);
-            case WEEK_SUN_SAT -> alignByWeek(reference, multiplier, DayOfWeek.SUNDAY, next);
-            case MONTH -> alignByMonth(reference, multiplier, next);
-            case YEAR -> alignByYear(reference, multiplier, next);
-            default -> throw new IllegalArgumentException("Unsupported type: " + type);
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        return switch (getType()) {
+            case HOUR -> alignByHours(reference, next);
+            case DAY -> alignByDays(reference, next);
+            case WEEK -> alignByWeeks(reference, DayOfWeek.MONDAY, next);
+            case WEEK_SUN_SAT -> alignByWeeks(reference, DayOfWeek.SUNDAY, next);
+            case MONTH -> alignByMonths(reference, next);
+            case YEAR -> alignByYears(reference, next);
+            default -> throw new IllegalArgumentException("Unsupported interval type: " + getType());
         };
     }
 
-    private ZonedDateTime alignByMin(ZonedDateTime now, int multiplier, boolean next) {
-        ZonedDateTime startOfHour = now.truncatedTo(ChronoUnit.HOURS);
-        long minsSinceHour = Duration.between(startOfHour, now).toMinutes();
-        long aligned = (minsSinceHour / multiplier) * multiplier;
-        if (next) aligned += multiplier;
-        return startOfHour.plusMinutes(aligned);
+    private ZonedDateTime alignByHours(ZonedDateTime now, boolean next) {
+        ZonedDateTime base = now.truncatedTo(ChronoUnit.HOURS);
+        return next ? base.plusHours(1) : base;
     }
 
-    private ZonedDateTime alignByHour(ZonedDateTime now, int multiplier, boolean next) {
-        ZonedDateTime startOfDay = now.truncatedTo(ChronoUnit.DAYS);
-        long hoursSinceMidnight = Duration.between(startOfDay, now).toHours();
-        long aligned = (hoursSinceMidnight / multiplier) * multiplier;
-        if (next) aligned += multiplier;
-        return startOfDay.plusHours(aligned);
+    private ZonedDateTime alignByDays(ZonedDateTime now, boolean next) {
+        ZonedDateTime base = now.truncatedTo(ChronoUnit.DAYS);
+        return next ? base.plusDays(1) : base;
     }
 
-    private ZonedDateTime alignByDay(ZonedDateTime now, int multiplier, boolean next) {
-        long daysSinceEpoch = now.toLocalDate().toEpochDay();
-        long aligned = (daysSinceEpoch / multiplier) * multiplier;
-        if (next) aligned += multiplier;
-        long diff = aligned - daysSinceEpoch;
-        return now.truncatedTo(ChronoUnit.DAYS).plusDays(diff);
-    }
-
-    private ZonedDateTime alignByWeek(ZonedDateTime now, int multiplier, DayOfWeek startOfWeekDay, boolean next) {
-        ZonedDateTime startOfWeek = now.with(TemporalAdjusters.previousOrSame(startOfWeekDay))
+    private ZonedDateTime alignByWeeks(ZonedDateTime now, DayOfWeek startOfWeek, boolean next) {
+        ZonedDateTime startOfWeekDate = now.with(TemporalAdjusters.previousOrSame(startOfWeek))
                 .truncatedTo(ChronoUnit.DAYS);
-        long weeksSinceEpoch = ChronoUnit.WEEKS.between(
-                ZonedDateTime.ofInstant(Instant.EPOCH, now.getZone()), startOfWeek);
-        long aligned = (weeksSinceEpoch / multiplier) * multiplier;
-        if (next) aligned += multiplier;
-        return startOfWeek.plusWeeks(aligned - weeksSinceEpoch);
+        return next ? startOfWeekDate.plusWeeks(1) : startOfWeekDate;
     }
 
-    private ZonedDateTime alignByMonth(ZonedDateTime now, int multiplier, boolean next) {
-        ZonedDateTime startOfMonth = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
-        long monthsSinceEpoch = now.getYear() * 12L + now.getMonthValue() - 1;
-        long aligned = (monthsSinceEpoch / multiplier) * multiplier;
-        if (next) aligned += multiplier;
-        return startOfMonth.plusMonths(aligned - monthsSinceEpoch);
+    private ZonedDateTime alignByMonths(ZonedDateTime now, boolean next) {
+        ZonedDateTime base = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+        return next ? base.plusMonths(1) : base;
     }
 
-    private ZonedDateTime alignByYear(ZonedDateTime now, int multiplier, boolean next) {
-        int year = now.getYear();
-        int aligned = (year / multiplier) * multiplier;
-        if (next) aligned += multiplier;
-        return ZonedDateTime.of(LocalDate.of(aligned, 1, 1), LocalTime.MIDNIGHT, now.getZone());
+    private ZonedDateTime alignByYears(ZonedDateTime now, boolean next) {
+        ZonedDateTime base = ZonedDateTime.of(
+                LocalDate.of(now.getYear(), 1, 1),
+                LocalTime.MIDNIGHT,
+                now.getZone());
+        return next ? base.plusYears(1) : base;
     }
 
 }

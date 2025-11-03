@@ -26,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = MinInterval.class, name = "MIN"),
         @JsonSubTypes.Type(value = HourInterval.class, name = "HOUR"),
         @JsonSubTypes.Type(value = DayInterval.class, name = "DAY"),
         @JsonSubTypes.Type(value = WeekInterval.class, name = "WEEK"),
