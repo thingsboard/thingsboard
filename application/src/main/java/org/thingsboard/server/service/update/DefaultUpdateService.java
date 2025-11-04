@@ -137,7 +137,7 @@ public class DefaultUpdateService implements UpdateService {
             request.put(VERSION_PARAM, version);
             request.put(INSTANCE_ID_PARAM, instanceId.toString());
             UpdateMessage prevUpdateMessage = updateMessage;
-            updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v2/thingsboard/updates", new HttpEntity<>(request.toString(), headers), UpdateMessage.class);
+            updateMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v3/thingsboard/updates", new HttpEntity<>(request.toString(), headers), UpdateMessage.class);
             if (updateMessage != null && updateMessage.isUpdateAvailable() && !updateMessage.equals(prevUpdateMessage)) {
                 notificationRuleProcessor.process(NewPlatformVersionTrigger.builder()
                         .updateInfo(updateMessage)

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
@@ -23,6 +24,7 @@ import java.io.Serializable;
 
 @Schema
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class UpdateMessage implements Serializable {
 
     @Serial
