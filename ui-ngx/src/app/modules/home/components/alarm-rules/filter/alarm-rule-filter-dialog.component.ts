@@ -1,0 +1,153 @@
+ ///
+/// Copyright © 2016-2025 The Thingsboard Authors
+///
+/// Licensed under the Apache License, Version 2.0 (the "License");
+/// you may not use this file except in compliance with the License.
+/// You may obtain a copy of the License at
+///
+///     http://www.apache.org/licenses/LICENSE-2.0
+///
+/// Unless required by applicable law or agreed to in writing, software
+/// distributed under the License is distributed on an "AS IS" BASIS,
+/// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+/// See the License for the specific language governing permissions and
+/// limitations under the License.
+///
+
+ import { Component, Inject, OnDestroy, SkipSelf } from '@angular/core';
+ import { ErrorStateMatcher } from '@angular/material/core';
+ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+ import { Store } from '@ngrx/store';
+ import { AppState } from '@core/core.state';
+ import {
+   FormGroup,
+   FormGroupDirective,
+   NgForm,
+   UntypedFormBuilder,
+   UntypedFormControl,
+   Validators
+ } from '@angular/forms';
+ import { Router } from '@angular/router';
+ import { DialogComponent } from '@app/shared/components/dialog.component';
+ import {
+   ComplexOperation,
+   complexOperationTranslationMap,
+   EntityKeyValueType,
+   entityKeyValueTypesMap
+ } from '@shared/models/query/query.models';
+ import { DialogService } from '@core/services/dialog.service';
+ import { TranslateService } from '@ngx-translate/core';
+ import { Subject } from 'rxjs';
+ import { takeUntil } from 'rxjs/operators';
+ import { AlarmRuleFilter, AlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+ import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+ import { FormControlsFrom } from "@shared/models/tenant.model";
+
+ export interface AlarmRuleFilterDialogData {
+  filter: AlarmRuleFilter;
+  isAdd: boolean;
+  arguments: Record<string, CalculatedFieldArgument>;
+  usedArguments: Array<string>;
+}
+
+@Component({
+  selector: 'tb-alarm-rule-filter-dialog',
+  templateUrl: './alarm-rule-filter-dialog.component.html',
+  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleFilterDialogComponent}],
+  styleUrls: ['./alarm-rule-filter-dialog.component.scss']
+})
+export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFilterDialogComponent, AlarmRuleFilter>
+  implements OnDestroy, ErrorStateMatcher {
+
+  private destroy$ = new Subject<void>();
+
+  filterFormGroup: FormGroup<FormControlsFrom<AlarmRuleFilter>>;
+
+  entityKeyValueTypesKeys = Object.keys(EntityKeyValueType);
+
+  entityKeyValueTypeEnum = EntityKeyValueType;
+
+  entityKeyValueTypes = entityKeyValueTypesMap;
+
+  complexOperationTranslationMap = complexOperationTranslationMap;
+
+  ComplexOperation = ComplexOperation;
+
+  submitted = false;
+
+  searchText = '';
+
+  arguments = this.data.arguments;
+
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              @Inject(MAT_DIALOG_DATA) public data: AlarmRuleFilterDialogData,
+              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
+              public dialogRef: MatDialogRef<AlarmRuleFilterDialogComponent, AlarmRuleFilter>,
+              private dialogs: DialogService,
+              private translate: TranslateService,
+              private fb: UntypedFormBuilder) {
+    super(store, router, dialogRef);
+
+    this.filterFormGroup = this.fb.group(
+      {
+        argument: [this.data.filter.argument, [Validators.required]],
+        valueType: [this.data.filter.valueType ?? EntityKeyValueType.STRING, [Validators.required]],
+        predicates: [this.data.filter.predicates, [Validators.required]],
+        operation: [this.data.filter.operation ?? ComplexOperation.AND]
+      }
+    );
+    this.filterFormGroup.get('valueType').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((valueType: EntityKeyValueType) => {
+      const prevValueType: EntityKeyValueType = this.filterFormGroup.value.valueType;
+      const predicates: AlarmRuleFilterPredicate[] = this.filterFormGroup.get('predicates').value;
+      if (prevValueType && prevValueType !== valueType) {
+        if (predicates && predicates.length) {
+          this.dialogs.confirm(this.translate.instant('filter.key-value-type-change-title'),
+            this.translate.instant('filter.key-value-type-change-message')).subscribe(
+            (result) => {
+              if (result) {
+                this.filterFormGroup.get('predicates').setValue([]);
+              } else {
+                this.filterFormGroup.get('valueType').setValue(prevValueType, {emitEvent: false});
+              }
+            }
+          );
+        }
+      }
+    });
+  }
+
+  ngOnDestroy() {
+    super.ngOnDestroy();
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  argumentInUse(argument: string): boolean {
+    return this.data.usedArguments.includes(argument);
+  }
+
+  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
+    const customErrorState = !!(control && control.invalid && this.submitted);
+    return originalErrorState || customErrorState;
+  }
+
+  cancel(): void {
+    this.dialogRef.close(null);
+  }
+
+  save(): void {
+    this.submitted = true;
+    if (this.filterFormGroup.valid) {
+      const keyFilter: AlarmRuleFilter = this.filterFormGroup.getRawValue();
+      this.dialogRef.close(keyFilter);
+    }
+  }
+
+  get argumentsList(): Array<string> {
+    return this.arguments ? Object.keys(this.arguments) : [];
+  }
+}

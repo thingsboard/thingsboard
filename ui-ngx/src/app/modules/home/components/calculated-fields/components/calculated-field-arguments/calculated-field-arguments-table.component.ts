@@ -85,6 +85,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
+  @Input() ownerId: EntityId;
   @Input() isScript: boolean;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
@@ -179,6 +180,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         buttonTitle: isExists ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
+        ownerId: this.ownerId,
         usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argument.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover({

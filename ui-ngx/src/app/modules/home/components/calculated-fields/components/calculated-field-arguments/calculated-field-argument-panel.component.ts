@@ -33,7 +33,7 @@ import {
   ArgumentEntityTypeTranslations,
   ArgumentType,
   ArgumentTypeTranslations,
-  CalculatedFieldArgumentValue,
+  CalculatedFieldArgumentValue, CFArgumentDynamicSourceType,
   getCalculatedFieldCurrentEntityFilter
 } from '@shared/models/calculated-field.models';
 import { debounceTime, distinctUntilChanged, filter } from 'rxjs/operators';
@@ -65,6 +65,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
+  @Input() ownerId: EntityId;
   @Input() isScript: boolean;
   @Input() usedArgumentNames: string[];
   @Input() isOutputKey = false;
@@ -166,7 +167,9 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
 
   saveArgument(): void {
     const value = this.argumentFormGroup.value as CalculatedFieldArgumentValue;
-    if (this.entityType === ArgumentEntityType.Tenant) {
+    if (this.entityType === ArgumentEntityType.Owner) {
+      value.refDynamicSource = CFArgumentDynamicSourceType.CURRENT_OWNER;
+    } else if (this.entityType === ArgumentEntityType.Tenant) {
       value.refEntityId = new TenantId(this.tenantId) as any;
     }
     if (this.entityType !== ArgumentEntityType.Current && this.entityType !== ArgumentEntityType.Tenant) {
@@ -205,6 +208,12 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     switch (entityType) {
       case ArgumentEntityType.Current:
         entityFilter = this.currentEntityFilter;
+        break;
+      case ArgumentEntityType.Owner:
+        entityFilter = {
+          type: AliasFilterType.singleEntity,
+          singleEntity: this.ownerId
+        };
         break;
       case ArgumentEntityType.Tenant:
         entityFilter = {

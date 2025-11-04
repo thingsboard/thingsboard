@@ -89,6 +89,7 @@
           <tb-simple-configuration formControlName="configuration"
                                    [entityId]="data.entityId"
                                    [entityName]="data.entityName"
+                                   [ownerId]="data.ownerId"
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"

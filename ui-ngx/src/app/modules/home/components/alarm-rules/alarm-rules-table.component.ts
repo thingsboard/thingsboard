@@ -30,20 +30,20 @@ import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { CalculatedFieldsTableConfig } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
+import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
 
 @Component({
-  selector: 'tb-calculated-fields-table',
-  templateUrl: './calculated-fields-table.component.html',
-  styleUrls: ['./calculated-fields-table.component.scss'],
+  selector: 'tb-alarm-rules-table',
+  templateUrl: './alarm-rules-table.component.html',
+  styleUrls: ['./alarm-rules-table.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [EntityDebugSettingsService]
 })
-export class CalculatedFieldsTableComponent {
+export class AlarmRulesTableComponent {
 
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
@@ -52,7 +52,7 @@ export class CalculatedFieldsTableComponent {
   entityName = input<string>();
   ownerId = input<EntityId>();
 
-  calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
+  calculatedFieldsTableConfig: AlarmRulesTableConfig;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
@@ -67,7 +67,7 @@ export class CalculatedFieldsTableComponent {
 
     effect(() => {
       if (this.active()) {
-        this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
+        this.calculatedFieldsTableConfig = new AlarmRulesTableConfig(
           this.calculatedFieldsService,
           this.translate,
           this.dialog,

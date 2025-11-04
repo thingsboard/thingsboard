@@ -15,54 +15,88 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="entity" #transportType="matTab"
-         label="{{ 'device-profile.transport-configuration' | translate }}">
-  <div class="mat-padding" [formGroup]="detailsForm" *ngIf="transportType.isActive">
-    <mat-form-field class="mat-block">
-      <mat-label translate>device-profile.transport-type</mat-label>
-      <mat-select formControlName="transportType" required>
-        <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
-          {{deviceTransportTypeTranslations.get(type) | translate}}
-        </mat-option>
-      </mat-select>
-      <mat-hint *ngIf="detailsForm.get('transportType').value">
-        {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
-      </mat-hint>
-      <mat-error *ngIf="detailsForm.get('transportType').hasError('required')">
-        {{ 'device-profile.transport-type-required' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <div formGroupName="profileData">
-      <tb-device-profile-transport-configuration
-        formControlName="transportConfiguration"
-        [isAdd]="isTransportTypeChanged">
-      </tb-device-profile-transport-configuration>
+@if (entity) {
+  <mat-tab #transportType="matTab" label="{{ 'device-profile.transport-configuration' | translate }}">
+    <div class="mat-padding" [formGroup]="detailsForm" *ngIf="transportType.isActive">
+      <mat-form-field class="mat-block">
+        <mat-label translate>device-profile.transport-type</mat-label>
+        <mat-select formControlName="transportType" required>
+          <mat-option *ngFor="let type of deviceTransportTypes" [value]="type">
+            {{deviceTransportTypeTranslations.get(type) | translate}}
+          </mat-option>
+        </mat-select>
+        <mat-hint *ngIf="detailsForm.get('transportType').value">
+          {{deviceTransportTypeHints.get(detailsForm.get('transportType').value) | translate}}
+        </mat-hint>
+        <mat-error *ngIf="detailsForm.get('transportType').hasError('required')">
+          {{ 'device-profile.transport-type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <div formGroupName="profileData">
+        <tb-device-profile-transport-configuration
+          formControlName="transportConfiguration"
+          [isAdd]="isTransportTypeChanged">
+        </tb-device-profile-transport-configuration>
+      </div>
     </div>
-  </div>
-</mat-tab>
-<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN && !isEdit"
-         label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
-  <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [entityName]="entity.name"/>
-</mat-tab>
-<mat-tab *ngIf="entity" #alarmRules="matTab"
-         label="{{ this.detailsForm.get('profileData.alarms').value?.length
-         ? ('device-profile.alarm-rules-with-count' | translate: { count: this.detailsForm.get('profileData.alarms').value.length })
-         : 'device-profile.alarm-rules' | translate }}">
-  <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
-    <div formGroupName="profileData">
-      <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
+  </mat-tab>
+  @if (authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+    <mat-tab label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
+      <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"/>
+    </mat-tab>
+  }
+
+  @if (hasOldRules || authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+    <mat-tab #alarmRules="matTab" label="{{'alarm-rule.alarm-rules-tab' | translate }}">
+      <section class="flex flex-col h-full">
+        @if (hasOldRules && !isEdit) {
+          <div class="flex flex-row items-center justify-end" style="padding: 16px 16px 0;">
+            <tb-toggle-select [(ngModel)]="alarmRulesVersion" appearance="fill">
+              <tb-toggle-option [value]="true">{{ 'alarm-rule.alarm-rules-new' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="false">{{ 'alarm-rule.alarm-rules-old' | translate }}</tb-toggle-option>
+            </tb-toggle-select>
+          </div>
+        }
+        @if (alarmRulesVersion) {
+          <div class="relative h-full">
+            <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
+          </div>
+        } @else {
+          <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
+            <div formGroupName="profileData">
+              <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
+            </div>
+          </div>
+        }
+      </section>
+    </mat-tab>
+  }
+
+  <mat-tab #deviceProvisioning="matTab" label="{{ 'device-profile.device-provisioning' | translate }}">
+    <div class="mat-padding" [formGroup]="detailsForm" *ngIf="deviceProvisioning.isActive">
+      <div formGroupName="profileData">
+        <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
+        </tb-device-profile-provision-configuration>
+      </div>
     </div>
-  </div>
-</mat-tab>
-<mat-tab *ngIf="entity" #deviceProvisioning="matTab"
-         label="{{ 'device-profile.device-provisioning' | translate }}">
-  <div class="mat-padding" [formGroup]="detailsForm" *ngIf="deviceProvisioning.isActive">
-    <div formGroupName="profileData">
-      <tb-device-profile-provision-configuration formControlName="provisionConfiguration">
-      </tb-device-profile-provision-configuration>
-    </div>
-  </div>
-</mat-tab>
+  </mat-tab>
+  @if (!isEdit) {
+    <mat-tab #auditLogsTab="matTab" label="{{ 'audit-log.audit-logs' | translate }}">
+      <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
+    </mat-tab>
+  }
+  @if (authUser.authority === authorities.TENANT_ADMIN && !isEdit) {
+    <mat-tab label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
+      <tb-version-control detailsMode="true" singleEntityMode="true"
+                          (versionRestored)="entitiesTableConfig.updateData()"
+                          [active]="versionControlTab.isActive"
+                          [entityId]="entity.id"
+                          [entityName]="entity.name"
+                          [externalEntityId]="entity.externalId || entity.id">
+      </tb-version-control>
+    </mat-tab>
+  }
+}
 <mat-tab *ngIf="false"
          label="{{'device-profile.profile-configuration' | translate }}" #deviceProfile="matTab">
   <div class="mat-padding" [formGroup]="detailsForm">
@@ -72,14 +106,4 @@
       </tb-device-profile-configuration>
     </div>
   </div>
-</mat-tab>
-<mat-tab *ngIf="entity && !isEdit" #auditLogsTab="matTab"
-         label="{{ 'audit-log.audit-logs' | translate }}">
-  <tb-audit-log-table detailsMode="true" [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.ENTITY" [entityId]="entity.id"></tb-audit-log-table>
-</mat-tab>
-<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN && !isEdit"
-         label="{{ 'version-control.version-control' | translate }}" #versionControlTab="matTab">
-  <tb-version-control detailsMode="true" singleEntityMode="true"
-                      (versionRestored)="entitiesTableConfig.updateData()"
-                      [active]="versionControlTab.isActive" [entityId]="entity.id" [entityName]="entity.name" [externalEntityId]="entity.externalId || entity.id"></tb-version-control>
 </mat-tab>

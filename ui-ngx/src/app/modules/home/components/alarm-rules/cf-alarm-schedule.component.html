@@ -1,0 +1,124 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="alarmScheduleForm" class="flex flex-col">
+  @if (settingsMode === 'static') {
+    <ng-container formGroupName="staticValue">
+      <mat-form-field class="mat-block" appearance="outline">
+        <mat-select formControlName="type" required placeholder="{{ 'alarm-rule.schedule-type' | translate }}">
+          <mat-option *ngFor="let alarmScheduleType of alarmScheduleTypes" [value]="alarmScheduleType">
+            {{ alarmScheduleTypeTranslate.get(alarmScheduleType) | translate }}
+          </mat-option>
+        </mat-select>
+        <mat-error *ngIf="alarmScheduleForm.get('staticValue.type').hasError('required')">
+          {{ 'alarm-rule.schedule-type-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </ng-container>
+    @if (alarmScheduleForm.get('staticValue.type').value !== alarmScheduleType.ANY_TIME) {
+      <div class="tb-form-panel no-padding no-border">
+        <div formGroupName="staticValue">
+          <tb-timezone-select
+            appearance="outline"
+            userTimezoneByDefault
+            required
+            formControlName="timezone">
+          </tb-timezone-select>
+          <section *ngIf="alarmScheduleForm.get('staticValue.type').value === alarmScheduleType.SPECIFIC_TIME">
+            <mat-chip-listbox multiple formControlName="daysOfWeek">
+              <mat-chip-option *ngFor="let day of allDays; let i = index;"
+                               [value]="i+1">
+                {{ dayOfWeekTranslationsArray[day] | translate }}
+              </mat-chip-option>
+            </mat-chip-listbox>
+            <tb-error class="block mb-2" [error]="alarmScheduleForm.get('staticValue.daysOfWeek').hasError('required')
+                  ? ('alarm-rule.schedule-days-of-week-required' | translate) : ''"></tb-error>
+            <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+              <div class="flex flex-row gap-2 gt-md:flex-1">
+                <mat-form-field class="flex-1 sm:min-w-37.5 sm:max-w-37.5 sm:basis-37.5 md:min-w-37.5 md:max-w-37.5 md:basis-37.5" appearance="outline">
+                  <mat-label translate>alarm-rule.schedule-time-from</mat-label>
+                  <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
+                  <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+                  <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
+                </mat-form-field>
+                <mat-form-field class="flex-1 sm:min-w-37.5 sm:max-w-37.5 sm:basis-37.5 md:min-w-37.5 md:max-w-37.5 md:basis-37.5" appearance="outline">
+                  <mat-label translate>alarm-rule.schedule-time-to</mat-label>
+                  <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
+                  <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+                  <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
+                </mat-form-field>
+              </div>
+              <div class="flex flex-1 items-center justify-center mb-[22px]">
+                <div style="text-align: center"
+                     [innerHTML]="getSchedulerRangeText(alarmScheduleForm.get('staticValue'))">
+                </div>
+              </div>
+            </div>
+          </section>
+          <section *ngIf="alarmScheduleForm.get('staticValue.type').value === alarmScheduleType.CUSTOM" class="flex flex-col gap-4">
+            <div *ngFor="let day of allDays" class="flex flex-col gap-4" formArrayName="items">
+              <div class="flex flex-row items-center justify-start gap-2 xs:flex-col xs:items-start xs:justify-center" [formGroupName]="''+day">
+                <mat-chip-listbox formControlName="enabled">
+                  <mat-chip-option  class="w-32" color="primary" (selectionChange)="changeCustomScheduler($event, day)" [value]="true">{{ dayOfWeekTranslationsArray[day] | translate }}</mat-chip-option>
+                </mat-chip-listbox>
+                <div class="flex flex-1 flex-row gap-2">
+                  <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label translate>alarm-rule.schedule-time-from</mat-label>
+                    <mat-datetimepicker-toggle [for]="startTimePicker" matPrefix></mat-datetimepicker-toggle>
+                    <mat-datetimepicker #startTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+                    <input required matInput formControlName="startsOn" [matDatetimepicker]="startTimePicker">
+                  </mat-form-field>
+                  <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label translate>alarm-rule.schedule-time-to</mat-label>
+                    <mat-datetimepicker-toggle [for]="endTimePicker" matPrefix></mat-datetimepicker-toggle>
+                    <mat-datetimepicker #endTimePicker type="time" openOnFocus="true"></mat-datetimepicker>
+                    <input required matInput formControlName="endsOn" [matDatetimepicker]="endTimePicker">
+                  </mat-form-field>
+                </div>
+                <div class="flex flex-1 items-center justify-center sm:max-w-[120px] mb-[22px]"
+                     style="text-align: center"
+                     [innerHTML]="getSchedulerRangeText(itemsSchedulerForm.at(day))">
+                </div>
+              </div>
+            </div>
+            <tb-error style="display: block;" [error]="alarmScheduleForm.get('staticValue.items').hasError('dayOfWeeks')
+                  ? ('alarm-rule.schedule-days-of-week-required' | translate) : ''"></tb-error>
+          </section>
+        </div>
+      </div>
+    }
+  } @else {
+    <div class="flex flex-row items-center gap-2">
+      <mat-form-field class="flex-1" appearance="outline">
+        <mat-label translate>alarm-rule.value-argument</mat-label>
+        <mat-select formControlName="dynamicValueArgument" placeholder="{{ 'action.set' | translate }}">
+          @for (argument of argumentsList; track argument) {
+            <mat-option [value]="argument">{{ argument }}</mat-option>
+          }
+        </mat-select>
+        <mat-error *ngIf="alarmScheduleForm.get('dynamicValueArgument').hasError('required')">
+          {{ 'calculated-fields.hint.argument-name-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <div matSuffix style="height: 56px"
+           [tb-help-popup]="'alarm-rule/alarm_rule_schedule_format'"
+           tb-help-popup-placement="left"
+           [tb-help-popup-style]="{maxWidth: '970px'}">
+      </div>
+    </div>
+  }
+</section>
