@@ -1791,6 +1791,10 @@ queue:
       task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:3000}"
       # Maximum amount of task reprocessing attempts. After exceeding, the task will be dropped
       max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:10}"
+      # Enable async processing for eligible tasks (DELETE_LATEST_TS and DELETE_TS_HISTORY)
+      async-processing-enabled: "${TB_HOUSEKEEPER_ASYNC_PROCESSING_ENABLED:true}"
+      # Size of the worker pool used for async-eligible tasks. 0 to auto-calculate as Runtime.getRuntime().availableProcessors()
+      async-processing-threads: "${TB_HOUSEKEEPER_ASYNC_PROCESSING_THREADS:0}"
       stats:
         # Enable/disable statistics for Housekeeper
         enabled: "${TB_HOUSEKEEPER_STATS_ENABLED:true}"
