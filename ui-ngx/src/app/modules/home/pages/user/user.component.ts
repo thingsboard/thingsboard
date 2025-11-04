@@ -23,7 +23,7 @@ import { User } from '@shared/models/user.model';
 import { selectAuth } from '@core/auth/auth.selectors';
 import { map } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, validateEmail } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { ActionNotificationShow } from '@app/core/notification/notification.actions';
 import { TranslateService } from '@ngx-translate/core';
@@ -35,7 +35,7 @@ import { UnitSystems } from '@shared/models/unit.models';
   templateUrl: './user.component.html',
   styleUrls: ['./user.component.scss']
 })
-export class UserComponent extends EntityComponent<User> {
+export class UserComponent extends EntityComponent<User>{
 
   authority = Authority;
   languageList = env.supportedLangs;
@@ -74,7 +74,7 @@ export class UserComponent extends EntityComponent<User> {
   buildForm(entity: User): UntypedFormGroup {
     return this.fb.group(
       {
-        email: [entity ? entity.email : '', [Validators.required, Validators.email]],
+        email: [entity ? entity.email : '', [Validators.required, validateEmail]],
         firstName: [entity ? entity.firstName : ''],
         lastName: [entity ? entity.lastName : ''],
         phone: [entity ? entity.phone : ''],

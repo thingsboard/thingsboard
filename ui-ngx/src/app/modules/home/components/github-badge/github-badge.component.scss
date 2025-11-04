@@ -13,12 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+:host {
+  &:has(section) {
+    height: 100%;
+  }
+  --mat-outlined-button-horizontal-padding: 8px;
+  --mdc-outlined-button-container-height: 30px;
+  --mdc-outlined-button-label-text-size: 12px;
 
-import org.thingsboard.server.common.data.id.CustomerId;
+  .mdc-button {
+    background-color: rgba(255, 255, 255, 0.12);
 
-public interface HasCustomerId {
+    &:hover {
+      background-color: rgba(255, 255, 255, 0.20);
+    }
+  }
 
-    CustomerId getCustomerId();
-
+  .button-label {
+    margin-top: 1px;
+  }
 }

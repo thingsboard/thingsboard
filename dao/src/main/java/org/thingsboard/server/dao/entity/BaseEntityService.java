@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.entity;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -67,15 +68,13 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.id.EntityId.NULL_UUID;
 import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_NAME;
 import static org.thingsboard.server.common.data.query.EntityFilterType.ENTITY_TYPE;
 import static org.thingsboard.server.dao.service.Validator.validateEntityDataPageLink;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
-/**
- * Created by ashvayka on 04.05.17.
- */
 @Service
 @Slf4j
 public class BaseEntityService extends AbstractEntityService implements EntityService {
@@ -93,7 +92,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
     @Autowired
     @Lazy
-    EntityServiceRegistry entityServiceRegistry;
+    private EntityServiceRegistry entityServiceRegistry;
 
     @Autowired
     private EdqsService edqsService;
@@ -199,6 +198,11 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
     }
 
     @Override
+    public FluentFuture<Optional<CustomerId>> fetchEntityCustomerIdAsync(TenantId tenantId, EntityId entityId) {
+        return fetchAndConvertAsync(tenantId, entityId, this::getCustomerId);
+    }
+
+    @Override
     public Optional<NameLabelAndCustomerDetails> fetchNameLabelAndCustomerDetails(TenantId tenantId, EntityId entityId) {
         log.trace("Executing fetchNameLabelAndCustomerDetails [{}]", entityId);
         return fetchAndConvert(tenantId, entityId, this::getNameLabelAndCustomerDetails);
@@ -237,6 +241,12 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
         Optional<HasId<?>> entityOpt = entityDaoService.findEntity(tenantId, entityId);
         return entityOpt.map(converter);
+    }
+
+    private <T> FluentFuture<Optional<T>> fetchAndConvertAsync(TenantId tenantId, EntityId entityId, Function<HasId<?>, T> converter) {
+        EntityDaoService entityDaoService = entityServiceRegistry.getServiceByEntityType(entityId.getEntityType());
+        return entityDaoService.findEntityAsync(tenantId, entityId)
+                .transform(entityOpt -> entityOpt.map(converter), directExecutor());
     }
 
     private String getName(HasId<?> entity) {
@@ -329,7 +339,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
         }
 
         if ((query.getEntityFields() == null || query.getEntityFields().isEmpty()) &&
-            (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
+                (query.getLatestValues() == null || query.getLatestValues().isEmpty())) {
             return false;
         }
 
