@@ -38,8 +38,8 @@ public class AggIntervalEntryStatus {
         boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - checkInterval;
         boolean argsUpdatedDuringInterval = lastArgsRefreshTs > -1;
         if (intervalPassed && argsUpdatedDuringInterval) {
-            lastMetricsEvalTs = System.currentTimeMillis();
-            lastArgsRefreshTs = -1;
+            setLastMetricsEvalTs(System.currentTimeMillis());
+            setLastArgsRefreshTs(-1);
             return true;
         }
         return false;

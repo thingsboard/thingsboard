@@ -23,7 +23,6 @@ import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
@@ -87,9 +86,6 @@ public abstract class AbstractCalculatedFieldProcessingService {
     protected final OwnerService ownerService;
 
     protected ListeningExecutorService calculatedFieldCallbackExecutor;
-
-    @Value("${actors.calculated_fields.max_datapoints_limit}")
-    private int aggArgumentMaxDatapointsLimit;
 
     @PostConstruct
     public void init() {
@@ -311,10 +307,10 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     private ListenableFuture<ArgumentEntry> fetchTimeSeries(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval, long queryEndTs) {
-        long startInterval = interval.getCurrentIntervalStartTs();
+        long intervalStartTs = interval.getCurrentIntervalStartTs();
         long intervalEndTs = interval.getCurrentIntervalEndTs();
-        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startInterval, queryEndTs, 0, aggArgumentMaxDatapointsLimit, Aggregation.NONE);
-        return fetchTimeSeriesInternal(tenantId, entityId, query, timeSeries -> transformAggregationArgument(timeSeries, startInterval, intervalEndTs));
+        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), intervalStartTs, queryEndTs, 0, 1, Aggregation.NONE);
+        return fetchTimeSeriesInternal(tenantId, entityId, query, timeSeries -> transformAggregationArgument(timeSeries, intervalStartTs, intervalEndTs));
     }
 
     private ListenableFuture<ArgumentEntry> fetchTsRolling(TenantId tenantId, EntityId entityId, Argument argument, long queryEndTs) {

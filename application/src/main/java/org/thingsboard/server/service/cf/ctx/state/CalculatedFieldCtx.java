@@ -45,6 +45,8 @@ import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSuppor
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.Watermark;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -94,6 +96,8 @@ public class CalculatedFieldCtx implements Closeable {
     private String expression;
     private boolean useLatestTs;
     private boolean requiresScheduledReevaluation;
+
+    private long lastReevaluationTs;
 
     private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
@@ -192,7 +196,6 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
             this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
         }
-        this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
         }
@@ -205,6 +208,29 @@ public class CalculatedFieldCtx implements Closeable {
         this.maxDataPointsPerRollingArg = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg); // fixme why tenant profile update is not handled??
         this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+    }
+
+    public boolean isRequiresScheduledReevaluation() {
+        if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration entityAggregationConfig) {
+            long now = System.currentTimeMillis();
+            long cfCheckIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval());
+            Watermark watermark = entityAggregationConfig.getWatermark();
+            if (watermark != null) {
+                long checkIntervalMillis = TimeUnit.SECONDS.toMillis(watermark.getCheckInterval());
+                if (cfCheckIntervalMillis == checkIntervalMillis) {
+                    return true;
+                }
+                if (now + cfCheckIntervalMillis >= lastReevaluationTs + checkIntervalMillis) {
+                    lastReevaluationTs = now;
+                    return true;
+                }
+            }
+            long intervalEndTsMillis = entityAggregationConfig.getInterval().getCurrentIntervalEndTs();
+            if (now + cfCheckIntervalMillis >= intervalEndTsMillis) {
+                return true;
+            }
+        }
+        return calculatedField.getConfiguration().requiresScheduledReevaluation();
     }
 
     public void init() {

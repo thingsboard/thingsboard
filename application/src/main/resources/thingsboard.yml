@@ -530,9 +530,7 @@ actors:
     # Time in seconds to receive calculation result.
     calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
     # Interval in seconds to re-evaluate calculated fields that have a time schedule. 2 minutes by default.
-    check_interval: "${ACTORS_CALCULATED_FIELDS_CHECK_INTERVAL_SEC:120}"
-    # Maximum allowed datapoints fetched by aggregation calculated fields
-    max_datapoints_limit: "${CF_AGG_MAX_DATAPOINTS_LIMIT:50000}"
+    check_interval: "${ACTORS_CALCULATED_FIELDS_CHECK_INTERVAL_SEC:30}"
 
 debug:
   settings:

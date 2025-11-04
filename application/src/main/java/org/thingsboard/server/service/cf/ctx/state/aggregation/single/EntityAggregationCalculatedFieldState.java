@@ -53,30 +53,16 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     private long checkInterval;
     private Map<String, AggMetric> metrics;
 
-    private final Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = new HashMap<>();
-
     private CalculatedFieldProcessingService cfProcessingService;
 
     public EntityAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
 
-    public void scheduleReevaluation() {
-        prepareIntervals();
-        fillMissingIntervals(interval.getCurrentIntervalEndTs(), intervalDuration);
-        long now = System.currentTimeMillis();
-        intervals.forEach((intervalEntry, argumentIntervalStatuses) -> {
-            if (intervalEntry.belongsToInterval(now)) {
-                ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
-            } else {
-                if (intervalEntry.getEndTs() <= now) {
-                    ctx.scheduleReevaluation(checkInterval, actorCtx);
-                }
-            }
-        });
-    }
-
-    private void fillMissingIntervals(long currentIntervalEndTs, long intervalDuration) {
+    public void fillMissingIntervals() {
+        long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
+        long intervalDuration = interval.getIntervalDurationMillis();
+        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
         AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
         if (lastIntervalEntry == null) {
             return;
@@ -91,13 +77,23 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             arguments.forEach((argName, argumentEntry) -> {
                 var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
                 AggIntervalEntryStatus intervalEntryStatus = new AggIntervalEntryStatus(System.currentTimeMillis());
-                entityAggEntry.getAggIntervals().put(missingAggIntervalEntry, intervalEntryStatus);
-                intervals.computeIfAbsent(missingAggIntervalEntry, i -> new HashMap<>()).put(argName, intervalEntryStatus);
+                entityAggEntry.getAggIntervals().computeIfAbsent(missingAggIntervalEntry, missingInterval -> intervalEntryStatus);
             });
 
             nextStartTs = nextEndTs;
             nextEndTs += intervalDuration;
         }
+    }
+
+    private Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> getIntervals() {
+        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = new HashMap<>();
+        arguments.forEach((argName, entry) -> {
+            var argEntry = (EntityAggregationArgumentEntry) entry;
+            argEntry.getAggIntervals().forEach((intervalEntry, status) ->
+                    intervals.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, status)
+            );
+        });
+        return intervals;
     }
 
     @Override
@@ -121,11 +117,11 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) throws Exception {
         createIntervalIfNotExist();
-        prepareIntervals();
         long now = System.currentTimeMillis();
 
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
+        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
         intervals.forEach((intervalEntry, argIntervalStatuses) -> {
             processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
@@ -143,37 +139,22 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 .build());
     }
 
-    private void prepareIntervals() {
-        arguments.forEach((argName, entry) -> {
-            var argEntry = (EntityAggregationArgumentEntry) entry;
-            argEntry.getAggIntervals().forEach((intervalEntry, status) ->
-                    intervals.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, status)
-            );
-        });
-    }
-
     private void removeExpiredIntervals(List<AggIntervalEntry> expiredIntervals) {
         expiredIntervals.forEach(expiredInterval -> {
             arguments.values().stream()
                     .map(EntityAggregationArgumentEntry.class::cast)
                     .forEach(arg -> arg.getAggIntervals().remove(expiredInterval));
-            intervals.remove(expiredInterval);
         });
     }
 
     private void createIntervalIfNotExist() {
         AggIntervalEntry currentInterval = new AggIntervalEntry(interval.getCurrentIntervalStartTs(), interval.getCurrentIntervalEndTs());
-        if (intervals.containsKey(currentInterval)) {
-            return;
-        }
         arguments.forEach((argName, argumentEntry) -> {
             var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
             if (!entityAggEntry.getAggIntervals().containsKey(currentInterval)) {
-                entityAggEntry.getAggIntervals().put(currentInterval, new AggIntervalEntryStatus());
-                intervals.computeIfAbsent(currentInterval, i -> new HashMap<>()).put(argName, new AggIntervalEntryStatus());
+                entityAggEntry.getAggIntervals().computeIfAbsent(currentInterval, current -> new AggIntervalEntryStatus());
             }
         });
-        ctx.scheduleReevaluation(interval.getDelayUntilIntervalEnd(), actorCtx);
     }
 
     private void processInterval(long now,
@@ -208,9 +189,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.shouldRecalculate(checkInterval)) {
                 processMetric(intervalEntry, argName, false, results);
-                ctx.scheduleReevaluation(checkInterval, actorCtx);
-            } else if (argEntryIntervalStatus.intervalPassed(checkInterval)) {
-                processMetric(intervalEntry, argName, true, results);
             }
         });
     }

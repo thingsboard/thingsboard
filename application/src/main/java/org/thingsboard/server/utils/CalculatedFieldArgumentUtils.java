@@ -80,7 +80,7 @@ public class CalculatedFieldArgumentUtils {
         if (defaultValue != null) {
             ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue.doubleValue()));
         }
-        return ArgumentEntry.createSingleValueArgument(new StringDataEntry(argKey, null));
+        return new SingleValueArgumentEntry();
     }
 
     public static ArgumentEntry transformAggregationArgument(List<TsKvEntry> timeSeries, long startIntervalTs, long endIntervalTs) {
