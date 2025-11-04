@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.dockerjava.zerodep.shaded.org.apache.commons.codec.binary.Hex;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
+import org.junit.Before;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
@@ -186,7 +187,8 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
 
-    public AbstractOtaLwM2MIntegrationTest() {
+    @Before
+    public void init() throws Exception {
         setResources(this.RESOURCES_OTA);
     }
 

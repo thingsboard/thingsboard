@@ -119,6 +119,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
 @Slf4j
@@ -304,7 +305,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
-    private String[] resources;
+    private String[] resources = lwm2mClientResources;
     protected String deviceId;
     protected boolean supportFormatOnly_SenMLJSON_SenMLCBOR = false;
 
@@ -324,6 +325,10 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     private void init() throws Exception {
         executor = ThingsBoardExecutors.newScheduledThreadPool(10, "test-lwm2m-scheduled");
         loginTenantAdmin();
+        initLwModels();
+    }
+
+    private void initLwModels() throws Exception {
         for (String resourceName : this.resources) {
             TbResource lwModel = new TbResource();
             lwModel.setResourceType(ResourceType.LWM2M_MODEL);
@@ -335,6 +340,13 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
             lwModel = doPostWithTypedResponse("/api/resource", lwModel, new TypeReference<>() {
             });
             Assert.assertNotNull(lwModel);
+        }
+    }
+
+    public void setResources(String[] resources) throws Exception {
+        if (this.resources == null || !Arrays.equals(this.resources, resources)) {
+            this.resources = resources;
+            initLwModels();
         }
     }
 
@@ -543,10 +555,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         NoSecClientCredential clientCredentials = new NoSecClientCredential();
         clientCredentials.setEndpoint(endpoint);
         return clientCredentials;
-    }
-
-    public void setResources(String[] resources) {
-        this.resources = resources;
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,

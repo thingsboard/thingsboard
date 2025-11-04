@@ -101,10 +101,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     @SpyBean
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
-    public AbstractRpcLwM2MIntegrationTest() {
-        setResources(lwm2mClientResources);
-    }
-
     @Before
     public void startInitRPC() throws Exception {
         if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")) {

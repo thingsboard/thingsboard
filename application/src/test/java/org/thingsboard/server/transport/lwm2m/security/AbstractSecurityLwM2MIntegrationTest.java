@@ -22,6 +22,7 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
+import org.junit.Before;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -134,7 +135,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
     public AbstractSecurityLwM2MIntegrationTest() {
         // create client credentials
-        setResources(this.RESOURCES_SECURITY);
         try {
             // Get certificates from key store
             char[] clientKeyStorePwd = CLIENT_STORE_PWD.toCharArray();
@@ -176,6 +176,12 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
         defaultBootstrapCredentials.setBootstrapServer(serverCredentials);
         defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
+    }
+
+    @Before
+    public void init() throws Exception {
+        String[] RESOURCES_SECURITY = new String[]{"3.xml", "5.xml", "6.xml", "9.xml", "19.xml"};
+        setResources(RESOURCES_SECURITY);
     }
 
     public void basicTestConnectionStartBS(String clientEndpoint,
