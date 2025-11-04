@@ -24,7 +24,7 @@
   <div #labelCardContent class="tb-label-card-content">
     <div #labelCardRow class="tb-label-card-row">
       <tb-icon *ngIf="showIcon" [style]="iconStyle">{{ icon }}</tb-icon>
-      <div [class.tb-label-card-label]="!settings.autoScale" [style]="labelStyle" [innerHTML]="label | safe:'html'"></div>
+      <div [class.tb-label-card-label]="!settings.autoScale" [style]="labelStyle" [innerHTML]="label | customTranslate  | safe:'html'"></div>
     </div>
   </div>
 </div>
