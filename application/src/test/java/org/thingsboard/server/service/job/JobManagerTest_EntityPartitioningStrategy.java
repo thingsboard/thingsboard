@@ -27,17 +27,16 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 public class JobManagerTest_EntityPartitioningStrategy extends JobManagerTest {
 
     /*
-    * Some tests are overridden because they are based on
-    * tenant partitioning strategy (subsequent tasks processing within a tenant)
-    * */
+     * Some tests are overridden because they are based on
+     * tenant partitioning strategy (subsequent tasks processing within a tenant)
+     * */
 
     @Override
-    public void testCancelJob_simulateTaskProcessorRestart() throws Exception {
+    public void testCancelJob_simulateTaskProcessorRestart() {
     }
 
     @Override
     public void testSubmitJob_generalError() {
-
     }
 
 }

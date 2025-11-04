@@ -44,7 +44,53 @@
         padding: 0 5px;
       }
     }
+
+    .mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {
+      border-color: var(--mat-tab-header-pagination-disabled-icon-color);
+    }
   }
+
+  .mat-mdc-input-element::placeholder {
+    color: var(--mat-table-header-headline-color);
+  }
+
+  .mat-mdc-table {
+    .mat-mdc-header-row {
+      background-color: var(--tb-orig-background-color);
+    }
+
+    .mat-mdc-cell, .mat-mdc-header-cell {
+      &.mat-mdc-table-sticky {
+        background-color:var(--tb-orig-background-color);
+      }
+    }
+
+    .mat-mdc-row {
+      background-color: rgba(0,0,0,0); 
+      &.tb-current-entity {
+        background-color: var(--tb-current-entity-color);
+        .mat-mdc-cell.mat-mdc-table-sticky {
+          background-color: var(--tb-current-entity-sticky-color);
+        }
+      }
+      &:hover:not(.tb-current-entity){
+        background-color: var(--tb-hover-color);
+        .mat-mdc-cell.mat-mdc-table-sticky {
+          background-color: var(--tb-hover-sticky-color);
+        }
+      }
+      &.mat-row-select.mat-selected:not(.tb-current-entity){
+        background-color: var(--tb-selected-color);
+        .mat-mdc-cell.mat-mdc-table-sticky {
+          background-color: var(--tb-selected-sticky-color);
+        }
+      }
+      &, .mat-mdc-cell.mat-mdc-table-sticky {
+        transition: background-color .2s;
+        background-color:var(--tb-orig-background-color);
+      }
+    }
+  } 
 }
 
 :host-context(.tb-has-timewindow) {
