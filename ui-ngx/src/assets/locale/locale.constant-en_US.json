@@ -2829,6 +2829,7 @@
         "details": "Entity details",
         "no-entities-prompt": "No entities found",
         "no-data": "No data to display",
+        "show-all-columns":"Show All",
         "columns-to-display": "Columns to Display",
         "type-api-usage-state": "API Usage State",
         "type-edge": "Edge",
@@ -7135,7 +7136,8 @@
             "marker": "Marker",
             "polygon": "Polygon",
             "rectangle": "Rectangle",
-            "circle": "Circle"
+            "circle": "Circle",
+            "polyline": "Polyline"
         },
         "place-map-item": "Place map item",
         "map-item-tooltip": {
@@ -7147,7 +7149,9 @@
             "continue-draw-polygon": "Continue draw polygon",
             "finish-draw-polygon": "Finish draw polygon",
             "start-draw-circle": "Start draw circle",
-            "finish-draw-circle": "Finish draw circle"
+            "finish-draw-circle": "Finish draw circle",
+            "start-draw-polyline": "Start draw polyline",
+            "finish-draw-polyline": "Finish draw polyline"
         }
     },
     "widgets-bundle": {
@@ -8163,14 +8167,14 @@
             "attribute-scope-server": "Server attribute",
             "attribute-scope-shared": "Shared attribute",
             "value-required": "Value required",
-            "image-settings": "Image settings",
+            "image-settings": "Image output settings",
             "image-format": "Image format",
             "image-format-jpeg": "JPEG",
             "image-format-png": "PNG",
             "image-format-webp": "WEBP",
-            "image-quality": "Image quality that use lossy compression such as jpeg and webp",
-            "max-image-width": "Maximum image width",
-            "max-image-height": "Maximum image height",
+            "image-quality": "Image quality",
+            "max-image-width": "Max width",
+            "max-image-height": "Max height",
             "action-buttons": "Action buttons",
             "show-action-buttons": "Show action buttons",
             "update-all-values": "Update all values, not only modified",
@@ -8251,7 +8255,10 @@
             "add-radio-option": "Add radio option",
             "radio-label-position": "Label position",
             "radio-label-position-before": "Before",
-            "radio-label-position-after": "After"
+            "radio-label-position-after": "After",
+            "save-image": "Save image",
+            "save-to-gallery": "Automatically store captured images in Image Gallery",
+            "public-image": "Makes image avaliable for any unauthorized user"
         },
         "invalid-qr-code-text": "Invalid input text for QR code. Input should have a string type",
         "qr-code": {
@@ -8546,7 +8553,8 @@
                 "trips": "Trips",
                 "markers": "Markers",
                 "polygons": "Polygons",
-                "circles": "Circles"
+                "circles": "Circles",
+                "polylines": "Polylines"
             },
             "data-layer": {
                 "source": "Source",
@@ -8742,6 +8750,25 @@
                     "place-circle-center-hint": "Circle: click to place circle center",
                     "finish-circle-hint-with-entity": "Circle for '{{entityName}}': click to finish and save circle",
                     "finish-circle-hint": "Circle: click to finish drawing"
+                },
+                "polyline": {
+                    "polyline-key": "Polyline key",
+                    "polyline-key-required": "Polyline key required",
+                    "no-polylines": "No polylines configured",
+                    "add-polylines": "Add polyline",
+                    "polyline-configuration": "Polyline configuration",
+                    "remove-polyline": "Remove polyline",
+                    "edit": "Edit polyline",
+                    "cut": "Cut polyline area",
+                    "rotate": "Rotate polyline",
+                    "remove-polyline-for": "Remove polyline for '{{entityName}}'",
+                    "draw-polyline": "Draw polyline",
+                    "polyline-place-first-point-hint-with-entity": "Polyline for '{{entityName}}': click to place first point",
+                    "polyline-place-first-point-hint": "Polyline: click to place first point",
+                    "finish-polyline-hint-with-entity": "Polyline for '{{entityName}}': click to finish drawing",
+                    "finish-polyline-hint": "Polyline: click to finish drawing",
+                    "polyline-place-first-point-cut-hint": "Click to place first point",
+                    "finish-polyline-cut-hint": "Click first marker to finish and save"
                 },
                 "select-entity": "Select entity",
                 "select-entity-hint": "Hint: after selection click at the map to set position"
@@ -9246,7 +9273,11 @@
             "alarm-column-error": "At least one alarm column should be specified",
             "table-tabs": "Table tabs",
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode",
-            "disable-sorting": "Disable sorting"
+            "disable-sorting": "Disable sorting",
+            "sort-by": "Sort tabs by",
+            "sort-asc": "Name Ascending",
+            "sort-desc": "Name Descending",
+            "sort-timestamp-option": "Created time"
         },
         "latest-chart": {
             "total": "Total",
@@ -9807,6 +9838,7 @@
         "items-per-page-separator": "of"
     },
     "language": {
+        "auto": "Auto",
         "language": "Language",
         "locales": {
             "ar_AE": "العربية (الإمارات العربية المتحدة)",

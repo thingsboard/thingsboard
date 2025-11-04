@@ -15,19 +15,32 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="photoCameraInputWidgetSettingsForm">
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
-      <input matInput formControlName="widgetTitle">
-    </mat-form-field>
-  </fieldset>
-  <fieldset class="fields-group">
-    <legend class="group-title" translate>widgets.input-widgets.image-settings</legend>
-    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-1">
-        <mat-label translate>widgets.input-widgets.image-format</mat-label>
+<section class="flex flex-col gap-4" [formGroup]="photoCameraInputWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.input-widgets.general-settings</div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>widgets.input-widgets.widget-title</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="widgetTitle" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.input-widgets.save-image</div>
+    <mat-slide-toggle class="mat-slide" formControlName="saveToGallery">
+      {{ 'widgets.input-widgets.save-to-gallery' | translate }}
+    </mat-slide-toggle>
+    @if (photoCameraInputWidgetSettingsForm.get('saveToGallery').value) {
+      <mat-slide-toggle class="mat-slide" formControlName="usePublicGalleryLink">
+        {{ 'widgets.input-widgets.public-image' | translate }}
+      </mat-slide-toggle>
+    }
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.input-widgets.image-settings</div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.input-widgets.image-format</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="imageFormat">
           <mat-option [value]="'image/jpeg'">
             {{ 'widgets.input-widgets.image-format-jpeg' | translate }}
@@ -40,20 +53,33 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
-        <mat-label translate>widgets.input-widgets.image-quality</mat-label>
-        <input matInput type="number" min="0" max="1" formControlName="imageQuality">
-      </mat-form-field>
-    </section>
-    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
-      <mat-form-field class="mat-block flex-1">
-        <mat-label translate>widgets.input-widgets.max-image-width</mat-label>
-        <input matInput type="number" min="1" formControlName="maxWidth">
-      </mat-form-field>
-      <mat-form-field class="mat-block flex-1">
-        <mat-label translate>widgets.input-widgets.max-image-height</mat-label>
-        <input matInput type="number" min="1" formControlName="maxHeight">
-      </mat-form-field>
-    </section>
-  </fieldset>
+    </div>
+
+    @if (photoCameraInputWidgetSettingsForm.get('imageFormat').value !== 'image/png') {
+      <div class="tb-form-row space-between">
+        <div translate>widgets.input-widgets.image-quality</div>
+        <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" max="100" formControlName="imageQuality">
+          <span matSuffix>%</span>
+        </mat-form-field>
+      </div>
+    }
+
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width !min-w-30">Size</div>
+      <div class="flex flex-row items-center justify-star gap-2">
+        <div class="tb-small-label" translate>widgets.input-widgets.max-image-width</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput type="number" min="1" formControlName="maxWidth">
+          <span matSuffix>px</span>
+        </mat-form-field>
+        <mat-divider vertical class="xs:hidden"></mat-divider>
+        <div class="tb-small-label" translate>widgets.input-widgets.max-image-height</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput type="number" min="1" formControlName="maxHeight">
+          <span matSuffix>px</span>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
 </section>

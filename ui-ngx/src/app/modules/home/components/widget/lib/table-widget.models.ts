@@ -451,107 +451,36 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   const mdDarkDisabled = defaultColor.setAlpha(0.26).toRgbString();
   const mdDarkDisabled2 = defaultColor.setAlpha(0.38).toRgbString();
   const mdDarkDivider = defaultColor.setAlpha(0.12).toRgbString();
+  
+  const cssString = ` {
+    --mat-toolbar-container-text-color: ${mdDark};
+    --mat-tab-header-active-label-text-color: ${mdDark};
+    --mat-tab-header-inactive-label-text-color: ${mdDark};
+    --mat-tab-header-pagination-icon-color: ${mdDark};
+    --mat-tab-header-pagination-disabled-icon-color: ${mdDarkDisabled2};
+    --mat-table-header-headline-color: ${mdDarkSecondary};
+    --mat-table-row-item-label-text-color: ${mdDark};
+    --mat-icon-color: ${mdDarkSecondary};
+    --mdc-icon-button-disabled-icon-color: ${mdDarkDisabled};
+    --mat-divider-color: ${mdDarkDivider};
+    --mat-paginator-container-text-color: ${mdDarkSecondary};
+    --mdc-icon-button-icon-color: ${mdDarkSecondary};
+    --mat-paginator-enabled-icon-color: ${mdDarkSecondary};
+    --mat-paginator-disabled-icon-color: ${mdDarkDisabled};
+    --mat-select-enabled-trigger-text-color: ${mdDarkSecondary};
+    --mat-select-disabled-trigger-text-color: ${mdDarkDisabled};
+    --mat-table-row-item-outline-color: ${mdDarkDivider};
+    --mdc-checkbox-unselected-focus-icon-color: ${mdDarkSecondary};
 
-  const cssString =
-    '.mat-mdc-input-element::placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-input-element::-moz-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-input-element::-webkit-input-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-input-element:-ms-input-placeholder {\n' +
-    '   color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    'mat-toolbar.mat-mdc-table-toolbar {\n' +
-    'color: ' + mdDark + ';\n' +
-    '}\n' +
-    'mat-toolbar.mat-mdc-table-toolbar:not([color="primary"]) button.mat-mdc-icon-button mat-icon {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-tab .mdc-tab__text-label {\n' +
-    'color: ' + mdDark + ';\n' +
-    '}\n' +
-    '.mat-mdc-tab-header-pagination-chevron {\n' +
-    'border-color: ' + mdDark + ';\n' +
-    '}\n' +
-    '.mat-mdc-tab-header-pagination-disabled .mat-mdc-tab-header-pagination-chevron {\n' +
-    'border-color: ' + mdDarkDisabled2 + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-header-row {\n' +
-    'background-color: ' + origBackgroundColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-header-cell {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell, .mat-mdc-table .mat-mdc-header-cell {\n' +
-    'border-bottom-color: ' + mdDarkDivider + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell .mat-mdc-checkbox ' +
-    '.mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])'+
-    '~.mdc-checkbox__background, ' +
-    '.mat-table .mat-header-cell .mat-mdc-checkbox ' +
-    '.mdc-checkbox__native-control:focus:enabled:not(:checked):not(:indeterminate):not([data-indeterminate=true])'+
-    '~.mdc-checkbox__background {\n' +
-    'border-color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'transition: background-color .2s;\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.tb-current-entity {\n' +
-    'background-color: ' + currentEntityColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.tb-current-entity .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + currentEntityStickyColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row:hover:not(.tb-current-entity) {\n' +
-    'background-color: ' + hoverColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row:hover:not(.tb-current-entity) .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + hoverStickyColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.mat-row-select.mat-selected:not(.tb-current-entity) {\n' +
-    'background-color: ' + selectedColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row.mat-row-select.mat-selected:not(.tb-current-entity) .mat-mdc-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + selectedStickyColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row .mat-mdc-cell.mat-mdc-table-sticky, .mat-mdc-table .mat-mdc-header-cell.mat-mdc-table-sticky {\n' +
-    'background-color: ' + origBackgroundColor + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-row {\n' +
-    'color: ' + mdDark + ';\n' +
-    'background-color: rgba(0, 0, 0, 0);\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button mat-icon {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button[disabled][disabled] mat-icon {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button tb-icon {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-table .mat-mdc-cell button.mat-mdc-icon-button[disabled][disabled] tb-icon {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
-    '.mat-divider {\n' +
-    'border-top-color: ' + mdDarkDivider + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator button.mat-mdc-icon-button {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator button.mat-mdc-icon-button[disabled][disabled] {\n' +
-    'color: ' + mdDarkDisabled + ';\n' +
-    '}\n' +
-    '.mat-mdc-paginator .mat-mdc-select-value {\n' +
-    'color: ' + mdDarkSecondary + ';\n' +
-    '}';
+    --tb-orig-background-color: ${origBackgroundColor};
+    --tb-current-entity-color: ${currentEntityColor};
+    --tb-current-entity-sticky-color: ${currentEntityStickyColor};
+    --tb-hover-color: ${hoverColor};
+    --tb-hover-sticky-color: ${hoverStickyColor};
+    --tb-selected-color: ${selectedColor};
+    --tb-selected-sticky-color: ${selectedStickyColor};
+  }
+  `;
   return cssString;
 }
 
