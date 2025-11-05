@@ -176,7 +176,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, ApiKeyId entityId, ApiKeyInfo entity) {
-            return user.getId().equals(entity.getUserId());
+            return user.getTenantId().equals(entity.getTenantId());
         }
 
     };
