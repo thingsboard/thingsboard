@@ -32,3 +32,5 @@ export * from './hint-tooltip-icon.component';
 export * from './grid/scroll-grid-datasource';
 export * from './grid/scroll-grid.component';
 export * from './table/table-datasource.abstract';
+export * from './button/public-api';
+export * from './phone-input.component';
