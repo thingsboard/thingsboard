@@ -30,28 +30,26 @@ import java.util.concurrent.ConcurrentHashMap;
 @Getter
 public class EdgeStatsCounterService {
 
-    private final ConcurrentHashMap<EdgeId, MsgCounters> counterByEdge = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<EdgeId, EdgeStats> statsByEdge = new ConcurrentHashMap<>();
 
     public void recordEvent(EdgeStatsKey type, TenantId tenantId, EdgeId edgeId, long value) {
-        MsgCounters counters = getOrCreateCounters(tenantId, edgeId);
+        EdgeStats edgeStats = getOrCreateEdgeStats(tenantId, edgeId);
+        MsgCounters counters = edgeStats.getMsgCounters();
         switch (type) {
             case DOWNLINK_MSGS_ADDED -> counters.getMsgsAdded().addAndGet(value);
             case DOWNLINK_MSGS_PUSHED -> counters.getMsgsPushed().addAndGet(value);
             case DOWNLINK_MSGS_PERMANENTLY_FAILED -> counters.getMsgsPermanentlyFailed().addAndGet(value);
             case DOWNLINK_MSGS_TMP_FAILED -> counters.getMsgsTmpFailed().addAndGet(value);
+            case DOWNLINK_MSGS_LAG -> counters.getMsgsLag().set(value);
         }
     }
 
-    public void setDownlinkMsgsLag(TenantId tenantId, EdgeId edgeId, long value) {
-        getOrCreateCounters(tenantId, edgeId).getMsgsLag().set(value);
+    public EdgeStats getOrCreateEdgeStats(TenantId tenantId, EdgeId edgeId) {
+        return statsByEdge.computeIfAbsent(edgeId, id -> new EdgeStats(tenantId));
     }
 
     public void clear(EdgeId edgeId) {
-        counterByEdge.remove(edgeId);
-    }
-
-    public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {
-        return counterByEdge.computeIfAbsent(edgeId, id -> new MsgCounters(tenantId));
+        statsByEdge.remove(edgeId);
     }
 
 }
