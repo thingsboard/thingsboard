@@ -59,43 +59,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         super(entityId);
     }
 
-    public void fillMissingIntervals() {
-        long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
-        long intervalDuration = interval.getIntervalDurationMillis();
-        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
-        AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
-        if (lastIntervalEntry == null) {
-            return;
-        }
-
-        long nextStartTs = lastIntervalEntry.getEndTs();
-        long nextEndTs = nextStartTs + intervalDuration;
-
-        while (nextEndTs <= currentIntervalEndTs) {
-            AggIntervalEntry missingAggIntervalEntry = new AggIntervalEntry(nextStartTs, nextEndTs);
-
-            arguments.forEach((argName, argumentEntry) -> {
-                var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
-                AggIntervalEntryStatus intervalEntryStatus = new AggIntervalEntryStatus(System.currentTimeMillis());
-                entityAggEntry.getAggIntervals().computeIfAbsent(missingAggIntervalEntry, missingInterval -> intervalEntryStatus);
-            });
-
-            nextStartTs = nextEndTs;
-            nextEndTs += intervalDuration;
-        }
-    }
-
-    private Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> getIntervals() {
-        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = new HashMap<>();
-        arguments.forEach((argName, entry) -> {
-            var argEntry = (EntityAggregationArgumentEntry) entry;
-            argEntry.getAggIntervals().forEach((intervalEntry, status) ->
-                    intervals.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, status)
-            );
-        });
-        return intervals;
-    }
-
     @Override
     public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
         super.setCtx(ctx, actorCtx);
@@ -104,7 +67,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         intervalDuration = configuration.getInterval().getIntervalDurationMillis();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-        checkInterval = ctx.getAggCheckInterval();
+        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getAggCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
     }
@@ -121,8 +84,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
-        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
-        intervals.forEach((intervalEntry, argIntervalStatuses) -> {
+        getIntervals().forEach((intervalEntry, argIntervalStatuses) -> {
             processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
         removeExpiredIntervals(expiredIntervals);
@@ -157,6 +119,43 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         });
     }
 
+    public void fillMissingIntervals() {
+        long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
+        long intervalDuration = interval.getIntervalDurationMillis();
+        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
+        AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
+        if (lastIntervalEntry == null) {
+            return;
+        }
+
+        long nextStartTs = lastIntervalEntry.getEndTs();
+        long nextEndTs = nextStartTs + intervalDuration;
+
+        while (nextEndTs <= currentIntervalEndTs) {
+            AggIntervalEntry missing = new AggIntervalEntry(nextStartTs, nextEndTs);
+
+            arguments.forEach((argName, argumentEntry) -> {
+                var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
+                AggIntervalEntryStatus intervalEntryStatus = new AggIntervalEntryStatus(System.currentTimeMillis());
+                entityAggEntry.getAggIntervals().computeIfAbsent(missing, missingInterval -> intervalEntryStatus);
+            });
+
+            nextStartTs = nextEndTs;
+            nextEndTs += intervalDuration;
+        }
+    }
+
+    private Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> getIntervals() {
+        Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = new HashMap<>();
+        arguments.forEach((argName, entry) -> {
+            var argEntry = (EntityAggregationArgumentEntry) entry;
+            argEntry.getAggIntervals().forEach((intervalEntry, status) ->
+                    intervals.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(argName, status)
+            );
+        });
+        return intervals;
+    }
+
     private void processInterval(long now,
                                  AggIntervalEntry intervalEntry,
                                  Map<String, AggIntervalEntryStatus> args,
@@ -179,6 +178,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
                 processMetric(intervalEntry, argName, false, results);
+            } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+                argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                processMetric(intervalEntry, argName, true, results);
             }
         });
     }
@@ -187,8 +189,15 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                                       Map<String, AggIntervalEntryStatus> args,
                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         args.forEach((argName, argEntryIntervalStatus) -> {
-            if (argEntryIntervalStatus.shouldRecalculate(checkInterval)) {
-                processMetric(intervalEntry, argName, false, results);
+            if (argEntryIntervalStatus.intervalPassed(checkInterval)) {
+                if (argEntryIntervalStatus.argsUpdated()) {
+                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    argEntryIntervalStatus.setLastArgsRefreshTs(-1);
+                    processMetric(intervalEntry, argName, false, results);
+                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    processMetric(intervalEntry, argName, true, results);
+                }
             }
         });
     }

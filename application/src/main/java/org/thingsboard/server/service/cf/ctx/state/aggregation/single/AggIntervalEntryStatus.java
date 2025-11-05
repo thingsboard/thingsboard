@@ -15,42 +15,31 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class AggIntervalEntryStatus {
 
-    @Setter
     private long lastArgsRefreshTs = -1;
-    @Setter
+
     private long lastMetricsEvalTs = -1;
 
     public AggIntervalEntryStatus(long lastArgsRefreshTs) {
         this.lastArgsRefreshTs = lastArgsRefreshTs;
     }
 
-    public boolean shouldRecalculate(long checkInterval) {
-        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - checkInterval;
-        boolean argsUpdatedDuringInterval = lastArgsRefreshTs > -1;
-        if (intervalPassed && argsUpdatedDuringInterval) {
-            setLastMetricsEvalTs(System.currentTimeMillis());
-            setLastArgsRefreshTs(-1);
-            return true;
-        }
-        return false;
+    public boolean intervalPassed(long checkInterval) {
+        return lastMetricsEvalTs <= System.currentTimeMillis() - checkInterval;
     }
 
-    public boolean intervalPassed(long checkInterval) {
-        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - checkInterval;
-        if (intervalPassed) {
-            lastMetricsEvalTs = System.currentTimeMillis();
-        }
-        return intervalPassed;
+    @JsonIgnore
+    public boolean argsUpdated() {
+        return lastArgsRefreshTs > -1;
     }
 
 }
