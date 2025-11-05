@@ -170,7 +170,7 @@ import { SafePipe } from '@shared/pipe/safe.pipe';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 import { MultipleImageInputComponent } from '@shared/components/multiple-image-input.component';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';
-import { PhoneInputComponent } from './components/phone-input.component';
+import { PhoneInputComponent } from '@shared/components/phone-input.component';
 import { CustomDateAdapter } from '@shared/adapter/custom-datatime-adapter';
 import { CustomPaginatorIntl } from '@shared/services/custom-paginator-intl';
 import { TbScriptLangComponent } from '@shared/components/script-lang.component';
@@ -208,7 +208,7 @@ import { MultipleGalleryImageInputComponent } from '@shared/components/image/mul
 import { EmbedImageDialogComponent } from '@shared/components/image/embed-image-dialog.component';
 import { ImageGalleryDialogComponent } from '@shared/components/image/image-gallery-dialog.component';
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
-import { WidgetButtonComponent } from './components/button/widget-button.component';
+import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
 import { TimezoneComponent } from '@shared/components/time/timezone.component';
 import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
