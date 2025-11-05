@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
@@ -49,8 +50,8 @@ public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsB
         if (arguments.containsKey("ctx")) {
             throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
         }
-        if (arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
-            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
+        if (arguments.values().stream().anyMatch(argument -> !ArgumentType.TS_LATEST.equals(argument.getRefEntityKey().getType()))) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' support only TS_LATEST arguments.");
         }
     }
 

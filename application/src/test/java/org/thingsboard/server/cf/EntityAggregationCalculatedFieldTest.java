@@ -109,7 +109,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
         long interval = customInterval.getIntervalDurationMillis();
-        Watermark watermark = new Watermark(60, 10);
+        Watermark watermark = new Watermark(60);
         CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, watermark);
 
         await().alias("create CF and perform aggregation after interval end")
@@ -140,7 +140,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
         long interval = customInterval.getIntervalDurationMillis();
-        Watermark watermark = new Watermark(60, 10);
+        Watermark watermark = new Watermark(60);
         CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, watermark);
 
         await().alias("create CF and perform aggregation after interval end")
@@ -155,7 +155,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":300}}", tsInInterval_1));
 
         await().alias("create CF and perform aggregation after interval end")
-                .atMost(2 * watermark.getCheckInterval(), TimeUnit.SECONDS)
+                .atMost(2 * 10, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode result = getLatestTelemetry(device.getId(), "consumptionPerMin");

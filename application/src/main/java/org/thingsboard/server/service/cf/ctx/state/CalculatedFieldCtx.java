@@ -97,7 +97,7 @@ public class CalculatedFieldCtx implements Closeable {
     private boolean useLatestTs;
     private boolean requiresScheduledReevaluation;
 
-    private long lastReevaluationTs;
+    private long aggCheckInterval;
 
     private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
@@ -199,6 +199,7 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
         }
+        this.aggCheckInterval = systemContext.getCfCheckInterval();
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();
@@ -213,20 +214,13 @@ public class CalculatedFieldCtx implements Closeable {
     public boolean isRequiresScheduledReevaluation() {
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration entityAggregationConfig) {
             long now = System.currentTimeMillis();
-            long cfCheckIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval());
             Watermark watermark = entityAggregationConfig.getWatermark();
-            if (watermark != null) {
-                long checkIntervalMillis = TimeUnit.SECONDS.toMillis(watermark.getCheckInterval());
-                if (cfCheckIntervalMillis == checkIntervalMillis) {
-                    return true;
-                }
-                if (now + cfCheckIntervalMillis >= lastReevaluationTs + checkIntervalMillis) {
-                    lastReevaluationTs = now;
-                    return true;
-                }
+            if (watermark != null && watermark.getDuration() > 0) {
+                return true;
             }
-            long intervalEndTsMillis = entityAggregationConfig.getInterval().getCurrentIntervalEndTs();
-            if (now + cfCheckIntervalMillis >= intervalEndTsMillis) {
+            long cfCheckIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval());
+            long intervalEndTs = entityAggregationConfig.getInterval().getCurrentIntervalEndTs();
+            if (now + cfCheckIntervalMillis >= intervalEndTs) {
                 return true;
             }
         }
@@ -634,6 +628,13 @@ public class CalculatedFieldCtx implements Closeable {
                 && other.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig
                 && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
             return true;
+        }
+        if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
+                && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
+            boolean metricsChanged = thisConfig.getMetrics().equals(otherConfig.getMetrics());
+            boolean intervalChanged = thisConfig.getInterval().equals(otherConfig.getInterval());
+            boolean watermarkChanged = thisConfig.getWatermark().equals(otherConfig.getWatermark());
+            return metricsChanged || intervalChanged || watermarkChanged;
         }
         return false;
     }

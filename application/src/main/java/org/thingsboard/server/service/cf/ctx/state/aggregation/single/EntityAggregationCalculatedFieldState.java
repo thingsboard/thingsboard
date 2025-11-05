@@ -104,7 +104,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         intervalDuration = configuration.getInterval().getIntervalDurationMillis();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-        checkInterval = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getCheckInterval());
+        checkInterval = ctx.getAggCheckInterval();
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
     }
