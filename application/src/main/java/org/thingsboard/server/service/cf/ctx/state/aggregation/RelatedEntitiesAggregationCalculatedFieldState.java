@@ -38,7 +38,9 @@ import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.function.AggEntry;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
@@ -52,6 +54,8 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     private long lastArgsRefreshTs = -1;
     @Setter
     private long lastMetricsEvalTs = -1;
+    @Setter
+    private long lastRelatedEntitiesRefreshTs = -1;
     private long deduplicationIntervalMs = -1;
     private Map<String, AggMetric> metrics;
 
@@ -76,7 +80,12 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         super.reset();
         lastArgsRefreshTs = -1;
         lastMetricsEvalTs = -1;
+        lastRelatedEntitiesRefreshTs = -1;
         metrics = null;
+    }
+
+    public void updateLastRelatedEntitiesRefreshTs() {
+        lastRelatedEntitiesRefreshTs = System.currentTimeMillis();
     }
 
     @Override
@@ -88,6 +97,49 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
         lastArgsRefreshTs = System.currentTimeMillis();
         return super.update(argumentValues, ctx);
+    }
+
+    public List<EntityId> checkRelatedEntities(List<EntityId> relatedEntities) {
+        Map<EntityId, Map<String, ArgumentEntry>> entityInputs = prepareInputs();
+        findOutdatedEntities(entityInputs, relatedEntities).forEach(this::cleanupEntityData);
+        updateLastRelatedEntitiesRefreshTs();
+        return findMissingEntities(entityInputs, relatedEntities);
+    }
+
+    private List<EntityId> findMissingEntities(Map<EntityId, Map<String, ArgumentEntry>> entityInputs, List<EntityId> relatedEntities) {
+        List<EntityId> missing = new ArrayList<>();
+        relatedEntities.forEach(entityId -> {
+            if (!entityInputs.containsKey(entityId)) {
+                missing.add(entityId);
+                log.warn("[{}] Missing related entity inputs for {}", ctx.getCfId(), entityId);
+            }
+        });
+        return missing;
+    }
+
+    private List<EntityId> findOutdatedEntities(Map<EntityId, Map<String, ArgumentEntry>> entityInputs, List<EntityId> relatedEntities) {
+        List<EntityId> outdated = new ArrayList<>();
+        entityInputs.keySet().forEach(entityId -> {
+            if (!relatedEntities.contains(entityId)) {
+                outdated.add(entityId);
+                log.warn("[{}] CF state keeps outdated related entity {}", ctx.getCfId(), entityId);
+            }
+        });
+        return outdated;
+    }
+
+    public Map<String, ArgumentEntry> updateEntityData(Map<String, ArgumentEntry> fetchedArgs) {
+        lastMetricsEvalTs = -1;
+        return update(fetchedArgs, ctx);
+    }
+
+    public void cleanupEntityData(EntityId relatedEntityId) {
+        arguments.values().forEach(argEntry -> {
+            RelatedEntitiesArgumentEntry aggEntry = (RelatedEntitiesArgumentEntry) argEntry;
+            aggEntry.getEntityInputs().remove(relatedEntityId);
+        });
+        lastMetricsEvalTs = -1;
+        lastArgsRefreshTs = System.currentTimeMillis();
     }
 
     @Override
@@ -106,20 +158,6 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         } else {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
         }
-    }
-
-    public Map<String, ArgumentEntry> updateEntityData(Map<String, ArgumentEntry> fetchedArgs) {
-        lastMetricsEvalTs = -1;
-        return update(fetchedArgs, ctx);
-    }
-
-    public void cleanupEntityData(EntityId relatedEntityId) {
-        arguments.values().forEach(argEntry -> {
-            RelatedEntitiesArgumentEntry aggEntry = (RelatedEntitiesArgumentEntry) argEntry;
-            aggEntry.getEntityInputs().remove(relatedEntityId);
-        });
-        lastMetricsEvalTs = -1;
-        lastArgsRefreshTs = System.currentTimeMillis();
     }
 
     private boolean shouldRecalculate() {

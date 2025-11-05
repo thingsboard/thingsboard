@@ -54,6 +54,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
@@ -95,6 +96,16 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
             case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
             default -> Collections.emptyMap();
         };
+    }
+
+    @Override
+    public List<EntityId> fetchRelatedEntities(CalculatedFieldCtx ctx, EntityId entityId) {
+        try {
+            return resolveRelatedEntities(entityId, ctx).get();
+        } catch (ExecutionException | InterruptedException e) {
+            Throwable cause = e.getCause();
+            throw new RuntimeException("Failed to fetch related entities for entity [" + entityId + "]: " + cause.getMessage(), cause);
+        }
     }
 
     @Override

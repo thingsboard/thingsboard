@@ -39,7 +39,6 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
-import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -172,26 +171,31 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     protected Map<String, ListenableFuture<ArgumentEntry>> fetchRelatedEntitiesAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
+        if (!(ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config)) {
+            return Collections.emptyMap();
+        }
+        ListenableFuture<List<EntityId>> relatedEntitiesFut = resolveRelatedEntities(entityId, ctx);
 
-        ListenableFuture<List<EntityId>> relatedEntitiesFut = resolveRelatedEntities(ctx.getTenantId(), entityId, aggConfig.getRelation());
-
-        return aggConfig.getArguments().entrySet().stream()
+        return config.getArguments().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> Futures.transformAsync(relatedEntitiesFut, relatedEntities -> fetchRelatedEntitiesArgumentEntry(ctx.getTenantId(), relatedEntities, entry.getValue(), ts), MoreExecutors.directExecutor())
                 ));
     }
 
-    private ListenableFuture<List<EntityId>> resolveRelatedEntities(TenantId tenantId, EntityId entityId, RelationPathLevel relation) {
-        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findByRelationPathQueryAsync(tenantId, new EntityRelationPathQuery(entityId, List.of(relation)));
+    protected ListenableFuture<List<EntityId>> resolveRelatedEntities(EntityId entityId, CalculatedFieldCtx ctx) {
+        if (!(ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config)) {
+            return Futures.immediateFuture(Collections.emptyList());
+        }
+
+        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findByRelationPathQueryAsync(ctx.getTenantId(), new EntityRelationPathQuery(entityId, List.of(config.getRelation())));
 
         return Futures.transform(relationsFut, relations -> {
             if (relations == null) {
                 return Collections.emptyList();
             }
 
-            return switch (relation.direction()) {
+            return switch (config.getRelation().direction()) {
                 case FROM -> relations.stream()
                         .map(EntityRelation::getTo)
                         .toList();

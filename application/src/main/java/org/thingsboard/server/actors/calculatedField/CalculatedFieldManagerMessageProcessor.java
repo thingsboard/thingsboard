@@ -339,9 +339,11 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
         List<CalculatedFieldCtx> matchingCfs = cfsByEntityIdAndProfile.stream()
                 .filter(cf -> {
-                    var config = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                    RelationPathLevel relation = config.getRelation();
-                    return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
+                    if (cf.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
+                        RelationPathLevel relation = config.getRelation();
+                        return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
+                    }
+                    return false;
                 })
                 .toList();
 

@@ -23,12 +23,13 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 
 import java.util.Map;
 
 @Data
-public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration {
+public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
 
     @NotNull
     private RelationPathLevel relation;
@@ -39,6 +40,9 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
     private Map<String, AggMetric> metrics;
     private Output output;
     private boolean useLatestTs;
+
+    private boolean scheduledUpdateEnabled;
+    private int scheduledUpdateInterval;
 
     @Override
     public CalculatedFieldType getType() {
