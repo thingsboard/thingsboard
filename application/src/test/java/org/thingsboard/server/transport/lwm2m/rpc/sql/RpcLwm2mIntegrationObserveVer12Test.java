@@ -44,4 +44,20 @@ public class RpcLwm2mIntegrationObserveVer12Test extends AbstractRpcLwM2MIntegra
         long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
         assertTrue(lastSendTelemetryAtCount > initSendTelemetryAtCount);
     }
+
+
+    /**
+     * "3_1.2/0/9"
+     * Observe count 4
+     * CancelAll Observe
+     * Reboot
+     * Observe count 4 contains
+     * "/3_1.2" - Discover Object - find ver
+     * @throws Exception
+     */
+    @Test
+    public void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4_ObjectVer_1_2() throws Exception {
+        String expectedIdVer = "</3>;ver=1.2";
+        testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4(expectedIdVer);
+    }
 }

@@ -64,22 +64,8 @@ public class RpcLwm2mIntegrationObserveVer10Test extends AbstractRpcLwM2MIntegra
      * @throws Exception
      */
     @Test
-    public void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4() throws Exception {
+    public void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4_ObjectVer_1_0() throws Exception {
         String expectedIdVer = "</3>;ver=1.0";
-        String expectedIdObserve = "SingleObservation:/3/0/9";
-        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
-        updateRegAtLeastOnceAfterAction();
-        JsonNode beforeDiscoverAll =  sendRpcDiscoverAll();
-        log.info("Start reboot client");
-        lwM2MTestClient.getLeshanClient().stop(false);
-        log.info("Start new registration client");
-        lwM2MTestClient.getLeshanClient().start();
-        updateRegAtLeastOnceAfterAction();
-        awaitObserveReadAll(4,lwM2MTestClient.getDeviceIdStr());
-        JsonNode afterDiscoverAll =  sendRpcDiscoverAll();
-        String actualIdVer = sendDiscover(objectIdVer_3);
-        assertTrue(actualIdVer.contains(expectedIdVer));
-        String actualAllObserve = sendRpcObserveReadAllWithResult();
-        assertTrue(actualAllObserve.contains(expectedIdObserve));
+        testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4(expectedIdVer);
     }
 }

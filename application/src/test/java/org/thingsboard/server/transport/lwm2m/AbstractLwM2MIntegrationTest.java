@@ -95,6 +95,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
@@ -761,6 +762,19 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                             .andExpect(status().isOk());
                    return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
                 });
+    }
+
+    protected void updateRegAtLeastOnceAfterAction() {
+        long initialInvocationCount = countUpdateReg();
+        AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
+        log.trace("updateRegAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
+        await("Update Registration at-least-once after action")
+                .atMost(50, TimeUnit.SECONDS)
+                .until(() -> {
+                    newInvocationCount.set(countUpdateReg());
+                    return newInvocationCount.get() > initialInvocationCount;
+                });
+        log.trace("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
     }
 
     protected Integer getCntObserveAll(String deviceIdStr) throws Exception {

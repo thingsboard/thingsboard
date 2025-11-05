@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
-import org.junit.Before;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 @DaoSqlTest
