@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
@@ -51,5 +52,34 @@ public class RpcLwm2mIntegrationObserveVer10Test extends AbstractRpcLwM2MIntegra
         long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
         assertTrue(lastSendTelemetryAtCount > initSendTelemetryAtCount);
         awaitObserveReadAll(1,lwM2MTestClient.getDeviceIdStr());
+    }
+
+    /**
+     * "3_1.0/0/9"
+     * Observe count 4
+     * CancelAll Observe
+     * Reboot
+     * Observe count 4 contains
+     * "/3_1.0" - Discover Object - find ver
+     * @throws Exception
+     */
+    @Test
+    public void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4() throws Exception {
+        String expectedIdVer = "</3>;ver=1.0";
+        String expectedIdObserve = "SingleObservation:/3/0/9";
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
+        updateRegAtLeastOnceAfterAction();
+        JsonNode beforeDiscoverAll =  sendRpcDiscoverAll();
+        log.info("Start reboot client");
+        lwM2MTestClient.getLeshanClient().stop(false);
+        log.info("Start new registration client");
+        lwM2MTestClient.getLeshanClient().start();
+        updateRegAtLeastOnceAfterAction();
+        awaitObserveReadAll(4,lwM2MTestClient.getDeviceIdStr());
+        JsonNode afterDiscoverAll =  sendRpcDiscoverAll();
+        String actualIdVer = sendDiscover(objectIdVer_3);
+        assertTrue(actualIdVer.contains(expectedIdVer));
+        String actualAllObserve = sendRpcObserveReadAllWithResult();
+        assertTrue(actualAllObserve.contains(expectedIdObserve));
     }
 }

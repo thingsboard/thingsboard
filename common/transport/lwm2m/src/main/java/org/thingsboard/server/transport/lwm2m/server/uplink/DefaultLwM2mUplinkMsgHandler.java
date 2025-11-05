@@ -218,14 +218,17 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         executor.submit(() -> {
             LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
             try {
-                log.debug("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
+                log.info("[{}] [{{}] Client: create after Registration", registration.getEndpoint(), registration.getId());
                 Optional<SessionInfoProto> oldSessionInfo = this.clientContext.register(lwM2MClient, registration);
                 if (oldSessionInfo.isPresent()) {
                     log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
                     sessionManager.deregister(oldSessionInfo.get());
                 }
-                logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId() + " version: "
-                        + registration.getLwM2mVersion() + " and modes: " + registration.getQueueMode() + ", " + registration.getBindingMode());
+                String msgLogService = String.format("""
+                %s: Endpoint [%s] Client registered with registration id: [%s] LwM2mVersion: [%s], SupportedObjectIdVer [%s] QueueMode [%s], BindingMode %s
+                """, LOG_LWM2M_INFO,  registration.getEndpoint(), registration.getId(), registration.getLwM2mVersion(), registration.getSupportedObject(), registration.getQueueMode(), registration.getBindingMode());
+                logService.log(lwM2MClient, msgLogService);
+                log.info(msgLogService);
                 sessionManager.register(lwM2MClient.getSession());
                 this.initClientTelemetry(lwM2MClient);
                 this.initAttributes(lwM2MClient, true);
@@ -290,7 +293,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             clientContext.unregister(client, registration);
             SessionInfoProto sessionInfo = client.getSession();
             if (sessionInfo != null) {
-                securityStore.remove(client.getEndpoint(), client.getRegistration().getId());
                 sessionManager.deregister(sessionInfo);
                 sessionStore.remove(registration.getEndpoint());
                 log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
