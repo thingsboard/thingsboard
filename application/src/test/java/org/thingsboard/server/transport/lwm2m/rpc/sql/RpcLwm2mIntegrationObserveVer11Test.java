@@ -15,17 +15,20 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test;
-
 import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 
 @Slf4j
-public class RpcLwm2mIntegrationObserve_Ver_1_0_Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test {
+public class RpcLwm2mIntegrationObserveVer11Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test {
+
+    public RpcLwm2mIntegrationObserveVer11Test() throws Exception {
+    }
 
     @Before
     public void setupObserveTest() throws Exception {
@@ -33,7 +36,7 @@ public class RpcLwm2mIntegrationObserve_Ver_1_0_Test extends AbstractRpcLwM2MInt
     }
 
     /**
-     * Observe "3_1.0/0/9"
+     * Observe "3_1.1/0/9"
      * @throws Exception
      */
     @Test

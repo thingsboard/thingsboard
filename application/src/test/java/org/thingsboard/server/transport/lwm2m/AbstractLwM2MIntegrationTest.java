@@ -343,10 +343,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         }
     }
 
-    public void setResources(String[] resources) throws Exception {
+    public void setResources(String[] resources) {
         if (this.resources == null || !Arrays.equals(this.resources, resources)) {
             this.resources = resources;
-            initLwModels();
         }
     }
 

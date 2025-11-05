@@ -15,15 +15,23 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.ResponseCode;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test;
+import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test;
+
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 
 @Slf4j
-public class RpcLwm2mIntegrationObserve_Ver_1_1_Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test {
+public class RpcLwm2mIntegrationObserveVer10Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test {
+
+    public RpcLwm2mIntegrationObserveVer10Test() throws Exception {
+    }
 
     @Before
     public void setupObserveTest() throws Exception {
@@ -31,16 +39,17 @@ public class RpcLwm2mIntegrationObserve_Ver_1_1_Test extends AbstractRpcLwM2MInt
     }
 
     /**
-     * Observe "3_1.1/0/9"
+     * Observe "3_1.0/0/9"
      * @throws Exception
      */
     @Test
-    public void testObserveOneResource_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
+    public void testObserveOneResource_Result_CONTENT_Value_Count_4_After_Cancel_Count_1() throws Exception {
         long initSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
         sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0_9);
         updateRegAtLeastOnceAfterAction();
         long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
         assertTrue(lastSendTelemetryAtCount > initSendTelemetryAtCount);
+        awaitObserveReadAll(1,lwM2MTestClient.getDeviceIdStr());
     }
 }
