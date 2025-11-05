@@ -37,8 +37,11 @@ import {
 } from '@shared/models/calculated-field.models';
 import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
+import { DAY, HOUR, MINUTE, SECOND } from '@shared/models/time/time.models';
 import { isDefinedAndNotNull } from '@core/utils';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 interface CalculatedFieldEntityAggregationConfigurationValue extends CalculatedFieldEntityAggregationConfiguration {
   interval: AggInterval & {allowOffsetSec?: boolean};
@@ -72,6 +75,8 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
   @Input({required: true})
   entityName: string;
 
+  readonly minAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAggregationIntervalInSecForCF;
+  readonly DayInSec = DAY / SECOND;
 
   entityAggregationConfiguration = this.fb.group({
     arguments: this.fb.control({}, notEmptyObjectValidator()),
@@ -79,14 +84,13 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     interval: this.fb.group({
       type: [AggIntervalType.HOUR],
       tz: ['', Validators.required],
-      durationSec: [HOUR/SECOND, Validators.required],
+      durationSec: [this.minAggregationIntervalInSecForCF, Validators.required],
       allowOffsetSec: [false],
       offsetSec: [MINUTE/SECOND, Validators.required],
     }),
     allowWatermark: [false],
     watermark: this.fb.group({
       duration: [HOUR/SECOND, Validators.required],
-      checkInterval: [10 * MINUTE / SECOND, Validators.required],
     }),
     output: this.fb.control<CalculatedFieldOutput>({
       type: OutputType.Timeseries,
@@ -103,7 +107,8 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
 
   private propagateChange: (config: CalculatedFieldEntityAggregationConfiguration) => void = () => { };
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private store: Store<AppState>) {
 
     this.entityAggregationConfiguration.get('interval.type').valueChanges.pipe(
       takeUntilDestroyed()

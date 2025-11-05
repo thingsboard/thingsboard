@@ -1195,7 +1195,8 @@
         "aggregate-interval-type": "Aggregate interval type",
         "aggregate-interval-value": "Aggregate interval value",
         "aggregate-interval-value-required": "Aggregate interval value is required",
-        "aggregate-interval-value-min": "Aggregate interval value should be at least 1 minute",
+        "aggregate-interval-value-min": "Aggregate interval value should be at least { sec, plural, =0 {0 second} =1 {1 second} other {# seconds} }",
+        "aggregate-interval-value-step-multiple-of": "Aggregate interval value must be a divisor or multiple of 1 day",
         "aggregate-period": {
             "hour": "Hour",
             "day": "Day",
@@ -1220,12 +1221,7 @@
             "duration": "Duration",
             "duration-required": "Duration is required",
             "duration-min": "Duration should be at least 1 minute",
-            "duration-hint": "Defines how long to wait for delayed data after the interval ends",
-            "check-interval": "Check for telemetry every",
-            "check-interval-required": "Check for telemetry every is required",
-            "check-interval-min": "Check interval should be at least 30 seconds",
-            "check-interval-max": "Check interval need be less than the duration",
-            "check-interval-hint": "Defines how often to recheck for late telemetry during the watermark period"
+            "duration-hint": "How long to wait for delayed data after the interval ends"
         },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
@@ -6001,6 +5997,9 @@
         "min-allowed-deduplication-interval": "Min allowed deduplication interval (seconds)",
         "min-allowed-deduplication-interval-range": "Min allowed deduplication interval value can't be negative",
         "min-allowed-deduplication-interval-required": "Min allowed deduplication interval is required",
+        "min-allowed-aggregation-interval": "Min allowed aggregation interval (seconds)",
+        "min-allowed-aggregation-interval-range": "Min allowed aggregation interval value can't be negative",
+        "min-allowed-aggregation-interval-required": "Min allowed aggregation interval is required",
         "min-allowed-scheduled-update-interval-required": "Min allowed update interval min number is required",
         "max-state-size": "State maximum size in KB",
         "max-state-size-range": "State maximum size in KB can't be negative",

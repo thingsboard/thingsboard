@@ -62,13 +62,16 @@
       </div>
       @if (entityAggregationConfiguration.get('interval.type').value === AggIntervalType.CUSTOM) {
         <tb-time-unit-input required
-                            [minTime]="60"
+                            [minTime]="minAggregationIntervalInSecForCF"
+                            [stepMultipleOf]="DayInSec"
                             sameWidthInputs
                             appearance="outline"
                             subscriptSizing="dynamic"
+                            containerClass="flex gap-3"
                             labelText="{{ 'calculated-fields.aggregate-interval-value' | translate }}"
-                            minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate }}"
+                            minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate : {sec: minAggregationIntervalInSecForCF} }}"
                             requiredText="{{ 'calculated-fields.aggregate-interval-value-required' | translate }}"
+                            stepMultipleOfErrorText="Must be 1 day"
                             formControlName="durationSec">
         </tb-time-unit-input>
       }
@@ -84,6 +87,7 @@
                               sameWidthInputs
                               appearance="outline"
                               subscriptSizing="dynamic"
+                              containerClass="flex gap-3"
                               labelText="{{ 'calculated-fields.entity-aggregation.offset-value' | translate }}"
                               minErrorText="{{ 'calculated-fields.entity-aggregation.offset-value-min' | translate }}"
                               requiredText="{{ 'calculated-fields.entity-aggregation.offset-value-required' | translate }}"
@@ -104,23 +108,12 @@
                               [minTime]="60"
                               sameWidthInputs
                               appearance="outline"
+                              containerClass="flex gap-3"
                               labelText="{{ 'calculated-fields.entity-aggregation.duration' | translate }}"
                               minErrorText="{{ 'calculated-fields.entity-aggregation.duration-min' | translate }}"
                               hintText="{{ 'calculated-fields.entity-aggregation.duration-hint' | translate }}"
                               requiredText="{{ 'calculated-fields.entity-aggregation.duration-required' | translate }}"
                               formControlName="duration">
-          </tb-time-unit-input>
-          <tb-time-unit-input required
-                              [minTime]="30"
-                              [maxTime]="entityAggregationConfiguration.get('watermark.duration').value"
-                              sameWidthInputs
-                              appearance="outline"
-                              labelText="{{ 'calculated-fields.entity-aggregation.check-interval' | translate }}"
-                              hintText="{{ 'calculated-fields.entity-aggregation.check-interval-hint' | translate }}"
-                              minErrorText="{{ 'calculated-fields.entity-aggregation.check-interval-min' | translate }}"
-                              maxErrorText="{{ 'calculated-fields.entity-aggregation.check-interval-max' | translate }}"
-                              requiredText="{{ 'calculated-fields.entity-aggregation.check-interval-required' | translate }}"
-                              formControlName="checkInterval">
           </tb-time-unit-input>
         </ng-container>
       }

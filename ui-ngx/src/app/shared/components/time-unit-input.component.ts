@@ -23,6 +23,7 @@ import {
   NG_VALUE_ACCESSOR,
   ValidationErrors,
   Validator,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 import { TimeUnit, timeUnitTranslations } from '@home/components/rule-node/rule-node-config.models';
@@ -80,6 +81,13 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   maxErrorText: string;
 
   @Input()
+  @coerceNumber()
+  stepMultipleOf: number;
+
+  @Input()
+  stepMultipleOfErrorText: string;
+
+  @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
@@ -92,6 +100,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   @Input()
   @coerceBoolean()
   sameWidthInputs: boolean = false;
+
+  @Input()
+  containerClass: string | string[] | Record<string, boolean | undefined | null> = "flex gap-4";
 
   timeUnits = Object.values(TimeUnit).filter(item => item !== TimeUnit.MILLISECONDS) as TimeUnit[];
 
@@ -128,7 +139,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         this.timeUnits = this.timeUnits.filter(item => item !== TimeUnit.DAYS);
       }
     }
-    if(this.required || this.maxTime) {
+    if (this.required || this.maxTime || isDefinedAndNotNull(this.minTime) || this.stepMultipleOf) {
       const timeControl = this.timeInputForm.get('time');
       const validators = [Validators.pattern(/^\d*$/)];
       if (this.required) {
@@ -143,6 +154,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         validators.push((control: AbstractControl) =>
           Validators.min(Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
         );
+      }
+
+      if (isDefinedAndNotNull(this.stepMultipleOf) && this.stepMultipleOf > 0) {
+        validators.push(this.createStepMultipleOfValidator());
       }
 
       timeControl.setValidators(validators);
@@ -170,6 +185,8 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
       return this.minErrorText;
     } else if (this.timeInputForm.get('time').hasError('max') && this.maxErrorText) {
       return this.maxErrorText;
+    } else if (this.timeInputForm.get('time').hasError('stepMultipleOf') && this.stepMultipleOfErrorText) {
+      return this.stepMultipleOfErrorText;
     }
   }
 
@@ -230,6 +247,36 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         }
       }
     }
+  }
+
+  private createStepMultipleOfValidator(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const time = control.value;
+      if (!isDefinedAndNotNull(time) || !isNumeric(time)) {
+        return null;
+      }
+      const numericTime = Number(time);
+      if (numericTime === 0) {
+        return null;
+      }
+
+      const timeUnit = control.parent?.get('timeUnit')?.value as TimeUnit;
+      if (!timeUnit) {
+        return null;
+      }
+
+      const unitInSec = this.timeIntervalsInSec.get(timeUnit);
+      const totalTimeInSec = numericTime * unitInSec;
+      const multipleOfVal = this.stepMultipleOf;
+
+      let isValid: boolean;
+      if (totalTimeInSec < multipleOfVal) {
+        isValid = (multipleOfVal % totalTimeInSec === 0);
+      } else {
+        isValid = (totalTimeInSec % multipleOfVal === 0);
+      }
+      return isValid ? null : { stepMultipleOf: true };
+    };
   }
 
 }
