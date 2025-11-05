@@ -76,7 +76,7 @@
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>user.email</mat-label>
-        <input matInput type="email" formControlName="email" required>
+        <input matInput type="email" formControlName="email">
         <mat-error *ngIf="entityForm.get('email').hasError('email')">
           {{ 'user.invalid-email-format' | translate }}
         </mat-error>
