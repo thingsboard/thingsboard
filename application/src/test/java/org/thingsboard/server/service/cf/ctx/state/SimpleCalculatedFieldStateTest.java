@@ -204,28 +204,29 @@ public class SimpleCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(state.getRequiredArguments());
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 "key1", key1ArgEntry,
                 "key2", key2ArgEntry,
                 "key3", key3ArgEntry
-        ));
-
+        ), ctx);
         assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 "key1", key1ArgEntry,
-                "key2", key2ArgEntry
-        ));
-        state.getArguments().put("key3", new SingleValueArgumentEntry());
-
+                "key2", key2ArgEntry,
+                "key3", new SingleValueArgumentEntry()
+        ), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains("key3");
     }
 
     private CalculatedField getCalculatedField() {

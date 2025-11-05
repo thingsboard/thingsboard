@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.predic
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 
 import java.io.Serializable;
+import java.util.List;
 
 @Data
 public class AlarmConditionFilter implements Serializable {
@@ -31,8 +32,9 @@ public class AlarmConditionFilter implements Serializable {
     private String argument;
     @NotNull
     private EntityKeyValueType valueType;
+    private ComplexOperation operation;
     @Valid
     @NotNull
-    private KeyFilterPredicate predicate;
+    private List<KeyFilterPredicate> predicates;
 
 }
