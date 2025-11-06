@@ -47,6 +47,7 @@ public abstract class BaseAggInterval implements AggInterval {
             case DAY -> Duration.ofDays(1).toMillis();
             case WEEK, WEEK_SUN_SAT -> Duration.ofDays(7L).toMillis();
             case MONTH -> Duration.ofDays(Math.round(30)).toMillis(); // average
+            case QUARTER -> Duration.ofDays(Math.round(91)).toMillis();
             case YEAR -> Duration.ofDays(Math.round(365)).toMillis();
             default -> throw new IllegalArgumentException("Unsupported type: " + getType());
         };
@@ -88,6 +89,7 @@ public abstract class BaseAggInterval implements AggInterval {
             case WEEK -> alignByWeeks(reference, DayOfWeek.MONDAY, next);
             case WEEK_SUN_SAT -> alignByWeeks(reference, DayOfWeek.SUNDAY, next);
             case MONTH -> alignByMonths(reference, next);
+            case QUARTER -> alignByQuarters(reference, next);
             case YEAR -> alignByYears(reference, next);
             default -> throw new IllegalArgumentException("Unsupported interval type: " + getType());
         };
@@ -112,6 +114,16 @@ public abstract class BaseAggInterval implements AggInterval {
     private ZonedDateTime alignByMonths(ZonedDateTime now, boolean next) {
         ZonedDateTime base = now.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
         return next ? base.plusMonths(1) : base;
+    }
+
+    private ZonedDateTime alignByQuarters(ZonedDateTime now, boolean next) {
+        int month = now.getMonthValue();
+        int quarterStartMonth = ((month - 1) / 3) * 3 + 1; // 1, 4, 7, 10
+        ZonedDateTime base = ZonedDateTime.of(
+                LocalDate.of(now.getYear(), quarterStartMonth, 1),
+                LocalTime.MIDNIGHT,
+                now.getZone());
+        return next ? base.plusMonths(3) : base;
     }
 
     private ZonedDateTime alignByYears(ZonedDateTime now, boolean next) {

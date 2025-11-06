@@ -15,15 +15,16 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
-public enum AggIntervalType {
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    HOUR,
-    DAY,
-    WEEK,
-    WEEK_SUN_SAT,
-    MONTH,
-    QUARTER,
-    YEAR,
-    CUSTOM
+@Data
+@NoArgsConstructor
+public class QuarterInterval extends BaseAggInterval {
+
+    @Override
+    public AggIntervalType getType() {
+        return AggIntervalType.QUARTER;
+    }
 
 }

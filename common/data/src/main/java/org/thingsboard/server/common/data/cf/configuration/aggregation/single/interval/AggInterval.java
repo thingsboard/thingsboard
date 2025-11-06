@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
         @JsonSubTypes.Type(value = WeekInterval.class, name = "WEEK"),
         @JsonSubTypes.Type(value = WeekSunSatInterval.class, name = "WEEK_SUN_SAT"),
         @JsonSubTypes.Type(value = MonthInterval.class, name = "MONTH"),
+        @JsonSubTypes.Type(value = QuarterInterval.class, name = "QUARTER"),
         @JsonSubTypes.Type(value = YearInterval.class, name = "YEAR"),
         @JsonSubTypes.Type(value = CustomInterval.class, name = "CUSTOM")
 })

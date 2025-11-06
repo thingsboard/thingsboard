@@ -27,5 +27,4 @@ public class MonthInterval extends BaseAggInterval {
         return AggIntervalType.MONTH;
     }
 
-
 }
