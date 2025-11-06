@@ -20,16 +20,31 @@
   --mat-outlined-button-horizontal-padding: 8px;
   --mdc-outlined-button-container-height: 30px;
   --mdc-outlined-button-label-text-size: 12px;
+  --mat-outlined-button-hover-state-layer-opacity: 0;
+  --mat-icon-button-hover-state-layer-opacity: 0;
 
-  .mdc-button {
-    background-color: rgba(255, 255, 255, 0.12);
+  .group {
+    .mdc-button {
+      background-color: rgba(255, 255, 255, 0.12);
+    }
 
     &:hover {
-      background-color: rgba(255, 255, 255, 0.20);
+      .mdc-button {
+        background-color: rgba(255, 255, 255, 0.20);
+      }
+    }
+
+    .mdc-icon-button {
+      background-color: #162C41;
+
+      &:hover {
+        background-color: #DD2C00;
+      }
     }
   }
 
   .button-label {
-    margin-top: 1px;
+    height: 28px;
+    --mat-divider-color: var(--mdc-outlined-button-label-text-color);
   }
 }
