@@ -107,6 +107,7 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
     map(argumentsObj => getCalculatedFieldArgumentsHighlights(argumentsObj))
   );
 
+  private readonly minAllowedScheduledUpdateIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedScheduledUpdateIntervalInSecForCF;
   private propagateChange: (config: CalculatedFieldRelatedAggregationConfiguration) => void = () => { };
 
   constructor(private fb: FormBuilder,
@@ -151,6 +152,7 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
 
   private updatedModel(value: CalculatedFieldRelatedAggregationConfiguration): void {
     value.type = CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
+    value.scheduledUpdateInterval = this.minAllowedScheduledUpdateIntervalInSecForCF;
     this.propagateChange(value);
   }
 }
