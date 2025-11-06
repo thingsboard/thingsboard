@@ -176,7 +176,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     if (!value.interval.allowOffsetSec) {
       delete value.interval.offsetSec;
     }
-    delete value.interval.offsetSec;
+    delete value.interval.allowOffsetSec;
     if (!value.allowWatermark) {
       delete value.watermark;
     }

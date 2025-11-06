@@ -294,6 +294,7 @@ export enum AggIntervalType {
   WEEK = 'WEEK',
   WEEK_SUN_SAT = 'WEEK_SUN_SAT',
   MONTH = 'MONTH',
+  QUARTER = 'QUARTER',
   YEAR = 'YEAR',
   CUSTOM = 'CUSTOM'
 }
@@ -305,6 +306,7 @@ export const AggIntervalTypeTranslations = new Map<AggIntervalType, string>(
     [AggIntervalType.WEEK, 'calculated-fields.aggregate-period.week'],
     [AggIntervalType.WEEK_SUN_SAT, 'calculated-fields.aggregate-period.week-sun-sat'],
     [AggIntervalType.MONTH, 'calculated-fields.aggregate-period.month'],
+    [AggIntervalType.QUARTER, 'calculated-fields.aggregate-period.quarter'],
     [AggIntervalType.YEAR, 'calculated-fields.aggregate-period.year'],
     [AggIntervalType.CUSTOM, 'calculated-fields.aggregate-period.custom']
   ]

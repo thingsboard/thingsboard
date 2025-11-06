@@ -1203,6 +1203,7 @@
             "week": "Week (Mon - Sun)",
             "week-sun-sat": "Week (Sun - Sat)",
             "month": "Month",
+            "quarter": "Quarter",
             "year": "Year",
             "custom": "Custom"
         },
