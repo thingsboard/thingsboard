@@ -55,6 +55,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+    type: [CalculatedFieldType.ALARM],
     debugSettings: [],
     configuration: this.fb.group({
       arguments: this.fb.control({}),
@@ -159,8 +160,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
-    this.fieldFormGroup.patchValue({ configuration, debugSettings, ...value }, {emitEvent: false});
+    const { configuration = {}, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
+    this.fieldFormGroup.patchValue({ configuration, type, debugSettings, ...value }, {emitEvent: false});
   }
 
   private observeIsLoading(): void {

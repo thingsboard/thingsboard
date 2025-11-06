@@ -176,7 +176,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       debugSettings,
       debugConfig: {
         entityType: EntityType.CALCULATED_FIELD,
-        isAlarmRule: true,
+        entityLabel: 'alarm-rule.alarm-rule',
         additionalActionConfig,
       },
       onSettingsAppliedFn: settings => this.onDebugConfigChanged(id.id, settings)

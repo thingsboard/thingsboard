@@ -28,7 +28,7 @@ export interface EntityDebugSettingPanelConfig {
     maxDebugModeDuration?: number;
     additionalActionConfig?: AdditionalDebugActionConfig;
     entityType: EntityType;
-    isAlarmRule?: boolean;
+    entityLabel?: string;
   }
   onSettingsAppliedFn: (settings: EntityDebugSettings) => void;
 }

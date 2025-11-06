@@ -51,8 +51,7 @@ export class CalculatedFieldsService {
   }
 
   public getCalculatedFields({ entityType, id }: EntityId, pageLink: PageLink, type?: CalculatedFieldType, config?: RequestConfig): Observable<PageData<CalculatedField>> {
-    let url = `/api/${entityType}/${id}/calculatedFields${pageLink.toQuery()}`;
-    return this.http.get<PageData<CalculatedField>>(url, createDefaultHttpOptions(type ? {type} : null, config));
+    return this.http.get<PageData<CalculatedField>>(`/api/${entityType}/${id}/calculatedFields${pageLink.toQuery()}`, createDefaultHttpOptions(type ? {type} : null, config));
   }
 
   public testScript(inputParams: CalculatedFieldTestScriptInputParams, config?: RequestConfig): Observable<EntityTestScriptResult> {

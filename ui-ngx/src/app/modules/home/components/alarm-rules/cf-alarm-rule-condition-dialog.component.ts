@@ -74,11 +74,11 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     unit: this.fb.control(TimeUnit.SECONDS, Validators.required),
     value: this.fb.group({
       staticValue: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]),
-      dynamicValueArgument: this.fb.control<string | null>(null, Validators.required),
+      dynamicValueArgument: this.fb.control<string>('', Validators.required),
     }),
     count: this.fb.group({
       staticValue: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]),
-      dynamicValueArgument: this.fb.control<string | null>(null, Validators.required),
+      dynamicValueArgument: this.fb.control<string>('', Validators.required),
     }),
   });
 

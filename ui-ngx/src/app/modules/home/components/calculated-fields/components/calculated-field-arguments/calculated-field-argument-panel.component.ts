@@ -315,7 +315,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   }
 
   private updatedRefEntityIdState(type: ArgumentEntityType, emitEvent = true): void {
-    const isEntityWithId = !!type && type !== ArgumentEntityType.Tenant && type !== ArgumentEntityType.Current;
+    const isEntityWithId = !!type && ![ArgumentEntityType.Tenant, ArgumentEntityType.Current, ArgumentEntityType.Owner].includes(type);
     this.argumentFormGroup.get('refEntityId')[isEntityWithId ? 'enable' : 'disable']({emitEvent});
     if (!isEntityWithId) {
       this.entityNameSubject.next(null);

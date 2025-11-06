@@ -80,10 +80,8 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
   }
 
   save(): void {
-    if (this.complexFilterFormGroup.valid) {
-      const predicate: ComplexAlarmRuleFilterPredicate = this.complexFilterFormGroup.value as ComplexAlarmRuleFilterPredicate;
-      predicate.type = FilterPredicateType.COMPLEX;
-      this.dialogRef.close(predicate);
-    }
+    const predicate = this.complexFilterFormGroup.value as ComplexAlarmRuleFilterPredicate;
+    predicate.type = FilterPredicateType.COMPLEX;
+    this.dialogRef.close(predicate);
   }
 }
