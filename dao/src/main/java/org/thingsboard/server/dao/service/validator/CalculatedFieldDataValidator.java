@@ -134,7 +134,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (minAggregationIntervalInSec <= 0) {
             return;
         }
-        if (aggConfiguration.getInterval().getIntervalDurationMillis() > TimeUnit.SECONDS.toMillis(minAggregationIntervalInSec)) {
+        if (aggConfiguration.getInterval().getIntervalDurationMillis() < TimeUnit.SECONDS.toMillis(minAggregationIntervalInSec)) {
             throw new IllegalArgumentException("Aggregation interval duration is less than configured " +
                     "minimum allowed aggregation interval in tenant profile: " + minAggregationIntervalInSec + " sec.");
         }

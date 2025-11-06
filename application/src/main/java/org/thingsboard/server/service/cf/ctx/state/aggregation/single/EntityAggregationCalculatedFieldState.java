@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
@@ -89,11 +90,11 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         });
         removeExpiredIntervals(expiredIntervals);
 
-        ArrayNode result = toResult(results);
+        Output output = ctx.getOutput();
+        ArrayNode result = toResult(results, output.getDecimalsByDefault());
         if (result.isEmpty()) {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
         }
-        Output output = ctx.getOutput();
         return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
                 .type(output.getType())
                 .scope(output.getScope())
@@ -227,7 +228,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 .orElse(null);
     }
 
-    protected ArrayNode toResult(Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
+    protected ArrayNode toResult(Map<AggIntervalEntry, Map<String, ArgumentEntry>> results, Integer precision) {
         ArrayNode result = JacksonUtil.newArrayNode();
         results.forEach((interval, args) -> {
             ObjectNode metricsNode = JacksonUtil.newObjectNode();
@@ -235,7 +236,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 String metricName = entry.getKey();
                 ArgumentEntry argumentEntry = entry.getValue();
                 if (!argumentEntry.isEmpty()) {
-                    metricsNode.put(metricName, JacksonUtil.toString(argumentEntry.getValue()));
+                    Object resultValue = argumentEntry.getValue() instanceof Number number
+                            ? TbUtils.roundResult(number.doubleValue(), precision)
+                            : argumentEntry.getValue();
+                    metricsNode.put(metricName, JacksonUtil.toString(resultValue));
                 }
             }
             ObjectNode resultNode = JacksonUtil.newObjectNode();
