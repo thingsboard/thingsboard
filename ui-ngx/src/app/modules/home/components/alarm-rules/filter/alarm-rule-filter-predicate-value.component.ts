@@ -17,10 +17,10 @@
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
+  FormBuilder,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
   ValidationErrors,
   Validator,
   ValidatorFn,
@@ -30,7 +30,6 @@ import { EntityKeyValueType } from '@shared/models/query/query.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { AlarmRuleValue } from "@shared/models/alarm-rule.models";
-import { isDefinedAndNotNull } from "@core/utils";
 import { FormControlsFrom } from "@shared/models/tenant.model";
 
 @Component({
@@ -62,16 +61,18 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
 
   filterPredicateValueFormGroup: FormGroup<FormControlsFrom<AlarmRuleValue<string | number | boolean>>>;
 
-  mode: 'static' | 'dynamic' = 'static';
+  dynamicModeControl = this.fb.control(false);
 
-  private propagateChange = null;
-  private propagateChangePending = false;
+  argumentsList: Array<string>;
 
-  constructor(private fb: UntypedFormBuilder,
+  private propagateChange= (v: any) => { };
+
+  constructor(private fb: FormBuilder,
               private destroyRef: DestroyRef) {
   }
 
   ngOnInit(): void {
+    this.argumentsList = this.arguments ? Object.keys(this.arguments): [];
     let defaultValue: string | number | boolean;
     let defaultValueValidators: ValidatorFn[];
     switch (this.valueType) {
@@ -94,42 +95,30 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
     }
     this.filterPredicateValueFormGroup = this.fb.group({
       staticValue: [defaultValue, defaultValueValidators],
-      dynamicValueArgument: [null, Validators.required]
+      dynamicValueArgument: ['', Validators.required]
     });
     this.filterPredicateValueFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateModel();
     });
+    this.dynamicModeControl.valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => this.updateValueModeValidators(value))
   }
 
-  private updateValueModeValidators(mode: 'static' | 'dynamic'): void {
-    if (mode === 'static') {
-      this.filterPredicateValueFormGroup.get('staticValue').enable({emitEvent: false});
-      this.filterPredicateValueFormGroup.get('dynamicValueArgument').disable({emitEvent: false});
-    } else {
+  private updateValueModeValidators(isDynamicMode: boolean): void {
+    if (isDynamicMode) {
       this.filterPredicateValueFormGroup.get('staticValue').disable({emitEvent: false});
       this.filterPredicateValueFormGroup.get('dynamicValueArgument').enable({emitEvent: false});
+    } else {
+      this.filterPredicateValueFormGroup.get('staticValue').enable({emitEvent: false});
+      this.filterPredicateValueFormGroup.get('dynamicValueArgument').disable({emitEvent: false});
     }
-  }
-
-  get argumentsList(): Array<string> {
-    return this.arguments ? Object.keys(this.arguments): [];
   }
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
-    if (this.propagateChangePending) {
-      this.propagateChangePending = false;
-      setTimeout(() => {
-        this.updateModel();
-      }, 0);
-    }
-  }
-
-  onModeChange(mode: 'static' | 'dynamic') {
-    this.mode = mode;
-    this.updateValueModeValidators(mode);
   }
 
   registerOnTouched(fn: any): void {
@@ -142,18 +131,11 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
   }
 
   writeValue(predicateValue: AlarmRuleValue<string | number | boolean>): void {
-    this.propagateChangePending = false;
     this.filterPredicateValueFormGroup.patchValue(predicateValue, {emitEvent: false});
-    this.mode = isDefinedAndNotNull(predicateValue.dynamicValueArgument) ? 'dynamic' : 'static';
-    this.updateValueModeValidators(this.mode);
+    this.dynamicModeControl.patchValue(!!predicateValue.dynamicValueArgument?.length);
   }
 
   private updateModel() {
-    const predicateValue: AlarmRuleValue<string | number | boolean> = this.filterPredicateValueFormGroup.value;
-    if (this.propagateChange) {
-      this.propagateChange(predicateValue);
-    } else {
-      this.propagateChangePending = true;
-    }
+    this.propagateChange(this.filterPredicateValueFormGroup.value);
   }
 }

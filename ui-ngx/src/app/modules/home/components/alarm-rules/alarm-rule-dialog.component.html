@@ -54,7 +54,7 @@
           />
         </div>
       </div>
-      <ng-container [formGroup]="configFormGroup">
+      <ng-container formGroupName="configuration">
         <div class="tb-form-panel">
           <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
           <tb-calculated-field-arguments-table formControlName="arguments"

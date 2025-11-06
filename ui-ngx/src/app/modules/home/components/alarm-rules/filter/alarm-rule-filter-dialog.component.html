@@ -16,9 +16,8 @@
 
 -->
 <form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="width: 1200px;">
-  <mat-toolbar color="primary">
-    <h2>{{(data.isAdd ? 'alarm-rule.add-filter' : ('alarm-rule.edit-filter')) | translate}}</h2>
-    <span class="flex-1"></span>
+  <mat-toolbar class="justify-between" color="primary">
+    <h2>{{(data.isAdd ? 'alarm-rule.add-filter' : 'alarm-rule.edit-filter') | translate}}</h2>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -26,7 +25,7 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async" class="tb-form-panel no-border no-padding">
+    <section class="tb-form-panel no-border no-padding">
       <section class="tb-form-panel">
         <div class="tb-form-panel-title">{{ 'alarm-rule.general' | translate }}</div>
         <div class="flex flex-row gap-2 xs:flex-col">
@@ -81,20 +80,18 @@
                                              formControlName="predicates">
         </tb-alarm-rule-filter-predicate-list>
       </section>
-
-    </fieldset>
+    </section>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
-            [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || filterFormGroup.invalid || !filterFormGroup.dirty">
+            [disabled]="filterFormGroup.invalid || !filterFormGroup.dirty">
       {{ (data.isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
   </div>

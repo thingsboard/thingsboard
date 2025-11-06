@@ -18,19 +18,12 @@
 <div class="tb-form-panel no-border no-gap no-padding" [formGroup]="filterPredicateValueFormGroup">
   <div class="tb-form-row no-padding no-border column-xs">
     <mat-form-field hideRequiredMarker class="flex-1 w-full max-w-30% xs:max-w-full" appearance="outline" subscriptSizing="dynamic">
-      <mat-select [ngModel]="mode"
-                  (ngModelChange)="onModeChange($event)"
-                  [ngModelOptions]="{ standalone: true }"
-                  placeholder="{{'filter.dynamic-source-type' | translate}}">
-        <mat-option [value]="'static'">
-          {{'alarm-rule.static' | translate}}
-        </mat-option>
-        <mat-option [value]="'dynamic'">
-          {{'alarm-rule.dynamic' | translate}}
-        </mat-option>
+      <mat-select [formControl]="dynamicModeControl" placeholder="{{'filter.dynamic-source-type' | translate}}">
+        <mat-option [value]="false">{{'alarm-rule.static' | translate}}</mat-option>
+        <mat-option [value]="true">{{'alarm-rule.dynamic' | translate}}</mat-option>
       </mat-select>
     </mat-form-field>
-    @if (mode === 'static') {
+    @if (!dynamicModeControl.value) {
       @switch (valueType) {
         @case (valueTypeEnum.STRING) {
           <mat-form-field hideRequiredMarker class="flex-1" appearance="outline" subscriptSizing="dynamic">

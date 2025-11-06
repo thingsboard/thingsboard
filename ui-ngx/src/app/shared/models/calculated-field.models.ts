@@ -32,6 +32,7 @@ import {
 import { EntitySearchDirection } from '@shared/models/relation.models';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
+import { AlarmSeverity } from "@shared/models/alarm.models";
 
 interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
@@ -139,11 +140,11 @@ interface BasePropagationConfiguration {
 interface CalculatedFieldAlarmRuleConfiguration {
   type: CalculatedFieldType.ALARM;
   arguments: Record<string, CalculatedFieldArgument>;
-  createRules: {[severity: string]: AlarmRule};
+  createRules: Record<AlarmSeverity, AlarmRule>;
   clearRule?: AlarmRule;
-  propagate?: boolean;
-  propagateToOwner?: boolean;
-  propagateToTenant?: boolean;
+  propagate: boolean;
+  propagateToOwner: boolean;
+  propagateToTenant: boolean;
   propagateRelationTypes?: Array<string>;
 }
 
@@ -266,15 +267,11 @@ export const ArgumentTypeTranslations = new Map<ArgumentType, string>(
   ]
 )
 
-export enum CFArgumentDynamicSourceType {
-  CURRENT_OWNER = 'CURRENT_OWNER'
-}
-
 export interface CalculatedFieldArgument {
   refEntityKey: RefEntityKey;
   defaultValue?: string;
   refEntityId?: RefEntityId;
-  refDynamicSource?: CFArgumentDynamicSourceType;
+  refDynamicSourceConfiguration?: RefDynamicSourceConfiguration;
   limit?: number;
   timeWindow?: number;
 }
@@ -338,7 +335,7 @@ export interface CalculatedFieldGeofencing {
 }
 
 export interface RefDynamicSourceConfiguration {
-  type?: ArgumentEntityType.RelationQuery;
+  type?: ArgumentEntityType.RelationQuery | ArgumentEntityType.Owner;
   levels?: Array<RelationPathLevel>;
 }
 

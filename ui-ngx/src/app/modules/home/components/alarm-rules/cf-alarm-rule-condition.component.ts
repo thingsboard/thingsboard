@@ -14,12 +14,12 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
+  FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
   UntypedFormControl,
   Validator,
   Validators
@@ -40,6 +40,7 @@ import {
 import {
   AlarmRuleCondition,
   AlarmRuleConditionType,
+  AlarmRuleExpressionType,
   AlarmRuleSchedule,
   AlarmRuleScheduleType
 } from "@shared/models/alarm-rule.models";
@@ -48,6 +49,7 @@ import {
   AlarmRuleScheduleDialogData,
   CfAlarmScheduleDialogComponent
 } from "@home/components/alarm-rules/cf-alarm-schedule-dialog.component";
+import { coerceBoolean } from "@shared/decorators/coercion";
 
 @Component({
   selector: 'tb-cf-alarm-rule-condition',
@@ -66,9 +68,10 @@ import {
     }
   ]
 })
-export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnInit, Validator {
+export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Validator {
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Input()
@@ -76,7 +79,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnIn
 
   alarmRuleConditionFormGroup = this.fb.group({
     type: ['SIMPLE'],
-    expression: [null, Validators.required],
+    expression: [{type: AlarmRuleExpressionType.SIMPLE}, Validators.required],
     schedule: [null],
   });
 
@@ -89,7 +92,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnIn
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
-              private fb: UntypedFormBuilder,
+              private fb: FormBuilder,
               private cd: ChangeDetectorRef,
               private translate: TranslateService) {
   }
@@ -99,9 +102,6 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnIn
   }
 
   registerOnTouched(fn: any): void {
-  }
-
-  ngOnInit() {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -119,7 +119,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnIn
   }
 
   public conditionSet() {
-    return this.modelValue && (this.modelValue.expression.expression || this.modelValue.expression.filters);
+    return this.modelValue && (this.modelValue.expression?.expression || this.modelValue.expression?.filters);
   }
 
   public validate(c: UntypedFormControl) {
@@ -147,7 +147,6 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnIn
       if (result) {
         this.modelValue = {...this.modelValue, ...result};
         this.updateModel();
-        this.updateSpecText();
         this.cd.detectChanges();
       }
     });
@@ -233,8 +232,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, OnIn
     }).afterClosed().subscribe((result) => {
       if (result) {
         this.modelValue.schedule = result;
-        this.propagateChange(this.modelValue);
-        this.updateScheduleText();
+        this.updateModel();
         this.cd.detectChanges();
       }
     });

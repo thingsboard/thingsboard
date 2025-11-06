@@ -14,19 +14,12 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  FormGroup,
-  FormGroupDirective,
-  NgForm,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
@@ -35,8 +28,7 @@ import {
   EntityKeyValueType,
   FilterPredicateType
 } from '@shared/models/query/query.models';
-import { ComplexAlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
-import { FormControlsFrom } from "@shared/models/tenant.model";
+import { AlarmRuleFilterPredicate, ComplexAlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 export interface AlarmRuleComplexFilterPredicateDialogData {
@@ -54,10 +46,14 @@ export interface AlarmRuleComplexFilterPredicateDialogData {
 })
 
 export class AlarmRuleComplexFilterPredicateDialogComponent extends
-  DialogComponent<AlarmRuleComplexFilterPredicateDialogComponent, ComplexAlarmRuleFilterPredicate>
-  implements OnInit, ErrorStateMatcher {
+  DialogComponent<AlarmRuleComplexFilterPredicateDialogComponent, ComplexAlarmRuleFilterPredicate> {
 
-  complexFilterFormGroup: FormGroup<FormControlsFrom<ComplexAlarmRuleFilterPredicate>>;
+  complexFilterFormGroup = this.fb.group(
+    {
+      operation: [ComplexOperation.AND, [Validators.required]],
+      predicates: this.fb.control<AlarmRuleFilterPredicate[] | null>(null, Validators.required)
+    }
+  );
 
   complexOperations = Object.keys(ComplexOperation);
   complexOperationEnum = ComplexOperation;
@@ -65,35 +61,18 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
 
   isAdd: boolean;
 
-  submitted = false;
-
   arguments = this.data.arguments;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleComplexFilterPredicateDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AlarmRuleComplexFilterPredicateDialogComponent, ComplexAlarmRuleFilterPredicate>,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.isAdd = this.data.isAdd;
 
-    this.complexFilterFormGroup = this.fb.group(
-      {
-        operation: [this.data.complexPredicate.operation, [Validators.required]],
-        predicates: [this.data.complexPredicate.predicates, [Validators.required]]
-      }
-    );
-  }
-
-  ngOnInit(): void {
-  }
-
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
+    this.complexFilterFormGroup.patchValue(this.data.complexPredicate, {emitEvent: false});
   }
 
   cancel(): void {
@@ -101,7 +80,6 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
   }
 
   save(): void {
-    this.submitted = true;
     if (this.complexFilterFormGroup.valid) {
       const predicate: ComplexAlarmRuleFilterPredicate = this.complexFilterFormGroup.value as ComplexAlarmRuleFilterPredicate;
       predicate.type = FilterPredicateType.COMPLEX;

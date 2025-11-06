@@ -53,6 +53,7 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
 
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
+  @Input({ transform: booleanAttribute }) isAlarmRule = false;
   @Input() entityType: EntityType;
   @Input() allEnabledUntil = 0;
   @Input() maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
@@ -109,7 +110,11 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
     this.onFailuresControl.patchValue(this.failuresEnabled);
     this.debugAllControl.patchValue(this.allEnabled);
     this.initialAllEnabled = this.allEnabled || this.allEnabledUntil > new Date().getTime();
-    this.entityLabel = entityTypeTranslations.has(this.entityType) ? entityTypeTranslations.get(this.entityType).type : 'debug-settings.entity';
+    if (this.isAlarmRule) {
+      this.entityLabel = 'alarm-rule.alarm-rule';
+    } else {
+      this.entityLabel = entityTypeTranslations.has(this.entityType) ? entityTypeTranslations.get(this.entityType).type : 'debug-settings.entity';
+    }
   }
 
   onCancel(): void {

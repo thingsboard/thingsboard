@@ -51,21 +51,21 @@
       <section class="flex flex-col h-full">
         @if (hasOldRules && !isEdit) {
           <div class="flex flex-row items-center justify-end" style="padding: 16px 16px 0;">
-            <tb-toggle-select [(ngModel)]="alarmRulesVersion" appearance="fill">
-              <tb-toggle-option [value]="true">{{ 'alarm-rule.alarm-rules-new' | translate }}</tb-toggle-option>
-              <tb-toggle-option [value]="false">{{ 'alarm-rule.alarm-rules-old' | translate }}</tb-toggle-option>
+            <tb-toggle-select [(ngModel)]="alarmRulesOldVersion" appearance="fill">
+              <tb-toggle-option [value]="false">{{ 'alarm-rule.alarm-rules-new' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="true">{{ 'alarm-rule.alarm-rules-old' | translate }}</tb-toggle-option>
             </tb-toggle-select>
           </div>
         }
-        @if (alarmRulesVersion) {
-          <div class="relative h-full">
-            <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
-          </div>
-        } @else {
+        @if (alarmRulesOldVersion) {
           <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
             <div formGroupName="profileData">
               <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
             </div>
+          </div>
+        } @else {
+          <div class="relative h-full">
+            <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
           </div>
         }
       </section>

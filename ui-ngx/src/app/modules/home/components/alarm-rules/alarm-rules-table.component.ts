@@ -52,7 +52,7 @@ export class AlarmRulesTableComponent {
   entityName = input<string>();
   ownerId = input<EntityId>();
 
-  calculatedFieldsTableConfig: AlarmRulesTableConfig;
+  alarmRulesTableConfig: AlarmRulesTableConfig;
 
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
@@ -67,7 +67,7 @@ export class AlarmRulesTableComponent {
 
     effect(() => {
       if (this.active()) {
-        this.calculatedFieldsTableConfig = new AlarmRulesTableConfig(
+        this.alarmRulesTableConfig = new AlarmRulesTableConfig(
           this.calculatedFieldsService,
           this.translate,
           this.dialog,

@@ -17,15 +17,14 @@
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
+  FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
   UntypedFormControl,
   Validator,
   Validators
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -35,6 +34,7 @@ import {
   AlarmRuleDetailsDialogComponent,
   AlarmRuleDetailsDialogData
 } from "@home/components/alarm-rules/alarm-rule-details-dialog.component";
+import { coerceBoolean } from "@shared/decorators/coercion";
 
 @Component({
   selector: 'tb-cf-alarm-rule',
@@ -56,24 +56,20 @@ import {
 export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Validator {
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
   private modelValue: AlarmRule;
 
-  alarmRuleFormGroup= this.fb.group({
-    condition: [null, [Validators.required]],
+  alarmRuleFormGroup = this.fb.group({
+    condition: this.fb.control({}, Validators.required),
     alarmDetails: [null],
     dashboardId: [null]
   });
@@ -81,7 +77,7 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   private propagateChange = (v: any) => { };
 
   constructor(private dialog: MatDialog,
-              private fb: UntypedFormBuilder,
+              private fb: FormBuilder,
               private destroyRef: DestroyRef) {
   }
 
@@ -147,7 +143,7 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
 
   private updateModel() {
     const value = this.alarmRuleFormGroup.value;
-    this.modelValue = {...this.modelValue, ...value, dashboardId: value.dashboardId ? new DashboardId(value.dashboardId) : null};
+    this.modelValue = {...value, dashboardId: value.dashboardId ? new DashboardId(value.dashboardId) : null} as AlarmRule;
     this.propagateChange(this.modelValue);
   }
 }

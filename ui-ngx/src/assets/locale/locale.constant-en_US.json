@@ -1374,7 +1374,8 @@
         "alarm-rule-relation-types-list": "Relation types",
         "alarm-rule-relation-types-list-hint": "Defines relation types to filter the related entities. If not set, the alarm will be propagated to all related entities.",
         "propagate-alarm-to-owner": "Propagate alarm to entity owner (Customer or Tenant)",
-        "propagate-alarm-to-tenant": "Propagate alarm to Tenant"
+        "propagate-alarm-to-tenant": "Propagate alarm to Tenant",
+        "debugging": "Alarm rule debugging"
     },
     "ai-models": {
         "ai-models": "AI models",

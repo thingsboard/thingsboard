@@ -16,9 +16,8 @@
 
 -->
 <form [formGroup]="complexFilterFormGroup" (ngSubmit)="save()" style="width: 1200px;">
-  <mat-toolbar color="primary">
+  <mat-toolbar class="justify-between" color="primary">
     <h2 translate>filter.complex-filter</h2>
-    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -26,33 +25,30 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async"  class="flex flex-col">
-      <mat-form-field class="mat-block" appearance="outline">
-        <mat-label translate>filter.operation.operation</mat-label>
-        <mat-select required formControlName="operation">
-          <mat-option *ngFor="let operation of complexOperations" [value]="operation">
-            {{complexOperationTranslations.get(complexOperationEnum[operation]) | translate}}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-      <tb-alarm-rule-filter-predicate-list [valueType]="data.valueType"
-                                           [arguments]="arguments"
-                                           [operation]="complexFilterFormGroup.get('operation').value"
-                                           formControlName="predicates">
-      </tb-alarm-rule-filter-predicate-list>
-    </fieldset>
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>filter.operation.operation</mat-label>
+      <mat-select required formControlName="operation">
+        <mat-option *ngFor="let operation of complexOperations" [value]="operation">
+          {{complexOperationTranslations.get(complexOperationEnum[operation]) | translate}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <tb-alarm-rule-filter-predicate-list [valueType]="data.valueType"
+                                         [arguments]="arguments"
+                                         [operation]="complexFilterFormGroup.get('operation').value"
+                                         formControlName="predicates">
+    </tb-alarm-rule-filter-predicate-list>
   </div>
   <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
-            [disabled]="(isLoading$ | async)"
             (click)="cancel()"
             cdkFocusInitial>
       {{'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
+            [disabled]="complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
       {{ (isAdd ? 'action.add' : 'action.update') | translate }}
     </button>
   </div>

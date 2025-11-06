@@ -15,8 +15,6 @@
  */
 :host ::ng-deep {
   tb-entities-table {
-    .mat-drawer-container {
-      background-color: white;
-    }
+    --mat-sidenav-content-background-color: white;
   }
 }

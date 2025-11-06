@@ -42,7 +42,6 @@ import {
   CalculatedFieldAlarmRule,
   CalculatedFieldType,
 } from '@shared/models/calculated-field.models';
-
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
@@ -128,7 +127,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
         name: this.translate.instant('action.export'),
         icon: 'file_download',
         isEnabled: () => true,
-        onAction: (event$, entity) => this.exportCalculatedField(event$, entity),
+        onAction: (event$, entity) => this.exportAlarmRule(event$, entity),
       },
       {
         name: this.translate.instant('entity-view.events'),
@@ -177,6 +176,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       debugSettings,
       debugConfig: {
         entityType: EntityType.CALCULATED_FIELD,
+        isAlarmRule: true,
         additionalActionConfig,
       },
       onSettingsAppliedFn: settings => this.onDebugConfigChanged(id.id, settings)
@@ -226,7 +226,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       .subscribe();
   }
 
-  private exportCalculatedField($event: Event, calculatedField: CalculatedField): void {
+  private exportAlarmRule($event: Event, calculatedField: CalculatedField): void {
     if ($event) {
       $event.stopPropagation();
     }

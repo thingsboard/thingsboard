@@ -14,10 +14,6 @@
  * limitations under the License.
  */
 :host {
-  min-width: 0;
-  .row {
-    margin-top: 1em;
-  }
   .tb-alarm-rule-details, .tb-alarm-rule-dashboard {
     padding: 4px;
     &.title {

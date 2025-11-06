@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="flex flex-col" [formGroup]="filterListFormGroup">
+<section class="flex flex-col gap-4" [formGroup]="filterListFormGroup">
   <div class="tb-form-panel no-padding no-gap stroked">
     <div class="flex flex-row">
       <div class="flex flex-full flex-row items-center justify-start gap-2">
@@ -24,15 +24,14 @@
           <label translate class="filter-title max-w-20% flex-full xs:hidden">alarm-rule.value-source</label>
           <label translate class="filter-title max-w-50% flex-full">alarm-rule.value</label>
         </div>
-        <span [class.!hidden]="disabled" style="min-width: 40px;">&nbsp;</span>
+        <span [class.!hidden]="disabled" class="min-w-10">&nbsp;</span>
       </div>
     </div>
     <mat-divider style="padding-bottom: 5px;"></mat-divider>
     <div class="predicate-list">
       @for (predicateControl of predicatesFormArray.controls; track predicateControl; let index = $index) {
         <div class="flex flex-row items-stretch justify-start relative"
-             [class.key-filter-list-divider]="$index"
-             formArrayName="predicates">
+             [class.key-filter-list-divider]="$index">
           @if (index) {
             <div class="filters-operation-container">
               <span class="filters-operation-label">{{ complexOperationTranslations.get(operation) | translate }}</span>
@@ -60,25 +59,27 @@
       }
       <span [class.!hidden]="!!predicatesFormArray.length"
             [class.disabled]="disabled"
-            class="no-data-found flex items-center justify-center" translate>filter.no-filters</span>
+            class="no-data-found flex items-center justify-center" translate>
+        filter.no-filters
+      </span>
     </div>
   </div>
-    <div style="margin-top: 16px;" class="flex flex-row gap-2">
-      <button mat-button mat-raised-button color="primary"
-              [class.!hidden]="disabled"
-              (click)="addPredicate(false)"
-              type="button"
-              matTooltip="{{ 'filter.add-filter' | translate }}"
-              matTooltipPosition="above">
-        {{ 'action.add' | translate }}
-      </button>
-      <button mat-button mat-raised-button color="primary"
-              [class.!hidden]="disabled"
-              (click)="addPredicate(true)"
-              type="button"
-              matTooltip="{{ 'filter.add-complex-filter' | translate }}"
-              matTooltipPosition="above">
-        {{ 'filter.add-complex' | translate }}
-      </button>
-    </div>
+  <div class="flex flex-row gap-2">
+    <button mat-button mat-raised-button color="primary"
+            [class.!hidden]="disabled"
+            (click)="addPredicate(false)"
+            type="button"
+            matTooltip="{{ 'filter.add-filter' | translate }}"
+            matTooltipPosition="above">
+      {{ 'action.add' | translate }}
+    </button>
+    <button mat-button mat-raised-button color="primary"
+            [class.!hidden]="disabled"
+            (click)="addPredicate(true)"
+            type="button"
+            matTooltip="{{ 'filter.add-complex-filter' | translate }}"
+            matTooltipPosition="above">
+      {{ 'filter.add-complex' | translate }}
+    </button>
+  </div>
 </section>

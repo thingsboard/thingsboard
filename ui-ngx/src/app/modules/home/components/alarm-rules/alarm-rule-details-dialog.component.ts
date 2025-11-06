@@ -14,15 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormGroupDirective, NgForm, UntypedFormBuilder, UntypedFormControl, UntypedFormGroup } from '@angular/forms';
+import { FormBuilder, FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { TranslateService } from '@ngx-translate/core';
 
 export interface AlarmRuleDetailsDialogData {
   alarmDetails: string;
@@ -32,42 +30,24 @@ export interface AlarmRuleDetailsDialogData {
 @Component({
   selector: 'tb-edit-alarm-details-dialog',
   templateUrl: './alarm-rule-details-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleDetailsDialogComponent}],
-  styleUrls: []
+  providers: [],
+  styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
 })
-export class AlarmRuleDetailsDialogComponent extends DialogComponent<AlarmRuleDetailsDialogComponent, string>
-  implements OnInit, ErrorStateMatcher {
+export class AlarmRuleDetailsDialogComponent extends DialogComponent<AlarmRuleDetailsDialogComponent, string> {
 
-  alarmDetails = this.data.alarmDetails;
-
-  editDetailsFormGroup: UntypedFormGroup;
-
-  submitted = false;
+  alarmDetailsControl: FormControl<string>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleDetailsDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AlarmRuleDetailsDialogComponent, string>,
-              private fb: UntypedFormBuilder,
-              public translate: TranslateService) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
 
-    this.editDetailsFormGroup = this.fb.group({
-      alarmDetails: [this.alarmDetails]
-    });
+    this.alarmDetailsControl = this.fb.control(this.data.alarmDetails);
     if (this.data.readonly) {
-      this.editDetailsFormGroup.disable();
+      this.alarmDetailsControl.disable();
     }
-  }
-
-  ngOnInit(): void {
-  }
-
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
   }
 
   cancel(): void {
@@ -75,8 +55,6 @@ export class AlarmRuleDetailsDialogComponent extends DialogComponent<AlarmRuleDe
   }
 
   save(): void {
-    this.submitted = true;
-    this.alarmDetails = this.editDetailsFormGroup.get('alarmDetails').value;
-    this.dialogRef.close(this.alarmDetails);
+    this.dialogRef.close(this.alarmDetailsControl.value);
   }
 }

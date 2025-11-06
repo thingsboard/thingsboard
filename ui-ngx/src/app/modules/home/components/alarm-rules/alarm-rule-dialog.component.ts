@@ -55,7 +55,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
   fieldFormGroup = this.fb.group({
     name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-    type: [CalculatedFieldType.ALARM],
     debugSettings: [],
     configuration: this.fb.group({
       arguments: this.fb.control({}),
@@ -121,22 +120,18 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     const index = keys.indexOf(key);
     if (index >= 0) {
       keys.splice(index, 1);
-      this.configFormGroup.get('propagateRelationTypes').setValue(keys, {emitEvent: true});
+      this.configFormGroup.get('propagateRelationTypes').setValue(keys);
     }
   }
 
   addRelationType(event: MatChipInputEvent): void {
     const input = event.chipInput.inputElement;
-    let value = event.value;
-    if ((value || '').trim()) {
-      value = value.trim();
-      let keys: string[] = this.configFormGroup.get('propagateRelationTypes').value;
-      if (!keys || keys.indexOf(value) === -1) {
-        if (!keys) {
-          keys = [];
-        }
+    let value = (event.value ?? '').trim();
+    if (value) {
+      let keys: string[] = this.configFormGroup.get('propagateRelationTypes').value ?? [];
+      if (keys.indexOf(value) === -1) {
         keys.push(value);
-        this.configFormGroup.get('propagateRelationTypes').setValue(keys, {emitEvent: true});
+        this.configFormGroup.get('propagateRelationTypes').setValue(keys);
       }
     }
     if (input) {
@@ -164,8 +159,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
-    this.fieldFormGroup.patchValue({ configuration, type, debugSettings, ...value }, {emitEvent: false});
+    const { configuration = {}, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
+    this.fieldFormGroup.patchValue({ configuration, debugSettings, ...value }, {emitEvent: false});
   }
 
   private observeIsLoading(): void {

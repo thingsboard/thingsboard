@@ -75,20 +75,6 @@ import { AlarmRuleDetailsDialogComponent } from "@home/components/alarm-rules/al
   ],
   exports: [
     AlarmRuleDialogComponent,
-    CreateCfAlarmRulesComponent,
-    CfAlarmRuleComponent,
-    CfAlarmRuleConditionComponent,
-    CfAlarmRuleConditionDialogComponent,
-    CfAlarmScheduleComponent,
-    CfAlarmScheduleDialogComponent,
-    AlarmRuleFilterTextComponent,
-    AlarmRuleFilterListComponent,
-    AlarmRuleFilterDialogComponent,
-    AlarmRuleFilterPredicateListComponent,
-    AlarmRuleFilterPredicateComponent,
-    AlarmRuleFilterPredicateValueComponent,
-    AlarmRuleComplexFilterPredicateDialogComponent,
-    AlarmRuleDetailsDialogComponent,
   ]
 })
 export class AlarmRuleModule { }

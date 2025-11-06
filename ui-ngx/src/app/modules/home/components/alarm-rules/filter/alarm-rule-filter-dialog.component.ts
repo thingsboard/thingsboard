@@ -14,19 +14,11 @@
 /// limitations under the License.
 ///
 
- import { Component, Inject, OnDestroy, SkipSelf } from '@angular/core';
- import { ErrorStateMatcher } from '@angular/material/core';
+ import { Component, DestroyRef, Inject } from '@angular/core';
  import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
  import { Store } from '@ngrx/store';
  import { AppState } from '@core/core.state';
- import {
-   FormGroup,
-   FormGroupDirective,
-   NgForm,
-   UntypedFormBuilder,
-   UntypedFormControl,
-   Validators
- } from '@angular/forms';
+ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
  import { Router } from '@angular/router';
  import { DialogComponent } from '@app/shared/components/dialog.component';
  import {
@@ -37,11 +29,10 @@
  } from '@shared/models/query/query.models';
  import { DialogService } from '@core/services/dialog.service';
  import { TranslateService } from '@ngx-translate/core';
- import { Subject } from 'rxjs';
- import { takeUntil } from 'rxjs/operators';
  import { AlarmRuleFilter, AlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
  import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
  import { FormControlsFrom } from "@shared/models/tenant.model";
+ import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
  export interface AlarmRuleFilterDialogData {
   filter: AlarmRuleFilter;
@@ -53,13 +44,10 @@
 @Component({
   selector: 'tb-alarm-rule-filter-dialog',
   templateUrl: './alarm-rule-filter-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleFilterDialogComponent}],
+  providers: [],
   styleUrls: ['./alarm-rule-filter-dialog.component.scss']
 })
-export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFilterDialogComponent, AlarmRuleFilter>
-  implements OnDestroy, ErrorStateMatcher {
-
-  private destroy$ = new Subject<void>();
+export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFilterDialogComponent, AlarmRuleFilter> {
 
   filterFormGroup: FormGroup<FormControlsFrom<AlarmRuleFilter>>;
 
@@ -73,21 +61,20 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
   ComplexOperation = ComplexOperation;
 
-  submitted = false;
-
-  searchText = '';
-
   arguments = this.data.arguments;
+  argumentsList: Array<string>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleFilterDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AlarmRuleFilterDialogComponent, AlarmRuleFilter>,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
+              private fb: FormBuilder,
+              private destroyRef: DestroyRef) {
     super(store, router, dialogRef);
+
+    this.argumentsList = this.arguments ? Object.keys(this.arguments) : [];
 
     this.filterFormGroup = this.fb.group(
       {
@@ -98,7 +85,7 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
       }
     );
     this.filterFormGroup.get('valueType').valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe((valueType: EntityKeyValueType) => {
       const prevValueType: EntityKeyValueType = this.filterFormGroup.value.valueType;
       const predicates: AlarmRuleFilterPredicate[] = this.filterFormGroup.get('predicates').value;
@@ -119,20 +106,8 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
     });
   }
 
-  ngOnDestroy() {
-    super.ngOnDestroy();
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
   argumentInUse(argument: string): boolean {
     return this.data.usedArguments.includes(argument);
-  }
-
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
   }
 
   cancel(): void {
@@ -140,14 +115,6 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
   }
 
   save(): void {
-    this.submitted = true;
-    if (this.filterFormGroup.valid) {
-      const keyFilter: AlarmRuleFilter = this.filterFormGroup.getRawValue();
-      this.dialogRef.close(keyFilter);
-    }
-  }
-
-  get argumentsList(): Array<string> {
-    return this.arguments ? Object.keys(this.arguments) : [];
+    this.dialogRef.close(this.filterFormGroup.value as AlarmRuleFilter);
   }
 }

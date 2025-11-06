@@ -15,67 +15,65 @@
     limitations under the License.
 
 -->
-<section class="tb-form-panel no-padding no-gap stroked" [formGroup]="filterListFormGroup">
-      <div class="flex flex-row">
-        <span class="max-w-8% flex-full"></span>
-        <div class="flex max-w-92% flex-full flex-row items-center justify-start">
-          <label translate class="filter-title flex-1">alarm-rule.argument-name</label>
-          <label translate class="filter-title flex-1">alarm-rule.value-type</label>
-          <span style="min-width: 96px;">&nbsp;</span>
+<section class="tb-form-panel no-padding no-gap stroked mb-4" [formGroup]="filterListFormGroup">
+  <div class="flex flex-row">
+    <span class="max-w-8% flex-full"></span>
+    <div class="flex max-w-92% flex-full flex-row items-center justify-start">
+      <label translate class="filter-title flex-1">alarm-rule.argument-name</label>
+      <label translate class="filter-title flex-1">alarm-rule.value-type</label>
+      <span class="min-w-24">&nbsp;</span>
+    </div>
+  </div>
+  <mat-divider></mat-divider>
+  <div class="filter-list">
+    @for (filterControl of filtersFormArray.controls; track filterControl; let index = $index) {
+      <div class="flex flex-row items-stretch justify-start"
+           formArrayName="filters"
+           [class.filter-list-divider]="index">
+        <div class="filters-operation max-w-8% flex-full">
+          @if ($index) {
+            <div class="filters-operation-container">
+              <span class="filters-operation-label">{{ complexOperationTranslationMap.get(operation) | translate }}</span>
+            </div>
+          }
         </div>
-      </div>
-      <mat-divider></mat-divider>
-      <div class="filter-list">
-        @for (filterControl of filtersFormArray.controls; track filterControl; let index = $index) {
-          <div class="flex flex-row items-stretch justify-start" style="max-height: 76px;"
-               formArrayName="filters"
-               [class.filter-list-divider]="index">
-            <div class="filters-operation max-w-8% flex-full">
-              @if ($index) {
-                <div class="filters-operation-container">
-                  <span class="filters-operation-label">{{ complexOperationTranslationMap.get(operation) | translate }}</span>
-                </div>
-              }
-            </div>
-            <div class="flex max-w-92% flex-full flex-col">
-              <div class="flex flex-row items-center justify-start">
-                <div class="flex-1">{{ filterControl.value?.argument }}</div>
-                <div class="flex-1">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.predicates[0]?.type) | translate }}</div>
-                <button mat-icon-button color="primary"
-                        type="button"
-                        (click)="editFilter(index)"
-                        matTooltip="{{  'filter.edit-key-filter' | translate }}"
-                        matTooltipPosition="above">
-                  <mat-icon>{{'edit'}}</mat-icon>
-                </button>
-                <button mat-icon-button color="primary"
-                        type="button"
-                        (click)="removeFilter(index)"
-                        matTooltip="{{ 'filter.remove-key-filter' | translate }}"
-                        matTooltipPosition="above">
-                  <mat-icon>close</mat-icon>
-                </button>
-              </div>
-            </div>
-            @if (index) {
-              <mat-divider></mat-divider>
-            }
+        <div class="flex max-w-92% flex-full flex-col">
+          <div class="flex flex-row items-center justify-start">
+            <div class="flex-1">{{ filterControl.value?.argument }}</div>
+            <div class="flex-1">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.predicates[0]?.type) | translate }}</div>
+            <button mat-icon-button color="primary"
+                    type="button"
+                    (click)="editFilter(index)"
+                    matTooltip="{{  'filter.edit-key-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>{{'edit'}}</mat-icon>
+            </button>
+            <button mat-icon-button color="primary"
+                    type="button"
+                    (click)="removeFilter(index)"
+                    matTooltip="{{ 'filter.remove-key-filter' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>close</mat-icon>
+            </button>
           </div>
+        </div>
+        @if (index) {
+          <mat-divider></mat-divider>
         }
-        <span [class.!hidden]="!!filtersFormArray.length"
-              class="no-data-found flex items-center justify-center"
-              translate>
-          filter.no-key-filters
-        </span>
       </div>
+    }
+    <span [class.!hidden]="!!filtersFormArray.length"
+          class="no-data-found flex items-center justify-center"
+          translate>
+      filter.no-key-filters
+    </span>
+  </div>
 </section>
-<div style="margin-top: 16px;">
-  <button mat-button mat-raised-button color="primary"
-          (click)="addFilter()"
-          type="button"
-          matTooltip="{{ 'alarm-rule.add-filter' | translate }}"
-          matTooltipPosition="above">
-    {{ 'alarm-rule.add-filter' | translate }}
-  </button>
-</div>
+<button mat-button mat-raised-button color="primary"
+        (click)="addFilter()"
+        type="button"
+        matTooltip="{{ 'alarm-rule.add-filter' | translate }}"
+        matTooltipPosition="above">
+  {{ 'alarm-rule.add-filter' | translate }}
+</button>
 

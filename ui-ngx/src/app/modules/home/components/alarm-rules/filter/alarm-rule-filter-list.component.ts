@@ -14,21 +14,19 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
+import { Component, DestroyRef, forwardRef, Input } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormControl,
+  FormArray,
+  FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormArray,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   ComplexOperation,
   complexOperationTranslationMap,
@@ -36,14 +34,13 @@ import {
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
-import { takeUntil } from 'rxjs/operators';
 import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
 import { AlarmRuleFilter, FilterPredicateTypeTranslationMap } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
-import { UtilsService } from "@core/services/utils.service";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
 @Component({
   selector: 'tb-alarm-rule-filter-list',
@@ -62,45 +59,34 @@ import { UtilsService } from "@core/services/utils.service";
     }
   ]
 })
-export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
+export class AlarmRuleFilterListComponent implements ControlValueAccessor, Validator {
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
-  @Input() operation: ComplexOperation = ComplexOperation.AND;
+  @Input()
+  operation: ComplexOperation = ComplexOperation.AND;
 
-  filterListFormGroup: UntypedFormGroup;
-  filtersControl: FormControl;
+  filterListFormGroup = this.fb.group({
+    filters: this.fb.array([])
+  });
 
   complexOperationTranslationMap = complexOperationTranslationMap;
   FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
 
-  private destroy$ = new Subject<void>();
-  private propagateChange = null;
+  private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder,
-              private utils: UtilsService,
-              private dialog: MatDialog) {
-  }
-
-  ngOnInit(): void {
-    this.filterListFormGroup = this.fb.group({
-      filters: this.fb.array([])
-    });
-    this.filtersControl = this.fb.control(null);
-
+  constructor(private fb: FormBuilder,
+              private dialog: MatDialog,
+              private destroyRef: DestroyRef) {
     this.filterListFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => this.updateModel());
   }
 
-  ngOnDestroy() {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
 
-  get filtersFormArray(): UntypedFormArray {
-    return this.filterListFormGroup.get('filters') as UntypedFormArray;
+  get filtersFormArray(): FormArray {
+    return this.filterListFormGroup.get('filters') as FormArray;
   }
 
   registerOnChange(fn: any): void {
@@ -111,32 +97,28 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   }
 
   validate(): ValidationErrors | null {
-    return this.filterListFormGroup.valid && this.filtersControl.valid && this.filterListFormGroup.get('filters').value?.length ? null : {
+    return this.filterListFormGroup.valid && this.filterListFormGroup.get('filters').value?.length ? null : {
       filterList: {valid: false}
     };
   }
 
   writeValue(filters: Array<AlarmRuleFilter>): void {
-    if (filters?.length === this.filtersFormArray?.length) {
-      this.filtersFormArray.patchValue(filters, {emitEvent: false});
-    } else {
-      const keyFilterControls: Array<AbstractControl> = [];
-      if (filters) {
-        for (const filter of filters) {
-          keyFilterControls.push(this.fb.control(filter, [Validators.required]));
-        }
+    const keyFilterControls: Array<AbstractControl> = [];
+    if (filters) {
+      for (const filter of filters) {
+        keyFilterControls.push(this.fb.control(filter, [Validators.required]));
       }
-      this.filterListFormGroup.setControl('filters', this.fb.array(keyFilterControls), {emitEvent: false});
     }
-    this.filtersControl.patchValue(filters, {emitEvent: false});
+    this.filtersFormArray.clear();
+    keyFilterControls.forEach(c => this.filtersFormArray.push(c));
   }
 
   public removeFilter(index: number) {
-    (this.filterListFormGroup.get('filters') as UntypedFormArray).removeAt(index);
+    (this.filterListFormGroup.get('filters') as FormArray).removeAt(index);
   }
 
   public addFilter() {
-    const filtersFormArray = this.filterListFormGroup.get('filters') as UntypedFormArray;
+    const filtersFormArray = this.filterListFormGroup.get('filters') as FormArray;
     this.openFilterDialog(null).subscribe(result => {
       if (result) {
         filtersFormArray.push(this.fb.control(result, [Validators.required]));
@@ -146,17 +128,17 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
 
   public editFilter(index: number) {
     const filter: AlarmRuleFilter =
-      (this.filterListFormGroup.get('filters') as UntypedFormArray).at(index).value;
+      (this.filterListFormGroup.get('filters') as FormArray).at(index).value;
     this.openFilterDialog(filter).subscribe(result => {
       if (result) {
-        (this.filterListFormGroup.get('filters') as UntypedFormArray).at(index).patchValue(result);
+        (this.filterListFormGroup.get('filters') as FormArray).at(index).patchValue(result);
       }
     });
   }
 
   private openFilterDialog(filter?: AlarmRuleFilter): Observable<AlarmRuleFilter> {
     const isAdd = !filter;
-    if (!filter) {
+    if (isAdd) {
       filter = {
         argument: null,
         valueType: EntityKeyValueType.STRING,
@@ -178,18 +160,13 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   }
 
   get getUsedArguments(): Array<string> {
-    const filters = this.filterListFormGroup.get('filters').value ?? [];
-    return filters.length ? filters.map((filter: AlarmRuleFilter) => filter.argument) : filters;
+    const filters = this.filterListFormGroup.get('filters').value as Array<AlarmRuleFilter>;
+    return filters.length ? filters.map((filter: AlarmRuleFilter) => filter.argument) : [];
   }
 
   private updateModel() {
-    const filters: Array<AlarmRuleFilter> = this.filterListFormGroup.getRawValue().filters;
-    this.filtersControl.patchValue(filters, {emitEvent: false});
-    if (filters.length) {
-      this.propagateChange(filters);
-    } else {
-      this.propagateChange(null);
-    }
+    const filters = this.filterListFormGroup.value.filters as Array<AlarmRuleFilter>;
+    this.propagateChange(filters);
   }
 
 }

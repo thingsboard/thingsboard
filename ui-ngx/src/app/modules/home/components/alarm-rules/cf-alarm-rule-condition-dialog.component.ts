@@ -14,22 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  FormGroup,
-  FormGroupDirective,
-  NgForm,
-  UntypedFormBuilder,
-  UntypedFormControl,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { TranslateService } from '@ngx-translate/core';
 import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from "@shared/models/rule-node.models";
@@ -47,7 +38,6 @@ import {
 import { TbEditorCompleter } from "@shared/models/ace/completion.models";
 import { AceHighlightRules } from "@shared/models/ace/ace.models";
 import { ComplexOperation, complexOperationTranslationMap } from "@shared/models/query/query.models";
-import { FormControlsFrom } from "@shared/models/tenant.model";
 
 export interface CfAlarmRuleConditionDialogData {
   readonly: boolean;
@@ -58,11 +48,10 @@ export interface CfAlarmRuleConditionDialogData {
 @Component({
   selector: 'tb-cf-alarm-rule-condition-dialog',
   templateUrl: './cf-alarm-rule-condition-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: CfAlarmRuleConditionDialogComponent}],
+  providers: [],
   styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
 })
-export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarmRuleConditionDialogComponent, AlarmRuleCondition>
-  implements OnInit, ErrorStateMatcher {
+export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarmRuleConditionDialogComponent, AlarmRuleCondition> {
 
   AlarmRuleExpressionType = AlarmRuleExpressionType;
 
@@ -74,9 +63,24 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   readonly = this.data.readonly;
   condition = this.data.condition;
 
-  conditionFormGroup: FormGroup<FormControlsFrom<AlarmRuleCondition>>;
-
-  submitted = false;
+  conditionFormGroup = this.fb.group({
+    expression: this.fb.group({
+      type: [AlarmRuleExpressionType.SIMPLE],
+      expression: ['', [Validators.required]],
+      operation: [ComplexOperation.AND],
+      filters: [null],
+    }),
+    type: this.fb.control(AlarmRuleConditionType.SIMPLE, Validators.required),
+    unit: this.fb.control(TimeUnit.SECONDS, Validators.required),
+    value: this.fb.group({
+      staticValue: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]),
+      dynamicValueArgument: this.fb.control<string | null>(null, Validators.required),
+    }),
+    count: this.fb.group({
+      staticValue: this.fb.control<number | null>(null, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]),
+      dynamicValueArgument: this.fb.control<string | null>(null, Validators.required),
+    }),
+  });
 
   readonly scriptLanguage = ScriptLanguage;
 
@@ -85,8 +89,8 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   defaultValueRangeError = '';
   defaultValuePatternError = '';
 
-  durationDynamicMode = !!this.condition?.value?.dynamicValueArgument;
-  repeatingDynamicMode = !!this.condition?.count?.dynamicValueArgument;
+  durationDynamicModeControl = this.fb.control<boolean>(false);
+  repeatingDynamicModeControl = this.fb.control<boolean>(false);
 
   ComplexOperation = ComplexOperation;
   complexOperationTranslationMap = complexOperationTranslationMap;
@@ -96,38 +100,41 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   argumentsHighlightRules: AceHighlightRules;
 
   arguments = this.data.arguments;
+  argumentsList: Array<string>;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CfAlarmRuleConditionDialogData,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<CfAlarmRuleConditionDialogComponent, AlarmRuleCondition>,
-              private fb: UntypedFormBuilder,
-              public translate: TranslateService) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.functionArgs = ['ctx', ...Object.keys(this.data.arguments)];
     this.argumentsEditorCompleter = getCalculatedFieldArgumentsEditorCompleter(this.data.arguments);
     this.argumentsHighlightRules = getCalculatedFieldArgumentsHighlights(this.data.arguments);
+    this.argumentsList = this.arguments ? Object.keys(this.arguments): [];
 
-    this.conditionFormGroup = this.fb.group({
-      expression: this.fb.group({
-        type: [this.condition?.expression?.type ?? AlarmRuleExpressionType.SIMPLE],
-        expression: [this.condition?.expression?.expression ?? null, [Validators.required]],
-        operation: [this.condition?.expression?.operation ?? ComplexOperation.AND],
-        filters: [this.condition?.expression?.filters],
-      }),
-      type: [this.condition?.type ?? AlarmRuleConditionType.SIMPLE, Validators.required],
-      unit: [this.condition?.unit ?? TimeUnit.SECONDS, Validators.required],
-      value: this.fb.group({
-        staticValue: [this.condition?.value?.staticValue ?? null, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
-        dynamicValueArgument: [this.condition?.value?.dynamicValueArgument ?? null, Validators.required],
-      }),
-      count: this.fb.group({
-        staticValue: [this.condition?.count?.staticValue ?? null, [Validators.required, Validators.min(1), Validators.max(2147483647), Validators.pattern('[0-9]*')]],
-        dynamicValueArgument: [this.condition?.count?.dynamicValueArgument ?? null, Validators.required],
-      }),
-    });
+    this.conditionFormGroup.patchValue({
+      expression: {
+        type: this.condition?.expression?.type ?? AlarmRuleExpressionType.SIMPLE,
+        expression: this.condition?.expression?.expression ?? null,
+        filters: this.condition?.expression?.filters ?? [],
+        operation: this.condition?.expression?.operation ?? ComplexOperation.AND
+      },
+      type: this.condition?.type ?? AlarmRuleConditionType.SIMPLE,
+      unit: this.condition?.unit ?? TimeUnit.SECONDS,
+      value: {
+        staticValue: this.condition?.value?.staticValue,
+        dynamicValueArgument: this.condition?.value?.dynamicValueArgument,
+      },
+      count: {
+        staticValue: this.condition?.count?.staticValue ?? null,
+        dynamicValueArgument: this.condition?.count?.dynamicValueArgument
+      }
+    }, {emitEvent: false});
+
+    this.durationDynamicModeControl.patchValue(!!this.condition?.value?.dynamicValueArgument, {emitEvent: false});
+    this.repeatingDynamicModeControl.patchValue(!!this.condition?.count?.dynamicValueArgument, {emitEvent: false});
 
     this.conditionFormGroup.get('type').valueChanges.pipe(
       takeUntilDestroyed()
@@ -142,93 +149,70 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
       this.updateValidators(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     });
 
+    this.durationDynamicModeControl.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((mode) => {
+      this.updateStaticValueValidator(AlarmRuleConditionType.DURATION, mode);
+    });
+    this.repeatingDynamicModeControl.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((mode) => {
+      this.updateStaticValueValidator(AlarmRuleConditionType.REPEATING, mode);
+    });
+
     this.updateValidators(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     this.updateExpressionTypeValidator(this.condition?.expression?.type ?? 'SIMPLE');
   }
 
-  ngOnInit(): void {
-  }
-
-  toggleDynamicMode(type: AlarmRuleConditionType): void {
-    if (type === AlarmRuleConditionType.DURATION) {
-      this.durationDynamicMode = !this.durationDynamicMode;
-      this.updateStaticValueValidator(type, this.durationDynamicMode);
-    } else {
-      this.repeatingDynamicMode = !this.repeatingDynamicMode;
-      this.updateStaticValueValidator(type, this.repeatingDynamicMode);
-    }
-  }
-
   updateStaticValueValidator(type: AlarmRuleConditionType, dynamicValue: boolean) {
-    const control = type === AlarmRuleConditionType.DURATION ? 'value' : 'count';
+    const control = this.conditionFormGroup.get(type === AlarmRuleConditionType.DURATION ? 'value' : 'count');
     if (dynamicValue) {
-      this.conditionFormGroup.get(`${control}.staticValue`).disable({emitEvent: false});
-      this.conditionFormGroup.get(`${control}.dynamicValueArgument`).enable({emitEvent: false});
+      control.get('staticValue').disable({emitEvent: false});
+      control.get('dynamicValueArgument').enable({emitEvent: false});
     } else {
-      this.conditionFormGroup.get(`${control}.staticValue`).enable({emitEvent: false});
-      this.conditionFormGroup.get(`${control}.dynamicValueArgument`).disable({emitEvent: false});
+      control.get('staticValue').enable({emitEvent: false});
+      control.get('dynamicValueArgument').disable({emitEvent: false});
     }
-    this.conditionFormGroup.get(`${control}.staticValue`).updateValueAndValidity({emitEvent: false})
-    this.conditionFormGroup.get(`${control}.dynamicValueArgument`).updateValueAndValidity({emitEvent: false})
   }
 
   updateExpressionTypeValidator(type: 'SIMPLE' | 'TBEL') {
     if (type === 'SIMPLE') {
-      this.conditionFormGroup.get(`expression.expression`).disable();
-      this.conditionFormGroup.get(`expression.filters`).enable();
+      this.conditionFormGroup.get(`expression.expression`).disable({emitEvent: false});
+      this.conditionFormGroup.get(`expression.filters`).enable({emitEvent: false});
     } else {
-      this.conditionFormGroup.get(`expression.expression`).enable();
-      this.conditionFormGroup.get(`expression.filters`).disable();
+      this.conditionFormGroup.get(`expression.expression`).enable({emitEvent: false});
+      this.conditionFormGroup.get(`expression.filters`).disable({emitEvent: false});
     }
-    this.conditionFormGroup.get(`expression.expression`).updateValueAndValidity({emitEvent: false});
-    this.conditionFormGroup.get(`expression.filters`).updateValueAndValidity({emitEvent: false});
-  }
-
-  isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
-    const originalErrorState = this.errorStateMatcher.isErrorState(control, form);
-    const customErrorState = !!(control && control.invalid && this.submitted);
-    return originalErrorState || customErrorState;
   }
 
   private updateValidators(type: AlarmRuleConditionType, emitEvent = false) {
     switch (type) {
       case AlarmRuleConditionType.DURATION:
-        this.conditionFormGroup.get('unit').enable();
-        this.conditionFormGroup.get('value').enable();
-        this.conditionFormGroup.get('count').disable();
-
-        this.updateStaticValueValidator(type, this.durationDynamicMode);
-
+        this.conditionFormGroup.get('unit').enable({emitEvent: false});
+        this.conditionFormGroup.get('value').enable({emitEvent: false});
+        this.conditionFormGroup.get('count').disable({emitEvent: false});
+        this.updateStaticValueValidator(type, this.durationDynamicModeControl.value);
         this.defaultValuePlaceholder = 'alarm-rule.condition-duration-value';
         this.defaultValueRequiredError = 'alarm-rule.condition-duration-value-required';
         this.defaultValueRangeError = 'alarm-rule.condition-duration-value-range';
         this.defaultValuePatternError = 'alarm-rule.condition-duration-value-pattern';
         break;
       case AlarmRuleConditionType.REPEATING:
-        this.conditionFormGroup.get('count').enable();
-        this.conditionFormGroup.get('value').disable();
-        this.conditionFormGroup.get('unit').disable();
-
-        this.updateStaticValueValidator(type, this.repeatingDynamicMode);
-
+        this.conditionFormGroup.get('count').enable({emitEvent: false});
+        this.conditionFormGroup.get('value').disable({emitEvent: false});
+        this.conditionFormGroup.get('unit').disable({emitEvent: false});
+        this.updateStaticValueValidator(type, this.repeatingDynamicModeControl.value);
         this.defaultValuePlaceholder = 'alarm-rule.condition-repeating-value';
         this.defaultValueRequiredError = 'alarm-rule.condition-repeating-value-required';
         this.defaultValueRangeError = 'alarm-rule.condition-repeating-value-range';
         this.defaultValuePatternError = 'alarm-rule.condition-repeating-value-pattern';
         break;
       case AlarmRuleConditionType.SIMPLE:
-        this.conditionFormGroup.get('value').disable();
-        this.conditionFormGroup.get('count').disable();
-        this.conditionFormGroup.get('unit').disable();
+        this.conditionFormGroup.get('value').disable({emitEvent: false});
+        this.conditionFormGroup.get('count').disable({emitEvent: false});
+        this.conditionFormGroup.get('unit').disable({emitEvent: false});
         break;
     }
-    this.conditionFormGroup.get('value').updateValueAndValidity({emitEvent});
-    this.conditionFormGroup.get('count').updateValueAndValidity({emitEvent});
-    this.conditionFormGroup.get('unit').updateValueAndValidity({emitEvent});
-  }
-
-  get argumentsList(): Array<string> {
-    return this.arguments ? Object.keys(this.arguments): [];
   }
 
   cancel(): void {
@@ -236,9 +220,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   }
 
   save(): void {
-    this.submitted = true;
-    this.condition = this.conditionFormGroup.value as AlarmRuleCondition;
-    this.dialogRef.close(this.condition);
+    this.dialogRef.close(this.conditionFormGroup.value as AlarmRuleCondition);
   }
 
 }
