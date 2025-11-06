@@ -738,6 +738,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doPost("/api/device-with-credentials", request, Device.class);
     }
 
+    protected ResultActions doGetAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate).params(params);
+        setJwtToken(getRequest);
+        return mockMvc.perform(asyncDispatch(mockMvc.perform(getRequest).andExpect(request().asyncStarted()).andReturn()));
+    }
+
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
         setJwtToken(getRequest);
@@ -935,6 +941,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         setJwtToken(deleteRequest);
         populateParams(deleteRequest, params);
         return mockMvc.perform(deleteRequest);
+    }
+
+    protected ResultActions doDeleteAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
+        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate)
+                .params(params);
+        setJwtToken(deleteRequest);
+        MvcResult result = mockMvc.perform(deleteRequest).andReturn();
+        result.getAsyncResult(DEFAULT_TIMEOUT);
+        return mockMvc.perform(asyncDispatch(result));
     }
 
     protected ResultActions doDeleteAsync(String urlTemplate, Long timeout, String... params) throws Exception {

@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import {createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig} from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -75,7 +75,7 @@ export class AttributeService {
     if (isDefinedAndNotNull(endTs)) {
       url += `&endTs=${endTs}`;
     }
-    return this.http.delete(url, defaultHttpOptionsFromConfig(config));
+    return this.http.delete(url, createDefaultHttpOptions( {key: timeseries.map(key => key.key)}, config));
   }
 
   public saveEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
