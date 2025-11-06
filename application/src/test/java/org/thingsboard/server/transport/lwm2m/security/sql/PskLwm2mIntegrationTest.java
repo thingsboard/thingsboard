@@ -68,10 +68,12 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
+
     @Test
     public void testWithPskConnectLwm2mOneObserveSuccessUpdateProfileManyObserveUpdateRegistrationSuccess() throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_PSK;
-        String identity = CLIENT_PSK_IDENTITY;
+        int suf = 24;
+        String clientEndpoint = CLIENT_ENDPOINT_PSK + "_" + suf;
+        String identity = CLIENT_PSK_IDENTITY + "_" + suf;
         String keyPsk = CLIENT_PSK_KEY;
         PSKClientCredential clientCredentials = new PSKClientCredential();
         clientCredentials.setEndpoint(clientEndpoint);
@@ -103,10 +105,12 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         awaitObserveReadAll(2, lwm2mDevice.getId().getId().toString());
         awaitUpdateReg(3);
     }
+
     @Test
     public void testWithPskConnectLwm2mSuccessObserveSuccessUnRegClientUpdateProfileObserveConnectLwm2mSuccessOWithNewObserve() throws Exception {
-        String clientEndpoint = CLIENT_ENDPOINT_PSK;
-        String identity = CLIENT_PSK_IDENTITY;
+        int suf = 14;
+        String clientEndpoint = CLIENT_ENDPOINT_PSK + "_" + suf;
+        String identity = CLIENT_PSK_IDENTITY + "_" + suf;
         String keyPsk = CLIENT_PSK_KEY;
         PSKClientCredential clientCredentials = new PSKClientCredential();
         clientCredentials.setEndpoint(clientEndpoint);

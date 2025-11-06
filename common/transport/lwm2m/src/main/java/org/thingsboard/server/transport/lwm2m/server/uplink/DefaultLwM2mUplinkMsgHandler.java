@@ -247,7 +247,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     logService.log(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to invalid state: " + stateException.getState());
                 }
             } catch (Throwable t) {
-                log.error("[{}] endpoint [{}] error Unable registration.", registration.getEndpoint(), t);
+                log.error("Endpoint [{}], Error Unable registration: [{}].", registration.getEndpoint(), t.getMessage(), t);
                 logService.log(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to: " + t.getMessage());
             }
         });
