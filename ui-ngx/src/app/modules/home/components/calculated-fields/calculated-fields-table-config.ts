@@ -77,6 +77,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private destroyRef: DestroyRef,
               private renderer: Renderer2,
               public entityName: string,
+              private ownerId: EntityId = null,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
   ) {
@@ -124,7 +125,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '170px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type)), () => ({whiteSpace: 'nowrap' })));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '170px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(
@@ -216,6 +217,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         entityId: this.entityId,
         tenantId: this.tenantId,
         entityName: this.entityName,
+        ownerId: this.ownerId,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty,

@@ -27,9 +27,11 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
@@ -74,6 +76,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
@@ -320,11 +323,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         EntityId fromId = entityRelation.getFrom();
         String relationType = entityRelation.getType();
 
+        if (!(CalculatedField.isSupportedRefEntity(toId) || CalculatedField.isSupportedRefEntity(fromId))) {
+            callback.onSuccess();
+            return;
+        }
+
         MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
         processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, relationAction.apply(fromId));
         processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, relationAction.apply(toId));
     }
-
 
     private void processRelationByDirection(EntitySearchDirection direction,
                                             String relationType,
@@ -339,9 +346,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
         List<CalculatedFieldCtx> matchingCfs = cfsByEntityIdAndProfile.stream()
                 .filter(cf -> {
-                    var config = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getCalculatedField().getConfiguration();
-                    RelationPathLevel relation = config.getRelation();
-                    return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
+                    if (cf.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
+                        RelationPathLevel relation = config.getRelation();
+                        return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
+                    } else {
+                        return false;
+                    }
                 })
                 .toList();
 
@@ -714,8 +724,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private EntityId getProfileId(TenantId tenantId, EntityId entityId) {
         return switch (entityId.getEntityType()) {
-            case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
-            case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
+            case ASSET -> Optional.ofNullable(assetProfileCache.get(tenantId, (AssetId) entityId)).map(AssetProfile::getId).orElse(null);
+            case DEVICE -> Optional.ofNullable(deviceProfileCache.get(tenantId, (DeviceId) entityId)).map(DeviceProfile::getId).orElse(null);
             default -> null;
         };
     }

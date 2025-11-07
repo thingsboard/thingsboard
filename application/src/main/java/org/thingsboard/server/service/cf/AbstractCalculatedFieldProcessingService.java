@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest.Strategy;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.AttributeSkipRuleEngineOutputStrategy;
@@ -75,6 +76,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
@@ -204,7 +206,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     private ListenableFuture<List<EntityId>> resolveRelatedEntities(TenantId tenantId, EntityId entityId, RelationPathLevel relation) {
-        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findByRelationPathQueryAsync(tenantId, new EntityRelationPathQuery(entityId, List.of(relation)));
+        Predicate<EntityRelation> filter = entityRelation -> CalculatedField.isSupportedRefEntity(entityRelation.getFrom()) && CalculatedField.isSupportedRefEntity(entityRelation.getTo());
+        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findFilteredRelationsByPathQueryAsync(tenantId, new EntityRelationPathQuery(entityId, List.of(relation)), filter);
 
         return Futures.transform(relationsFut, relations -> {
             if (relations == null) {
@@ -215,7 +218,11 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 case FROM -> relations.stream()
                         .map(EntityRelation::getTo)
                         .toList();
-                case TO -> relations.isEmpty() ? List.of() : List.of(relations.get(0).getFrom());
+                case TO -> relations.stream()
+                        .map(EntityRelation::getFrom)
+                        .findFirst()
+                        .map(List::of)
+                        .orElseGet(Collections::emptyList);
             };
         }, calculatedFieldCallbackExecutor);
     }
@@ -237,7 +244,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
             case CURRENT_OWNER -> Futures.immediateFuture(List.of(resolveOwnerArgument(tenantId, entityId)));
             case RELATION_PATH_QUERY -> {
                 var configuration = (RelationPathQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
-                yield Futures.transform(relationService.findByRelationPathQueryAsync(tenantId, configuration.toRelationPathQuery(entityId)),
+                Predicate<EntityRelation> filter = entityRelation -> CalculatedField.isSupportedRefEntity(entityRelation.getFrom()) && CalculatedField.isSupportedRefEntity(entityRelation.getTo());
+                yield Futures.transform(relationService.findFilteredRelationsByPathQueryAsync(tenantId, configuration.toRelationPathQuery(entityId), filter),
                         configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
             }
         };
