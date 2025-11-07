@@ -119,8 +119,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('createRule', 'alarm-rule.severities', '67%',
       entity => Object.keys(entity.configuration.createRules).map((severity) => this.translate.instant(alarmSeverityTranslations.get(severity as AlarmSeverity))).join(', '),
       () => ({}), false));
-    this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('clearRule', 'alarm-rule.cleared', '60px',
-      entity => checkBoxCell(!!entity.configuration.clearRule), ()=> { return {padding: '0 14px'}}, false));
+    this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('clearRule', 'alarm-rule.cleared', '70px',
+      entity => checkBoxCell(!!entity.configuration.clearRule), ()=> { return {padding: 0, textAlign: 'center'}}, false));
 
     this.cellActionDescriptors.push(
       {
