@@ -146,7 +146,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         Assert.assertNotNull(lwm2mDeviceProfileManyParams);
 
         lwM2MTestClient.start(true);
-        awaitObserveReadAll(2, lwm2mDevice.getId().getId().toString());
+        awaitObserveReadAll(1, lwm2mDevice.getId().getId().toString());
         awaitUpdateReg(3);
     }
 

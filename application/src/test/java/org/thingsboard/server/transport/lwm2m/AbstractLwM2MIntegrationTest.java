@@ -21,6 +21,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.awaitility.core.ConditionTimeoutException;
 import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.servers.LwM2mServer;
@@ -730,11 +731,19 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return credentials;
     }
 
-    protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
-        await("ObserveReadAll: countObserve " + cntObserve)
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+
+    protected void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
+        try {
+            await("ObserveReadAll: countObserve " + cntObserve)
+                    .atMost(40, TimeUnit.SECONDS)
+                    .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
+        } catch (ConditionTimeoutException e) {
+            int current = getCntObserveAll(deviceIdStr);
+            log.error("Condition or device {} with alias 'ObserveReadAll: countObserve {}, but received {}", deviceIdStr, cntObserve, current);
+            throw e;
+        }
     }
+
     protected  void awaitDeleteDevice(String deviceIdStr) throws Exception {
         await("Delete device with id:  " + deviceIdStr)
                 .atMost(40, TimeUnit.SECONDS)
