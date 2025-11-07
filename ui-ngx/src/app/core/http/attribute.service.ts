@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import {createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig} from './http-utils';
+import { defaultHttpOptionsFromConfig, defaultHttpOptionsFromParams, RequestConfig } from './http-utils';
 import { forkJoin, Observable, of } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -35,47 +35,37 @@ export class AttributeService {
   public getEntityAttributes(entityId: EntityId, attributeScope?: AttributeScope,
                              keys?: Array<string>, config?: RequestConfig): Observable<Array<AttributeData>> {
     let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/attributes`;
-
+    let queryParams: object = null;
     if (attributeScope) {
       url += `/${attributeScope}`;
     }
 
     if (keys && keys.length) {
-      url += `?keys=${keys.join(',')}`;
+      queryParams = {key: keys};
     }
 
-    return this.http.get<Array<AttributeData>>(url, defaultHttpOptionsFromConfig(config));
+    return this.http.get<Array<AttributeData>>(url, defaultHttpOptionsFromParams(queryParams, config));
   }
 
   public deleteEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
                                 config?: RequestConfig): Observable<any> {
-    const keys = attributes.map(attribute => encodeURIComponent(attribute.key)).join(',');
-    return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/${attributeScope}` +
-      `?keys=${keys}`,
-      defaultHttpOptionsFromConfig(config));
+    return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/${attributeScope}`,
+      defaultHttpOptionsFromParams({key: attributes.map(attribute => attribute.key)}, config));
   }
 
   public deleteEntityTimeseries(entityId: EntityId, timeseries: Array<AttributeData>, deleteAllDataForKeys = false,
                                 startTs?: number, endTs?: number, rewriteLatestIfDeleted = false, deleteLatest = true,
                                 config?: RequestConfig): Observable<any> {
-    const keys = timeseries.map(attribute => encodeURIComponent(attribute.key)).join(',');
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete?keys=${keys}`;
-    if (isDefinedAndNotNull(deleteAllDataForKeys)) {
-      url += `&deleteAllDataForKeys=${deleteAllDataForKeys}`;
-    }
-    if (isDefinedAndNotNull(rewriteLatestIfDeleted)) {
-      url += `&rewriteLatestIfDeleted=${rewriteLatestIfDeleted}`;
-    }
-    if (isDefinedAndNotNull(deleteLatest)) {
-      url += `&deleteLatest=${deleteLatest}`;
-    }
-    if (isDefinedAndNotNull(startTs)) {
-      url += `&startTs=${startTs}`;
-    }
-    if (isDefinedAndNotNull(endTs)) {
-      url += `&endTs=${endTs}`;
-    }
-    return this.http.delete(url, createDefaultHttpOptions( {key: timeseries.map(key => key.key)}, config));
+    const queryParams = {
+      key: timeseries.map(key => key.key),
+      deleteAllDataForKeys: deleteAllDataForKeys,
+      rewriteLatestIfDeleted: rewriteLatestIfDeleted,
+      deleteLatest: deleteLatest,
+      startTs: startTs,
+      endTs: endTs
+    };
+    return this.http.delete(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/timeseries/delete`,
+      defaultHttpOptionsFromParams(queryParams, config));
   }
 
   public saveEntityAttributes(entityId: EntityId, attributeScope: AttributeScope, attributes: Array<AttributeData>,
@@ -138,32 +128,29 @@ export class AttributeService {
                              limit: number = 100, agg: AggregationType = AggregationType.NONE, interval?: number,
                              orderBy: DataSortOrder = DataSortOrder.DESC, useStrictDataTypes: boolean = false,
                              config?: RequestConfig): Observable<TimeseriesData> {
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries?keys=${keys.join(',')}&startTs=${startTs}&endTs=${endTs}`;
-    if (isDefinedAndNotNull(limit)) {
-      url += `&limit=${limit}`;
+    const queryParams = {
+      key: keys,
+      startTs: startTs,
+      endTs: endTs,
+      limit: limit,
+      agg: agg,
+      interval: interval,
+      orderBy: orderBy,
+      useStrictDataTypes: useStrictDataTypes
     }
-    if (isDefinedAndNotNull(agg)) {
-      url += `&agg=${agg}`;
-    }
-    if (isDefinedAndNotNull(interval)) {
-      url += `&interval=${interval}`;
-    }
-    if (isDefinedAndNotNull(orderBy)) {
-      url += `&orderBy=${orderBy}`;
-    }
-    if (isDefinedAndNotNull(useStrictDataTypes)) {
-      url += `&useStrictDataTypes=${useStrictDataTypes}`;
-    }
-
-    return this.http.get<TimeseriesData>(url, defaultHttpOptionsFromConfig(config));
+    return this.http.get<TimeseriesData>(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries`,
+      defaultHttpOptionsFromParams(queryParams, config));
   }
 
   public getEntityTimeseriesLatest(entityId: EntityId, keys?: Array<string>,
                                    useStrictDataTypes = false, config?: RequestConfig): Observable<TimeseriesData> {
-    let url = `/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries?useStrictDataTypes=${useStrictDataTypes}`;
-    if (isDefinedAndNotNull(keys) && keys.length) {
-      url += `&keys=${keys.join(',')}`;
+    const queryParams: Record<string, any> = {
+      useStrictDataTypes: useStrictDataTypes
     }
-    return this.http.get<TimeseriesData>(url, defaultHttpOptionsFromConfig(config));
+    if (isDefinedAndNotNull(keys) && keys.length) {
+      queryParams.key = keys;
+    }
+    return this.http.get<TimeseriesData>(`/api/plugins/telemetry/${entityId.entityType}/${entityId.id}/values/timeseries`,
+      defaultHttpOptionsFromParams(queryParams, config));
   }
 }
