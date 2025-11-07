@@ -15,7 +15,6 @@
 ///
 
 import { Component, Inject } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -41,7 +40,7 @@ export interface AlarmRuleComplexFilterPredicateDialogData {
 @Component({
   selector: 'tb-alarm-rule-complex-filter-predicate-dialog',
   templateUrl: './alarm-rule-complex-filter-predicate-dialog.component.html',
-  providers: [{provide: ErrorStateMatcher, useExisting: AlarmRuleComplexFilterPredicateDialogComponent}],
+  providers: [],
   styleUrls: []
 })
 

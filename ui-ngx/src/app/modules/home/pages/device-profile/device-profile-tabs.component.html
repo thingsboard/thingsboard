@@ -50,9 +50,9 @@
     <mat-tab #alarmRules="matTab" label="{{'alarm-rule.alarm-rules-tab' | translate }}">
       <section class="flex flex-col h-full">
         @if (hasOldRules && !isEdit) {
-          <div class="flex flex-row items-center justify-end" style="padding: 16px 16px 0;">
+          <div class="flex flex-row items-center justify-start" style="padding: 16px 16px 0;">
             <tb-toggle-select [(ngModel)]="alarmRulesOldVersion" appearance="fill">
-              <tb-toggle-option [value]="false">{{ 'alarm-rule.alarm-rules-new' | translate }}</tb-toggle-option>
+              <tb-toggle-option [value]="false">{{ 'alarm-rule.alarm-rules-actual' | translate }}</tb-toggle-option>
               <tb-toggle-option [value]="true">{{ 'alarm-rule.alarm-rules-old' | translate }}</tb-toggle-option>
             </tb-toggle-select>
           </div>
@@ -65,7 +65,11 @@
           </div>
         } @else {
           <div class="relative h-full">
-            <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
+            <tb-alarm-rules-table [active]="alarmRules.isActive"
+                                  [entityId]="entity.id"
+                                  [entityName]="entity.name"
+                                  [ownerId]="entity.tenantId">
+            </tb-alarm-rules-table>
           </div>
         }
       </section>
