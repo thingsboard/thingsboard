@@ -24,6 +24,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -101,7 +102,10 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     @Override
     public List<EntityId> fetchRelatedEntities(CalculatedFieldCtx ctx, EntityId entityId) {
         try {
-            return resolveRelatedEntities(entityId, ctx).get();
+            if (ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
+                return resolveRelatedEntities(ctx.getTenantId(), entityId, config.getRelation()).get();
+            }
+            return Collections.emptyList();
         } catch (ExecutionException | InterruptedException e) {
             Throwable cause = e.getCause();
             throw new RuntimeException("Failed to fetch related entities for entity [" + entityId + "]: " + cause.getMessage(), cause);
