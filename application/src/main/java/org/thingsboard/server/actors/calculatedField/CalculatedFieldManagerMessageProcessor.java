@@ -295,31 +295,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onEntityDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
-        // 2 = 1 for entity processing + 1 for relation processing
-        MultipleTbCallback multiCallback = new MultipleTbCallback(2, callback);
-        deleteEntityRelations(msg, multiCallback);
         switch (msg.getEntityId().getEntityType()) {
             case DEVICE, ASSET -> entityProfileCache.removeEntityId(msg.getEntityId());
             case CUSTOMER -> ownerEntities.remove(msg.getEntityId());
         }
         ownerEntities.values().forEach(entities -> entities.remove(msg.getEntityId()));
-        if (isMyPartition(msg.getEntityId(), multiCallback)) {
+        if (isMyPartition(msg.getEntityId(), callback)) {
             log.debug("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
-            getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), multiCallback));
+            getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
         }
-    }
-
-    private void deleteEntityRelations(ComponentLifecycleMsg msg, TbCallback callback) {
-        List<EntityRelation> entityRelations = relationService.findEntityRelations(tenantId, msg.getEntityId());
-        if (entityRelations.isEmpty()) {
-            callback.onSuccess();
-        }
-        entityRelations.forEach(entityRelation -> {
-            Function<EntityId, TriConsumer<EntityId, CalculatedFieldCtx, TbCallback>> deleteAction =
-                    relatedId -> (entityId, ctx, cb) -> deleteRelatedEntity(entityId, relatedId, ctx, cb);
-
-            processRelationIfSupported(entityRelation, callback, deleteAction);
-        });
     }
 
     private void onRelationChangedEvent(ComponentLifecycleMsg msg, TbCallback callback) {
@@ -335,12 +319,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
 
         EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
-        processRelationIfSupported(entityRelation, callback, relationAction);
-    }
-
-    private void processRelationIfSupported(EntityRelation entityRelation,
-                                            TbCallback callback,
-                                            Function<EntityId, TriConsumer<EntityId, CalculatedFieldCtx, TbCallback>> relationAction) {
         EntityId toId = entityRelation.getTo();
         EntityId fromId = entityRelation.getFrom();
         String relationType = entityRelation.getType();
