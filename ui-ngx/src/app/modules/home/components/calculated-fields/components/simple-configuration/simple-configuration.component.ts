@@ -76,6 +76,9 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   entityName: string;
 
   @Input({required: true})
+  ownerId: EntityId;
+
+  @Input({required: true})
   testScript: () => Observable<string>;
 
   simpleConfiguration = this.fb.group({

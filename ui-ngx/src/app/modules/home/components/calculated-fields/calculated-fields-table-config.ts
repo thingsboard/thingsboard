@@ -77,6 +77,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private destroyRef: DestroyRef,
               private renderer: Renderer2,
               public entityName: string,
+              private ownerId: EntityId = null,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
   ) {
@@ -216,6 +217,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         entityId: this.entityId,
         tenantId: this.tenantId,
         entityName: this.entityName,
+        ownerId: this.ownerId,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty,
