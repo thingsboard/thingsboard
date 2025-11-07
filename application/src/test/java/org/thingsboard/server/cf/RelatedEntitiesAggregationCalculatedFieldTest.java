@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -300,6 +301,45 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
     }
 
     @Test
+    public void testCreateCfAndRelationToRuleChain_checkAggregation() throws Exception {
+        Asset asset2 = createAsset("Asset 2", assetProfile.getId());
+        Device device3 = createDevice("Device 3", "1234567890333");
+        postTelemetry(device3.getId(), "{\"occupied\":true}");
+
+        RuleChain ruleChain = new RuleChain();
+        ruleChain.setName("RuleChain");
+        ruleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        postTelemetry(ruleChain.getId(), "{\"occupied\":true}");
+
+        createEntityRelation(asset2.getId(), device3.getId(), "Contains");
+        createEntityRelation(asset2.getId(), ruleChain.getId(), "Contains");
+
+        createOccupancyCF(asset2.getId());
+
+        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset2.getId(), Map.of(
+                            "freeSpaces", "0",
+                            "occupiedSpaces", "1",
+                            "totalSpaces", "1"
+                    ));
+                });
+
+        postTelemetry(ruleChain.getId(), "{\"occupied\":true}");
+
+        await().alias("update telemetry on rule chain and no aggregation performed").atMost(deduplicationInterval, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset2.getId(), Map.of(
+                            "freeSpaces", "0",
+                            "occupiedSpaces", "1",
+                            "totalSpaces", "1"
+                    ));
+                });
+    }
+
+    @Test
     public void testDeleteCf_checkNoAggregation() throws Exception {
         CalculatedField cf = createOccupancyCF(asset.getId());
         checkInitialCalculation();
@@ -454,6 +494,24 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
         checkInitialCalculation();
 
         deleteEntityRelation(new EntityRelation(asset.getId(), device1.getId(), "Contains", RelationTypeGroup.COMMON));
+
+        await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of(
+                            "freeSpaces", "1",
+                            "occupiedSpaces", "0",
+                            "totalSpaces", "1"
+                    ));
+                });
+    }
+
+    @Test
+    public void testDeleteEntityByRelation_checkAggregation() throws Exception {
+        createOccupancyCF(asset.getId());
+        checkInitialCalculation();
+
+        doDelete("/api/device/" + device1.getId()).andExpect(status().isOk());
 
         await().alias("create relation and perform aggregation").atMost(deduplicationInterval, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)

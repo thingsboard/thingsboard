@@ -24,6 +24,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
@@ -39,6 +40,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -55,6 +57,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
@@ -174,7 +177,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         if (!(ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config)) {
             return Collections.emptyMap();
         }
-        ListenableFuture<List<EntityId>> relatedEntitiesFut = resolveRelatedEntities(entityId, ctx);
+        ListenableFuture<List<EntityId>> relatedEntitiesFut = resolveRelatedEntities(ctx.getTenantId(), entityId, config.getRelation());
 
         return config.getArguments().entrySet().stream()
                 .collect(Collectors.toMap(
@@ -183,23 +186,24 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 ));
     }
 
-    protected ListenableFuture<List<EntityId>> resolveRelatedEntities(EntityId entityId, CalculatedFieldCtx ctx) {
-        if (!(ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config)) {
-            return Futures.immediateFuture(Collections.emptyList());
-        }
-
-        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findByRelationPathQueryAsync(ctx.getTenantId(), new EntityRelationPathQuery(entityId, List.of(config.getRelation())));
+    protected ListenableFuture<List<EntityId>> resolveRelatedEntities(TenantId tenantId, EntityId entityId, RelationPathLevel relation) {
+        Predicate<EntityRelation> filter = entityRelation -> CalculatedField.isSupportedRefEntity(entityRelation.getFrom()) && CalculatedField.isSupportedRefEntity(entityRelation.getTo());
+        ListenableFuture<List<EntityRelation>> relationsFut = relationService.findFilteredRelationsByPathQueryAsync(tenantId, new EntityRelationPathQuery(entityId, List.of(relation)), filter);
 
         return Futures.transform(relationsFut, relations -> {
             if (relations == null) {
                 return Collections.emptyList();
             }
 
-            return switch (config.getRelation().direction()) {
+            return switch (relation.direction()) {
                 case FROM -> relations.stream()
                         .map(EntityRelation::getTo)
                         .toList();
-                case TO -> relations.isEmpty() ? List.of() : List.of(relations.get(0).getFrom());
+                case TO -> relations.stream()
+                        .map(EntityRelation::getFrom)
+                        .findFirst()
+                        .map(List::of)
+                        .orElseGet(Collections::emptyList);
             };
         }, calculatedFieldCallbackExecutor);
     }
@@ -221,7 +225,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
             case CURRENT_OWNER -> Futures.immediateFuture(List.of(resolveOwnerArgument(tenantId, entityId)));
             case RELATION_PATH_QUERY -> {
                 var configuration = (RelationPathQueryDynamicSourceConfiguration) refDynamicSourceConfiguration;
-                yield Futures.transform(relationService.findByRelationPathQueryAsync(tenantId, configuration.toRelationPathQuery(entityId)),
+                Predicate<EntityRelation> filter = entityRelation -> CalculatedField.isSupportedRefEntity(entityRelation.getFrom()) && CalculatedField.isSupportedRefEntity(entityRelation.getTo());
+                yield Futures.transform(relationService.findFilteredRelationsByPathQueryAsync(tenantId, configuration.toRelationPathQuery(entityId), filter),
                         configuration::resolveEntityIds, calculatedFieldCallbackExecutor);
             }
         };

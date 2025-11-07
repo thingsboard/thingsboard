@@ -162,7 +162,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
     }
 
     private boolean checkEntityForCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter, Predicate<CalculatedFieldCtx> linkedEntityFilter, Predicate<CalculatedFieldCtx> dynamicSourceFilter, Predicate<CalculatedFieldCtx> relatedEntityFilter) {
-        if (!CalculatedField.SUPPORTED_REFERENCED_ENTITIES.contains(entityId.getEntityType())) {
+        if (!CalculatedField.isSupportedRefEntity(entityId)) {
             return false;
         }
 

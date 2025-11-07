@@ -47,11 +47,14 @@ export class CalculatedFieldDebugDialogComponent extends DialogComponent<Calcula
   readonly debugEventTypes = DebugEventType;
   readonly EventType = EventType;
 
+  dialogTitle: string;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldDebugDialogData,
               protected dialogRef: MatDialogRef<CalculatedFieldDebugDialogComponent, string>) {
     super(store, router, dialogRef);
+    this.dialogTitle = this.data.value.type === CalculatedFieldType.ALARM ? 'alarm-rule.debugging' : 'calculated-fields.debugging';
   }
 
   ngAfterViewInit(): void {
