@@ -44,6 +44,7 @@ export interface CalculatedFieldDialogData {
   entityId: EntityId;
   tenantId: string;
   entityName?: string;
+  ownerId: EntityId;
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
@@ -71,7 +72,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   readonly EntityType = EntityType;
   readonly CalculatedFieldType = CalculatedFieldType;
-  readonly fieldTypes = Object.values(CalculatedFieldType) as CalculatedFieldType[];
+  readonly fieldTypes = Object.values(CalculatedFieldType).filter(type => type !== CalculatedFieldType.ALARM) as CalculatedFieldType[];
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
 
   constructor(protected store: Store<AppState>,
