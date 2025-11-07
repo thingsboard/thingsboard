@@ -107,7 +107,7 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
     ).subscribe(value => this.updateValueModeValidators(value))
   }
 
-  setDisabledState?(isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
     if (isDisabled) {
       this.filterPredicateValueFormGroup.disable({emitEvent: false});
       this.dynamicModeControl.disable({emitEvent: false});

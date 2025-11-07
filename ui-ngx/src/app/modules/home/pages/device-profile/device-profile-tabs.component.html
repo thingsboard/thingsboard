@@ -57,7 +57,7 @@
             </tb-toggle-select>
           </div>
         }
-        @if (alarmRulesOldVersion) {
+        @if (alarmRulesOldVersion || isEdit) {
           <div class="mat-padding" [formGroup]="detailsForm" *ngIf="alarmRules.isActive">
             <div formGroupName="profileData">
               <tb-device-profile-alarms formControlName="alarms" [deviceProfileId]="entity.id"></tb-device-profile-alarms>
