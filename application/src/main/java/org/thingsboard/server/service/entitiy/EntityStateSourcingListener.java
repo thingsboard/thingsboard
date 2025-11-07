@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
@@ -49,6 +48,7 @@ import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.notification.NotificationRequest;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -274,10 +274,13 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(RelationActionEvent relationEvent) {
-        if (relationEvent.getActionType() == ActionType.RELATION_ADD_OR_UPDATE) {
-            tbClusterService.onRelationUpdated(relationEvent.getTenantId(), relationEvent.getRelation(), TbQueueCallback.EMPTY);
-        } else if (relationEvent.getActionType() == ActionType.RELATION_DELETED) {
-            tbClusterService.onRelationDeleted(relationEvent.getTenantId(), relationEvent.getRelation(), TbQueueCallback.EMPTY);
+        EntityRelation relation = relationEvent.getRelation();
+        if (CalculatedField.isSupportedRefEntity(relation.getFrom()) && CalculatedField.isSupportedRefEntity(relation.getTo())) {
+            if (relationEvent.getActionType() == ActionType.RELATION_ADD_OR_UPDATE) {
+                tbClusterService.onRelationUpdated(relationEvent.getTenantId(), relation, TbQueueCallback.EMPTY);
+            } else if (relationEvent.getActionType() == ActionType.RELATION_DELETED) {
+                tbClusterService.onRelationDeleted(relationEvent.getTenantId(), relation, TbQueueCallback.EMPTY);
+            }
         }
     }
 

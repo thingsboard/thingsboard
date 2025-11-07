@@ -71,6 +71,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
@@ -507,6 +508,11 @@ public class BaseRelationService implements RelationService {
 
     @Override
     public ListenableFuture<List<EntityRelation>> findByRelationPathQueryAsync(TenantId tenantId, EntityRelationPathQuery relationPathQuery) {
+        return findFilteredRelationsByPathQueryAsync(tenantId, relationPathQuery, null);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelation>> findFilteredRelationsByPathQueryAsync(TenantId tenantId, EntityRelationPathQuery relationPathQuery, Predicate<EntityRelation> relationFilter) {
         log.trace("Executing findByRelationPathQuery, tenantId [{}], relationPathQuery {}", tenantId, relationPathQuery);
         validateId(tenantId, id -> "Invalid tenant id: " + id);
         validate(relationPathQuery);
@@ -518,10 +524,24 @@ public class BaseRelationService implements RelationService {
                 case FROM -> findByFromAndTypeAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
                 case TO -> findByToAndTypeAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
             };
-            return Futures.transform(relationsFuture, entityRelations -> entityRelations.size() > limit ?
-                    entityRelations.subList(0, limit) : entityRelations, MoreExecutors.directExecutor());
+            return Futures.transform(relationsFuture, entityRelations -> {
+                if (entityRelations == null || entityRelations.isEmpty()) {
+                    return Collections.emptyList();
+                }
+                List<EntityRelation> relations = relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
+                return relations.size() > limit ? relations.subList(0, limit) : relations;
+            }, MoreExecutors.directExecutor());
         }
-        return executor.submit(() -> relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit));
+        return executor.submit(() -> {
+            List<EntityRelation> entityRelations = relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
+            return relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
+        });
+    }
+
+    private List<EntityRelation> filterRelations(List<EntityRelation> entityRelations,  Predicate<EntityRelation> relationFilter) {
+        return entityRelations.stream()
+                .filter(relationFilter)
+                .toList();
     }
 
     @Override
