@@ -206,7 +206,6 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
                             return true;
                         }
                     }
-                    return false;
                 }
             }
         }
