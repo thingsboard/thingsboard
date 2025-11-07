@@ -27,9 +27,11 @@ import org.thingsboard.server.actors.service.DefaultActorService;
 import org.thingsboard.server.actors.shared.AbstractContextAwareMsgProcessor;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
@@ -74,6 +76,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ScheduledFuture;
@@ -292,15 +295,31 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onEntityDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
+        // 2 = 1 for entity processing + 1 for relation processing
+        MultipleTbCallback multiCallback = new MultipleTbCallback(2, callback);
+        deleteEntityRelations(msg, multiCallback);
         switch (msg.getEntityId().getEntityType()) {
             case DEVICE, ASSET -> entityProfileCache.removeEntityId(msg.getEntityId());
             case CUSTOMER -> ownerEntities.remove(msg.getEntityId());
         }
         ownerEntities.values().forEach(entities -> entities.remove(msg.getEntityId()));
-        if (isMyPartition(msg.getEntityId(), callback)) {
+        if (isMyPartition(msg.getEntityId(), multiCallback)) {
             log.debug("Pushing entity lifecycle msg to specific actor [{}]", msg.getEntityId());
-            getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), callback));
+            getOrCreateActor(msg.getEntityId()).tell(new CalculatedFieldEntityDeleteMsg(tenantId, msg.getEntityId(), multiCallback));
         }
+    }
+
+    private void deleteEntityRelations(ComponentLifecycleMsg msg, TbCallback callback) {
+        List<EntityRelation> entityRelations = relationService.findEntityRelations(tenantId, msg.getEntityId());
+        if (entityRelations.isEmpty()) {
+            callback.onSuccess();
+        }
+        entityRelations.forEach(entityRelation -> {
+            Function<EntityId, TriConsumer<EntityId, CalculatedFieldCtx, TbCallback>> deleteAction =
+                    relatedId -> (entityId, ctx, cb) -> deleteRelatedEntity(entityId, relatedId, ctx, cb);
+
+            processRelationIfSupported(entityRelation, callback, deleteAction);
+        });
     }
 
     private void onRelationChangedEvent(ComponentLifecycleMsg msg, TbCallback callback) {
@@ -316,15 +335,25 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
 
         EntityRelation entityRelation = JacksonUtil.treeToValue(msg.getInfo(), EntityRelation.class);
+        processRelationIfSupported(entityRelation, callback, relationAction);
+    }
+
+    private void processRelationIfSupported(EntityRelation entityRelation,
+                                            TbCallback callback,
+                                            Function<EntityId, TriConsumer<EntityId, CalculatedFieldCtx, TbCallback>> relationAction) {
         EntityId toId = entityRelation.getTo();
         EntityId fromId = entityRelation.getFrom();
         String relationType = entityRelation.getType();
+
+        if (!(CalculatedField.isSupportedRefEntity(toId) || CalculatedField.isSupportedRefEntity(fromId))) {
+            callback.onSuccess();
+            return;
+        }
 
         MultipleTbCallback callbackForToAndFrom = new MultipleTbCallback(2, callback);
         processRelationByDirection(EntitySearchDirection.TO, relationType, toId, callbackForToAndFrom, relationAction.apply(fromId));
         processRelationByDirection(EntitySearchDirection.FROM, relationType, fromId, callbackForToAndFrom, relationAction.apply(toId));
     }
-
 
     private void processRelationByDirection(EntitySearchDirection direction,
                                             String relationType,
@@ -339,7 +368,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
         List<CalculatedFieldCtx> matchingCfs = cfsByEntityIdAndProfile.stream()
                 .filter(cf -> {
-                    if (cf.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config ) {
+                    if (cf.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
                         RelationPathLevel relation = config.getRelation();
                         return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
                     } else {
@@ -717,8 +746,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private EntityId getProfileId(TenantId tenantId, EntityId entityId) {
         return switch (entityId.getEntityType()) {
-            case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
-            case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
+            case ASSET -> Optional.ofNullable(assetProfileCache.get(tenantId, (AssetId) entityId)).map(AssetProfile::getId).orElse(null);
+            case DEVICE -> Optional.ofNullable(deviceProfileCache.get(tenantId, (DeviceId) entityId)).map(DeviceProfile::getId).orElse(null);
             default -> null;
         };
     }

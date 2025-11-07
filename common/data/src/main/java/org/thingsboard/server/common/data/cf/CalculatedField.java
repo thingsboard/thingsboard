@@ -65,6 +65,10 @@ public class CalculatedField extends BaseData<CalculatedFieldId> implements HasN
             EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT
     ));
 
+    public static boolean isSupportedRefEntity(EntityId entity) {
+        return SUPPORTED_REFERENCED_ENTITIES.contains(entity.getEntityType());
+    }
+
     private TenantId tenantId;
     private EntityId entityId;
 

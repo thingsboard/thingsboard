@@ -24,6 +24,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
@@ -194,8 +195,14 @@ public abstract class AbstractCalculatedFieldProcessingService {
             return switch (relation.direction()) {
                 case FROM -> relations.stream()
                         .map(EntityRelation::getTo)
+                        .filter(CalculatedField::isSupportedRefEntity)
                         .toList();
-                case TO -> relations.isEmpty() ? List.of() : List.of(relations.get(0).getFrom());
+                case TO -> relations.stream()
+                        .map(EntityRelation::getFrom)
+                        .filter(CalculatedField::isSupportedRefEntity)
+                        .findFirst()
+                        .map(List::of)
+                        .orElseGet(Collections::emptyList);
             };
         }, calculatedFieldCallbackExecutor);
     }

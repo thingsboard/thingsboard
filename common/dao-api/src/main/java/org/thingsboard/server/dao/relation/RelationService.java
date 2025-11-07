@@ -88,6 +88,8 @@ public interface RelationService {
 
     List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery relationPathQuery);
 
+    List<EntityRelation> findEntityRelations(TenantId tenantId, EntityId entityId);
+
 //    TODO: This method may be useful for some validations in the future
 //    ListenableFuture<Boolean> checkRecursiveRelation(EntityId from, EntityId to);
 

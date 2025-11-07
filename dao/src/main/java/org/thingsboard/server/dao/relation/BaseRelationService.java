@@ -541,6 +541,16 @@ public class BaseRelationService implements RelationService {
         return relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
     }
 
+    @Override
+    public List<EntityRelation> findEntityRelations(TenantId tenantId, EntityId entityId) {
+        List<EntityRelation> relations = new ArrayList<>();
+        for (RelationTypeGroup relationTypeGroup : RelationTypeGroup.values()) {
+            relations.addAll(findByFrom(tenantId, entityId, relationTypeGroup));
+            relations.addAll(findByTo(tenantId, entityId, relationTypeGroup));
+        }
+        return relations;
+    }
+
     private void validate(EntityRelationPathQuery relationPathQuery) {
         validateId((UUIDBased) relationPathQuery.rootEntityId(), id -> "Invalid root entity id: " + id);
         List<RelationPathLevel> levels = relationPathQuery.levels();
