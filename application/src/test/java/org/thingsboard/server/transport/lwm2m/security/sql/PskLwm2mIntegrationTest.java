@@ -71,7 +71,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
 
     @Test
     public void testWithPskConnectLwm2mOneObserveSuccessUpdateProfileManyObserveUpdateRegistrationSuccess() throws Exception {
-        int suf = 24;
+        String suf = "UpdateReg";
         String clientEndpoint = CLIENT_ENDPOINT_PSK + "_" + suf;
         String identity = CLIENT_PSK_IDENTITY + "_" + suf;
         String keyPsk = CLIENT_PSK_KEY;
@@ -107,8 +107,8 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
     }
 
     @Test
-    public void testWithPskConnectLwm2mSuccessObserveSuccessUnRegClientUpdateProfileObserveConnectLwm2mSuccessOWithNewObserve() throws Exception {
-        int suf = 14;
+    public void testWithPskConnectLwm2mSuccessObserveSuccessUnRegClientUpdateProfileObserveConnectLwm2mSuccessWithNewObserve() throws Exception {
+        String suf = "UnReg";
         String clientEndpoint = CLIENT_ENDPOINT_PSK + "_" + suf;
         String identity = CLIENT_PSK_IDENTITY + "_" + suf;
         String keyPsk = CLIENT_PSK_KEY;
