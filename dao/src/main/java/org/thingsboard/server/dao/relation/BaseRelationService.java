@@ -529,7 +529,7 @@ public class BaseRelationService implements RelationService {
                     return Collections.emptyList();
                 }
                 List<EntityRelation> relations = relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
-                return relations.size() > limit ? entityRelations.subList(0, limit) : entityRelations;
+                return relations.size() > limit ? relations.subList(0, limit) : relations;
             }, MoreExecutors.directExecutor());
         }
         return executor.submit(() -> {
