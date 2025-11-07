@@ -106,7 +106,8 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, Calc
       hint: 'calculated-fields.type.related-entities-aggregation-hint'
     }],
     [CalculatedFieldType.ENTITY_AGGREGATION, {
-      name:'calculated-fields.type.entity-aggregation'
+      name: 'calculated-fields.type.time-series-data-aggregation',
+      hint: 'calculated-fields.type.time-series-data-aggregation-hint',
     }],
   ]
 )
