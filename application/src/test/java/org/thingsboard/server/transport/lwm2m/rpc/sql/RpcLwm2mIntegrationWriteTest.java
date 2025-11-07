@@ -30,6 +30,8 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TARGET_FW_VERSION;
+import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TITLE;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.*;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.*;
 
@@ -558,8 +560,8 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         ObjectNode objectNodeInfoOta = JacksonUtil.newObjectNode();
         byte[] firmwareChunk = new byte[]{1};
         String fileChecksumSHA256 = Hashing.sha256().hashBytes(firmwareChunk).toString();
-        objectNodeInfoOta.put(OTA_INFO_19_TITLE, "My firmware");
-        objectNodeInfoOta.put(OTA_INFO_19_VERSION, "fw.v.1.5.0-update");
+        objectNodeInfoOta.put(OTA_INFO_19_TITLE, TITLE);
+        objectNodeInfoOta.put(OTA_INFO_19_VERSION, TARGET_FW_VERSION);
         objectNodeInfoOta.put(OTA_INFO_19_FILE_CHECKSUM256, fileChecksumSHA256);
         objectNodeInfoOta.put(OTA_INFO_19_FILE_SIZE, firmwareChunk.length);
         objectNodeInfoOta.put(OTA_INFO_19_FILE_NAME, "filename.txt");

@@ -53,6 +53,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
 public class OtaPackageServiceTest extends AbstractServiceTest {
 
     public static final String TITLE = "My firmware";
+    public static final String TARGET_FW_VERSION = "fw.v.1.5.0-update";
     private static final String FILE_NAME = "filename.txt";
     private static final String VERSION = "v1.0";
     private static final String CONTENT_TYPE = "text/plain";

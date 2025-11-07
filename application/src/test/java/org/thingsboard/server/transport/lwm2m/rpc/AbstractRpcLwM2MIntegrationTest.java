@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.link.LinkParser;
 import org.eclipse.leshan.core.link.lwm2m.DefaultLwM2mLinkParser;
 import org.junit.Before;
@@ -34,18 +36,17 @@ import org.thingsboard.server.transport.lwm2m.server.client.ResourceUpdateResult
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
-
-import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
@@ -100,10 +101,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @SpyBean
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
-
-    public AbstractRpcLwM2MIntegrationTest() {
-        setResources(lwm2mClientResources);
-    }
 
     @Before
     public void startInitRPC() throws Exception {
@@ -324,19 +321,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 .count();
     }
 
-    protected void updateRegAtLeastOnceAfterAction() {
-        long initialInvocationCount = countUpdateReg();
-        AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
-        log.trace("updateRegAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
-        await("Update Registration at-least-once after action")
-                .atMost(50, TimeUnit.SECONDS)
-                .until(() -> {
-                    newInvocationCount.set(countUpdateReg());
-                    return newInvocationCount.get() > initialInvocationCount;
-                });
-        log.trace("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
-    }
-
     protected long countSendParametersOnThingsboardTelemetryResource(String rezName) {
         return Mockito.mockingDetails(lwM2mTransportServerHelperTest)
                 .getInvocations().stream()
@@ -349,5 +333,37 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                                         .anyMatch(arg -> rezName.equals(((TransportProtos.KeyValueProto) arg).getKey()))
                 )
                 .count();
+    }
+
+    protected String sendDiscover(String path) throws Exception {
+        String setRpcRequest = "{\"method\": \"Discover\", \"params\": {\"id\": \"" + path + "\"}}";
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
+    }
+
+    protected String sendRpcObserveReadAllWithResult() throws Exception {
+        ObjectNode rpcActualResult = sendRpcObserveWithResult("ObserveReadAll", null);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        return rpcActualResult.get("value").asText();
+    }
+
+    protected String sendRpcObserveReadAllWithResult(String params) throws Exception {
+        sendRpcObserveOk("Observe", params);
+        ObjectNode rpcActualResult = sendRpcObserveWithResult("ObserveReadAll", null);
+        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        return rpcActualResult.get("value").asText();
+    }
+
+    protected void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4(String expectedIdVer) throws Exception {
+        String expectedIdObserve = "SingleObservation:/3/0/9";
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
+        updateRegAtLeastOnceAfterAction();
+        lwM2MTestClient.getLeshanClient().stop(false);
+        lwM2MTestClient.getLeshanClient().start();
+        updateRegAtLeastOnceAfterAction();
+        awaitObserveReadAll(4,lwM2MTestClient.getDeviceIdStr());
+        String actualIdVer = sendDiscover(objectIdVer_3);
+        assertTrue(actualIdVer.contains(expectedIdVer));
+        String actualAllObserve = sendRpcObserveReadAllWithResult();
+        assertTrue(actualAllObserve.contains(expectedIdObserve));
     }
 }
