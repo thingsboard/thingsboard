@@ -19,13 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test;
-import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test;
-
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 
 @Slf4j
-public class RpcLwm2mIntegrationObserve_Ver_1_0_Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test {
+public class RpcLwm2mIntegrationObserveVer10Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_0_Test {
+
+    public RpcLwm2mIntegrationObserveVer10Test() throws Exception {
+    }
 
     @Before
     public void setupObserveTest() throws Exception {
@@ -44,5 +47,21 @@ public class RpcLwm2mIntegrationObserve_Ver_1_0_Test extends AbstractRpcLwM2MInt
         updateRegAtLeastOnceAfterAction();
         long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
         assertTrue(lastSendTelemetryAtCount > initSendTelemetryAtCount);
+        awaitObserveReadAll(1,lwM2MTestClient.getDeviceIdStr());
+    }
+
+    /**
+     * "3_1.0/0/9"
+     * Observe count 4
+     * CancelAll Observe
+     * Reboot
+     * Observe count 4 contains
+     * "/3_1.0" - Discover Object - find ver
+     * @throws Exception
+     */
+    @Test
+    public void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4_ObjectVer_1_0() throws Exception {
+        String expectedIdVer = "</3>;ver=1.0";
+        testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4(expectedIdVer);
     }
 }

@@ -22,6 +22,7 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Assert;
+import org.junit.Before;
 import org.springframework.test.web.servlet.MvcResult;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
@@ -119,7 +120,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
     protected final PrivateKey clientPrivateKeyFromCertTrust;                                   // client private key used for X509 and RPK
     protected final X509Certificate clientX509CertTrustNo;                                      // client certificate signed by intermediate, rootCA with a good CN ("host name")
     protected final PrivateKey clientPrivateKeyFromCertTrustNo;                                 // client private key used for X509 and RPK
-    private final String[] RESOURCES_SECURITY = new String[]{"1.xml", "2.xml", "3.xml", "5.xml", "9.xml", "19.xml"};
 
 
     private final LwM2MBootstrapClientCredentials defaultBootstrapCredentials;
@@ -134,7 +134,6 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
 
     public AbstractSecurityLwM2MIntegrationTest() {
         // create client credentials
-        setResources(this.RESOURCES_SECURITY);
         try {
             // Get certificates from key store
             char[] clientKeyStorePwd = CLIENT_STORE_PWD.toCharArray();
@@ -178,11 +177,17 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         defaultBootstrapCredentials.setLwm2mServer(serverCredentials);
     }
 
-    public void basicTestConnectionBefore(String clientEndpoint,
-                                          String awaitAlias,
-                                          LwM2MProfileBootstrapConfigType type,
-                                          Set<LwM2MClientState> expectedStatuses,
-                                          LwM2MClientState finishState) throws Exception {
+    @Before
+    public void init() throws Exception {
+        String[] RESOURCES_SECURITY = new String[]{"3-1_2.xml", "5.xml", "6.xml", "9.xml", "19.xml"};
+        setResources(RESOURCES_SECURITY);
+    }
+
+    public void basicTestConnectionStartBS(String clientEndpoint,
+                                           String awaitAlias,
+                                           LwM2MProfileBootstrapConfigType type,
+                                           Set<LwM2MClientState> expectedStatuses,
+                                           LwM2MClientState finishState) throws Exception {
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(type));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
         this.basicTestConnection(null , SECURITY_NO_SEC_BS,

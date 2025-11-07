@@ -470,6 +470,7 @@ public class LwM2MTestClient {
                 this.awaitClientAfterStartConnectLw();
             }
             lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
+            fwLwM2MDevice.setLeshanClient(leshanClient);
         }
     }
 

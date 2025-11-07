@@ -94,6 +94,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.client.object.Security.noSec;
@@ -118,6 +119,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClient
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.lwm2mClientResources;
 import static org.thingsboard.server.transport.lwm2m.ota.AbstractOtaLwM2MIntegrationTest.CLIENT_LWM2M_SETTINGS_19;
 
 @TestPropertySource(properties = {
@@ -306,7 +308,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     protected final Set<Lwm2mTestHelper.LwM2MClientState> expectedStatusesRegistrationBsSuccess = new HashSet<>(Arrays.asList(ON_BOOTSTRAP_STARTED, ON_BOOTSTRAP_SUCCESS, ON_REGISTRATION_STARTED, ON_REGISTRATION_SUCCESS));
     protected ScheduledExecutorService executor;
     protected LwM2MTestClient lwM2MTestClient;
-    private String[] resources;
+    private String[] resources = lwm2mClientResources;
     protected String deviceId;
     protected boolean supportFormatOnly_SenMLJSON_SenMLCBOR = false;
 
@@ -548,7 +550,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     public void setResources(String[] resources) {
-        this.resources = resources;
+        if (this.resources == null || !Arrays.equals(this.resources, resources)) {
+            this.resources = resources;
+        }
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
@@ -739,6 +743,19 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                             .andExpect(status().isOk());
                    return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
                 });
+    }
+
+    protected void updateRegAtLeastOnceAfterAction() {
+        long initialInvocationCount = countUpdateReg();
+        AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
+        log.trace("updateRegAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
+        await("Update Registration at-least-once after action")
+                .atMost(50, TimeUnit.SECONDS)
+                .until(() -> {
+                    newInvocationCount.set(countUpdateReg());
+                    return newInvocationCount.get() > initialInvocationCount;
+                });
+        log.trace("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
     }
 
     protected Integer getCntObserveAll(String deviceIdStr) throws Exception {

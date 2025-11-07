@@ -23,7 +23,10 @@ import static org.junit.Assert.assertTrue;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 
 @Slf4j
-public class RpcLwm2mIntegrationObserve_Ver_1_1_Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test {
+public class RpcLwm2mIntegrationObserveVer11Test extends AbstractRpcLwM2MIntegrationObserve_Ver_1_1_Test {
+
+    public RpcLwm2mIntegrationObserveVer11Test() throws Exception {
+    }
 
     @Before
     public void setupObserveTest() throws Exception {
@@ -42,5 +45,20 @@ public class RpcLwm2mIntegrationObserve_Ver_1_1_Test extends AbstractRpcLwM2MInt
         updateRegAtLeastOnceAfterAction();
         long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
         assertTrue(lastSendTelemetryAtCount > initSendTelemetryAtCount);
+    }
+
+    /**
+     * "3_1.1/0/9"
+     * Observe count 4
+     * CancelAll Observe
+     * Reboot
+     * Observe count 4 contains
+     * "/3" - Discover Object - find ver (lwm2mVersion == 1.1)
+     * @throws Exception
+     */
+    @Test
+    public void testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4_ObjectVer_1_1() throws Exception {
+        String expectedIdVer = "</3>";
+        testObserveOneResourceValue_Count_4_CancelAll_Reboot_After_Observe_Count_4(expectedIdVer);
     }
 }
