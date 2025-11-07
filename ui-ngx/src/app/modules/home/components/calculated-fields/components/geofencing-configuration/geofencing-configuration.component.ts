@@ -34,7 +34,7 @@ import {
   notEmptyObjectValidator,
   OutputType
 } from '@shared/models/calculated-field.models';
-import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -80,7 +80,7 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
     zoneGroups: this.fb.control<Record<string, CalculatedFieldGeofencing>>({}, notEmptyObjectValidator()),
     scheduledUpdateEnabled: [true],
     scheduledUpdateInterval: [this.minAllowedScheduledUpdateIntervalInSecForCF],
-    output: this.fb.control<CalculatedFieldOutput>({scope: AttributeScope.SERVER_SCOPE, type: OutputType.Timeseries})
+    output: this.fb.control<CalculatedFieldOutput>({type: OutputType.Timeseries})
   });
 
   currentEntityFilter: EntityFilter;

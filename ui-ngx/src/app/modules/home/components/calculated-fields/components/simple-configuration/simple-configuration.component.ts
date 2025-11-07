@@ -35,7 +35,6 @@ import {
   getCalculatedFieldArgumentsHighlights,
   OutputType
 } from '@shared/models/calculated-field.models';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { deepClone } from '@core/utils';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -87,7 +86,6 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     expressionSCRIPT: [calculatedFieldDefaultScript],
     output: this.fb.control<CalculatedFieldSimpleOutput>({
       name: '',
-      scope: AttributeScope.SERVER_SCOPE,
       type: OutputType.Timeseries,
       decimalsByDefault: null
     }),

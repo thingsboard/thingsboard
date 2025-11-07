@@ -79,13 +79,29 @@ export enum CalculatedFieldType {
   ALARM = 'ALARM',
 }
 
-export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, string>(
+interface CalculatedFieldTypeTranslate {
+  name: string;
+  hint?: string;
+}
+
+export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, CalculatedFieldTypeTranslate>(
   [
-    [CalculatedFieldType.SIMPLE, 'calculated-fields.type.simple'],
-    [CalculatedFieldType.SCRIPT, 'calculated-fields.type.script'],
-    [CalculatedFieldType.GEOFENCING, 'calculated-fields.type.geofencing'],
-    [CalculatedFieldType.PROPAGATION, 'calculated-fields.type.propagation'],
-    [CalculatedFieldType.RELATED_ENTITIES_AGGREGATION, 'calculated-fields.type.related-entities-aggregation'],
+    [CalculatedFieldType.SIMPLE, {
+      name: 'calculated-fields.type.simple'
+    }],
+    [CalculatedFieldType.SCRIPT, {
+      name: 'calculated-fields.type.script'
+    }],
+    [CalculatedFieldType.GEOFENCING, {
+      name: 'calculated-fields.type.geofencing'
+    }],
+    [CalculatedFieldType.PROPAGATION, {
+      name: 'calculated-fields.type.propagation'
+    }],
+    [CalculatedFieldType.RELATED_ENTITIES_AGGREGATION, {
+      name: 'calculated-fields.type.related-entities-aggregation',
+      hint: 'calculated-fields.type.related-entities-aggregation-hint'
+    }],
   ]
 )
 
@@ -127,7 +143,7 @@ export interface CalculatedFieldRelatedAggregationConfiguration {
   metrics: Record<string, CalculatedFieldAggMetric>;
   deduplicationIntervalInSec: number;
   useLatestTs: boolean;
-  output: Omit<CalculatedFieldSimpleOutput, 'name'>;
+  output: CalculatedFieldOutput & { decimalsByDefault?: number; };
 }
 
 interface BasePropagationConfiguration {
@@ -161,12 +177,20 @@ export type CalculatedFieldPropagationConfiguration =
   | PropagationWithNoExpression
   | PropagationWithExpression;
 
-export interface CalculatedFieldOutput {
-  type: OutputType;
-  scope?: AttributeScope;
+export type CalculatedFieldOutput =
+  | CalculatedFieldOutputAttribute
+  | CalculatedFieldOutputTimeSeries;
+
+export interface CalculatedFieldOutputAttribute {
+  type: OutputType.Attribute,
+  scope: AttributeScope;
 }
 
-export interface CalculatedFieldSimpleOutput extends CalculatedFieldOutput {
+export interface CalculatedFieldOutputTimeSeries {
+  type: OutputType.Timeseries;
+}
+
+export type CalculatedFieldSimpleOutput = CalculatedFieldOutput & {
   name: string;
   decimalsByDefault?: number;
 }

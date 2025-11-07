@@ -1057,7 +1057,8 @@
             "script": "Script",
             "geofencing" : "Geofencing",
             "propagation": "Propagation",
-            "related-entities-aggregation": "Related entities aggregation"
+            "related-entities-aggregation": "Related entities aggregation",
+            "related-entities-aggregation-hint": "Aggregation of data from related entities"
         },
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
