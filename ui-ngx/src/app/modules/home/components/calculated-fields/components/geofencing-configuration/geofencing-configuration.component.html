@@ -43,6 +43,7 @@
     <tb-calculated-field-geofencing-zone-groups-table formControlName="zoneGroups"
                                                       [entityId]="entityId"
                                                       [tenantId]="tenantId"
+                                                      [ownerId]="ownerId"
                                                       [entityName]="entityName"/>
     <div class="tb-form-row space-between flex-1 columns-xs" [class.!hidden]="!isRelatedEntity">
       <mat-slide-toggle class="mat-slide" formControlName="scheduledUpdateEnabled">

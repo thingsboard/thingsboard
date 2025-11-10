@@ -37,7 +37,7 @@
     </mat-tab>
     <mat-tab #alarmRules="matTab"
              label="{{'alarm-rule.alarm-rules' | translate }}">
-      <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name"></tb-alarm-rules-table>
+      <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
     </mat-tab>
   }
   <mat-tab label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
