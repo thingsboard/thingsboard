@@ -18,9 +18,11 @@ package org.thingsboard.server.service.cf.ctx.state;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -39,8 +41,9 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -67,13 +70,17 @@ public class SimpleCalculatedFieldStateTest {
 
     @Mock
     private ApiLimitService apiLimitService;
+    @InjectMocks
+    private ActorSystemContext systemContext;
 
     @BeforeEach
     void setUp() {
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
-        ctx = new CalculatedFieldCtx(getCalculatedField(), null, apiLimitService, null);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), systemContext);
         ctx.init();
-        state = new SimpleCalculatedFieldState(ctx.getArgNames());
+        state = new SimpleCalculatedFieldState(ctx.getEntityId());
+        state.setCtx(ctx, null);
+        state.init();
     }
 
     @Test
@@ -89,7 +96,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("key3", key3ArgEntry);
-        boolean stateUpdated = state.updateState(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -107,7 +114,7 @@ public class SimpleCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis(), new LongDataEntry("key1", 18L), 190L);
         Map<String, ArgumentEntry> newArgs = Map.of("key1", newArgEntry);
-        boolean stateUpdated = state.updateState(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(Map.of("key1", newArgEntry));
@@ -121,7 +128,7 @@ public class SimpleCalculatedFieldStateTest {
         ));
 
         Map<String, ArgumentEntry> newArgs = Map.of("key3", new TsRollingArgumentEntry(10, 30000L));
-        assertThatThrownBy(() -> state.updateState(ctx, newArgs))
+        assertThatThrownBy(() -> state.update(newArgs, ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument type detected for argument: key3. " +
                             "Rolling argument entry is not supported for simple calculated fields.");
@@ -135,7 +142,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
+        TelemetryCalculatedFieldResult result = performCalculation();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
@@ -152,7 +159,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        assertThatThrownBy(() -> state.performCalculation(ctx.getEntityId(), ctx))
+        assertThatThrownBy(() -> state.performCalculation(Collections.emptyMap(), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Argument 'key2' is not a number.");
     }
@@ -165,7 +172,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", key3ArgEntry
         ));
 
-        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
+        TelemetryCalculatedFieldResult result = performCalculation();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
@@ -186,7 +193,7 @@ public class SimpleCalculatedFieldStateTest {
         output.setDecimalsByDefault(3);
         ctx.setOutput(output);
 
-        CalculatedFieldResult result = state.performCalculation(ctx.getEntityId(), ctx).get();
+        TelemetryCalculatedFieldResult result = performCalculation();
 
         assertThat(result).isNotNull();
         assertThat(result.getType()).isEqualTo(output.getType());
@@ -197,28 +204,29 @@ public class SimpleCalculatedFieldStateTest {
     @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(state.getRequiredArguments());
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 "key1", key1ArgEntry,
                 "key2", key2ArgEntry,
                 "key3", key3ArgEntry
-        ));
-
+        ), ctx);
         assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of(
+        state.update(Map.of(
                 "key1", key1ArgEntry,
-                "key2", key2ArgEntry
-        ));
-        state.getArguments().put("key3", new SingleValueArgumentEntry());
-
+                "key2", key2ArgEntry,
+                "key3", new SingleValueArgumentEntry()
+        ), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains("key3");
     }
 
     private CalculatedField getCalculatedField() {
@@ -264,6 +272,10 @@ public class SimpleCalculatedFieldStateTest {
         config.setOutput(output);
 
         return config;
+    }
+
+    private TelemetryCalculatedFieldResult performCalculation() throws InterruptedException, ExecutionException {
+        return (TelemetryCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
     }
 
 }
