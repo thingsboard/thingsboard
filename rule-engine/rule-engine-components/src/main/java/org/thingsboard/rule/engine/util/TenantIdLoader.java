@@ -18,14 +18,12 @@ package org.thingsboard.rule.engine.util;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -169,14 +167,6 @@ public class TenantIdLoader {
                 break;
             case CALCULATED_FIELD:
                 tenantEntity = ctx.getCalculatedFieldService().findById(ctxTenantId, new CalculatedFieldId(id));
-                break;
-            case CALCULATED_FIELD_LINK:
-                CalculatedFieldLink calculatedFieldLink = ctx.getCalculatedFieldService().findCalculatedFieldLinkById(ctxTenantId, new CalculatedFieldLinkId(id));
-                if (calculatedFieldLink != null) {
-                    tenantEntity = ctx.getCalculatedFieldService().findById(ctxTenantId, calculatedFieldLink.getCalculatedFieldId());
-                } else {
-                    tenantEntity = null;
-                }
                 break;
             case JOB:
                 tenantEntity = ctx.getJobService().findJobById(ctxTenantId, new JobId(id));
