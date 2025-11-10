@@ -335,7 +335,7 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
           let valueToParse = attrValue;
           try {
             valueToParse = JSON.parse(attrValue);
-          } catch (e) { }
+          } catch (e) {/**/}
 
           try {
             value = !!this.parseValueFunction(valueToParse);

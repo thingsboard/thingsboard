@@ -376,7 +376,7 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
           let valueToParse = attrValue;
           try {
             valueToParse = JSON.parse(attrValue);
-          } catch (e) { }
+          } catch (e) {/**/}
 
           try {
             value = !!this.parseValueFunction(valueToParse);

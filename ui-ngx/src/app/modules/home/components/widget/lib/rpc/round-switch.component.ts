@@ -333,7 +333,7 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
           let valueToParse = attrValue;
           try {
             valueToParse = JSON.parse(attrValue);
-          } catch (e) { }
+          } catch (e) {/**/}
 
           try {
             value = !!this.parseValueFunction(valueToParse);
