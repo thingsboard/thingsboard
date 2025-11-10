@@ -1210,6 +1210,8 @@
             "year": "Year",
             "custom": "Custom"
         },
+        "aggregate-period-hint-offset": "Your aggregation interval will be: {{ interval }}",
+        "aggregate-period-hint-offset-and-so-on": "Your aggregation interval will be: {{ interval }} and so on",
         "entity-aggregation": {
             "argument-hint": "Data will be fetched from selected entity",
             "argument-setting-hint": "Latest telemetry is the only available argument type for this calculated field",
@@ -1220,6 +1222,7 @@
             "offset-value": "Offset value",
             "offset-value-required": "Offset value is required",
             "offset-value-min": "Offset value must be a positive integer",
+            "offset-value-max": "Offset value should be less than the aggregate interval value",
             "wait-delay": "Wait for delayed telemetry",
             "wait-delay-hint": "Waits for delayed telemetry after the interval ends",
             "duration": "Duration",

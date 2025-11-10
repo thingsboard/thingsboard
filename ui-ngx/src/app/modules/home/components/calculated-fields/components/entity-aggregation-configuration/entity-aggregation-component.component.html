@@ -71,7 +71,7 @@
                             labelText="{{ 'calculated-fields.aggregate-interval-value' | translate }}"
                             minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate : {sec: minAggregationIntervalInSecForCF} }}"
                             requiredText="{{ 'calculated-fields.aggregate-interval-value-required' | translate }}"
-                            stepMultipleOfErrorText="Must be 1 day"
+                            stepMultipleOfErrorText="{{ 'calculated-fields.aggregate-interval-value-step-multiple-of' | translate }}"
                             formControlName="durationSec">
         </tb-time-unit-input>
       }
@@ -84,15 +84,20 @@
         @if (entityAggregationConfiguration.get('interval.allowOffsetSec').value) {
           <tb-time-unit-input required
                               [minTime]="0"
+                              [maxTime]="maxOffsetTime"
                               sameWidthInputs
                               appearance="outline"
                               subscriptSizing="dynamic"
                               containerClass="flex gap-3"
                               labelText="{{ 'calculated-fields.entity-aggregation.offset-value' | translate }}"
                               minErrorText="{{ 'calculated-fields.entity-aggregation.offset-value-min' | translate }}"
+                              maxErrorText="{{ 'calculated-fields.entity-aggregation.offset-value-max' | translate }}"
                               requiredText="{{ 'calculated-fields.entity-aggregation.offset-value-required' | translate }}"
                               formControlName="offsetSec">
           </tb-time-unit-input>
+          <div class="tb-form-hint tb-primary-fill hint-container">
+            {{ hint }}
+          </div>
         }
       </div>
     </ng-container>
