@@ -41,7 +41,22 @@ public class NoSecLwM2MIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2
     }
 
     @Test
-    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_2() throws Exception {
-        testNoSecDtlsCidLength(2);
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_1() throws Exception {
+        testNoSecDtlsCidLength(1);
+    }
+
+    @Test
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_4() throws Exception {
+        testNoSecDtlsCidLength(4);
+    }
+
+    @Test
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_8() throws Exception {
+        testNoSecDtlsCidLength(8);
+    }
+
+    @Test
+    public void testWithNoSecConnectLwm2mSuccessClientDtlsCidLength_16() throws Exception {
+        testNoSecDtlsCidLength(16);
     }
 }

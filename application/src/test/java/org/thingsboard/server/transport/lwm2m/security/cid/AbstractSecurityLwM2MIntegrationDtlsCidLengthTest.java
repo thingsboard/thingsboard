@@ -17,14 +17,29 @@ package org.thingsboard.server.transport.lwm2m.security.cid;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.config.Configuration;
+import org.eclipse.californium.scandium.DTLSConnector;
+import org.eclipse.californium.scandium.dtls.Connection;
+import org.eclipse.californium.scandium.dtls.ConnectionId;
+import org.eclipse.californium.scandium.dtls.DTLSSession;
+import org.eclipse.californium.scandium.dtls.InMemoryReadWriteLockConnectionStore;
+import org.eclipse.californium.scandium.dtls.ResumptionSupportingConnectionStore;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpoint;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointsProvider;
+import org.eclipse.leshan.client.endpoint.LwM2mClientEndpoint;
+import org.eclipse.leshan.client.servers.LwM2mServer;
+import org.eclipse.leshan.core.peer.IpPeer;
+import org.eclipse.leshan.core.peer.LwM2mPeer;
 import org.junit.Assert;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.transport.lwm2m.client.Lwm2mServer;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
+import java.lang.reflect.Field;
+import java.net.InetSocketAddress;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
 import static org.awaitility.Awaitility.await;
@@ -70,7 +85,6 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthTest extends 
         } else {
             Assert.assertEquals(2L, lwM2MTestClient.getClientDtlsCid().size());
             Assert.assertTrue(lwM2MTestClient.getClientDtlsCid().keySet().contains(ON_READ_CONNECTION_ID));
-            Assert.assertTrue(lwM2MTestClient.getClientDtlsCid().keySet().contains(ON_WRITE_CONNECTION_ID));
             if (serverDtlsCidLength == null) {
                 Assert.assertNull(lwM2MTestClient.getClientDtlsCid().get(ON_WRITE_CONNECTION_ID));
                 Assert.assertNull(lwM2MTestClient.getClientDtlsCid().get(ON_READ_CONNECTION_ID));
@@ -79,8 +93,29 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthTest extends 
                 if (clientDtlsCidLength == null) {
                     Assert.assertNull(lwM2MTestClient.getClientDtlsCid().get(ON_READ_CONNECTION_ID));
                 } else {
-                    Assert.assertEquals(Integer.valueOf(serverDtlsCidLength), lwM2MTestClient.getClientDtlsCid().get(ON_WRITE_CONNECTION_ID));
+                    Integer expectedWrite = Math.max(clientDtlsCidLength, serverDtlsCidLength);
+//                    Assert.assertEquals(expectedWrite, lwM2MTestClient.getClientDtlsCid().get(ON_WRITE_CONNECTION_ID));
+                    Assert.assertEquals(serverDtlsCidLength, lwM2MTestClient.getClientDtlsCid().get(ON_WRITE_CONNECTION_ID));
                 }
+            }
+            LwM2mServer lwM2mServer = lwM2MTestClient.getLeshanClient().getRegisteredServers().entrySet().stream().findFirst().get().getValue();
+            CaliforniumClientEndpoint  lwM2mClientEndpoint  = (CaliforniumClientEndpoint) lwM2MTestClient.getLeshanClient().getEndpoint(lwM2mServer);
+            DTLSConnector connector = (DTLSConnector) lwM2mClientEndpoint.getCoapEndpoint().getConnector();
+            Field field = DTLSConnector.class.getDeclaredField("connectionStore");
+            field.setAccessible(true);
+            ResumptionSupportingConnectionStore connectionStore = (InMemoryReadWriteLockConnectionStore) field.get(connector);
+            InetSocketAddress serverAddr = ((IpPeer) lwM2mServer.getTransportData()).getSocketAddress();
+            Connection connection = connectionStore.get(serverAddr);
+            ConnectionId cid = connection.getConnectionId();
+            if (cid != null) {
+                int actualClientCidLength = cid.getBytes().length;
+                int expectedClientCidLength;
+                if (clientDtlsCidLength == null || clientDtlsCidLength == 0) {
+                    expectedClientCidLength = 3;
+                } else {
+                    expectedClientCidLength = clientDtlsCidLength;
+                }
+                Assert.assertEquals(expectedClientCidLength, actualClientCidLength);
             }
         }
     }

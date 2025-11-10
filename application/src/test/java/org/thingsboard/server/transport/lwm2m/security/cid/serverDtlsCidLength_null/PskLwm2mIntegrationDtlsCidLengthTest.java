@@ -41,8 +41,22 @@ public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MI
     }
 
     @Test
-    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_2() throws Exception {
-        testPskDtlsCidLength(2);
+    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_1() throws Exception {
+        testPskDtlsCidLength(1);
+    }
+
+    @Test
+    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_4() throws Exception {
+        testPskDtlsCidLength(4);
+    }
+
+    @Test
+    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_8() throws Exception {
+        testPskDtlsCidLength(8);
+    }
+    @Test
+    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_16() throws Exception {
+        testPskDtlsCidLength(16);
     }
 }
 
