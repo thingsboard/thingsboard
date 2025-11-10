@@ -26,9 +26,11 @@ import java.util.UUID;
 
 public interface ApiKeyInfoRepository extends JpaRepository<ApiKeyInfoEntity, UUID> {
 
-    @Query("SELECT ak FROM ApiKeyInfoEntity ak WHERE ak.tenantId = :tenantId AND ak.userId = :userId")
+    @Query("SELECT ak FROM ApiKeyInfoEntity ak WHERE ak.tenantId = :tenantId AND ak.userId = :userId AND " +
+            "(:searchText is NULL OR ilike(ak.description, concat('%', :searchText, '%')) = true)")
     Page<ApiKeyInfoEntity> findByUserId(@Param("tenantId") UUID tenantId,
                                         @Param("userId") UUID userId,
+                                        @Param("searchText") String searchText,
                                         Pageable pageable);
 
 }

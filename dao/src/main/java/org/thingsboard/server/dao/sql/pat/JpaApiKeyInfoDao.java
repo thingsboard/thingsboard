@@ -42,7 +42,7 @@ public class JpaApiKeyInfoDao extends JpaAbstractDao<ApiKeyInfoEntity, ApiKeyInf
 
     @Override
     public PageData<ApiKeyInfo> findByUserId(TenantId tenantId, UserId userId, PageLink pageLink) {
-        return DaoUtil.toPageData(apiKeyInfoRepository.findByUserId(tenantId.getId(), userId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(apiKeyInfoRepository.findByUserId(tenantId.getId(), userId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

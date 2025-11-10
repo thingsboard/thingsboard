@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -47,10 +48,13 @@ import java.util.Optional;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.API_KEY_ID_PARAM_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.API_KEY_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARAM_DESCRIPTION;
 
 @RestController
@@ -86,9 +90,15 @@ public class ApiKeyController extends BaseController {
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
             @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-            @RequestParam int page) throws ThingsboardException {
+            @RequestParam int page,
+            @Parameter(description = API_KEY_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "expirationTime", "description", "enabled"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
-        PageLink pageLink = createPageLink(pageSize, page, null, null, null);
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         UserId userId = new UserId(toUUID(userIdStr));
         accessControlService.checkPermission(securityUser, Resource.API_KEY, Operation.READ);
         return apiKeyService.findApiKeysByUserId(securityUser.getTenantId(), userId, pageLink);
