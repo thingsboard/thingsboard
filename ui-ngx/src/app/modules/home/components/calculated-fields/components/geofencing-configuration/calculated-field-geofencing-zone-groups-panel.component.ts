@@ -66,6 +66,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   @Input() entityId: EntityId;
   @Input() tenantId: string;
   @Input() entityName: string;
+  @Input() ownerId: EntityId;
   @Input() usedNames: string[];
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
@@ -195,6 +196,11 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
       case ArgumentEntityType.Current:
         delete value.refEntityId;
         break;
+      case ArgumentEntityType.Owner:
+        delete value.refEntityId;
+        value.refDynamicSourceConfiguration ||= { type: ArgumentEntityType.Owner };
+        value.refDynamicSourceConfiguration.type = ArgumentEntityType.Owner;
+        break;
       case ArgumentEntityType.RelationQuery:
         delete value.refEntityId;
         value.refDynamicSourceConfiguration.type = ArgumentEntityType.RelationQuery;
@@ -218,6 +224,12 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
       case ArgumentEntityType.Current:
       case ArgumentEntityType.RelationQuery:
         entityFilter = this.currentEntityFilter;
+        break;
+      case ArgumentEntityType.Owner:
+        entityFilter = {
+          type: AliasFilterType.singleEntity,
+          singleEntity: this.ownerId
+        };
         break;
       case ArgumentEntityType.Tenant:
         entityFilter = {

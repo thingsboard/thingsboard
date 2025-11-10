@@ -69,6 +69,9 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
   @Input({required: true})
   entityName: string;
 
+  @Input({required: true})
+  ownerId: EntityId;
+
   readonly minAllowedScheduledUpdateIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedScheduledUpdateIntervalInSecForCF;
   readonly DataKeyType = DataKeyType;
 
