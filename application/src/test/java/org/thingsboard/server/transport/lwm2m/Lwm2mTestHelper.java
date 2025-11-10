@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m;
 
 public class Lwm2mTestHelper {
 
-    public static final String[] lwm2mClientResources = new String[]{"3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
+    public static final String[] lwm2mClientResources = new String[]{"3-1_2.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
 
     // Models
     public static final int BINARY_APP_DATA_CONTAINER = 19;
