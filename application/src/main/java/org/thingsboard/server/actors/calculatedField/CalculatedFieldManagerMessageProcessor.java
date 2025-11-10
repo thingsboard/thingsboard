@@ -349,9 +349,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     if (cf.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
                         RelationPathLevel relation = config.getRelation();
                         return direction.equals(relation.direction()) && relationType.equals(relation.relationType());
-                    } else {
-                        return false;
                     }
+                    return false;
                 })
                 .toList();
 

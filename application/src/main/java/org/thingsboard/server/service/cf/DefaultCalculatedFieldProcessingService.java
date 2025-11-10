@@ -24,6 +24,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -54,6 +55,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
@@ -95,6 +97,19 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
             case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
             default -> Collections.emptyMap();
         };
+    }
+
+    @Override
+    public List<EntityId> fetchRelatedEntities(CalculatedFieldCtx ctx, EntityId entityId) {
+        try {
+            if (ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
+                return resolveRelatedEntities(ctx.getTenantId(), entityId, config.getRelation()).get();
+            }
+            return Collections.emptyList();
+        } catch (ExecutionException | InterruptedException e) {
+            Throwable cause = e.getCause();
+            throw new RuntimeException("Failed to fetch related entities for entity [" + entityId + "]: " + cause.getMessage(), cause);
+        }
     }
 
     @Override
