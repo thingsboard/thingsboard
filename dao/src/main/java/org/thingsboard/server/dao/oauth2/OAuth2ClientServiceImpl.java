@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
+import com.google.common.util.concurrent.FluentFuture;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,6 +42,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 @Slf4j
 @Service("OAuth2ClientService")
@@ -107,7 +109,6 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
                 .tenantId(tenantId)
                 .entityId(oAuth2ClientId)
                 .build());
-
     }
 
     @Override
@@ -147,6 +148,12 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findOAuth2ClientById(tenantId, new OAuth2ClientId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(oauth2ClientDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

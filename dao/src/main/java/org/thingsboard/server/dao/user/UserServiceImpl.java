@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.user;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +82,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -115,8 +117,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     private final EntityCountService countService;
     private final JpaExecutorService executor;
 
-    @TransactionalEventListener(classes = UserCacheEvictEvent.class)
     @Override
+    @TransactionalEventListener
     public void handleEvictEvent(UserCacheEvictEvent event) {
         List<UserCacheKey> keys = new ArrayList<>(2);
         keys.add(new UserCacheKey(event.tenantId(), event.newEmail()));
@@ -191,7 +193,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
                 userCredentialsDao.save(user.getTenantId(), userCredentials);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder()
-                    .tenantId(tenantId == null ? TenantId.SYS_TENANT_ID : tenantId)
+                    .tenantId(savedUser.getTenantId())
                     .entity(savedUser)
                     .oldEntity(oldUser)
                     .entityId(savedUser.getId())
@@ -351,7 +353,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
         eventPublisher.publishEvent(DeleteEntityEvent.builder()
-                .tenantId(tenantId)
+                .tenantId(user.getTenantId())
                 .entityId(userId)
                 .entity(user)
                 .cause(cause)
@@ -496,6 +498,11 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
             ((ObjectNode) userSettings.getSettings().get("sessions")).remove(mobileToken);
             userSettingsService.saveUserSettings(tenantId, userSettings);
         }
+    }
+
+    @Override
+    public int countTenantAdmins(TenantId tenantId) {
+        return userDao.countTenantAdmins(tenantId.getId());
     }
 
     @Override
@@ -655,6 +662,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findUserByIdAsync(tenantId, new UserId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

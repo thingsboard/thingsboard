@@ -22,6 +22,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.CurrentOwnerDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -42,24 +43,6 @@ public class ZoneGroupConfigurationTest {
         assertThatThrownBy(() -> zoneGroupConfiguration.validate(name))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Name '" + name + "' is reserved and cannot be used for zone group!");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = "  ")
-    @NullAndEmptySource
-    void validateShouldThrowWhenPerimeterKeyNameIsNullEmptyOrBlank(String perimeterKeyName) {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration(perimeterKeyName, REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
-        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Perimeter key name must be specified for 'allowedZonesGroup' zone group!");
-    }
-
-    @Test
-    void validateShouldThrowWhenReportStrategyIsNull() {
-        var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", null, false);
-        assertThatThrownBy(() -> zoneGroupConfiguration.validate("allowedZonesGroup"))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Report strategy must be specified for 'allowedZonesGroup' zone group!");
     }
 
     @ParameterizedTest
@@ -98,19 +81,25 @@ public class ZoneGroupConfigurationTest {
     }
 
     @Test
-    void whenHasDynamicSourceCalled_shouldReturnTrueIfDynamicSourceConfigurationIsNotNull() {
+    void whenHasRelationQuerySourceCalled_shouldReturnTrueIfRelationQuerySourceConfigurationIsNotNull() {
         var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(new RelationPathQueryDynamicSourceConfiguration());
-        assertThat(zoneGroupConfiguration.hasDynamicSource()).isTrue();
+        assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isTrue();
     }
 
     @Test
-    void whenHasDynamicSourceCalled_shouldReturnTrueIfDynamicSourceConfigurationIsNull() {
+    void whenHasRelationQuerySourceCalled_shouldReturnFalseIfRelationQuerySourceConfigurationIsNull() {
         var zoneGroupConfiguration = mock(ZoneGroupConfiguration.class);
         assertThat(zoneGroupConfiguration.getRefDynamicSourceConfiguration()).isNull();
-        assertThat(zoneGroupConfiguration.hasDynamicSource()).isFalse();
+        assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isFalse();
     }
 
+    @Test
+    void whenHasRelationQuerySourceCalled_shouldReturnFalseIfCurrentOwnerSourceConfigured() {
+        var zoneGroupConfiguration = mock(ZoneGroupConfiguration.class);
+        zoneGroupConfiguration.setRefDynamicSourceConfiguration(new CurrentOwnerDynamicSourceConfiguration());
+        assertThat(zoneGroupConfiguration.hasRelationQuerySource()).isFalse();
+    }
 
     @Test
     void validateToArgumentsMethodCallWithoutRefEntityId() {

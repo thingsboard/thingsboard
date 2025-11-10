@@ -15,12 +15,14 @@
  */
 package org.thingsboard.server.dao.cf;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CalculatedFieldLinkId;
@@ -33,11 +35,15 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
-import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.validator.CalculatedFieldDataValidator;
+import org.thingsboard.server.dao.service.validator.CalculatedFieldLinkDataValidator;
 
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
@@ -52,13 +58,12 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
 
     private final CalculatedFieldDao calculatedFieldDao;
     private final CalculatedFieldLinkDao calculatedFieldLinkDao;
-    private final DataValidator<CalculatedField> calculatedFieldDataValidator;
-    private final DataValidator<CalculatedFieldLink> calculatedFieldLinkDataValidator;
+    private final CalculatedFieldDataValidator calculatedFieldDataValidator;
+    private final CalculatedFieldLinkDataValidator calculatedFieldLinkDataValidator;
 
     @Override
     public CalculatedField save(CalculatedField calculatedField) {
-        CalculatedField oldCalculatedField = calculatedFieldDataValidator.validate(calculatedField, CalculatedField::getTenantId);
-        return doSave(calculatedField, oldCalculatedField);
+        return save(calculatedField, true);
     }
 
     @Override
@@ -85,8 +90,9 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
             return savedCalculatedField;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    "calculated_field_unq_key", "Calculated Field with such name is already in exists!",
-                    "calculated_field_external_id_unq_key", "Calculated Field with such external id already exists!");
+                    "calculated_field_unq_key", calculatedField.getType() == CalculatedFieldType.ALARM ?
+                            "Alarm rule with such type already exists" : "Calculated field with such name and type already exists",
+                    "calculated_field_external_id_unq_key", "Calculated field with such external id already exists");
             throw e;
         }
     }
@@ -100,10 +106,10 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public CalculatedField findByEntityIdAndName(EntityId entityId, String name) {
-        log.trace("Executing findByEntityIdAndName [{}], calculatedFieldName[{}]", entityId, name);
+    public CalculatedField findByEntityIdAndTypeAndName(EntityId entityId, CalculatedFieldType type, String name) {
+        log.trace("Executing findByEntityIdAndTypeAndName entityId [{}], type [{}], name [{}]", entityId, type, name);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
-        return calculatedFieldDao.findByEntityIdAndName(entityId, name);
+        return calculatedFieldDao.findByEntityIdAndTypeAndName(entityId, type, name);
     }
 
     @Override
@@ -136,11 +142,18 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
-    public PageData<CalculatedField> findAllCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+    public PageData<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, CalculatedFieldType type, PageLink pageLink) {
         log.trace("Executing findAllByEntityId, entityId [{}], pageLink [{}]", entityId, pageLink);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);
         validatePageLink(pageLink);
-        return calculatedFieldDao.findAllByEntityId(tenantId, entityId, pageLink);
+        Set<CalculatedFieldType> types;
+        if (type == null) {
+            types = EnumSet.allOf(CalculatedFieldType.class);
+            types.remove(CalculatedFieldType.ALARM);
+        } else {
+            types = Set.of(type);
+        }
+        return calculatedFieldDao.findByEntityIdAndTypes(tenantId, entityId, types, pageLink);
     }
 
     @Override
@@ -232,6 +245,12 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findById(tenantId, new CalculatedFieldId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(calculatedFieldDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

@@ -17,7 +17,7 @@
 -->
 <div class="tb-led-indicator flex flex-col">
   <div #ledTitleContainer class="title-container flex max-h-20% flex-full flex-row items-center justify-center" [class.!hidden]="!showTitle">
-    <span #ledTitle class="led-title">{{title}}</span>
+    <span #ledTitle class="led-title">{{title | customTranslate}}</span>
   </div>
   <div class="flex flex-full flex-col items-center justify-center"
        [class]="{
