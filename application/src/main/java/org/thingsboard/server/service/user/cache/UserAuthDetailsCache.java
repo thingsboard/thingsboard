@@ -21,6 +21,6 @@ import org.thingsboard.server.common.data.id.UserId;
 
 public interface UserAuthDetailsCache {
 
-    UserAuthDetails findUserEnabled(TenantId tenantId, UserId userId);
+    UserAuthDetails getUserAuthDetails(TenantId tenantId, UserId userId);
 
 }

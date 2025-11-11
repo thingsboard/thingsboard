@@ -29,13 +29,13 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.user.UserService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 @Slf4j
 @Service
+@TbCoreComponent
 @RequiredArgsConstructor
 public class DefaultUserAuthDetailsCache implements UserAuthDetailsCache {
 
@@ -46,8 +46,6 @@ public class DefaultUserAuthDetailsCache implements UserAuthDetailsCache {
     @Value("${cache.userAuthDetails.timeToLiveInMinutes:30}")
     private int cacheValueTtl;
     private Cache<UserId, UserAuthDetails> cache;
-
-    private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     @PostConstruct
     private void init() {
@@ -67,14 +65,9 @@ public class DefaultUserAuthDetailsCache implements UserAuthDetailsCache {
     }
 
     @Override
-    public UserAuthDetails findUserEnabled(TenantId tenantId, UserId userId) {
-        lock.readLock().lock();
-        try {
-            log.trace("Retrieving user with enabled credentials status for id {} for tenant {} from cache", userId, tenantId);
-            return cache.get(userId, id -> userService.findUserAuthDetailsByUserId(tenantId, id));
-        } finally {
-            lock.readLock().unlock();
-        }
+    public UserAuthDetails getUserAuthDetails(TenantId tenantId, UserId userId) {
+        log.trace("Retrieving user with enabled credentials status for id {} for tenant {} from cache", userId, tenantId);
+        return cache.get(userId, id -> userService.findUserAuthDetailsByUserId(tenantId, id));
     }
 
     public void evict(UserId userId) {

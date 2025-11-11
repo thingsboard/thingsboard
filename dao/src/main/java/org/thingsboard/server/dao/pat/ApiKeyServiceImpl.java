@@ -90,7 +90,7 @@ public class ApiKeyServiceImpl extends AbstractCachedEntityService<ApiKeyCacheKe
             }
             return savedApiKey;
         } catch (Exception e) {
-            checkConstraintViolation(e, "api_key_value_unq_key", "Api Key with such value already exists!");
+            checkConstraintViolation(e, "api_key_value_unq_key", "API Key with such value already exists!");
             throw e;
         }
     }

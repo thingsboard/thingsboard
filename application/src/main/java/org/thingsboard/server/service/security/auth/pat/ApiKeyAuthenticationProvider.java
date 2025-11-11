@@ -67,7 +67,7 @@ public class ApiKeyAuthenticationProvider implements org.springframework.securit
         if (apiKey.getExpirationTime() != 0 && apiKey.getExpirationTime() < System.currentTimeMillis()) {
             throw new CredentialsExpiredException("API key is expired");
         }
-        UserAuthDetails userAuthDetails = userAuthDetailsCache.findUserEnabled(apiKey.getTenantId(), apiKey.getUserId());
+        UserAuthDetails userAuthDetails = userAuthDetailsCache.getUserAuthDetails(apiKey.getTenantId(), apiKey.getUserId());
         if (userAuthDetails == null) {
             throw new UsernameNotFoundException("User with credentials not found");
         }

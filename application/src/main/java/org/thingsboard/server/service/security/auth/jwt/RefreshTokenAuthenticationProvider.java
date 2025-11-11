@@ -76,7 +76,7 @@ public class RefreshTokenAuthenticationProvider implements AuthenticationProvide
     }
 
     private SecurityUser authenticateByUserId(UserId userId) {
-        UserAuthDetails userAuthDetails = userAuthDetailsCache.findUserEnabled(TenantId.SYS_TENANT_ID, userId);
+        UserAuthDetails userAuthDetails = userAuthDetailsCache.getUserAuthDetails(TenantId.SYS_TENANT_ID, userId);
         if (userAuthDetails == null) {
             throw new UsernameNotFoundException("User with credentials not found");
         }

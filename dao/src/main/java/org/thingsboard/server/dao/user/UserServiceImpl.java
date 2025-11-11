@@ -507,7 +507,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public UserAuthDetails findUserAuthDetailsByUserId(TenantId tenantId, UserId userId) {
-        log.trace("Executing findUserEnabled [{}]", userId);
+        log.trace("Executing findUserAuthDetailsByUserId [{}]", userId);
         validateId(userId, id -> INCORRECT_USER_ID + id);
         return userDao.findUserAuthDetailsByUserId(tenantId.getId(), userId.getId());
     }

@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.rpc.Rpc;
@@ -169,6 +170,8 @@ public class TenantIdLoaderTest {
     private JobService jobService;
     @Mock
     private AiModelService aiModelService;
+    @Mock
+    private ApiKeyService apiKeyService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -203,7 +206,6 @@ public class TenantIdLoaderTest {
             case TENANT:
             case NOTIFICATION:
             case ADMIN_SETTINGS:
-            case API_KEY:
                 break;
             case CUSTOMER:
                 Customer customer = new Customer();
@@ -399,6 +401,12 @@ public class TenantIdLoaderTest {
                 aiModel.setTenantId(tenantId);
                 when(ctx.getAiModelService()).thenReturn(aiModelService);
                 doReturn(Optional.of(aiModel)).when(aiModelService).findAiModelById(eq(tenantId), any());
+                break;
+            case API_KEY:
+                ApiKey apiKey = new ApiKey();
+                apiKey.setTenantId(tenantId);
+                when(ctx.getApiKeyService()).thenReturn(apiKeyService);
+                doReturn(apiKey).when(apiKeyService).findApiKeyById(eq(tenantId), any());
                 break;
             default:
                 throw new RuntimeException("Unexpected originator EntityType " + entityType);

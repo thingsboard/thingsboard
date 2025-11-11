@@ -437,7 +437,7 @@ sql:
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
     api_keys:
-      enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for api keys records
+      enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
       checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonably small to prevent infinite recursion as early as possible

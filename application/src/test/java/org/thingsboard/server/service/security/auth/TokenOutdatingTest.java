@@ -97,7 +97,7 @@ public class TokenOutdatingTest {
         user.setId(userId);
         user.setAuthority(Authority.TENANT_ADMIN);
         user.setEmail("email");
-        when(userAuthDetailsCache.findUserEnabled(any(), eq(userId))).thenReturn(new UserAuthDetails(user, true));
+        when(userAuthDetailsCache.getUserAuthDetails(any(), eq(userId))).thenReturn(new UserAuthDetails(user, true));
 
         accessTokenAuthenticationProvider = new JwtAuthenticationProvider(tokenFactory, tokenOutdatingService);
         refreshTokenAuthenticationProvider = new RefreshTokenAuthenticationProvider(tokenFactory, userAuthDetailsCache, mock(CustomerService.class), tokenOutdatingService);

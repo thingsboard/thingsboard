@@ -627,6 +627,10 @@ public class DefaultTbClusterService implements TbClusterService {
             // No need to push notifications twice
             tbRuleEngineServices.removeAll(tbCoreServices);
         }
+        if (entityType == EntityType.USER) {
+            // No need to push user update notification to the rule engine
+            return;
+        }
         for (String serviceId : tbRuleEngineServices) {
             TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
             ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
