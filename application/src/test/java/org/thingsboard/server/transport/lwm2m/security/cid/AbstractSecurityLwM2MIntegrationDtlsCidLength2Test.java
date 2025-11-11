@@ -21,14 +21,14 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 
 @TestPropertySource(properties = {
-        "transport.lwm2m.dtls.connection_id_length=8"
+        "transport.lwm2m.dtls.connection_id_length=2"
 })
 
 @DaoSqlTest
 @Slf4j
-public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLength8Test extends AbstractSecurityLwM2MIntegrationDtlsCidLengthTest {
+public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLength2Test extends AbstractSecurityLwM2MIntegrationDtlsCidLengthTest {
 
-    private static final Integer  serverDtlsCidLength = 8;
+    private static final Integer  serverDtlsCidLength = 2;
 
     protected void  testNoSecDtlsCidLength(Integer dtlsCidLength) throws Exception {
         testNoSecDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
