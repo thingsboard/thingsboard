@@ -35,6 +35,7 @@
     </mat-form-field>
     <tb-alarm-rule-filter-predicate-list [valueType]="data.valueType"
                                          [arguments]="arguments"
+                                         [argumentInUse]="data.argumentInUse"
                                          [operation]="complexFilterFormGroup.get('operation').value"
                                          formControlName="predicates">
     </tb-alarm-rule-filter-predicate-list>
