@@ -55,7 +55,7 @@
       <mat-form-field class="flex-1 w-full" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="dynamicValueArgument" placeholder="{{ 'action.set' | translate }}">
           @for (argument of argumentsList; track argument) {
-            <mat-option [value]="argument">{{ argument }}</mat-option>
+            <mat-option [value]="argument" [disabled]="argument === argumentInUse">{{ argument }}</mat-option>
           }
         </mat-select>
         @if (filterPredicateValueFormGroup.get('dynamicValueArgument').touched && filterPredicateValueFormGroup.get('dynamicValueArgument').hasError('required')) {
