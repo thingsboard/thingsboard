@@ -26,13 +26,12 @@ import { Store } from '@ngrx/store';
   styles: ``
 })
 export class AuditLogHeaderComponent extends EntityTableHeaderComponent<AuditLog, TimePageLink> {
-  
+
   constructor(protected store: Store<AppState>) {
     super(store)
   }
 
   auditLogFiltersChanged(auditLogFilter: AuditLogFilter) {
-    console.log("auditLogFilter",auditLogFilter )
     this.entitiesTableConfig.componentsData.auditLogFilter = auditLogFilter;
     this.entitiesTableConfig.getTable().resetSortAndFilter(true, true);
   }

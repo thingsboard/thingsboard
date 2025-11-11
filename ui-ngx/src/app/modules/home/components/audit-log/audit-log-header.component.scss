@@ -13,23 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: flex;
-  max-width: 100%;
-  padding-right: 20px;
-  .mdc-button {
-    max-width: 100%;
-  }
-}
 
-:host ::ng-deep {
-  .mdc-button {
-    .mat-icon {
-      min-width: 24px;
-    }
-    .mdc-button__label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-  }
+:host {
+  padding-right: 8px;
+  overflow: hidden;
+  max-width: 100%;
 }

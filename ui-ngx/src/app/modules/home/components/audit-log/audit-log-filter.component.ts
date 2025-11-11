@@ -14,28 +14,27 @@
 /// limitations under the License.
 ///
 
-import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
+import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { TemplatePortal } from '@angular/cdk/portal';
-import { ChangeDetectorRef, Component, DestroyRef, ElementRef, forwardRef, Inject, InjectionToken, Input, OnInit, Optional, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, ElementRef, forwardRef, Input, OnInit, TemplateRef, ViewChild, ViewContainerRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { isDefinedAndNotNull } from '@app/core/utils';
+import { isDefined, isDefinedAndNotNull } from '@app/core/utils';
 import { StringItemsOption } from '@app/shared/components/string-items-list.component';
-import { ActionType, actionTypeTranslations, AuditLogFilter, coerceBoolean } from '@app/shared/public-api';
+import {
+  ActionType,
+  actionTypeTranslations,
+  auditLogFilterEquals,
+  AuditLogFilter,
+  POSITION_MAP,
+} from '@app/shared/public-api';
 import { TranslateService } from '@ngx-translate/core';
 
-
-export const AUDIT_LOG_FILTER_CONFIG_DATA = new InjectionToken<any>('AuditLogFilterConfigData');
-
-export interface AuditLogConfigData {
-  panelMode: boolean;
-  auditLogFilter: AuditLogFilter;
-}
-
+// @dynamic
 @Component({
   selector: 'tb-audit-log-filter',
   templateUrl: './audit-log-filter.component.html',
-  styleUrl: './audit-log-filter.component.scss',
+  styleUrls: ['./audit-log-filter.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -45,23 +44,17 @@ export interface AuditLogConfigData {
   ]
 })
 export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
-  
+
   @ViewChild('auditLogFilterPanel')
   auditLogFilterPanel: TemplateRef<any>;
 
   @Input() disabled: boolean;
 
-  @coerceBoolean()
-  @Input()
-  buttonMode = true;
-
   ActionType = ActionType;
 
   actionTypes = Object.values(ActionType);
-  
-  actionTypeTranslations = actionTypeTranslations;
 
-  panelMode = false;
+  actionTypeTranslations = actionTypeTranslations;
 
   buttonDisplayValue = this.translate.instant('audit-log.filter');
 
@@ -69,17 +62,13 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   auditLogOverlayRef: OverlayRef;
 
-  panelResult: AuditLogFilter = null;
+  initialAuditLogFilter: AuditLogFilter;
 
   private auditLogFilter: AuditLogFilter;
 
   private propagateChange = (_: any) => {};
 
-  constructor(@Optional() @Inject(AUDIT_LOG_FILTER_CONFIG_DATA)
-              private data: AuditLogConfigData | undefined,
-              @Optional()
-              private overlayRef: OverlayRef,
-              private fb: UntypedFormBuilder,
+  constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
               private overlay: Overlay,
               private nativeElement: ElementRef,
@@ -88,27 +77,16 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
               private destroyRef: DestroyRef) {}
 
   ngOnInit(): void {
-    if (this.data) {
-      this.panelMode = this.data.panelMode;
-      this.auditLogFilter = this.data.auditLogFilter;
-    }
     this.auditLogFilterForm = this.fb.group({
-      types: ['', []]
+      actionTypes: [[]]
     });
-
     this.auditLogFilterForm.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(
       () => {
         this.updateValidators();
-        if (!this.buttonMode) {
-          this.auditLogFilterUpdated(this.auditLogFilterForm.value);
-        }
       }
     );
-    if (this.panelMode) {
-      this.updateAuditLogFilterForm(this.auditLogFilter);
-    }
   }
 
   registerOnChange(fn: any): void {
@@ -127,18 +105,21 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
       this.updateValidators();
     }
   }
-  
+
   writeValue(auditLogFilter?: AuditLogFilter): void {
     this.auditLogFilter = auditLogFilter;
+    if(!this.initialAuditLogFilter && isDefined(this.auditLogFilter)) {
+      this.initialAuditLogFilter = this.auditLogFilterForm.getRawValue();
+    }
     this.updateButtonDisplayValue();
     this.updateAuditLogFilterForm(auditLogFilter);
   }
-  
+
   get predefinedTypeValues (): StringItemsOption[] {
     return [...this.actionTypes].map(type => ({
       name: this.translate.instant(this.actionTypeTranslations.get(type)),
       value: type
-    }))
+    }));
   }
 
   private updateValidators() {
@@ -157,14 +138,9 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
       minWidth: ''
     });
     config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'start',
-      originY: 'bottom',
-      overlayX: 'start',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(this.nativeElement)
-      .withPositions([connectedPosition]);
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(this.nativeElement)
+      .withPositions([POSITION_MAP.bottomLeft]);
 
     this.auditLogOverlayRef = this.overlay.create(config);
     this.auditLogOverlayRef.backdropClick().subscribe(() => {
@@ -176,28 +152,26 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   cancel() {
     this.updateAuditLogFilterForm(this.auditLogFilter);
-    if (this.overlayRef) {
-      this.overlayRef.dispose();
-    } else {
-      this.auditLogOverlayRef.dispose();
-    }
+    this.auditLogOverlayRef.dispose();
   }
 
   update() {
     this.auditLogFilterUpdated(this.auditLogFilterForm.value);
-    if (this.panelMode) {
-      this.panelResult = this.auditLogFilter;
-    }
-    if (this.overlayRef) {
-      this.overlayRef.dispose();
-    } else {
-      this.auditLogOverlayRef.dispose();
+    this.auditLogOverlayRef.dispose();
+  }
+
+  reset() {
+    if (this.initialAuditLogFilter) {
+      if (!auditLogFilterEquals(this.auditLogFilter, this.initialAuditLogFilter)) {
+        this.updateAuditLogFilterForm(this.initialAuditLogFilter);
+        this.auditLogFilterForm.markAsDirty();
+      }
     }
   }
 
   private updateAuditLogFilterForm(auditLogFilter?: AuditLogFilter) {
     this.auditLogFilterForm.patchValue({
-      types: auditLogFilter?.types,
+      actionTypes: auditLogFilter?.actionTypes,
     }, {emitEvent: false});
     this.updateValidators();
   }
@@ -209,18 +183,16 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
   }
 
   private updateButtonDisplayValue() {
-    if (this.buttonMode) {
-      const filterTextParts: string[] = [];
-       if (isDefinedAndNotNull(this.auditLogFilter?.types)) {
-        const types = this.auditLogFilter.types;
-        types.forEach(type => filterTextParts.push(this.translate.instant(this.actionTypeTranslations.get(type as ActionType)))) 
-      }
-      if (!filterTextParts.length) {
-        this.buttonDisplayValue = this.translate.instant('audit-log.audit-log-filter-title');
-      } else {
-        this.buttonDisplayValue = this.translate.instant('audit-log.filter-title') + `: ${filterTextParts.join(', ')}`;
-      }
-      this.cd.detectChanges();
+    const filterTextParts: string[] = [];
+    if (isDefinedAndNotNull(this.auditLogFilter?.actionTypes)) {
+      const actionTypes = this.auditLogFilter.actionTypes;
+      actionTypes.forEach(actionType => filterTextParts.push(this.translate.instant(this.actionTypeTranslations.get(actionType as ActionType))))
     }
+    if (!filterTextParts.length) {
+      this.buttonDisplayValue = this.translate.instant('audit-log.audit-log-filter-title');
+    } else {
+      this.buttonDisplayValue = this.translate.instant('audit-log.filter-title') + `: ${filterTextParts.join(', ')}`;
+    }
+    this.cd.detectChanges();
   }
 }

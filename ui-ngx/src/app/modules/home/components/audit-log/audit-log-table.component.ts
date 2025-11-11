@@ -97,9 +97,6 @@ export class AuditLogTableComponent implements OnInit {
     }
   }
 
-  @Input()
-  isFilterShown: boolean;
-
   @ViewChild(EntitiesTableComponent, {static: true}) entitiesTable: EntitiesTableComponent;
 
   auditLogTableConfig: AuditLogTableConfig;

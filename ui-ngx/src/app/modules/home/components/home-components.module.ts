@@ -23,7 +23,7 @@ import { DetailsPanelComponent } from '@home/components/details-panel.component'
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { AuditLogDetailsDialogComponent } from '@home/components/audit-log/audit-log-details-dialog.component';
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
-import { AuditLogFilterComponent } from '@home/components/audit-log/audit-log-filter.component';
+import { AuditLogHeaderComponent } from '@home/components/audit-log/audit-log-header.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { EventFilterPanelComponent } from '@home/components/event/event-filter-panel.component';
@@ -198,6 +198,7 @@ import {
 import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 import { AlarmRuleModule } from "@home/components/alarm-rules/alarm-rule.module";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
+import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
 
 @NgModule({
   declarations:
@@ -209,7 +210,6 @@ import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rul
       EntityDetailsPanelComponent,
       EntityDetailsPageComponent,
       AuditLogTableComponent,
-      AuditLogFilterComponent,
       AuditLogDetailsDialogComponent,
       CalculatedFieldsTableComponent,
       CalculatedFieldDebugDialogComponent,
@@ -350,6 +350,8 @@ import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rul
       AIModelDialogComponent,
       ResourcesDialogComponent,
       ResourcesLibraryComponent,
+      AuditLogHeaderComponent,
+      AuditLogFilterComponent
     ],
   imports: [
     CommonModule,

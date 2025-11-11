@@ -15,24 +15,36 @@
     limitations under the License.
 
 -->
-<ng-container *ngIf="panelMode; else componentMode">
-  <ng-container *ngTemplateOutlet="auditLogFilterPanel"></ng-container>
-</ng-container>
-<ng-template #componentMode>
-  <ng-container *ngIf="buttonMode; else auditLogFilter">
-    <button color="primary"
-            matTooltip="{{buttonDisplayValue}}"
-            matTooltipPosition="above"
-            mat-stroked-button
-            (click)="toggleAuditLogFilterPanel($event)">
-      <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
-    </button>
-  </ng-container>
-</ng-template>
+
+<button color="primary"
+        matTooltip="{{buttonDisplayValue}}"
+        matTooltipPosition="above"
+        mat-stroked-button
+        (click)="toggleAuditLogFilterPanel($event)">
+  <mat-icon>filter_list</mat-icon>{{buttonDisplayValue}}
+</button>
 <ng-template #auditLogFilterPanel>
-  <form class="mat-content mat-padding flex flex-col" (ngSubmit)="update()">
-    <ng-container *ngTemplateOutlet="auditLogFilter"></ng-container>
+  <form class="mat-content mat-padding flex flex-col" [formGroup]="auditLogFilterForm" (ngSubmit)="update()">
+    <div class="tb-form-panel flex-1 no-padding no-border">
+      <div class="tb-form-row flex-1 space-between column-xs">
+        <div class="fixed-title-width" translate>audit-log.filter-types</div>
+        <tb-string-items-list appearance="outline"
+                              class="flex flex-1 gt-xs:w-64"
+                              subscriptSizing="dynamic"
+                              [placeholder]="'audit-log.filter-type-add' | translate"
+                              [predefinedValues]="predefinedTypeValues"
+                              formControlName="actionTypes">
+        </tb-string-items-list>
+      </div>
+    </div>
     <div class="tb-panel-actions flex flex-row items-center justify-end">
+      <button type="button"
+              mat-button
+              color="primary"
+              (click)="reset()">
+        {{ 'action.reset' | translate }}
+      </button>
+      <span class="flex-1"></span>
       <button type="button"
               mat-button
               (click)="cancel()">
@@ -46,16 +58,4 @@
       </button>
     </div>
   </form>
-</ng-template>
-<ng-template #auditLogFilter>
-  <div class="flex flex-col gap-4" style="min-width: 280px;" [formGroup]="auditLogFilterForm">
-    <tb-string-items-list [label]="'audit-log.type' | translate"
-                          appearance="outline"
-                          subscriptSizing="dynamic"
-                          [placeholder]="'audit-log.filter-type-add' | translate"
-                          [predefinedValues]="predefinedTypeValues"
-                          formControlName="types"
-    >
-    </tb-string-items-list>
-  </div>
 </ng-template>

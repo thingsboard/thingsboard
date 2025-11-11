@@ -20,9 +20,7 @@ import { CustomerId } from './id/customer-id';
 import { EntityId } from './id/entity-id';
 import { UserId } from './id/user-id';
 import { TenantId } from './id/tenant-id';
-import { PageLink } from '@shared/models/page/page-link';
-import { isDefinedAndNotNull } from '@app/core/utils';
-import { StringItemsOption } from '../components/string-items-list.component';
+import {isArraysEqualIgnoreUndefined, isDefinedAndNotNull, isEmpty, isUndefinedOrNull} from "@core/utils";
 
 export enum AuditLogMode {
   TENANT,
@@ -136,37 +134,18 @@ export interface AuditLog extends BaseData<AuditLogId> {
   actionFailureDetails: string;
 }
 
-
 export interface AuditLogFilter {
-  types?: string[];
+  actionTypes?: string[];
 }
 
-export interface AuditLogRequestParams {
-  types?: string[];
-  id?: string;
-}
-
-
-export class AuditLogQuery  {
-
-  pageLink: PageLink;
-  auditLogFilter: AuditLogRequestParams;
-
-  constructor(pageLink: PageLink, auditLogFilter: AuditLogRequestParams) {
-    this.pageLink = pageLink;
-    this.auditLogFilter = auditLogFilter;
+export const auditLogFilterEquals = (filter1?: AuditLogFilter, filter2?: AuditLogFilter): boolean => {
+  if (filter1 === filter2) {
+    return true;
   }
-
-  public toQuery(): string {
-    let query = '';
-    if(isDefinedAndNotNull(this.auditLogFilter.id)) {
-      query += `${this.auditLogFilter.id}`;
-    } 
-    query += this.pageLink.toQuery();
-    if (isDefinedAndNotNull(this.auditLogFilter?.types)) {
-      const types = this.auditLogFilter.types.join(',');
-      query += `&actionTypes=${types}`;
-    }
-    return query;
+  if ((isUndefinedOrNull(filter1) || isEmpty(filter1)) && (isUndefinedOrNull(filter2) || isEmpty(filter2))) {
+    return true;
+  } else if (isDefinedAndNotNull(filter1) && isDefinedAndNotNull(filter2)) {
+    return isArraysEqualIgnoreUndefined(filter1.actionTypes, filter2.actionTypes);
   }
-}
+  return false;
+};
