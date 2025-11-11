@@ -361,21 +361,19 @@ public abstract class AbstractCalculatedFieldProcessingService {
             case TIME_SERIES -> saveTimeSeries(tenantId, entityId, cfResult, cfIds, System.currentTimeMillis(), future);
         }
 
-        if (log.isTraceEnabled()) {
-            Futures.addCallback(future, new FutureCallback<>() {
-                @Override
-                public void onSuccess(Void v) {
-                    callback.onSuccess();
-                    log.debug("[{}][{}] Saved CF result: {}", tenantId, entityId, cfResult);
-                }
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void v) {
+                callback.onSuccess();
+                log.debug("[{}][{}] Saved CF result: {}", tenantId, entityId, cfResult);
+            }
 
-                @Override
-                public void onFailure(Throwable t) {
-                    callback.onFailure(t);
-                    log.error("[{}][{}] Failed to save CF result {}", tenantId, entityId, cfResult, t);
-                }
-            }, MoreExecutors.directExecutor());
-        }
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+                log.error("[{}][{}] Failed to save CF result {}", tenantId, entityId, cfResult, t);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private void saveAttributes(TenantId tenantId, EntityId entityId, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, SettableFuture<Void> future) {

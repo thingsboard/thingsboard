@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TimeSeriesImmediateOutputStrategy extends ImmediateOutputStrategy {
+public class TimeSeriesImmediateOutputStrategy implements OutputStrategy {
 
     private long ttl;
 
@@ -32,7 +32,7 @@ public class TimeSeriesImmediateOutputStrategy extends ImmediateOutputStrategy {
     private boolean processCfs;
 
     @Override
-    public String getType() {
-        return "IMMEDIATE_TIME_SERIES";
+    public OutputStrategyType getType() {
+        return OutputStrategyType.IMMEDIATE_TIME_SERIES;
     }
 }

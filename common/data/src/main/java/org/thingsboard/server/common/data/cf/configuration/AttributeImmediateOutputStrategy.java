@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class AttributeImmediateOutputStrategy extends ImmediateOutputStrategy {
+public class AttributeImmediateOutputStrategy implements OutputStrategy {
 
     private boolean updateAttributesOnlyOnValueChange;
 
@@ -31,7 +31,7 @@ public class AttributeImmediateOutputStrategy extends ImmediateOutputStrategy {
     private boolean processCfs;
 
     @Override
-    public String getType() {
-        return "IMMEDIATE_ATTRIBUTES";
+    public OutputStrategyType getType() {
+        return OutputStrategyType.IMMEDIATE_ATTRIBUTES;
     }
 }

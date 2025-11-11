@@ -32,14 +32,10 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 
         @Type(value = AttributeRuleChainOutputStrategy.class, name = "RULE_CHAIN_ATTRIBUTES"),
         @Type(value = TimeSeriesRuleChainOutputStrategy.class, name = "RULE_CHAIN_TIME_SERIES")
-
 })
 public interface OutputStrategy {
 
     @JsonIgnore
-    OutputStrategyType getStrategyType();
-
-    @JsonIgnore
-    String getType();
+    OutputStrategyType getType();
 
 }
