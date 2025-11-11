@@ -186,8 +186,8 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxStateSizeInKBytes = 32;
     @Schema(example = "2")
     private long maxSingleValueArgumentSizeInKBytes = 2;
-    @Schema(example = "3600")
-    private long minAllowedDeduplicationIntervalInSecForCF = 3600;
+    @Schema(example = "60")
+    private long minAllowedDeduplicationIntervalInSecForCF = 60;
     @Schema(example = "60")
     private long minAggregationIntervalInSecForCF = 60;
 

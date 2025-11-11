@@ -102,6 +102,14 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     };
   }
 
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.filterListFormGroup.disable({emitEvent: false});
+    } else {
+      this.filterListFormGroup.enable({emitEvent: false});
+    }
+  }
+
   writeValue(filters: Array<AlarmRuleFilter>): void {
     const keyFilterControls: Array<AbstractControl> = [];
     if (filters) {

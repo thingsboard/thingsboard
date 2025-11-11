@@ -61,6 +61,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -701,6 +702,19 @@ public class CalculatedFieldCtx implements Closeable {
             }
             default -> false;
         };
+    }
+
+    public boolean shouldFetchEntityRelations(CalculatedFieldState state) {
+        if (!(state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState)) {
+            return false;
+        }
+        if (!isScheduledUpdateEnabled()) {
+            return false;
+        }
+        if (relatedEntitiesAggState.getLastRelatedEntitiesRefreshTs() == -1L) {
+            return true;
+        }
+        return relatedEntitiesAggState.getLastRelatedEntitiesRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
     }
 
     @Override
