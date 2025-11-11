@@ -30,10 +30,11 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLength16Test extend
 
     private static final Integer  serverDtlsCidLength = 16;
 
-    protected void  testNoSecDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testNoSecDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
+    protected void  testNoSecDtlsCidLength(Integer clientDtlsCidLength) throws Exception {
+        testNoSecDtlsCidLength(clientDtlsCidLength, serverDtlsCidLength);
     }
-    protected void  testPskDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testPskDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
+
+    protected void  testPskDtlsCidLength(Integer clientDtlsCidLength) throws Exception {
+        testPskDtlsCidLength(clientDtlsCidLength, serverDtlsCidLength);
     }
 }

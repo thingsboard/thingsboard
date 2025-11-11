@@ -28,7 +28,7 @@ public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MI
     @Before
     public void createProfileRpc() {
         transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
-        awaitAlias = "await on client state (Psk_Lwm2m) DtlsCidLength = 16";
+        awaitAlias = "await on client state (Psk_Lwm2m) serverDtlsCidLength = 16";
     }
 
     @Test
@@ -47,14 +47,15 @@ public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MI
     }
 
     @Test
+    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_2() throws Exception {
+        testPskDtlsCidLength(2);
+    }
+
+    @Test
     public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_4() throws Exception {
         testPskDtlsCidLength(4);
     }
 
-    @Test
-    public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_8() throws Exception {
-        testPskDtlsCidLength(8);
-    }
     @Test
     public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_16() throws Exception {
         testPskDtlsCidLength(16);
