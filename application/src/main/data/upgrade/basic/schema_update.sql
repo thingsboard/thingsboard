@@ -70,7 +70,7 @@ ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (ent
 
 -- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
 
--- CALCULATED FIELD OUTPUT STRATEGY UPGRADE START
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE START
 
 UPDATE calculated_field
 SET configuration = jsonb_set(
@@ -91,4 +91,4 @@ SET configuration = jsonb_set(
                     )
 WHERE (configuration::jsonb -> 'output' -> 'strategy') IS NULL;
 
--- CALCULATED FIELD OUTPUT STRATEGY UPGRADE END
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE END

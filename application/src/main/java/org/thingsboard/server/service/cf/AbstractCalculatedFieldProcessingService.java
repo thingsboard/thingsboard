@@ -398,6 +398,10 @@ public abstract class AbstractCalculatedFieldProcessingService {
         DonAsynchron.withCallback(findFuture,
                 existingAttributes -> {
                     List<AttributeKvEntry> changed = filterChangedAttr(existingAttributes, newAttributes);
+                    if (changed.isEmpty()) {
+                        future.set(null);
+                        return;
+                    }
                     saveAttributesInternal(tenantId, entityId, cfResult, cfIds, changed, strategy, future);
                 },
                 future::setException,
@@ -429,7 +433,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
         JsonElement jsonResult = JsonParser.parseString(Objects.requireNonNull(cfResult.stringValue()));
         Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(jsonResult, ts);
         if (tsKvMap.isEmpty()) {
-            future.setFuture(Futures.immediateFuture(null));
+            future.set(null);
+            return;
         }
         List<TsKvEntry> tsEntries = toTsKvEntryList(tsKvMap);
         TimeseriesSaveRequest.Strategy strategy = new TimeseriesSaveRequest.Strategy(outputStrategy.isSaveTimeSeries(), outputStrategy.isSaveLatest(), outputStrategy.isSendWsUpdate(), outputStrategy.isProcessCfs());
