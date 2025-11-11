@@ -411,6 +411,23 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             } catch (Exception e) {
                 throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
             }
+        } else if (ctx.shouldFetchEntityRelations(state)) {
+            log.debug("[{}][{}] Going to update related entities for CF.", entityId, ctx.getCfId());
+            try {
+                if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesState) {
+                    List<EntityId> relatedEntities = cfService.fetchRelatedEntities(ctx, entityId);
+                    List<EntityId> missingEntities = relatedEntitiesState.checkRelatedEntities(relatedEntities);
+                    if (!missingEntities.isEmpty()) {
+                        missingEntities.forEach(missingEntityId -> {
+                            Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, missingEntityId, ctx.getArguments());
+                            relatedEntitiesState.updateEntityData(setEntityIdToSingleEntityArguments(missingEntityId, fetchedArgs));
+                        });
+                        justRestored = true;
+                    }
+                }
+            } catch (Exception e) {
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
+            }
         }
         if (state.isSizeOk()) {
             Map<String, ArgumentEntry> updatedArgs = state.update(newArgValues, ctx);

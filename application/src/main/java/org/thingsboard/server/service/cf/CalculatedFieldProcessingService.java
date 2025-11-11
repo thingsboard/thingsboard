@@ -35,6 +35,8 @@ public interface CalculatedFieldProcessingService {
 
     Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId);
 
+    List<EntityId> fetchRelatedEntities(CalculatedFieldCtx ctx, EntityId entityId);
+
     Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments);
 
     void processImmediately(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback);

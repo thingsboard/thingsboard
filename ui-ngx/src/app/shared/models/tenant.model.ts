@@ -175,7 +175,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxArgumentsPerCF: 10,
           maxDataPointsPerRollingArg: 1000,
           maxRelationLevelPerCfArgument: 10,
-          minAllowedDeduplicationIntervalInSecForCF: 3600,
+          minAllowedDeduplicationIntervalInSecForCF: 60,
           maxRelatedEntitiesToReturnPerCfArgument: 100,
           minAllowedScheduledUpdateIntervalInSecForCF: 0,
           maxStateSizeInKBytes: 32,

@@ -18,7 +18,7 @@
 <div class="tb-form-panel no-border no-padding" [formGroup]="alarmRuleFormGroup">
   <tb-cf-alarm-rule-condition formControlName="condition" [arguments]="arguments">
   </tb-cf-alarm-rule-condition>
-  @if (!disabled || alarmRuleFormGroup.get('dashboardId').value) {
+  @if (!disabled || alarmRuleFormGroup.get('alarmDetails').value) {
     <div class="tb-form-row space-between column-xs">
       <div class="min-w-40 xs:min-w-fit" translate>
         alarm-rule.alarm-rule-additional-info

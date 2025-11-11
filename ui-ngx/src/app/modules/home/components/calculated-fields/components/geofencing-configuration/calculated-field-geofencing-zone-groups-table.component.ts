@@ -81,6 +81,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   @Input({required: true}) entityId: EntityId;
   @Input({required: true}) tenantId: string;
   @Input({required: true}) entityName: string;
+  @Input({required: true}) ownerId: EntityId;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -159,6 +160,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
         buttonTitle: isExists ? 'action.apply' : 'action.add',
         tenantId: this.tenantId,
         entityName: this.entityName,
+        ownerId: this.ownerId,
         usedNames: this.zoneGroupsFormArray.value.map(({ name }) => name).filter(name => name !== zone.name),
       };
       this.popoverComponent = this.popoverService.displayPopover({
