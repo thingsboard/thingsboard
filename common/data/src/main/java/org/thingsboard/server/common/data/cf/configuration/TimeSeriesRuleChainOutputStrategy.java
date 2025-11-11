@@ -15,8 +15,15 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-public enum OutputStrategyType {
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-    IMMEDIATE, RULE_CHAIN
+@Data
+@NoArgsConstructor
+public class TimeSeriesRuleChainOutputStrategy extends RuleChainOutputStrategy {
 
+    @Override
+    public String getType() {
+        return "RULE_CHAIN_TIME_SERIES";
+    }
 }

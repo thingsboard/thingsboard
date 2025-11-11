@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.TimeSeriesSkipRuleEngineOutputStrategy;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesImmediateOutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -1235,7 +1235,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         output.setName("fahrenheitTemp");
         output.setType(OutputType.TIME_SERIES);
         output.setDecimalsByDefault(1);
-        output.setStrategy(new TimeSeriesSkipRuleEngineOutputStrategy(1000L, true, true, true, true));
+        output.setStrategy(new TimeSeriesImmediateOutputStrategy(1000L, true, true, true, true));
 
         config.setOutput(output);
 

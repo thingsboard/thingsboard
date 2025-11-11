@@ -15,23 +15,24 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-        property = "type"
-)
-@JsonSubTypes({
-        @JsonSubTypes.Type(value = AttributeSkipRuleEngineOutputStrategy.class, name = "ATTRIBUTES"),
-        @JsonSubTypes.Type(value = TimeSeriesSkipRuleEngineOutputStrategy.class, name = "TIME_SERIES")
-})
-public abstract class SkipRuleEngineOutputStrategy implements OutputStrategy {
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class TimeSeriesImmediateOutputStrategy extends ImmediateOutputStrategy {
+
+    private long ttl;
+
+    private boolean saveTimeSeries;
+    private boolean saveLatest;
+    private boolean sendWsUpdate;
+    private boolean processCfs;
 
     @Override
-    public OutputStrategyType getType() {
-        return OutputStrategyType.SKIP_RULE_ENGINE;
+    public String getType() {
+        return "IMMEDIATE_TIME_SERIES";
     }
-
 }

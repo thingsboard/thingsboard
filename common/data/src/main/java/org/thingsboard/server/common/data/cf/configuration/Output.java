@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Data;
 import org.thingsboard.server.common.data.AttributeScope;
 
@@ -28,12 +27,6 @@ public class Output {
     private OutputType type;
     private AttributeScope scope;
     private Integer decimalsByDefault;
-
-    @JsonTypeInfo(
-            use = JsonTypeInfo.Id.NAME,
-            include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
-            property = "type"
-    )
     private OutputStrategy strategy;
 
 }

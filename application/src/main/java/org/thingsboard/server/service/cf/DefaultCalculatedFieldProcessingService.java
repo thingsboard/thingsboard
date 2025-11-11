@@ -116,14 +116,20 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
 
     @Override
     public void processResult(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
-        switch (result.getOutputStrategy().getType()) {
-            case SKIP_RULE_ENGINE -> saveToDB(tenantId, entityId, result, cfIds, callback);
-            case PUSH_TO_RULE_ENGINE -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
+        if (result instanceof AlarmCalculatedFieldResult) {
+            sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+            return;
+        }
+        TelemetryCalculatedFieldResult telemetryResult = result instanceof TelemetryCalculatedFieldResult telemetryRes
+                ? telemetryRes : ((PropagationCalculatedFieldResult) result).getResult();
+        switch (telemetryResult.getOutputStrategy().getStrategyType()) {
+            case IMMEDIATE -> processImmediately(tenantId, entityId, result, cfIds, callback);
+            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
         }
     }
 
     @Override
-    public void saveToDB(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    public void processImmediately(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof TelemetryCalculatedFieldResult telemetryResult) {
             saveTelemetryResult(tenantId, entityId, telemetryResult, cfIds, callback);
             return;
@@ -131,7 +137,9 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
                     (entity, res, cb) -> saveTelemetryResult(tenantId, entityId, res, cfIds, cb));
+            return;
         }
+        callback.onSuccess();
     }
 
     @Override
@@ -150,6 +158,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         List<EntityId> propagationEntityIds = propagationResult.getPropagationEntityIds();
         if (propagationEntityIds.isEmpty()) {
             callback.onSuccess();
+            return;
         }
         if (propagationEntityIds.size() == 1) {
             EntityId propagationEntityId = propagationEntityIds.get(0);

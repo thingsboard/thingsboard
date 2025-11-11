@@ -15,11 +15,23 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-public class PushToRuleEngineOutputStrategy implements OutputStrategy {
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class AttributeImmediateOutputStrategy extends ImmediateOutputStrategy {
+
+    private boolean updateAttributesOnlyOnValueChange;
+
+    private boolean saveAttribute;
+    private boolean sendWsUpdate;
+    private boolean processCfs;
 
     @Override
-    public OutputStrategyType getType() {
-        return OutputStrategyType.PUSH_TO_RULE_ENGINE;
+    public String getType() {
+        return "IMMEDIATE_ATTRIBUTES";
     }
-
 }

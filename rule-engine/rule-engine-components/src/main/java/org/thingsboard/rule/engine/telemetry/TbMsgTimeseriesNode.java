@@ -49,6 +49,7 @@ import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessin
 import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.Deduplicate;
 import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.OnEveryMessage;
 import static org.thingsboard.rule.engine.telemetry.settings.TimeseriesProcessingSettings.WebSocketsOnly;
+import static org.thingsboard.rule.engine.util.TelemetryUtil.toTsKvEntryList;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_TELEMETRY_REQUEST;
 
 @RuleNode(
@@ -148,12 +149,7 @@ public class TbMsgTimeseriesNode implements TbNode {
             ctx.tellFailure(msg, new IllegalArgumentException("Msg body is empty: " + src));
             return;
         }
-        List<TsKvEntry> tsKvEntryList = new ArrayList<>();
-        for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
-            for (KvEntry kvEntry : tsKvEntry.getValue()) {
-                tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
-            }
-        }
+        List<TsKvEntry> tsKvEntryList = toTsKvEntryList(tsKvMap);
         String ttlValue = msg.getMetaData().getValue("TTL");
         long ttl = !StringUtils.isEmpty(ttlValue) ? Long.parseLong(ttlValue) : config.getDefaultTTL();
         if (ttl == 0L) {

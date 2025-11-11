@@ -15,19 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public abstract class ImmediateOutputStrategy implements OutputStrategy {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class AttributeSkipRuleEngineOutputStrategy extends SkipRuleEngineOutputStrategy {
-
-    private boolean updateAttributesOnlyOnValueChange;
-
-    private boolean saveAttribute;
-    private boolean sendWsUpdate;
-    private boolean processCfs;
+    @Override
+    public OutputStrategyType getStrategyType() {
+        return OutputStrategyType.IMMEDIATE;
+    }
 
 }

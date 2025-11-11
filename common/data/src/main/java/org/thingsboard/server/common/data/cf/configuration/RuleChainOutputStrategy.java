@@ -15,20 +15,11 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public abstract class RuleChainOutputStrategy implements OutputStrategy {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class TimeSeriesSkipRuleEngineOutputStrategy extends SkipRuleEngineOutputStrategy {
-
-    private long ttl;
-
-    private boolean saveTimeSeries;
-    private boolean saveLatest;
-    private boolean sendWsUpdate;
-    private boolean processCfs;
+    @Override
+    public OutputStrategyType getStrategyType() {
+        return OutputStrategyType.RULE_CHAIN;
+    }
 
 }

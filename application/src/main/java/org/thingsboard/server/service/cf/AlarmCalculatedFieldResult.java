@@ -21,8 +21,6 @@ import lombok.RequiredArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.cf.configuration.OutputStrategy;
-import org.thingsboard.server.common.data.cf.configuration.PushToRuleEngineOutputStrategy;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -37,11 +35,6 @@ import java.util.List;
 public class AlarmCalculatedFieldResult implements CalculatedFieldResult {
 
     private final TbAlarmResult alarmResult;
-
-    @Override
-    public OutputStrategy getOutputStrategy() {
-        return new PushToRuleEngineOutputStrategy();
-    }
 
     @Override
     public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
