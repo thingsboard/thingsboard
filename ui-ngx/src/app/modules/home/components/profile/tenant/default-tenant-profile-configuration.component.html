@@ -344,12 +344,12 @@
           <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.min-allowed-aggregation-interval</mat-label>
             <input matInput required min="0" step="1"
-                   formControlName="minAggregationIntervalInSecForCF"
+                   formControlName="minAllowedAggregationIntervalInSecForCF"
                    type="number">
-            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAggregationIntervalInSecForCF').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedAggregationIntervalInSecForCF').hasError('required')">
               {{ 'tenant-profile.min-allowed-aggregation-interval-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAggregationIntervalInSecForCF').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedAggregationIntervalInSecForCF').hasError('min')">
               {{ 'tenant-profile.min-allowed-aggregation-interval-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>

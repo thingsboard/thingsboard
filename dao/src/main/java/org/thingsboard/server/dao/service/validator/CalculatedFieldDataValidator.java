@@ -123,10 +123,10 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (!(calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfiguration)) {
             return;
         }
-        long minAllowedDeduplicationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedDeduplicationIntervalInSecForCF);
-        if (aggConfiguration.getDeduplicationIntervalInSec() < minAllowedDeduplicationInterval) {
+        long minDeduplicationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedDeduplicationIntervalInSecForCF);
+        if (aggConfiguration.getDeduplicationIntervalInSec() < minDeduplicationInterval) {
             throw new IllegalArgumentException("Deduplication interval is less than configured " +
-                    "minimum allowed interval in tenant profile: " + minAllowedDeduplicationInterval);
+                    "minimum allowed interval in tenant profile: " + minDeduplicationInterval);
         }
     }
 
@@ -134,7 +134,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (!(calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration aggConfiguration)) {
             return;
         }
-        long minAggregationIntervalInSec = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAggregationIntervalInSecForCF);
+        long minAggregationIntervalInSec = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedAggregationIntervalInSecForCF);
         if (minAggregationIntervalInSec <= 0) {
             return;
         }

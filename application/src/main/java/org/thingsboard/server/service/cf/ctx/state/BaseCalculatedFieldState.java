@@ -62,7 +62,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     }
 
     @Override
-    public void init() {
+    public void init(boolean restored) {
     }
 
     @Override

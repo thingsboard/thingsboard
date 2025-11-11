@@ -62,14 +62,14 @@
       </div>
       @if (entityAggregationConfiguration.get('interval.type').value === AggIntervalType.CUSTOM) {
         <tb-time-unit-input required
-                            [minTime]="minAggregationIntervalInSecForCF"
+                            [minTime]="minAllowedAggregationIntervalInSecForCF"
                             [stepMultipleOf]="DayInSec"
                             sameWidthInputs
                             appearance="outline"
                             subscriptSizing="dynamic"
                             containerClass="flex gap-3"
                             labelText="{{ 'calculated-fields.aggregate-interval-value' | translate }}"
-                            minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate : {sec: minAggregationIntervalInSecForCF} }}"
+                            minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate : {sec: minAllowedAggregationIntervalInSecForCF} }}"
                             requiredText="{{ 'calculated-fields.aggregate-interval-value-required' | translate }}"
                             stepMultipleOfErrorText="{{ 'calculated-fields.aggregate-interval-value-step-multiple-of' | translate }}"
                             formControlName="durationSec">

@@ -97,8 +97,8 @@ import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleNodeStateService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -664,9 +664,13 @@ public class ActorSystemContext {
     @Getter
     private long cfCalculationResultTimeout;
 
-    @Value("${actors.calculated_fields.check_interval:120}")
+    @Value("${actors.calculated_fields.check_interval:60}")
     @Getter
     private long cfCheckInterval;
+
+    @Value("${actors.alarms.reevaluation_interval:120}")
+    @Getter
+    private long alarmRulesReevaluationInterval;
 
     @Autowired
     @Getter
@@ -851,7 +855,7 @@ public class ActorSystemContext {
                 if (arguments != null) {
                     eventBuilder.arguments(JacksonUtil.toString(
                             arguments.entrySet().stream()
-                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue()))
                     ));
                 }
                 if (result != null) {

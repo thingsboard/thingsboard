@@ -17,6 +17,7 @@ package org.thingsboard.server.service.cf;
 
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -25,6 +26,7 @@ import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 public interface CalculatedFieldCache {
 
@@ -38,9 +40,7 @@ public interface CalculatedFieldCache {
 
     List<CalculatedFieldCtx> getCalculatedFieldCtxsByEntityId(EntityId entityId);
 
-    List<CalculatedFieldCtx> getRelatedEntitiesAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter);
-
-    List<CalculatedFieldCtx> getEntityAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> entityAggCfFilter);
+    Stream<CalculatedFieldCtx> getCalculatedFieldCtxsByType(CalculatedFieldType cfType);
 
     boolean hasCalculatedFields(TenantId tenantId, EntityId entityId, Predicate<CalculatedFieldCtx> filter);
 

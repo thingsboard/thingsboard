@@ -85,7 +85,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
   @Input({required: true})
   entityName: string;
 
-  readonly minAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAggregationIntervalInSecForCF;
+  readonly minAllowedAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedAggregationIntervalInSecForCF;
   readonly DayInSec = DAY / SECOND;
 
   entityAggregationConfiguration = this.fb.group({
@@ -94,9 +94,9 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     interval: this.fb.group({
       type: [AggIntervalType.HOUR],
       tz: ['', Validators.required],
-      durationSec: [this.minAggregationIntervalInSecForCF, Validators.required],
+      durationSec: [this.minAllowedAggregationIntervalInSecForCF, Validators.required],
       allowOffsetSec: [false],
-      offsetSec: [this.minAggregationIntervalInSecForCF > 60 ? MINUTE / SECOND : 1, Validators.required],
+      offsetSec: [this.minAllowedAggregationIntervalInSecForCF > 60 ? MINUTE / SECOND : 1, Validators.required],
     }),
     allowWatermark: [false],
     watermark: this.fb.group({

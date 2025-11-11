@@ -49,6 +49,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -148,21 +149,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public List<CalculatedFieldCtx> getRelatedEntitiesAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter) {
+    public Stream<CalculatedFieldCtx> getCalculatedFieldCtxsByType(CalculatedFieldType cfType) {
         return calculatedFields.values().stream()
-                .filter(cf -> CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cf.getType()))
-                .map(cf -> getCalculatedFieldCtx(cf.getId()))
-                .filter(relatedEntityFilter)
-                .toList();
-    }
-
-    @Override
-    public List<CalculatedFieldCtx> getEntityAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> entityAggCfFilter) {
-        return calculatedFields.values().stream()
-                .filter(cf -> CalculatedFieldType.ENTITY_AGGREGATION.equals(cf.getType()))
-                .map(cf -> getCalculatedFieldCtx(cf.getId()))
-                .filter(entityAggCfFilter)
-                .toList();
+                .filter(cf -> cfType.equals(cf.getType()))
+                .map(cf -> getCalculatedFieldCtx(cf.getId()));
     }
 
     @Override

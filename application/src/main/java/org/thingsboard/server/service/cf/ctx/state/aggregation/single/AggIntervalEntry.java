@@ -26,7 +26,7 @@ public class AggIntervalEntry {
     private Long endTs;
 
     public boolean belongsToInterval(long ts) {
-        return ts >= startTs && ts <= endTs;
+        return ts >= startTs && ts < endTs;
     }
 
 }

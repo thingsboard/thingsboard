@@ -199,12 +199,13 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     protected Map<String, ListenableFuture<ArgumentEntry>> fetchEntityAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
-        EntityAggregationCalculatedFieldConfiguration aggConfig = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-
-        return aggConfig.getArguments().entrySet().stream()
+        if (!(ctx.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration config)) {
+            return Collections.emptyMap();
+        }
+        return config.getArguments().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> fetchTimeSeries(ctx.getTenantId(), entityId, entry.getValue(), aggConfig.getInterval(), ts)
+                        entry -> fetchTimeSeries(ctx.getTenantId(), entityId, entry.getValue(), config.getInterval(), ts)
                 ));
     }
 

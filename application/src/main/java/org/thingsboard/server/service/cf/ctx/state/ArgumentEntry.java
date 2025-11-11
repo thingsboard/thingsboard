@@ -18,6 +18,8 @@ package org.thingsboard.server.service.cf.ctx.state;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.JsonNode;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -53,6 +55,10 @@ public interface ArgumentEntry {
     boolean updateEntry(ArgumentEntry entry);
 
     boolean isEmpty();
+
+    default JsonNode jsonValue() {
+        return JacksonUtil.valueToTree(toTbelCfArg());
+    }
 
     TbelCfArg toTbelCfArg();
 

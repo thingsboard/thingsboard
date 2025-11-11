@@ -32,7 +32,7 @@ export interface SysParamsState {
   maxDataPointsPerRollingArg: number;
   maxArgumentsPerCF: number;
   minAllowedDeduplicationIntervalInSecForCF: number;
-  minAggregationIntervalInSecForCF: number;
+  minAllowedAggregationIntervalInSecForCF: number;
   minAllowedScheduledUpdateIntervalInSecForCF: number;
   maxRelationLevelPerCfArgument: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;

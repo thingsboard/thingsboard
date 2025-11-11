@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -36,8 +37,13 @@ public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsB
     @Valid
     @NotEmpty
     private Map<String, AggMetric> metrics;
+    @Valid
+    @NotNull
     private AggInterval interval;
+    @Valid
     private Watermark watermark;
+    @Valid
+    @NotNull
     private Output output;
 
     @Override

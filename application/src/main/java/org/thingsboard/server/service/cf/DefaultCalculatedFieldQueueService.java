@@ -27,6 +27,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -188,13 +189,15 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
             }
         }
 
-        List<CalculatedFieldCtx> entityAggCfCtxs = calculatedFieldCache.getEntityAggCalculatedFieldCtxsByFilter(filter);
-        if (!entityAggCfCtxs.isEmpty()) {
+        boolean hasMatchesEntityAggCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(CalculatedFieldType.ENTITY_AGGREGATION).anyMatch(filter);
+        if (hasMatchesEntityAggCfs) {
             return true;
         }
 
-        List<CalculatedFieldCtx> relatedEntityAggCfCtxs = calculatedFieldCache.getRelatedEntitiesAggCalculatedFieldCtxsByFilter(relatedEntityFilter);
-        for (CalculatedFieldCtx cfCtx : relatedEntityAggCfCtxs) {
+        List<CalculatedFieldCtx> relatedEntitiesAggregationCfs = calculatedFieldCache.getCalculatedFieldCtxsByType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION)
+                .filter(relatedEntityFilter)
+                .toList();
+        for (CalculatedFieldCtx cfCtx : relatedEntitiesAggregationCfs) {
             if (cfCtx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
                 RelationPathLevel relation = aggConfig.getRelation();
                 EntitySearchDirection inverseDirection = switch (relation.direction()) {

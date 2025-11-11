@@ -189,7 +189,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Schema(example = "60")
     private long minAllowedDeduplicationIntervalInSecForCF = 60;
     @Schema(example = "60")
-    private long minAggregationIntervalInSecForCF = 60;
+    private long minAllowedAggregationIntervalInSecForCF = 60;
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {

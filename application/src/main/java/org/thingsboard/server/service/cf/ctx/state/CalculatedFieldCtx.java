@@ -96,9 +96,11 @@ public class CalculatedFieldCtx implements Closeable {
     private Output output;
     private String expression;
     private boolean useLatestTs;
-    private boolean requiresScheduledReevaluation;
 
-    private long aggCheckInterval;
+    private long cfCheckInterval;
+    private long alarmReevaluationInterval;
+
+    private long lastReevaluationTs;
 
     private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
@@ -200,7 +202,8 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
         }
-        this.aggCheckInterval = systemContext.getCfCheckInterval();
+        this.cfCheckInterval = systemContext.getCfCheckInterval();
+        this.alarmReevaluationInterval = systemContext.getAlarmRulesReevaluationInterval();
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();
@@ -213,19 +216,28 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public boolean isRequiresScheduledReevaluation() {
+        long now = System.currentTimeMillis();
+        long cfCheckIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval());
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration entityAggregationConfig) {
-            long now = System.currentTimeMillis();
             Watermark watermark = entityAggregationConfig.getWatermark();
             if (watermark != null && watermark.getDuration() > 0) {
                 return true;
             }
-            long cfCheckIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getCfCheckInterval());
             long intervalEndTs = entityAggregationConfig.getInterval().getCurrentIntervalEndTs();
             if (now + cfCheckIntervalMillis >= intervalEndTs) {
                 return true;
             }
         }
-        return calculatedField.getConfiguration().requiresScheduledReevaluation();
+        long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getAlarmRulesReevaluationInterval());
+        boolean requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
+        if (requiresScheduledReevaluation) {
+            if (now + cfCheckIntervalMillis >= lastReevaluationTs + reevaluationIntervalMillis) {
+                lastReevaluationTs = now;
+                return true;
+            }
+            return false;
+        }
+        return false;
     }
 
     public void init() {

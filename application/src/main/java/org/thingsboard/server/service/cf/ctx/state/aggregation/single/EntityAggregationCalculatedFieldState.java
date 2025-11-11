@@ -68,9 +68,17 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         intervalDuration = configuration.getInterval().getIntervalDurationMillis();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getAggCheckInterval());
+        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getCfCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
+    }
+
+    @Override
+    public void init(boolean restored) {
+        super.init(restored);
+        if (restored) {
+            fillMissingIntervals();
+        }
     }
 
     @Override
@@ -114,9 +122,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         AggIntervalEntry currentInterval = new AggIntervalEntry(interval.getCurrentIntervalStartTs(), interval.getCurrentIntervalEndTs());
         arguments.forEach((argName, argumentEntry) -> {
             var entityAggEntry = (EntityAggregationArgumentEntry) argumentEntry;
-            if (!entityAggEntry.getAggIntervals().containsKey(currentInterval)) {
-                entityAggEntry.getAggIntervals().computeIfAbsent(currentInterval, current -> new AggIntervalEntryStatus());
-            }
+            entityAggEntry.getAggIntervals().computeIfAbsent(currentInterval, current -> new AggIntervalEntryStatus());
         });
     }
 
@@ -244,7 +250,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             }
             ObjectNode resultNode = JacksonUtil.newObjectNode();
             if (!metricsNode.isEmpty()) {
-                resultNode.put("ts", interval.getEndTs());
+                resultNode.put("ts", interval.getEndTs() - 1);
                 resultNode.set("values", metricsNode);
             }
             result.add(resultNode);

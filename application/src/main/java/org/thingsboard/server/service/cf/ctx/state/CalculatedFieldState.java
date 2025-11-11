@@ -27,8 +27,8 @@ import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -63,7 +63,7 @@ public interface CalculatedFieldState extends Closeable {
 
     void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx);
 
-    void init();
+    void init(boolean restored);
 
     Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> arguments, CalculatedFieldCtx ctx);
 
