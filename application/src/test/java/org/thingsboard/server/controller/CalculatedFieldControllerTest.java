@@ -15,13 +15,17 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
@@ -36,6 +40,7 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoor
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
@@ -45,6 +50,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -192,15 +198,54 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testGetCalculatedFields() throws Exception {
+    public void testGetEntityCalculatedFields() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         CalculatedField calculatedField = getSimpleCalculatedField(testDevice.getId());
         calculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        assertThat(getCalculatedFields(testDevice.getId(), null, new PageLink(10)).getData())
+        assertThat(getEntityCalculatedFields(testDevice.getId(), null, new PageLink(10)).getData())
                 .singleElement().isEqualTo(calculatedField);
-        assertThat(getCalculatedFields(testDevice.getId(), CalculatedFieldType.SIMPLE, new PageLink(10)).getData())
+        assertThat(getEntityCalculatedFields(testDevice.getId(), CalculatedFieldType.SIMPLE, new PageLink(10)).getData())
                 .singleElement().isEqualTo(calculatedField);
+    }
+
+    @Test
+    public void testGetCalculatedFieldsByFilter() throws Exception {
+        Device device = createDevice("Device A", "1234567890");
+        CalculatedFieldInfo deviceCalculatedField = new CalculatedFieldInfo(
+                doPost("/api/calculatedField", getSimpleCalculatedField(device.getId()), CalculatedField.class),
+                "Device A"
+        );
+
+        DeviceProfile deviceProfile = doPost("/api/deviceProfile", createDeviceProfile("Profile A"), DeviceProfile.class);
+        CalculatedFieldInfo profileCalculatedField = new CalculatedFieldInfo(
+                doPost("/api/calculatedField", getSimpleCalculatedField(deviceProfile.getId()), CalculatedField.class),
+                "Profile A"
+        );
+
+        List<CalculatedFieldInfo> allCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, null, null, null);
+        assertThat(allCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
+
+        List<CalculatedFieldInfo> profileLevelCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, EntityType.DEVICE_PROFILE, null, null);
+        assertThat(profileLevelCalculatedFields).containsOnly(profileCalculatedField);
+
+        List<CalculatedFieldInfo> specificDeviceCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, EntityType.DEVICE, List.of(device.getUuidId()), null);
+        assertThat(specificDeviceCalculatedFields).containsOnly(deviceCalculatedField);
+
+        List<CalculatedFieldInfo> byNameCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, null, null, deviceCalculatedField.getName());
+        assertThat(byNameCalculatedFields).containsOnly(deviceCalculatedField);
+    }
+
+    private List<CalculatedFieldInfo> getCalculatedFields(CalculatedFieldType type,
+                                                          EntityType entityType,
+                                                          List<UUID> entities,
+                                                          String name) throws Exception {
+        return doGetTypedWithPageLink("/api/calculatedFields?type=" + type + "&" +
+                                      (entityType != null ? "entityType=" + entityType + "&" : "") +
+                                      (entities != null ? "entities=" + String.join(",",
+                                              entities.stream().map(UUID::toString).toList()) + "&" : "") +
+                                      (name != null ? "name=" + name + "&" : ""),
+                new TypeReference<PageData<CalculatedFieldInfo>>() {}, new PageLink(10)).getData();
     }
 
     @Test

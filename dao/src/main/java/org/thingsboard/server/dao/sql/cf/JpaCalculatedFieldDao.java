@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
+import com.google.common.base.Strings;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -100,6 +103,15 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
     @Override
     public long countByEntityIdAndTypeNot(TenantId tenantId, EntityId entityId, CalculatedFieldType type) {
         return calculatedFieldRepository.countByTenantIdAndEntityIdAndTypeNot(tenantId.getId(), entityId.getId(), type.name());
+    }
+
+    @Override
+    public PageData<CalculatedField> findByTenantIdAndFilter(TenantId tenantId, CalculatedFieldFilter filter, PageLink pageLink) {
+        return DaoUtil.toPageData(calculatedFieldRepository.findByTenantIdAndFilter(tenantId.getId(), filter.getType().name(),
+                filter.getEntityTypes().stream().map(Enum::name).toList(),
+                CollectionUtils.isNotEmpty(filter.getEntityIds()) ? filter.getEntityIds() : null,
+                Strings.emptyToNull(filter.getName()),
+                pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

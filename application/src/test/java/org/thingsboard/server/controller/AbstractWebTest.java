@@ -1370,7 +1370,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
     }
 
-    protected PageData<CalculatedField> getCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {
+    protected PageData<CalculatedField> getEntityCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields" +
                                       (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
     }
