@@ -16,8 +16,8 @@
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -30,17 +30,10 @@ public class EntityCoordinates {
     public static final String ENTITY_ID_LATITUDE_ARGUMENT_KEY = "latitude";
     public static final String ENTITY_ID_LONGITUDE_ARGUMENT_KEY = "longitude";
 
+    @NotBlank
     private final String latitudeKeyName;
+    @NotBlank
     private final String longitudeKeyName;
-
-    public void validate() {
-        if (StringUtils.isBlank(latitudeKeyName)) {
-            throw new IllegalArgumentException("Entity coordinates latitude key name must be specified!");
-        }
-        if (StringUtils.isBlank(longitudeKeyName)) {
-            throw new IllegalArgumentException("Entity coordinates longitude key name must be specified!");
-        }
-    }
 
     public Map<String, Argument> toArguments() {
         return Map.of(

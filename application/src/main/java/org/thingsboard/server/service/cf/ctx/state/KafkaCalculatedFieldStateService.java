@@ -43,6 +43,7 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.service.cf.AbstractCalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
@@ -77,9 +78,9 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
                             if (msg.getValue() != null) {
-                                processRestoredState(msg.getValue());
+                                processRestoredState(msg.getValue(), consumerKey.partition());
                             } else {
-                                processRestoredState(getStateId(msg.getHeaders()), null);
+                                processRestoredState(getStateId(msg.getHeaders()), null, consumerKey.partition());
                             }
                         } catch (Throwable t) {
                             log.error("Failed to process state message: {}", msg, t);
@@ -102,6 +103,11 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .stateConsumer(stateConsumer)
                 .build();
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
+    }
+
+    @Override
+    public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
+        stateService.update(queueKey, partitions, null);
     }
 
     @Override

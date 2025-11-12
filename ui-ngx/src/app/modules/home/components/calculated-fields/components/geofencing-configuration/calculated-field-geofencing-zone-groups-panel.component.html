@@ -1,0 +1,268 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-config-panel" [formGroup]="geofencingFormGroup">
+  <div class="tb-config-panel-title tb-form-panel-title">{{ 'calculated-fields.geofencing-zone-groups-settings' | translate }}</div>
+  <div class="tb-config-panel-content tb-form-panel no-border no-padding">
+    <div class="tb-form-row">
+      <div class="fixed-title-width tb-required">{{ 'calculated-fields.name' | translate }}</div>
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input matInput autocomplete="new-name" name="value" formControlName="name" maxlength="255"
+               placeholder="{{ 'action.set' | translate }}"/>
+        @if (geofencingFormGroup.get('name').touched && geofencingFormGroup.get('name').hasError('required')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-required' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (geofencingFormGroup.get('name').touched && geofencingFormGroup.get('name').hasError('duplicateName')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-duplicate' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (geofencingFormGroup.get('name').touched && geofencingFormGroup.get('name').hasError('pattern')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-pattern' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (geofencingFormGroup.get('name').touched && geofencingFormGroup.get('name').hasError('maxlength')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-max-length' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        } @else if (geofencingFormGroup.get('name').touched && geofencingFormGroup.get('name').hasError('forbiddenName')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'calculated-fields.hint.name-forbidden' | translate"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        }
+      </mat-form-field>
+    </div>
+    <ng-container [formGroup]="refEntityIdFormGroup">
+      <div class="tb-form-row">
+        <div class="fixed-title-width">{{ 'entity.entity-type' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="entityType">
+            @for (type of argumentEntityTypes; track type) {
+              <mat-option [value]="type">{{ ArgumentEntityTypeTranslations.get(type) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      @if (ArgumentEntityTypeParamsMap.has(entityType)) {
+        <div class="tb-form-row">
+          <div class="fixed-title-width tb-required">{{ ArgumentEntityTypeParamsMap.get(entityType).title | translate }}</div>
+          <tb-entity-autocomplete class="flex-1"
+                                  #entityAutocomplete
+                                  formControlName="id"
+                                  inlineField
+                                  appearance="outline"
+                                  [placeholder]="'action.set' | translate"
+                                  required
+                                  [entityType]="ArgumentEntityTypeParamsMap.get(entityType).entityType"
+                                  (entityChanged)="entityNameSubject.next($event?.name)"/>
+        </div>
+      }
+    </ng-container>
+    <ng-container [formGroup]="refDynamicSourceFormGroup">
+      <div class="tb-form-panel stroked" *ngIf="entityType === ArgumentEntityType.RelationQuery">
+        <mat-expansion-panel class="tb-settings" expanded>
+          <mat-expansion-panel-header>{{ 'calculated-fields.entity-zone-relationship' | translate }}</mat-expansion-panel-header>
+          <div class="tb-form-table">
+            <div class="tb-form-table-header">
+              <div class="tb-form-table-header-cell tb-actions-header"></div>
+              <div class="tb-form-table-header-cell" translate>calculated-fields.level</div>
+              <div class="tb-form-table-header-cell flex-1" translate>calculated-fields.direction-level</div>
+              <div class="tb-form-table-header-cell tb-required flex-1" translate>calculated-fields.relation-type</div>
+              <div class="tb-form-table-header-cell tb-actions-header"></div>
+            </div>
+            @if (levelsFormArray()?.controls?.length) {
+              <div class="tb-form-table-body tb-drop-list"
+                   cdkDropList cdkDropListOrientation="vertical"
+                   [cdkDropListDisabled]="!dragEnabled"
+                   (cdkDropListDropped)="keyDrop($event)">
+                @for (keyControl of levelsFormArray().controls; track trackByKey; ) {
+                  <div cdkDrag [cdkDragDisabled]="!dragEnabled" class="tb-draggable-form-table-row">
+                    <div class="tb-form-table-row-cell-buttons">
+                      <button mat-icon-button
+                              type="button"
+                              cdkDragHandle
+                              class="lt-lg:!hidden"
+                              [class.tb-hidden]="!dragEnabled"
+                              matTooltip="{{ 'action.drag' | translate }}"
+                              matTooltipPosition="above">
+                        <mat-icon>drag_indicator</mat-icon>
+                      </button>
+                    </div>
+                    <div class="tb-form-row no-border flex-1" [formGroup]="keyControl">
+                      <div class="level-text">{{ $index + 1 }}</div>
+                      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="direction">
+                          @for (direction of GeofencingDirectionList; track direction) {
+                            <mat-option [value]="direction">{{ GeofencingDirectionLevelTranslations.get(direction) | translate }}</mat-option>
+                          }
+                        </mat-select>
+                      </mat-form-field>
+                      <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                              additionalClass="tb-suffix-show-on-hover"
+                                              class="flex-1"
+                                              appearance="outline"
+                                              panelWidth=""
+                                              required
+                                              [errorText]="'calculated-fields.hint.relation-type-required' | translate"
+                                              formControlName="relationType">
+                      </tb-string-autocomplete>
+                    </div>
+                    <div class="tb-form-table-row-cell-buttons">
+                      <button type="button"
+                              mat-icon-button
+                              (click)="removeKey($index)"
+                              matTooltip="{{ 'calculated-fields.delete-level' | translate }}"
+                              matTooltipPosition="above">
+                        <mat-icon>delete</mat-icon>
+                      </button>
+                    </div>
+                  </div>
+                }
+              </div>
+            } @else {
+              <span class="tb-prompt flex items-center justify-center">{{ 'calculated-fields.no-level' | translate }}</span>
+            }
+            @if (levelsFormArray().errors) {
+              <tb-error noMargin error="{{ 'calculated-fields.levels-required' | translate }}" style="padding-left: 12px;"></tb-error>
+            }
+          </div>
+          <div>
+            @if (maxRelationLevelPerCfArgument && levelsFormArray().length >= maxRelationLevelPerCfArgument) {
+              <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+                <mat-icon>warning</mat-icon>
+                <span>{{ 'calculated-fields.max-allowed-levels-error' | translate }}</span>
+              </div>
+            } @else {
+              <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+                {{ 'calculated-fields.add-level' | translate }}
+              </button>
+            }
+          </div>
+        </mat-expansion-panel>
+      </div>
+    </ng-container>
+    <ng-container>
+      @if (entityFilter.singleEntity?.id) {
+        <div class="tb-form-row">
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{'calculated-fields.hint.perimeter-attribute-key' | translate}}">
+            {{ 'calculated-fields.perimeter-attribute-key' | translate }}
+          </div>
+          @if (entityType === ArgumentEntityType.RelationQuery) {
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input matInput autocomplete="new-name" name="value" formControlName="perimeterKeyName" maxlength="255" placeholder="{{ 'action.set' | translate }}"/>
+              @if (geofencingFormGroup.get('perimeterKeyName').touched && geofencingFormGroup.get('perimeterKeyName').hasError('required')) {
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'calculated-fields.perimeter-attribute-key-required' | translate"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              } @else if (geofencingFormGroup.get('perimeterKeyName').touched && geofencingFormGroup.get('perimeterKeyName').hasError('pattern')) {
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'calculated-fields.perimeter-attribute-key-pattern' | translate"
+                          class="tb-error">
+                  warning
+                </mat-icon>
+              }
+            </mat-form-field>
+          } @else {
+            <tb-entity-key-autocomplete class="flex-1" formControlName="perimeterKeyName"
+                                        [dataKeyType]="DataKeyType.attribute" [entityFilter]="entityFilter"
+                                        [keyScopeType]="AttributeScope.SERVER_SCOPE"/>
+          }
+        </div>
+      }
+      <div class="tb-form-row">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{'calculated-fields.hint.report-strategy' | translate}}">{{ 'calculated-fields.report-strategy' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="reportStrategy">
+            @for (strategy of GeofencingReportStrategyList; track strategy) {
+              <mat-option [value]="strategy">{{ GeofencingReportStrategyTranslations.get(strategy) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </ng-container>
+    <div class="tb-form-panel stroked">
+      <mat-slide-toggle class="mat-slide" formControlName="createRelationsWithMatchedZones" (click)="$event.stopPropagation()">
+        <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.create-relation-with-matched-zones' | translate }}">
+          {{ 'calculated-fields.create-relation-with-matched-zones' | translate }}
+        </div>
+      </mat-slide-toggle>
+      <div class="tb-form-row" [class.!hidden]="!geofencingFormGroup.get('createRelationsWithMatchedZones').value">
+        <div class="fixed-title-width">{{ 'calculated-fields.direction' | translate }}</div>
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="direction">
+            @for (direction of GeofencingDirectionList; track direction) {
+              <mat-option [value]="direction">{{ GeofencingDirectionTranslations.get(direction) | translate }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div class="tb-form-row" [class.!hidden]="!geofencingFormGroup.get('createRelationsWithMatchedZones').value">
+        <div class="fixed-title-width tb-required">{{ 'calculated-fields.relation-type' | translate }}</div>
+        <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                additionalClass="tb-suffix-show-on-hover"
+                                class="flex-1"
+                                appearance="outline"
+                                panelWidth=""
+                                required
+                                [errorText]="'calculated-fields.hint.relation-type-required' | translate"
+                                formControlName="relationType">
+        </tb-string-autocomplete>
+      </div>
+    </div>
+  </div>
+  <div class="tb-config-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="saveZone()"
+            [disabled]="geofencingFormGroup.invalid || !geofencingFormGroup.dirty">
+      {{ buttonTitle | translate }}
+    </button>
+  </div>
+</div>

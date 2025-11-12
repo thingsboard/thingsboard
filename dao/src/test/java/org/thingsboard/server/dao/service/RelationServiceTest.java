@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -51,6 +52,9 @@ public class RelationServiceTest extends AbstractServiceTest {
 
     @Autowired
     RelationService relationService;
+
+    @Autowired
+    private TbTenantProfileCache tbTenantProfileCache;
 
     @Before
     public void before() {
@@ -628,48 +632,111 @@ public class RelationServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindByPathQuery() throws Exception {
+    public void testFindByPathQueryWithoutExceedingLimit() throws Exception {
         /*
         A
         └──[firstLevel, TO]→ B
             └──[secondLevel, TO]→ C
-                ├──[thirdLevel, FROM]→ D
-                ├──[thirdLevel, FROM]→ E
-                └──[thirdLevel, FROM]→ F
+                ├──[thirdLevel, FROM]→ D1
+                ├──[thirdLevel, FROM]→ D2
+                ├──[thirdLevel, FROM]→ ...
+                └──[thirdLevel, FROM]→ D{N - 1}, where N is the limit
         */
-        // rootEntity
         AssetId assetA = new AssetId(Uuids.timeBased());
-        // firstLevelEntity
         AssetId assetB = new AssetId(Uuids.timeBased());
-        // secondLevelEntity
         AssetId assetC = new AssetId(Uuids.timeBased());
-        // thirdLevelEntities
-        AssetId assetD = new AssetId(Uuids.timeBased());
-        AssetId assetE = new AssetId(Uuids.timeBased());
-        AssetId assetF = new AssetId(Uuids.timeBased());
 
-        EntityRelation firstLevelRelation = new EntityRelation(assetB, assetA, "firstLevel");
-        EntityRelation secondLevelRelation = new EntityRelation(assetC, assetB, "secondLevel");
-        EntityRelation thirdLevelRelation1 = new EntityRelation(assetC, assetD, "thirdLevel");
-        EntityRelation thirdLevelRelation2 = new EntityRelation(assetC, assetE, "thirdLevel");
-        EntityRelation thirdLevelRelation3 = new EntityRelation(assetC, assetF, "thirdLevel");
+        // create first and second level
+        saveRelation(new EntityRelation(assetB, assetA, "firstLevel"));
+        saveRelation(new EntityRelation(assetC, assetB, "secondLevel"));
 
-        firstLevelRelation = saveRelation(firstLevelRelation);
-        secondLevelRelation = saveRelation(secondLevelRelation);
-        thirdLevelRelation1 = saveRelation(thirdLevelRelation1);
-        thirdLevelRelation2 = saveRelation(thirdLevelRelation2);
-        thirdLevelRelation3 = saveRelation(thirdLevelRelation3);
+        int limit = tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMaxRelatedEntitiesToReturnPerCfArgument();
 
-        List<EntityRelation> expectedRelations = List.of(thirdLevelRelation1, thirdLevelRelation2, thirdLevelRelation3);
+        int totalCreated = limit - 1;
 
-        EntityRelationPathQuery relationPathQuery = new EntityRelationPathQuery(assetA, List.of(
+        List<EntityRelation> allThirdLevelRelations = new ArrayList<>();
+        for (int i = 0; i < totalCreated; i++) {
+            AssetId leaf = new AssetId(Uuids.timeBased());
+            allThirdLevelRelations.add(saveRelation(new EntityRelation(assetC, leaf, "thirdLevel")));
+        }
+
+        EntityRelationPathQuery query = new EntityRelationPathQuery(assetA, List.of(
                 new RelationPathLevel(EntitySearchDirection.TO, "firstLevel"),
                 new RelationPathLevel(EntitySearchDirection.TO, "secondLevel"),
                 new RelationPathLevel(EntitySearchDirection.FROM, "thirdLevel")
         ));
-        List<EntityRelation> entityRelations = relationService.findByRelationPathQueryAsync(tenantId, relationPathQuery).get();
 
-        assertThat(expectedRelations).containsExactlyInAnyOrderElementsOf(entityRelations);
+        // call a method that applies the default limit internally
+        List<EntityRelation> result = relationService.findByRelationPathQueryAsync(tenantId, query).get();
+
+        // verify that limit has been applied
+        assertThat(result).hasSize(totalCreated);
+
+        // verify all returned are valid third-level relations under C
+        assertThat(result)
+                .allSatisfy(rel -> {
+                    assertThat(rel.getType()).isEqualTo("thirdLevel");
+                    assertThat(rel.getFrom()).isEqualTo(assetC);
+                });
+
+        // verify the returned subset is part of all created relations
+        assertThat(result).isEqualTo(allThirdLevelRelations);
+    }
+
+    @Test
+    public void testFindByPathQueryWithExceedingLimit() throws Exception {
+        /*
+        A
+        └──[firstLevel, TO]→ B
+            └──[secondLevel, TO]→ C
+                ├──[thirdLevel, FROM]→ D1
+                ├──[thirdLevel, FROM]→ D2
+                ├──[thirdLevel, FROM]→ ...
+                └──[thirdLevel, FROM]→ D{N + 20}, where N is the limit
+        */
+        AssetId assetA = new AssetId(Uuids.timeBased());
+        AssetId assetB = new AssetId(Uuids.timeBased());
+        AssetId assetC = new AssetId(Uuids.timeBased());
+
+        // create first and second level
+        saveRelation(new EntityRelation(assetB, assetA, "firstLevel"));
+        saveRelation(new EntityRelation(assetC, assetB, "secondLevel"));
+
+        int limit = tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMaxRelatedEntitiesToReturnPerCfArgument();
+
+        int totalCreated = limit + 20;
+
+        List<EntityRelation> allThirdLevelRelations = new ArrayList<>();
+        for (int i = 0; i < totalCreated; i++) {
+            AssetId leaf = new AssetId(Uuids.timeBased());
+            allThirdLevelRelations.add(saveRelation(new EntityRelation(assetC, leaf, "thirdLevel")));
+        }
+
+        EntityRelationPathQuery query = new EntityRelationPathQuery(assetA, List.of(
+                new RelationPathLevel(EntitySearchDirection.TO, "firstLevel"),
+                new RelationPathLevel(EntitySearchDirection.TO, "secondLevel"),
+                new RelationPathLevel(EntitySearchDirection.FROM, "thirdLevel")
+        ));
+
+        // call a method that applies the default limit internally
+        List<EntityRelation> result = relationService.findByRelationPathQueryAsync(tenantId, query).get();
+
+        // verify that limit has been applied
+        assertThat(result).hasSize(limit);
+
+        // verify all returned are valid third-level relations under C
+        assertThat(result)
+                .allSatisfy(rel -> {
+                    assertThat(rel.getType()).isEqualTo("thirdLevel");
+                    assertThat(rel.getFrom()).isEqualTo(assetC);
+                });
+
+        // verify the returned subset is part of all created relations
+        assertThat(result).isSubsetOf(allThirdLevelRelations);
     }
 
     @Test

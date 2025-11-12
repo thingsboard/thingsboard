@@ -77,11 +77,14 @@ import org.thingsboard.server.actors.device.DeviceActorMessageProcessor;
 import org.thingsboard.server.actors.device.SessionInfo;
 import org.thingsboard.server.actors.device.ToDeviceRpcRequestMetadata;
 import org.thingsboard.server.actors.service.DefaultActorService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.SaveDeviceWithCredentialsRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -89,6 +92,8 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
@@ -101,6 +106,7 @@ import org.thingsboard.server.common.data.device.profile.MqttTopics;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -680,9 +686,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Device createDevice(String name, String accessToken) throws Exception {
+        return createDevice(name, "default", null, accessToken);
+    }
+
+    protected Device createDevice(String name, String type, String label, String accessToken) throws Exception {
         Device device = new Device();
         device.setName(name);
-        device.setType("default");
+        device.setType(type);
+        device.setLabel(label);
         DeviceData deviceData = new DeviceData();
         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
@@ -1063,6 +1074,16 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         doPost("/api/relation", relation);
     }
 
+    protected void deleteEntityRelation(EntityRelation entityRelation) throws Exception {
+        String url = String.format("/api/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
+                entityRelation.getFrom().getId(),
+                entityRelation.getFrom().getEntityType(),
+                entityRelation.getType(),
+                entityRelation.getTo().getId(),
+                entityRelation.getTo().getEntityType());
+        doDelete(url);
+    }
+
     protected List<EntityRelation> findRelationsByTo(EntityId entityId) throws Exception {
         String url = String.format("/api/relations?toId=%s&toType=%s", entityId.getId(), entityId.getEntityType().name());
         MvcResult mvcResult = doGet(url).andReturn();
@@ -1117,7 +1138,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
             boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs()
-                              < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+                    < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
         });
@@ -1308,7 +1329,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs(List<JobType> types, List<UUID> entities) throws Exception {
         return doGetTypedWithPageLink("/api/jobs?types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) +
-                                      "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                        "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
                 new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 
@@ -1318,6 +1339,36 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void reprocessJob(JobId jobId) throws Exception {
         doPost("/api/job/" + jobId + "/reprocess").andExpect(status().isOk());
+    }
+
+    protected void postTelemetry(EntityId entityId, String payload) throws Exception {
+        doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
+                    "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+    }
+
+    protected void postAttributes(EntityId entityId, AttributeScope scope, String payload) throws Exception {
+        doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
+                    "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+    }
+
+    protected CalculatedField saveCalculatedField(CalculatedField calculatedField) {
+        return doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+    }
+
+    protected PageData<CalculatedField> getCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {
+        return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields" +
+                                      (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
+    }
+
+    protected PageData<EventInfo> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
+        return getEvents(tenantId, entityId, EventType.DEBUG_RULE_NODE, limit);
+    }
+
+    protected PageData<EventInfo> getEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit) throws Exception {
+        TimePageLink pageLink = new TimePageLink(limit);
+        return doGetTypedWithTimePageLink("/api/events/{entityType}/{entityId}/{eventType}?tenantId={tenantId}&",
+                new TypeReference<PageData<EventInfo>>() {
+                }, pageLink, entityId.getEntityType(), entityId.getId(), eventType, tenantId.getId());
     }
 
 }

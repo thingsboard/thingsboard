@@ -34,6 +34,18 @@ SET profile_data = jsonb_set(
                             WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
                                 THEN NULL
                             ELSE to_jsonb(10)
+                            END,
+                        'maxRelatedEntitiesToReturnPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(100)
+                            END,
+                        'minAllowedDeduplicationIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
                             END
                 )
                ),
@@ -43,6 +55,17 @@ WHERE NOT (
     (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
         AND
     (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
     );
 
 -- UPDATE TENANT PROFILE CONFIGURATION END
+
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE START
+
+ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
+ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
+
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END

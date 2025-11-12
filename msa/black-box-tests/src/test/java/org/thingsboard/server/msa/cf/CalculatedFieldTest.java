@@ -23,6 +23,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
@@ -419,6 +421,177 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.deleteCalculatedFieldIfExists(saved.getId());
     }
 
+    @Test
+    public void testPropagationCalculatedField_withExpression() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId);
+
+        // --- Arrange entities ---
+        String deviceToken = "propagationDeviceTokenA";
+        Device device = testRestClient.postDevice(deviceToken, createDevice("Propagation Device With Expression", deviceProfileId));
+        Asset asset1 = testRestClient.postAsset(createAsset("Propagated Asset 1", null));
+        Asset asset2 = testRestClient.postAsset(createAsset("Propagated Asset 2", null));
+
+        // Create relations FROM assets TO device
+        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel1);
+        testRestClient.postEntityRelation(rel2);
+
+        // Telemetry on device
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":12.5}"));
+
+        // --- Build CF: PROPAGATION with expression ---
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.PROPAGATION);
+        cf.setName("Propagation CF (expr)");
+        cf.setConfigurationVersion(1);
+
+        PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
+        cfg.setApplyExpressionToResolvedArguments(true);
+
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("t", arg));
+
+        cfg.setExpression("{\"testResult\": t * 2}");
+
+        Output output = new Output();
+        output.setType(OutputType.ATTRIBUTES);
+        output.setScope(AttributeScope.SERVER_SCOPE);
+        cfg.setOutput(output);
+
+        cf.setConfiguration(cfg);
+
+        CalculatedField saved = testRestClient.postCalculatedField(cf);
+
+        // --- Assert propagated calculation (expression applied) ---
+        await().alias("propagation expr mode evaluation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs1 = testRestClient.getAttributes(asset1.getId(), SERVER_SCOPE, "testResult");
+                    assertThat(attrs1).isNotNull().hasSize(1);
+                    Map<String, Integer> m1 = intKv(attrs1);
+                    assertThat(m1).containsEntry("testResult", 25);
+
+                    ArrayNode attrs2 = testRestClient.getAttributes(asset2.getId(), SERVER_SCOPE, "testResult");
+                    assertThat(attrs2).isNotNull().hasSize(1);
+                    Map<String, Integer> m2 = intKv(attrs2);
+                    assertThat(m2).containsEntry("testResult", 25);
+                });
+
+        testRestClient.deleteEntityRelation(asset1.getId(), EntityRelation.CONTAINS_TYPE, device.getId());
+        testRestClient.deleteEntityAttributes(asset1.getId(), SERVER_SCOPE, "testResult");
+
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":25}"));
+
+        // --- Assert propagated calculation (expression applied with new temperature argument and one relation removed) ---
+        await().alias("propagation expr mode evaluation after temperature update")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ArrayNode attrs1 = testRestClient.getAttributes(asset1.getId(), SERVER_SCOPE, "testResult");
+                    assertThat(attrs1).isNullOrEmpty();
+
+                    ArrayNode attrs2 = testRestClient.getAttributes(asset2.getId(), SERVER_SCOPE, "testResult");
+                    assertThat(attrs2).isNotNull().hasSize(1);
+                    Map<String, Integer> m2 = intKv(attrs2);
+                    assertThat(m2).containsEntry("testResult", 50);
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(saved.getId());
+    }
+
+    @Test
+    public void testPropagationCalculatedField_withoutExpression() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId);
+
+        // --- Arrange entities ---
+        String deviceToken = "propagationDeviceTokenB";
+        Device device = testRestClient.postDevice(deviceToken, createDevice("Propagation Device Without Expression", deviceProfileId));
+        Asset asset1 = testRestClient.postAsset(createAsset("Propagated Asset 3", null));
+        Asset asset2 = testRestClient.postAsset(createAsset("Propagated Asset 4", null));
+
+        // Create relations FROM assets TO device
+        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel1);
+        testRestClient.postEntityRelation(rel2);
+
+        // Telemetry on device
+        long ts = System.currentTimeMillis() - 300000L;
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":12.5}}", ts)));
+
+        // --- Build CF: PROPAGATION without expression ---
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.PROPAGATION);
+        cf.setName("Propagation CF (args-only)");
+        cf.setConfigurationVersion(1);
+
+        PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
+        cfg.setApplyExpressionToResolvedArguments(false); // arguments-only mode
+
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("temperatureComputed", arg));
+
+        Output output = new Output();
+        output.setType(OutputType.TIME_SERIES);
+        cfg.setOutput(output);
+
+        cf.setConfiguration(cfg);
+
+        CalculatedField saved = testRestClient.postCalculatedField(cf);
+
+        // --- Assert propagated calculation (arguments-only mode) ---
+        await().alias("propagation args-only evaluation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode temperature1 = testRestClient.getLatestTelemetry(asset1.getId());
+                    assertThat(temperature1).isNotNull();
+                    assertThat(temperature1.get("temperatureComputed")).isNotNull();
+                    assertThat(temperature1.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(temperature1.get("temperatureComputed").get(0).get("value").asText()).isEqualTo("12.5");
+
+                    JsonNode temperature2 = testRestClient.getLatestTelemetry(asset2.getId());
+                    assertThat(temperature2).isNotNull();
+                    assertThat(temperature2.get("temperatureComputed")).isNotNull();
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("value").asText()).isEqualTo("12.5");
+                });
+
+        testRestClient.deleteEntityRelation(asset1.getId(), EntityRelation.CONTAINS_TYPE, device.getId());
+        testRestClient.deleteEntityTimeseries(asset1.getId(), "temperatureComputed", true);
+
+        // Update telemetry on device
+        long newTs = System.currentTimeMillis() - 300000L;
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":25}}", newTs)));
+
+        // --- Assert propagated calculation (arguments-only mode after update) ---
+        await().alias("propagation args-only evaluation after temperature update")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode temperature1 = testRestClient.getLatestTelemetry(asset1.getId());
+                    assertThat(temperature1).isNullOrEmpty();
+
+                    JsonNode temperature2 = testRestClient.getLatestTelemetry(asset2.getId());
+                    assertThat(temperature2).isNotNull();
+                    assertThat(temperature2.get("temperatureComputed")).isNotNull();
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
+                    assertThat(temperature2.get("temperatureComputed").get(0).get("value").asInt()).isEqualTo(25);
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(saved.getId());
+    }
+
     private CalculatedField createSimpleCalculatedField() {
         return createSimpleCalculatedField(device.getId());
     }
@@ -510,6 +683,14 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         Map<String, String> m = new HashMap<>();
         for (JsonNode n : attrs) {
             m.put(n.get("key").asText(), n.get("value").asText());
+        }
+        return m;
+    }
+
+    private static Map<String, Integer> intKv(ArrayNode attrs) {
+        Map<String, Integer> m = new HashMap<>();
+        for (JsonNode n : attrs) {
+            m.put(n.get("key").asText(), n.get("value").asInt());
         }
         return m;
     }

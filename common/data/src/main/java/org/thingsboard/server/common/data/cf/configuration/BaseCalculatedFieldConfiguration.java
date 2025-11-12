@@ -16,15 +16,8 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Data
 public abstract class BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration {
@@ -34,20 +27,16 @@ public abstract class BaseCalculatedFieldConfiguration implements ExpressionBase
     protected Output output;
 
     @Override
-    public List<EntityId> getReferencedEntities() {
-        return arguments.values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    public void validate() {
+        baseCalculatedFieldRestriction();
+        if (arguments.values().stream().anyMatch(Argument::hasRelationQuerySource)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support relation query configuration!");
+        }
     }
 
-    @Override
-    public void validate() {
+    protected void baseCalculatedFieldRestriction() {
         if (arguments.containsKey("ctx")) {
             throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
-        }
-        if (arguments.values().stream().anyMatch(Argument::hasDynamicSource)) {
-            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support dynamic source configuration!");
         }
     }
 
