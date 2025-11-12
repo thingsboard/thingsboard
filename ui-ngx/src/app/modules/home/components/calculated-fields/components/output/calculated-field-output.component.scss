@@ -1,0 +1,7 @@
+:host ::ng-deep {
+  .mat-mdc-chip-disabled {
+    .mdc-evolution-chip__action {
+      cursor: default
+    }
+  }
+}

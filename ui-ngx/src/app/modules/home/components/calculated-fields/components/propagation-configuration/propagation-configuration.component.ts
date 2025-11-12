@@ -31,6 +31,7 @@ import {
   CalculatedFieldOutput,
   CalculatedFieldPropagationConfiguration,
   CalculatedFieldType,
+  defaultCalculatedFieldOutput,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
   notEmptyObjectValidator,
@@ -81,9 +82,7 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
       relationType: ['Contains', Validators.required],
     }),
     expression: [calculatedFieldDefaultScript],
-    output: this.fb.control<CalculatedFieldOutput>({
-      type: OutputType.Timeseries,
-    }),
+    output: this.fb.control<CalculatedFieldOutput>(defaultCalculatedFieldOutput),
   });
 
   readonly ScriptLanguage = ScriptLanguage;
