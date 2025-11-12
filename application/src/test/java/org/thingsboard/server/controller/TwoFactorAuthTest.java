@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.notification.targets.platform.AllUsersFilter;
 import org.thingsboard.server.common.data.notification.targets.platform.TenantAdministratorsFilter;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -415,7 +416,8 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
 
         logInWithMfaToken(username, password, Authority.MFA_CONFIGURATION_TOKEN);
 
-        TotpTwoFaAccountConfig totpTwoFaAccountConfig = (TotpTwoFaAccountConfig) twoFactorAuthService.generateNewAccountConfig(user, totpTwoFaProviderConfig.getProviderType());
+        TotpTwoFaAccountConfig totpTwoFaAccountConfig = doPost("/api/2fa/account/config/generate?providerType=" + totpTwoFaProviderConfig.getProviderType(), TotpTwoFaAccountConfig.class);
+
         String secret = UriComponentsBuilder.fromUriString(totpTwoFaAccountConfig.getAuthUrl()).build()
                 .getQueryParams().getFirst("secret");
         String verificationCode = new Totp(secret).now();
@@ -431,6 +433,36 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         // verifying enforced users filter
         createDifferentTenant();
         doGet("/api/user/" + savedDifferentTenantUser.getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testEnforceTwoFa_sysadmin() throws Exception {
+        TotpTwoFaProviderConfig totpTwoFaProviderConfig = new TotpTwoFaProviderConfig();
+        totpTwoFaProviderConfig.setIssuerName("tb");
+
+        PlatformTwoFaSettings twoFaSettings = new PlatformTwoFaSettings();
+        twoFaSettings.setProviders(Arrays.stream(new TwoFaProviderConfig[]{totpTwoFaProviderConfig}).collect(Collectors.toList()));
+        twoFaSettings.setMinVerificationCodeSendPeriod(5);
+        twoFaSettings.setTotalAllowedTimeForVerification(100);
+        twoFaSettings.setEnforceTwoFa(true);
+        AllUsersFilter enforcedUsersFilter = new AllUsersFilter();
+        twoFaSettings.setEnforcedUsersFilter(enforcedUsersFilter);
+        twoFaSettings = twoFaConfigManager.savePlatformTwoFaSettings(TenantId.SYS_TENANT_ID, twoFaSettings);
+
+        logInWithMfaToken(SYS_ADMIN_EMAIL, SYS_ADMIN_PASSWORD, Authority.MFA_CONFIGURATION_TOKEN);
+
+        TotpTwoFaAccountConfig totpTwoFaAccountConfig = doPost("/api/2fa/account/config/generate?providerType=" + totpTwoFaProviderConfig.getProviderType(), TotpTwoFaAccountConfig.class);
+        String secret = UriComponentsBuilder.fromUriString(totpTwoFaAccountConfig.getAuthUrl()).build()
+                .getQueryParams().getFirst("secret");
+        String verificationCode = new Totp(secret).now();
+        readResponse(doPost("/api/2fa/account/config?verificationCode=" + verificationCode, totpTwoFaAccountConfig).andExpect(status().isOk()), JsonNode.class);
+
+        JwtPair tokenPair = readResponse(doPost("/api/auth/2fa/login").andExpect(status().isOk()), JwtPair.class);
+        assertThat(tokenPair.getToken()).isNotEmpty();
+        assertThat(tokenPair.getRefreshToken()).isNotEmpty();
+        validateAndSetJwtToken(tokenPair, SYS_ADMIN_EMAIL);
+
+        doGet("/api/user/" + user.getId()).andExpect(status().isOk());
     }
 
     private void logInWithMfaToken(String username, String password, Authority expectedScope) throws Exception {
