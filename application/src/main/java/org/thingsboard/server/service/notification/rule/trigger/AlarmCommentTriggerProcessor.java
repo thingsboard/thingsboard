@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
@@ -62,8 +63,9 @@ public class AlarmCommentTriggerProcessor implements NotificationRuleTriggerProc
             originatorName = ((AlarmInfo) alarm).getOriginatorName();
             originatorLabel = ((AlarmInfo) alarm).getOriginatorLabel();
         } else {
-            originatorName = entityService.fetchEntityName(trigger.getTenantId(), alarm.getOriginator()).orElse("");
-            originatorLabel = entityService.fetchEntityLabel(trigger.getTenantId(), alarm.getOriginator()).orElse("");
+            var infoOpt = entityService.fetchNameLabelAndCustomerDetails(trigger.getTenantId(), alarm.getOriginator());
+            originatorName = infoOpt.map(NameLabelAndCustomerDetails::getName).orElse(null);
+            originatorLabel = infoOpt.map(NameLabelAndCustomerDetails::getLabel).orElse(null);
         }
         return AlarmCommentNotificationInfo.builder()
                 .comment(trigger.getComment().getComment().get("text").asText())

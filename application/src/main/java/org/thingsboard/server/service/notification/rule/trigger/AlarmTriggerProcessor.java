@@ -118,15 +118,15 @@ public class AlarmTriggerProcessor implements NotificationRuleTriggerProcessor<A
                 .cleared(alarmInfo.isCleared())
                 .alarmCustomerId(alarmInfo.getCustomerId())
                 .dashboardId(alarmInfo.getDashboardId())
-                .info(toInfoTemplateMap(alarmInfo.getDetails()))
+                .details(toDetailsTemplateMap(alarmInfo.getDetails()))
                 .build();
     }
 
-    private Map<String, String> toInfoTemplateMap(JsonNode details) {
+    private Map<String, String> toDetailsTemplateMap(JsonNode details) {
         Map<String, String> infoMap = JacksonUtil.toFlatMap(details);
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, String> entry : infoMap.entrySet()) {
-            String key = "info." + entry.getKey();
+            String key = "details." + entry.getKey();
             result.put(key, entry.getValue());
         }
         return result;

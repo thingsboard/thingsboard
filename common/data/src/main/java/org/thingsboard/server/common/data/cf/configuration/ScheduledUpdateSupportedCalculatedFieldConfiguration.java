@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import jakarta.validation.constraints.PositiveOrZero;
+
 public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
     boolean isScheduledUpdateEnabled();
 
+    @PositiveOrZero
     int getScheduledUpdateInterval();
 
     void setScheduledUpdateInterval(int interval);

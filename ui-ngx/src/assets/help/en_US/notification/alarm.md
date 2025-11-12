@@ -22,7 +22,7 @@ Available template parameters:
 * `recipientEmail` - email of the recipient;
 * `recipientFirstName` - first name of the recipient;
 * `recipientLastName` - last name of the recipient;
-* `info.<key>` - any key field from the alarm's additional info. Fox example, if additional info is `{"data": "Temperature is 25"}`, use `${info.data}` to access "Temperature is 25";
+* `details.<key>` - any key field from the alarm's details. Fox example, if details are `{"data": "Temperature is 25"}`, use `${details.data}` to access "Temperature is 25";
 
 Parameter names must be wrapped using `${...}`. For example: `${action}`.
 You may also modify the value of the parameter with one of the suffixes:

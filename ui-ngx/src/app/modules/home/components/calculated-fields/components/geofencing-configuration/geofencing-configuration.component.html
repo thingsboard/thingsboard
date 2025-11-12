@@ -1,0 +1,69 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="geofencingConfiguration" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title tb-required" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.entity-coordinates' | translate }}">
+      {{ 'calculated-fields.entity-coordinates' | translate }}
+    </div>
+    <div class="flex items-start gap-3" formGroupName="entityCoordinates">
+      <tb-entity-key-autocomplete class="flex-1"
+                                  placeholder="{{ 'calculated-fields.latitude-time-series-key' | translate }}"
+                                  requiredText="{{ 'calculated-fields.latitude-time-series-key-required' | translate }}"
+                                  formControlName="latitudeKeyName"
+                                  [dataKeyType]="DataKeyType.timeseries"
+                                  [entityFilter]="currentEntityFilter"/>
+      <tb-entity-key-autocomplete class="flex-1"
+                                  placeholder="{{ 'calculated-fields.longitude-time-series-key' | translate }}"
+                                  requiredText="{{ 'calculated-fields.longitude-time-series-key-required' | translate }}"
+                                  formControlName="longitudeKeyName"
+                                  [dataKeyType]="DataKeyType.timeseries"
+                                  [entityFilter]="currentEntityFilter"/>
+    </div>
+  </div>
+
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title tb-required" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.geofencing-zone-groups' | translate }}">
+      {{ 'calculated-fields.geofencing-zone-groups' | translate }}
+    </div>
+    <tb-calculated-field-geofencing-zone-groups-table formControlName="zoneGroups"
+                                                      [entityId]="entityId"
+                                                      [tenantId]="tenantId"
+                                                      [ownerId]="ownerId"
+                                                      [entityName]="entityName"/>
+    <div class="tb-form-row space-between flex-1 columns-xs" [class.!hidden]="!isRelatedEntity">
+      <mat-slide-toggle class="mat-slide" formControlName="scheduledUpdateEnabled">
+        <div tb-hint-tooltip-icon="{{'calculated-fields.hint.zone-group-refresh-interval' | translate}}">
+          {{ 'calculated-fields.zone-group-refresh-interval' | translate }}
+        </div>
+      </mat-slide-toggle>
+      <div class="flex flex-row items-center justify-start gap-2">
+        <tb-time-unit-input required
+                            inlineField
+                            requiredText="{{ 'calculated-fields.hint.zone-group-refresh-interval-required' | translate }}"
+                            minErrorText="{{ 'calculated-fields.hint.zone-group-refresh-interval-min' | translate: {min: minAllowedScheduledUpdateIntervalInSecForCF}  }}"
+                            [minTime]="minAllowedScheduledUpdateIntervalInSecForCF"
+                            formControlName="scheduledUpdateInterval">
+        </tb-time-unit-input>
+      </div>
+    </div>
+  </div>
+  <tb-calculate-field-output
+    formControlName="output"
+    [entityId]="entityId">
+  </tb-calculate-field-output>
+</div>

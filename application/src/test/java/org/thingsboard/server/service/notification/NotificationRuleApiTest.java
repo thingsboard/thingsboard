@@ -27,7 +27,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.limits.RateLimitService;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -39,17 +39,19 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -87,9 +89,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
@@ -106,12 +105,10 @@ import org.thingsboard.server.service.system.DefaultSystemInfoService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -193,7 +190,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRuleProcessing_alarmTrigger() throws Exception {
         String notificationSubject = "Alarm type: ${alarmType}, status: ${alarmStatus}, " +
-                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}, details: ${info.data}.";
+                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}, details: ${details.data}.";
         String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
@@ -234,8 +231,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         JsonNode attr = JacksonUtil.newObjectNode()
-                .set("bool", BooleanNode.TRUE);
-        doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
+                .set("createAlarm", BooleanNode.TRUE);
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, attr.toString());
 
         await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
@@ -341,8 +338,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().subscribeForUnreadNotifications(10).waitForReply(true);
         getWsClient().registerWaitForUpdate();
         JsonNode attr = JacksonUtil.newObjectNode()
-                .set("bool", BooleanNode.TRUE);
-        doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
+                .set("createAlarm", BooleanNode.TRUE);
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, attr.toString());
 
         await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
@@ -944,35 +941,28 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private DeviceProfile createDeviceProfileWithAlarmRules(String alarmType) {
         DeviceProfile deviceProfile = createDeviceProfile("For notification rule test");
         deviceProfile.setTenantId(tenantId);
+        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
 
-        List<DeviceProfileAlarm> alarms = new ArrayList<>();
-        DeviceProfileAlarm alarm = new DeviceProfileAlarm();
-        alarm.setAlarmType(alarmType);
-        alarm.setId(alarmType);
+        CalculatedField alarmCf = new CalculatedField();
+        alarmCf.setType(CalculatedFieldType.ALARM);
+        alarmCf.setEntityId(deviceProfile.getId());
+        alarmCf.setName(alarmType);
+        AlarmCalculatedFieldConfiguration configuration = new AlarmCalculatedFieldConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("createAlarm", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        configuration.setArguments(Map.of("createAlarm", argument));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setAlarmDetails("attribute is ${bool}");
-        AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setSpec(new SimpleAlarmConditionSpec());
-        List<AlarmConditionFilter> condition = new ArrayList<>();
-
-        AlarmConditionFilter alarmConditionFilter = new AlarmConditionFilter();
-        alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"));
-        BooleanFilterPredicate predicate = new BooleanFilterPredicate();
-        predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        predicate.setValue(new FilterPredicateValue<>(true));
-
-        alarmConditionFilter.setPredicate(predicate);
-        alarmConditionFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        condition.add(alarmConditionFilter);
-        alarmCondition.setCondition(condition);
-        alarmRule.setCondition(alarmCondition);
-        TreeMap<AlarmSeverity, AlarmRule> createRules = new TreeMap<>();
-        createRules.put(AlarmSeverity.CRITICAL, alarmRule);
-        alarm.setCreateRules(createRules);
-        alarms.add(alarm);
-
-        deviceProfile.getProfileData().setAlarms(alarms);
-        deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        SimpleAlarmCondition condition = new SimpleAlarmCondition();
+        TbelAlarmConditionExpression expression = new TbelAlarmConditionExpression();
+        expression.setExpression("return createAlarm == true;");
+        condition.setExpression(expression);
+        alarmRule.setCondition(condition);
+        configuration.setCreateRules(Map.of(
+                AlarmSeverity.CRITICAL, alarmRule
+        ));
+        alarmCf.setConfiguration(configuration);
+        saveCalculatedField(alarmCf);
         return deviceProfile;
     }
 

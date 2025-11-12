@@ -33,9 +33,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 
-/**
- * Created by ashvayka on 19.01.17.
- */
 @ToString(callSuper = true)
 @Slf4j
 public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGatewaySessionHandler> extends MqttDeviceAwareSessionContext implements SessionMsgListener {

@@ -888,6 +888,7 @@ message SingleValueArgumentProto {
   string argName = 1;
   TsValueProto value = 2;
   int64 version = 3;
+  EntityIdProto entityId = 4;
 }
 
 message TsDoubleValProto {
@@ -921,6 +922,9 @@ message CalculatedFieldStateProto {
   repeated SingleValueArgumentProto singleValueArguments = 3;
   repeated TsRollingArgumentProto rollingValueArguments = 4;
   repeated GeofencingArgumentProto geofencingArguments = 5;
+  AlarmStateProto alarmState = 6;
+  int64 lastArgsUpdateTs = 7;
+  int64 lastMetricsEvalTs = 8;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
@@ -1273,6 +1277,8 @@ enum ComponentLifecycleEvent {
     DELETED       = 6;
     FAILED        = 7;
     DEACTIVATED   = 8;
+    RELATION_UPDATED = 9;
+    RELATION_DELETED = 10;
 }
 
 message ComponentLifecycleMsgProto {
@@ -1290,6 +1296,7 @@ message ComponentLifecycleMsgProto {
   int64 profileIdMSB = 11;
   int64 profileIdLSB = 12;
   optional string info = 13;
+  bool ownerChanged = 100;
 }
 
 message EdgeEventMsgProto {
@@ -1721,6 +1728,7 @@ message ToEdgeEventNotificationMsg {
 message ToCalculatedFieldMsg {
   CalculatedFieldTelemetryMsgProto telemetryMsg = 1;
   CalculatedFieldLinkedTelemetryMsgProto linkedTelemetryMsg = 2;
+  EntityActionEventProto eventMsg = 3;
 }
 
 message ToCalculatedFieldNotificationMsg {
@@ -1893,4 +1901,23 @@ message JobStatsMsg {
 
 message TaskResultProto {
   string value = 1;
+}
+
+message EntityActionEventProto {
+  EntityIdProto tenantId = 1;
+  EntityIdProto entityId = 2;
+  string entity = 3;
+  string action = 4;
+}
+
+message AlarmStateProto {
+  repeated AlarmRuleStateProto createRuleStates = 1;
+  AlarmRuleStateProto clearRuleState = 2;
+}
+
+message AlarmRuleStateProto {
+  string severity = 1;
+  int64 eventCount = 2;
+  int64 firstEventTs = 3;
+  int64 lastEventTs = 4;
 }

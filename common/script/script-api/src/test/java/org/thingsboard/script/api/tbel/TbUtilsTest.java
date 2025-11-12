@@ -1155,6 +1155,13 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void roundResult() {
+        Assertions.assertEquals(1729.1729, TbUtils.roundResult(doubleVal, null));
+        Assertions.assertEquals(1729, TbUtils.roundResult(doubleVal, 0));
+        Assertions.assertEquals(1729.17, TbUtils.roundResult(doubleVal, 2));
+    }
+
+    @Test
     public void isNaN() {
         assertFalse(TbUtils.isNaN(doubleVal));
         assertTrue(TbUtils.isNaN(Double.NaN));

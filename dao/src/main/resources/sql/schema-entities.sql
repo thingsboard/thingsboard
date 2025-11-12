@@ -923,7 +923,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
     debug_settings varchar(1024),
-    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name)
+    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name)
 );
 
 CREATE TABLE IF NOT EXISTS calculated_field_link (
