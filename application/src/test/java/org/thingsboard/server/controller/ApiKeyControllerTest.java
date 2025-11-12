@@ -120,6 +120,54 @@ public class ApiKeyControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testIsApiKeyExpired() throws Exception {
+        doGet("/api/apiKey/" + UUID.randomUUID() + "/expired").andExpect(status().isNotFound());
+
+        ApiKeyInfo apiKeyInfo = constructApiKeyInfo("Test API key description", true);
+        doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData.getData().size());
+        ApiKeyInfo savedApiKeyNoExpiration = pageData.getData().get(0);
+
+        Boolean isExpiredNoExpiration = doGet("/api/apiKey/" + savedApiKeyNoExpiration.getId().getId() + "/expired", Boolean.class);
+        Assert.assertNotNull(isExpiredNoExpiration);
+        Assert.assertFalse(isExpiredNoExpiration);
+
+        doDelete("/api/apiKey/" + savedApiKeyNoExpiration.getId()).andExpect(status().isOk());
+
+        ApiKeyInfo apiKeyInfoFutureExpiration = constructApiKeyInfo("Test API key future expiration", true);
+        long futureExpirationTime = System.currentTimeMillis() + 3600000;
+        apiKeyInfoFutureExpiration.setExpirationTime(futureExpirationTime);
+        doPost("/api/apiKey", apiKeyInfoFutureExpiration, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData2 = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData2.getData().size());
+        ApiKeyInfo savedApiKeyFuture = pageData2.getData().get(0);
+
+        Boolean isExpiredFuture = doGet("/api/apiKey/" + savedApiKeyFuture.getId().getId() + "/expired", Boolean.class);
+        Assert.assertNotNull(isExpiredFuture);
+        Assert.assertFalse(isExpiredFuture);
+
+        doDelete("/api/apiKey/" + savedApiKeyFuture.getId()).andExpect(status().isOk());
+
+        ApiKeyInfo apiKeyInfoPastExpiration = constructApiKeyInfo("Test API key past expiration", true);
+        long pastExpirationTime = System.currentTimeMillis() - 3600000;
+        apiKeyInfoPastExpiration.setExpirationTime(pastExpirationTime);
+        doPost("/api/apiKey", apiKeyInfoPastExpiration, ApiKey.class);
+
+        PageData<ApiKeyInfo> pageData3 = doGetTypedWithPageLink("/api/apiKeys/" + tenantAdminUserId + "?", new TypeReference<>() {}, new PageLink(10, 0));
+        Assert.assertEquals(1, pageData3.getData().size());
+        ApiKeyInfo savedApiKeyPast = pageData3.getData().get(0);
+
+        Boolean isExpiredPast = doGet("/api/apiKey/" + savedApiKeyPast.getId().getId() + "/expired", Boolean.class);
+        Assert.assertNotNull(isExpiredPast);
+        Assert.assertTrue(isExpiredPast);
+
+        doDelete("/api/apiKey/" + savedApiKeyPast.getId()).andExpect(status().isOk());
+    }
+
+    @Test
     public void testDeleteApiKey() throws Exception {
         doDelete("/api/apiKey/" + UUID.randomUUID()).andExpect(status().isNotFound());
 
