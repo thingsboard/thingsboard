@@ -1,0 +1,84 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form (ngSubmit)="add()">
+  <mat-toolbar color="primary">
+    <h2>{{ 'api-key.generate-title' | translate }}</h2>
+    <span class="flex-1"></span>
+    <div tb-help="apiKeys"></div>
+    <button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" mode="indeterminate"></mat-progress-bar>
+  } @else {
+    <div style="height: 4px;"></div>
+  }
+  <div mat-dialog-content>
+    <section class="tb-form-panel no-border no-padding" [formGroup]="apiKeyForm">
+      <div class="api-key-text">
+        <span translate>api-key.generate-text</span>
+      </div>
+      <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
+        <mat-label translate>api-key.description</mat-label>
+        <textarea #input cdkTextareaAutosize matInput formControlName="description" rows="2" maxLength="255"></textarea>
+      </mat-form-field>
+      <mat-slide-toggle class="mat-slide" formControlName="enabled">
+        {{ 'api-key.enable' | translate }}
+      </mat-slide-toggle>
+      <section class="flex gap-3">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
+          <mat-select formControlName="expirationTime" aria-label="Expiration date selector" (selectionChange)="onExpirationDateChange()">
+            <mat-option [value]="value" *ngFor="let value of expirationDates">
+              {{ value | dateExpiration }}
+            </mat-option>
+            <mat-option value="never">{{'api-key.expiration-time-never' | translate}}</mat-option>
+            <mat-option value="custom">{{'api-key.expiration-time-custom' | translate}}</mat-option>
+          </mat-select>
+        </mat-form-field>
+        @if (isCustomExpirationTime()) {
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label translate>api-key.date</mat-label>
+            <mat-datetimepicker-toggle [for]="datePicker" matSuffix></mat-datetimepicker-toggle>
+            <mat-datetimepicker #datePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
+            <input matInput required formControlName="customExpirationTime"
+                   [matDatetimepicker]="datePicker"
+                   [min]="startDate"/>
+          </mat-form-field>
+        }
+      </section>
+    </section>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            [disabled]="(isLoading$ | async)"
+            (click)="close()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="(isLoading$ | async) || apiKeyForm?.invalid">
+      {{ 'api-key.generate' | translate }}
+    </button>
+  </div>
+</form>
+
