@@ -274,7 +274,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(entityId);
         calculatedField.setType(cfType);
-        calculatedField.setName("Test Calculated Field");
+        calculatedField.setName("Test Calculated Field for " + entityId);
         calculatedField.setConfigurationVersion(1);
         if (customConfiguration != null) {
             calculatedField.setConfiguration(customConfiguration);
