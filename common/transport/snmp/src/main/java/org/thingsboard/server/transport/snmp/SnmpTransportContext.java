@@ -105,7 +105,7 @@ public class SnmpTransportContext extends TransportContext {
     private void doBootstrap() {
         log.info("Initializing SNMP devices sessions");
         int batchIndex = 0;
-        final int batchSize = 512;
+        int batchSize = 512;
         boolean nextBatchExists = true;
 
         while (nextBatchExists) {
@@ -125,7 +125,7 @@ public class SnmpTransportContext extends TransportContext {
             batchIndex++;
         }
 
-        log.debug("Found all SNMP devices ids: {}", allSnmpDevicesIds.size());
+        log.debug("Found all SNMP devices ids: {}", allSnmpDevicesIds);
     }
 
     private void establishDeviceSession(Device device) {
