@@ -18,6 +18,7 @@ package org.thingsboard.server.transport.snmp;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
@@ -53,9 +54,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedDeque;
 
 @TbSnmpTransportComponent
 @Component
@@ -72,14 +73,35 @@ public class SnmpTransportContext extends TransportContext {
     private final SnmpAuthService snmpAuthService;
 
     private final Map<DeviceId, DeviceSessionContext> sessions = new ConcurrentHashMap<>();
-    private final Collection<DeviceId> allSnmpDevicesIds = new ConcurrentLinkedDeque<>();
+    private final Set<DeviceId> allSnmpDevicesIds = ConcurrentHashMap.newKeySet();
+
+    @Value("${transport.snmp.bootstrap_retries}")
+    private int snmpBootstrapMaxRetries;
 
     @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void fetchDevicesAndEstablishSessions() {
-        log.info("Initializing SNMP devices sessions");
+        getExecutor().execute(this::bootstrapWithRetries);
+    }
 
+    private void bootstrapWithRetries() {
+        for (int attempt = 1; attempt <= snmpBootstrapMaxRetries; attempt++) {
+            try {
+                doBootstrap();
+                return;
+            } catch (Exception e) {
+                if (attempt >= snmpBootstrapMaxRetries) {
+                    log.error("SNMP bootstrap failed after {} attempts.", attempt, e);
+                    return;
+                }
+                log.warn("SNMP bootstrap attempt {}/{} failed. Retrying immediately...", attempt, snmpBootstrapMaxRetries, e);
+            }
+        }
+    }
+
+    private void doBootstrap() {
+        log.info("Initializing SNMP devices sessions");
         int batchIndex = 0;
-        int batchSize = 512;
+        final int batchSize = 512;
         boolean nextBatchExists = true;
 
         while (nextBatchExists) {
@@ -89,13 +111,17 @@ public class SnmpTransportContext extends TransportContext {
                     .peek(allSnmpDevicesIds::add)
                     .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
                     .map(protoEntityService::getDeviceById)
-                    .forEach(device -> getExecutor().execute(() -> establishDeviceSession(device)));
+                    .forEach(device -> {
+                        if (!sessions.containsKey(device.getId())) {
+                            getExecutor().execute(() -> establishDeviceSession(device));
+                        }
+                    });
 
             nextBatchExists = snmpDevicesResponse.getHasNextPage();
             batchIndex++;
         }
 
-        log.debug("Found all SNMP devices ids: {}", allSnmpDevicesIds);
+        log.debug("Found all SNMP devices ids: {}", allSnmpDevicesIds.size());
     }
 
     private void establishDeviceSession(Device device) {
