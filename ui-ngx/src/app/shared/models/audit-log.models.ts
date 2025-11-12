@@ -20,7 +20,7 @@ import { CustomerId } from './id/customer-id';
 import { EntityId } from './id/entity-id';
 import { UserId } from './id/user-id';
 import { TenantId } from './id/tenant-id';
-import {isArraysEqualIgnoreUndefined, isDefinedAndNotNull, isEmpty, isUndefinedOrNull} from "@core/utils";
+import { isArraysEqualIgnoreUndefined } from "@core/utils";
 
 export enum AuditLogMode {
   TENANT,
@@ -135,17 +135,9 @@ export interface AuditLog extends BaseData<AuditLogId> {
 }
 
 export interface AuditLogFilter {
-  actionTypes?: string[];
+  actionTypes: string[];
 }
 
 export const auditLogFilterEquals = (filter1?: AuditLogFilter, filter2?: AuditLogFilter): boolean => {
-  if (filter1 === filter2) {
-    return true;
-  }
-  if ((isUndefinedOrNull(filter1) || isEmpty(filter1)) && (isUndefinedOrNull(filter2) || isEmpty(filter2))) {
-    return true;
-  } else if (isDefinedAndNotNull(filter1) && isDefinedAndNotNull(filter2)) {
-    return isArraysEqualIgnoreUndefined(filter1.actionTypes, filter2.actionTypes);
-  }
-  return false;
+  return isArraysEqualIgnoreUndefined(filter1.actionTypes, filter2.actionTypes);
 };
