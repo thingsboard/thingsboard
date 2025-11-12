@@ -36,6 +36,6 @@ public class CalculatedFieldFilter {
     @Nullable
     private final List<UUID> entityIds;
     @Nullable
-    private final String name;
+    private final List<String> names;
 
 }

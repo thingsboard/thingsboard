@@ -51,6 +51,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -223,28 +224,36 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
                 "Profile A"
         );
 
-        List<CalculatedFieldInfo> allCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, null, null, null);
+        List<CalculatedFieldInfo> allCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
+                null, null, null);
         assertThat(allCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
 
-        List<CalculatedFieldInfo> profileLevelCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, EntityType.DEVICE_PROFILE, null, null);
+        List<CalculatedFieldInfo> profileLevelCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
+                EntityType.DEVICE_PROFILE, null, null);
         assertThat(profileLevelCalculatedFields).containsOnly(profileCalculatedField);
 
-        List<CalculatedFieldInfo> specificDeviceCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, EntityType.DEVICE, List.of(device.getUuidId()), null);
+        List<CalculatedFieldInfo> specificDeviceCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
+                EntityType.DEVICE, List.of(device.getUuidId()), null);
         assertThat(specificDeviceCalculatedFields).containsOnly(deviceCalculatedField);
 
-        List<CalculatedFieldInfo> byNameCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, null, null, deviceCalculatedField.getName());
+        List<CalculatedFieldInfo> byNameCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
+                null, null, List.of(deviceCalculatedField.getName()));
         assertThat(byNameCalculatedFields).containsOnly(deviceCalculatedField);
+
+        byNameCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, null, null,
+                List.of(deviceCalculatedField.getName(), profileCalculatedField.getName()));
+        assertThat(byNameCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
     }
 
     private List<CalculatedFieldInfo> getCalculatedFields(CalculatedFieldType type,
                                                           EntityType entityType,
                                                           List<UUID> entities,
-                                                          String name) throws Exception {
+                                                          List<String> names) throws Exception {
         return doGetTypedWithPageLink("/api/calculatedFields?type=" + type + "&" +
                                       (entityType != null ? "entityType=" + entityType + "&" : "") +
                                       (entities != null ? "entities=" + String.join(",",
                                               entities.stream().map(UUID::toString).toList()) + "&" : "") +
-                                      (name != null ? "name=" + name + "&" : ""),
+                                      (names != null ? names.stream().map(name -> "name=" + name + "&").collect(Collectors.joining("")) : ""),
                 new TypeReference<PageData<CalculatedFieldInfo>>() {}, new PageLink(10)).getData();
     }
 

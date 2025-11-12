@@ -46,10 +46,10 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
            "AND cf.type = :type " +
            "AND cf.entityType IN :entityTypes " +
            "AND (:entityIds IS NULL OR cf.entityId IN :entityIds) " +
-           "AND (:name IS NULL OR cf.name = :name) " +
+           "AND (:names IS NULL OR cf.name IN :names) " +
            "AND (:textSearch IS NULL OR ilike(cf.name, CONCAT('%', :textSearch, '%')) = true)")
     Page<CalculatedFieldEntity> findByTenantIdAndFilter(UUID tenantId, String type, List<String> entityTypes,
-                                                        List<UUID> entityIds, String name, String textSearch, Pageable pageable);
+                                                        List<UUID> entityIds, List<String> names, String textSearch, Pageable pageable);
 
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
 

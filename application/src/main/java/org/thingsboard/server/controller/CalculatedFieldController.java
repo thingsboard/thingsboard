@@ -25,6 +25,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -203,14 +204,15 @@ public class CalculatedFieldController extends BaseController {
                                                              @RequestParam(required = false) EntityType entityType,
                                                              @Parameter(description = "Entities filter. If not specified, calculated fields for entity type filter will be returned.")
                                                              @RequestParam(required = false) List<UUID> entities,
-                                                             @Parameter(description = "Name filter.")
-                                                             @RequestParam(required = false) String name,
+                                                             @Parameter(description = "Name filter. To specify multiple names, duplicate 'name' parameter for each name, for example '?name=name1&name=name2")
+                                                             @RequestParam(required = false) String name, // for Swagger only, retrieved from MultiValueMap params (due to issues when name contains comma)
                                                              @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION)
                                                              @RequestParam(required = false) String textSearch,
                                                              @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name"}))
                                                              @RequestParam(required = false) String sortProperty,
                                                              @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
-                                                             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+                                                             @RequestParam(required = false) String sortOrder,
+                                                             @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         SecurityUser user = getCurrentUser();
         Set<EntityType> entityTypes;
@@ -224,7 +226,7 @@ public class CalculatedFieldController extends BaseController {
                 .type(type)
                 .entityTypes(entityTypes)
                 .entityIds(entities)
-                .name(name)
+                .names(params.get("name"))
                 .build();
         return calculatedFieldService.findCalculatedFieldsByTenantIdAndFilter(user.getTenantId(), filter, pageLink);
     }
