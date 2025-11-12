@@ -151,7 +151,7 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     @Override
     public Asset saveAsset(Asset asset, NameConflictStrategy nameConflictStrategy) {
-        return saveEntity(asset, () -> saveAsset(asset, true, NameConflictStrategy.DEFAULT));
+        return saveEntity(asset, () -> saveAsset(asset, true, nameConflictStrategy));
     }
 
     @Override

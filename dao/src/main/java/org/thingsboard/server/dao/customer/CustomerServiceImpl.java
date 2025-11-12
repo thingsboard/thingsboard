@@ -153,6 +153,9 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         return saveEntity(customer, () -> saveCustomer(customer, true, nameConflictStrategy));
     }
 
+    private Customer saveCustomer(Customer customer, boolean doValidate) {
+        return saveCustomer(customer, doValidate, NameConflictStrategy.DEFAULT);
+    }
 
     private Customer saveCustomer(Customer customer, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveCustomer [{}]", customer);
