@@ -96,10 +96,8 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
         return switch (ctx.getCfType()) {
-            case GEOFENCING ->
-                    resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
-            case PROPAGATION ->
-                    resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
+            case GEOFENCING -> resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
+            case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
             default -> Collections.emptyMap();
         };
     }
@@ -140,8 +138,8 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         TelemetryCalculatedFieldResult telemetryResult = result instanceof TelemetryCalculatedFieldResult telemetryRes
                 ? telemetryRes : ((PropagationCalculatedFieldResult) result).getResult();
         switch (telemetryResult.getOutputStrategy().getType()) {
-            case IMMEDIATE_ATTRIBUTES, IMMEDIATE_TIME_SERIES -> processImmediately(tenantId, entityId, result, cfIds, callback);
-            case RULE_CHAIN_ATTRIBUTES, RULE_CHAIN_TIME_SERIES -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
+            case IMMEDIATE -> processImmediately(tenantId, entityId, result, cfIds, callback);
+            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
         }
     }
 

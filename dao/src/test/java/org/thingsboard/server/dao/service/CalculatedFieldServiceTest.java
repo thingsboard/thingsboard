@@ -28,11 +28,10 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -163,7 +162,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
                 .getMaxRelationLevelPerCfArgument();
 
         // Zone-group argument (ATTRIBUTE)
-        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration( "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var dynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
 
         List<RelationPathLevel> levels = new ArrayList<>();
@@ -203,7 +202,7 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         cfg.setEntityCoordinates(entityCoordinates);
 
         // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
-        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration( "allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+        ZoneGroupConfiguration zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         var dynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
         dynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE)));
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
@@ -300,9 +299,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         config.setExpression("T - (100 - H) / 5");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("output");
-        output.setType(OutputType.TIME_SERIES);
 
         config.setOutput(output);
 

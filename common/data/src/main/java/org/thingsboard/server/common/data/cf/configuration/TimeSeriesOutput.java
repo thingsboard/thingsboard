@@ -15,24 +15,23 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 
 @Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TimeSeriesImmediateOutputStrategy implements TimeSeriesOutputStrategy {
+public class TimeSeriesOutput implements Output {
 
-    private long ttl;
+    private String name;
+    private Integer decimalsByDefault;
 
-    private boolean saveTimeSeries;
-    private boolean saveLatest;
-    private boolean sendWsUpdate;
-    private boolean processCfs;
+    private TimeSeriesOutputStrategy strategy;
+
+    public TimeSeriesOutput() {
+        this.strategy = new TimeSeriesRuleChainOutputStrategy();
+    }
 
     @Override
-    public OutputStrategyType getType() {
-        return OutputStrategyType.IMMEDIATE;
+    public OutputType getType() {
+        return OutputType.TIME_SERIES;
     }
+
 }

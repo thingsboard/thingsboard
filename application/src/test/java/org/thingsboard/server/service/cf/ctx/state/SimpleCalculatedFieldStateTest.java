@@ -28,11 +28,12 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.AttributesOutput;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -189,7 +190,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", new SingleValueArgumentEntry(System.currentTimeMillis() - 3, new DoubleDataEntry("key3", 23.1), 184L)
         ));
 
-        Output output = getCalculatedFieldConfig().getOutput();
+        TimeSeriesOutput output = (TimeSeriesOutput) getCalculatedFieldConfig().getOutput();
         output.setDecimalsByDefault(3);
         ctx.setOutput(output);
 
@@ -263,9 +264,8 @@ public class SimpleCalculatedFieldStateTest {
 
         config.setExpression("key1 + key2 + key3");
 
-        Output output = new Output();
+        AttributesOutput output = new AttributesOutput();
         output.setName("output");
-        output.setType(OutputType.ATTRIBUTES);
         output.setScope(AttributeScope.SERVER_SCOPE);
         output.setDecimalsByDefault(0);
 

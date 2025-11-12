@@ -15,24 +15,17 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class TimeSeriesImmediateOutputStrategy implements TimeSeriesOutputStrategy {
-
-    private long ttl;
-
-    private boolean saveTimeSeries;
-    private boolean saveLatest;
-    private boolean sendWsUpdate;
-    private boolean processCfs;
-
-    @Override
-    public OutputStrategyType getType() {
-        return OutputStrategyType.IMMEDIATE;
-    }
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = TimeSeriesImmediateOutputStrategy.class, name = "IMMEDIATE"),
+        @JsonSubTypes.Type(value = TimeSeriesRuleChainOutputStrategy.class, name = "RULE_CHAIN")
+})
+public interface TimeSeriesOutputStrategy extends OutputStrategy {
 }

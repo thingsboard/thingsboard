@@ -17,10 +17,6 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 public enum OutputStrategyType {
 
-    IMMEDIATE_ATTRIBUTES,
-    IMMEDIATE_TIME_SERIES,
-
-    RULE_CHAIN_ATTRIBUTES,
-    RULE_CHAIN_TIME_SERIES
+    IMMEDIATE, RULE_CHAIN
 
 }

@@ -16,23 +16,7 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import com.fasterxml.jackson.annotation.JsonSubTypes;
-import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeInfo.As;
 
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = As.PROPERTY,
-        property = "type"
-)
-@JsonSubTypes({
-        @Type(value = AttributeImmediateOutputStrategy.class, name = "IMMEDIATE_ATTRIBUTES"),
-        @Type(value = TimeSeriesImmediateOutputStrategy.class, name = "IMMEDIATE_TIME_SERIES"),
-
-        @Type(value = AttributeRuleChainOutputStrategy.class, name = "RULE_CHAIN_ATTRIBUTES"),
-        @Type(value = TimeSeriesRuleChainOutputStrategy.class, name = "RULE_CHAIN_TIME_SERIES")
-})
 public interface OutputStrategy {
 
     @JsonIgnore

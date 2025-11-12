@@ -80,11 +80,7 @@ SET configuration = jsonb_set(
             || jsonb_build_object(
                 'strategy',
                 jsonb_build_object(
-                        'type',
-                        CASE (configuration::jsonb -> 'output' ->> 'type')
-                            WHEN 'TIME_SERIES' THEN 'RULE_CHAIN_TIME_SERIES'
-                            WHEN 'ATTRIBUTES' THEN 'RULE_CHAIN_ATTRIBUTES'
-                            END
+                        'type', 'RULE_CHAIN'
                 )
                ),
         false

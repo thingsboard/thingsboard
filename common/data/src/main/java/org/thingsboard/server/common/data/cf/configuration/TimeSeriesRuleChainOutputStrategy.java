@@ -20,10 +20,10 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class TimeSeriesRuleChainOutputStrategy implements OutputStrategy {
+public class TimeSeriesRuleChainOutputStrategy implements TimeSeriesOutputStrategy {
 
     @Override
     public OutputStrategyType getType() {
-        return OutputStrategyType.RULE_CHAIN_TIME_SERIES;
+        return OutputStrategyType.RULE_CHAIN;
     }
 }
