@@ -51,7 +51,7 @@ public class AlarmNotificationInfo implements RuleOriginatedNotificationInfo {
 
     @Override
     public Map<String, String> getTemplateData() {
-        Map<String, String> templateData = new HashMap<>(details);
+        Map<String, String> templateData = details != null ? new HashMap<>(details) : new HashMap<>();
         templateData.put("alarmType", alarmType);
         templateData.put("action", action);
         templateData.put("alarmId", alarmId.toString());
