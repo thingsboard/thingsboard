@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.mobile;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -40,11 +41,11 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.checkNotNull;
 
 @Slf4j
@@ -60,7 +61,6 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     @Autowired
     private DataValidator<MobileAppBundle> mobileAppBundleDataValidator;
 
-
     @Override
     public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileAppBundle) {
         log.trace("Executing saveMobileAppBundle [{}]", mobileAppBundle);
@@ -71,8 +71,8 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
             return savedMobileApp;
         } catch (Exception e) {
             checkConstraintViolation(e,
-                    Map.of("mobile_app_bundle_android_app_id_key", "Android mobile app is already configured in another bundle!",
-                            "mobile_app_bundle_ios_app_id_key", "IOS mobile app is already configured in another bundle!"));
+                    "mobile_app_bundle_android_app_id_key", "Android mobile app is already configured in another bundle!",
+                    "mobile_app_bundle_ios_app_id_key", "IOS mobile app is already configured in another bundle!");
             throw e;
         }
     }
@@ -150,6 +150,12 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     }
 
     @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(mobileAppBundleDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
+    }
+
+    @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteMobileAppBundleById(tenantId, (MobileAppBundleId) id);
@@ -167,4 +173,5 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
                 .collect(Collectors.toList());
         mobileAppBundleInfo.setOauth2ClientInfos(clients);
     }
+
 }

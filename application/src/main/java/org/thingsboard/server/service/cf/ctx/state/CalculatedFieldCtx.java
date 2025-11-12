@@ -15,42 +15,68 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import net.objecthunter.exp4j.Expression;
-import net.objecthunter.exp4j.ExpressionBuilder;
 import org.mvel2.MVEL;
+import org.thingsboard.common.util.ExpressionUtils;
+import org.thingsboard.script.api.tbel.TbelCfArg;
+import org.thingsboard.script.api.tbel.TbelCfCtx;
+import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.actors.calculatedField.CalculatedFieldReevaluateMsg;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
+import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
+import java.io.Closeable;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-
-import static org.thingsboard.common.util.ExpressionFunctionsUtil.userDefinedFunctions;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Data
-public class CalculatedFieldCtx {
+@Slf4j
+public class CalculatedFieldCtx implements Closeable {
 
     private CalculatedField calculatedField;
 
@@ -61,13 +87,21 @@ public class CalculatedFieldCtx {
     private final Map<String, Argument> arguments;
     private final Map<ReferencedEntityKey, Set<String>> mainEntityArguments;
     private final Map<EntityId, Map<ReferencedEntityKey, Set<String>>> linkedEntityArguments;
+    private final Map<ReferencedEntityKey, Set<String>> dynamicEntityArguments;
+    private final Map<ReferencedEntityKey, Set<String>> relatedEntityArguments;
     private final List<String> argNames;
     private Output output;
     private String expression;
     private boolean useLatestTs;
+    private boolean requiresScheduledReevaluation;
+
+    private ActorSystemContext systemContext;
     private TbelInvokeService tbelInvokeService;
-    private CalculatedFieldScriptEngine calculatedFieldScriptEngine;
-    private ThreadLocal<Expression> customExpression;
+    private RelationService relationService;
+    private AlarmSubscriptionService alarmService;
+
+    private Map<String, CalculatedFieldScriptEngine> tbelExpressions;
+    private Map<String, ThreadLocal<Expression>> simpleExpressions;
 
     private boolean initialized;
 
@@ -75,70 +109,231 @@ public class CalculatedFieldCtx {
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
 
-    public CalculatedFieldCtx(CalculatedField calculatedField, TbelInvokeService tbelInvokeService, ApiLimitService apiLimitService) {
+    private boolean relationQueryDynamicArguments;
+    private List<String> mainEntityGeofencingArgumentNames;
+    private List<String> linkedEntityAndCurrentOwnerGeofencingArgumentNames;
+    private List<String> relatedEntityArgumentNames;
+
+    private long scheduledUpdateIntervalMillis;
+
+    private Argument propagationArgument;
+    private boolean applyExpressionForResolvedArguments;
+
+    public CalculatedFieldCtx(CalculatedField calculatedField,
+                              ActorSystemContext systemContext) {
         this.calculatedField = calculatedField;
 
         this.cfId = calculatedField.getId();
         this.tenantId = calculatedField.getTenantId();
         this.entityId = calculatedField.getEntityId();
         this.cfType = calculatedField.getType();
-        CalculatedFieldConfiguration configuration = calculatedField.getConfiguration();
-        this.arguments = configuration.getArguments();
+        this.arguments = new HashMap<>();
         this.mainEntityArguments = new HashMap<>();
         this.linkedEntityArguments = new HashMap<>();
-        for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
-            var refId = entry.getValue().getRefEntityId();
-            var refKey = entry.getValue().getRefEntityKey();
-            if (refId == null || refId.equals(calculatedField.getEntityId())) {
-                mainEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
-            } else {
-                linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>())
-                        .compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+        this.dynamicEntityArguments = new HashMap<>();
+        this.relatedEntityArguments = new HashMap<>();
+        this.argNames = new ArrayList<>();
+        this.mainEntityGeofencingArgumentNames = new ArrayList<>();
+        this.linkedEntityAndCurrentOwnerGeofencingArgumentNames = new ArrayList<>();
+        this.relatedEntityArgumentNames = new ArrayList<>();
+        this.output = calculatedField.getConfiguration().getOutput();
+        if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+            this.arguments.putAll(argBasedConfig.getArguments());
+            for (Map.Entry<String, Argument> entry : arguments.entrySet()) {
+                var refId = entry.getValue().getRefEntityId();
+                var refKey = entry.getValue().getRefEntityKey();
+                if (refId == null) {
+                    if (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cfType)) {
+                        relatedEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+                        continue;
+                    }
+                    if (entry.getValue().hasRelationQuerySource()) {
+                        relationQueryDynamicArguments = true;
+                        continue;
+                    }
+                    if (entry.getValue().hasOwnerSource()) {
+                        dynamicEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+                    } else {
+                        mainEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+                    }
+                } else if (refId.equals(calculatedField.getEntityId())) {
+                    mainEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+                } else {
+                    linkedEntityArguments.computeIfAbsent(refId, key -> new HashMap<>())
+                            .compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+                }
+            }
+            this.argNames.addAll(arguments.keySet());
+            this.relatedEntityArgumentNames = relatedEntityArguments.values().stream()
+                    .flatMap(Set::stream)
+                    .collect(Collectors.toList());
+            if (argBasedConfig instanceof ExpressionBasedCalculatedFieldConfiguration expressionBasedConfig) {
+                this.expression = expressionBasedConfig.getExpression();
+                this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) argBasedConfig).isUseLatestTs();
+            }
+            if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration geofencingConfig) {
+                geofencingConfig.getZoneGroups().forEach((zoneGroupName, config) -> {
+                    if (config.isCfEntitySource(entityId)) {
+                        mainEntityGeofencingArgumentNames.add(zoneGroupName);
+                        return;
+                    }
+                    if (config.isLinkedCfEntitySource(entityId) || config.hasCurrentOwnerSource()) {
+                        linkedEntityAndCurrentOwnerGeofencingArgumentNames.add(zoneGroupName);
+                    }
+                });
+            }
+            if (calculatedField.getConfiguration() instanceof PropagationCalculatedFieldConfiguration propagationConfig) {
+                propagationArgument = propagationConfig.toPropagationArgument();
+                applyExpressionForResolvedArguments = propagationConfig.isApplyExpressionToResolvedArguments();
+                relationQueryDynamicArguments = true;
             }
         }
-        this.argNames = new ArrayList<>(arguments.keySet());
-        this.output = configuration.getOutput();
-        this.expression = configuration.getExpression();
-        this.useLatestTs = CalculatedFieldType.SIMPLE.equals(calculatedField.getType()) && ((SimpleCalculatedFieldConfiguration) configuration).isUseLatestTs();
-        this.tbelInvokeService = tbelInvokeService;
+        if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
+            this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : -1L;
+        }
+        this.requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
+            this.useLatestTs = aggConfig.isUseLatestTs();
+        }
+        this.systemContext = systemContext;
+        this.tbelInvokeService = systemContext.getTbelInvokeService();
+        this.relationService = systemContext.getRelationService();
+        this.alarmService = systemContext.getAlarmService();
 
-        this.maxDataPointsPerRollingArg = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
-        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
-        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+        this.maxDataPointsPerRollingArg = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg); // fixme why tenant profile update is not handled??
+        this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
 
     public void init() {
-        if (CalculatedFieldType.SCRIPT.equals(cfType)) {
-            try {
-                this.calculatedFieldScriptEngine = initEngine(tenantId, expression, tbelInvokeService);
+        switch (cfType) {
+            case SCRIPT -> {
+                initTbelExpression(expression);
                 initialized = true;
-            } catch (Exception e) {
-                initialized = false;
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
             }
-        } else {
-            if (isValidExpression(expression)) {
-                this.customExpression = ThreadLocal.withInitial(() ->
-                        new ExpressionBuilder(expression)
-                                .functions(userDefinedFunctions)
-                                .implicitMultiplication(true)
-                                .variables(this.arguments.keySet())
-                                .build()
-                );
+            case GEOFENCING -> initialized = true;
+            case SIMPLE -> {
+                initSimpleExpression(expression);
                 initialized = true;
-            } else {
-                initialized = false;
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            }
+            case ALARM -> {
+                AlarmCalculatedFieldConfiguration configuration = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+                configuration.getAllRules().map(rule -> rule.getValue().getCondition().getExpression())
+                        .forEach(expression -> {
+                            if (expression instanceof TbelAlarmConditionExpression tbelExpression) {
+                                initTbelExpression(tbelExpression.getExpression());
+                            }
+                        });
+                initialized = true;
+            }
+            case PROPAGATION -> {
+                if (applyExpressionForResolvedArguments) {
+                    initTbelExpression(expression);
+                }
+                initialized = true;
+            }
+            case RELATED_ENTITIES_AGGREGATION -> {
+                RelatedEntitiesAggregationCalculatedFieldConfiguration configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) calculatedField.getConfiguration();
+                configuration.getMetrics().forEach((key, metric) -> {
+                    if (metric.getInput() instanceof AggFunctionInput functionInput) {
+                        initTbelExpression(functionInput.getFunction());
+                    }
+                    String filter = metric.getFilter();
+                    if (filter != null && !filter.isEmpty()) {
+                        initTbelExpression(filter);
+                    }
+                });
+                initialized = true;
             }
         }
     }
 
-    public void stop() {
-        if (calculatedFieldScriptEngine != null) {
-            calculatedFieldScriptEngine.destroy();
+    public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {
+        for (Map.Entry<String, ArgumentEntry> entry : state.getArguments().entrySet()) {
+            try {
+                BasicKvEntry kvEntry = ((SingleValueArgumentEntry) entry.getValue()).getKvEntryValue();
+                double value = switch (kvEntry.getDataType()) {
+                    case LONG -> kvEntry.getLongValue().map(Long::doubleValue).orElseThrow();
+                    case DOUBLE -> kvEntry.getDoubleValue().orElseThrow();
+                    case BOOLEAN -> kvEntry.getBooleanValue().map(b -> b ? 1.0 : 0.0).orElseThrow();
+                    case STRING, JSON -> Double.parseDouble(kvEntry.getValueAsString());
+                };
+                expression.setVariable(entry.getKey(), value);
+            } catch (NumberFormatException e) {
+                throw new IllegalArgumentException("Argument '" + entry.getKey() + "' is not a number.");
+            }
         }
-        if (customExpression != null) {
-            customExpression.remove();
+        return expression.evaluate();
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(String expression, CalculatedFieldState state) {
+        return evaluateTbelExpression(tbelExpressions.get(expression), state.getArguments(), state.getLatestTimestamp());
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(CalculatedFieldScriptEngine expression, CalculatedFieldState state) {
+        return evaluateTbelExpression(expression, state.getArguments(), state.getLatestTimestamp());
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(String expression, Map<String, ArgumentEntry> entries, long latestTimestamp) {
+        return evaluateTbelExpression(tbelExpressions.get(expression), entries, latestTimestamp);
+    }
+
+    public ListenableFuture<Object> evaluateTbelExpression(CalculatedFieldScriptEngine expression, Map<String, ArgumentEntry> entries, long latestTimestamp) {
+        Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
+        List<Object> args = new ArrayList<>(argNames.size() + 1);
+        args.add(new Object()); // first element is a ctx, but we will set it later;
+        for (String argName : argNames) {
+            var arg = toTbelArgument(argName, entries);
+            arguments.put(argName, arg);
+            if (arg instanceof TbelCfSingleValueArg svArg) {
+                args.add(svArg.getValue());
+            } else {
+                args.add(arg);
+            }
+        }
+        args.set(0, new TbelCfCtx(arguments, latestTimestamp));
+
+        return expression.executeScriptAsync(args.toArray());
+    }
+
+    public ScheduledFuture<?> scheduleReevaluation(long delayMs, TbActorRef actorCtx) {
+        log.debug("[{}] Scheduling CF reevaluation in {} ms", cfId, delayMs);
+        return systemContext.scheduleMsgWithDelay(actorCtx, new CalculatedFieldReevaluateMsg(tenantId, this), delayMs);
+    }
+
+    private TbelCfArg toTbelArgument(String key, Map<String, ArgumentEntry> arguments) {
+        return arguments.get(key).toTbelCfArg();
+    }
+
+    private void initTbelExpression(String expression) {
+        if (tbelExpressions == null) {
+            tbelExpressions = new HashMap<>();
+        } else if (tbelExpressions.containsKey(expression)) {
+            return;
+        }
+        try {
+            CalculatedFieldScriptEngine engine = initEngine(tenantId, expression, tbelInvokeService);
+            tbelExpressions.put(expression, engine);
+        } catch (Exception e) {
+            initialized = false;
+            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+        }
+    }
+
+    private void initSimpleExpression(String expression) {
+        if (simpleExpressions == null) {
+            simpleExpressions = new HashMap<>();
+        } else if (simpleExpressions.containsKey(expression)) {
+            return;
+        }
+        if (isValidExpression(expression)) {
+            ThreadLocal<Expression> compiledExpression = ThreadLocal.withInitial(() ->
+                    ExpressionUtils.createExpression(expression, this.arguments.keySet())
+            );
+            simpleExpressions.put(expression, compiledExpression);
+        } else {
+            initialized = false;
+            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
         }
     }
 
@@ -185,6 +380,14 @@ public class CalculatedFieldCtx {
         return map != null && matchesTimeSeries(map, values);
     }
 
+    public boolean dynamicSourceMatches(List<TsKvEntry> values) {
+        return matchesTimeSeries(dynamicEntityArguments, values);
+    }
+
+    public boolean dynamicSourceMatches(List<AttributeKvEntry> values, AttributeScope scope) {
+        return matchesAttributes(dynamicEntityArguments, values, scope);
+    }
+
     private boolean matchesAttributes(Map<ReferencedEntityKey, Set<String>> argMap, List<AttributeKvEntry> values, AttributeScope scope) {
         if (argMap.isEmpty() || values.isEmpty()) {
             return false;
@@ -226,6 +429,14 @@ public class CalculatedFieldCtx {
 
     public boolean matchesKeys(List<String> keys) {
         return matchesTimeSeriesKeys(mainEntityArguments, keys);
+    }
+
+    public boolean matchesDynamicSourceKeys(List<String> keys, AttributeScope scope) {
+        return matchesAttributesKeys(dynamicEntityArguments, keys, scope);
+    }
+
+    public boolean matchesDynamicSourceKeys(List<String> keys) {
+        return matchesTimeSeriesKeys(dynamicEntityArguments, keys);
     }
 
     private boolean matchesAttributesKeys(Map<ReferencedEntityKey, Set<String>> argMap, List<String> keys, AttributeScope scope) {
@@ -274,6 +485,60 @@ public class CalculatedFieldCtx {
         return map != null && matchesTimeSeriesKeys(map, keys);
     }
 
+    public boolean relatedEntityMatches(List<TsKvEntry> values) {
+        return matchesTimeSeries(relatedEntityArguments, values);
+    }
+
+    public boolean relatedEntityMatches(List<AttributeKvEntry> values, AttributeScope scope) {
+        return matchesAttributes(relatedEntityArguments, values, scope);
+    }
+
+    public boolean matchesRelatedEntityKeys(List<String> keys, AttributeScope scope) {
+        return matchesAttributesKeys(relatedEntityArguments, keys, scope);
+    }
+
+    public boolean matchesRelatedEntityKeys(List<String> keys) {
+        return matchesTimeSeriesKeys(relatedEntityArguments, keys);
+    }
+
+    public boolean relatedEntityMatches(CalculatedFieldTelemetryMsgProto proto) {
+        if (!proto.getTsDataList().isEmpty()) {
+            List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return relatedEntityMatches(updatedTelemetry);
+        } else if (!proto.getAttrDataList().isEmpty()) {
+            AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
+            List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return relatedEntityMatches(updatedTelemetry, scope);
+        } else if (!proto.getRemovedTsKeysList().isEmpty()) {
+            return matchesRelatedEntityKeys(proto.getRemovedTsKeysList());
+        } else {
+            return matchesRelatedEntityKeys(proto.getRemovedAttrKeysList(), AttributeScope.valueOf(proto.getScope().name()));
+        }
+    }
+
+    public boolean dynamicSourceMatches(CalculatedFieldTelemetryMsgProto proto) {
+        if (!proto.getTsDataList().isEmpty()) {
+            List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return dynamicSourceMatches(updatedTelemetry);
+        } else if (!proto.getAttrDataList().isEmpty()) {
+            AttributeScope scope = AttributeScope.valueOf(proto.getScope().name());
+            List<AttributeKvEntry> updatedTelemetry = proto.getAttrDataList().stream()
+                    .map(ProtoUtils::fromProto)
+                    .toList();
+            return dynamicSourceMatches(updatedTelemetry, scope);
+        } else if (!proto.getRemovedTsKeysList().isEmpty()) {
+            return matchesDynamicSourceKeys(proto.getRemovedTsKeysList());
+        } else {
+            return matchesDynamicSourceKeys(proto.getRemovedAttrKeysList(), AttributeScope.valueOf(proto.getScope().name()));
+        }
+    }
+
     public boolean linkMatches(EntityId entityId, CalculatedFieldTelemetryMsgProto proto) {
         if (!proto.getTsDataList().isEmpty()) {
             List<TsKvEntry> updatedTelemetry = proto.getTsDataList().stream()
@@ -293,24 +558,163 @@ public class CalculatedFieldCtx {
         }
     }
 
+    public Map<ReferencedEntityKey, Set<String>> getLinkedAndDynamicArgs(EntityId entityId) {
+        var argNames = new HashMap<ReferencedEntityKey, Set<String>>();
+        var linkedArgNames = linkedEntityArguments.get(entityId);
+        if (linkedArgNames != null && !linkedArgNames.isEmpty()) {
+            argNames.putAll(linkedArgNames);
+        }
+        if (dynamicEntityArguments != null && !dynamicEntityArguments.isEmpty()) {
+            argNames.putAll(dynamicEntityArguments);
+        }
+        return argNames;
+    }
+
     public CalculatedFieldEntityCtxId toCalculatedFieldEntityCtxId() {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
-    public boolean hasOtherSignificantChanges(CalculatedFieldCtx other) {
-        boolean expressionChanged = !expression.equals(other.expression);
-        boolean outputChanged = !output.equals(other.output);
-        return expressionChanged || outputChanged;
+    public boolean hasContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state reinit and will be picked up by the state on the fly
+        if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !Objects.equals(expression, other.expression)) {
+            return true;
+        }
+        if (!Objects.equals(output, other.output)) {
+            return true;
+        }
+        if (calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration otherConfig
+                && thisConfig.isUseLatestTs() != otherConfig.isUseLatestTs()) {
+            return true;
+        }
+        if (cfType == CalculatedFieldType.ALARM) {
+            if (!calculatedField.getName().equals(other.getCalculatedField().getName())) {
+                return true;
+            }
+
+            var thisConfig = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+            var otherConfig = (AlarmCalculatedFieldConfiguration) other.getCalculatedField().getConfiguration();
+            if (!thisConfig.rulesEqual(otherConfig, AlarmRule::equals)) {
+                // if the rules have any changes not tracked by hasStateChanges
+                return true;
+            }
+        }
+        if (scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis) {
+            return true;
+        }
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
+                && other.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig
+                && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
+            return true;
+        }
+        return false;
     }
 
     public boolean hasStateChanges(CalculatedFieldCtx other) {
-        boolean typeChanged = !cfType.equals(other.cfType);
-        boolean argumentsChanged = !arguments.equals(other.arguments);
-        return typeChanged || argumentsChanged;
+        if (!arguments.equals(other.arguments)) {
+            return true;
+        }
+        if (cfType == CalculatedFieldType.ALARM) {
+            var thisConfig = (AlarmCalculatedFieldConfiguration) calculatedField.getConfiguration();
+            var otherConfig = (AlarmCalculatedFieldConfiguration) other.getCalculatedField().getConfiguration();
+            if (!thisConfig.rulesEqual(otherConfig, (thisRule, otherRule) -> {
+                return thisRule.getCondition().getType() == otherRule.getCondition().getType();
+            })) {
+                // reinitializing only if the rule list changed, or if a condition type changed for any rule
+                return true;
+            }
+        }
+        if (hasGeofencingZoneGroupConfigurationChanges(other)) {
+            return true;
+        }
+        if (hasRelatedEntitiesAggregationConfigurationChanges(other)) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean hasGeofencingZoneGroupConfigurationChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration otherConfig) {
+            return !thisConfig.getZoneGroups().equals(otherConfig.getZoneGroups());
+        }
+        return false;
+    }
+
+    private boolean hasRelatedEntitiesAggregationConfigurationChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig) {
+            return !thisConfig.getRelation().equals(otherConfig.getRelation());
+        }
+        return false;
+    }
+
+    private boolean isScheduledUpdateEnabled() {
+        return scheduledUpdateIntervalMillis != -1;
+    }
+
+    public boolean shouldFetchRelationQueryDynamicArgumentsFromDb(CalculatedFieldState state) {
+        if (!relationQueryDynamicArguments) {
+            return false;
+        }
+        return switch (cfType) {
+            case PROPAGATION -> true;
+            case GEOFENCING -> {
+                if (!isScheduledUpdateEnabled()) {
+                    yield false;
+                }
+                var geofencingState = (GeofencingCalculatedFieldState) state;
+                if (geofencingState.getLastDynamicArgumentsRefreshTs() == -1L) {
+                    yield true;
+                }
+                yield geofencingState.getLastDynamicArgumentsRefreshTs() <
+                        System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+            }
+            default -> false;
+        };
+    }
+
+    public boolean shouldFetchEntityRelations(CalculatedFieldState state) {
+        if (!(state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState)) {
+            return false;
+        }
+        if (!isScheduledUpdateEnabled()) {
+            return false;
+        }
+        if (relatedEntitiesAggState.getLastRelatedEntitiesRefreshTs() == -1L) {
+            return true;
+        }
+        return relatedEntitiesAggState.getLastRelatedEntitiesRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+    }
+
+    @Override
+    public void close() {
+        try {
+            if (tbelExpressions != null) {
+                tbelExpressions.values().forEach(CalculatedFieldScriptEngine::destroy);
+            }
+            if (simpleExpressions != null) {
+                simpleExpressions.values().forEach(ThreadLocal::remove);
+            }
+        } catch (Exception e) {
+            log.warn("Failed to stop {}", this, e);
+        }
     }
 
     public String getSizeExceedsLimitMessage() {
         return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
+    }
+
+    public boolean hasCurrentOwnerSourceArguments() {
+        return !dynamicEntityArguments.isEmpty();
+    }
+
+    @Override
+    public String toString() {
+        return "CalculatedFieldCtx{" +
+                "cfId=" + cfId +
+                ", cfType=" + cfType +
+                ", entityId=" + entityId +
+                '}';
     }
 
 }

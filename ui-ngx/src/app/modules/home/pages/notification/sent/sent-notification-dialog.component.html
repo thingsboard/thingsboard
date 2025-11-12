@@ -171,11 +171,11 @@
             </div>
           </div>
           <mat-divider class="divider"></mat-divider>
-          <mat-chip-listbox>
-            <mat-chip *ngFor="let recipientTitle of preview.recipientsPreview">
+          <mat-chip-set>
+            <mat-chip-row class="tb-chip-row-ellipsis" *ngFor="let recipientTitle of preview.recipientsPreview">
               <span>{{ recipientTitle }}</span>
-            </mat-chip>
-          </mat-chip-listbox>
+            </mat-chip-row>
+          </mat-chip-set>
         </section>
         <section class="preview-group notification tb-form-panel stroked no-gap" *ngIf="preview.processedTemplates.WEB?.enabled">
           <div class="flex flex-row items-center justify-start gap-2">
@@ -233,7 +233,7 @@
           <div class="notification-content mini" [style.background-color]="preview.processedTemplates.MICROSOFT_TEAMS?.themeColor">
             <div class="subject">{{ preview.processedTemplates.MICROSOFT_TEAMS.subject }}</div>
             {{ preview.processedTemplates.MICROSOFT_TEAMS.body }}
-            <button mat-raised-button>{{ preview.processedTemplates.MICROSOFT_TEAMS.button.text }}</button>
+            <button mat-raised-button>{{ preview.processedTemplates.MICROSOFT_TEAMS.button?.text }}</button>
           </div>
         </section>
       </div>

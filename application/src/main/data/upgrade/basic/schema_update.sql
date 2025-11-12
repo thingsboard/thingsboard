@@ -14,3 +14,65 @@
 -- limitations under the License.
 --
 
+-- UPDATE TENANT PROFILE CONFIGURATION START
+
+UPDATE tenant_profile
+SET profile_data = jsonb_set(
+        profile_data,
+        '{configuration}',
+        (profile_data -> 'configuration')
+            || jsonb_strip_nulls(
+                jsonb_build_object(
+                        'minAllowedScheduledUpdateIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END,
+                        'maxRelationLevelPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(10)
+                            END,
+                        'maxRelatedEntitiesToReturnPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(100)
+                            END,
+                        'minAllowedDeduplicationIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END
+                )
+               ),
+        false
+                   )
+WHERE NOT (
+    (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+    );
+
+-- UPDATE TENANT PROFILE CONFIGURATION END
+
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE START
+
+ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
+ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
+
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
+
+DROP TABLE IF EXISTS calculated_field_link;
+ANALYZE calculated_field;
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE END

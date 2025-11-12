@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.rule;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -38,6 +40,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -80,6 +83,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
@@ -87,9 +91,6 @@ import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
-/**
- * Created by igor on 3/12/18.
- */
 @Service("RuleChainDaoService")
 @Slf4j
 public class BaseRuleChainService extends AbstractEntityService implements RuleChainService {
@@ -98,6 +99,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     public static final String TB_RULE_CHAIN_INPUT_NODE = "org.thingsboard.rule.engine.flow.TbRuleChainInputNode";
+
     @Autowired
     private RuleChainDao ruleChainDao;
 
@@ -264,7 +266,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                 firstRuleNodeId = nodes.get(ruleChainMetaData.getFirstNodeIndex()).getId();
             }
             if ((ruleChain.getFirstRuleNodeId() != null && !ruleChain.getFirstRuleNodeId().equals(firstRuleNodeId))
-                || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
+                    || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
                 ruleChain.setFirstRuleNodeId(firstRuleNodeId);
             }
             if (ruleChainMetaData.getConnections() != null) {
@@ -881,6 +883,17 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        ListenableFuture<? extends BaseDataWithAdditionalInfo<? extends UUIDBased>> future;
+        if (entityId.getEntityType() == EntityType.RULE_NODE) {
+            future = findRuleNodeByIdAsync(tenantId, new RuleNodeId(entityId.getId()));
+        } else {
+            future = findRuleChainByIdAsync(tenantId, new RuleChainId(entityId.getId()));
+        }
+        return FluentFuture.from(future).transform(Optional::ofNullable, directExecutor());
+    }
+
+    @Override
     public long countByTenantId(TenantId tenantId) {
         return ruleChainDao.countByTenantId(tenantId);
     }
@@ -923,18 +936,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             ComponentClusteringMode nodeConfigType = ReflectionUtils.getAnnotationProperty(ruleNode.getType(),
                     "org.thingsboard.rule.engine.api.RuleNode", "clusteringMode");
 
-            switch (nodeConfigType) {
-                case ENABLED:
-                    singletonMode = false;
-                    break;
-                case SINGLETON:
-                    singletonMode = true;
-                    break;
-                case USER_PREFERENCE:
-                default:
-                    singletonMode = ruleNode.isSingletonMode();
-                    break;
-            }
+            singletonMode = switch (nodeConfigType) {
+                case ENABLED -> false;
+                case SINGLETON -> true;
+                default -> ruleNode.isSingletonMode();
+            };
         } catch (Exception e) {
             log.warn("Failed to get clustering mode: {}", ExceptionUtils.getRootCauseMessage(e));
             singletonMode = false;

@@ -665,5 +665,4 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             log.warn("Failed to cleanup kafka sessions", e);
         }
     }
-
 }

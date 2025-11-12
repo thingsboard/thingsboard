@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.dao.asset;
 
-
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -26,6 +26,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -62,6 +64,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
@@ -93,8 +96,8 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Autowired
     private JpaExecutorService executor;
 
-    @TransactionalEventListener(classes = AssetCacheEvictEvent.class)
     @Override
+    @TransactionalEventListener
     public void handleEvictEvent(AssetCacheEvictEvent event) {
         List<AssetCacheKey> keys = new ArrayList<>(2);
         keys.add(new AssetCacheKey(event.getTenantId(), event.getNewName()));
@@ -147,17 +150,23 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     }
 
     @Override
-    public Asset saveAsset(Asset asset, boolean doValidate) {
-        return saveEntity(asset, () -> doSaveAsset(asset, doValidate));
+    public Asset saveAsset(Asset asset, NameConflictStrategy nameConflictStrategy) {
+        return saveEntity(asset, () -> saveAsset(asset, true, NameConflictStrategy.DEFAULT));
     }
 
-    private Asset doSaveAsset(Asset asset, boolean doValidate) {
+    @Override
+    public Asset saveAsset(Asset asset, boolean doValidate) {
+        return saveEntity(asset, () -> saveAsset(asset, doValidate, NameConflictStrategy.DEFAULT));
+    }
+
+    private Asset saveAsset(Asset asset, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveAsset [{}]", asset);
-        Asset oldAsset = null;
+        Asset oldAsset = (asset.getId() != null) ? assetDao.findById(asset.getTenantId(), asset.getId().getId()) : null;
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldAsset == null || !oldAsset.getName().equals(asset.getName()))) {
+            uniquifyEntityName(asset, oldAsset, asset::setName, EntityType.ASSET, nameConflictStrategy);
+        }
         if (doValidate) {
-            oldAsset = assetValidator.validate(asset, Asset::getTenantId);
-        } else if (asset.getId() != null) {
-            oldAsset = findAssetById(asset.getTenantId(), asset.getId());
+            assetValidator.validate(asset, Asset::getTenantId);
         }
         AssetCacheEvictEvent evictEvent = new AssetCacheEvictEvent(asset.getTenantId(), asset.getName(), oldAsset != null ? oldAsset.getName() : null);
         Asset savedAsset;
@@ -521,6 +530,12 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findAssetById(tenantId, new AssetId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findAssetByIdAsync(tenantId, new AssetId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

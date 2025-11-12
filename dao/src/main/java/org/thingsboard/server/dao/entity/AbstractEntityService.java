@@ -23,9 +23,14 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.common.util.DebugModeUtil;
+import org.thingsboard.server.common.data.EntityInfo;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.HasDebugSettings;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -34,6 +39,7 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.edge.EdgeService;
@@ -48,9 +54,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentMap;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import java.util.function.Consumer;
+import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.UniquifyStrategy.RANDOM;
 
 @Slf4j
 public abstract class AbstractEntityService {
@@ -89,7 +100,10 @@ public abstract class AbstractEntityService {
 
     @Autowired
     @Lazy
-    private TbTenantProfileCache tbTenantProfileCache;
+    protected TbTenantProfileCache tbTenantProfileCache;
+
+    @Autowired
+    protected EntityDaoRegistry entityDaoRegistry;
 
     @Value("${debug.settings.default_duration:15}")
     private int defaultDebugDurationMinutes;
@@ -177,4 +191,33 @@ public abstract class AbstractEntityService {
     private long getMaxDebugAllUntil(TenantId tenantId, long now) {
         return now + TimeUnit.MINUTES.toMillis(DebugModeUtil.getMaxDebugAllDuration(tbTenantProfileCache.get(tenantId).getDefaultProfileConfiguration().getMaxDebugModeDurationMinutes(), defaultDebugDurationMinutes));
     }
+
+    protected <E extends HasId<?> & HasTenantId & HasName> void uniquifyEntityName(E entity, E oldEntity, Consumer<String> setName, EntityType entityType, NameConflictStrategy strategy) {
+        Dao<?> dao = entityDaoRegistry.getDao(entityType);
+        List<EntityInfo> existingEntities = dao.findEntityInfosByNamePrefix(entity.getTenantId(), entity.getName());
+        Set<String> existingNames = existingEntities.stream()
+                .filter(e -> (oldEntity == null || !e.getId().equals(oldEntity.getId())))
+                .map(EntityInfo::getName)
+                .collect(Collectors.toSet());
+
+        if (existingNames.contains(entity.getName())) {
+            String uniqueName = generateUniqueName(entity.getName(), existingNames, strategy);
+            setName.accept(uniqueName);
+        }
+    }
+
+    private String generateUniqueName(String baseName, Set<String> existingNames, NameConflictStrategy strategy) {
+        String newName;
+        int index = 1;
+        String separator = strategy.separator();
+        boolean isRandom = strategy.uniquifyStrategy() == RANDOM;
+
+        do {
+            String suffix = isRandom ? StringUtils.randomAlphanumeric(6) : String.valueOf(index++);
+            newName = baseName + separator + suffix;
+        } while (existingNames.contains(newName));
+
+        return newName;
+    }
+
 }

@@ -190,6 +190,7 @@ export const isImageResourceUrl = (url: string): boolean => url && IMAGES_URL_RE
 
 export const isJSResourceUrl = (url: string): boolean => url && RESOURCES_URL_REGEXP.test(url);
 export const isJSResource = (url: string): boolean => url?.startsWith(TB_RESOURCE_PREFIX);
+export const isTbImage = (url: string): boolean => url?.startsWith(TB_IMAGE_PREFIX);
 
 export const extractParamsFromImageResourceUrl = (url: string): {type: ImageResourceType; key: string} => {
   const res = url.match(IMAGES_URL_REGEXP);

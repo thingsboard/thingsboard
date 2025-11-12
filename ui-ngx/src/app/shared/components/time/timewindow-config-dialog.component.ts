@@ -36,7 +36,15 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-import { deepClone, isDefined, isDefinedAndNotNull, isObject, mergeDeep } from '@core/utils';
+import {
+  deepClean,
+  deepClone,
+  deleteFalseProperties,
+  isDefined,
+  isDefinedAndNotNull,
+  isEmpty,
+  mergeDeepIgnoreArray
+} from '@core/utils';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
@@ -152,73 +160,73 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.timewindowForm = this.fb.group({
       selectedTab: [isDefined(this.timewindow.selectedTab) ? this.timewindow.selectedTab : TimewindowType.REALTIME],
       realtime: this.fb.group({
-        realtimeType: [ isDefined(realtime?.realtimeType) ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL ],
-        timewindowMs: [ isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null ],
-        interval: [ isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null ],
-        quickInterval: [ isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null ],
-        disableCustomInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomInterval)
-          ? this.timewindow.realtime?.disableCustomInterval : false ],
-        disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomGroupInterval)
-          ? this.timewindow.realtime?.disableCustomGroupInterval : false ],
-        hideInterval: [ isDefinedAndNotNull(this.timewindow.realtime.hideInterval)
-          ? this.timewindow.realtime.hideInterval : false ],
+        realtimeType: [ isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL ],
+        timewindowMs: [ isDefined(realtime?.timewindowMs) ? realtime.timewindowMs : null ],
+        interval: [ isDefined(realtime?.interval) ? realtime.interval : null ],
+        quickInterval: [ isDefined(realtime?.quickInterval) ? realtime.quickInterval : null ],
+        disableCustomInterval: [ isDefinedAndNotNull(realtime?.disableCustomInterval)
+          ? realtime.disableCustomInterval : false ],
+        disableCustomGroupInterval: [ isDefinedAndNotNull(realtime?.disableCustomGroupInterval)
+          ? realtime.disableCustomGroupInterval : false ],
+        hideInterval: [ isDefinedAndNotNull(realtime?.hideInterval)
+          ? realtime.hideInterval : false ],
         hideLastInterval: [{
-          value: isDefinedAndNotNull(this.timewindow.realtime.hideLastInterval)
-            ? this.timewindow.realtime.hideLastInterval : false,
-          disabled: this.timewindow.realtime.hideInterval
+          value: isDefinedAndNotNull(realtime?.hideLastInterval)
+            ? realtime.hideLastInterval : false,
+          disabled: realtime?.hideInterval
         }],
         hideQuickInterval: [{
-          value: isDefinedAndNotNull(this.timewindow.realtime.hideQuickInterval)
-            ? this.timewindow.realtime.hideQuickInterval : false,
-          disabled: this.timewindow.realtime.hideInterval
+          value: isDefinedAndNotNull(realtime?.hideQuickInterval)
+            ? realtime.hideQuickInterval : false,
+          disabled: realtime?.hideInterval
         }],
         advancedParams: this.fb.group({
-          allowedLastIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.allowedLastIntervals)
-            ? this.timewindow.realtime.advancedParams.allowedLastIntervals : null ],
-          allowedQuickIntervals: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.allowedQuickIntervals)
-            ? this.timewindow.realtime.advancedParams.allowedQuickIntervals : null ],
-          lastAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.lastAggIntervalsConfig)
-            ? this.timewindow.realtime.advancedParams.lastAggIntervalsConfig : null ],
-          quickAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.realtime?.advancedParams?.quickAggIntervalsConfig)
-            ? this.timewindow.realtime.advancedParams.quickAggIntervalsConfig : null ]
+          allowedLastIntervals: [ isDefinedAndNotNull(realtime?.advancedParams?.allowedLastIntervals)
+            ? realtime.advancedParams.allowedLastIntervals : null ],
+          allowedQuickIntervals: [ isDefinedAndNotNull(realtime?.advancedParams?.allowedQuickIntervals)
+            ? realtime.advancedParams.allowedQuickIntervals : null ],
+          lastAggIntervalsConfig: [ isDefinedAndNotNull(realtime?.advancedParams?.lastAggIntervalsConfig)
+            ? realtime.advancedParams.lastAggIntervalsConfig : null ],
+          quickAggIntervalsConfig: [ isDefinedAndNotNull(realtime?.advancedParams?.quickAggIntervalsConfig)
+            ? realtime.advancedParams.quickAggIntervalsConfig : null ]
         })
       }),
       history: this.fb.group({
-        historyType: [ isDefined(history?.historyType) ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL ],
-        timewindowMs: [ isDefined(history?.timewindowMs) ? this.timewindow.history.timewindowMs : null ],
-        interval: [ isDefined(history?.interval) ? this.timewindow.history.interval : null ],
-        fixedTimewindow: [ isDefined(history?.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null ],
-        quickInterval: [ isDefined(history?.quickInterval) ? this.timewindow.history.quickInterval : null ],
-        disableCustomInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomInterval)
-          ? this.timewindow.history?.disableCustomInterval : false ],
-        disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomGroupInterval)
-          ? this.timewindow.history?.disableCustomGroupInterval : false ],
-        hideInterval: [ isDefinedAndNotNull(this.timewindow.history.hideInterval)
-          ? this.timewindow.history.hideInterval : false ],
+        historyType: [ isDefined(history?.historyType) ? history.historyType : HistoryWindowType.LAST_INTERVAL ],
+        timewindowMs: [ isDefined(history?.timewindowMs) ? history.timewindowMs : null ],
+        interval: [ isDefined(history?.interval) ? history.interval : null ],
+        fixedTimewindow: [ isDefined(history?.fixedTimewindow) ? history.fixedTimewindow : null ],
+        quickInterval: [ isDefined(history?.quickInterval) ? history.quickInterval : null ],
+        disableCustomInterval: [ isDefinedAndNotNull(history?.disableCustomInterval)
+          ? history.disableCustomInterval : false ],
+        disableCustomGroupInterval: [ isDefinedAndNotNull(history?.disableCustomGroupInterval)
+          ? history.disableCustomGroupInterval : false ],
+        hideInterval: [ isDefinedAndNotNull(history?.hideInterval)
+          ? history.hideInterval : false ],
         hideLastInterval: [{
-          value: isDefinedAndNotNull(this.timewindow.history.hideLastInterval)
-            ? this.timewindow.history.hideLastInterval : false,
-          disabled: this.timewindow.history.hideInterval
+          value: isDefinedAndNotNull(history?.hideLastInterval)
+            ? history.hideLastInterval : false,
+          disabled: history?.hideInterval
         }],
         hideQuickInterval: [{
-          value: isDefinedAndNotNull(this.timewindow.history.hideQuickInterval)
-            ? this.timewindow.history.hideQuickInterval : false,
-          disabled: this.timewindow.history.hideInterval
+          value: isDefinedAndNotNull(history?.hideQuickInterval)
+            ? history.hideQuickInterval : false,
+          disabled: history?.hideInterval
         }],
         hideFixedInterval: [{
-          value: isDefinedAndNotNull(this.timewindow.history.hideFixedInterval)
-            ? this.timewindow.history.hideFixedInterval : false,
-          disabled: this.timewindow.history.hideInterval
+          value: isDefinedAndNotNull(history?.hideFixedInterval)
+            ? history.hideFixedInterval : false,
+          disabled: history?.hideInterval
         }],
         advancedParams: this.fb.group({
-          allowedLastIntervals: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.allowedLastIntervals)
-            ? this.timewindow.history.advancedParams.allowedLastIntervals : null ],
-          allowedQuickIntervals: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.allowedQuickIntervals)
-            ? this.timewindow.history.advancedParams.allowedQuickIntervals : null ],
-          lastAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.lastAggIntervalsConfig)
-            ? this.timewindow.history.advancedParams.lastAggIntervalsConfig : null ],
-          quickAggIntervalsConfig: [ isDefinedAndNotNull(this.timewindow.history?.advancedParams?.quickAggIntervalsConfig)
-            ? this.timewindow.history.advancedParams.quickAggIntervalsConfig : null ]
+          allowedLastIntervals: [ isDefinedAndNotNull(history?.advancedParams?.allowedLastIntervals)
+            ? history.advancedParams.allowedLastIntervals : null ],
+          allowedQuickIntervals: [ isDefinedAndNotNull(history?.advancedParams?.allowedQuickIntervals)
+            ? history.advancedParams.allowedQuickIntervals : null ],
+          lastAggIntervalsConfig: [ isDefinedAndNotNull(history?.advancedParams?.lastAggIntervalsConfig)
+            ? history.advancedParams.lastAggIntervalsConfig : null ],
+          quickAggIntervalsConfig: [ isDefinedAndNotNull(history?.advancedParams?.quickAggIntervalsConfig)
+            ? history.advancedParams.quickAggIntervalsConfig : null ]
         })
       }),
       aggregation: this.fb.group({
@@ -424,7 +432,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   update() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
+    this.timewindow = mergeDeepIgnoreArray(this.timewindow, timewindowFormValue);
 
     const realtimeConfigurableLastIntervalsAvailable = !(timewindowFormValue.hideAggInterval &&
       (timewindowFormValue.realtime.hideInterval || timewindowFormValue.realtime.hideLastInterval));
@@ -435,82 +443,50 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     const historyConfigurableQuickIntervalsAvailable = !(timewindowFormValue.hideAggInterval &&
       (timewindowFormValue.history.hideInterval || timewindowFormValue.history.hideQuickInterval));
 
-    if (realtimeConfigurableLastIntervalsAvailable && timewindowFormValue.realtime.advancedParams.allowedLastIntervals?.length) {
-      this.timewindow.realtime.advancedParams.allowedLastIntervals = timewindowFormValue.realtime.advancedParams.allowedLastIntervals;
-    } else {
+    if (!realtimeConfigurableLastIntervalsAvailable) {
       delete this.timewindow.realtime.advancedParams.allowedLastIntervals;
     }
-    if (realtimeConfigurableQuickIntervalsAvailable && timewindowFormValue.realtime.advancedParams.allowedQuickIntervals?.length) {
-      this.timewindow.realtime.advancedParams.allowedQuickIntervals = timewindowFormValue.realtime.advancedParams.allowedQuickIntervals;
-    } else {
+    if (!realtimeConfigurableQuickIntervalsAvailable) {
       delete this.timewindow.realtime.advancedParams.allowedQuickIntervals;
     }
-    if (realtimeConfigurableLastIntervalsAvailable && isObject(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig) &&
-      Object.keys(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig).length) {
+    if (realtimeConfigurableLastIntervalsAvailable && !isEmpty(timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig)) {
       this.timewindow.realtime.advancedParams.lastAggIntervalsConfig = timewindowFormValue.realtime.advancedParams.lastAggIntervalsConfig;
     } else {
       delete this.timewindow.realtime.advancedParams.lastAggIntervalsConfig;
     }
-    if (realtimeConfigurableQuickIntervalsAvailable && isObject(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig) &&
-      Object.keys(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig).length) {
+    if (realtimeConfigurableQuickIntervalsAvailable && !isEmpty(timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig)) {
       this.timewindow.realtime.advancedParams.quickAggIntervalsConfig = timewindowFormValue.realtime.advancedParams.quickAggIntervalsConfig;
     } else {
       delete this.timewindow.realtime.advancedParams.quickAggIntervalsConfig;
     }
 
-    if (historyConfigurableLastIntervalsAvailable && timewindowFormValue.history.advancedParams.allowedLastIntervals?.length) {
-      this.timewindow.history.advancedParams.allowedLastIntervals = timewindowFormValue.history.advancedParams.allowedLastIntervals;
-    } else {
+    if (!historyConfigurableLastIntervalsAvailable) {
       delete this.timewindow.history.advancedParams.allowedLastIntervals;
     }
-    if (historyConfigurableQuickIntervalsAvailable && timewindowFormValue.history.advancedParams.allowedQuickIntervals?.length) {
-      this.timewindow.history.advancedParams.allowedQuickIntervals = timewindowFormValue.history.advancedParams.allowedQuickIntervals;
-    } else {
+    if (!historyConfigurableQuickIntervalsAvailable) {
       delete this.timewindow.history.advancedParams.allowedQuickIntervals;
     }
-    if (historyConfigurableLastIntervalsAvailable && isObject(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig) &&
-      Object.keys(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig).length) {
+    if (historyConfigurableLastIntervalsAvailable && !isEmpty(timewindowFormValue.history.advancedParams.lastAggIntervalsConfig)) {
       this.timewindow.history.advancedParams.lastAggIntervalsConfig = timewindowFormValue.history.advancedParams.lastAggIntervalsConfig;
     } else {
       delete this.timewindow.history.advancedParams.lastAggIntervalsConfig;
     }
-    if (historyConfigurableQuickIntervalsAvailable && isObject(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig) &&
-      Object.keys(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig).length) {
+    if (historyConfigurableQuickIntervalsAvailable && !isEmpty(timewindowFormValue.history.advancedParams.quickAggIntervalsConfig)) {
       this.timewindow.history.advancedParams.quickAggIntervalsConfig = timewindowFormValue.history.advancedParams.quickAggIntervalsConfig;
     } else {
       delete this.timewindow.history.advancedParams.quickAggIntervalsConfig;
     }
 
-    if (!Object.keys(this.timewindow.realtime.advancedParams).length) {
-      delete this.timewindow.realtime.advancedParams;
-    }
-    if (!Object.keys(this.timewindow.history.advancedParams).length) {
-      delete this.timewindow.history.advancedParams;
-    }
-
-    if (timewindowFormValue.allowedAggTypes?.length && !timewindowFormValue.hideAggregation) {
-      this.timewindow.allowedAggTypes = timewindowFormValue.allowedAggTypes;
-    } else {
+    if (timewindowFormValue.hideAggregation) {
       delete this.timewindow.allowedAggTypes;
-    }
-
-    if (!this.timewindow.realtime.disableCustomInterval) {
-      delete this.timewindow.realtime.disableCustomInterval;
-    }
-    if (!this.timewindow.realtime.disableCustomGroupInterval) {
-      delete this.timewindow.realtime.disableCustomGroupInterval;
-    }
-    if (!this.timewindow.history.disableCustomInterval) {
-      delete this.timewindow.history.disableCustomInterval;
-    }
-    if (!this.timewindow.history.disableCustomGroupInterval) {
-      delete this.timewindow.history.disableCustomGroupInterval;
     }
 
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }
-    this.dialogRef.close(this.timewindow);
+
+    deleteFalseProperties(this.timewindow);
+    this.dialogRef.close(deepClean(this.timewindow));
   }
 
   cancel() {

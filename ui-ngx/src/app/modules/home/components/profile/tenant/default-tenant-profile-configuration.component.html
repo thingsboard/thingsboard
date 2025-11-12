@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section [formGroup]="defaultTenantProfileConfigurationFormGroup" class="flex flex-col">
+<section [formGroup]="tenantProfileConfigurationForm" class="flex flex-col">
   <fieldset class="fields-group">
     <legend class="group-title">
       {{ 'tenant-profile.entities' | translate }} <span translate>tenant-profile.unlimited</span>
@@ -26,10 +26,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxDevices"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDevices').hasError('required')">
           {{ 'tenant-profile.maximum-devices-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDevices').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDevices').hasError('min')">
           {{ 'tenant-profile.maximum-devices-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -39,10 +39,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxDashboards"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDashboards').hasError('required')">
           {{ 'tenant-profile.maximum-dashboards-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDashboards').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDashboards').hasError('min')">
           {{ 'tenant-profile.maximum-dashboards-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -54,10 +54,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxAssets"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxAssets').hasError('required')">
           {{ 'tenant-profile.maximum-assets-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxAssets').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxAssets').hasError('min')">
           {{ 'tenant-profile.maximum-assets-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -67,10 +67,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxUsers"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxUsers').hasError('required')">
           {{ 'tenant-profile.maximum-users-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxUsers').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxUsers').hasError('min')">
           {{ 'tenant-profile.maximum-users-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -89,10 +89,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxCustomers"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxCustomers').hasError('required')">
               {{ 'tenant-profile.maximum-customers-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCustomers').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxCustomers').hasError('min')">
               {{ 'tenant-profile.maximum-customers-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -102,10 +102,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxRuleChains"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRuleChains').hasError('required')">
               {{ 'tenant-profile.maximum-rule-chains-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleChains').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRuleChains').hasError('min')">
               {{ 'tenant-profile.maximum-rule-chains-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -117,10 +117,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxEdges"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEdges').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxEdges').hasError('required')">
               {{ 'tenant-profile.maximum-edges-required' | translate }}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEdges').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxEdges').hasError('min')">
               {{ 'tenant-profile.maximum-edges-range' | translate }}
             </mat-error>
             <mat-hint></mat-hint>
@@ -141,10 +141,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxREExecutions"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxREExecutions').hasError('required')">
           {{ 'tenant-profile.max-r-e-executions-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxREExecutions').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxREExecutions').hasError('min')">
           {{ 'tenant-profile.max-r-e-executions-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -154,10 +154,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxTransportMessages"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxTransportMessages').hasError('required')">
           {{ 'tenant-profile.max-transport-messages-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportMessages').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxTransportMessages').hasError('min')">
           {{ 'tenant-profile.max-transport-messages-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -176,10 +176,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxJSExecutions"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxJSExecutions').hasError('required')">
               {{ 'tenant-profile.max-j-s-executions-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxJSExecutions').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxJSExecutions').hasError('min')">
               {{ 'tenant-profile.max-j-s-executions-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -189,10 +189,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxTbelExecutions"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTbelExecutions').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxTbelExecutions').hasError('required')">
               {{ 'tenant-profile.max-tbel-executions-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTbelExecutions').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxTbelExecutions').hasError('min')">
               {{ 'tenant-profile.max-tbel-executions-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -204,10 +204,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxRuleNodeExecutionsPerMessage"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('required')">
               {{ 'tenant-profile.max-rule-node-executions-per-message-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxRuleNodeExecutionsPerMessage').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRuleNodeExecutionsPerMessage').hasError('min')">
               {{ 'tenant-profile.max-rule-node-executions-per-message-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -217,10 +217,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxTransportDataPoints"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxTransportDataPoints').hasError('required')">
               {{ 'tenant-profile.max-transport-data-points-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxTransportDataPoints').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxTransportDataPoints').hasError('min')">
               {{ 'tenant-profile.max-transport-data-points-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -239,10 +239,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxCalculatedFieldsPerEntity"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCalculatedFieldsPerEntity').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxCalculatedFieldsPerEntity').hasError('required')">
           {{ 'tenant-profile.max-calculated-fields-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCalculatedFieldsPerEntity').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxCalculatedFieldsPerEntity').hasError('min')">
           {{ 'tenant-profile.max-calculated-fields-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -252,10 +252,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxDataPointsPerRollingArg"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDataPointsPerRollingArg').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDataPointsPerRollingArg').hasError('required')">
           {{ 'tenant-profile.max-data-points-per-rolling-arg-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDataPointsPerRollingArg').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDataPointsPerRollingArg').hasError('min')">
           {{ 'tenant-profile.max-data-points-per-rolling-arg-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -267,10 +267,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxArgumentsPerCF"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxArgumentsPerCF').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxArgumentsPerCF').hasError('required')">
           {{ 'tenant-profile.max-arguments-per-cf-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxArgumentsPerCF').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxArgumentsPerCF').hasError('min')">
           {{ 'tenant-profile.max-arguments-per-cf-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -290,10 +290,10 @@
             <input matInput required min="0" step="1"
                    formControlName="maxStateSizeInKBytes"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxStateSizeInKBytes').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxStateSizeInKBytes').hasError('required')">
               {{ 'tenant-profile.max-state-size-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxStateSizeInKBytes').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxStateSizeInKBytes').hasError('min')">
               {{ 'tenant-profile.max-state-size-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
@@ -303,11 +303,67 @@
             <input matInput required min="0" step="1"
                    formControlName="maxSingleValueArgumentSizeInKBytes"
                    type="number">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSingleValueArgumentSizeInKBytes').hasError('required')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxSingleValueArgumentSizeInKBytes').hasError('required')">
               {{ 'tenant-profile.max-value-argument-size-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSingleValueArgumentSizeInKBytes').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxSingleValueArgumentSizeInKBytes').hasError('min')">
               {{ 'tenant-profile.max-value-argument-size-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.max-related-level-per-argument</mat-label>
+            <input matInput required min="1" step="1"
+                   formControlName="maxRelationLevelPerCfArgument"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelationLevelPerCfArgument').hasError('required')">
+              {{ 'tenant-profile.max-related-level-per-argument-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelationLevelPerCfArgument').hasError('min')">
+              {{ 'tenant-profile.max-related-level-per-argument-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.min-allowed-scheduled-update-interval</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="minAllowedScheduledUpdateIntervalInSecForCF"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedScheduledUpdateIntervalInSecForCF').hasError('required')">
+              {{ 'tenant-profile.min-allowed-scheduled-update-interval-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedScheduledUpdateIntervalInSecForCF').hasError('min')">
+              {{ 'tenant-profile.min-allowed-scheduled-update-interval-range' | translate}}
+            </mat-error>
+            <mat-hint></mat-hint>
+          </mat-form-field>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.relation-search-entity-limit</mat-label>
+            <input matInput required min="1" step="1"
+                   formControlName="maxRelatedEntitiesToReturnPerCfArgument"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('required')">
+              {{ 'tenant-profile.relation-search-entity-limit-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('min')">
+              {{ 'tenant-profile.relation-search-entity-limit-range' | translate}}
+            </mat-error>
+            <mat-hint translate>tenant-profile.relation-search-entity-limit-hint</mat-hint>
+          </mat-form-field>
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.min-allowed-deduplication-interval</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="minAllowedDeduplicationIntervalInSecForCF"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedDeduplicationIntervalInSecForCF').hasError('required')">
+              {{ 'tenant-profile.min-allowed-deduplication-interval-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedDeduplicationIntervalInSecForCF').hasError('min')">
+              {{ 'tenant-profile.min-allowed-deduplication-interval-range' | translate}}
             </mat-error>
             <mat-hint></mat-hint>
           </mat-form-field>
@@ -326,10 +382,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxDPStorageDays"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDPStorageDays').hasError('required')">
           {{ 'tenant-profile.max-d-p-storage-days-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDPStorageDays').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDPStorageDays').hasError('min')">
           {{ 'tenant-profile.max-d-p-storage-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -339,10 +395,10 @@
         <input matInput required min="0" step="1"
                formControlName="alarmsTtlDays"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('alarmsTtlDays').hasError('required')">
           {{ 'tenant-profile.alarms-ttl-days-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('alarmsTtlDays').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('alarmsTtlDays').hasError('min')">
           {{ 'tenant-profile.alarms-ttl-days-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -354,10 +410,10 @@
         <input matInput required min="0" step="1"
                formControlName="defaultStorageTtlDays"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('defaultStorageTtlDays').hasError('required')">
           {{ 'tenant-profile.default-storage-ttl-days-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('defaultStorageTtlDays').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('defaultStorageTtlDays').hasError('min')">
           {{ 'tenant-profile.default-storage-ttl-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -367,10 +423,10 @@
         <input matInput required min="0" step="1"
                formControlName="rpcTtlDays"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('rpcTtlDays').hasError('required')">
           {{ 'tenant-profile.rpc-ttl-days-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('rpcTtlDays').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('rpcTtlDays').hasError('min')">
           {{ 'tenant-profile.rpc-ttl-days-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -382,10 +438,10 @@
         <input matInput required min="0" step="1"
                formControlName="queueStatsTtlDays"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('queueStatsTtlDays').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('queueStatsTtlDays').hasError('required')">
           {{ 'tenant-profile.queue-stats-ttl-days-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('queueStatsTtlDays').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('queueStatsTtlDays').hasError('min')">
           {{ 'tenant-profile.queue-stats-ttl-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -395,10 +451,10 @@
         <input matInput required min="0" step="1"
                formControlName="ruleEngineExceptionsTtlDays"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('ruleEngineExceptionsTtlDays').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('ruleEngineExceptionsTtlDays').hasError('required')">
           {{ 'tenant-profile.rule-engine-exceptions-ttl-days-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('ruleEngineExceptionsTtlDays').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('ruleEngineExceptionsTtlDays').hasError('min')">
           {{ 'tenant-profile.rule-engine-exceptions-ttl-days-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -413,16 +469,16 @@
     <mat-slide-toggle class="slide-toggle-element flex-1" formControlName="smsEnabled">
       {{ 'tenant-profile.sms-enabled' | translate }}
     </mat-slide-toggle>
-    <mat-form-field *ngIf="defaultTenantProfileConfigurationFormGroup.get('smsEnabled').value" class="mat-block flex-1"
+    <mat-form-field *ngIf="tenantProfileConfigurationForm.get('smsEnabled').value" class="mat-block flex-1"
                     appearance="fill" subscriptSizing="dynamic">
       <mat-label translate>tenant-profile.max-sms</mat-label>
       <input matInput required min="0" step="1"
              formControlName="maxSms"
              type="number">
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('required')">
+      <mat-error *ngIf="tenantProfileConfigurationForm.get('maxSms').hasError('required')">
         {{ 'tenant-profile.max-sms-required' | translate}}
       </mat-error>
-      <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxSms').hasError('min')">
+      <mat-error *ngIf="tenantProfileConfigurationForm.get('maxSms').hasError('min')">
         {{ 'tenant-profile.max-sms-range' | translate}}
       </mat-error>
     </mat-form-field>
@@ -432,10 +488,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxEmails"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEmails').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxEmails').hasError('required')">
           {{ 'tenant-profile.max-emails-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxEmails').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxEmails').hasError('min')">
           {{ 'tenant-profile.max-emails-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -445,10 +501,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxCreatedAlarms"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxCreatedAlarms').hasError('required')">
           {{ 'tenant-profile.max-created-alarms-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxCreatedAlarms').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxCreatedAlarms').hasError('min')">
           {{ 'tenant-profile.max-created-alarms-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -466,7 +522,7 @@
         <input matInput min="0" step="1"
                formControlName="maxDebugModeDurationMinutes"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxDebugModeDurationMinutes').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxDebugModeDurationMinutes').hasError('min')">
           {{ 'tenant-profile.maximum-debug-duration-min-range' | translate }}
         </mat-error>
         <mat-hint></mat-hint>
@@ -485,10 +541,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxResourcesInBytes"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxResourcesInBytes').hasError('required')">
           {{ 'tenant-profile.maximum-resources-sum-data-size-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourcesInBytes').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxResourcesInBytes').hasError('min')">
           {{ 'tenant-profile.maximum-resources-sum-data-size-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -498,10 +554,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxOtaPackagesInBytes"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxOtaPackagesInBytes').hasError('required')">
           {{ 'tenant-profile.maximum-ota-package-sum-data-size-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxOtaPackagesInBytes').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxOtaPackagesInBytes').hasError('min')">
           {{ 'tenant-profile.maximum-ota-package-sum-data-size-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -513,10 +569,10 @@
         <input matInput required min="0" step="1"
                formControlName="maxResourceSize"
                type="number">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourceSize').hasError('required')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxResourceSize').hasError('required')">
           {{ 'tenant-profile.maximum-resource-size-required' | translate}}
         </mat-error>
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxResourceSize').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxResourceSize').hasError('min')">
           {{ 'tenant-profile.maximum-resource-size-range' | translate}}
         </mat-error>
         <mat-hint></mat-hint>
@@ -533,14 +589,14 @@
       <mat-form-field class="mat-block flex-1" appearance="fill">
         <mat-label translate>tenant-profile.ws-limit-max-sessions-per-tenant</mat-label>
         <input matInput type="number" formControlName="maxWsSessionsPerTenant">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerTenant').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSessionsPerTenant').hasError('min')">
           {{ 'tenant-profile.too-small-value-zero' | translate}}
         </mat-error>
       </mat-form-field>
       <mat-form-field class="mat-block flex-1" appearance="fill">
         <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-tenant</mat-label>
         <input matInput type="number" formControlName="maxWsSubscriptionsPerTenant">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerTenant').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSubscriptionsPerTenant').hasError('min')">
           {{ 'tenant-profile.too-small-value-zero' | translate}}
         </mat-error>
       </mat-form-field>
@@ -549,14 +605,14 @@
       <mat-form-field class="mat-block flex-1" appearance="fill">
         <mat-label translate>tenant-profile.ws-limit-max-sessions-per-customer</mat-label>
         <input matInput type="number" formControlName="maxWsSessionsPerCustomer">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerCustomer').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSessionsPerCustomer').hasError('min')">
           {{ 'tenant-profile.too-small-value-zero' | translate}}
         </mat-error>
       </mat-form-field>
       <mat-form-field class="mat-block flex-1" appearance="fill">
         <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-customer</mat-label>
         <input matInput type="number" formControlName="maxWsSubscriptionsPerCustomer">
-        <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerCustomer').hasError('min')">
+        <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSubscriptionsPerCustomer').hasError('min')">
           {{ 'tenant-profile.too-small-value-zero' | translate}}
         </mat-error>
       </mat-form-field>
@@ -572,14 +628,14 @@
           <mat-form-field class="mat-block flex-1" appearance="fill">
             <mat-label translate>tenant-profile.ws-limit-max-sessions-per-public-user</mat-label>
             <input matInput type="number" formControlName="maxWsSessionsPerPublicUser">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerPublicUser').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSessionsPerPublicUser').hasError('min')">
               {{ 'tenant-profile.too-small-value-zero' | translate}}
             </mat-error>
           </mat-form-field>
           <mat-form-field class="mat-block flex-1" appearance="fill">
             <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-public-user</mat-label>
             <input matInput type="number" formControlName="maxWsSubscriptionsPerPublicUser">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerPublicUser').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSubscriptionsPerPublicUser').hasError('min')">
               {{ 'tenant-profile.too-small-value-zero' | translate}}
             </mat-error>
           </mat-form-field>
@@ -588,14 +644,14 @@
           <mat-form-field class="mat-block flex-1" appearance="fill">
             <mat-label translate>tenant-profile.ws-limit-max-sessions-per-regular-user</mat-label>
             <input matInput type="number" formControlName="maxWsSessionsPerRegularUser">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSessionsPerRegularUser').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSessionsPerRegularUser').hasError('min')">
               {{ 'tenant-profile.too-small-value-zero' | translate}}
             </mat-error>
           </mat-form-field>
           <mat-form-field class="mat-block flex-1" appearance="fill">
             <mat-label translate>tenant-profile.ws-limit-max-subscriptions-per-regular-user</mat-label>
             <input matInput type="number" formControlName="maxWsSubscriptionsPerRegularUser">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('maxWsSubscriptionsPerRegularUser').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxWsSubscriptionsPerRegularUser').hasError('min')">
               {{ 'tenant-profile.too-small-value-zero' | translate}}
             </mat-error>
           </mat-form-field>
@@ -604,7 +660,7 @@
           <mat-form-field class="mat-block flex-1" appearance="fill">
             <mat-label translate>tenant-profile.ws-limit-queue-per-session</mat-label>
             <input matInput type="number" formControlName="wsMsgQueueLimitPerSession">
-            <mat-error *ngIf="defaultTenantProfileConfigurationFormGroup.get('wsMsgQueueLimitPerSession').hasError('min')">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('wsMsgQueueLimitPerSession').hasError('min')">
               {{ 'tenant-profile.too-small-value-one' | translate}}
             </mat-error>
             <mat-hint>
