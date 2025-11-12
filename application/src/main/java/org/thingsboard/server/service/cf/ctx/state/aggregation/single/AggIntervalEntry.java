@@ -29,4 +29,8 @@ public class AggIntervalEntry {
         return ts >= startTs && ts < endTs;
     }
 
+    public long getIntervalDuration() {
+        return endTs - startTs;
+    }
+
 }

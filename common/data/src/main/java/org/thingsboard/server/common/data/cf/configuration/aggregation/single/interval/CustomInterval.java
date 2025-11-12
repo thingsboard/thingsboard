@@ -20,9 +20,8 @@ import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
 import java.time.Duration;
-import java.time.ZoneId;
+import java.time.Instant;
 import java.time.ZonedDateTime;
-import java.util.concurrent.TimeUnit;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -31,9 +30,8 @@ public class CustomInterval extends BaseAggInterval {
 
     private Long durationSec;
 
-    public CustomInterval(Long durationSec, Long offsetMillis, String tz) {
-        this.tz = tz;
-        this.offsetSec = offsetMillis;
+    public CustomInterval(String tz, Long offsetSec, Long durationSec) {
+        super(tz, offsetSec);
         this.durationSec = durationSec;
     }
 
@@ -43,32 +41,26 @@ public class CustomInterval extends BaseAggInterval {
     }
 
     @Override
-    public long getIntervalDurationMillis() {
+    public long getCurrentIntervalDurationMillis() {
+        return getDurationMillis();
+    }
+
+    private long getDurationMillis() {
         return Duration.ofSeconds(durationSec).toMillis();
     }
 
     @Override
-    public long getCurrentIntervalStartTs() {
-        ZoneId zoneId = ZoneId.of(tz);
-        ZonedDateTime now = ZonedDateTime.now(zoneId);
-        ZonedDateTime shiftedNow = now.minusSeconds(getOffsetSec());
-
-        long durationMillis = getIntervalDurationMillis();
-        long shiftedNowMillis = shiftedNow.toInstant().toEpochMilli();
-        long alignedStartMillis = (shiftedNowMillis / durationMillis) * durationMillis;
-
-        long offsetMillis = TimeUnit.SECONDS.toMillis(getOffsetSec());
-        return alignedStartMillis + offsetMillis;
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        long durationMillis = getDurationMillis();
+        long nowMillis = reference.toInstant().toEpochMilli();
+        long alignedStartMillis = (nowMillis / durationMillis) * durationMillis;
+        ZonedDateTime aligned = Instant.ofEpochMilli(alignedStartMillis).atZone(getZoneId());
+        return next ? aligned.plusSeconds(durationSec) : aligned;
     }
 
     @Override
-    public long getCurrentIntervalEndTs() {
-        return getCurrentIntervalStartTs() + getIntervalDurationMillis();
-    }
-
-    @Override
-    public long getDelayUntilIntervalEnd() {
-        return getCurrentIntervalEndTs() - System.currentTimeMillis();
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusSeconds(durationSec);
     }
 
 }

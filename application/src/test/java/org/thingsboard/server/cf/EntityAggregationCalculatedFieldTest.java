@@ -95,7 +95,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     public void testCreateCf_checkAggregation() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval(30L, 0L, "Europe/Kyiv");
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 30L, 0L);
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
         long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
@@ -108,7 +108,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
-        long interval = customInterval.getIntervalDurationMillis();
+        long interval = customInterval.getCurrentIntervalDurationMillis();
         Watermark watermark = new Watermark(60);
         CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, watermark);
 
@@ -126,7 +126,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     public void testCreateCf_checkAggregationDuringWatermark() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval(30L, 0L, "Europe/Kyiv");
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 30L, 0L);
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
         long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
@@ -139,7 +139,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
-        long interval = customInterval.getIntervalDurationMillis();
+        long interval = customInterval.getCurrentIntervalDurationMillis();
         Watermark watermark = new Watermark(60);
         CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, watermark);
 

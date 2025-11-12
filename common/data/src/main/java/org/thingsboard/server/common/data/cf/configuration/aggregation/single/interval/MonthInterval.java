@@ -18,6 +18,9 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
 @Data
 @NoArgsConstructor
 public class MonthInterval extends BaseAggInterval {
@@ -25,6 +28,21 @@ public class MonthInterval extends BaseAggInterval {
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.MONTH;
+    }
+
+    public MonthInterval(String tz, Long offsetSec) {
+        super(tz, offsetSec);
+    }
+
+    @Override
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        ZonedDateTime base = reference.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
+        return next ? base.plusMonths(1) : base;
+    }
+
+    @Override
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusMonths(1);
     }
 
 }

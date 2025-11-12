@@ -16,15 +16,35 @@
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
+@EqualsAndHashCode(callSuper = true)
 @Data
 @NoArgsConstructor
 public class HourInterval extends BaseAggInterval {
 
+    public HourInterval(String tz, Long offsetSec) {
+        super(tz, offsetSec);
+    }
+
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.HOUR;
+    }
+
+    @Override
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        ZonedDateTime base = reference.truncatedTo(ChronoUnit.HOURS);
+        return next ? base.plusHours(1) : base;
+    }
+
+    @Override
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusHours(1);
     }
 
 }

@@ -18,6 +18,10 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+
 @Data
 @NoArgsConstructor
 public class QuarterInterval extends BaseAggInterval {
@@ -25,6 +29,26 @@ public class QuarterInterval extends BaseAggInterval {
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.QUARTER;
+    }
+
+    public QuarterInterval(String tz, Long offsetSec) {
+        super(tz, offsetSec);
+    }
+
+    @Override
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        int month = reference.getMonthValue();
+        int quarterStartMonth = ((month - 1) / 3) * 3 + 1; // 1, 4, 7, 10
+        ZonedDateTime base = ZonedDateTime.of(
+                LocalDate.of(reference.getYear(), quarterStartMonth, 1),
+                LocalTime.MIDNIGHT,
+                reference.getZone());
+        return next ? base.plusMonths(3) : base;
+    }
+
+    @Override
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusMonths(3);
     }
 
 }

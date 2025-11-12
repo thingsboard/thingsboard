@@ -18,6 +18,9 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+
 @Data
 @NoArgsConstructor
 public class DayInterval extends BaseAggInterval {
@@ -25,6 +28,21 @@ public class DayInterval extends BaseAggInterval {
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.DAY;
+    }
+
+    public DayInterval(String tz, Long offsetSec) {
+        super(tz, offsetSec);
+    }
+
+    @Override
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        ZonedDateTime base = reference.truncatedTo(ChronoUnit.DAYS);
+        return next ? base.plusDays(1) : base;
+    }
+
+    @Override
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusDays(1);
     }
 
 }

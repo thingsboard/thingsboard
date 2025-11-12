@@ -18,6 +18,10 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZonedDateTime;
+
 @Data
 @NoArgsConstructor
 public class YearInterval extends BaseAggInterval {
@@ -25,6 +29,24 @@ public class YearInterval extends BaseAggInterval {
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.YEAR;
+    }
+
+    public YearInterval(String tz, Long offsetSec) {
+        super(tz, offsetSec);
+    }
+
+    @Override
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        ZonedDateTime base = ZonedDateTime.of(
+                LocalDate.of(reference.getYear(), 1, 1),
+                LocalTime.MIDNIGHT,
+                reference.getZone());
+        return next ? base.plusYears(1) : base;
+    }
+
+    @Override
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusYears(1);
     }
 
 }

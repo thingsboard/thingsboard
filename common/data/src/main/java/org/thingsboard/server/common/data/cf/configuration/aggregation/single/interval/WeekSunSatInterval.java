@@ -18,6 +18,11 @@ package org.thingsboard.server.common.data.cf.configuration.aggregation.single.i
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.DayOfWeek;
+import java.time.ZonedDateTime;
+import java.time.temporal.ChronoUnit;
+import java.time.temporal.TemporalAdjusters;
+
 @Data
 @NoArgsConstructor
 public class WeekSunSatInterval extends BaseAggInterval {
@@ -25,6 +30,22 @@ public class WeekSunSatInterval extends BaseAggInterval {
     @Override
     public AggIntervalType getType() {
         return AggIntervalType.WEEK_SUN_SAT;
+    }
+
+    public WeekSunSatInterval(String tz, Long offsetSec) {
+        super(tz, offsetSec);
+    }
+
+    @Override
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        ZonedDateTime startOfWeekDate = reference.with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
+                .truncatedTo(ChronoUnit.DAYS);
+        return next ? startOfWeekDate.plusWeeks(1) : startOfWeekDate;
+    }
+
+    @Override
+    public ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart) {
+        return currentStart.plusWeeks(1);
     }
 
 }

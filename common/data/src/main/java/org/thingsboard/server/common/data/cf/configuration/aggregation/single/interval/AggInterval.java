@@ -20,6 +20,9 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -42,15 +45,21 @@ public interface AggInterval {
     AggIntervalType getType();
 
     @JsonIgnore
-    long getIntervalDurationMillis();
+    ZoneId getZoneId();
+
+    @JsonIgnore
+    long getCurrentIntervalDurationMillis();
 
     @JsonIgnore
     long getCurrentIntervalStartTs();
 
+    long getDateTimeIntervalStartTs(ZonedDateTime dateTime);
+
     @JsonIgnore
     long getCurrentIntervalEndTs();
 
-    @JsonIgnore
-    long getDelayUntilIntervalEnd();
+    long getDateTimeIntervalEndTs(ZonedDateTime dateTime);
+
+    ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart);
 
 }

@@ -37,6 +37,9 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -49,7 +52,6 @@ import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDe
 public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
     private AggInterval interval;
-    private long intervalDuration;
     private long watermarkDuration;
     private long checkInterval;
     private Map<String, AggMetric> metrics;
@@ -65,7 +67,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         super.setCtx(ctx, actorCtx);
         this.cfProcessingService = ctx.getCfProcessingService();
         var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        intervalDuration = configuration.getInterval().getIntervalDurationMillis();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
         checkInterval = TimeUnit.SECONDS.toMillis(ctx.getCfCheckInterval());
@@ -127,18 +128,21 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     public void fillMissingIntervals() {
+        ZoneId zoneId = interval.getZoneId();
         long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
-        long intervalDuration = interval.getIntervalDurationMillis();
+
         Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
         AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
         if (lastIntervalEntry == null) {
             return;
         }
 
-        long nextStartTs = lastIntervalEntry.getEndTs();
-        long nextEndTs = nextStartTs + intervalDuration;
+        ZonedDateTime nextStart = Instant.ofEpochMilli(lastIntervalEntry.getEndTs()).atZone(zoneId);
+        ZonedDateTime nextEnd = interval.getNextIntervalStart(nextStart);
 
-        while (nextEndTs <= currentIntervalEndTs) {
+        while (nextEnd.toInstant().toEpochMilli() <= currentIntervalEndTs) {
+            long nextStartTs = nextStart.toInstant().toEpochMilli();
+            long nextEndTs = nextEnd.toInstant().toEpochMilli();
             AggIntervalEntry missing = new AggIntervalEntry(nextStartTs, nextEndTs);
 
             arguments.forEach((argName, argumentEntry) -> {
@@ -147,8 +151,8 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 entityAggEntry.getAggIntervals().computeIfAbsent(missing, missingInterval -> intervalEntryStatus);
             });
 
-            nextStartTs = nextEndTs;
-            nextEndTs += intervalDuration;
+            nextStart = nextEnd;
+            nextEnd = interval.getNextIntervalStart(nextStart);
         }
     }
 
@@ -174,7 +178,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         if (now - endTs > watermarkDuration) {
             handleExpiredInterval(intervalEntry, args, results);
             expiredIntervals.add(intervalEntry);
-        } else if (now - startTs >= intervalDuration) {
+        } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
             handleActiveInterval(intervalEntry, args, results);
         }
     }
