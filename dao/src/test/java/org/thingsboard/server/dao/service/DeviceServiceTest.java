@@ -83,6 +83,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
@@ -156,7 +157,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testDeviceLimitOnTenantProfileLevel() {
+    public void testDeviceLimitOnTenantProfileLevel() throws InterruptedException {
         TenantProfile defaultTenantProfile = tenantProfileService.findDefaultTenantProfile(tenantId);
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
@@ -175,6 +176,9 @@ public class DeviceServiceTest extends AbstractServiceTest {
             long countByTenantId = deviceService.countByTenantId(tenantId);
             return countByTenantId == 5;
         });
+
+        Thread.sleep(2000);
+        assertThat(deviceService.countByTenantId(tenantId)).isEqualTo(5);
     }
 
     @Test

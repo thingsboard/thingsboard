@@ -70,6 +70,7 @@ import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -134,7 +135,7 @@ public class AssetServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testAssetLimitOnTenantProfileLevel() {
+    public void testAssetLimitOnTenantProfileLevel() throws InterruptedException {
         TenantProfile tenantProfile = new TenantProfile();
         tenantProfile.setName("Test profile");
         tenantProfile.setDescription("Test");
@@ -161,6 +162,9 @@ public class AssetServiceTest extends AbstractServiceTest {
             long countByTenantId = assetService.countByTenantId(anotherTenantId);
             return countByTenantId == 5;
         });
+
+        Thread.sleep(2000);
+        assertThat(assetService.countByTenantId(anotherTenantId)).isEqualTo(5);
     }
 
     @Test
