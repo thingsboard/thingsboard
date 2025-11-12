@@ -38,7 +38,7 @@ import {
 import { filter, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AVG_MONTH, AVG_QUARTER, DAY, HOUR, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
-import { isDefinedAndNotNull } from '@core/utils';
+import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -156,7 +156,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     this.entityAggregationConfiguration.valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((value: CalculatedFieldEntityAggregationConfigurationValue) => {
-      this.updatedModel(value);
+      this.updatedModel(deepClone(value));
     });
   }
 
