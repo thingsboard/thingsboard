@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.core.converter.AnnotatedType;
 import io.swagger.v3.core.converter.ModelConverter;
 import io.swagger.v3.core.converter.ModelConverters;
+import io.swagger.v3.core.jackson.ModelResolver;
 import io.swagger.v3.core.util.Json;
 import io.swagger.v3.oas.models.Components;
 import io.swagger.v3.oas.models.OpenAPI;
@@ -30,9 +31,7 @@ import io.swagger.v3.oas.models.examples.Example;
 import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.info.License;
-import io.swagger.v3.oas.models.media.Content;
-import io.swagger.v3.oas.models.media.MediaType;
-import io.swagger.v3.oas.models.media.Schema;
+import io.swagger.v3.oas.models.media.*;
 import io.swagger.v3.oas.models.parameters.RequestBody;
 import io.swagger.v3.oas.models.responses.ApiResponse;
 import io.swagger.v3.oas.models.responses.ApiResponses;
@@ -65,23 +64,19 @@ import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.TreeMap;
-
+import java.util.*;
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
+import static org.thingsboard.server.config.TbSwaggerModelConverter.*;
 
 @Slf4j
 @Configuration
 @ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${springdoc.api-docs.enabled:true}'=='true'")
 @Profile("!test")
 public class SwaggerConfiguration {
+    /// Force Jackson to generate enums as separate schema objects in Swagger
+    static {
+        io.swagger.v3.core.jackson.ModelResolver.enumsAsRef = true;
+    }
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
     public static final String REFRESH_TOKEN_ENDPOINT = "/api/auth/token";
@@ -242,35 +237,15 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
-                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
+                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer)) // TODO: this should be removed!!! It breaks generation of clients from swagger schema
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();
     }
 
     @Bean
-    @Lazy(false)
     ModelConverter mapAwareConverter() {
-        return (type, context, chain) -> {
-            if (chain.hasNext()) {
-                Schema schema = chain.next().resolve(type, context, chain);
-                JavaType javaType = Json.mapper().constructType(type.getType());
-                if (javaType != null) {
-                    Class<?> cls = javaType.getRawClass();
-                    if (Map.class.isAssignableFrom(cls)) {
-                        if (schema != null && schema.getProperties() != null) {
-                            schema.getProperties().remove("empty");
-                            if (schema.getProperties().isEmpty()) {
-                                schema.setProperties(null);
-                            }
-                        }
-                    }
-                }
-                return schema;
-            } else {
-                return null;
-            }
-        };
+        return new TbSwaggerModelConverter();
     }
 
     private void addDefaultSchemas(OpenAPI openAPI) {
@@ -285,6 +260,23 @@ public class SwaggerConfiguration {
                 .addSchemas("LoginResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(LoginResponse.class)).schema)
                 .addSchemas("ThingsboardErrorResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardErrorResponse.class)).schema)
                 .addSchemas("ThingsboardCredentialsExpiredResponse", ModelConverters.getInstance().readAllAsResolvedSchema(new AnnotatedType().type(ThingsboardCredentialsExpiredResponse.class)).schema);
+        registerEnumSchemas(openAPI);
+    }
+
+    private void registerEnumSchemas(OpenAPI openAPI) {
+        Schema<Integer> errorCodeSchema = new Schema<Integer>();
+
+               errorCodeSchema .setDescription("Thingsboard error codes");
+               errorCodeSchema.setType("integer");
+               errorCodeSchema.setFormat("int32");
+                errorCodeSchema.setEnum(Arrays.stream(ThingsboardErrorCode.values()).map(ThingsboardErrorCode::getErrorCode).toList());
+        openAPI.getComponents().addSchemas("ThingsboardErrorCode", errorCodeSchema);
+//        Schema<?> scriptLangSchema = new Schema<>()
+//                .description("Script lang")
+//                .format("int32")
+//                .type("integer")
+//                ._enum(Arrays.stream(ScriptLanguage.values()).map(String::valueOf).toList());
+        //openAPI.getComponents().addSchemas("ScriptLang", scriptLangSchema);
     }
 
     private RouterOperationCustomizer routerOperationCustomizer(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
@@ -352,6 +344,11 @@ public class SwaggerConfiguration {
             });
             sortedPaths.setExtensions(paths.getExtensions());
             openAPI.setPaths(sortedPaths);
+
+            // Fix polymorphic type inlining - move oneOf from inlined fields to base schema, remove allOfs
+            fixPolymorphicSchemas(openAPI);
+            // Fix schema of requests(Query params, and Responses)
+            fixRequestSchemas(openAPI);
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
         };
