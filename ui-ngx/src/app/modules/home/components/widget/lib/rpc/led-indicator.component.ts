@@ -27,6 +27,7 @@ import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import Timeout = NodeJS.Timeout;
 import { Observable } from 'rxjs';
+import { tap } from "rxjs/operators";
 
 const checkStatusPollingInterval = 10000;
 
@@ -149,8 +150,12 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
   private init() {
     const settings: LedIndicatorSettings = this.ctx.settings;
     const settingsTitle = settings.title;
-    this.title$ = this.ctx.registerLabelPattern(settingsTitle,this.title$);
     this.showTitle = !!(settingsTitle && settingsTitle.length);
+    if(this.showTitle) {
+      this.title$ = this.ctx.registerLabelPattern(settingsTitle, this.title$).pipe(
+        tap(title => this.setFontSize(this.ledTitle, title, this.ledTitleContainer.height() * 2 / 3, this.ledTitleContainer.width()))
+      );
+    }
     const origColor = isDefined(settings.ledColor) ? settings.ledColor : 'green';
     this.valueAttribute = isDefined(settings.valueAttribute) ? settings.valueAttribute : 'value';
 
@@ -217,12 +222,6 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
     const size = Math.min(width, height);
 
     this.led.css({width: size, height: size});
-
-    if (this.showTitle) {
-      this.title$.subscribe(title => {
-        this.setFontSize(this.ledTitle, title, this.ledTitleContainer.height(), this.ledTitleContainer.width());
-      }).unsubscribe();    
-    }
     this.setFontSize(this.ledError, this.error, this.ledErrorContainer.height(), this.ledErrorContainer.width());
   }
 

@@ -35,6 +35,8 @@ import {
 import { UnitService } from '@core/services/unit.service';
 import { isNotEmptyTbUnits } from '@shared/models/unit.models';
 import GenericOptions = CanvasGauges.GenericOptions;
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
 
 // @dynamic
 export class TbCanvasDigitalGauge {
@@ -53,6 +55,11 @@ export class TbCanvasDigitalGauge {
 
     const dataKey = ctx.data[0].dataKey;
     const keyColor = settings.defaultColor || dataKey.color;
+
+    const settingsTitle = ((settings.showTitle === true) ?
+      (settings.title && settings.title.length > 0 ?
+        settings.title : dataKey.label) : '');
+    let title$: Observable<string>;
 
     this.localSettings.unitTitle = ((settings.showUnitTitle === true) ?
       (settings.unitTitle && settings.unitTitle.length > 0 ?
@@ -86,9 +93,6 @@ export class TbCanvasDigitalGauge {
     this.localSettings.donutStartAngle = isDefinedAndNotNull(settings.donutStartAngle) ?
       -TbCanvasDigitalGauge.toRadians(settings.donutStartAngle) : null;
 
-    this.localSettings.title = ((settings.showTitle === true) ?
-      (settings.title && settings.title.length > 0 ?
-        settings.title : dataKey.label) : '');
 
     if (!this.localSettings.unitTitle && this.localSettings.showTimestamp) {
       this.localSettings.unitTitle = ' ';
@@ -142,8 +146,6 @@ export class TbCanvasDigitalGauge {
       tickWidth: this.localSettings.tickWidth,
       ticks: this.localSettings.ticks,
 
-      title: this.localSettings.title,
-
       fontTitleSize: this.localSettings.titleFont.size,
       fontTitleStyle: this.localSettings.titleFont.style,
       fontTitleWeight: this.localSettings.titleFont.weight,
@@ -194,6 +196,13 @@ export class TbCanvasDigitalGauge {
 
       isMobile: ctx.isMobile
     };
+
+    this.ctx.registerLabelPattern(settingsTitle,title$).pipe(tap(
+      (title)=> {
+        gaugeData.title = title;
+        this.ctx.updateLabelPatterns();
+      }
+    )).subscribe();
 
     this.gauge = new CanvasDigitalGauge(gaugeData).draw();
     this.init();

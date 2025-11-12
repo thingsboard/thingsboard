@@ -26,6 +26,8 @@ import { TbUnit } from '@shared/models/unit.models';
 import { ValueFormatProcessor } from '@shared/models/widget-settings.models';
 import { UnitService } from '@core/services/unit.service';
 import { DataKey } from '@shared/models/widget.models';
+import { Observable } from "rxjs";
+import { tap } from "rxjs/operators";
 
 export type AnimationRule = 'linear' | 'quad' | 'quint' | 'cycle'
                             | 'bounce' | 'elastic' | 'dequad' | 'dequint'
@@ -146,6 +148,11 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
     const dataKey = this.ctx.data[0].dataKey;
     const keyColor = settings.defaultColor || dataKey.color;
 
+    const settingsTitle = ((settings.showUnitTitle !== false) ?
+      (settings.unitTitle && settings.unitTitle.length > 0 ?
+        settings.unitTitle : dataKey.label) : '');
+    let title$: Observable<string>;
+
     const majorTicksCount = settings.majorTicksCount || 10;
     const total = maxValue - minValue;
     let step = (total / majorTicksCount);
@@ -200,9 +207,6 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
       majorTicks,
       minorTicks: settings.minorTicks || 2,
       units: unitSymbols,
-      title: ((settings.showUnitTitle !== false) ?
-        (settings.unitTitle && settings.unitTitle.length > 0 ?
-          settings.unitTitle : dataKey.label) : ''),
 
       borders: settings.showBorder !== false,
       borderShadowWidth: (settings.showBorder !== false) ? 3 : 0,
@@ -271,6 +275,13 @@ export abstract class TbAnalogueGauge<S extends AnalogueGaugeSettings, O extends
       animationRule: settings.animationRule || 'cycle',
       animatedValue: true
     } as O;
+
+    this.ctx.registerLabelPattern(settingsTitle,title$).pipe(tap(
+      (title)=> {
+        gaugeData.title = title;
+        this.ctx.updateLabelPatterns();
+      }
+    )).subscribe();
 
     this.prepareGaugeOptions(settings, gaugeData);
     return gaugeData;

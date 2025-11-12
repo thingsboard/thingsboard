@@ -27,6 +27,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { MatSlideToggle } from '@angular/material/slide-toggle';
 import { ThemePalette } from '@angular/material/core';
 import { Observable } from 'rxjs';
+import { tap } from "rxjs/operators";
 
 const switchAspectRation = 2.7893;
 
@@ -155,8 +156,12 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
   private init() {
     const settings: SwitchSettings = this.ctx.settings;
     const settingsTitle = settings.title;
-    this.title$ = this.ctx.registerLabelPattern(settingsTitle,this.title$);
     this.showTitle = !!(settingsTitle && settingsTitle.length);
+    if (this.showTitle) {
+      this.title$ = this.ctx.registerLabelPattern(settingsTitle,this.title$).pipe(
+        tap(title => this.setFontSize(this.switchTitle, title, this.switchTitleContainer.height() * 2 / 3, this.switchTitleContainer.width()))
+      );
+    }
     this.showOnOffLabels = isDefined(settings.showOnOffLabels) ? settings.showOnOffLabels : true;
     this.labelPosition = isDefined(settings.labelPosition) ? settings.labelPosition : 'after';
     this.sliderColor = isDefined(settings.sliderColor) ? settings.sliderColor : 'accent';
@@ -240,12 +245,6 @@ export class SwitchComponent extends PageComponent implements AfterViewInit, OnD
     }
     this.switchElement.css({width, height});
     this.matSlideToggle.css({width, height, minWidth: width});
-
-    if (this.showTitle) {
-      this.title$.subscribe(title => {
-        this.setFontSize(this.switchTitle, title, this.switchTitleContainer.height() * 2 / 3, this.switchTitleContainer.width());
-      }).unsubscribe(); 
-    }
 
     if (this.showOnOffLabels) {
       this.onoffContainer.css({width, height: this.switchContainer.height() / 3});

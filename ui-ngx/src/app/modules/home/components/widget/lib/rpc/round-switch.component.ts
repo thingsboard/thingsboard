@@ -25,6 +25,7 @@ import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { Observable } from 'rxjs';
+import { tap } from "rxjs/operators";
 
 type RetrieveValueMethod = 'rpc' | 'attribute' | 'timeseries';
 
@@ -135,8 +136,12 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
   private init() {
     const settings: RoundSwitchSettings = this.ctx.settings;
     const settingsTitle = settings.title;
-    this.title$ = this.ctx.registerLabelPattern(settingsTitle,this.title$);
     this.showTitle = !!(settingsTitle && settingsTitle.length);
+    if(this.showTitle){
+      this.title$ = this.ctx.registerLabelPattern(settingsTitle,this.title$).pipe(
+        tap(title => this.setFontSize(this.switchTitle, title, this.switchTitleContainer.height() * 2 / 3, this.switchTitleContainer.width()))
+      );
+    }
     const initialValue = isDefined(settings.initialValue) ? settings.initialValue : false;
     this.setValue(initialValue);
 
@@ -215,11 +220,6 @@ export class RoundSwitchComponent extends PageComponent implements OnInit, OnDes
       '-o-transform': `scale(${scale})`,
       transform: `scale(${scale})`
     });
-    if (this.showTitle) {
-      this.title$.subscribe(title => {
-        this.setFontSize(this.switchTitle, title, this.switchTitleContainer.height() * 2 / 3, this.switchTitleContainer.width())
-      }).unsubscribe(); 
-    }
     this.setFontSize(this.switchError, this.error, this.switchErrorContainer.height(), this.switchErrorContainer.width());
   }
 
