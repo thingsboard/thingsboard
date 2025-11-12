@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.pat;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -52,6 +53,17 @@ public class ApiKeyInfo extends BaseData<ApiKeyId> implements HasTenantId {
 
     @Schema(description = "Enabled/disabled api key.", example = "true")
     private boolean enabled;
+
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    @Schema(description = "Indicates if the api key is expired based on current time. Returns false if expirationTime is 0 (no expiry).",
+            example = "false",
+            accessMode = Schema.AccessMode.READ_ONLY)
+    public boolean isExpired() {
+        if (expirationTime == 0) {
+            return false;
+        }
+        return System.currentTimeMillis() > expirationTime;
+    }
 
     @Schema(description = "JSON object with the Api Key Id. " +
             "Specify this field to update the Api Key. " +

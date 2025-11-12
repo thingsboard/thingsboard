@@ -136,26 +136,6 @@ public class ApiKeyController extends BaseController {
         return apiKeyService.saveApiKey(apiKey.getTenantId(), apiKey);
     }
 
-
-    @ApiOperation(value = "Check if API key is expired (isApiKeyExpired)",
-            notes = "Returns true if the API key is expired, false otherwise. " +
-                    "Referencing a non-existing ApiKey Id will cause a 'Not Found' error." +
-                    AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/apiKey/{id}/expired")
-    public boolean isApiKeyExpired(
-            @Parameter(description = API_KEY_ID_PARAM_DESCRIPTION, required = true)
-            @PathVariable UUID id) throws ThingsboardException {
-        ApiKeyId apiKeyId = new ApiKeyId(id);
-        ApiKey apiKey = checkApiKeyId(apiKeyId, Operation.READ);
-
-        if (apiKey.getExpirationTime() > 0) {
-            return System.currentTimeMillis() > apiKey.getExpirationTime();
-        }
-
-        return false;
-    }
-
     @ApiOperation(value = "Delete API key by ID (deleteApiKey)",
             notes = "Deletes the API key. Referencing non-existing ApiKey Id will cause an error." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
