@@ -15,14 +15,17 @@
  */
 package org.thingsboard.server.service.queue;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import com.google.common.util.concurrent.MoreExecutors;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.queue.processing.TbRuleEngineSubmitStrategy;
@@ -35,30 +38,241 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertTrue;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@Slf4j
-@RunWith(MockitoJUnitRunner.class)
-public class TbMsgPackProcessingContextTest {
+@ExtendWith(MockitoExtension.class)
+class TbMsgPackProcessingContextTest {
 
-    public static final int TIMEOUT = 10;
+    TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+
+    @Mock
+    TbRuleEngineSubmitStrategy submitStrategy;
+    @Mock
+    TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg> mockMsg;
+
+    ConcurrentMap<UUID, TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> pendingMap;
+
     ExecutorService executorService;
 
-    @After
-    public void tearDown() {
+    @BeforeEach
+    void setup() {
+        pendingMap = new ConcurrentHashMap<>();
+        lenient().when(submitStrategy.getPendingMap()).thenReturn(pendingMap);
+    }
+
+    @AfterEach
+    void tearDown() {
         if (executorService != null) {
-            executorService.shutdownNow();
+            MoreExecutors.shutdownAndAwaitTermination(executorService, 5, TimeUnit.SECONDS);
         }
     }
 
     @Test
-    public void testHighConcurrencyCase() throws InterruptedException {
-        //log.warn("preparing the test...");
+    void testAwait_shouldReturnTrue_whenOnSuccessIsCalledBeforeTimeout() throws InterruptedException {
+        // GIVEN - a context with one pending message
+        executorService = Executors.newSingleThreadExecutor();
+
+        UUID msgId = UUID.randomUUID();
+        pendingMap.put(msgId, mockMsg);
+        var context = new TbMsgPackProcessingContext("test-queue", submitStrategy, false);
+
+        // WHEN - onSuccess() is called in another thread before timeout
+        executorService.submit(() -> {
+            try {
+                Thread.sleep(100);
+                context.onSuccess(msgId);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // THEN - await() should return true (successful completion)
+        boolean result = context.await(5000, TimeUnit.MILLISECONDS);
+        assertThat(result).as("await() should return true when latch is counted down before timeout").isTrue();
+
+        // Verify the message was moved to success map
+        assertThat(context.getSuccessMap()).containsKey(msgId);
+        assertThat(context.getPendingMap()).isEmpty();
+        assertThat(context.getExceptionsMap()).isEmpty();
+
+
+        // Verify submit strategy was notified about successful message processing
+        then(submitStrategy).should().onSuccess(msgId);
+    }
+
+    @Test
+    void testAwait_shouldReturnTrue_whenOnFailureIsCalledBeforeTimeout() throws InterruptedException {
+        // GIVEN - a context with one pending message
+        executorService = Executors.newSingleThreadExecutor();
+
+        UUID msgId = UUID.randomUUID();
+        pendingMap.put(msgId, mockMsg);
+        var context = new TbMsgPackProcessingContext("test-queue", submitStrategy, false);
+
+        var exception = new RuleEngineException("Test exception");
+
+        // WHEN - onFailure() is called in another thread before timeout
+        executorService.submit(() -> {
+            try {
+                Thread.sleep(100);
+                context.onFailure(tenantId, msgId, exception);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // THEN - await() should return true (successful completion, even if message processing failed)
+        boolean result = context.await(5000, TimeUnit.MILLISECONDS);
+        assertThat(result).as("await() should return true when latch is counted down before timeout").isTrue();
+
+        // Verify the exception was added to exceptions map
+        assertThat(context.getSuccessMap()).isEmpty();
+        assertThat(context.getPendingMap()).isEmpty();
+        assertThat(context.getExceptionsMap()).containsEntry(tenantId, exception);
+    }
+
+    @Test
+    void testAwait_shouldReturnFalse_whenTimeoutOccurs() throws InterruptedException {
+        // GIVEN - a context with one pending message and no processing
+        UUID msgId = UUID.randomUUID();
+        pendingMap.put(msgId, mockMsg);
+        var context = new TbMsgPackProcessingContext("test-queue", submitStrategy, false);
+
+        // WHEN - await() is called with short timeout and no message processing happens
+        long startTime = System.nanoTime();
+        boolean result = context.await(100, TimeUnit.MILLISECONDS);
+        long elapsedTime = System.nanoTime() - startTime;
+
+        // THEN - await() should return false (timeout occurred)
+        assertThat(result).as("await() should return false when timeout occurs").isFalse();
+        assertThat(elapsedTime).as("await() should wait for at least the timeout duration").isGreaterThanOrEqualTo(100L);
+
+        // Message should still be in pending map
+        assertThat(context.getSuccessMap()).isEmpty();
+        assertThat(context.getPendingMap()).containsKey(msgId);
+        assertThat(context.getExceptionsMap()).isEmpty();
+    }
+
+    @Test
+    void testAwait_shouldHandleMultiplePendingMessages() throws InterruptedException {
+        // GIVEN - a context with multiple pending messages
+        executorService = Executors.newSingleThreadExecutor();
+
+        UUID msgId1 = UUID.randomUUID();
+        UUID msgId2 = UUID.randomUUID();
+        UUID msgId3 = UUID.randomUUID();
+
+        pendingMap.put(msgId1, mockMsg);
+        pendingMap.put(msgId2, mockMsg);
+        pendingMap.put(msgId3, mockMsg);
+
+        var context = new TbMsgPackProcessingContext("test-queue", submitStrategy, false);
+
+        // WHEN - messages are processed one by one
+        executorService.submit(() -> {
+            try {
+                Thread.sleep(50);
+                context.onSuccess(msgId1);
+                Thread.sleep(50);
+                context.onSuccess(msgId2);
+                Thread.sleep(50);
+                context.onSuccess(msgId3);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // THEN - await() should return true only after all messages are processed
+        boolean result = context.await(5000, TimeUnit.MILLISECONDS);
+        assertThat(result).as("await() should return true after all messages are processed").isTrue();
+
+        // All messages should be in success map
+        assertThat(context.getSuccessMap()).containsKeys(msgId1, msgId2, msgId3);
+        assertThat(context.getPendingMap()).isEmpty();
+        assertThat(context.getExceptionsMap()).isEmpty();
+    }
+
+    @Test
+    void testAwait_shouldNotCountDownPrematurely_withMultipleMessages() throws InterruptedException {
+        // GIVEN - a context with multiple pending messages
+        executorService = Executors.newSingleThreadExecutor();
+
+        UUID msgId1 = UUID.randomUUID();
+        UUID msgId2 = UUID.randomUUID();
+
+        pendingMap.put(msgId1, mockMsg);
+        pendingMap.put(msgId2, mockMsg);
+
+        var context = new TbMsgPackProcessingContext("test-queue", submitStrategy, false);
+
+        // WHEN - only one message is processed
+        executorService.submit(() -> {
+            try {
+                Thread.sleep(100);
+                context.onSuccess(msgId1);
+                // msgId2 still in processing
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // THEN: await should timeout because not all messages were processed
+        boolean result = context.await(2000, TimeUnit.MILLISECONDS);
+        assertThat(result).as("await() should timeout when not all messages are processed").isFalse();
+
+        // One message in success, one still pending
+        assertThat(context.getSuccessMap()).containsOnlyKeys(msgId1);
+        assertThat(context.getPendingMap()).containsOnlyKeys(msgId2);
+        assertThat(context.getExceptionsMap()).isEmpty();
+    }
+
+    @Test
+    void testAwait_shouldHandleMixedSuccessAndFailure() throws InterruptedException {
+        // GIVEN - multiple messages
+        executorService = Executors.newSingleThreadExecutor();
+
+        UUID msgId1 = UUID.randomUUID();
+        UUID msgId2 = UUID.randomUUID();
+
+        pendingMap.put(msgId1, mockMsg);
+        pendingMap.put(msgId2, mockMsg);
+
+        var context = new TbMsgPackProcessingContext("test-queue", submitStrategy, false);
+
+        var exception = new RuleEngineException("Test exception");
+
+        // WHEN - one succeeds, one fails
+        executorService.submit(() -> {
+            try {
+                Thread.sleep(50);
+                context.onSuccess(msgId1);
+                Thread.sleep(50);
+                context.onFailure(tenantId, msgId2, exception);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+
+        // THEN - await() should complete successfully
+        boolean result = context.await(5000, TimeUnit.MILLISECONDS);
+        assertThat(result).as("await() should return true when all messages are processed").isTrue();
+
+        assertThat(context.getSuccessMap()).containsOnlyKeys(msgId1);
+        assertThat(context.getPendingMap()).isEmpty();
+        assertThat(context.getExceptionsMap()).containsEntry(tenantId, exception);
+    }
+
+    @Test
+    void testHighConcurrencyCase() throws InterruptedException {
         int msgCount = 1000;
         int parallelCount = 5;
         executorService = Executors.newFixedThreadPool(parallelCount, ThingsBoardThreadFactory.forName(getClass().getSimpleName() + "-test-scope"));
@@ -76,28 +290,24 @@ public class TbMsgPackProcessingContextTest {
             final CountDownLatch startLatch = new CountDownLatch(1);
             final CountDownLatch finishLatch = new CountDownLatch(parallelCount);
             for (int i = 0; i < parallelCount; i++) {
-                //final String taskName = "" + uuid + " " + i;
                 executorService.submit(() -> {
-                    //log.warn("ready {}", taskName);
                     readyLatch.countDown();
                     try {
                         startLatch.await();
                     } catch (InterruptedException e) {
-                        Assert.fail("failed to await");
+                        fail("failed to await");
                     }
-                    //log.warn("go    {}", taskName);
-
                     context.onSuccess(uuid);
-
                     finishLatch.countDown();
                 });
             }
-            assertTrue(readyLatch.await(TIMEOUT, TimeUnit.SECONDS));
+            assertTrue(readyLatch.await(10, TimeUnit.SECONDS));
             Thread.yield();
             startLatch.countDown(); //run all-at-once submitted tasks
-            assertTrue(finishLatch.await(TIMEOUT, TimeUnit.SECONDS));
+            assertTrue(finishLatch.await(10, TimeUnit.SECONDS));
         }
-        assertTrue(context.await(TIMEOUT, TimeUnit.SECONDS));
+        assertTrue(context.await(10, TimeUnit.SECONDS));
         verify(strategyMock, times(msgCount)).onSuccess(any(UUID.class));
     }
+
 }
