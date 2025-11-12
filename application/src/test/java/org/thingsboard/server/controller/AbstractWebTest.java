@@ -704,9 +704,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Device createDevice(String name, String accessToken) throws Exception {
+        return createDevice(name, "default", null, accessToken);
+    }
+
+    protected Device createDevice(String name, String type, String label, String accessToken) throws Exception {
         Device device = new Device();
         device.setName(name);
-        device.setType("default");
+        device.setType(type);
+        device.setLabel(label);
         DeviceData deviceData = new DeviceData();
         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
@@ -1184,7 +1189,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
             boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs()
-                              < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+                    < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
         });

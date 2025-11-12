@@ -35,6 +35,7 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
 import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
+import { UtilsService } from "@core/services/utils.service";
 
 @Component({
   selector: 'tb-alarm-rules-table',
@@ -63,6 +64,7 @@ export class AlarmRulesTableComponent {
               private renderer: Renderer2,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
+              private utilsService: UtilsService,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -80,6 +82,7 @@ export class AlarmRulesTableComponent {
           this.ownerId(),
           this.importExportService,
           this.entityDebugSettingsService,
+          this.utilsService,
         );
         this.cd.markForCheck();
       }

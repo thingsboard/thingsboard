@@ -57,6 +57,9 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
   @Input()
   valueType: EntityKeyValueType;
 
+  @Input()
+  argumentInUse: string;
+
   valueTypeEnum = EntityKeyValueType;
 
   filterPredicateValueFormGroup: FormGroup<FormControlsFrom<AlarmRuleValue<string | number | boolean>>>;
@@ -104,7 +107,7 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
     });
     this.dynamicModeControl.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
-    ).subscribe(value => this.updateValueModeValidators(value))
+    ).subscribe(value => this.updateValueModeValidators(value));
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -114,16 +117,17 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
     } else {
       this.filterPredicateValueFormGroup.enable({emitEvent: false});
       this.dynamicModeControl.enable({emitEvent: false});
+      this.updateValueModeValidators(this.dynamicModeControl.value);
     }
   }
 
   private updateValueModeValidators(isDynamicMode: boolean): void {
     if (isDynamicMode) {
       this.filterPredicateValueFormGroup.get('staticValue').disable({emitEvent: false});
-      this.filterPredicateValueFormGroup.get('dynamicValueArgument').enable({emitEvent: false});
+      this.filterPredicateValueFormGroup.get('dynamicValueArgument').enable();
     } else {
-      this.filterPredicateValueFormGroup.get('staticValue').enable({emitEvent: false});
       this.filterPredicateValueFormGroup.get('dynamicValueArgument').disable({emitEvent: false});
+      this.filterPredicateValueFormGroup.get('staticValue').enable();
     }
   }
 
@@ -142,7 +146,7 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
 
   writeValue(predicateValue: AlarmRuleValue<string | number | boolean>): void {
     this.filterPredicateValueFormGroup.patchValue(predicateValue, {emitEvent: false});
-    this.dynamicModeControl.patchValue(!!predicateValue.dynamicValueArgument?.length);
+    this.dynamicModeControl.patchValue(!!predicateValue.dynamicValueArgument?.length, {emitEvent: false});
   }
 
   private updateModel() {
