@@ -19,4 +19,9 @@ import jakarta.validation.constraints.NotNull;
 
 public record GoogleAiGeminiProviderConfig(
         @NotNull String apiKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+    @Override
+    public AiProvider getProvider() {
+        return AiProvider.GOOGLE_AI_GEMINI;
+    }
+}

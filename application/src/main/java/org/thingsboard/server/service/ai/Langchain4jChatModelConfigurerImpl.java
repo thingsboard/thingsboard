@@ -47,10 +47,7 @@ import org.thingsboard.server.common.data.ai.model.chat.Langchain4jChatModelConf
 import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
 import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
-import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
-import org.thingsboard.server.common.data.ai.provider.AzureOpenAiProviderConfig;
-import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProviderConfig;
-import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
+import org.thingsboard.server.common.data.ai.provider.*;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
@@ -285,13 +282,13 @@ class Langchain4jChatModelConfigurerImpl implements Langchain4jChatModelConfigur
                 .maxRetries(chatModelConfig.maxRetries());
 
         var auth = chatModelConfig.providerConfig().auth();
-        if (auth instanceof OllamaProviderConfig.OllamaAuth.Basic basicAuth) {
+        if (auth instanceof OllamaAuth.Basic basicAuth) {
             String credentials = basicAuth.username() + ":" + basicAuth.password();
             String encodedCredentials = Base64.getEncoder().encodeToString(credentials.getBytes(StandardCharsets.UTF_8));
             builder.customHeaders(singletonMap(HttpHeaders.AUTHORIZATION, "Basic " + encodedCredentials));
-        } else if (auth instanceof OllamaProviderConfig.OllamaAuth.Token tokenAuth) {
+        } else if (auth instanceof OllamaAuth.Token tokenAuth) {
             builder.customHeaders(singletonMap(HttpHeaders.AUTHORIZATION, "Bearer " + tokenAuth.token()));
-        } else if (auth instanceof OllamaProviderConfig.OllamaAuth.None) {
+        } else if (auth instanceof OllamaAuth.None) {
             // do nothing
         } else {
             throw new UnsupportedOperationException("Unknown authentication type: " + auth.getClass().getSimpleName());

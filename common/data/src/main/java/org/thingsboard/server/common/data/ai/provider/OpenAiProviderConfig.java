@@ -43,4 +43,8 @@ public record OpenAiProviderConfig(
         return true;
     }
 
+    @Override
+    public AiProvider getProvider() {
+        return AiProvider.OPENAI;
+    }
 }

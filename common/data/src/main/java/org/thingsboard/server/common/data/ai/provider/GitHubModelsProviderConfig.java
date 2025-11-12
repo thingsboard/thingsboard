@@ -19,4 +19,9 @@ import jakarta.validation.constraints.NotNull;
 
 public record GitHubModelsProviderConfig(
         @NotNull String personalAccessToken
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+    @Override
+    public AiProvider getProvider() {
+        return AiProvider.GITHUB_MODELS;
+    }
+}
