@@ -15,9 +15,11 @@
  */
 package org.thingsboard.server.common.data.relation;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import org.thingsboard.server.common.data.StringUtils;
 
-public record RelationPathLevel(EntitySearchDirection direction, String relationType) {
+public record RelationPathLevel(@NotNull EntitySearchDirection direction, @NotBlank String relationType) {
 
     public void validate() {
         if (direction == null) {

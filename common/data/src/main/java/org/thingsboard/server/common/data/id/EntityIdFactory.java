@@ -80,7 +80,6 @@ public class EntityIdFactory {
             case DOMAIN -> new DomainId(uuid);
             case MOBILE_APP_BUNDLE -> new MobileAppBundleId(uuid);
             case CALCULATED_FIELD -> new CalculatedFieldId(uuid);
-            case CALCULATED_FIELD_LINK -> new CalculatedFieldLinkId(uuid);
             case JOB -> new JobId(uuid);
             case ADMIN_SETTINGS -> new AdminSettingsId(uuid);
             case AI_MODEL -> new AiModelId(uuid);

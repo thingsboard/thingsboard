@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.job;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -44,6 +45,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.job.JobStatus.CANCELLED;
 import static org.thingsboard.server.common.data.job.JobStatus.COMPLETED;
 import static org.thingsboard.server.common.data.job.JobStatus.FAILED;
@@ -87,11 +89,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
         }
         job.getResult().setCancellationTs(System.currentTimeMillis());
         JobStatus prevStatus = job.getStatus();
-        if (job.getStatus() == QUEUED) {
-            job.setStatus(CANCELLED); // setting cancelled status right away, because we don't expect stats for cancelled tasks
-        } else if (job.getStatus() == PENDING) {
-            job.setStatus(RUNNING);
-        }
+        job.setStatus(CANCELLED);
         saveJob(tenantId, job, true, prevStatus);
     }
 
@@ -145,7 +143,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
             }
         }
 
-        if (job.getStatus() == RUNNING) {
+        if (job.getStatus().isOneOf(RUNNING, CANCELLED)) {
             if (result.getTotalCount() != null && result.getCompletedCount() >= result.getTotalCount()) {
                 if (result.getCancellationTs() > 0) {
                     job.setStatus(CANCELLED);
@@ -193,7 +191,7 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
 
     private void checkWaitingJobs(TenantId tenantId, JobType jobType) {
         Job queuedJob = jobDao.findOldestByTenantIdAndTypeAndStatusForUpdate(tenantId, jobType, QUEUED);
-        if (queuedJob == null) {
+        if (queuedJob == null || jobDao.existsByTenantIdAndTypeAndStatusOneOf(tenantId, jobType, PENDING, RUNNING)) {
             return;
         }
         queuedJob.setStatus(PENDING);
@@ -243,6 +241,12 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findJobById(tenantId, (JobId) entityId));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(jobDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

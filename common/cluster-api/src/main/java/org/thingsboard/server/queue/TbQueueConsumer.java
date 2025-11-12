@@ -38,6 +38,8 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     boolean isStopped();
 
+    Set<TopicPartitionInfo> getPartitions();
+
     List<String> getFullTopicNames();
 
 }

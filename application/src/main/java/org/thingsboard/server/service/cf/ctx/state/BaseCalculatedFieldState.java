@@ -15,42 +15,59 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
+import lombok.Setter;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
+import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-@Data
-@AllArgsConstructor
-public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
+@Getter
+public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
 
+    protected final EntityId entityId;
+    protected CalculatedFieldCtx ctx;
+    protected TbActorRef actorCtx;
     protected List<String> requiredArguments;
-    protected Map<String, ArgumentEntry> arguments;
+
+    protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
-
     protected long latestTimestamp = -1;
+    protected ReadinessStatus readinessStatus;
 
-    public BaseCalculatedFieldState(List<String> requiredArguments) {
-        this.requiredArguments = requiredArguments;
-        this.arguments = new HashMap<>();
-    }
+    @Setter
+    private TopicPartitionInfo partition;
 
-    public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+    public BaseCalculatedFieldState(EntityId entityId) {
+        this.entityId = entityId;
     }
 
     @Override
-    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        this.ctx = ctx;
+        this.actorCtx = actorCtx;
+        this.requiredArguments = ctx.getArgNames();
+        this.readinessStatus = checkReadiness(requiredArguments, arguments);
+    }
 
-        boolean stateUpdated = false;
+    @Override
+    public void init() {
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        Map<String, ArgumentEntry> updatedArguments = null;
 
         for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
             String key = entry.getKey();
@@ -63,26 +80,44 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
                 validateNewEntry(key, newEntry);
-                arguments.put(key, newEntry);
+                if (existingEntry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+                    relatedEntitiesArgumentEntry.updateEntry(newEntry);
+                } else {
+                    arguments.put(key, newEntry);
+                }
                 entryUpdated = true;
             } else {
                 entryUpdated = existingEntry.updateEntry(newEntry);
             }
 
             if (entryUpdated) {
-                stateUpdated = true;
+                if (updatedArguments == null) {
+                    updatedArguments = new HashMap<>(argumentValues.size());
+                }
+                updatedArguments.put(key, newEntry);
                 updateLastUpdateTimestamp(newEntry);
             }
 
         }
 
-        return stateUpdated;
+        if (updatedArguments == null) {
+            return Collections.emptyMap();
+        }
+        readinessStatus = checkReadiness(requiredArguments, arguments);
+        return updatedArguments;
+    }
+
+    @Override
+    public void reset() { // must reset everything dependent on arguments
+        requiredArguments = null;
+        arguments.clear();
+        sizeExceedsLimit = false;
+        latestTimestamp = -1;
     }
 
     @Override
     public boolean isReady() {
-        return arguments.keySet().containsAll(requiredArguments) &&
-                arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+        return readinessStatus.ready();
     }
 
     @Override
@@ -93,7 +128,26 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         }
     }
 
-    protected void validateNewEntry(String key, ArgumentEntry newEntry) {}
+    @Override
+    public void close() {
+    }
+
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+    }
+
+    protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
+        if (!useLatestTs) {
+            return valuesNode;
+        }
+        long latestTs = getLatestTimestamp();
+        if (latestTs == -1) {
+            return valuesNode;
+        }
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        resultNode.put("ts", latestTs);
+        resultNode.set("values", valuesNode);
+        return resultNode;
+    }
 
     private void updateLastUpdateTimestamp(ArgumentEntry entry) {
         long newTs = this.latestTimestamp;
@@ -104,6 +158,23 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
+    }
+
+    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        if (currentArguments == null) {
+            return ReadinessStatus.from(requiredArguments);
+        }
+        List<String> emptyArguments = null;
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                if (emptyArguments == null) {
+                    emptyArguments = new ArrayList<>();
+                }
+                emptyArguments.add(requiredArgumentKey);
+            }
+        }
+        return ReadinessStatus.from(emptyArguments);
     }
 
 }

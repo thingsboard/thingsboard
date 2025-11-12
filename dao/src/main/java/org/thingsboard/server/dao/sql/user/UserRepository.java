@@ -78,4 +78,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             "u.customerId, u.version, u.firstName, u.lastName, u.email, u.phone, u.additionalInfo) " +
             "FROM UserEntity u WHERE u.id > :id ORDER BY u.id")
     List<UserFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    int countByTenantIdAndAuthority(UUID tenantId, Authority authority);
 }

@@ -115,16 +115,12 @@ class AlarmRuleState {
 
     public AlarmEvalResult eval(DataSnapshot data) {
         boolean active = isActive(data, data.getTs());
-        switch (spec.getType()) {
-            case SIMPLE:
-                return (active && eval(alarmRule.getCondition(), data)) ? AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
-            case DURATION:
-                return evalDuration(data, active);
-            case REPEATING:
-                return evalRepeating(data, active);
-            default:
-                return AlarmEvalResult.FALSE;
-        }
+        return switch (spec.getType()) {
+            case SIMPLE -> (active && eval(alarmRule.getCondition(), data)) ?
+                    AlarmEvalResult.TRUE : AlarmEvalResult.FALSE;
+            case DURATION -> evalDuration(data, active);
+            case REPEATING -> evalRepeating(data, active);
+        };
     }
 
     private boolean isActive(DataSnapshot data, long eventTs) {
@@ -600,4 +596,5 @@ class AlarmRuleState {
                 return null;
         }
     }
+
 }

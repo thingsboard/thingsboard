@@ -1,0 +1,148 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex flex-col gap-3">
+  <div class="tb-form-panel stroked no-padding no-gap arguments-table flex flex-col" [class.arguments-table-with-error]="errorText">
+    <table mat-table [dataSource]="dataSource" class="overflow-hidden bg-transparent" matSort
+           [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
+      <ng-container [matColumnDef]="'name'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="!w-1/3 xs:!w-1/2">
+          <div tbTruncateWithTooltip>{{ argumentNameColumn | translate }}</div>
+        </mat-header-cell>
+        <mat-cell *matCellDef="let argument" class="argument-name-cell w-1/3 xs:w-1/2">
+          <div class="flex items-center">
+            <div tbTruncateWithTooltip class="flex-1">{{ argument.argumentName }}</div>
+            <tb-copy-button
+              class="copy-argument-name"
+              [copyText]="argument.argumentName"
+              tooltipText="{{ argumentNameColumnCopy | translate }}"
+              tooltipPosition="above"
+              icon="content_copy"
+            />
+          </div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'entityType'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 xs:hidden">
+          {{ 'entity.entity-type' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let argument" class="w-1/5 xs:hidden">
+          <div tbTruncateWithTooltip>
+            @if (argument.refEntityId?.entityType === ArgumentEntityType.Tenant) {
+              {{ 'calculated-fields.argument-current-tenant' | translate }}
+            } @else if (argument.refDynamicSourceConfiguration?.type === ArgumentEntityType.Owner) {
+              {{ 'calculated-fields.argument-owner' | translate }}
+            } @else if (argument.refEntityId?.id) {
+              {{ entityTypeTranslations.get(argument.refEntityId.entityType).type | translate }}
+            } @else {
+              {{ 'calculated-fields.argument-current' | translate }}
+            }
+          </div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'target'">
+        <mat-header-cell *matHeaderCellDef class="w-1/4 xs:hidden">
+          {{ 'entity-view.target-entity' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let argument" class="w-1/4 xs:hidden">
+          <div tbTruncateWithTooltip>
+            @if (argument.refEntityId?.id && argument.refEntityId?.entityType !== ArgumentEntityType.Tenant) {
+              <a [attr.aria-label]="'calculated-fields.open-details-page' | translate"
+                 [routerLink]="getEntityDetailsPageURL(argument.refEntityId.id, argument.refEntityId.entityType)">
+                {{ entityNameMap.get(argument.refEntityId.id) ?? '' }}
+              </a>
+            }
+          </div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'type'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/4 lt-md:hidden">
+          {{ 'common.type' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let argument" class="w-1/4 lt-md:hidden">
+          <div tbTruncateWithTooltip>{{ ArgumentTypeTranslations.get(argument.refEntityKey.type) | translate }}</div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'key'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/4 xs:w-1/3">
+          {{ 'entity.key' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let argument" class="w-1/4 xs:w-1/3">
+          <mat-chip class="tb-chip-row-ellipsis">
+            <div tbTruncateWithTooltip class="key-text">{{ argument.refEntityKey.key }}</div>
+          </mat-chip>
+        </mat-cell>
+      </ng-container>
+      <ng-container matColumnDef="actions" stickyEnd>
+        <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
+        <mat-cell *matCellDef="let argument;">
+          <div class="tb-form-table-row-cell-buttons min-w-20">
+            <button type="button"
+                    mat-icon-button
+                    #button
+                    (click)="manageArgument($event, button, argument)"
+                    [matTooltip]="'action.edit' | translate"
+                    matTooltipPosition="above">
+              <mat-icon
+                [matBadgeHidden]="isEditButtonShowBadge(argument)"
+                matBadgeColor="warn"
+                matBadgeSize="small"
+                matBadge="*"
+              >
+                edit
+              </mat-icon>
+            </button>
+            <button type="button"
+                    mat-icon-button
+                    (click)="onDelete($event, argument)"
+                    [matTooltip]="'action.delete' | translate"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row class="mat-row-select" *matHeaderRowDef="displayColumns"></mat-header-row>
+      <mat-row *matRowDef="let argument; columns: displayColumns"></mat-row>
+    </table>
+    <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
+         class="tb-prompt flex flex-1 items-end justify-center">
+      {{ 'calculated-fields.no-arguments' | translate }}
+    </div>
+    @if (errorText) {
+      <tb-error noMargin [error]="errorText | translate" class="flex h-9 items-center pl-3"/>
+    }
+  </div>
+  <div class="flex h-9 justify-between">
+    <button
+      type="button"
+      mat-stroked-button
+      color="primary"
+      #button
+      (click)="manageArgument($event, button)"
+      [disabled]="maxArgumentsPerCF > 0 && argumentsFormArray.length >= maxArgumentsPerCF"
+    >
+      {{ 'calculated-fields.add-argument' | translate }}
+    </button>
+    @if (maxArgumentsPerCF && argumentsFormArray.length >= maxArgumentsPerCF) {
+      <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+        <mat-icon>warning</mat-icon>
+        <span>{{ 'calculated-fields.hint.max-args' | translate }}</span>
+      </div>
+    }
+  </div>
+</div>
