@@ -1631,7 +1631,7 @@ public class ControllerConstants {
 
     protected static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
     protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'. " +
-            "If attribute keys contain commas duplicate 'key' parameter for each key, for example '?key=my,key&key=my,second,key";
+            "If attribute keys contain comma, duplicate 'key' parameter for each key, for example '?key=my,key&key=my,second,key";
     protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
 
     protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
