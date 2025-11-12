@@ -58,6 +58,28 @@
       </mat-form-field>
     </div>
   </div>
+  <div class="tb-form-panel stroked no-padding-bottom"
+        *ngIf="changeOriginatorConfigForm.get('originatorSource').value === originatorSource.ID">
+    <tb-example-hint [hintText]="'rule-node-config.entity-type-or-id-pattern-hint'"
+                      popupHelpLink="rulenode/change_originator_node_fields_templatization">
+    </tb-example-hint>
+    <div class="tb-form-row no-border no-padding tb-standard-fields">
+      <mat-form-field class="flex">
+        <mat-label translate>rule-node-config.entity-type-pattern</mat-label>
+        <input required matInput formControlName="entityTypePattern">
+        <mat-error *ngIf="changeOriginatorConfigForm.get('entityTypePattern').hasError('required')">
+          {{ 'rule-node-config.entity-type-pattern-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+      <mat-form-field class="flex">
+        <mat-label translate>rule-node-config.entity-id-pattern</mat-label>
+        <input required matInput formControlName="entityIdPattern">
+        <mat-error *ngIf="changeOriginatorConfigForm.get('entityIdPattern').hasError('required')">
+          {{ 'rule-node-config.entity-id-pattern-required' | translate }}
+        </mat-error>
+      </mat-form-field>
+    </div>
+  </div>
   <tb-relations-query-config
     required
     *ngIf="changeOriginatorConfigForm.get('originatorSource').value === originatorSource.RELATED"
