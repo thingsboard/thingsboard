@@ -92,6 +92,7 @@
           <ng-container *ngSwitchCase="notificationTargetConfigType.USER_LIST">
             <tb-entity-list
               required
+              syncIdsWithDB
               formControlName="usersIds"
               [entityType]="entityType.USER"
               labelText="{{ 'user.user-list' | translate }}"
