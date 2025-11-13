@@ -230,6 +230,11 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
+    public void handleTenantProfileUpdate() {
+        calculatedFieldsCtx.values().forEach(CalculatedFieldCtx::updateTenantProfileProperties);
+    }
+
+    @Override
     public EntityId getProfileId(TenantId tenantId, EntityId entityId) {
         return switch (entityId.getEntityType()) {
             case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();

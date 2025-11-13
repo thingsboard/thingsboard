@@ -67,6 +67,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
 
         updateDefaultTenantProfileConfig(tenantProfileConfig -> {
             tenantProfileConfig.setMinAllowedDeduplicationIntervalInSecForCF(1);
+            tenantProfileConfig.setMinAllowedAggregationIntervalInSecForCF(1);
         });
 
         Tenant tenant = new Tenant();
@@ -95,7 +96,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     public void testCreateCf_checkAggregation() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 30L, 0L);
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 30L);
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
         long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
@@ -126,7 +127,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     public void testCreateCf_checkAggregationDuringWatermark() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 30L, 0L);
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 30L);
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
         long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 

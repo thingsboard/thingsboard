@@ -97,9 +97,6 @@ public class CalculatedFieldCtx implements Closeable {
     private String expression;
     private boolean useLatestTs;
 
-    private long cfCheckInterval;
-    private long alarmReevaluationInterval;
-
     private long lastReevaluationTs;
 
     private ActorSystemContext systemContext;
@@ -113,7 +110,6 @@ public class CalculatedFieldCtx implements Closeable {
 
     private boolean initialized;
 
-    private long maxDataPointsPerRollingArg;
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
 
@@ -202,15 +198,12 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
         }
-        this.cfCheckInterval = systemContext.getCfCheckInterval();
-        this.alarmReevaluationInterval = systemContext.getAlarmRulesReevaluationInterval();
         this.systemContext = systemContext;
         this.tbelInvokeService = systemContext.getTbelInvokeService();
         this.relationService = systemContext.getRelationService();
         this.alarmService = systemContext.getAlarmService();
         this.cfProcessingService = systemContext.getCalculatedFieldProcessingService();
 
-        this.maxDataPointsPerRollingArg = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg); // fixme why tenant profile update is not handled??
         this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
@@ -282,6 +275,11 @@ public class CalculatedFieldCtx implements Closeable {
             }
             case ENTITY_AGGREGATION -> initialized = true;
         }
+    }
+
+    public void updateTenantProfileProperties() {
+        this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
     }
 
     public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {
@@ -645,9 +643,8 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
                 && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
             boolean metricsChanged = thisConfig.getMetrics().equals(otherConfig.getMetrics());
-            boolean intervalChanged = thisConfig.getInterval().equals(otherConfig.getInterval());
             boolean watermarkChanged = thisConfig.getWatermark().equals(otherConfig.getWatermark());
-            return metricsChanged || intervalChanged || watermarkChanged;
+            return metricsChanged || watermarkChanged;
         }
         return false;
     }
@@ -672,6 +669,9 @@ public class CalculatedFieldCtx implements Closeable {
         if (hasRelatedEntitiesAggregationConfigurationChanges(other)) {
             return true;
         }
+        if (hasEntityAggregationConfigurationChanges(other)) {
+            return true;
+        }
         return false;
     }
 
@@ -687,6 +687,14 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
                 && other.calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig) {
             return !thisConfig.getRelation().equals(otherConfig.getRelation());
+        }
+        return false;
+    }
+
+    private boolean hasEntityAggregationConfigurationChanges(CalculatedFieldCtx other) {
+        if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
+                && other.calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
+            return !thisConfig.getInterval().equals(otherConfig.getInterval());
         }
         return false;
     }

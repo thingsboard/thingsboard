@@ -86,7 +86,8 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 @Slf4j
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "actors.calculated_fields.check_interval=1"
+        "actors.calculated_fields.check_interval=1",
+        "actors.alarms.reevaluation_interval=1"
 })
 public class AlarmRulesTest extends AbstractControllerTest {
 

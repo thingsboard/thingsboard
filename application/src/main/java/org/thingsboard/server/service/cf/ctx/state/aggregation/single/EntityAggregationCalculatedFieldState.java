@@ -69,7 +69,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getCfCheckInterval());
+        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getSystemContext().getCfCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
     }
