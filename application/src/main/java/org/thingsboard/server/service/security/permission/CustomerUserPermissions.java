@@ -209,6 +209,11 @@ public class CustomerUserPermissions extends AbstractPermissions {
     private static final PermissionChecker apiKeysPermissionChecker = new PermissionChecker<ApiKeyId, ApiKeyInfo>() {
 
         @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return true;
+        }
+
+        @Override
         @SuppressWarnings("unchecked")
         public boolean hasPermission(SecurityUser user, Operation operation, ApiKeyId entityId, ApiKeyInfo entity) {
             return user.getTenantId().equals(entity.getTenantId());
