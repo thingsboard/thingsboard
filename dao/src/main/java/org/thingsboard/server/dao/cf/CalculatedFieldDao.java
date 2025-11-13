@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.cf;
 
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,5 +49,7 @@ public interface CalculatedFieldDao extends Dao<CalculatedField> {
     List<CalculatedField> removeAllByEntityId(TenantId tenantId, EntityId entityId);
 
     long countByEntityIdAndTypeNot(TenantId tenantId, EntityId entityId, CalculatedFieldType type);
+
+    PageData<CalculatedField> findByTenantIdAndFilter(TenantId tenantId, CalculatedFieldFilter filter, PageLink pageLink);
 
 }

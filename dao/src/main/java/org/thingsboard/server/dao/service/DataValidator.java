@@ -93,7 +93,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
     }
 
     public void validateString(String exceptionPrefix, String name) {
-        if (StringUtils.isEmpty(name) || name.trim().length() == 0) {
+        if (StringUtils.isBlank(name)) {
             throw new DataValidationException(exceptionPrefix + " should be specified!");
         }
         if (StringUtils.contains0x00(name)) {
