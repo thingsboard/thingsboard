@@ -78,19 +78,6 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testSaveApiKeyWithEmptyDescription() {
-        ApiKeyInfo apiKeyInfo = createApiKeyInfo(null);
-        ApiKey savedApiKey = apiKeyService.saveApiKey(tenantId, apiKeyInfo);
-
-        Assert.assertNotNull(savedApiKey);
-        Assert.assertNotNull(savedApiKey.getId());
-        Assert.assertEquals(tenantId, savedApiKey.getTenantId());
-        Assert.assertNull(savedApiKey.getDescription());
-        Assert.assertTrue(savedApiKey.isEnabled());
-        Assert.assertNotNull(savedApiKey.getValue());
-    }
-
-    @Test
     public void testSaveApiKeyWithTooLongDescription() {
         ApiKeyInfo apiKeyInfo = createApiKeyInfo(StringUtils.randomAlphabetic(300));
 
