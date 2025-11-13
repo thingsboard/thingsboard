@@ -37,6 +37,9 @@
                             createVersionFormGroup.get('versionName').hasError('pattern')">
             {{ 'version-control.version-name-required' | translate }}
           </mat-error>
+          <mat-error *ngIf="createVersionFormGroup.get('versionName').hasError('maxlength')">
+            {{ 'version-control.version-name-max-length' | translate }}
+          </mat-error>
         </mat-form-field>
         <mat-checkbox *ngIf="entityId.entityType === entityTypes.DEVICE" formControlName="saveCredentials" style="margin-bottom: 16px;">
           {{ 'version-control.export-credentials' | translate }}
