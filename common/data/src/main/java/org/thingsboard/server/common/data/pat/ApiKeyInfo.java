@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.pat;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
@@ -47,6 +48,7 @@ public class ApiKeyInfo extends BaseData<ApiKeyId> implements HasTenantId {
     private long expirationTime;
 
     @NoXss
+    @NotBlank
     @Length(fieldName = "description")
     @Schema(description = "Api Key description.", example = "Api Key description")
     private String description;
