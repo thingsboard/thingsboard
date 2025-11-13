@@ -25,7 +25,7 @@ public enum AlarmCommentSubType {
     UNASSIGNED_BY_USER("Alarm was unassigned by user %s"),
     UNASSIGNED_FROM_DELETED_USER("Alarm was unassigned because user %s - was deleted"),
     COMMENT_DELETED("User %s deleted his comment"),
-    SEVERITY_CHANGED("Alarm severity was changed by user %s from %s to %s");
+    SEVERITY_CHANGED("Alarm severity was updated from %s to %s");
 
     @Getter
     private final String text;
