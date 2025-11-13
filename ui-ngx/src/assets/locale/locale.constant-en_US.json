@@ -4144,6 +4144,7 @@
         "copy-key": "Copy key",
         "send-code": "Send code",
         "email-label": "Email",
+        "email-description": "Enter an email to use as your authenticator.",
         "sms-description": "Enter a phone number to use as your authenticator.",
         "backup-code-description": "Print out the codes so you have them handy when you need to use them to log in to your account. You can use each backup code once.",
         "backup-code-warn": "Once you leave this page, these codes cannot be shown again. Store them safely using the options below.",
