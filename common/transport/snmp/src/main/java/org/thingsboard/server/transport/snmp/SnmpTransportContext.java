@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.snmp;
 
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -60,6 +61,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 @TbSnmpTransportComponent
 @Component
@@ -79,8 +81,8 @@ public class SnmpTransportContext extends TransportContext {
     private final Set<DeviceId> allSnmpDevicesIds = ConcurrentHashMap.newKeySet();
     private final ExecutorService snmpExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("snmp-bootstrap"));
 
-    @Value("${transport.snmp.bootstrap_retries}")
-    private int snmpBootstrapMaxRetries;
+    @Value("${transport.snmp.batch_retries}")
+    private int snmpBootstrapBatchRetries;
 
     @AfterStartUp(order = AfterStartUp.AFTER_TRANSPORT_SERVICE)
     public void fetchDevicesAndEstablishSessions() {
@@ -88,44 +90,45 @@ public class SnmpTransportContext extends TransportContext {
     }
 
     private void bootstrapWithRetries() {
-        for (int attempt = 1; attempt <= snmpBootstrapMaxRetries; attempt++) {
-            try {
-                doBootstrap();
-                return;
-            } catch (Exception e) {
-                if (attempt >= snmpBootstrapMaxRetries) {
-                    log.error("SNMP bootstrap failed after {} attempts.", attempt, e);
-                    return;
-                }
-                log.warn("SNMP bootstrap attempt {}/{} failed. Retrying immediately...", attempt, snmpBootstrapMaxRetries, e);
-            }
-        }
-    }
-
-    private void doBootstrap() {
         log.info("Initializing SNMP devices sessions");
         int batchIndex = 0;
         int batchSize = 512;
         boolean nextBatchExists = true;
 
         while (nextBatchExists) {
-            TransportProtos.GetSnmpDevicesResponseMsg snmpDevicesResponse = protoEntityService.getSnmpDevicesIds(batchIndex, batchSize);
-            snmpDevicesResponse.getIdsList().stream()
-                    .map(id -> new DeviceId(UUID.fromString(id)))
-                    .peek(allSnmpDevicesIds::add)
-                    .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
-                    .map(protoEntityService::getDeviceById)
-                    .forEach(device -> {
-                        if (!sessions.containsKey(device.getId())) {
-                            getExecutor().execute(() -> establishDeviceSession(device));
-                        }
-                    });
+            for (int attempt = 1; attempt <= snmpBootstrapBatchRetries; attempt++) {
+                try {
+                    TransportProtos.GetSnmpDevicesResponseMsg snmpDevicesResponse = protoEntityService.getSnmpDevicesIds(batchIndex, batchSize);
+                    snmpDevicesResponse.getIdsList().stream()
+                            .map(id -> new DeviceId(UUID.fromString(id)))
+                            .peek(allSnmpDevicesIds::add)
+                            .filter(deviceId -> balancingService.isManagedByCurrentTransport(deviceId.getId()))
+                            .map(protoEntityService::getDeviceById)
+                            .forEach(device -> getExecutor().execute(() -> establishDeviceSession(device)));
+                    nextBatchExists = snmpDevicesResponse.getHasNextPage();
+                    batchIndex++;
+                    break;
+                } catch (Exception e) {
+                    if (e instanceof InterruptedException) {
+                        log.warn("SNMP bootstrap interrupted. Stopping bootstrap task.", e);
+                        return;
+                    }
 
-            nextBatchExists = snmpDevicesResponse.getHasNextPage();
-            batchIndex++;
+                    if (attempt >= snmpBootstrapBatchRetries) {
+                        log.error("SNMP bootstrap: batch {} failed after {} attempts.", batchIndex, attempt, e);
+                        return;
+                    }
+                    log.warn("SNMP bootstrap: batch {} attempt {}/{} failed.", batchIndex, attempt, snmpBootstrapBatchRetries, e);
+                    try {
+                        TimeUnit.SECONDS.sleep(10);
+                    } catch (InterruptedException ex) {
+                        log.warn("SNMP bootstrap interrupted. Stopping bootstrap task.");
+                        return;
+                    }
+                }
+            }
         }
-
-        log.debug("Found all SNMP devices ids: {}", allSnmpDevicesIds);
+        log.debug("Found SNMP devices ids: {}", allSnmpDevicesIds);
     }
 
     private void establishDeviceSession(Device device) {
@@ -328,6 +331,11 @@ public class SnmpTransportContext extends TransportContext {
 
     public Collection<DeviceSessionContext> getSessions() {
         return sessions.values();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        snmpExecutor.shutdown();
     }
 
 }
