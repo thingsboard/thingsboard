@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmAssignee;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.AlarmCommentSubType;
 import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -39,8 +40,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.ACKED_BY_USER;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.ASSIGNED_TO_USER;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.CLEARED_BY_USER;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.UNASSIGNED_BY_USER;
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.UNASSIGNED_FROM_DELETED_USER;
 
 @Service
 @AllArgsConstructor
@@ -102,8 +111,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
-            String systemComment = String.format("Alarm was acknowledged by user %s", user.getTitle());
-            addSystemAlarmComment(alarmInfo, user, "ACK", systemComment);
+            addSystemAlarmComment(alarmInfo, user, ACKED_BY_USER,"userName", user.getTitle());
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ACK, user);
         } else {
@@ -125,8 +133,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isCleared()) {
-            String systemComment = String.format("Alarm was cleared by user %s", user.getTitle());
-            addSystemAlarmComment(alarmInfo, user, "CLEAR", systemComment);
+            addSystemAlarmComment(alarmInfo, user, CLEARED_BY_USER, "userName", user.getTitle());
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_CLEAR, user);
         } else {
@@ -144,8 +151,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
             AlarmAssignee assignee = alarmInfo.getAssignee();
-            String systemComment = String.format("Alarm was assigned by user %s to user %s", user.getTitle(), assignee.getTitle());
-            addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment, assignee.getId());
+            addSystemAlarmComment(alarmInfo, user, ASSIGNED_TO_USER,"userName", user.getTitle(), "assigneeName", assignee.getTitle());
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ASSIGNED, user);
         } else {
@@ -162,8 +168,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         }
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
-            String systemComment = String.format("Alarm was unassigned by user %s", user.getTitle());
-            addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment);
+            addSystemAlarmComment(alarmInfo, user, UNASSIGNED_BY_USER, "userName", user.getTitle());
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
         } else {
@@ -182,8 +187,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                 continue;
             }
             if (result.isModified()) {
-                String comment = String.format("Alarm was unassigned because user %s - was deleted", userTitle);
-                addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
+                addSystemAlarmComment(result.getAlarm(), null, UNASSIGNED_FROM_DELETED_USER, "userName", userTitle);
                 logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
             }
         }
@@ -214,20 +218,24 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         return ts > 0 ? ts : System.currentTimeMillis();
     }
 
-    private void addSystemAlarmComment(Alarm alarm, User user, String subType, String commentText) {
-        addSystemAlarmComment(alarm, user, subType, commentText, null);
+    private void addSystemAlarmComment(Alarm alarm, User user, AlarmCommentSubType subType, String param, String value) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put(param, value);
+        addSystemAlarmComment(alarm, user, subType, params);
     }
 
-    private void addSystemAlarmComment(Alarm alarm, User user, String subType, String commentText, UserId assigneeId) {
+    private void addSystemAlarmComment(Alarm alarm, User user, AlarmCommentSubType subType, String param, String value, String param2, String value2) {
+        Map<String, String> params = new LinkedHashMap<>();
+        params.put(param, value);
+        params.put(param2, value2);
+        addSystemAlarmComment(alarm, user, subType, params);
+    }
+
+    private void addSystemAlarmComment(Alarm alarm, User user, AlarmCommentSubType subType, Map<String, String> params) {
         ObjectNode commentNode = JacksonUtil.newObjectNode();
-        commentNode.put("text", commentText)
-                .put("subtype", subType);
-        if (user != null) {
-            commentNode.put("userId", user.getId().getId().toString());
-        }
-        if (assigneeId != null) {
-            commentNode.put("assigneeId", assigneeId.getId().toString());
-        }
+        commentNode.put("text", String.format(subType.getText(), params.values()))
+                .put("subtype", subType.name());
+        params.forEach(commentNode::put);
         AlarmComment alarmComment = AlarmComment.builder()
                 .alarmId(alarm.getId())
                 .type(AlarmCommentType.SYSTEM)

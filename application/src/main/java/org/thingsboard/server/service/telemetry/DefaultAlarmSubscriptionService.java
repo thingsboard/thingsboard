@@ -61,6 +61,8 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
 
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.SEVERITY_CHANGED;
+
 /**
  * Created by ashvayka on 27.03.18.
  */
@@ -251,9 +253,9 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 AlarmComment.AlarmCommentBuilder alarmComment = AlarmComment.builder()
                         .alarmId(alarm.getId())
                         .type(AlarmCommentType.SYSTEM)
-                        .comment(JacksonUtil.newObjectNode().put("text",
-                                String.format("Alarm severity was updated from %s to %s", result.getOldSeverity(), alarm.getSeverity()))
-                                .put("subtype", "severityChanged")
+                        .comment(JacksonUtil.newObjectNode()
+                                .put("text", String.format(SEVERITY_CHANGED.getText(), result.getOldSeverity(), alarm.getSeverity()))
+                                .put("subtype", SEVERITY_CHANGED.name())
                                 .put("oldSeverity", result.getOldSeverity().name())
                                 .put("newSeverity", alarm.getSeverity().name()));
                 if (request != null && request.getUserId() != null) {
