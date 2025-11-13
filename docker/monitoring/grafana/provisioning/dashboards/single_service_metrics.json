@@ -548,7 +548,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(statsName)(increase(ruleEngine_Main_total{job=\"$job\"}[1m]))",
+          "expr": "sum by(statsName)(increase(ruleEngine_total{job=\"$job\", queue=\"Main\"}[1m]))",
           "interval": "",
           "legendFormat": "{{statsName}}",
           "refId": "A"
@@ -644,7 +644,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(statsName)(increase(ruleEngine_HighPriority_total{job=\"$job\"}[1m]))",
+          "expr": "sum by(statsName)(increase(ruleEngine_total{job=\"$job\", queue=\"HighPriority\"}[1m]))",
           "interval": "",
           "legendFormat": "{{statsName}}",
           "refId": "A"
@@ -740,7 +740,7 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by(statsName)(increase(ruleEngine_SequentialByOriginator_total{job=\"$job\"}[1m]))",
+          "expr": "sum by(statsName)(increase(ruleEngine_total{job=\"$job\", queue=\"SequentialByOriginator\"}[1m]))",
           "interval": "",
           "legendFormat": "{{statsName}}",
           "refId": "A"
