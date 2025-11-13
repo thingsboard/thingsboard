@@ -188,6 +188,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                                        Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
+                argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                 processMetric(intervalEntry, argName, false, results);
             } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());

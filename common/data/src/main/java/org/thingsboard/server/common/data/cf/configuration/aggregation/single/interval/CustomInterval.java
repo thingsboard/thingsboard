@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -28,6 +30,8 @@ import java.time.ZonedDateTime;
 @NoArgsConstructor
 public class CustomInterval extends BaseAggInterval {
 
+    @NotNull
+    @Min(1)
     private Long durationSec;
 
     public CustomInterval(String tz, Long offsetSec, Long durationSec) {

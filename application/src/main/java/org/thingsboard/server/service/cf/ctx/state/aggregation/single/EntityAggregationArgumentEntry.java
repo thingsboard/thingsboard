@@ -48,19 +48,25 @@ public class EntityAggregationArgumentEntry implements ArgumentEntry {
 
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
+        boolean updated = false;
         if (entry instanceof EntityAggregationArgumentEntry entityAggEntry) {
             aggIntervals.putAll(entityAggEntry.getAggIntervals());
         } else if (entry instanceof SingleValueArgumentEntry singleValueArgEntry) {
             long entryTs = singleValueArgEntry.getTs();
             long argUpdateTs = System.currentTimeMillis();
             for (Map.Entry<AggIntervalEntry, AggIntervalEntryStatus> aggIntervalEntry : aggIntervals.entrySet()) {
+                if (singleValueArgEntry.isForceResetPrevious()) {
+                    aggIntervalEntry.getValue().setLastArgsRefreshTs(argUpdateTs);
+                    updated = true;
+                    continue;
+                }
                 if (aggIntervalEntry.getKey().belongsToInterval(entryTs)) {
                     aggIntervalEntry.getValue().setLastArgsRefreshTs(argUpdateTs);
                     return true;
                 }
             }
         }
-        return false;
+        return updated;
     }
 
     @Override
