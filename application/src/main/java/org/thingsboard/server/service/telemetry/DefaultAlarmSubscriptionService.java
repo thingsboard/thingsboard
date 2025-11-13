@@ -252,7 +252,10 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                         .alarmId(alarm.getId())
                         .type(AlarmCommentType.SYSTEM)
                         .comment(JacksonUtil.newObjectNode().put("text",
-                                String.format("Alarm severity was updated from %s to %s", result.getOldSeverity(), alarm.getSeverity())));
+                                String.format("Alarm severity was updated from %s to %s", result.getOldSeverity(), alarm.getSeverity()))
+                                .put("subtype", "severityChanged")
+                                .put("oldSeverity", result.getOldSeverity().name())
+                                .put("newSeverity", alarm.getSeverity().name()));
                 if (request != null && request.getUserId() != null) {
                     alarmComment.userId(request.getUserId());
                 }
