@@ -1632,11 +1632,13 @@ public class ControllerConstants {
     protected static final String ENTITY_VIEW_INFO_DESCRIPTION = "Entity Views Info extends the Entity View with customer title and 'is public' flag. " + ENTITY_VIEW_DESCRIPTION;
 
     protected static final String ATTRIBUTES_SCOPE_DESCRIPTION = "A string value representing the attributes scope. For example, 'SERVER_SCOPE'.";
-    protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'.";
+    protected static final String ATTRIBUTES_KEYS_DESCRIPTION = "A string value representing the comma-separated list of attributes keys. For example, 'active,inactivityAlarmTime'. " +
+            "If attribute keys contain comma, duplicate 'key' parameter for each key, for example '?key=my,key&key=my,second,key";
     protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
 
     protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
-    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest time series. For example, 'temperature,humidity'.";
+    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest time series. For example, 'temperature,humidity'. " +
+            "If telemetry keys contain comma, duplicate 'key' parameter for each key, for example '?key=my,key&key=my,second,key";
     protected static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is deprecated, reserved for backward compatibility and not used in the API call implementation. Specify any scope for compatibility";
     protected static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A JSON with the telemetry values. See API call description for more details.";
 

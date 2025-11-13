@@ -24,6 +24,7 @@ import java.util.EnumSet;
 import java.util.List;
 
 public enum EntityType {
+
     TENANT(1),
     CUSTOMER(2),
     USER(3, "tb_user"),
@@ -62,7 +63,7 @@ public enum EntityType {
     MOBILE_APP(37),
     MOBILE_APP_BUNDLE(38),
     CALCULATED_FIELD(39),
-    CALCULATED_FIELD_LINK(40),
+    // CALCULATED_FIELD_LINK(40), - was removed in 4.3
     JOB(41),
     ADMIN_SETTINGS(42),
     AI_MODEL(43, "ai_model") {

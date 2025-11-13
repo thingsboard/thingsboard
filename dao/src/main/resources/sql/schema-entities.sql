@@ -938,16 +938,6 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name)
 );
 
-CREATE TABLE IF NOT EXISTS calculated_field_link (
-    id uuid NOT NULL CONSTRAINT calculated_field_link_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    tenant_id uuid NOT NULL,
-    entity_type VARCHAR(32),
-    entity_id uuid NOT NULL,
-    calculated_field_id uuid NOT NULL,
-    CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
-);
-
 CREATE TABLE IF NOT EXISTS cf_debug_event (
     id uuid NOT NULL,
     tenant_id uuid NOT NULL ,

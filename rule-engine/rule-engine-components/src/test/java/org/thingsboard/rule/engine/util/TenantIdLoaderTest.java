@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -383,12 +382,6 @@ public class TenantIdLoaderTest {
                 calculatedField.setTenantId(tenantId);
                 when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
                 doReturn(calculatedField).when(calculatedFieldService).findById(eq(tenantId), any());
-                break;
-            case CALCULATED_FIELD_LINK:
-                CalculatedFieldLink calculatedFieldLink = new CalculatedFieldLink();
-                calculatedFieldLink.setTenantId(tenantId);
-                when(ctx.getCalculatedFieldService()).thenReturn(calculatedFieldService);
-                doReturn(calculatedFieldLink).when(calculatedFieldService).findCalculatedFieldLinkById(eq(tenantId), any());
                 break;
             case JOB:
                 Job job = new Job();

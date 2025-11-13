@@ -212,7 +212,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static final String TEST_DIFFERENT_TENANT_NAME = "TEST DIFFERENT TENANT";
 
     protected static final String SYS_ADMIN_EMAIL = "sysadmin@thingsboard.org";
-    private static final String SYS_ADMIN_PASSWORD = "sysadmin";
+    protected static final String SYS_ADMIN_PASSWORD = "sysadmin";
 
     protected static final String TENANT_ADMIN_EMAIL = "testtenant@thingsboard.org";
     protected static final String TENANT_ADMIN_PASSWORD = "tenant";
@@ -767,6 +767,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doPost("/api/device-with-credentials", request, Device.class);
     }
 
+    protected ResultActions doGetAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate).params(params);
+        setJwtToken(getRequest);
+        return mockMvc.perform(asyncDispatch(mockMvc.perform(getRequest).andExpect(request().asyncStarted()).andReturn()));
+    }
+
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
         MockHttpServletRequestBuilder getRequest = get(urlTemplate, urlVariables);
         setJwtToken(getRequest);
@@ -990,6 +996,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         setJwtToken(deleteRequest);
         populateParams(deleteRequest, params);
         return mockMvc.perform(deleteRequest);
+    }
+
+    protected ResultActions doDeleteAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
+        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate)
+                .params(params);
+        setJwtToken(deleteRequest);
+        MvcResult result = mockMvc.perform(deleteRequest).andReturn();
+        result.getAsyncResult(DEFAULT_TIMEOUT);
+        return mockMvc.perform(asyncDispatch(result));
     }
 
     protected ResultActions doDeleteWithApiKey(String urlTemplate, String... params) throws Exception {
@@ -1394,12 +1409,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void postTelemetry(EntityId entityId, String payload) throws Exception {
         doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
-                    "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+                "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
     }
 
     protected void postAttributes(EntityId entityId, AttributeScope scope, String payload) throws Exception {
         doPostAsync("/api/plugins/telemetry/" + entityId.getEntityType() + "/" + entityId.getId() +
-                    "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
+                "/attributes/" + scope, JacksonUtil.toJsonNode(payload), 30_000L).andExpect(status().isOk());
     }
 
     protected CalculatedField saveCalculatedField(CalculatedField calculatedField) {
@@ -1408,7 +1423,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected PageData<CalculatedField> getCalculatedFields(EntityId entityId, CalculatedFieldType type, PageLink pageLink) throws Exception {
         return doGetTypedWithPageLink("/api/" + entityId.getEntityType() + "/" + entityId.getId() + "/calculatedFields" +
-                                      (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
+                (type != null ? "?type=" + type.name() + "&" : "?"), new TypeReference<>() {}, pageLink);
     }
 
     protected PageData<EventInfo> getDebugEvents(TenantId tenantId, EntityId entityId, int limit) throws Exception {
