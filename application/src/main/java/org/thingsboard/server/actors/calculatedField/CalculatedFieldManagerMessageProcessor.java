@@ -262,7 +262,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         ).forEach(CalculatedFieldCtx::updateTenantProfileProperties);
 
         calculatedFields.values().forEach(ctx -> {
-            applyToTargetCfEntityActors(ctx, callback, (id, cb) -> initCfForEntity(id, ctx, StateAction.REPROCESS, cb));
+            applyToTargetCfEntityActors(ctx, callback, (id, cb) -> initCfForEntity(id, ctx, StateAction.REFRESH_CTX, cb));
         });
     }
 
