@@ -61,7 +61,8 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
             alarmComment.setUserId(null);
             alarmComment.setComment(JacksonUtil.newObjectNode().put("text",
                     String.format("User %s deleted his comment",
-                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
+                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName()))
+                    .put("subtype", "deleted"));
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment));
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), ActionType.DELETED_COMMENT, user, savedAlarmComment);
         } else {
