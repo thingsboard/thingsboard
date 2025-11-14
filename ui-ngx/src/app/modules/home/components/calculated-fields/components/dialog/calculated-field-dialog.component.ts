@@ -26,7 +26,8 @@ import {
   CalculatedFieldConfiguration,
   CalculatedFieldTestScriptFn,
   CalculatedFieldType,
-  CalculatedFieldTypeTranslations
+  CalculatedFieldTypeTranslations,
+  OutputStrategyType
 } from '@shared/models/calculated-field.models';
 import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -36,7 +37,7 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { Observable } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
-import { deepTrim } from '@core/utils';
+import { deepTrim, isDefined } from '@core/utils';
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -121,6 +122,11 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   private applyDialogData(): void {
     const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
+    if (configuration.type !== CalculatedFieldType.ALARM) {
+      if (isDefined(configuration?.output) && !configuration?.output?.strategy) {
+          configuration.output.strategy = {type: OutputStrategyType.RULE_CHAIN};
+      }
+    }
     this.fieldFormGroup.patchValue({ configuration, type, debugSettings, ...value }, {emitEvent: false});
     setTimeout(() => this.fieldFormGroup.get('type').updateValueAndValidity({onlySelf: true}));
   }

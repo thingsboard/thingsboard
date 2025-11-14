@@ -1193,6 +1193,28 @@
             "filter": "Filter",
             "filter-hint": "Enables filtering of entities during aggregation. The filter function must return a boolean value and can use all configured arguments."
         },
+        "output-strategy": {
+            "strategy": "Strategy",
+            "process-right-away": "Process right away",
+            "process-rule-chains": "Process via Rule Chains",
+            "processing-options": "Processing options",
+            "save-time-series": "Save to time series",
+            "save-database": "Save to database",
+            "save-latest-values": "Save to latest values",
+            "send-web-sockets": "Send to WebSockets",
+            "save-calculated-fields": "Send to Calculated fields",
+            "update-attributes-only-on-value-change": "Save attributes only if the value changes",
+            "ttl": "TTL",
+            "ttl-required": "TTL is required.",
+            "ttl-min": "Only 0 minimum TTL is allowed.",
+            "hint": {
+                "strategy": "Strategy",
+                "processing-options": "Processing options",
+                "update-attributes-only-on-value-change": "Updates the attributes on every incoming message disregarding if their value has changed. Increases API usage and reduces performance.",
+                "update-attributes-only-on-value-change-enabled": "Updates the attributes only if their value has changed. If the value is not changed, no update to the attribute timestamp nor attribute change notification will be sent.",
+                "ttl": "If no value is present, it defaults to the TTL specified in the configuration. If the value is set to 0, the TTL from the tenant profile configuration will be applied."
+            }
+        },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
             "arguments-propagate-arguments-with-rolling": "'Time series rolling' type is incompatible with 'Arguments only' propagation.",
