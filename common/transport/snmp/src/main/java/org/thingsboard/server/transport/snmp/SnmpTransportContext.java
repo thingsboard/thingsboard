@@ -109,11 +109,6 @@ public class SnmpTransportContext extends TransportContext {
                     batchIndex++;
                     break;
                 } catch (Exception e) {
-                    if (e instanceof InterruptedException) {
-                        log.warn("SNMP bootstrap interrupted. Stopping bootstrap task.", e);
-                        return;
-                    }
-
                     if (attempt >= snmpBootstrapBatchRetries) {
                         log.error("SNMP bootstrap: batch {} failed after {} attempts.", batchIndex, attempt, e);
                         return;
