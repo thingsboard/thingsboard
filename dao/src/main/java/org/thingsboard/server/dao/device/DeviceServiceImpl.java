@@ -228,6 +228,10 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     private Device saveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
+        return saveEntity(device, () -> doSaveDeviceWithoutCredentials(device, doValidate, nameConflictStrategy));
+    }
+
+    private Device doSaveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveDevice [{}]", device);
         Device oldDevice = (device.getId() != null) ? deviceDao.findById(device.getTenantId(), device.getId().getId()) : null;
         if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldDevice == null || !oldDevice.getName().equals(device.getName()))) {
