@@ -94,8 +94,8 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     private final DeviceProfileService deviceProfileService;
     private final RuleEngineTelemetryService telemetryService;
     private final TbQueueProducer<TbProtoQueueMsg<ToOtaPackageStateServiceMsg>> otaPackageStateMsgProducer;
-    private OtaPackageEvents assignmentTelemetry;
-    private OtaPackageEvents assignmentAttributes;
+    private OtaPackageEvents assignmentTelemetry = OtaPackageEvents.UNKNOWN;
+    private OtaPackageEvents assignmentAttributes = OtaPackageEvents.UNKNOWN;
 
     @Autowired(required = false)
     private TbLogEntityActionService logEntityActionService;

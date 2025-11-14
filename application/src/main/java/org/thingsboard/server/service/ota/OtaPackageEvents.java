@@ -19,6 +19,7 @@ import java.util.Optional;
 
 public enum OtaPackageEvents {
 
+    UNKNOWN,
     TELEMETRY_EVENT,
     RULECHAIN_EVENT;
 
