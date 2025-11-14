@@ -143,13 +143,13 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
     @Override
     @Transactional
     public Customer saveCustomer(Customer customer) {
-        return saveCustomer(customer, true, NameConflictStrategy.DEFAULT);
+        return saveCustomer(customer, NameConflictStrategy.DEFAULT);
     }
 
     @Override
     @Transactional
     public Customer saveCustomer(Customer customer, NameConflictStrategy nameConflictStrategy) {
-        return saveCustomer(customer, true, nameConflictStrategy);
+        return saveEntity(customer, () -> saveCustomer(customer, true, nameConflictStrategy));
     }
 
     private Customer saveCustomer(Customer customer, boolean doValidate) {
