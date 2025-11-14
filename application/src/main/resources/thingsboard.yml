@@ -1295,6 +1295,8 @@ transport:
       ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
     # Thread pool size for scheduler that executes device querying tasks
     scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
+    # Maximum number of retry attempts for a single SNMP devices batch during bootstrap.
+    batch_retries: "${SNMP_BOOTSTRAP_RETRIES:8}"
   stats:
     # Enable/Disable the collection of transport statistics
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
