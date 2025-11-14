@@ -162,13 +162,13 @@ public class DeviceServiceTest extends AbstractServiceTest {
         defaultTenantProfile.getProfileData().setConfiguration(DefaultTenantProfileConfiguration.builder().maxDevices(5l).build());
         tenantProfileService.saveTenantProfile(tenantId, defaultTenantProfile);
 
-        for (int i = 0; i < 20; i++) {
+        for (int i = 0; i < 50; i++) {
             executor.submit(() -> {
                 Device device = new Device();
                 device.setTenantId(tenantId);
                 device.setName(StringUtils.randomAlphabetic(10));
                 device.setType("default");
-                deviceService.saveDevice(device, true);
+                deviceService.saveDevice(device);
             });
         }
 

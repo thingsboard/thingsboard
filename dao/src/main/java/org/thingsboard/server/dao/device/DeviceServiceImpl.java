@@ -189,13 +189,17 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
-        return this.saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
+        return saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
     }
 
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, true, nameConflictStrategy);
+        return saveEntity(device, () -> doSaveWithCredentials(device, deviceCredentials, nameConflictStrategy));
+    }
+
+    private Device doSaveWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
+        Device savedDevice = doSaveDeviceWithoutCredentials(device, true, nameConflictStrategy);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
             deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
@@ -216,7 +220,11 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate, nameConflictStrategy);
+        return saveEntity(device, () -> saveWithoutCredentials(device, accessToken, doValidate, nameConflictStrategy));
+    }
+
+    private Device saveWithoutCredentials(Device device, String accessToken, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
+        Device savedDevice = doSaveDeviceWithoutCredentials(device, doValidate, nameConflictStrategy);
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
@@ -225,10 +233,6 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
         }
         return savedDevice;
-    }
-
-    private Device saveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
-        return saveEntity(device, () -> doSaveDeviceWithoutCredentials(device, doValidate, nameConflictStrategy));
     }
 
     private Device doSaveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
