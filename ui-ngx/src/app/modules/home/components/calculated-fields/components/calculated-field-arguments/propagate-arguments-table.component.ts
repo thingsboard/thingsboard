@@ -32,7 +32,7 @@ import {
   CalculatedFieldArgumentsTableComponent
 } from '@home/components/calculated-fields/components/calculated-field-arguments/calculated-field-arguments-table.component';
 import { ArgumentEntityType, ArgumentType, CalculatedFieldArgumentValue } from '@shared/models/calculated-field.models';
-import { isDefined } from '@core/utils';
+import { isDefined, isUndefinedOrNull } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
@@ -94,14 +94,14 @@ export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTa
   }
 
   protected isEditButtonShowBadge(argument: CalculatedFieldArgumentValue): boolean {
-    if (!this.isScript && isDefined(argument?.refEntityId)) {
+    if (!this.isScript && (isDefined(argument?.refEntityId) || isDefined(argument?.refDynamicSourceConfiguration))) {
       return false;
     }
     return super.isEditButtonShowBadge(argument);
   }
 
   protected updateErrorText(): void {
-    if (!this.isScript && this.argumentsFormArray.controls.some(control => isDefined(control.value?.refEntityId))) {
+    if (!this.isScript && this.argumentsFormArray.controls.some(control => isDefined(control.value?.refEntityId) || isDefined(control.value.refDynamicSourceConfiguration))) {
       this.errorText = 'calculated-fields.hint.arguments-propagate-argument-entity-type';
     } else if (!this.isScript && this.argumentsFormArray.controls.some(control => control.value.refEntityKey.type === ArgumentType.Rolling)) {
       this.errorText = 'calculated-fields.hint.arguments-propagate-arguments-with-rolling';
@@ -109,6 +109,8 @@ export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTa
       this.errorText = 'calculated-fields.hint.arguments-entity-not-found';
     } else if (!this.argumentsFormArray.controls.length) {
       this.errorText = 'calculated-fields.hint.arguments-empty';
+    } if (this.isScript && !this.argumentsFormArray.controls.some(control => isUndefinedOrNull(control.value?.refEntityId) && isUndefinedOrNull(control.value.refDynamicSourceConfiguration))) {
+      this.errorText = 'calculated-fields.hint.arguments-propagate-argument-must-current-entity';
     } else {
       this.errorText = '';
     }
