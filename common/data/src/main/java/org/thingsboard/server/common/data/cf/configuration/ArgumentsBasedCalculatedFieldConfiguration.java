@@ -19,10 +19,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import org.thingsboard.server.common.data.id.EntityId;
 
-import java.util.List;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.stream.Collectors;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
 
 public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
@@ -30,14 +32,15 @@ public interface ArgumentsBasedCalculatedFieldConfiguration extends CalculatedFi
     @NotEmpty
     Map<String, Argument> getArguments();
 
-    default List<EntityId> getReferencedEntities() {
-        if (getArguments() == null) {
-            return List.of();
+    default Set<EntityId> getReferencedEntities() {
+        var args = getArguments();
+        if (args == null) {
+            return Collections.emptySet();
         }
-        return getArguments().values().stream()
+        return args.values().stream()
                 .map(Argument::getRefEntityId)
                 .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+                .collect(toSet());
     }
 
 }

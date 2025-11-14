@@ -88,3 +88,10 @@ SET configuration = jsonb_set(
 WHERE (configuration::jsonb -> 'output' -> 'strategy') IS NULL;
 
 -- CALCULATED FIELD OUTPUT STRATEGY UPDATE END
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
+
+DROP TABLE IF EXISTS calculated_field_link;
+ANALYZE calculated_field;
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE END

@@ -59,6 +59,7 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { isObject } from '@core/utils';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
+import { UtilsService } from "@core/services/utils.service";
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
@@ -80,6 +81,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private ownerId: EntityId = null,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
+              private utilsService: UtilsService,
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
@@ -124,7 +126,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     };
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
+    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%',
+      entity => this.utilsService.customTranslation(entity.name, entity.name)));
     this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '170px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
     this.columns.push(expressionColumn);
 

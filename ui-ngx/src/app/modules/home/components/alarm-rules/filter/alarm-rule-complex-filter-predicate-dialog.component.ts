@@ -35,6 +35,7 @@ export interface AlarmRuleComplexFilterPredicateDialogData {
   isAdd: boolean;
   valueType: EntityKeyValueType;
   arguments: Record<string, CalculatedFieldArgument>;
+  argumentInUse: string;
 }
 
 @Component({
