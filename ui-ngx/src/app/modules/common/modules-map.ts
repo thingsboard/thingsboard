@@ -178,6 +178,10 @@ import * as OtaPackageAutocompleteComponent from '@shared/components/ota-package
 import * as WidgetsBundleSearchComponent from '@shared/components/widgets-bundle-search.component';
 import * as CopyButtonComponent from '@shared/components/button/copy-button.component';
 import * as TogglePasswordComponent from '@shared/components/button/toggle-password.component';
+import * as WidgetButtonComponent from '@shared/components/button/widget-button.component';
+import * as WidgetButtonToggleComponent from '@shared/components/button/widget-button-toggle.component';
+import * as PhoneInputComponent from '@shared/components/phone-input.component';
+import * as TbPopoverService from '@shared/components/popover.service';
 import * as ProtobufContentComponent from '@shared/components/protobuf-content.component';
 import * as SlackConversationAutocompleteComponent from '@shared/components/slack-conversation-autocomplete.component';
 import * as StringItemsListComponent from '@shared/components/string-items-list.component';
@@ -190,8 +194,6 @@ import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.
 import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
 import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
-import * as TbPopoverService from '@shared/components/popover.service';
-
 
 import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
 import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
@@ -520,6 +522,10 @@ class ModulesMap implements IModulesMap {
     '@shared/components/widgets-bundle-search.component': WidgetsBundleSearchComponent,
     '@shared/components/button/copy-button.component': CopyButtonComponent,
     '@shared/components/button/toggle-password.component': TogglePasswordComponent,
+    '@shared/components/button/widget-button.component': WidgetButtonComponent,
+    '@shared/components/button/widget-button-toggle.component': WidgetButtonToggleComponent,
+    '@shared/components/popover.service': TbPopoverService,
+    '@shared/components/phone-input.component': PhoneInputComponent,
     '@shared/components/protobuf-content.component': ProtobufContentComponent,
     '@shared/components/slack-conversation-autocomplete.component': SlackConversationAutocompleteComponent,
     '@shared/components/string-items-list.component': StringItemsListComponent,
@@ -532,8 +538,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
-    '@shared/components/popover.service': TbPopoverService,
-
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
     '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
