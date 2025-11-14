@@ -62,4 +62,6 @@ public interface AggInterval {
 
     ZonedDateTime getNextIntervalStart(ZonedDateTime currentStart);
 
+    void validate();
+
 }

@@ -93,41 +93,71 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
     }
 
     @Test
-    public void testCreateCf_checkAggregation() throws Exception {
+    public void testCreateCfAndNoTelemetryDuringInterval_checkAggregation() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 30L);
-        long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
-        long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
+        long intervalEndTs = customInterval.getCurrentIntervalEndTs();
 
-        long tsBeforeInterval = currentIntervalStartTs - 1000L;
-        long tsInInterval_1 = currentIntervalStartTs + 1000L;
-        long tsInInterval_2 = currentIntervalStartTs + 500L;
-        long tsInInterval_3 = currentIntervalStartTs + 200L;
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsBeforeInterval));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":100}}", tsInInterval_1));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
-
+        CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, null);
         long interval = customInterval.getCurrentIntervalDurationMillis();
-        Watermark watermark = new Watermark(60);
-        CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, watermark);
 
-        await().alias("create CF and perform aggregation after interval end")
+        await().alias("create CF and no telemetry during interval -> save metric with default value")
                 .atMost(2 * interval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode result = getLatestTelemetry(device.getId(), "consumptionPerMin");
+                    ObjectNode result = getLatestTelemetry(device.getId(), "consumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumptionPerMin").get(0).get("value").asText()).isEqualTo("400");
+                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("9999");
                 });
     }
 
     @Test
-    public void testCreateCf_checkAggregationDuringWatermark() throws Exception {
+    public void testCreateCfWithoutWatermark_checkAggregation() throws Exception {
         Device device = createDevice("Device", "1234567890111");
 
-        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 30L);
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
+        long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
+        long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
+
+        long tsBeforeInterval = currentIntervalStartTs - 1000;
+        long tsInInterval_1 = currentIntervalStartTs + 1000;
+        long tsInInterval_2 = currentIntervalStartTs + 500;
+        long tsInInterval_3 = currentIntervalStartTs + 200;
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsBeforeInterval));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":100}}", tsInInterval_1));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
+
+        long interval = customInterval.getCurrentIntervalDurationMillis();
+        CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, null);
+
+        await().alias("create CF -> perform aggregation after interval end")
+                .atMost(2 * interval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(device.getId(), "consumption");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
+                });
+
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":500}}", tsInInterval_1));
+
+        await().alias("update telemetry that belongs to previous interval -> no aggregation since watermark is not set ")
+                .atMost(2 * interval, TimeUnit.MILLISECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(device.getId(), "consumption");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
+                });
+    }
+
+    @Test
+    public void testCreateCfWithWatermark_checkAggregationDuringWatermark() throws Exception {
+        Device device = createDevice("Device", "1234567890111");
+
+        CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
         long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
@@ -141,27 +171,27 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
         long interval = customInterval.getCurrentIntervalDurationMillis();
-        Watermark watermark = new Watermark(60);
+        Watermark watermark = new Watermark(10);
         CalculatedField totalConsumptionCF = createTotalConsumptionCF(device.getId(), customInterval, watermark);
 
-        await().alias("create CF and perform aggregation after interval end")
+        await().alias("create CF -> perform aggregation after interval end")
                 .atMost(2 * interval, TimeUnit.MILLISECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode result = getLatestTelemetry(device.getId(), "consumptionPerMin");
+                    ObjectNode result = getLatestTelemetry(device.getId(), "consumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumptionPerMin").get(0).get("value").asText()).isEqualTo("400");
+                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("400");
                 });
 
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":300}}", tsInInterval_1));
 
-        await().alias("create CF and perform aggregation after interval end")
+        await().alias("update telemetry during watermark -> perform aggregation")
                 .atMost(2 * 10, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode result = getLatestTelemetry(device.getId(), "consumptionPerMin");
+                    ObjectNode result = getLatestTelemetry(device.getId(), "consumption");
                     assertThat(result).isNotNull();
-                    assertThat(result.get("consumptionPerMin").get(0).get("value").asText()).isEqualTo("600");
+                    assertThat(result.get("consumption").get(0).get("value").asText()).isEqualTo("600");
                 });
     }
 
@@ -169,15 +199,15 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         Map<String, Argument> arguments = new HashMap<>();
         Argument argument = new Argument();
         argument.setRefEntityKey(new ReferencedEntityKey("energy", ArgumentType.TS_LATEST, null));
-        argument.setLimit(100);
         arguments.put("en", argument);
 
         Map<String, AggMetric> aggMetrics = new HashMap<>();
 
-        AggMetric consumptionPerMin = new AggMetric();
-        consumptionPerMin.setFunction(AggFunction.SUM);
-        consumptionPerMin.setInput(new AggKeyInput("en"));
-        aggMetrics.put("consumptionPerMin", consumptionPerMin);
+        AggMetric consumption = new AggMetric();
+        consumption.setFunction(AggFunction.SUM);
+        consumption.setInput(new AggKeyInput("en"));
+        consumption.setDefaultValue(9999L);
+        aggMetrics.put("consumption", consumption);
 
         Output output = new Output();
         output.setType(OutputType.TIME_SERIES);
@@ -208,7 +238,9 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         configuration.setArguments(inputs);
         configuration.setMetrics(metrics);
         configuration.setInterval(aggInterval);
-        configuration.setWatermark(watermark);
+        if (watermark != null) {
+            configuration.setWatermark(watermark);
+        }
         configuration.setOutput(output);
 
         calculatedField.setConfiguration(configuration);

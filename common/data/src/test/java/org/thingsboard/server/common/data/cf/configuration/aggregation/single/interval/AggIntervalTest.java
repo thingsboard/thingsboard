@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -29,10 +30,38 @@ import java.util.function.LongFunction;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class AggIntervalTest {
 
     private static final String TZ = "Europe/Kiev";
+
+    @Test
+    void validateShouldThrowWhenInvalidTimZone() {
+        AggInterval interval = new HourInterval("TimeZone", null);
+
+        assertThatThrownBy(interval::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Invalid timezone in interval: ");
+    }
+
+    @Test
+    void validateShouldThrowWhenOffsetIsNegative() {
+        AggInterval interval = new CustomInterval(TZ, -100L, TimeUnit.HOURS.toSeconds(2));
+
+        assertThatThrownBy(interval::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Offset cannot be negative.");
+    }
+
+    @Test
+    void validateShouldThrowWhenOffsetGreaterThanIntervalDuration() {
+        AggInterval interval = new CustomInterval(TZ, TimeUnit.HOURS.toSeconds(2), TimeUnit.HOURS.toSeconds(2));
+
+        assertThatThrownBy(interval::validate)
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Offset must be greater than interval duration.");
+    }
 
     @ParameterizedTest
     @MethodSource("intervals")
