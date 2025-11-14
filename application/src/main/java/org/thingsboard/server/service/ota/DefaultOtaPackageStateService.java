@@ -100,10 +100,10 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     @Autowired(required = false)
     private TbLogEntityActionService logEntityActionService;
 
-    @Value("${queue.core.ota.assignment-event.telemetry:SAVE}")
+    @Value("${queue.core.ota.assignment-event.telemetry:TELEMETRY_EVENT")
     private String assignmentTelemetryConfig;
 
-    @Value("${queue.core.ota.assignment-event.attributes:SAVE}")
+    @Value("${queue.core.ota.assignment-event.attributes:TELEMETRY_EVENT}")
     private String assignmentAttributesConfig;
 
     public DefaultOtaPackageStateService(@Lazy TbClusterService tbClusterService,
@@ -298,7 +298,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
         telemetry.add(new BasicTsKvEntry(ts, new LongDataEntry(getTargetTelemetryKey(firmware.getType(), TS), ts)));
         telemetry.add(new BasicTsKvEntry(ts, new StringDataEntry(getTelemetryKey(firmware.getType(), STATE), OtaPackageUpdateStatus.QUEUED.name())));
 
-        if (assignmentTelemetry.equals(OtaPackageEvents.SAVE)) {
+        if (assignmentTelemetry.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
             telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(deviceId)
@@ -331,7 +331,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         BasicTsKvEntry status = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(getTelemetryKey(otaPackageType, STATE), OtaPackageUpdateStatus.INITIATED.name()));
 
-        if (assignmentTelemetry.equals(OtaPackageEvents.SAVE)) {
+        if (assignmentTelemetry.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
             telemetryService.saveTimeseries(TimeseriesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(deviceId)
@@ -398,7 +398,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
 
         remove(device, otaPackageType, attrToRemove);
 
-        if (assignmentAttributes.equals(OtaPackageEvents.SAVE)) {
+        if (assignmentAttributes.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
             telemetryService.saveAttributes(AttributesSaveRequest.builder()
                     .tenantId(tenantId)
                     .entityId(deviceId)
@@ -429,7 +429,7 @@ public class DefaultOtaPackageStateService implements OtaPackageStateService {
     }
 
     private void remove(Device device, OtaPackageType otaPackageType, List<String> attributesKeys) {
-        if (assignmentAttributes.equals(OtaPackageEvents.SAVE)) {
+        if (assignmentAttributes.equals(OtaPackageEvents.TELEMETRY_EVENT)) {
             telemetryService.deleteAttributes(AttributesDeleteRequest.builder()
                     .tenantId(device.getTenantId())
                     .entityId(device.getId())

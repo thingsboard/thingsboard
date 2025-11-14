@@ -19,7 +19,7 @@ import java.util.Optional;
 
 public enum OtaPackageEvents {
 
-    SAVE,
+    TELEMETRY_EVENT,
     RULECHAIN_EVENT;
 
     public static Optional<OtaPackageEvents> parse(String name) {

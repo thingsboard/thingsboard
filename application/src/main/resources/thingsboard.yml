@@ -1771,10 +1771,10 @@ queue:
       # The size of OTA updates notifications fetched from the queue. The queue stores pairs of firmware and device ids
       pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
       # The event that should occur for telemetry and attributes when an OTA is assigned to a device
-      # SAVE (The data is saved to the server), RULECHAIN_EVENT (Rulechain event is generated and sent into the devices root rule chain)
+      # TELEMETRY_EVENT (The data is saved to the server), RULECHAIN_EVENT (Rulechain event is generated and sent into the devices root rule chain)
       assignment-event:
-        telemetry: "${TB_QUEUE_CORE_OTA_ASSIGNMENT_EVENT_TELEMETRY:SAVE}"
-        attributes: "${TB_QUEUE_CORE_OTA_ASSIGNMENT_EVENT_ATTRIBUTES:SAVE}"
+        telemetry: "${TB_QUEUE_CORE_OTA_ASSIGNMENT_EVENT_TELEMETRY:TELEMETRY_EVENT}"
+        attributes: "${TB_QUEUE_CORE_OTA_ASSIGNMENT_EVENT_ATTRIBUTES:TELEMETRY_EVENT}"
     # Stats topic name
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
     stats:
