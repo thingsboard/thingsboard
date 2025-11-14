@@ -105,7 +105,7 @@ public class GeofencingCalculatedFieldStateTest {
         ctx.init();
         state = new GeofencingCalculatedFieldState(ctx.getEntityId());
         state.setCtx(ctx, null);
-        state.init();
+        state.init(false);
     }
 
     @Test

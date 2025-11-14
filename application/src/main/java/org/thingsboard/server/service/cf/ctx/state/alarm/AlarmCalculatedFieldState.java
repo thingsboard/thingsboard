@@ -122,8 +122,11 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     }
 
     @Override
-    public void init() {
-        super.init();
+    public void init(boolean restored) {
+        super.init(restored);
+        if (restored) {
+            return;
+        }
         AtomicBoolean reevalNeeded = new AtomicBoolean(false);
         Map<AlarmSeverity, AlarmRule> createRules = configuration.getCreateRules();
         for (AlarmSeverity severity : AlarmSeverity.values()) {

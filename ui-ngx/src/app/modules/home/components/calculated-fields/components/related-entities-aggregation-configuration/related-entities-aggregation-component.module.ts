@@ -27,11 +27,8 @@ import {
   RelatedEntitiesAggregationComponentComponent
 } from '@home/components/calculated-fields/components/related-entities-aggregation-configuration/related-entities-aggregation-component.component';
 import {
-  CalculatedFieldMetricsTableComponent
-} from '@home/components/calculated-fields/components/related-entities-aggregation-configuration/calculated-field-metrics-table.component';
-import {
-  CalculatedFieldMetricsPanelComponent
-} from '@home/components/calculated-fields/components/related-entities-aggregation-configuration/calculated-field-metrics-panel.component';
+  CalculatedFieldMetricsTableModule
+} from '@home/components/calculated-fields/components/metrics/calculated-field-metrics-table.module';
 
 @NgModule({
   imports: [
@@ -39,11 +36,10 @@ import {
     SharedModule,
     CalculatedFieldOutputModule,
     CalculatedFieldArgumentsTableModule,
+    CalculatedFieldMetricsTableModule,
   ],
   declarations: [
     RelatedEntitiesAggregationComponentComponent,
-    CalculatedFieldMetricsTableComponent,
-    CalculatedFieldMetricsPanelComponent
   ],
   exports: [
     RelatedEntitiesAggregationComponentComponent,

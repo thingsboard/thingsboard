@@ -1,0 +1,133 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="entityAggregationConfiguration" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title">
+      {{ 'calculated-fields.arguments' | translate }}
+    </div>
+    <div class="tb-form-hint tb-primary-fill hint-container">
+      {{ 'calculated-fields.entity-aggregation.argument-hint' | translate }}
+    </div>
+    <tb-entity-aggregation-arguments-table formControlName="arguments"
+                                           [entityId]="entityId"
+                                           [tenantId]="tenantId"
+                                           [entityName]="entityName"/>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.metrics' | translate }}">
+      {{ 'calculated-fields.metrics.metrics' | translate }}
+    </div>
+    <tb-calculated-field-metrics-table formControlName="metrics"
+                                       simpleMode
+                                       [arguments]="arguments$ | async"
+    ></tb-calculated-field-metrics-table>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.aggregation-interval-hint' | translate }}">
+      {{ 'calculated-fields.entity-aggregation.aggregation-interval' | translate }}
+    </div>
+    <ng-container formGroupName="interval">
+      <div class="flex items-start gap-3 xs:flex-col xs:items-stretch">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>calculated-fields.aggregate-interval-type</mat-label>
+          <mat-select formControlName="type" required>
+            <mat-option *ngFor="let type of AggIntervalTypes" [value]="type">
+              {{ AggIntervalTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <tb-timezone-select
+          class="flex-1"
+          appearance="outline"
+          subscriptSizing="dynamic"
+          required
+          userTimezoneByDefault
+          formControlName="tz">
+        </tb-timezone-select>
+      </div>
+      @if (entityAggregationConfiguration.get('interval.type').value === AggIntervalType.CUSTOM) {
+        <tb-time-unit-input required
+                            [minTime]="minAllowedAggregationIntervalInSecForCF"
+                            [stepMultipleOf]="DayInSec"
+                            sameWidthInputs
+                            appearance="outline"
+                            subscriptSizing="dynamic"
+                            containerClass="flex gap-3"
+                            labelText="{{ 'calculated-fields.aggregate-interval-value' | translate }}"
+                            minErrorText="{{ 'calculated-fields.aggregate-interval-value-min' | translate : {sec: minAllowedAggregationIntervalInSecForCF} }}"
+                            requiredText="{{ 'calculated-fields.aggregate-interval-value-required' | translate }}"
+                            stepMultipleOfErrorText="{{ 'calculated-fields.aggregate-interval-value-step-multiple-of' | translate }}"
+                            formControlName="durationSec">
+        </tb-time-unit-input>
+      }
+      <div class="tb-form-panel stroked">
+        <mat-slide-toggle class="mat-slide flex" formControlName="allowOffsetSec">
+          <div tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.apply-offset-hint' | translate }}">
+            {{ 'calculated-fields.entity-aggregation.apply-offset' | translate }}
+          </div>
+        </mat-slide-toggle>
+        @if (entityAggregationConfiguration.get('interval.allowOffsetSec').value) {
+          <tb-time-unit-input required
+                              [minTime]="0"
+                              [maxTime]="maxOffsetTime"
+                              sameWidthInputs
+                              appearance="outline"
+                              subscriptSizing="dynamic"
+                              containerClass="flex gap-3"
+                              labelText="{{ 'calculated-fields.entity-aggregation.offset-value' | translate }}"
+                              minErrorText="{{ 'calculated-fields.entity-aggregation.offset-value-min' | translate }}"
+                              maxErrorText="{{ 'calculated-fields.entity-aggregation.offset-value-max' | translate }}"
+                              requiredText="{{ 'calculated-fields.entity-aggregation.offset-value-required' | translate }}"
+                              formControlName="offsetSec">
+          </tb-time-unit-input>
+          <div class="tb-form-hint tb-primary-fill hint-container">
+            {{ hint }}
+          </div>
+        }
+      </div>
+    </ng-container>
+    <div class="tb-form-panel stroked">
+      <mat-slide-toggle class="mat-slide flex" formControlName="allowWatermark">
+        <div tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.wait-delay-hint' | translate }}">
+          {{ 'calculated-fields.entity-aggregation.wait-delay' | translate }}
+        </div>
+      </mat-slide-toggle>
+      @if (entityAggregationConfiguration.get('allowWatermark').value) {
+        <ng-container formGroupName="watermark">
+          <tb-time-unit-input required
+                              [minTime]="60"
+                              sameWidthInputs
+                              appearance="outline"
+                              containerClass="flex gap-3"
+                              labelText="{{ 'calculated-fields.entity-aggregation.duration' | translate }}"
+                              minErrorText="{{ 'calculated-fields.entity-aggregation.duration-min' | translate }}"
+                              hintText="{{ 'calculated-fields.entity-aggregation.duration-hint' | translate }}"
+                              requiredText="{{ 'calculated-fields.entity-aggregation.duration-required' | translate }}"
+                              formControlName="duration">
+          </tb-time-unit-input>
+        </ng-container>
+      }
+    </div>
+  </div>
+  <tb-calculate-field-output formControlName="output"
+                             containerInputClass="grid items-start grid-cols-2 gap-3 xs:grid-cols-1"
+                             simpleMode
+                             hiddenName
+                             disableType
+                             [entityId]="entityId"></tb-calculate-field-output>
+</div>

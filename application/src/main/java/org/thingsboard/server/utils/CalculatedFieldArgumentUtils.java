@@ -21,6 +21,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
@@ -35,10 +37,17 @@ import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntryStatus;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class CalculatedFieldArgumentUtils {
@@ -53,6 +62,36 @@ public class CalculatedFieldArgumentUtils {
         } else {
             return new SingleValueArgumentEntry();
         }
+    }
+
+    public static ArgumentEntry transformTsRollingArgument(List<TsKvEntry> tsRolling, int limit, long argTimeWindow) {
+        return ArgumentEntry.createTsRollingArgument(tsRolling, limit, argTimeWindow);
+    }
+
+    public static ArgumentEntry transformAggMetricArgument(List<TsKvEntry> timeSeries, String argKey, AggMetric aggMetric) {
+        if (timeSeries == null || timeSeries.isEmpty()) {
+            return createDefaultMetricArgumentEntry(argKey, aggMetric);
+        }
+        return ArgumentEntry.createSingleValueArgument(timeSeries.get(0));
+    }
+
+    public static ArgumentEntry createDefaultMetricArgumentEntry(String argKey, AggMetric metric) {
+        Long defaultValue = metric.getDefaultValue();
+        if (defaultValue != null) {
+            return ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue.doubleValue()));
+        }
+        return new SingleValueArgumentEntry();
+    }
+
+    public static ArgumentEntry transformAggregationArgument(List<TsKvEntry> timeSeries, long startIntervalTs, long endIntervalTs) {
+        Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals = new HashMap<>();
+        AggIntervalEntry aggIntervalEntry = new AggIntervalEntry(startIntervalTs, endIntervalTs);
+        if (timeSeries == null || timeSeries.isEmpty()) {
+            aggIntervals.put(aggIntervalEntry, new AggIntervalEntryStatus());
+        } else {
+            aggIntervals.put(aggIntervalEntry, new AggIntervalEntryStatus(System.currentTimeMillis()));
+        }
+        return new EntityAggregationArgumentEntry(aggIntervals);
     }
 
     public static KvEntry createDefaultKvEntry(Argument argument) {
@@ -83,6 +122,7 @@ public class CalculatedFieldArgumentUtils {
             case ALARM -> new AlarmCalculatedFieldState(entityId);
             case PROPAGATION -> new PropagationCalculatedFieldState(entityId);
             case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(entityId);
+            case ENTITY_AGGREGATION -> new EntityAggregationCalculatedFieldState(entityId);
         };
     }
 

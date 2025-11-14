@@ -75,6 +75,14 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     @Override
+    public void init(boolean restored) {
+        super.init(restored);
+        if (restored) {
+            scheduleReevaluation();
+        }
+    }
+
+    @Override
     public void close() {
         super.close();
         if (reevaluationFuture != null) {
