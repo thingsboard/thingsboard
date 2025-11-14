@@ -48,4 +48,6 @@ public interface Output {
 
     Integer getDecimalsByDefault();
 
+    void setDecimalsByDefault(Integer decimalsByDefault);
+
 }

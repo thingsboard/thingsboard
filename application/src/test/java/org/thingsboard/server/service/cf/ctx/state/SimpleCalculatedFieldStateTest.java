@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfig
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -190,7 +189,7 @@ public class SimpleCalculatedFieldStateTest {
                 "key3", new SingleValueArgumentEntry(System.currentTimeMillis() - 3, new DoubleDataEntry("key3", 23.1), 184L)
         ));
 
-        TimeSeriesOutput output = (TimeSeriesOutput) getCalculatedFieldConfig().getOutput();
+        Output output = getCalculatedFieldConfig().getOutput();
         output.setDecimalsByDefault(3);
         ctx.setOutput(output);
 
