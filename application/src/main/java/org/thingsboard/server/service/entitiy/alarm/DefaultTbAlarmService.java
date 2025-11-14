@@ -233,7 +233,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     private void addSystemAlarmComment(Alarm alarm, User user, AlarmCommentSubType subType, Map<String, String> params) {
         ObjectNode commentNode = JacksonUtil.newObjectNode();
-        commentNode.put("text", String.format(subType.getText(), params.values()))
+        commentNode.put("text", String.format(subType.getText(), params.values().toArray()))
                 .put("subtype", subType.name());
         params.forEach(commentNode::put);
         AlarmComment alarmComment = AlarmComment.builder()
