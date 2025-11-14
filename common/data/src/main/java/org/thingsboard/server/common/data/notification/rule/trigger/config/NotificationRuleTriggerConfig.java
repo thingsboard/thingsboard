@@ -42,12 +42,11 @@ import java.io.Serializable;
         @Type(value = ResourcesShortageNotificationRuleTriggerConfig.class, name = "RESOURCES_SHORTAGE")
 })
 public interface NotificationRuleTriggerConfig extends Serializable {
-
+    @JsonIgnore
     NotificationRuleTriggerType getTriggerType();
 
     @JsonIgnore
     default String getDeduplicationKey() {
         return "#";
     }
-
 }

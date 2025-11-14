@@ -23,4 +23,9 @@ public record GoogleVertexAiGeminiProviderConfig(
         @NotNull String projectId,
         @NotNull String location,
         @NotNull String serviceAccountKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+    @Override
+    public AiProvider getProvider() {
+        return AiProvider.GOOGLE_VERTEX_AI_GEMINI;
+    }
+}
