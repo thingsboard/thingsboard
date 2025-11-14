@@ -19,6 +19,7 @@ import com.auth0.jwt.JWT;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
@@ -214,16 +215,15 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 
-/**
- * @author Andrew Shvayka
- */
 public class RestClient implements Closeable {
-    private static final String JWT_TOKEN_HEADER_PARAM = "X-Authorization";
+
+    private static final String TOKEN_HEADER_PARAM = "X-Authorization";
     private static final long AVG_REQUEST_TIMEOUT = TimeUnit.SECONDS.toMillis(30);
     protected static final String ACTIVATE_TOKEN_REGEX = "/api/noauth/activate?activateToken=";
     private final LazyInitializer<ExecutorService> executor = LazyInitializer.<ExecutorService>builder()
             .setInitializer(() -> ThingsBoardExecutors.newWorkStealingPool(10, getClass()))
             .get();
+    @Getter
     protected final RestTemplate restTemplate;
     protected final RestTemplate loginRestTemplate;
     protected final String baseURL;
@@ -231,56 +231,66 @@ public class RestClient implements Closeable {
     private String username;
     private String password;
     private String mainToken;
+    @Getter
     private String refreshToken;
     private long mainTokenExpTs;
     private long refreshTokenExpTs;
     private long clientServerTimeDiff;
+
+    public enum AuthType {JWT, API_KEY}
 
     public RestClient(String baseURL) {
         this(new RestTemplate(), baseURL);
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
-        this(restTemplate, baseURL, null);
+        this(restTemplate, baseURL, AuthType.JWT, null);
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL, String accessToken) {
+        this(restTemplate, baseURL, AuthType.JWT, accessToken);
+    }
+
+    public RestClient(RestTemplate restTemplate, String baseURL, AuthType authType, String token) {
         this.restTemplate = restTemplate;
         this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);
-            if (accessToken == null) {
-                long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
-                if (calculatedTs > mainTokenExpTs) {
-                    synchronized (RestClient.this) {
+            switch (authType) {
+                case JWT -> {
+                    if (token == null) {
+                        long calculatedTs = System.currentTimeMillis() + clientServerTimeDiff + AVG_REQUEST_TIMEOUT;
                         if (calculatedTs > mainTokenExpTs) {
-                            if (calculatedTs < refreshTokenExpTs) {
-                                refreshToken();
-                            } else {
-                                doLogin();
+                            synchronized (RestClient.this) {
+                                if (calculatedTs > mainTokenExpTs) {
+                                    if (calculatedTs < refreshTokenExpTs) {
+                                        refreshToken();
+                                    } else {
+                                        doLogin();
+                                    }
+                                }
                             }
                         }
+                    } else {
+                        mainToken = token;
                     }
+                    wrapper.getHeaders().set(TOKEN_HEADER_PARAM, "Bearer " + mainToken);
                 }
-            } else {
-                mainToken = accessToken;
+                case API_KEY -> {
+                    wrapper.getHeaders().set(TOKEN_HEADER_PARAM, "ApiKey " + token);
+                }
             }
-            wrapper.getHeaders().set(JWT_TOKEN_HEADER_PARAM, "Bearer " + mainToken);
             return execution.execute(wrapper, bytes);
         });
     }
 
-    public RestTemplate getRestTemplate() {
-        return restTemplate;
+    public static RestClient withApiKey(RestTemplate rt, String baseURL, String token) {
+        return new RestClient(rt, baseURL, AuthType.API_KEY, token);
     }
 
     public String getToken() {
         return mainToken;
-    }
-
-    public String getRefreshToken() {
-        return refreshToken;
     }
 
     public void refreshToken() {

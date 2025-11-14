@@ -31,6 +31,20 @@
     </div>
   </mat-card>
   <mat-card appearance="outlined" class="profile-card flex flex-col">
+    <div class="flex flex-row items-center justify-between">
+      <mat-card-title>
+        <span class="mat-headline-5 card-title" translate>api-key.api-keys</span>
+      </mat-card-title>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="openApiKeysTable()">
+        <mat-icon>key</mat-icon>
+        <span>{{ 'api-key.manage' | translate }}</span>
+      </button>
+    </div>
+  </mat-card>
+  <mat-card appearance="outlined" class="profile-card flex flex-col">
     <div class="change-password" tb-toast toastTarget="changePassword">
       <form #changePasswordForm="ngForm" [formGroup]="changePassword" (ngSubmit)="onChangePassword(changePasswordForm)">
         <div class="flex flex-row gap-6.25 xs:flex-col xs:gap-0">

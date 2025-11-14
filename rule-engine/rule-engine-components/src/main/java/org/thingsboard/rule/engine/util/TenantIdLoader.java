@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -173,6 +174,9 @@ public class TenantIdLoader {
                 break;
             case AI_MODEL:
                 tenantEntity = ctx.getAiModelService().findAiModelById(ctxTenantId, new AiModelId(id)).orElse(null);
+                break;
+            case API_KEY:
+                tenantEntity = ctx.getApiKeyService().findApiKeyById(ctxTenantId, new ApiKeyId(id));
                 break;
             default:
                 throw new RuntimeException("Unexpected entity type: " + entityId.getEntityType());

@@ -52,6 +52,9 @@ import { isDefinedAndNotNull, isEqual } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import {
+  ApiKeysTableDialogComponent, ApiKeysTableDialogData
+} from '@home/components/api-key/components/dialog/api-keys-table-dialog.component';
 
 @Component({
   selector: 'tb-security',
@@ -383,5 +386,16 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
       newPassword: '',
       newPassword2: ''
     });
+  }
+
+  openApiKeysTable() {
+    this.dialog.open<ApiKeysTableDialogComponent, ApiKeysTableDialogData>(
+      ApiKeysTableDialogComponent, {
+        disableClose: false,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          userId: this.user.id,
+        }
+      }).afterClosed().subscribe();
   }
 }

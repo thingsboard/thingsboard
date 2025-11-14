@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.jwt.extractor;
+package org.thingsboard.server.service.security.auth.extractor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationServiceException;
@@ -21,24 +21,23 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 
-@Component(value="jwtHeaderTokenExtractor")
-public class JwtHeaderTokenExtractor implements TokenExtractor {
-    public static final String HEADER_PREFIX = "Bearer ";
+@Component(value = "jwtQueryTokenExtractor")
+public class JwtQueryTokenExtractor implements TokenExtractor {
 
     @Override
     public String extract(HttpServletRequest request) {
-        String header = request.getHeader(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM);
-        if (StringUtils.isBlank(header)) {
-            header = request.getHeader(ThingsboardSecurityConfiguration.JWT_TOKEN_HEADER_PARAM_V2);
-            if (StringUtils.isBlank(header)) {
-                throw new AuthenticationServiceException("Authorization header cannot be blank!");
+        String token = null;
+        if (request.getParameterMap() != null && !request.getParameterMap().isEmpty()) {
+            String[] tokenParamValue = request.getParameterMap().get(ThingsboardSecurityConfiguration.JWT_TOKEN_QUERY_PARAM);
+            if (tokenParamValue != null && tokenParamValue.length == 1) {
+                token = tokenParamValue[0];
             }
         }
-
-        if (header.length() < HEADER_PREFIX.length()) {
-            throw new AuthenticationServiceException("Invalid authorization header size.");
+        if (StringUtils.isBlank(token)) {
+            throw new AuthenticationServiceException("Authorization query parameter cannot be blank!");
         }
 
-        return header.substring(HEADER_PREFIX.length(), header.length());
+        return token;
     }
+
 }

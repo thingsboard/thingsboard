@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.jwt.extractor;
+package org.thingsboard.server.service.user.cache;
 
-import jakarta.servlet.http.HttpServletRequest;
+import org.thingsboard.server.common.data.UserAuthDetails;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserId;
 
-public interface TokenExtractor {
-    String extract(HttpServletRequest request);
+public interface UserAuthDetailsCache {
+
+    UserAuthDetails getUserAuthDetails(TenantId tenantId, UserId userId);
+
 }
