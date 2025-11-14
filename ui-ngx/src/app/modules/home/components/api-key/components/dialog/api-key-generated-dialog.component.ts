@@ -21,6 +21,7 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { userInfoCommand, ApiKey } from '@shared/models/api-key.models';
+import { getOS } from '@core/utils';
 
 export interface ApiKeyGeneratedDialogData {
   apiKey: ApiKey;
@@ -34,12 +35,14 @@ export interface ApiKeyGeneratedDialogData {
 export class ApiKeyGeneratedDialogComponent extends DialogComponent<ApiKeyGeneratedDialogComponent, void> {
 
   apiKeyCommand = userInfoCommand(this.data.apiKey.value);
+  selectedTab: number;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               protected dialogRef: MatDialogRef<ApiKeyGeneratedDialogComponent, void>,
               @Inject(MAT_DIALOG_DATA) public data: ApiKeyGeneratedDialogData) {
     super(store, router, dialogRef);
+    this.selectTabIndexForUserOS();
   }
 
   close(): void {
@@ -51,5 +54,24 @@ export class ApiKeyGeneratedDialogComponent extends DialogComponent<ApiKeyGenera
       command +
       '{:copy-code}\n' +
       '```';
+  }
+
+  private selectTabIndexForUserOS() {
+    const currentOS = getOS();
+    switch (currentOS) {
+      case 'linux':
+      case 'android':
+        this.selectedTab = 2;
+        break;
+      case 'macos':
+      case 'ios':
+        this.selectedTab = 1;
+        break;
+      case 'windows':
+        this.selectedTab = 0;
+        break;
+      default:
+        this.selectedTab = 2;
+    }
   }
 }

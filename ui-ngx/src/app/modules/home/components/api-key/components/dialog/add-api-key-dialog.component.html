@@ -46,9 +46,11 @@
       <section class="flex gap-3">
         <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
           <mat-select formControlName="expirationTime" aria-label="Expiration date selector" (selectionChange)="onExpirationDateChange()">
-            <mat-option [value]="value" *ngFor="let value of expirationDates">
-              {{ value | dateExpiration }}
-            </mat-option>
+            @for (value of expirationTimeOptions; track value) {
+              <mat-option [value]="value">
+                {{ value | dateExpiration }}
+              </mat-option>
+            }
             <mat-option value="never">{{'api-key.expiration-time-never' | translate}}</mat-option>
             <mat-option value="custom">{{'api-key.expiration-time-custom' | translate}}</mat-option>
           </mat-select>

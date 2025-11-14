@@ -14,10 +14,16 @@
  * limitations under the License.
  */
 :host{
-  display: block;
-  width: 600px;
+  display: grid;
+  width: 500px;
+  height: 100%;
   max-width: 100%;
-  color: rgba(0, 0, 0, 0.76);
+  max-height: 100vh;
+  grid-template-rows: min-content minmax(auto, 1fr) min-content;
+
+  .tb-install-instruction-text {
+    min-height: 42px;
+  }
 }
 
 :host ::ng-deep {

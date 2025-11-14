@@ -40,7 +40,7 @@
          label="{{ 'audit-log.audit-logs' | translate }}" #auditLogsTab="matTab">
   <tb-audit-log-table [active]="auditLogsTab.isActive" [auditLogMode]="auditLogModes.USER" [userId]="entity.id" detailsMode="true"></tb-audit-log-table>
 </mat-tab>
-<mat-tab *ngIf="entity && authUser.authority === authorities.TENANT_ADMIN"
+<mat-tab *ngIf="entity"
          label="{{ 'api-key.api-keys' | translate }}" #apiKeysTab="matTab">
   <tb-api-keys-table [active]="apiKeysTab.isActive" [userId]="entity.id"></tb-api-keys-table>
 </mat-tab>

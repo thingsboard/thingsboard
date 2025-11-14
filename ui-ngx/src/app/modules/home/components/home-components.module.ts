@@ -512,9 +512,6 @@ import {
     ResourcesLibraryComponent,
     ApiKeysTableComponent,
     ApiKeysTableDialogComponent,
-    AddApiKeyDialogComponent,
-    EditApiKeyDescriptionPanelComponent,
-    ApiKeyGeneratedDialogComponent,
   ],
   providers: [
     WidgetComponentService,

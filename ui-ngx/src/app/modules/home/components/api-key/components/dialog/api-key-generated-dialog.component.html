@@ -16,7 +16,7 @@
 
 -->
 <mat-toolbar color="primary">
-  <h2>{{ 'api-key.generated-title' | translate }}</h2>
+  <h2>{{ 'api-key.generated-api-key-title' | translate }}</h2>
   <span class="flex-1"></span>
   <button mat-icon-button
           (click)="close()"
@@ -25,14 +25,62 @@
   </button>
 </mat-toolbar>
 <div mat-dialog-content>
-  <span translate>api-key.generated-text</span>
-  <div class="tb-form-panel no-padding no-border tb-tab-body">
-    <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                 [data]='createMarkDownCommand(data.apiKey.value)'></tb-markdown>
-    <div class="tb-form-panel stroked">
-      <div class="tb-form-panel-title" translate>api-key.generated-command-title</div>
+  <div class="tb-form-panel no-padding no-border">
+    <div class="tb-no-data-text font-normal" translate>api-key.generated-api-key-copy</div>
+    <div class="tb-form-panel no-padding no-border">
       <tb-markdown usePlainMarkdown containerClass="tb-command-code"
-                   [data]='createMarkDownCommand(apiKeyCommand)'></tb-markdown>
+                   [data]='createMarkDownCommand(data.apiKey.value)'></tb-markdown>
+    </div>
+    <div class="tb-form-panel no-padding no-border tb-tab-body">
+      <div class="tb-no-data-text font-normal" translate>api-key.generated-api-key-command</div>
+      <mat-tab-group [selectedIndex]="selectedTab">
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
+            Windows
+          </ng-template>
+          <ng-template matTabContent>
+            <div class="tb-form-panel no-padding no-border tb-tab-body">
+              <div class="tb-form-panel stroked">
+                <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-windows</div>
+              </div>
+              <ng-container *ngTemplateOutlet="executeCommand"></ng-container>
+            </div>
+          </ng-template>
+        </mat-tab>
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
+            MacOS
+          </ng-template>
+          <ng-template matTabContent>
+            <div class="tb-form-panel no-padding no-border tb-tab-body">
+              <div class="tb-form-panel stroked">
+                <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                <div class="tb-install-instruction-text" translate>device.connectivity.install-curl-macos</div>
+              </div>
+              <ng-container *ngTemplateOutlet="executeCommand"></ng-container>
+            </div>
+          </ng-template>
+        </mat-tab>
+        <mat-tab>
+          <ng-template mat-tab-label>
+            <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
+            Linux
+          </ng-template>
+          <ng-template matTabContent>
+            <div class="tb-form-panel no-padding no-border tb-tab-body">
+              <div class="tb-form-panel stroked">
+                <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+                <tb-markdown usePlainMarkdown containerClass="tb-command-code"
+                             [data]='createMarkDownCommand("sudo apt-get install curl")'></tb-markdown>
+              </div>
+              <ng-container *ngTemplateOutlet="executeCommand"></ng-container>
+            </div>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
     </div>
   </div>
 </div>
@@ -44,3 +92,10 @@
     {{ 'action.close' | translate }}
   </button>
 </div>
+
+<ng-template #executeCommand>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
+    <tb-markdown usePlainMarkdown containerClass="tb-command-code" [data]='createMarkDownCommand(apiKeyCommand)'></tb-markdown>
+  </div>
+</ng-template>

@@ -15,13 +15,13 @@
 ///
 
 
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, Inject } from '@angular/core';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { FormBuilder, Validators, UntypedFormGroup } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { deepTrim } from '@core/utils';
 import { ApiKeyService } from '@core/http/api-key.service';
 import { ApiKeyInfo } from '@shared/models/api-key.models';
@@ -33,14 +33,16 @@ import { DAY } from '@shared/models/time/time.models';
   templateUrl: './add-api-key-dialog.component.html',
   styleUrls: ['./add-api-key-dialog.component.scss']
 })
-export class AddApiKeyDialogComponent extends DialogComponent<AddApiKeyDialogComponent, ApiKeyInfo | string> implements OnInit{
-
-  apiKeyForm: UntypedFormGroup;
+export class AddApiKeyDialogComponent extends DialogComponent<AddApiKeyDialogComponent, ApiKeyInfo | string> {
 
   readonly startDate = new Date();
-  readonly expirationDates = [7, 30, 60, 90].map(days => days * DAY);
-
-  private defaultExpirationDate = this.expirationDates[1];
+  readonly expirationTimeOptions: Array<number> = [7, 30, 60, 90].map(days => days * DAY);
+  readonly apiKeyForm = this.fb.group({
+    description: [{value: null, disabled: false}, [Validators.required]],
+    enabled: [{value: true, disabled: false}, []],
+    expirationTime: [{value: this.expirationTimeOptions[1] as string | number, disabled: false}, [Validators.required]],
+    customExpirationTime: [{value: null, disabled: true}, []],
+  });
 
   constructor(
     protected store: Store<AppState>,
@@ -51,15 +53,6 @@ export class AddApiKeyDialogComponent extends DialogComponent<AddApiKeyDialogCom
     @Inject(MAT_DIALOG_DATA) public data: ApiKeysTableDialogData,
   ) {
     super(store, router, dialogRef);
-  }
-
-  ngOnInit() {
-    this.apiKeyForm = this.fb.group({
-      description: [{value: null, disabled: false}, [Validators.required]],
-      enabled: [{value: true, disabled: false}, []],
-      expirationTime: [{value: this.defaultExpirationDate, disabled: false}, [Validators.required]],
-      customExpirationTime: [{value: null, disabled: true}, []],
-    });
   }
 
   close(): void {
@@ -89,11 +82,10 @@ export class AddApiKeyDialogComponent extends DialogComponent<AddApiKeyDialogCom
   onExpirationDateChange() {
     const customExpirationTimeControl = this.apiKeyForm.get('customExpirationTime');
     if (this.isCustomExpirationTime()) {
-      customExpirationTimeControl.enable();
+      customExpirationTimeControl.enable({emitEvent: false});
     } else {
-      customExpirationTimeControl.disable();
+      customExpirationTimeControl.disable({emitEvent: false});
     }
-    customExpirationTimeControl.updateValueAndValidity();
   }
 
   private calcExpirationTime(): number {
@@ -104,7 +96,7 @@ export class AddApiKeyDialogComponent extends DialogComponent<AddApiKeyDialogCom
     } else if (expirationTimeValue === 'never') {
       value = 0;
     } else {
-      value = expirationTimeValue + Date.now();
+      value = expirationTimeValue as number + Date.now();
     }
     return value;
   }

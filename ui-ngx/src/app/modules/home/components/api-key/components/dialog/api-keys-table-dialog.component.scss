@@ -14,23 +14,14 @@
  * limitations under the License.
  */
 
-:host ::ng-deep {
-  tb-api-keys-table {
-    tb-entities-table {
-      .tb-absolute-fill {
-        position: relative;
-      }
-      .table-container {
-        width: 1000px;
-        min-height: 625px;
-        max-height: 625px;
-      }
-      .no-data-found {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-      }
+:host {
+  .api-keys-dialog-container {
+    width: 1080px;
+    max-width: 100%;
+
+    .api-keys-dialog-content {
+      height: 65vh;
+      border-radius: 0;
     }
   }
 }

@@ -15,21 +15,25 @@
     limitations under the License.
 
 -->
-<mat-toolbar color="primary">
-  <h2>{{ 'api-key.manage-api-keys' | translate }}</h2>
-  <span class="flex-1"></span>
-  <div tb-help="apiKeys"></div>
-  <button mat-icon-button
-          (click)="close()"
-          type="button">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-</mat-toolbar>
-<tb-api-keys-table [active]="true" [userId]="data.userId"/>
-<div mat-dialog-actions class="justify-end">
-  <button mat-raised-button color="primary"
-          type="button"
-          (click)="close()">
-    {{ 'action.close' | translate }}
-  </button>
+<div class="api-keys-dialog-container flex flex-col xs:h-full">
+  <mat-toolbar color="primary">
+    <h2>{{ 'api-key.manage-api-keys' | translate }}</h2>
+    <span class="flex-1"></span>
+    <div tb-help="apiKeys"></div>
+    <button mat-icon-button
+            (click)="close()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content class="tb-form-panel stroked api-keys-dialog-content xs:flex-1">
+    <tb-api-keys-table [active]="true" [userId]="data.userId"/>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-raised-button color="primary"
+            type="button"
+            (click)="close()">
+      {{ 'action.close' | translate }}
+    </button>
+  </div>
 </div>
