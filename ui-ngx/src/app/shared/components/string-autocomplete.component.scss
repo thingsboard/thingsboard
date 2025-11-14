@@ -20,6 +20,12 @@
     max-width: 100%;
     box-sizing: border-box;
 
+    &.tb-inline-field {
+      .mdc-icon-button {
+        margin-right: 8px;
+      }
+    }
+
     .tb-autocomplete.tb-option-input-autocomplete {
       .mat-mdc-option {
         border-bottom: none;
