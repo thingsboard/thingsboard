@@ -55,7 +55,10 @@
       }
 
       .table-container {
-        overflow: auto;
+        overflow: hidden;
+        .mat-mdc-table {
+          table-layout: fixed;
+        }
       }
 
       .tb-entity-table-info{

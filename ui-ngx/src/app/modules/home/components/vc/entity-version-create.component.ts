@@ -86,7 +86,7 @@ export class EntityVersionCreateComponent extends PageComponent implements OnIni
     this.createVersionFormGroup = this.fb.group({
       branch: [this.branch, [Validators.required]],
       versionName: [this.translate.instant('version-control.default-create-entity-version-name',
-        {entityName: this.entityName}), [Validators.required, Validators.pattern(/(?:.|\s)*\S(&:.|\s)*/), Validators.maxLength(256)]],
+        {entityName: this.entityName}), [Validators.required, Validators.pattern(/(?:.|\s)*\S(&:.|\s)*/)]],
       saveRelations: [false, []],
       saveAttributes: [true, []],
       saveCredentials: [true, []],

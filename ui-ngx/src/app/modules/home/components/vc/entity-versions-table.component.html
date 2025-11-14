@@ -114,7 +114,9 @@
         <ng-container matColumnDef="name">
           <mat-header-cell *matHeaderCellDef style="width: 50%"> {{ 'version-control.version-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
-            {{ entityVersion.name }}
+            <div tbTruncateWithTooltip>
+              {{ entityVersion.name }}
+            </div>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="author">
