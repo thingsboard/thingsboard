@@ -8,6 +8,7 @@ import AssetsPage from '@/pages/AssetsPage'
 import AssetDetailsPage from '@/pages/AssetDetailsPage'
 import CustomersPage from '@/pages/CustomersPage'
 import UsersPage from '@/pages/UsersPage'
+import TenantsPage from '@/pages/TenantsPage'
 import AlarmsPage from '@/pages/AlarmsPage'
 import { selectIsAuthenticated } from '@/store/auth/authSlice'
 
@@ -74,6 +75,14 @@ function App() {
         element={
           <PrivateRoute>
             <UsersPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/tenants"
+        element={
+          <PrivateRoute>
+            <TenantsPage />
           </PrivateRoute>
         }
       />

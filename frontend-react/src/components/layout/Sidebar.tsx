@@ -21,6 +21,7 @@ import {
   Rule as RuleEngineIcon,
   Business as CustomersIcon,
   People as UsersIcon,
+  Domain as TenantsIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material'
@@ -42,6 +43,7 @@ const navItems: NavItem[] = [
   { text: 'Assets', icon: <AssetsIcon />, path: '/assets' },
   { text: 'Customers', icon: <CustomersIcon />, path: '/customers' },
   { text: 'Users', icon: <UsersIcon />, path: '/users' },
+  { text: 'Tenants', icon: <TenantsIcon />, path: '/tenants' },
   { text: 'Alarms', icon: <AlarmsIcon />, path: '/alarms', badge: 3 },
   { text: 'Rule Engine', icon: <RuleEngineIcon />, path: '/rule-chains' },
 ]
