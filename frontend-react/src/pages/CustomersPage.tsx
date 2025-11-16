@@ -30,6 +30,7 @@ import {
 import { format } from 'date-fns'
 import MainLayout from '@/components/layout/MainLayout'
 import EntityTable, { EntityColumn } from '@/components/entity/EntityTable'
+import CustomerDetailsDrawer from '@/components/drawers/CustomerDetailsDrawer'
 
 interface Customer {
   id: string
@@ -71,6 +72,11 @@ export default function CustomersPage() {
     zip: '',
     isPublic: false,
   })
+
+  // Drawer states
+  const [openDrawer, setOpenDrawer] = useState(false)
+  const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view')
 
   // Load customers (mock data for now)
   useEffect(() => {
@@ -245,8 +251,8 @@ export default function CustomersPage() {
   ]
 
   const handleAdd = () => {
-    setEditingCustomer(null)
-    setFormData({
+    setSelectedCustomer({
+      id: '',
       title: '',
       email: '',
       phone: '',
@@ -256,24 +262,16 @@ export default function CustomersPage() {
       address2: '',
       zip: '',
       isPublic: false,
+      createdTime: Date.now(),
     })
-    setOpenDialog(true)
+    setDrawerMode('create')
+    setOpenDrawer(true)
   }
 
   const handleEdit = (customer: Customer) => {
-    setEditingCustomer(customer)
-    setFormData({
-      title: customer.title,
-      email: customer.email || '',
-      phone: customer.phone || '',
-      country: customer.country || '',
-      city: customer.city || '',
-      address: customer.address || '',
-      address2: customer.address2 || '',
-      zip: customer.zip || '',
-      isPublic: customer.isPublic || false,
-    })
-    setOpenDialog(true)
+    setSelectedCustomer(customer)
+    setDrawerMode('edit')
+    setOpenDrawer(true)
   }
 
   const handleDelete = async (ids: string[]) => {
@@ -293,7 +291,23 @@ export default function CustomersPage() {
   }
 
   const handleViewDetails = (customer: Customer) => {
-    navigate(`/customers/${customer.id}`)
+    setSelectedCustomer(customer)
+    setDrawerMode('view')
+    setOpenDrawer(true)
+  }
+
+  const handleSaveCustomer = (customer: Customer) => {
+    // API call would go here
+    console.log('Saving customer:', customer)
+    setOpenDrawer(false)
+    loadCustomers()
+  }
+
+  const handleDeleteCustomer = (customerId: string) => {
+    // API call would go here
+    console.log('Deleting customer:', customerId)
+    setOpenDrawer(false)
+    loadCustomers()
   }
 
   const handleManageUsers = (customer: Customer) => {
@@ -451,6 +465,16 @@ export default function CustomersPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Customer Details Drawer - Right-side slide-in matching ThingsBoard */}
+        <CustomerDetailsDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          customer={selectedCustomer}
+          onSave={handleSaveCustomer}
+          onDelete={handleDeleteCustomer}
+          mode={drawerMode}
+        />
       </Box>
     </MainLayout>
   )

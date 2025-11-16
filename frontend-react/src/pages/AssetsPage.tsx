@@ -30,6 +30,7 @@ import {
 import { format } from 'date-fns'
 import MainLayout from '@/components/layout/MainLayout'
 import EntityTable, { EntityColumn } from '@/components/entity/EntityTable'
+import AssetDetailsDrawer from '@/components/drawers/AssetDetailsDrawer'
 
 interface Asset {
   id: string
@@ -75,6 +76,11 @@ export default function AssetsPage() {
     type: 'building',
     assetProfileId: '',
   })
+
+  // Drawer states
+  const [openDrawer, setOpenDrawer] = useState(false)
+  const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view')
 
   // Load assets (mock data for now)
   useEffect(() => {
@@ -222,25 +228,21 @@ export default function AssetsPage() {
   ]
 
   const handleAdd = () => {
-    setEditingAsset(null)
-    setFormData({
+    setSelectedAsset({
+      id: '',
       name: '',
       label: '',
       type: 'building',
-      assetProfileId: '',
+      createdTime: Date.now(),
     })
-    setOpenDialog(true)
+    setDrawerMode('create')
+    setOpenDrawer(true)
   }
 
   const handleEdit = (asset: Asset) => {
-    setEditingAsset(asset)
-    setFormData({
-      name: asset.name,
-      label: asset.label || '',
-      type: asset.type,
-      assetProfileId: asset.assetProfileId || '',
-    })
-    setOpenDialog(true)
+    setSelectedAsset(asset)
+    setDrawerMode('edit')
+    setOpenDrawer(true)
   }
 
   const handleDelete = async (ids: string[]) => {
@@ -260,7 +262,23 @@ export default function AssetsPage() {
   }
 
   const handleViewDetails = (asset: Asset) => {
-    navigate(`/assets/${asset.id}`)
+    setSelectedAsset(asset)
+    setDrawerMode('view')
+    setOpenDrawer(true)
+  }
+
+  const handleSaveAsset = (asset: Asset) => {
+    // API call would go here
+    console.log('Saving asset:', asset)
+    setOpenDrawer(false)
+    loadAssets()
+  }
+
+  const handleDeleteAsset = (assetId: string) => {
+    // API call would go here
+    console.log('Deleting asset:', assetId)
+    setOpenDrawer(false)
+    loadAssets()
   }
 
   const handleViewDashboard = (asset: Asset) => {
@@ -364,6 +382,16 @@ export default function AssetsPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Asset Details Drawer - Right-side slide-in matching ThingsBoard */}
+        <AssetDetailsDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          asset={selectedAsset}
+          onSave={handleSaveAsset}
+          onDelete={handleDeleteAsset}
+          mode={drawerMode}
+        />
       </Box>
     </MainLayout>
   )

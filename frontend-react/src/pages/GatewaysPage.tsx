@@ -44,6 +44,7 @@ import {
 import { format } from 'date-fns'
 import MainLayout from '@/components/layout/MainLayout'
 import EntityTable, { EntityColumn } from '@/components/entity/EntityTable'
+import GatewayDetailsDrawer from '@/components/drawers/GatewayDetailsDrawer'
 
 interface Gateway {
   id: string
@@ -114,6 +115,11 @@ export default function GatewaysPage() {
   const [selectedGateway, setSelectedGateway] = useState<Gateway | null>(null)
   const [configTab, setConfigTab] = useState(0)
   const [connectors, setConnectors] = useState<Connector[]>([])
+
+  // Drawer states
+  const [openDrawer, setOpenDrawer] = useState(false)
+  const [drawerGateway, setDrawerGateway] = useState<Gateway | null>(null)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view')
 
   useEffect(() => {
     loadGateways()
@@ -322,25 +328,43 @@ export default function GatewaysPage() {
   ]
 
   const handleAdd = () => {
-    setEditingGateway(null)
-    setFormData({
+    setDrawerGateway({
+      id: '',
       name: '',
       label: '',
-      type: 'Default Gateway',
-      gatewayProfileId: '',
+      type: 'default',
+      active: true,
+      connected: false,
+      createdTime: Date.now(),
     })
-    setOpenDialog(true)
+    setDrawerMode('create')
+    setOpenDrawer(true)
   }
 
   const handleEdit = (gateway: Gateway) => {
-    setEditingGateway(gateway)
-    setFormData({
-      name: gateway.name,
-      label: gateway.label || '',
-      type: gateway.type,
-      gatewayProfileId: gateway.gatewayProfileId || '',
-    })
-    setOpenDialog(true)
+    setDrawerGateway(gateway)
+    setDrawerMode('edit')
+    setOpenDrawer(true)
+  }
+
+  const handleViewDetails = (gateway: Gateway) => {
+    setDrawerGateway(gateway)
+    setDrawerMode('view')
+    setOpenDrawer(true)
+  }
+
+  const handleSaveGateway = (gateway: Gateway) => {
+    // API call would go here
+    console.log('Saving gateway:', gateway)
+    setOpenDrawer(false)
+    loadGateways()
+  }
+
+  const handleDeleteGateway = (gatewayId: string) => {
+    // API call would go here
+    console.log('Deleting gateway:', gatewayId)
+    setOpenDrawer(false)
+    loadGateways()
   }
 
   const handleDelete = async (ids: string[]) => {
@@ -597,6 +621,16 @@ export default function GatewaysPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Gateway Details Drawer - Right-side slide-in matching ThingsBoard */}
+        <GatewayDetailsDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          gateway={drawerGateway}
+          onSave={handleSaveGateway}
+          onDelete={handleDeleteGateway}
+          mode={drawerMode}
+        />
       </Box>
     </MainLayout>
   )
