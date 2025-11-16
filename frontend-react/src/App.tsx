@@ -13,6 +13,7 @@ import AlarmsPage from '@/pages/AlarmsPage'
 import RuleChainsPage from '@/pages/RuleChainsPage'
 import RuleChainDesignerPage from '@/pages/RuleChainDesignerPage'
 import GatewaysPage from '@/pages/GatewaysPage'
+import GatewayDetailsPage from '@/pages/GatewayDetailsPage'
 import WidgetsBundlesPage from '@/pages/WidgetsBundlesPage'
 import AuditLogsPage from '@/pages/AuditLogsPage'
 import { selectIsAuthenticated, selectCurrentUser } from '@/store/auth/authSlice'
@@ -162,6 +163,14 @@ function App() {
         element={
           <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
             <GatewaysPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/gateways/:id"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <GatewayDetailsPage />
           </RoleBasedRoute>
         }
       />
