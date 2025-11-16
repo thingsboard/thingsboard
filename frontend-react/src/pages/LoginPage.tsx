@@ -40,9 +40,19 @@ export default function LoginPage() {
     setLanguage(language === 'EN' ? 'FA' : 'EN')
   }
 
-  const handleDemoLogin = () => {
-    dispatch(demoLogin())
-    navigate('/dashboard')
+  const handleDemoLogin = (role: 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER') => {
+    dispatch(demoLogin({ authority: role }))
+
+    // Navigate to role-appropriate default page
+    switch (role) {
+      case 'SYS_ADMIN':
+        navigate('/tenants')
+        break
+      case 'TENANT_ADMIN':
+      case 'CUSTOMER_USER':
+        navigate('/dashboard')
+        break
+    }
   }
 
   return (
@@ -370,40 +380,83 @@ export default function LoginPage() {
                   </Button>
                 </Box>
 
-                {/* Demo Login Button */}
-                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                {/* Demo Login Buttons */}
+                <Box sx={{ mt: 2 }}>
                   <Typography
                     variant="body2"
                     sx={{
-                      mb: 1,
+                      mb: 1.5,
+                      textAlign: 'center',
                       color: (theme) =>
                         theme.palette.mode === 'dark'
                           ? 'rgba(255,255,255,0.5)'
                           : 'rgba(0,0,0,0.5)',
                     }}
                   >
-                    Or try without credentials
+                    Demo Login (No Credentials Required)
                   </Typography>
-                  <Button
-                    fullWidth
-                    variant="outlined"
-                    onClick={handleDemoLogin}
-                    sx={{
-                      borderColor: '#2D6B9A',
-                      color: '#2D6B9A',
-                      py: 1.5,
-                      borderRadius: 1.5,
-                      textTransform: 'none',
-                      fontSize: '1rem',
-                      fontWeight: 'medium',
-                      '&:hover': {
-                        borderColor: '#245580',
-                        bgcolor: 'rgba(45, 107, 154, 0.04)',
-                      },
-                    }}
-                  >
-                    Demo Login (Test Only)
-                  </Button>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={() => handleDemoLogin('SYS_ADMIN')}
+                      sx={{
+                        borderColor: '#C62828',
+                        color: '#C62828',
+                        py: 1,
+                        borderRadius: 1.5,
+                        textTransform: 'none',
+                        fontSize: '0.875rem',
+                        fontWeight: 'medium',
+                        '&:hover': {
+                          borderColor: '#B71C1C',
+                          bgcolor: 'rgba(198, 40, 40, 0.04)',
+                        },
+                      }}
+                    >
+                      System Administrator
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={() => handleDemoLogin('TENANT_ADMIN')}
+                      sx={{
+                        borderColor: '#2D6B9A',
+                        color: '#2D6B9A',
+                        py: 1,
+                        borderRadius: 1.5,
+                        textTransform: 'none',
+                        fontSize: '0.875rem',
+                        fontWeight: 'medium',
+                        '&:hover': {
+                          borderColor: '#245580',
+                          bgcolor: 'rgba(45, 107, 154, 0.04)',
+                        },
+                      }}
+                    >
+                      Tenant Administrator
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      onClick={() => handleDemoLogin('CUSTOMER_USER')}
+                      sx={{
+                        borderColor: '#2E7D6F',
+                        color: '#2E7D6F',
+                        py: 1,
+                        borderRadius: 1.5,
+                        textTransform: 'none',
+                        fontSize: '0.875rem',
+                        fontWeight: 'medium',
+                        '&:hover': {
+                          borderColor: '#26695C',
+                          bgcolor: 'rgba(46, 125, 111, 0.04)',
+                        },
+                      }}
+                    >
+                      Customer User
+                    </Button>
+                  </Box>
                 </Box>
               </Box>
             </Box>

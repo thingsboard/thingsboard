@@ -37,4 +37,7 @@ rebuild-docker.sh
 */.run/**
 .run/**
 .run
-*node_modules
+
+# Node.js dependencies
+**/node_modules/
+node_modules/

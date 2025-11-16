@@ -11,125 +11,218 @@ import UsersPage from '@/pages/UsersPage'
 import TenantsPage from '@/pages/TenantsPage'
 import AlarmsPage from '@/pages/AlarmsPage'
 import RuleChainsPage from '@/pages/RuleChainsPage'
+import RuleChainDesignerPage from '@/pages/RuleChainDesignerPage'
 import GatewaysPage from '@/pages/GatewaysPage'
+import GatewayDetailsPage from '@/pages/GatewayDetailsPage'
 import WidgetsBundlesPage from '@/pages/WidgetsBundlesPage'
 import AuditLogsPage from '@/pages/AuditLogsPage'
-import { selectIsAuthenticated } from '@/store/auth/authSlice'
+import { selectIsAuthenticated, selectCurrentUser } from '@/store/auth/authSlice'
+
+type UserRole = 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const isAuthenticated = useAppSelector(selectIsAuthenticated)
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" replace />
 }
 
+function RoleBasedRoute({
+  children,
+  allowedRoles,
+}: {
+  children: React.ReactNode
+  allowedRoles: UserRole[]
+}) {
+  const isAuthenticated = useAppSelector(selectIsAuthenticated)
+  const currentUser = useAppSelector(selectCurrentUser)
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  if (!currentUser?.authority || !allowedRoles.includes(currentUser.authority as UserRole)) {
+    // Redirect to appropriate default page based on user role
+    switch (currentUser?.authority) {
+      case 'SYS_ADMIN':
+        return <Navigate to="/tenants" replace />
+      case 'TENANT_ADMIN':
+      case 'CUSTOMER_USER':
+        return <Navigate to="/dashboard" replace />
+      default:
+        return <Navigate to="/login" replace />
+    }
+  }
+
+  return <>{children}</>
+}
+
+function RoleBasedDefaultRedirect() {
+  const currentUser = useAppSelector(selectCurrentUser)
+  const isAuthenticated = useAppSelector(selectIsAuthenticated)
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Redirect based on user role
+  switch (currentUser?.authority) {
+    case 'SYS_ADMIN':
+      return <Navigate to="/tenants" replace />
+    case 'TENANT_ADMIN':
+    case 'CUSTOMER_USER':
+      return <Navigate to="/dashboard" replace />
+    default:
+      return <Navigate to="/login" replace />
+  }
+}
+
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/" element={<Navigate to="/dashboard" replace />} />
+      <Route path="/" element={<RoleBasedDefaultRedirect />} />
+
+      {/* Dashboard - TENANT_ADMIN and CUSTOMER_USER */}
       <Route
         path="/dashboard"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <DashboardPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
+
+      {/* Devices - TENANT_ADMIN and CUSTOMER_USER */}
       <Route
         path="/devices"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <DevicesPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
       <Route
         path="/devices/:deviceId"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <DeviceDetailsPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
+
+      {/* Assets - TENANT_ADMIN and CUSTOMER_USER */}
       <Route
         path="/assets"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <AssetsPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
       <Route
         path="/assets/:assetId"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <AssetDetailsPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
-      <Route
-        path="/customers"
-        element={
-          <PrivateRoute>
-            <CustomersPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/users"
-        element={
-          <PrivateRoute>
-            <UsersPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/tenants"
-        element={
-          <PrivateRoute>
-            <TenantsPage />
-          </PrivateRoute>
-        }
-      />
+
+      {/* Alarms - TENANT_ADMIN and CUSTOMER_USER */}
       <Route
         path="/alarms"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <AlarmsPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
+
+      {/* Customers - TENANT_ADMIN only */}
       <Route
-        path="/rule-chains"
+        path="/customers"
         element={
-          <PrivateRoute>
-            <RuleChainsPage />
-          </PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <CustomersPage />
+          </RoleBasedRoute>
         }
       />
+
+      {/* Users - TENANT_ADMIN and CUSTOMER_USER */}
+      <Route
+        path="/users"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
+            <UsersPage />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* Gateways - TENANT_ADMIN only */}
       <Route
         path="/gateways"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
             <GatewaysPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
+      <Route
+        path="/gateways/:id"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <GatewayDetailsPage />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* Rule Chains - TENANT_ADMIN only */}
+      <Route
+        path="/rule-chains"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <RuleChainsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/rule-chains/:id"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <RuleChainDesignerPage />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* Widget Library - TENANT_ADMIN only */}
       <Route
         path="/widgets-bundles"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
             <WidgetsBundlesPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
+
+      {/* Tenants - SYS_ADMIN only */}
+      <Route
+        path="/tenants"
+        element={
+          <RoleBasedRoute allowedRoles={['SYS_ADMIN']}>
+            <TenantsPage />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* Audit Logs - SYS_ADMIN and TENANT_ADMIN */}
       <Route
         path="/audit-logs"
         element={
-          <PrivateRoute>
+          <RoleBasedRoute allowedRoles={['SYS_ADMIN', 'TENANT_ADMIN']}>
             <AuditLogsPage />
-          </PrivateRoute>
+          </RoleBasedRoute>
         }
       />
+
       {/* More routes will be added here */}
     </Routes>
   )
