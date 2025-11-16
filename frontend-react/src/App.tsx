@@ -11,6 +11,7 @@ import UsersPage from '@/pages/UsersPage'
 import TenantsPage from '@/pages/TenantsPage'
 import AlarmsPage from '@/pages/AlarmsPage'
 import RuleChainsPage from '@/pages/RuleChainsPage'
+import GatewaysPage from '@/pages/GatewaysPage'
 import { selectIsAuthenticated } from '@/store/auth/authSlice'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -100,6 +101,14 @@ function App() {
         element={
           <PrivateRoute>
             <RuleChainsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/gateways"
+        element={
+          <PrivateRoute>
+            <GatewaysPage />
           </PrivateRoute>
         }
       />

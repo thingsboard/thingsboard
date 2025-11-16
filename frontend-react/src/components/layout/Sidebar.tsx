@@ -22,6 +22,7 @@ import {
   Business as CustomersIcon,
   People as UsersIcon,
   Domain as TenantsIcon,
+  Router as GatewaysIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material'
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { text: 'Dashboards', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Devices', icon: <DevicesIcon />, path: '/devices' },
   { text: 'Assets', icon: <AssetsIcon />, path: '/assets' },
+  { text: 'Gateways', icon: <GatewaysIcon />, path: '/gateways' },
   { text: 'Customers', icon: <CustomersIcon />, path: '/customers' },
   { text: 'Users', icon: <UsersIcon />, path: '/users' },
   { text: 'Tenants', icon: <TenantsIcon />, path: '/tenants' },
