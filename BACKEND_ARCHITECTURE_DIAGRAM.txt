@@ -1,0 +1,364 @@
+╔════════════════════════════════════════════════════════════════════════════════╗
+║                   THINGSBOARD BACKEND ARCHITECTURE                             ║
+║                         FastAPI (Python 3.x)                                   ║
+╚════════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────────┐
+│                         CLIENT APPLICATIONS                                     │
+│  (React Frontend, Mobile Apps, Third-party Integrations, IoT Devices)          │
+└────────────────────┬──────────────────────────────────────────────────────────────┘
+                     │ HTTP/HTTPS, MQTT, CoAP, WebSocket
+                     │
+┌────────────────────▼──────────────────────────────────────────────────────────────┐
+│                          FASTAPI APPLICATION                                     │
+│                     /app/main.py (Entry Point)                                  │
+├─────────────────────────────────────────────────────────────────────────────────┤
+│  Middleware: CORS, GZip, Auth Bearer Token                                     │
+└──────────────────────┬─────────────────────────────────────────────────────────┘
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+   ┌────▼────┐   ┌────▼────┐   ┌────▼────┐
+   │ REST API │   │WebSocket│   │ IoT     │
+   │ Routes   │   │(TODO)   │   │Protocol │
+   │ /api/v1/ │   │         │   │Handlers │
+   └────┬────┘   └─────────┘   └────┬────┘
+        │                             │
+        │         API ROUTES          │
+        │    (/app/api/v1/endpoints/) │
+        │                             │
+   ┌────────────────────────────────────┬─────────────────────────┐
+   │                                    │                         │
+┌──▼────────┐  ┌──────────────┐  ┌──────▼─────┐  ┌──────────────┐
+│  Auth     │  │  Devices     │  │ Customers  │  │  Tenants     │
+│  (DONE)   │  │  (DONE)      │  │  (DONE)    │  │  (DONE)      │
+│ - Login   │  │ - CRUD       │  │ - CRUD     │  │ - CRUD       │
+│ - Refresh │  │ - Creds Mgmt │  │ - Contact  │  │ - Region     │
+│ - Logout  │  │ - Profiles   │  │ - Public   │  │ - Isolated   │
+└──────────┘  └──────────────┘  └────────────┘  └──────────────┘
+
+┌──────────────┐  ┌────────────────┐  ┌──────────────┐  ┌──────────────┐
+│ Telemetry    │  │  Users (TODO)  │  │Assets(TODO)  │  │ Alarms(TODO) │
+│ (DONE)       │  │ - CRUD         │  │ - CRUD       │  │ - Query      │
+│ - Save       │  │ - Roles        │  │ - Types      │  │ - Ack/Clear  │
+│ - Retrieve   │  │ - Activation   │  │ - Profiles   │  │ - Propagate  │
+│ - Attributes │  │ - Password RST │  │ - Hierarchy  │  │ - Details    │
+└──────────────┘  └────────────────┘  └──────────────┘  └──────────────┘
+
+┌──────────────────┐  ┌────────────────────┐
+│Dashboards(TODO)  │  │RuleChains(TODO)    │
+│ - CRUD           │  │ - CRUD             │
+│ - Widgets        │  │ - Node graph       │
+│ - Config         │  │ - Metadata         │
+└──────────────────┘  └────────────────────┘
+
+        │
+        │  Pydantic Schemas Validation
+        │
+┌───────▼────────────────────────────────────────────────────┐
+│               SCHEMAS LAYER (/app/schemas/)                │
+│  (Request/Response validation with Pydantic)              │
+├────────────────────────────────────────────────────────────┤
+│ - auth.py          - device.py      - customer.py         │
+│ - tenant.py        - telemetry.py   - asset.py            │
+└───────┬────────────────────────────────────────────────────┘
+        │
+        │  Dependency Injection (FastAPI Depends)
+        │  - Database sessions
+        │  - Current user
+        │  - Authority checks
+        │
+┌───────▼────────────────────────────────────────────────────┐
+│              SECURITY LAYER (/app/core/)                   │
+├────────────────────────────────────────────────────────────┤
+│ - security.py: JWT token, password hash, auth checks      │
+│ - config.py: Environment variables                        │
+│ - logging.py: Logging setup                               │
+│ - events.py: Startup/shutdown events                      │
+└───────┬────────────────────────────────────────────────────┘
+        │
+┌───────▼────────────────────────────────────────────────────┐
+│           DATABASE LAYER (/app/models/)                    │
+├────────────────────────────────────────────────────────────┤
+│ Entity Models (SQLAlchemy):                               │
+│ ├─ base.py         (BaseEntity, TenantEntity,             │
+│ │                   CustomerEntity, NamedEntity)          │
+│ ├─ device.py       (Device + DeviceCredentials)           │
+│ ├─ device_profile.py (DeviceProfile)                      │
+│ ├─ asset.py        (Asset)                                │
+│ ├─ customer.py     (Customer)                             │
+│ ├─ tenant.py       (Tenant)                               │
+│ ├─ user.py         (TbUser + UserCredentials)             │
+│ ├─ alarm.py        (Alarm + AlarmSeverity/Status)         │
+│ ├─ dashboard.py    (Dashboard)                            │
+│ ├─ rule_chain.py   (RuleChain)                            │
+│ ├─ entity_view.py  (EntityView)                           │
+│ └─ telemetry.py    (TsKvLatest, AttributeKv)              │
+│                                                            │
+│ Database Session Management:                              │
+│ ├─ session.py      (AsyncSessionLocal, engine, init_db)   │
+│ └─ Async SQLAlchemy 2.0 with asyncpg driver              │
+└───────┬────────────────────────────────────────────────────┘
+        │
+        │
+    ┌───┴──────────────────────────────────────────┬────────────────┐
+    │                                              │                │
+┌───▼──────────────────────┐  ┌──────────────────▼──┐  ┌──────────▼─┐
+│   PostgreSQL             │  │    Cassandra        │  │   Redis    │
+│   (Primary Relational)   │  │  (Time-Series)      │  │  (Cache)   │
+├──────────────────────────┤  ├─────────────────────┤  ├────────────┤
+│ - Devices               │  │ - Historical        │  │ - Sessions │
+│ - Users                 │  │   Telemetry         │  │ - Locks    │
+│ - Customers             │  │ - Partitioned       │  │ - Rate     │
+│ - Tenants               │  │   by time           │  │   limits   │
+│ - Assets                │  │ - High write        │  │ - Caching  │
+│ - Alarms                │  │   throughput        │  │            │
+│ - Rules                 │  │ - Scalable          │  │            │
+│ - Dashboards            │  │ (Optional)          │  │            │
+│ - Latest Values         │  │                     │  │            │
+│   (TsKvLatest)          │  │                     │  │            │
+│ - Attributes            │  │                     │  │            │
+│   (AttributeKv)         │  │                     │  │            │
+└──────────────────────────┘  └─────────────────────┘  └────────────┘
+                                                               ▲
+                                                               │
+                                                           Connection
+                                                           Pool
+
+
+    DISTRIBUTED SERVICES & INTEGRATIONS
+    ════════════════════════════════════════════════════════════════════════════════
+
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                          RULE ENGINE (/app/rule_engine/)                         │
+├──────────────────────────────────────────────────────────────────────────────────┤
+│  Core: rule_node_base.py, rule_engine_executor.py                              │
+│  Async Message Processing Pipeline                                              │
+│                                                                                  │
+│  FILTER NODES (5):                  TRANSFORMATION (2):                         │
+│  ├─ Switch Node                     ├─ JavaScript Transform                    │
+│  ├─ Originator Type Filter          └─ Rename Keys                             │
+│  ├─ Message Type Switch                                                        │
+│  ├─ Check Relation Node             ENRICHMENT (3):                            │
+│  └─ Originator Fields Filter        ├─ Originator Attributes                  │
+│                                     ├─ Related Attributes                      │
+│  ACTION NODES (6):                  └─ Customer Details                        │
+│  ├─ Save Telemetry                                                             │
+│  ├─ Create Alarm                    Connection Types:                          │
+│  ├─ Send Email                      ├─ SUCCESS                                 │
+│  ├─ RPC Call                        ├─ FAILURE                                 │
+│  ├─ REST API Call                   ├─ TRUE / FALSE                            │
+│  └─ Log Node                        └─ OTHER                                   │
+│                                                                                  │
+└──────────────────────┬───────────────────────────────────────────────────────────┘
+                       │
+        ┌──────────────┼──────────────┐
+        │              │              │
+┌───────▼─────┐  ┌────▼─────┐  ┌────▼──────┐
+│   Apache    │  │  MQTT    │  │   IoT     │
+│   Kafka     │  │ Connector│  │ Protocols │
+├─────────────┤  │ Service  │  ├───────────┤
+│ - Events    │  ├──────────┤  │ - MQTT    │
+│ - Telemetry │  │Data Conv │  │ - CoAP    │
+│ - Alarms    │  │ - JSON   │  │ - HTTP    │
+│ - Rules     │  │ - Custom │  │ - LWM2M   │
+│ - Messages  │  │Wildcards │  │ - SNMP    │
+│            │  │ - QoS    │  │          │
+└─────────────┘  └──────────┘  └───────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+
+                        AUTHENTICATION & AUTHORIZATION
+                        ════════════════════════════════════════════════════════════════
+
+JWT Token Flow:
+┌─────────────────────────────────────────────────────────┐
+│ 1. POST /api/auth/login                                 │
+│    Email + Password → Returns                           │
+│    {                                                    │
+│      "token": "access_token_jwt",                       │
+│      "refresh_token": "refresh_token_jwt"               │
+│    }                                                    │
+└─────────────────────────────────────────────────────────┘
+
+Authority Levels (Role-Based Access Control):
+┌──────────────────────────────────────────────────────────┐
+│  SYS_ADMIN        → Full system access                  │
+│  TENANT_ADMIN     → Tenant-level management             │
+│  CUSTOMER_USER    → Customer-scoped access only         │
+└──────────────────────────────────────────────────────────┘
+
+Multi-Tenancy Enforcement:
+┌──────────────────────────────────────────────────────────┐
+│  Each entity has tenant_id field                        │
+│  Queries filtered by current user's tenant_id           │
+│  Prevents cross-tenant data access                      │
+│  Customer users further scoped by customer_id           │
+└──────────────────────────────────────────────────────────┘
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+
+                            DATA FLOW EXAMPLES
+                        ═════════════════════════════════════════════════════════════
+
+DEVICE TELEMETRY FLOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IoT Device
+    │
+    │ MQTT: sensors/sensor1/data {"temp": 25.5, "humidity": 60}
+    │
+    ▼
+MQTT Broker (port 1883)
+    │
+    │ Processes message with Data Converter
+    │ - Extracts device name from topic: sensor1
+    │ - Extracts device type
+    │ - Maps to telemetry keys
+    │
+    ▼
+MQTT Connector Service (/app/services/mqtt_connector.py)
+    │
+    │ Converts MQTT to internal format
+    │ Handles JSONPath expressions
+    │
+    ▼
+POST /api/telemetry/DEVICE/{device_id}/timeseries/SERVER
+    │
+    │ Body: {"temperature": 25.5, "humidity": 60}
+    │
+    ▼
+Telemetry Endpoint (telemetry.py)
+    │
+    │ ├─ Validates entity access
+    │ ├─ Stores in TsKvLatest (PostgreSQL latest values)
+    │ └─ Queues to Kafka (for historical storage in Cassandra)
+    │
+    ▼
+PostgreSQL (TsKvLatest table)
+    │ entity_id: <device-uuid>
+    │ key: temperature
+    │ ts: 1234567890000
+    │ dbl_v: 25.5
+    │
+    ▼
+Kafka Queue
+    │
+    │ (Optional) Cassandra Historical Data
+    │ Distributed to subscribed clients (WebSocket - TODO)
+    │ Forwarded to Rule Engine
+
+
+RULE CHAIN EXECUTION FLOW:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Device sends telemetry
+    │
+    ▼
+Rule Engine Input Queue (Kafka)
+    │
+    ▼
+Rule Chain Executor (rule_engine_executor.py)
+    │
+    ├─ Filter Nodes (Check conditions)
+    │   │ Switch node: temperature > 30?
+    │   ├─ TRUE → Enrichment path
+    │   └─ FALSE → Other path
+    │
+    ├─ Enrichment Nodes (Add context)
+    │   │ Fetch device attributes
+    │   │ Fetch customer details
+    │   │ Fetch related assets
+    │
+    ├─ Transformation Nodes (Process data)
+    │   │ JavaScript transform
+    │   │ Rename keys
+    │
+    └─ Action Nodes (Execute)
+        │ Save additional telemetry
+        │ Create alarm (if threshold exceeded)
+        │ Send email notification
+        │ Call REST API
+        │ Log event
+
+
+═══════════════════════════════════════════════════════════════════════════════════════
+
+                            DIRECTORY STRUCTURE
+                        ════════════════════════════════════════════════════════════
+
+/home/user/thingsboard/backend-python/
+│
+├── app/
+│   ├── __init__.py
+│   ├── main.py                          ← FastAPI app entry point
+│   │
+│   ├── api/
+│   │   └── v1/
+│   │       ├── api.py                   ← Router aggregation
+│   │       └── endpoints/               ← API route handlers
+│   │           ├── auth.py              (✓ DONE)
+│   │           ├── devices.py           (✓ DONE)
+│   │           ├── customers.py         (✓ DONE)
+│   │           ├── tenants.py           (✓ DONE)
+│   │           ├── telemetry.py         (✓ DONE)
+│   │           ├── users.py             (✗ TODO)
+│   │           ├── assets.py            (✗ TODO)
+│   │           ├── alarms.py            (✗ TODO)
+│   │           ├── dashboards.py        (✗ TODO)
+│   │           └── rule_chains.py       (✗ TODO)
+│   │
+│   ├── core/
+│   │   ├── config.py                    ← Settings management
+│   │   ├── security.py                  ← JWT & Auth utilities
+│   │   ├── logging.py                   ← Logging configuration
+│   │   └── events.py                    ← Startup/shutdown events
+│   │
+│   ├── models/                          ← Database models (SQLAlchemy)
+│   │   ├── base.py
+│   │   ├── device.py
+│   │   ├── device_profile.py
+│   │   ├── asset.py
+│   │   ├── customer.py
+│   │   ├── tenant.py
+│   │   ├── user.py
+│   │   ├── alarm.py
+│   │   ├── dashboard.py
+│   │   ├── rule_chain.py
+│   │   ├── entity_view.py
+│   │   └── telemetry.py
+│   │
+│   ├── schemas/                         ← Pydantic schemas
+│   │   ├── auth.py
+│   │   ├── device.py
+│   │   ├── customer.py
+│   │   ├── tenant.py
+│   │   ├── telemetry.py
+│   │   ├── asset.py
+│   │   └── gateway.py
+│   │
+│   ├── db/
+│   │   └── session.py                   ← Database session mgmt
+│   │
+│   ├── services/
+│   │   └── mqtt_connector.py            ← MQTT connector service
+│   │
+│   └── rule_engine/                     ← Rule engine implementation
+│       ├── core/
+│       │   ├── rule_node_base.py
+│       │   └── rule_engine_executor.py
+│       ├── models/
+│       └── nodes/
+│           ├── filter/                  (5 nodes)
+│           ├── transformation/          (2 nodes)
+│           ├── enrichment/              (3 nodes)
+│           └── action/                  (6 nodes)
+│
+├── requirements.txt                     ← Python dependencies
+├── Dockerfile
+├── docker-compose.yml
+├── .env.example                         ← Environment template
+└── README.md
+

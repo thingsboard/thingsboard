@@ -1,0 +1,223 @@
+==============================================
+THINGSBOARD BACKEND - EXECUTIVE SUMMARY
+==============================================
+
+1. BACKEND FRAMEWORK
+   Type: FastAPI (Python) + Uvicorn
+   Language: Python 3.x
+   Architecture: REST API with async/await
+   Base URL: http://localhost:8080
+   Documentation: /swagger-ui, /redoc
+
+2. WHERE API ROUTES ARE LOCATED
+   Location: /home/user/thingsboard/backend-python/app/api/v1/endpoints/
+   Files:
+   - auth.py (Authentication)
+   - devices.py (Device Management)
+   - customers.py (Customer Management)
+   - tenants.py (Tenant Management)
+   - telemetry.py (Telemetry/Time-series)
+   - users.py (TODO - User Management)
+   - assets.py (TODO - Asset Management)
+   - alarms.py (TODO - Alarm Management)
+   - dashboards.py (TODO - Dashboard Management)
+   - rule_chains.py (TODO - Rule Chain Management)
+
+3. IMPLEMENTED APIS (5 COMPLETE)
+   
+   A. AUTHENTICATION (/api/auth) - COMPLETE
+      - POST /auth/login - JWT login
+      - POST /auth/token/refresh - Refresh token
+      - GET /auth/user - Get current user
+      - POST /auth/changePassword - Change password
+      - POST /auth/logout - Logout
+   
+   B. DEVICE MANAGEMENT (/api/devices) - COMPLETE
+      - POST /devices - Create device
+      - GET /devices - List devices (paginated)
+      - GET /devices/{id} - Get device
+      - PUT /devices/{id} - Update device
+      - DELETE /devices/{id} - Delete device
+      - GET /devices/{id}/credentials - Get credentials
+      - POST /devices/{id}/credentials - Update credentials
+   
+   C. CUSTOMER MANAGEMENT (/api/customers) - COMPLETE
+      - POST /customers - Create
+      - GET /customers - List (paginated)
+      - GET /customers/{id} - Get
+      - PUT /customers/{id} - Update
+      - DELETE /customers/{id} - Delete
+   
+   D. TENANT MANAGEMENT (/api/tenants) - COMPLETE
+      - POST /tenants - Create (SYS_ADMIN only)
+      - GET /tenants - List all
+      - GET /tenants/{id} - Get
+      - PUT /tenants/{id} - Update
+      - DELETE /tenants/{id} - Delete
+   
+   E. TELEMETRY APIs (/api/telemetry) - COMPLETE
+      - POST /telemetry/{entity_type}/{id}/timeseries/{scope} - Save telemetry
+      - GET /telemetry/{entity_type}/{id}/values/timeseries - Get latest values
+      - GET /telemetry/{entity_type}/{id}/keys/timeseries - Get available keys
+      - POST /telemetry/{entity_type}/{id}/attributes/{scope} - Save attributes
+      - GET /telemetry/{entity_type}/{id}/attributes - Get attributes
+      - DELETE /telemetry/{entity_type}/{id}/attributes/{scope} - Delete attributes
+
+   PENDING APIS (5 TO-DO)
+   - User Management (/api/users) - Stub only
+   - Asset Management (/api/assets) - Stub only
+   - Alarm Management (/api/alarms) - Stub only
+   - Dashboard Management (/api/dashboards) - Stub only
+   - Rule Chain Management (/api/ruleChains) - Stub only
+
+4. DATABASE MODELS LOCATION
+   Location: /home/user/thingsboard/backend-python/app/models/
+   
+   Core Models (13+ entities):
+   - device.py - Device entity + DeviceCredentials
+   - device_profile.py - Device configuration profiles
+   - asset.py - Asset entity
+   - customer.py - Customer entity
+   - tenant.py - Tenant entity (top-level)
+   - user.py - User entity (TbUser) + UserCredentials
+   - alarm.py - Alarm entity
+   - dashboard.py - Dashboard entity
+   - rule_chain.py - Rule chain entity
+   - entity_view.py - Entity view entity
+   - telemetry.py - TsKvLatest + AttributeKv (data models)
+   - base.py - Base entity classes (BaseEntity, TenantEntity, CustomerEntity)
+
+5. BACKEND FRAMEWORK DETAILS
+   - Framework: FastAPI (Python 3.x)
+   - Database ORM: SQLAlchemy 2.0 (async)
+   - Primary DB: PostgreSQL
+   - Optional Time-Series DB: Cassandra
+   - Cache Layer: Redis
+   - Message Queue: Apache Kafka
+   - Authentication: JWT (python-jose, bcrypt)
+   - Async Server: Uvicorn ASGI
+   - IoT Protocols: MQTT, CoAP, HTTP, LWM2M, SNMP
+
+6. WEBSOCKET SUPPORT
+   Current Status: DEPENDENCIES INSTALLED, NOT YET IMPLEMENTED
+   
+   Available:
+   - python-socketio 5.11.0
+   - websockets 12.0
+   - TelemetrySubscription schema prepared
+   
+   What Needs Work:
+   - WebSocket endpoint handler
+   - Connection/subscription management
+   - Real-time telemetry broadcast
+   - Message routing from MQTT/rule engine
+   
+   Architecture is ready for async message streaming, but WebSocket
+   endpoint handlers need to be created.
+
+7. OVERALL BACKEND ARCHITECTURE
+   
+   Layered Design:
+   API Layer (FastAPI Endpoints)
+      ↓
+   Schema/Validation Layer (Pydantic)
+      ↓
+   Service Layer (Business Logic)
+      ↓
+   Database Layer (SQLAlchemy ORM)
+      ↓
+   PostgreSQL + Cassandra + Redis + Kafka
+   
+   Key Features:
+   - Multi-tenancy with tenant/customer scoping
+   - Role-based access control (SYS_ADMIN, TENANT_ADMIN, CUSTOMER_USER)
+   - JWT authentication with access + refresh tokens
+   - Async/await for high performance
+   - Dependency injection for modularity
+   - Comprehensive error handling
+   
+   Data Storage:
+   - PostgreSQL: Entities, relationships, latest values
+   - Cassandra: Historical telemetry (optional)
+   - Redis: Caching, sessions, locks
+   - Kafka: Event streaming, rule engine messages
+
+8. RULE ENGINE
+   Status: Core infrastructure complete (17 nodes)
+   Location: /app/rule_engine/
+   
+   Node Types:
+   - Filter Nodes (5): Switch, type filter, message switch, relation check, field filter
+   - Transformation Nodes (2): JavaScript transform, rename keys
+   - Enrichment Nodes (3): Attributes, related attributes, customer details
+   - Action Nodes (6): Save telemetry, create alarm, email, RPC, REST API, log
+   
+   Execution Model: Async message processing with connection routing
+
+9. CONFIGURATION
+   Environment File: /backend-python/.env.example
+   Settings File: /app/core/config.py
+   
+   Key Configs:
+   - SECRET_KEY (JWT secret)
+   - POSTGRES_* (Database connection)
+   - REDIS_* (Cache connection)
+   - KAFKA_* (Message queue)
+   - MQTT_* (MQTT transport)
+   - CASSANDRA_* (Time-series DB)
+   - Access token expire: 60 minutes
+   - Refresh token expire: 30 days
+
+10. MIGRATION STATUS
+    
+    ✅ COMPLETED:
+    - Backend infrastructure (FastAPI)
+    - Core models (13+ entities)
+    - Database layer (async SQLAlchemy)
+    - Authentication & JWT
+    - Multi-tenancy support
+    - Device management (complete CRUD)
+    - Customer management (complete CRUD)
+    - Tenant management (complete CRUD)
+    - Telemetry APIs (save/retrieve)
+    - MQTT connector service
+    - Rule engine core + 17 node types
+    
+    🔄 IN PROGRESS:
+    - WebSocket integration
+    - Rule engine execution
+    - Cassandra integration
+    - MQTT transport integration
+    
+    ⏳ PENDING:
+    - User management APIs
+    - Asset management APIs
+    - Alarm management APIs
+    - Dashboard management APIs
+    - Rule chain CRUD APIs
+    - Advanced features (relations, audit logs, edge)
+
+==============================================
+KEY FILES TO REFERENCE
+==============================================
+
+Main Application:
+- /backend-python/app/main.py - FastAPI app entry point
+- /backend-python/app/api/v1/api.py - Router aggregation
+
+Authentication:
+- /backend-python/app/core/security.py - JWT utilities
+- /backend-python/app/api/v1/endpoints/auth.py - Auth endpoints
+
+Database:
+- /backend-python/app/models/base.py - Base entity classes
+- /backend-python/app/db/session.py - Database configuration
+
+API Endpoints:
+- /backend-python/app/api/v1/endpoints/devices.py - Full example
+- /backend-python/app/api/v1/endpoints/telemetry.py - Complex example
+
+Configuration:
+- /backend-python/app/core/config.py - All settings
+- /backend-python/.env.example - Environment variables
+

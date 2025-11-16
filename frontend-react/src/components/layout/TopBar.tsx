@@ -34,6 +34,7 @@ export default function TopBar() {
   const currentUser = useAppSelector(selectCurrentUser)
   const [searchQuery, setSearchQuery] = useState('')
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null)
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState<null | HTMLElement>(null)
 
   const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget)
@@ -41,6 +42,14 @@ export default function TopBar() {
 
   const handleUserMenuClose = () => {
     setAnchorEl(null)
+  }
+
+  const handleNotificationMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setNotificationAnchorEl(event.currentTarget)
+  }
+
+  const handleNotificationMenuClose = () => {
+    setNotificationAnchorEl(null)
   }
 
   const handleLogout = async () => {
@@ -101,6 +110,7 @@ export default function TopBar() {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           {/* Notifications */}
           <IconButton
+            onClick={handleNotificationMenuOpen}
             sx={{
               color: '#8C959D',
               '&:hover': {
@@ -114,9 +124,8 @@ export default function TopBar() {
             <Badge
               badgeContent={3}
               color="error"
-              variant="dot"
               sx={{
-                '& .MuiBadge-dot': {
+                '& .MuiBadge-badge': {
                   border: (theme) =>
                     `2px solid ${theme.palette.mode === 'dark' ? '#1F2428' : '#FFFFFF'}`,
                 },
@@ -125,6 +134,84 @@ export default function TopBar() {
               <NotificationsIcon />
             </Badge>
           </IconButton>
+
+          {/* Notification Menu */}
+          <Menu
+            anchorEl={notificationAnchorEl}
+            open={Boolean(notificationAnchorEl)}
+            onClose={handleNotificationMenuClose}
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            PaperProps={{
+              sx: {
+                width: 360,
+                maxHeight: 400,
+              },
+            }}
+          >
+            <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+              <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                Notifications
+              </Typography>
+            </Box>
+            <MenuItem onClick={handleNotificationMenuClose}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  High Temperature Alert
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Device "Temp Sensor 01" exceeded threshold
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                  2 minutes ago
+                </Typography>
+              </Box>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleNotificationMenuClose}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  Device Offline
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Gateway "Main Gateway" lost connection
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                  15 minutes ago
+                </Typography>
+              </Box>
+            </MenuItem>
+            <Divider />
+            <MenuItem onClick={handleNotificationMenuClose}>
+              <Box>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                  New User Added
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  User "john.doe@example.com" was created
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                  1 hour ago
+                </Typography>
+              </Box>
+            </MenuItem>
+            <Divider />
+            <MenuItem
+              onClick={() => {
+                handleNotificationMenuClose()
+                navigate('/alarms')
+              }}
+              sx={{ justifyContent: 'center', color: '#0F3E5C', fontWeight: 600 }}
+            >
+              View All Notifications
+            </MenuItem>
+          </Menu>
 
           {/* Settings */}
           <IconButton

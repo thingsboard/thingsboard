@@ -12,6 +12,7 @@ import {
   Badge,
   Avatar,
   Divider,
+  Collapse,
 } from '@mui/material'
 import {
   Dashboard as DashboardIcon,
@@ -27,6 +28,14 @@ import {
   History as AuditIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
+  ExpandLess,
+  ExpandMore,
+  BusinessCenter as TenantProfileIcon,
+  Storage as QueueIcon,
+  Public as GeneralIcon,
+  Email as EmailIcon,
+  Sms as SmsIcon,
+  Security as SecurityIcon,
 } from '@mui/icons-material'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
 import { logout, selectCurrentUser } from '@/store/auth/authSlice'
@@ -49,6 +58,18 @@ const navItems: NavItem[] = [
     text: 'Tenants',
     icon: <TenantsIcon />,
     path: '/tenants',
+    roles: ['SYS_ADMIN']
+  },
+  {
+    text: 'Tenant Profiles',
+    icon: <TenantProfileIcon />,
+    path: '/tenant-profiles',
+    roles: ['SYS_ADMIN']
+  },
+  {
+    text: 'Queues',
+    icon: <QueueIcon />,
+    path: '/queues',
     roles: ['SYS_ADMIN']
   },
   {
@@ -118,11 +139,39 @@ const navItems: NavItem[] = [
   },
 ]
 
+const settingsItems: NavItem[] = [
+  {
+    text: 'General',
+    icon: <GeneralIcon />,
+    path: '/settings/general',
+    roles: ['SYS_ADMIN']
+  },
+  {
+    text: 'Mail Server',
+    icon: <EmailIcon />,
+    path: '/settings/mail-server',
+    roles: ['SYS_ADMIN']
+  },
+  {
+    text: 'SMS Provider',
+    icon: <SmsIcon />,
+    path: '/settings/sms-provider',
+    roles: ['SYS_ADMIN']
+  },
+  {
+    text: 'Security',
+    icon: <SecurityIcon />,
+    path: '/settings/security',
+    roles: ['SYS_ADMIN']
+  },
+]
+
 export default function Sidebar() {
   const navigate = useNavigate()
   const location = useLocation()
   const dispatch = useAppDispatch()
   const currentUser = useAppSelector(selectCurrentUser)
+  const [settingsOpen, setSettingsOpen] = useState(false)
 
   const handleNavigation = (path: string) => {
     navigate(path)
@@ -133,11 +182,25 @@ export default function Sidebar() {
     navigate('/login')
   }
 
+  const handleSettingsToggle = () => {
+    setSettingsOpen(!settingsOpen)
+  }
+
   // Filter navigation items based on user role
   const filteredNavItems = navItems.filter((item) => {
     if (!currentUser?.authority) return false
     return item.roles.includes(currentUser.authority as UserRole)
   })
+
+  // Filter settings items based on user role
+  const filteredSettingsItems = settingsItems.filter((item) => {
+    if (!currentUser?.authority) return false
+    return item.roles.includes(currentUser.authority as UserRole)
+  })
+
+  // Check if current route is a settings page
+  const isSettingsRoute = location.pathname.startsWith('/settings/')
+  const hasSettingsAccess = filteredSettingsItems.length > 0
 
   // Get role display name
   const getRoleDisplayName = (authority?: string) => {
@@ -308,6 +371,74 @@ export default function Sidebar() {
               </ListItem>
             )
           })}
+
+          {/* Settings Menu (expandable) */}
+          {hasSettingsAccess && (
+            <>
+              <ListItem disablePadding>
+                <ListItemButton
+                  onClick={handleSettingsToggle}
+                  sx={{
+                    borderRadius: 1,
+                    bgcolor: isSettingsRoute ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                    color: isSettingsRoute ? '#FFB300' : '#8C959D',
+                    '&:hover': {
+                      bgcolor: 'rgba(255, 255, 255, 0.1)',
+                      color: 'white',
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
+                    <SettingsIcon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary="Settings"
+                    primaryTypographyProps={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                    }}
+                  />
+                  {settingsOpen ? <ExpandLess /> : <ExpandMore />}
+                </ListItemButton>
+              </ListItem>
+
+              <Collapse in={settingsOpen} timeout="auto" unmountOnExit>
+                <List component="div" disablePadding>
+                  {filteredSettingsItems.map((item) => {
+                    const isActive = location.pathname === item.path
+                    return (
+                      <ListItem key={item.text} disablePadding>
+                        <ListItemButton
+                          onClick={() => handleNavigation(item.path)}
+                          sx={{
+                            pl: 4,
+                            borderRadius: 1,
+                            bgcolor: isActive ? 'rgba(255, 255, 255, 0.1)' : 'transparent',
+                            color: isActive ? '#FFB300' : '#8C959D',
+                            '&:hover': {
+                              bgcolor: 'rgba(255, 255, 255, 0.1)',
+                              color: 'white',
+                            },
+                          }}
+                        >
+                          <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
+                            {item.icon}
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={item.text}
+                            primaryTypographyProps={{
+                              fontSize: '0.8125rem',
+                              fontWeight: 500,
+                            }}
+                          />
+                        </ListItemButton>
+                      </ListItem>
+                    )
+                  })}
+                </List>
+              </Collapse>
+            </>
+          )}
         </List>
 
         {/* Logout Section */}
