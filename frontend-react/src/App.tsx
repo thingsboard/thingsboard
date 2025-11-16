@@ -11,6 +11,7 @@ import UsersPage from '@/pages/UsersPage'
 import TenantsPage from '@/pages/TenantsPage'
 import AlarmsPage from '@/pages/AlarmsPage'
 import RuleChainsPage from '@/pages/RuleChainsPage'
+import RuleChainDesignerPage from '@/pages/RuleChainDesignerPage'
 import GatewaysPage from '@/pages/GatewaysPage'
 import WidgetsBundlesPage from '@/pages/WidgetsBundlesPage'
 import AuditLogsPage from '@/pages/AuditLogsPage'
@@ -171,6 +172,14 @@ function App() {
         element={
           <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
             <RuleChainsPage />
+          </RoleBasedRoute>
+        }
+      />
+      <Route
+        path="/rule-chains/:id"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <RuleChainDesignerPage />
           </RoleBasedRoute>
         }
       />
