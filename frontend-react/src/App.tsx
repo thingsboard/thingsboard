@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import { useAppSelector } from '@/hooks/redux'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
+import DevicesPage from '@/pages/DevicesPage'
 import { selectIsAuthenticated } from '@/store/auth/authSlice'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -22,7 +23,15 @@ function App() {
           </PrivateRoute>
         }
       />
-      {/* Add more routes as needed */}
+      <Route
+        path="/devices"
+        element={
+          <PrivateRoute>
+            <DevicesPage />
+          </PrivateRoute>
+        }
+      />
+      {/* More routes will be added here */}
     </Routes>
   )
 }
