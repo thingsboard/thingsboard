@@ -19,6 +19,7 @@ import {
   Delete as DeleteIcon,
   Storage as QueueIcon,
 } from '@mui/icons-material'
+import MainLayout from '@/components/layout/MainLayout'
 
 interface Queue {
   id: string
@@ -81,11 +82,12 @@ export default function QueueManagementPage() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ color: '#0F3E5C', fontWeight: 600 }}>
-          Queue Management - Payvar
-        </Typography>
+    <MainLayout>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ color: '#0F3E5C', fontWeight: 600 }}>
+            Queue Management - Payvar
+          </Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} sx={{ bgcolor: '#0F3E5C' }}>
           Add Queue
         </Button>
@@ -199,6 +201,7 @@ export default function QueueManagementPage() {
           </ul>
         </Typography>
       </Paper>
-    </Box>
+      </Box>
+    </MainLayout>
   )
 }

@@ -22,6 +22,7 @@ import {
   Search as SearchIcon,
   BusinessCenter as ProfileIcon,
 } from '@mui/icons-material'
+import MainLayout from '@/components/layout/MainLayout'
 
 interface TenantProfile {
   id: string
@@ -97,11 +98,12 @@ export default function TenantProfilesPage() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" sx={{ color: '#0F3E5C', fontWeight: 600 }}>
-          Tenant Profiles - Payvar
-        </Typography>
+    <MainLayout>
+      <Box sx={{ p: 3 }}>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+          <Typography variant="h4" sx={{ color: '#0F3E5C', fontWeight: 600 }}>
+            Tenant Profiles - Payvar
+          </Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={handleAdd} sx={{ bgcolor: '#0F3E5C' }}>
           Add Tenant Profile
         </Button>
@@ -245,6 +247,7 @@ export default function TenantProfilesPage() {
           A value of 0 means unlimited quota for that resource.
         </Typography>
       </Paper>
-    </Box>
+      </Box>
+    </MainLayout>
   )
 }

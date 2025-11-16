@@ -16,6 +16,7 @@ import {
   Tab,
 } from '@mui/material'
 import { Save as SaveIcon, Send as SendIcon } from '@mui/icons-material'
+import MainLayout from '@/components/layout/MainLayout'
 
 type SmsProviderType = 'aws-sns' | 'twilio' | 'smpp'
 
@@ -83,10 +84,11 @@ export default function SmsProviderPage() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3, color: '#0F3E5C', fontWeight: 600 }}>
-        SMS Provider - Payvar
-      </Typography>
+    <MainLayout>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, color: '#0F3E5C', fontWeight: 600 }}>
+          SMS Provider - Payvar
+        </Typography>
 
       {saved && (
         <Alert severity="success" sx={{ mb: 3 }}>
@@ -290,6 +292,7 @@ export default function SmsProviderPage() {
           Save Settings
         </Button>
       </Box>
-    </Box>
+      </Box>
+    </MainLayout>
   )
 }

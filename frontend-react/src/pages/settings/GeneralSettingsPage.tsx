@@ -12,6 +12,7 @@ import {
   Alert,
 } from '@mui/material'
 import { Save as SaveIcon } from '@mui/icons-material'
+import MainLayout from '@/components/layout/MainLayout'
 
 interface GeneralSettings {
   baseUrl: string
@@ -74,10 +75,11 @@ export default function GeneralSettingsPage() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3, color: '#0F3E5C', fontWeight: 600 }}>
-        General Settings - Payvar
-      </Typography>
+    <MainLayout>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, color: '#0F3E5C', fontWeight: 600 }}>
+          General Settings - Payvar
+        </Typography>
 
       {saved && (
         <Alert severity="success" sx={{ mb: 3 }}>
@@ -170,6 +172,7 @@ export default function GeneralSettingsPage() {
           Save Settings
         </Button>
       </Box>
-    </Box>
+      </Box>
+    </MainLayout>
   )
 }

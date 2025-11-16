@@ -27,6 +27,7 @@ import {
   Switch,
   FormControlLabel,
   Alert,
+  Typography,
 } from '@mui/material'
 import {
   Memory as DeviceIcon,

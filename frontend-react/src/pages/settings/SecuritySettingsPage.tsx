@@ -16,6 +16,7 @@ import {
   MenuItem,
 } from '@mui/material'
 import { Save as SaveIcon } from '@mui/icons-material'
+import MainLayout from '@/components/layout/MainLayout'
 
 interface SecuritySettings {
   maxFailedLoginAttempts: number
@@ -77,10 +78,11 @@ export default function SecuritySettingsPage() {
   }
 
   return (
-    <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom sx={{ mb: 3, color: '#0F3E5C', fontWeight: 600 }}>
-        Security Settings - Payvar
-      </Typography>
+    <MainLayout>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h4" gutterBottom sx={{ mb: 3, color: '#0F3E5C', fontWeight: 600 }}>
+          Security Settings - Payvar
+        </Typography>
 
       {saved && (
         <Alert severity="success" sx={{ mb: 3 }}>
@@ -265,6 +267,7 @@ export default function SecuritySettingsPage() {
           Save Settings
         </Button>
       </Box>
-    </Box>
+      </Box>
+    </MainLayout>
   )
 }
