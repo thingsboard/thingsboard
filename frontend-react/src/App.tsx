@@ -5,6 +5,7 @@ import DashboardPage from '@/pages/DashboardPage'
 import DevicesPage from '@/pages/DevicesPage'
 import DeviceDetailsPage from '@/pages/DeviceDetailsPage'
 import AssetsPage from '@/pages/AssetsPage'
+import AssetDetailsPage from '@/pages/AssetDetailsPage'
 import CustomersPage from '@/pages/CustomersPage'
 import UsersPage from '@/pages/UsersPage'
 import AlarmsPage from '@/pages/AlarmsPage'
@@ -49,6 +50,14 @@ function App() {
         element={
           <PrivateRoute>
             <AssetsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/assets/:assetId"
+        element={
+          <PrivateRoute>
+            <AssetDetailsPage />
           </PrivateRoute>
         }
       />
