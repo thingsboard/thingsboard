@@ -2,7 +2,7 @@
 Device schemas
 """
 from pydantic import BaseModel
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 
 class DeviceBase(BaseModel):
@@ -15,8 +15,12 @@ class DeviceBase(BaseModel):
 
 class DeviceCreate(DeviceBase):
     """Schema for creating a device"""
-    device_profile_id: str
+    device_profile_id: Optional[str] = None
     customer_id: Optional[str] = None
+    active: Optional[bool] = True
+    credentials_type: Optional[str] = "ACCESS_TOKEN"
+    credentials_id: Optional[str] = None
+    credentials_value: Optional[str] = None
 
 
 class DeviceUpdate(BaseModel):
@@ -57,3 +61,10 @@ class DeviceCredentialsUpdate(BaseModel):
     credentials_type: str
     credentials_id: Optional[str] = None
     credentials_value: Optional[str] = None
+
+
+class DeviceListResponse(BaseModel):
+    """Schema for paginated device list response"""
+    data: List[DeviceResponse]
+    totalElements: int
+    totalPages: int
