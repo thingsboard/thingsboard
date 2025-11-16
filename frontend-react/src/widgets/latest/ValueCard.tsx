@@ -62,8 +62,9 @@ function ValueCard({ widget, data }: WidgetComponentProps) {
           variant="h3"
           sx={{
             fontWeight: 'bold',
-            color: settings.valueFont?.color ?? (theme) =>
-              theme.palette.mode === 'dark' ? '#E1E3E5' : '#121517',
+            color: (theme) =>
+              settings.valueFont?.color ??
+              (theme.palette.mode === 'dark' ? '#E1E3E5' : '#121517'),
             fontSize: settings.valueFont?.size ?? '2rem',
             mb: showTrend ? 1 : 0,
           }}
