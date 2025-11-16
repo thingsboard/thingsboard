@@ -3,6 +3,8 @@ import { useAppSelector } from '@/hooks/redux'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import DevicesPage from '@/pages/DevicesPage'
+import AssetsPage from '@/pages/AssetsPage'
+import CustomersPage from '@/pages/CustomersPage'
 import { selectIsAuthenticated } from '@/store/auth/authSlice'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -28,6 +30,22 @@ function App() {
         element={
           <PrivateRoute>
             <DevicesPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/assets"
+        element={
+          <PrivateRoute>
+            <AssetsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/customers"
+        element={
+          <PrivateRoute>
+            <CustomersPage />
           </PrivateRoute>
         }
       />
