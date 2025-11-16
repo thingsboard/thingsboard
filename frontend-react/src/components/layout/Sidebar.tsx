@@ -23,6 +23,8 @@ import {
   People as UsersIcon,
   Domain as TenantsIcon,
   Router as GatewaysIcon,
+  Widgets as WidgetsIcon,
+  History as AuditIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material'
@@ -48,6 +50,8 @@ const navItems: NavItem[] = [
   { text: 'Tenants', icon: <TenantsIcon />, path: '/tenants' },
   { text: 'Alarms', icon: <AlarmsIcon />, path: '/alarms', badge: 3 },
   { text: 'Rule Engine', icon: <RuleEngineIcon />, path: '/rule-chains' },
+  { text: 'Widget Library', icon: <WidgetsIcon />, path: '/widgets-bundles' },
+  { text: 'Audit Logs', icon: <AuditIcon />, path: '/audit-logs' },
 ]
 
 export default function Sidebar() {

@@ -12,6 +12,8 @@ import TenantsPage from '@/pages/TenantsPage'
 import AlarmsPage from '@/pages/AlarmsPage'
 import RuleChainsPage from '@/pages/RuleChainsPage'
 import GatewaysPage from '@/pages/GatewaysPage'
+import WidgetsBundlesPage from '@/pages/WidgetsBundlesPage'
+import AuditLogsPage from '@/pages/AuditLogsPage'
 import { selectIsAuthenticated } from '@/store/auth/authSlice'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -109,6 +111,22 @@ function App() {
         element={
           <PrivateRoute>
             <GatewaysPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/widgets-bundles"
+        element={
+          <PrivateRoute>
+            <WidgetsBundlesPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/audit-logs"
+        element={
+          <PrivateRoute>
+            <AuditLogsPage />
           </PrivateRoute>
         }
       />
