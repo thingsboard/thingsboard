@@ -1,0 +1,53 @@
+version: '3.8'
+
+services:
+  tb-gateway:
+    build: .
+    container_name: tb-gateway
+    ports:
+      - "1883:1883"   # MQTT
+      - "8081:8081"   # HTTP
+      - "5683:5683/udp"  # CoAP
+      - "9090:9090"   # Metrics
+    environment:
+      SERVICE_ID: gateway-docker-001
+      TB_HOST: thingsboard-api
+      TB_PORT: 8080
+      KAFKA_BOOTSTRAP_SERVERS: '["kafka:9092"]'
+      REDIS_HOST: redis
+    depends_on:
+      - kafka
+      - redis
+    restart: unless-stopped
+    networks:
+      - tb-network
+
+  # Optional: If running standalone without main backend docker-compose
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+    networks:
+      - tb-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - tb-network
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - tb-network
+
+networks:
+  tb-network:
+    driver: bridge

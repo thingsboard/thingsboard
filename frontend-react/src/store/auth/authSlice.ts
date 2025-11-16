@@ -62,6 +62,57 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    demoLogin: (
+      state,
+      action: PayloadAction<{ authority: 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER' }>
+    ) => {
+      // Demo login - no backend call
+      const authority = action.payload.authority
+      const demoToken = 'demo-token-' + Date.now()
+
+      // Create role-specific demo user
+      const roleNames: Record<string, { firstName: string; lastName: string; email: string }> = {
+        SYS_ADMIN: {
+          firstName: 'System',
+          lastName: 'Administrator',
+          email: 'sysadmin@payvar.io',
+        },
+        TENANT_ADMIN: {
+          firstName: 'Tenant',
+          lastName: 'Administrator',
+          email: 'tenant@payvar.io',
+        },
+        CUSTOMER_USER: {
+          firstName: 'Customer',
+          lastName: 'User',
+          email: 'customer@payvar.io',
+        },
+      }
+
+      const roleInfo = roleNames[authority]
+      const demoUser: UserInfo = {
+        id: `demo-user-${authority.toLowerCase()}-123`,
+        email: roleInfo.email,
+        first_name: roleInfo.firstName,
+        last_name: roleInfo.lastName,
+        authority,
+        tenant_id: authority === 'SYS_ADMIN' ? undefined : 'demo-tenant-123',
+        customer_id: authority === 'CUSTOMER_USER' ? 'demo-customer-123' : undefined,
+      }
+
+      state.loading = false
+      state.isAuthenticated = true
+      state.token = demoToken
+      state.refreshToken = 'demo-refresh-token'
+      state.user = demoUser
+      state.error = null
+
+      // Store in localStorage
+      localStorage.setItem('token', demoToken)
+      localStorage.setItem('refreshToken', 'demo-refresh-token')
+      localStorage.setItem('demoMode', 'true')
+      localStorage.setItem('demoRole', authority)
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -95,7 +146,7 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError } = authSlice.actions
+export const { clearError, demoLogin } = authSlice.actions
 
 export const selectAuth = (state: RootState) => state.auth
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated
