@@ -33,25 +33,89 @@ import { logout, selectCurrentUser } from '@/store/auth/authSlice'
 
 const DRAWER_WIDTH = 256 // 64 * 4 = 256px (w-64 in Tailwind)
 
+type UserRole = 'SYS_ADMIN' | 'TENANT_ADMIN' | 'CUSTOMER_USER'
+
 interface NavItem {
   text: string
   icon: React.ReactNode
   path: string
   badge?: number
+  roles: UserRole[] // Which roles can see this item
 }
 
 const navItems: NavItem[] = [
-  { text: 'Dashboards', icon: <DashboardIcon />, path: '/dashboard' },
-  { text: 'Devices', icon: <DevicesIcon />, path: '/devices' },
-  { text: 'Assets', icon: <AssetsIcon />, path: '/assets' },
-  { text: 'Gateways', icon: <GatewaysIcon />, path: '/gateways' },
-  { text: 'Customers', icon: <CustomersIcon />, path: '/customers' },
-  { text: 'Users', icon: <UsersIcon />, path: '/users' },
-  { text: 'Tenants', icon: <TenantsIcon />, path: '/tenants' },
-  { text: 'Alarms', icon: <AlarmsIcon />, path: '/alarms', badge: 3 },
-  { text: 'Rule Engine', icon: <RuleEngineIcon />, path: '/rule-chains' },
-  { text: 'Widget Library', icon: <WidgetsIcon />, path: '/widgets-bundles' },
-  { text: 'Audit Logs', icon: <AuditIcon />, path: '/audit-logs' },
+  // System Administrator only
+  {
+    text: 'Tenants',
+    icon: <TenantsIcon />,
+    path: '/tenants',
+    roles: ['SYS_ADMIN']
+  },
+  {
+    text: 'Audit Logs',
+    icon: <AuditIcon />,
+    path: '/audit-logs',
+    roles: ['SYS_ADMIN', 'TENANT_ADMIN']
+  },
+
+  // Tenant Administrator and Customer User
+  {
+    text: 'Dashboards',
+    icon: <DashboardIcon />,
+    path: '/dashboard',
+    roles: ['TENANT_ADMIN', 'CUSTOMER_USER']
+  },
+  {
+    text: 'Devices',
+    icon: <DevicesIcon />,
+    path: '/devices',
+    roles: ['TENANT_ADMIN', 'CUSTOMER_USER']
+  },
+  {
+    text: 'Assets',
+    icon: <AssetsIcon />,
+    path: '/assets',
+    roles: ['TENANT_ADMIN', 'CUSTOMER_USER']
+  },
+  {
+    text: 'Alarms',
+    icon: <AlarmsIcon />,
+    path: '/alarms',
+    badge: 3,
+    roles: ['TENANT_ADMIN', 'CUSTOMER_USER']
+  },
+
+  // Tenant Administrator only
+  {
+    text: 'Gateways',
+    icon: <GatewaysIcon />,
+    path: '/gateways',
+    roles: ['TENANT_ADMIN']
+  },
+  {
+    text: 'Customers',
+    icon: <CustomersIcon />,
+    path: '/customers',
+    roles: ['TENANT_ADMIN']
+  },
+  {
+    text: 'Users',
+    icon: <UsersIcon />,
+    path: '/users',
+    roles: ['TENANT_ADMIN', 'CUSTOMER_USER']
+  },
+  {
+    text: 'Rule Engine',
+    icon: <RuleEngineIcon />,
+    path: '/rule-chains',
+    roles: ['TENANT_ADMIN']
+  },
+  {
+    text: 'Widget Library',
+    icon: <WidgetsIcon />,
+    path: '/widgets-bundles',
+    roles: ['TENANT_ADMIN']
+  },
 ]
 
 export default function Sidebar() {
@@ -67,6 +131,26 @@ export default function Sidebar() {
   const handleLogout = async () => {
     await dispatch(logout())
     navigate('/login')
+  }
+
+  // Filter navigation items based on user role
+  const filteredNavItems = navItems.filter((item) => {
+    if (!currentUser?.authority) return false
+    return item.roles.includes(currentUser.authority as UserRole)
+  })
+
+  // Get role display name
+  const getRoleDisplayName = (authority?: string) => {
+    switch (authority) {
+      case 'SYS_ADMIN':
+        return 'System Administrator'
+      case 'TENANT_ADMIN':
+        return 'Tenant Administrator'
+      case 'CUSTOMER_USER':
+        return 'Customer User'
+      default:
+        return 'User'
+    }
   }
 
   return (
@@ -109,9 +193,63 @@ export default function Sidebar() {
           </Box>
         </Box>
 
+        {/* User Profile Section */}
+        {currentUser && (
+          <Box
+            sx={{
+              bgcolor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: 1,
+              p: 1.5,
+              mb: 2,
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Avatar
+                sx={{
+                  width: 36,
+                  height: 36,
+                  bgcolor: '#FFB300',
+                  color: '#0F3E5C',
+                  fontSize: '0.875rem',
+                  fontWeight: 'bold',
+                }}
+              >
+                {currentUser.first_name?.[0]}
+                {currentUser.last_name?.[0]}
+              </Avatar>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'white',
+                    fontWeight: 500,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {currentUser.first_name} {currentUser.last_name}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: '#8C959D',
+                    display: 'block',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  {getRoleDisplayName(currentUser.authority)}
+                </Typography>
+              </Box>
+            </Box>
+          </Box>
+        )}
+
+        <Divider sx={{ borderColor: 'rgba(255, 255, 255, 0.1)', mb: 2 }} />
+
         {/* Navigation Items */}
         <List sx={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {navItems.map((item) => {
+          {filteredNavItems.map((item) => {
             const isActive = location.pathname === item.path
             return (
               <ListItem key={item.text} disablePadding>
