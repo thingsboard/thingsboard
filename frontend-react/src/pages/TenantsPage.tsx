@@ -38,6 +38,7 @@ import MainLayout from '@/components/layout/MainLayout'
 import EntityTable, { EntityColumn } from '@/components/entity/EntityTable'
 import { useAppSelector } from '@/hooks/redux'
 import { selectCurrentUser } from '@/store/auth/authSlice'
+import TenantDetailsDrawer from '@/components/drawers/TenantDetailsDrawer'
 
 interface Tenant {
   id: string
@@ -105,6 +106,11 @@ export default function TenantsPage() {
     tenantProfileId: '',
     enabled: true,
   })
+
+  // Drawer states
+  const [openDrawer, setOpenDrawer] = useState(false)
+  const [selectedTenant, setSelectedTenant] = useState<Tenant | null>(null)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view')
 
   // Check if user is SYS_ADMIN
   const isSysAdmin = currentUser?.authority === 'SYS_ADMIN'
@@ -294,43 +300,54 @@ export default function TenantsPage() {
   ]
 
   const handleAdd = () => {
-    setEditingTenant(null)
-    setFormData({
+    setSelectedTenant({
+      id: '',
       title: '',
-      name: '',
       email: '',
       phone: '',
       address: '',
-      address2: '',
       city: '',
       state: '',
       zip: '',
       country: 'United States',
-      region: '',
-      tenantProfileId: '',
+      tenantProfileName: 'Default',
       enabled: true,
+      createdTime: Date.now(),
     })
-    setOpenDialog(true)
+    setDrawerMode('create')
+    setOpenDrawer(true)
   }
 
   const handleEdit = (tenant: Tenant) => {
-    setEditingTenant(tenant)
-    setFormData({
-      title: tenant.title,
-      name: tenant.name || '',
-      email: tenant.email || '',
-      phone: tenant.phone || '',
-      address: tenant.address || '',
-      address2: tenant.address2 || '',
-      city: tenant.city || '',
-      state: tenant.state || '',
-      zip: tenant.zip || '',
-      country: tenant.country || 'United States',
-      region: tenant.region || '',
-      tenantProfileId: tenant.tenantProfileId || '',
-      enabled: tenant.enabled || true,
-    })
-    setOpenDialog(true)
+    setSelectedTenant(tenant)
+    setDrawerMode('edit')
+    setOpenDrawer(true)
+  }
+
+  const handleViewDetails = (tenant: Tenant) => {
+    setSelectedTenant(tenant)
+    setDrawerMode('view')
+    setOpenDrawer(true)
+  }
+
+  const handleSaveTenant = (tenant: Tenant) => {
+    // API call would go here
+    console.log('Saving tenant:', tenant)
+    setOpenDrawer(false)
+    loadTenants()
+  }
+
+  const handleDeleteTenant = (tenantId: string) => {
+    // API call would go here
+    console.log('Deleting tenant:', tenantId)
+    setOpenDrawer(false)
+    loadTenants()
+  }
+
+  const handleActivateTenant = (tenantId: string, enabled: boolean) => {
+    // API call would go here
+    console.log('Activating/Deactivating tenant:', tenantId, enabled)
+    loadTenants()
   }
 
   const handleDelete = async (ids: string[]) => {
@@ -362,7 +379,7 @@ export default function TenantsPage() {
   const rowActions = (row: Tenant) => (
     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
       <Tooltip title="View details">
-        <IconButton size="small" onClick={() => navigate(`/tenants/${row.id}`)}>
+        <IconButton size="small" onClick={() => handleViewDetails(row)}>
           <Visibility fontSize="small" />
         </IconButton>
       </Tooltip>
@@ -373,13 +390,13 @@ export default function TenantsPage() {
       </Tooltip>
       {!row.enabled ? (
         <Tooltip title="Enable tenant">
-          <IconButton size="small" onClick={() => handleToggleStatus(row)}>
+          <IconButton size="small" onClick={() => handleActivateTenant(row.id, true)}>
             <CheckCircle fontSize="small" />
           </IconButton>
         </Tooltip>
       ) : (
         <Tooltip title="Disable tenant">
-          <IconButton size="small" onClick={() => handleToggleStatus(row)}>
+          <IconButton size="small" onClick={() => handleActivateTenant(row.id, false)}>
             <Block fontSize="small" />
           </IconButton>
         </Tooltip>
@@ -567,6 +584,17 @@ export default function TenantsPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Tenant Details Drawer - Right-side slide-in matching ThingsBoard */}
+        <TenantDetailsDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          tenant={selectedTenant}
+          onSave={handleSaveTenant}
+          onDelete={handleDeleteTenant}
+          onActivate={handleActivateTenant}
+          mode={drawerMode}
+        />
       </Box>
     </MainLayout>
   )

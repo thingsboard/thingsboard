@@ -35,6 +35,7 @@ import {
 import { format } from 'date-fns'
 import MainLayout from '@/components/layout/MainLayout'
 import EntityTable, { EntityColumn } from '@/components/entity/EntityTable'
+import UserDetailsDrawer from '@/components/drawers/UserDetailsDrawer'
 
 interface User {
   id: string
@@ -85,6 +86,11 @@ export default function UsersPage() {
 
   // Assume current user is TENANT_ADMIN for demo
   const currentUserAuthority = 'TENANT_ADMIN'
+
+  // Drawer states
+  const [openDrawer, setOpenDrawer] = useState(false)
+  const [selectedUser, setSelectedUser] = useState<User | null>(null)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view')
 
   // Load users (mock data for now)
   useEffect(() => {
@@ -248,31 +254,54 @@ export default function UsersPage() {
   ]
 
   const handleAdd = () => {
-    setEditingUser(null)
-    setFormData({
+    setSelectedUser({
+      id: '',
       email: '',
       firstName: '',
       lastName: '',
       authority: 'CUSTOMER_USER',
-      customerId: '',
-      password: '',
       enabled: true,
+      createdTime: Date.now(),
     })
-    setOpenDialog(true)
+    setDrawerMode('create')
+    setOpenDrawer(true)
   }
 
   const handleEdit = (user: User) => {
-    setEditingUser(user)
-    setFormData({
-      email: user.email,
-      firstName: user.firstName || '',
-      lastName: user.lastName || '',
-      authority: user.authority,
-      customerId: user.customerId || '',
-      password: '',
-      enabled: user.enabled || true,
-    })
-    setOpenDialog(true)
+    setSelectedUser(user)
+    setDrawerMode('edit')
+    setOpenDrawer(true)
+  }
+
+  const handleViewDetails = (user: User) => {
+    setSelectedUser(user)
+    setDrawerMode('view')
+    setOpenDrawer(true)
+  }
+
+  const handleSaveUser = (user: User) => {
+    // API call would go here
+    console.log('Saving user:', user)
+    setOpenDrawer(false)
+    loadUsers()
+  }
+
+  const handleDeleteUser = (userId: string) => {
+    // API call would go here
+    console.log('Deleting user:', userId)
+    setOpenDrawer(false)
+    loadUsers()
+  }
+
+  const handleActivateUser = (userId: string, enabled: boolean) => {
+    // API call would go here
+    console.log('Activating/Deactivating user:', userId, enabled)
+    loadUsers()
+  }
+
+  const handleResendActivation = (userId: string) => {
+    // API call would go here
+    console.log('Resending activation to user:', userId)
   }
 
   const handleDelete = async (ids: string[]) => {
@@ -291,33 +320,29 @@ export default function UsersPage() {
     loadUsers()
   }
 
-  const handleActivateUser = async (user: User) => {
-    // API call would go here
-    console.log('Activating user:', user.id)
-    loadUsers()
-  }
-
-  const handleSendActivationEmail = async (user: User) => {
-    // API call would go here
-    console.log('Sending activation email to:', user.email)
-  }
-
   const rowActions = (row: User) => (
     <Box sx={{ display: 'flex', gap: 0.5, justifyContent: 'flex-end' }}>
       <Tooltip title="View details">
-        <IconButton size="small" onClick={() => navigate(`/users/${row.id}`)}>
+        <IconButton size="small" onClick={() => handleViewDetails(row)}>
           <Visibility fontSize="small" />
         </IconButton>
       </Tooltip>
       {!row.enabled && (
         <Tooltip title="Activate user">
-          <IconButton size="small" onClick={() => handleActivateUser(row)}>
+          <IconButton size="small" onClick={() => handleActivateUser(row.id, true)}>
             <CheckCircle fontSize="small" />
           </IconButton>
         </Tooltip>
       )}
+      {row.enabled && (
+        <Tooltip title="Disable user">
+          <IconButton size="small" onClick={() => handleActivateUser(row.id, false)}>
+            <Block fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      )}
       <Tooltip title="Send activation email">
-        <IconButton size="small" onClick={() => handleSendActivationEmail(row)}>
+        <IconButton size="small" onClick={() => handleResendActivation(row.id)}>
           <Email fontSize="small" />
         </IconButton>
       </Tooltip>
@@ -463,6 +488,19 @@ export default function UsersPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* User Details Drawer - Right-side slide-in matching ThingsBoard */}
+        <UserDetailsDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          user={selectedUser}
+          onSave={handleSaveUser}
+          onDelete={handleDeleteUser}
+          onActivate={handleActivateUser}
+          onResendActivation={handleResendActivation}
+          mode={drawerMode}
+          currentUserAuthority={currentUserAuthority}
+        />
       </Box>
     </MainLayout>
   )
