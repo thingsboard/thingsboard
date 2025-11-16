@@ -32,6 +32,7 @@ import {
 import { format } from 'date-fns'
 import MainLayout from '@/components/layout/MainLayout'
 import EntityTable, { EntityColumn } from '@/components/entity/EntityTable'
+import DeviceDetailsDrawer from '@/components/drawers/DeviceDetailsDrawer'
 
 interface Device {
   id: string
@@ -78,6 +79,11 @@ export default function DevicesPage() {
     type: 'default',
     deviceProfileId: '',
   })
+
+  // Drawer states
+  const [openDrawer, setOpenDrawer] = useState(false)
+  const [selectedDevice, setSelectedDevice] = useState<Device | null>(null)
+  const [drawerMode, setDrawerMode] = useState<'view' | 'edit' | 'create'>('view')
 
   // Load devices (mock data for now)
   useEffect(() => {
@@ -232,25 +238,22 @@ export default function DevicesPage() {
   ]
 
   const handleAdd = () => {
-    setEditingDevice(null)
-    setFormData({
+    setSelectedDevice({
+      id: '',
       name: '',
       label: '',
       type: 'default',
-      deviceProfileId: '',
+      active: true,
+      createdTime: Date.now(),
     })
-    setOpenDialog(true)
+    setDrawerMode('create')
+    setOpenDrawer(true)
   }
 
   const handleEdit = (device: Device) => {
-    setEditingDevice(device)
-    setFormData({
-      name: device.name,
-      label: device.label || '',
-      type: device.type,
-      deviceProfileId: device.deviceProfileId || '',
-    })
-    setOpenDialog(true)
+    setSelectedDevice(device)
+    setDrawerMode('edit')
+    setOpenDrawer(true)
   }
 
   const handleDelete = async (ids: string[]) => {
@@ -270,7 +273,23 @@ export default function DevicesPage() {
   }
 
   const handleViewDetails = (device: Device) => {
-    navigate(`/devices/${device.id}`)
+    setSelectedDevice(device)
+    setDrawerMode('view')
+    setOpenDrawer(true)
+  }
+
+  const handleSaveDevice = (device: Device) => {
+    // API call would go here
+    console.log('Saving device:', device)
+    setOpenDrawer(false)
+    loadDevices()
+  }
+
+  const handleDeleteDevice = (deviceId: string) => {
+    // API call would go here
+    console.log('Deleting device:', deviceId)
+    setOpenDrawer(false)
+    loadDevices()
   }
 
   const handleManageCredentials = (device: Device) => {
@@ -371,6 +390,16 @@ export default function DevicesPage() {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Device Details Drawer - Right-side slide-in matching ThingsBoard */}
+        <DeviceDetailsDrawer
+          open={openDrawer}
+          onClose={() => setOpenDrawer(false)}
+          device={selectedDevice}
+          onSave={handleSaveDevice}
+          onDelete={handleDeleteDevice}
+          mode={drawerMode}
+        />
       </Box>
     </MainLayout>
   )
