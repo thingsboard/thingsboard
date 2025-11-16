@@ -19,6 +19,8 @@ import {
   Inventory2 as AssetsIcon,
   NotificationsActive as AlarmsIcon,
   Rule as RuleEngineIcon,
+  Business as CustomersIcon,
+  People as UsersIcon,
   Logout as LogoutIcon,
   Settings as SettingsIcon,
 } from '@mui/icons-material'
@@ -38,6 +40,8 @@ const navItems: NavItem[] = [
   { text: 'Dashboards', icon: <DashboardIcon />, path: '/dashboard' },
   { text: 'Devices', icon: <DevicesIcon />, path: '/devices' },
   { text: 'Assets', icon: <AssetsIcon />, path: '/assets' },
+  { text: 'Customers', icon: <CustomersIcon />, path: '/customers' },
+  { text: 'Users', icon: <UsersIcon />, path: '/users' },
   { text: 'Alarms', icon: <AlarmsIcon />, path: '/alarms', badge: 3 },
   { text: 'Rule Engine', icon: <RuleEngineIcon />, path: '/rule-chains' },
 ]

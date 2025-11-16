@@ -5,6 +5,7 @@ import DashboardPage from '@/pages/DashboardPage'
 import DevicesPage from '@/pages/DevicesPage'
 import AssetsPage from '@/pages/AssetsPage'
 import CustomersPage from '@/pages/CustomersPage'
+import UsersPage from '@/pages/UsersPage'
 import { selectIsAuthenticated } from '@/store/auth/authSlice'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -46,6 +47,14 @@ function App() {
         element={
           <PrivateRoute>
             <CustomersPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/users"
+        element={
+          <PrivateRoute>
+            <UsersPage />
           </PrivateRoute>
         }
       />
