@@ -2,7 +2,7 @@
 Customer schemas
 """
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Dict, Any
+from typing import Optional, Dict, Any, List
 
 
 class CustomerBase(BaseModel):
@@ -49,3 +49,10 @@ class CustomerResponse(CustomerBase):
 
     class Config:
         from_attributes = True
+
+
+class CustomerListResponse(BaseModel):
+    """Schema for paginated customer list response"""
+    data: List[CustomerResponse]
+    totalElements: int
+    totalPages: int
