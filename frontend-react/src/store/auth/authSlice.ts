@@ -62,6 +62,30 @@ const authSlice = createSlice({
     clearError: (state) => {
       state.error = null
     },
+    demoLogin: (state) => {
+      // Demo login - no backend call
+      const demoToken = 'demo-token-' + Date.now()
+      const demoUser: UserInfo = {
+        id: 'demo-user-123',
+        email: 'demo@payvar.io',
+        first_name: 'Demo',
+        last_name: 'User',
+        authority: 'TENANT_ADMIN',
+        tenant_id: 'demo-tenant-123',
+      }
+
+      state.loading = false
+      state.isAuthenticated = true
+      state.token = demoToken
+      state.refreshToken = 'demo-refresh-token'
+      state.user = demoUser
+      state.error = null
+
+      // Store in localStorage
+      localStorage.setItem('token', demoToken)
+      localStorage.setItem('refreshToken', 'demo-refresh-token')
+      localStorage.setItem('demoMode', 'true')
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -95,7 +119,7 @@ const authSlice = createSlice({
   },
 })
 
-export const { clearError } = authSlice.actions
+export const { clearError, demoLogin } = authSlice.actions
 
 export const selectAuth = (state: RootState) => state.auth
 export const selectIsAuthenticated = (state: RootState) => state.auth.isAuthenticated

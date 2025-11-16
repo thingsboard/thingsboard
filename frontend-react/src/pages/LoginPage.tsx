@@ -12,7 +12,7 @@ import {
 } from '@mui/material'
 import { Visibility, VisibilityOff, Settings } from '@mui/icons-material'
 import { useAppDispatch, useAppSelector } from '@/hooks/redux'
-import { login, selectAuth } from '@/store/auth/authSlice'
+import { login, demoLogin, selectAuth } from '@/store/auth/authSlice'
 
 export default function LoginPage() {
   const navigate = useNavigate()
@@ -38,6 +38,11 @@ export default function LoginPage() {
 
   const toggleLanguage = () => {
     setLanguage(language === 'EN' ? 'FA' : 'EN')
+  }
+
+  const handleDemoLogin = () => {
+    dispatch(demoLogin())
+    navigate('/dashboard')
   }
 
   return (
@@ -362,6 +367,42 @@ export default function LoginPage() {
                     }}
                   >
                     {loading ? 'Logging in...' : 'Login'}
+                  </Button>
+                </Box>
+
+                {/* Demo Login Button */}
+                <Box sx={{ mt: 2, textAlign: 'center' }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      mb: 1,
+                      color: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.5)'
+                          : 'rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    Or try without credentials
+                  </Typography>
+                  <Button
+                    fullWidth
+                    variant="outlined"
+                    onClick={handleDemoLogin}
+                    sx={{
+                      borderColor: '#2D6B9A',
+                      color: '#2D6B9A',
+                      py: 1.5,
+                      borderRadius: 1.5,
+                      textTransform: 'none',
+                      fontSize: '1rem',
+                      fontWeight: 'medium',
+                      '&:hover': {
+                        borderColor: '#245580',
+                        bgcolor: 'rgba(45, 107, 154, 0.04)',
+                      },
+                    }}
+                  >
+                    Demo Login (Test Only)
                   </Button>
                 </Box>
               </Box>
