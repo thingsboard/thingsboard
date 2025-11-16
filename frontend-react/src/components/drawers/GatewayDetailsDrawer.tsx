@@ -23,6 +23,9 @@ import {
   Router as GatewayIcon,
 } from '@mui/icons-material'
 import EntityDrawer, { SectionHeader, StatusBadge } from './EntityDrawer'
+import AttributesTab from '@/components/entity/AttributesTab'
+import EventsTab from '@/components/entity/EventsTab'
+import RelationsTab from '@/components/entity/RelationsTab'
 import { format } from 'date-fns'
 
 interface Gateway {
@@ -185,16 +188,15 @@ export default function GatewayDetailsDrawer({
 
   // Attributes Tab
   const attributesTab = (
-    <Box>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: '#0F3E5C' }}>
-          Attributes
-        </Typography>
-        <Alert severity="info">
-          Gateway attributes management will be implemented
-        </Alert>
-      </Paper>
-    </Box>
+    <AttributesTab
+      entityId={gateway.id}
+      entityType="DEVICE"
+      attributes={[]}
+      onRefresh={() => console.log('Refresh attributes')}
+      onSave={(scope, key, value) => console.log('Save attribute:', scope, key, value)}
+      onDelete={(scope, key) => console.log('Delete attribute:', scope, key)}
+      readOnly={mode === 'view'}
+    />
   )
 
   // Telemetry Tab
@@ -225,18 +227,36 @@ export default function GatewayDetailsDrawer({
     </Box>
   )
 
+  // Events Tab
+  const eventsTab = (
+    <EventsTab
+      entityId={gateway.id}
+      entityType="DEVICE"
+      events={[
+        {
+          id: '1',
+          type: 'LIFECYCLE',
+          severity: 'INFO',
+          message: 'Gateway created',
+          timestamp: gateway.createdTime,
+        },
+      ]}
+      onRefresh={() => console.log('Refresh events')}
+      readOnly={true}
+    />
+  )
+
   // Relations Tab
   const relationsTab = (
-    <Box>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: '#0F3E5C' }}>
-          Relations
-        </Typography>
-        <Alert severity="info">
-          Gateway relations (connected devices) will be displayed here
-        </Alert>
-      </Paper>
-    </Box>
+    <RelationsTab
+      entityId={gateway.id}
+      entityType="DEVICE"
+      relations={[]}
+      onRefresh={() => console.log('Refresh relations')}
+      onSave={(relation) => console.log('Save relation:', relation)}
+      onDelete={(relation) => console.log('Delete relation:', relation)}
+      readOnly={mode === 'view'}
+    />
   )
 
   // Audit Logs Tab
@@ -258,6 +278,7 @@ export default function GatewayDetailsDrawer({
     { label: 'Attributes', content: attributesTab, disabled: mode === 'create' },
     { label: 'Latest telemetry', content: telemetryTab, disabled: mode === 'create' },
     { label: 'Alarms', content: alarmsTab, disabled: mode === 'create' },
+    { label: 'Events', content: eventsTab, disabled: mode === 'create' },
     { label: 'Relations', content: relationsTab, disabled: mode === 'create' },
     { label: 'Audit logs', content: auditLogsTab, disabled: mode === 'create' },
   ]

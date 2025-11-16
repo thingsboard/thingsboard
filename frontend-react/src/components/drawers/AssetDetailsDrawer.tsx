@@ -22,6 +22,9 @@ import {
   Inventory2 as AssetIcon,
 } from '@mui/icons-material'
 import EntityDrawer, { SectionHeader } from './EntityDrawer'
+import AttributesTab from '@/components/entity/AttributesTab'
+import EventsTab from '@/components/entity/EventsTab'
+import RelationsTab from '@/components/entity/RelationsTab'
 import { format } from 'date-fns'
 
 interface Asset {
@@ -139,16 +142,15 @@ export default function AssetDetailsDrawer({
 
   // Attributes Tab
   const attributesTab = (
-    <Box>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: '#0F3E5C' }}>
-          Attributes
-        </Typography>
-        <Alert severity="info">
-          Attributes management will be implemented
-        </Alert>
-      </Paper>
-    </Box>
+    <AttributesTab
+      entityId={asset.id}
+      entityType="ASSET"
+      attributes={[]}
+      onRefresh={() => console.log('Refresh attributes')}
+      onSave={(scope, key, value) => console.log('Save attribute:', scope, key, value)}
+      onDelete={(scope, key) => console.log('Delete attribute:', scope, key)}
+      readOnly={mode === 'view'}
+    />
   )
 
   // Other tabs
@@ -178,17 +180,34 @@ export default function AssetDetailsDrawer({
     </Box>
   )
 
+  const eventsTab = (
+    <EventsTab
+      entityId={asset.id}
+      entityType="ASSET"
+      events={[
+        {
+          id: '1',
+          type: 'LIFECYCLE',
+          severity: 'INFO',
+          message: 'Asset created',
+          timestamp: asset.createdTime,
+        },
+      ]}
+      onRefresh={() => console.log('Refresh events')}
+      readOnly={true}
+    />
+  )
+
   const relationsTab = (
-    <Box>
-      <Paper sx={{ p: 3 }}>
-        <Typography variant="h6" sx={{ mb: 3, color: '#0F3E5C' }}>
-          Relations
-        </Typography>
-        <Alert severity="info">
-          Relations management will be implemented
-        </Alert>
-      </Paper>
-    </Box>
+    <RelationsTab
+      entityId={asset.id}
+      entityType="ASSET"
+      relations={[]}
+      onRefresh={() => console.log('Refresh relations')}
+      onSave={(relation) => console.log('Save relation:', relation)}
+      onDelete={(relation) => console.log('Delete relation:', relation)}
+      readOnly={mode === 'view'}
+    />
   )
 
   const auditLogsTab = (
@@ -209,6 +228,7 @@ export default function AssetDetailsDrawer({
     { label: 'Attributes', content: attributesTab, disabled: mode === 'create' },
     { label: 'Latest telemetry', content: telemetryTab, disabled: mode === 'create' },
     { label: 'Alarms', content: alarmsTab, disabled: mode === 'create' },
+    { label: 'Events', content: eventsTab, disabled: mode === 'create' },
     { label: 'Relations', content: relationsTab, disabled: mode === 'create' },
     { label: 'Audit logs', content: auditLogsTab, disabled: mode === 'create' },
   ]

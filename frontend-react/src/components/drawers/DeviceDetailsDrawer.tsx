@@ -39,6 +39,9 @@ import {
   CheckCircle as CheckIcon,
 } from '@mui/icons-material'
 import EntityDrawer, { StatusBadge, InfoRow, SectionHeader } from './EntityDrawer'
+import AttributesTab from '@/components/entity/AttributesTab'
+import EventsTab from '@/components/entity/EventsTab'
+import RelationsTab from '@/components/entity/RelationsTab'
 import { format } from 'date-fns'
 
 interface Device {
@@ -206,45 +209,17 @@ export default function DeviceDetailsDrawer({
 
   // Attributes Tab
   const attributesTab = (
-    <Box>
-      <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ color: '#0F3E5C' }}>
-            Attributes
-          </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} size="small" sx={{ bgcolor: '#0F3E5C' }}>
-            Add Attribute
-          </Button>
-        </Box>
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Key</TableCell>
-                <TableCell>Value</TableCell>
-                <TableCell>Last Update</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              <TableRow>
-                <TableCell>model</TableCell>
-                <TableCell>v1.0</TableCell>
-                <TableCell>{format(new Date(), 'MMM dd, yyyy HH:mm')}</TableCell>
-                <TableCell align="right">
-                  <IconButton size="small">
-                    <EditIcon fontSize="small" />
-                  </IconButton>
-                  <IconButton size="small">
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    </Box>
+    <AttributesTab
+      entityId={device.id}
+      entityType="DEVICE"
+      attributes={[
+        { key: 'model', value: 'v1.0', lastUpdateTs: Date.now(), scope: 'SERVER_SCOPE' },
+      ]}
+      onRefresh={() => console.log('Refresh attributes')}
+      onSave={(scope, key, value) => console.log('Save attribute:', scope, key, value)}
+      onDelete={(scope, key) => console.log('Delete attribute:', scope, key)}
+      readOnly={mode === 'view'}
+    />
   )
 
   // Latest Telemetry Tab
@@ -330,23 +305,36 @@ export default function DeviceDetailsDrawer({
     </Box>
   )
 
+  // Events Tab
+  const eventsTab = (
+    <EventsTab
+      entityId={device.id}
+      entityType="DEVICE"
+      events={[
+        {
+          id: '1',
+          type: 'LIFECYCLE',
+          severity: 'INFO',
+          message: 'Device created',
+          timestamp: device.createdTime,
+        },
+      ]}
+      onRefresh={() => console.log('Refresh events')}
+      readOnly={true}
+    />
+  )
+
   // Relations Tab
   const relationsTab = (
-    <Box>
-      <Paper sx={{ p: 3 }}>
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-          <Typography variant="h6" sx={{ color: '#0F3E5C' }}>
-            Relations
-          </Typography>
-          <Button variant="contained" startIcon={<AddIcon />} size="small" sx={{ bgcolor: '#0F3E5C' }}>
-            Add Relation
-          </Button>
-        </Box>
-        <Alert severity="info">
-          No relations configured for this device
-        </Alert>
-      </Paper>
-    </Box>
+    <RelationsTab
+      entityId={device.id}
+      entityType="DEVICE"
+      relations={[]}
+      onRefresh={() => console.log('Refresh relations')}
+      onSave={(relation) => console.log('Save relation:', relation)}
+      onDelete={(relation) => console.log('Delete relation:', relation)}
+      readOnly={mode === 'view'}
+    />
   )
 
   // Audit Logs Tab
@@ -385,6 +373,7 @@ export default function DeviceDetailsDrawer({
     { label: 'Attributes', content: attributesTab, disabled: mode === 'create' },
     { label: 'Latest telemetry', content: telemetryTab, disabled: mode === 'create' },
     { label: 'Alarms', content: alarmsTab, disabled: mode === 'create' },
+    { label: 'Events', content: eventsTab, disabled: mode === 'create' },
     { label: 'Relations', content: relationsTab, disabled: mode === 'create' },
     { label: 'Audit logs', content: auditLogsTab, disabled: mode === 'create' },
   ]
