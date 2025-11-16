@@ -3,6 +3,7 @@ import { useAppSelector } from '@/hooks/redux'
 import LoginPage from '@/pages/LoginPage'
 import DashboardPage from '@/pages/DashboardPage'
 import DevicesPage from '@/pages/DevicesPage'
+import DeviceDetailsPage from '@/pages/DeviceDetailsPage'
 import AssetsPage from '@/pages/AssetsPage'
 import CustomersPage from '@/pages/CustomersPage'
 import UsersPage from '@/pages/UsersPage'
@@ -32,6 +33,14 @@ function App() {
         element={
           <PrivateRoute>
             <DevicesPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/devices/:deviceId"
+        element={
+          <PrivateRoute>
+            <DeviceDetailsPage />
           </PrivateRoute>
         }
       />
