@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.security.permission;
 
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
