@@ -16,11 +16,13 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,8 +41,14 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -164,6 +172,30 @@ public class TenantController extends BaseController {
     ) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenantInfos(pageLink));
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/tenants", params = {"tenantIds"})
+    public List<Tenant> getTenantsByIds(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") String[] strTenantIds) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkArrayParameter("tenantIds", strTenantIds);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<TenantId> tenantIds = new ArrayList<>();
+        for (String strTenantId : strTenantIds) {
+            tenantIds.add(new TenantId(toUUID(strTenantId)));
+        }
+        return Objects.requireNonNull(checkNotNull(tenantService.findTenantsByIdsAsync(tenantId, tenantIds).get()))
+                .stream()
+                .filter(e -> {
+                    try {
+                        return accessControlService.hasPermission(user, Resource.TENANT, Operation.READ, e.getId(), e);
+                    } catch (ThingsboardException ex) {
+                        return false;
+                    }
+                })
+                .toList();
     }
 
 }

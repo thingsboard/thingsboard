@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import com.google.common.util.concurrent.FluentFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -66,7 +67,9 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Service("DeviceProfileDaoService")
@@ -389,6 +392,14 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         return deviceProfileDao.findTenantDeviceProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceProfileInfo>> findDeviceProfilesByIdsAsync(TenantId tenantId, List<DeviceProfileId> deviceProfileIds) {
+        log.trace("Executing findDeviceProfilesByIdsAsync, tenantId [{}], deviceProfileIds [{}]", tenantId, deviceProfileIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(deviceProfileIds, ids -> "Incorrect deviceProfileIds " + ids);
+        return deviceProfileDao.findDeviceProfilesByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceProfileIds));
     }
 
     private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

@@ -62,4 +62,6 @@ public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
 
     TenantEntity findFirstByTitle(String name);
 
+    List<TenantEntity> findTenantsByIdIn(List<UUID> tenantIds);
+
 }

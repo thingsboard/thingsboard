@@ -16,12 +16,14 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -48,8 +50,11 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_DATA;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID;
@@ -276,6 +281,34 @@ public class DeviceProfileController extends BaseController {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
         return checkNotNull(deviceProfileService.findDeviceProfileNamesByTenantId(tenantId, activeOnly));
+    }
+
+    @ApiOperation(value = "Get Device Profiles By Ids (getDeviceProfilesByIds)",
+            notes = "Requested device profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"})
+    public List<DeviceProfileInfo> getDeviceProfilesByIds(
+            @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("deviceProfileIds") String[] strDeviceProfileIds) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkArrayParameter("deviceProfileIds", strDeviceProfileIds);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
+        for (String strDeviceProfileId : strDeviceProfileIds) {
+            deviceProfileIds.add(new DeviceProfileId(toUUID(strDeviceProfileId)));
+        }
+
+        return Objects.requireNonNull(checkNotNull(deviceProfileService.findDeviceProfilesByIdsAsync(tenantId, deviceProfileIds).get()))
+                .stream()
+                .filter(e -> {
+                    try {
+                        return accessControlService.hasPermission(user, Resource.DEVICE_PROFILE, Operation.READ, e.getId(), e);
+                    } catch (ThingsboardException ex) {
+                        return false;
+                    }
+                })
+                .toList();
     }
 
 }

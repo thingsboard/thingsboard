@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.rule;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
@@ -110,6 +111,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     @Override
     public Collection<RuleChain> findByTenantIdAndTypeAndName(TenantId tenantId, RuleChainType type, String name) {
         return DaoUtil.convertDataList(ruleChainRepository.findByTenantIdAndTypeAndName(tenantId.getId(), type, name));
+    }
+
+    @Override
+    public ListenableFuture<List<RuleChain>> findRuleChainsByTenantIdAndIdsAsync(UUID tenantId, List<UUID> ruleChainIds) {
+        return service.submit(() -> DaoUtil.convertDataList(ruleChainRepository.findRuleChainsByTenantIdAndIdIn(tenantId, ruleChainIds)));
     }
 
     @Override

@@ -65,6 +65,16 @@ public class DefaultAccessControlService implements AccessControlService {
         }
     }
 
+    @Override
+    @SuppressWarnings("unchecked")
+    public <I extends EntityId, T extends HasTenantId> boolean hasPermission(SecurityUser user, Resource resource, Operation operation, I entityId, T entity) throws ThingsboardException {
+        PermissionChecker permissionChecker = getPermissionChecker(user.getAuthority(), resource);
+        if (permissionChecker != null) {
+            return permissionChecker.hasPermission(user, operation, entityId, entity);
+        }
+        return false;
+    }
+
     private PermissionChecker getPermissionChecker(Authority authority, Resource resource) throws ThingsboardException {
         Permissions permissions = authorityPermissions.get(authority);
         if (permissions == null) {

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.customer;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -105,6 +106,11 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
         return DaoUtil.toPageData(
                 customerRepository.findCustomersWithTheSameTitle(DaoUtil.toPageable(pageLink))
         );
+    }
+
+    @Override
+    public ListenableFuture<List<Customer>> findCustomersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> customerIds) {
+        return service.submit(() -> DaoUtil.convertDataList(customerRepository.findCustomersByTenantIdAndIdIn(tenantId, customerIds)));
     }
 
     @Override

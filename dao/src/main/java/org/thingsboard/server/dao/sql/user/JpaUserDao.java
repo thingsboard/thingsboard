@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.user;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -139,6 +140,11 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     @Override
     public int countTenantAdmins(UUID tenantId) {
         return userRepository.countByTenantIdAndAuthority(tenantId, Authority.TENANT_ADMIN);
+    }
+
+    @Override
+    public ListenableFuture<List<User>> findUsersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> userIds) {
+        return service.submit(() -> DaoUtil.convertDataList(userRepository.findUsersByTenantIdAndIdIn(tenantId, userIds)));
     }
 
     @Override

@@ -117,4 +117,6 @@ public interface RuleChainService extends EntityDaoService {
 
     void deleteRuleNodes(TenantId tenantId, RuleChainId ruleChainId);
 
+    ListenableFuture<List<RuleChain>> findRuleChainsByIdsAsync(TenantId tenantId, List<RuleChainId> ruleChainIds);
+
 }

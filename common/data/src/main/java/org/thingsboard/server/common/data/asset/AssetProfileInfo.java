@@ -23,6 +23,7 @@ import lombok.ToString;
 import lombok.Value;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -33,7 +34,7 @@ import java.util.UUID;
 @Value
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true, exclude = "image")
-public class AssetProfileInfo extends EntityInfo {
+public class AssetProfileInfo extends EntityInfo implements HasTenantId {
 
     @Schema(description = "Either URL or Base64 data of the icon. Used in the mobile application to visualize set of asset profiles in the grid view. ")
     private final String image;

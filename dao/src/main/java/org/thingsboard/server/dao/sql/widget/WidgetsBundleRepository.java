@@ -146,4 +146,16 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
     @Query("SELECT new org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields(w.id, w.createdTime, w.tenantId," +
             "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
     List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
+            "AND wb.id IN :widgetsBundleIds")
+    List<WidgetsBundleEntity> findSystemWidgetsBundlesByIdIn(@Param("systemTenantId") UUID systemTenantId,
+                                                             @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
+            "AND wb.id IN :widgetsBundleIds")
+    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
+                                                                           @Param("nullTenantId") UUID nullTenantId,
+                                                                           @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+
 }
