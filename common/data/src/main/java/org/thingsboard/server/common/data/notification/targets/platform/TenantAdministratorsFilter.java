@@ -21,7 +21,7 @@ import java.util.Set;
 import java.util.UUID;
 
 @Data
-public class TenantAdministratorsFilter implements UsersFilter {
+public class TenantAdministratorsFilter implements SystemLevelUsersFilter {
 
     private Set<UUID> tenantsIds;
     private Set<UUID> tenantProfilesIds;

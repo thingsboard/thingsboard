@@ -5,7 +5,7 @@
 
 *function (data, dsData): string*
 
-A JavaScript function used to compute text or HTML code to be displayed in the trip path point tooltip.
+A JavaScript function used to compute text or HTML code to be displayed in the path point tooltip.
 
 **Parameters:**
 

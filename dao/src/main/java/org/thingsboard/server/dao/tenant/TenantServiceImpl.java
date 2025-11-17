@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.tenant;
 
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -51,6 +52,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("TenantDaoService")
@@ -75,6 +77,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     private ApiUsageStateService apiUsageStateService;
     @Autowired
+    @Lazy
     private NotificationSettingsService notificationSettingsService;
     @Autowired
     private QrCodeSettingService qrCodeSettingService;
@@ -85,8 +88,8 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Autowired
     protected TbTransactionalCache<TenantId, Boolean> existsTenantCache;
 
-    @TransactionalEventListener(classes = TenantEvictEvent.class)
     @Override
+    @TransactionalEventListener
     public void handleEvictEvent(TenantEvictEvent event) {
         TenantId tenantId = event.getTenantId();
         cache.evict(tenantId);
@@ -243,6 +246,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findTenantById(TenantId.fromUUID(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findTenantByIdAsync(tenantId, TenantId.fromUUID(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

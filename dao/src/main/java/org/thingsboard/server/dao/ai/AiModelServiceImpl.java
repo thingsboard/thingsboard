@@ -29,13 +29,17 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.model.sql.AiModelEntity;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
 @Service
@@ -63,11 +67,23 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Override
     @Transactional
     public AiModel save(AiModel model) {
-        aiModelValidator.validate(model, AiModel::getTenantId);
+        return save(model, true);
+    }
+
+    @Override
+    public AiModel save(AiModel aiModel, boolean doValidate) {
+        AiModel oldAiModel = null;
+        if (doValidate) {
+            oldAiModel = aiModelValidator.validate(aiModel, AiModel::getTenantId);
+        } else if (aiModel.getId() != null) {
+            oldAiModel = findAiModelById(aiModel.getTenantId(), aiModel.getId()).orElse(null);
+        }
 
         AiModel savedModel;
         try {
-            savedModel = aiModelDao.saveAndFlush(model.getTenantId(), model);
+            savedModel = aiModelDao.saveAndFlush(aiModel.getTenantId(), aiModel);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedModel.getTenantId()).entityId(savedModel.getId())
+                    .entity(savedModel).oldEntity(oldAiModel).created(oldAiModel == null).broadcastEvent(true).build());
         } catch (Exception e) {
             checkConstraintViolation(e,
                     "ai_model_name_unq_key", "AI model with such name already exist!",
@@ -104,15 +120,26 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     }
 
     @Override
+    public Optional<AiModel> findAiModelByTenantIdAndName(TenantId tenantId, String name) {
+        return Optional.ofNullable(aiModelDao.findByTenantIdAndName(tenantId.getId(), name));
+    }
+
+    @Override
     @Transactional
     public boolean deleteByTenantIdAndId(TenantId tenantId, AiModelId modelId) {
-        return deleteByTenantIdAndIdInternal(tenantId, modelId);
+        return deleteByTenantIdAndIdInternal(tenantId, modelId.getId());
     }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return findAiModelByTenantIdAndId(tenantId, (AiModelId) entityId)
                 .map(model -> model); // necessary to cast to HasId<?>
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return findAiModelByTenantIdAndIdAsync(tenantId, new AiModelId(entityId.getId()))
+                .transform(modelOpt -> modelOpt.map(model -> model), directExecutor());  // necessary to cast to HasId<?>
     }
 
     @Override
@@ -123,14 +150,21 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        deleteByTenantIdAndIdInternal(tenantId, new AiModelId(id.getId()));
+        deleteByTenantIdAndIdInternal(tenantId, id.getId());
     }
 
-    private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, AiModelId modelId) {
-        boolean deleted = aiModelDao.deleteByTenantIdAndId(tenantId, modelId);
-        if (deleted) {
-            publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, modelId)));
+    private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, UUID modelId) {
+        AiModel aiModel = findAiModelById(tenantId, new AiModelId(modelId)).orElse(null);
+        if (aiModel == null) {
+            return false;
         }
+
+        boolean deleted = aiModelDao.deleteByTenantIdAndId(tenantId, aiModel.getId());
+        if (deleted) {
+            publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, aiModel.getId())));
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(aiModel.getId()).entity(aiModel).build());
+        }
+
         return deleted;
     }
 

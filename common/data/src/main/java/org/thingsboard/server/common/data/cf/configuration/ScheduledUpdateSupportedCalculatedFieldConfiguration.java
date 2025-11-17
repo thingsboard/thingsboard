@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.PositiveOrZero;
 
 public interface ScheduledUpdateSupportedCalculatedFieldConfiguration extends CalculatedFieldConfiguration {
 
-    @JsonIgnore
     boolean isScheduledUpdateEnabled();
 
+    @PositiveOrZero
     int getScheduledUpdateInterval();
 
     void setScheduledUpdateInterval(int interval);

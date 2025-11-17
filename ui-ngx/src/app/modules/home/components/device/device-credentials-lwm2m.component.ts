@@ -14,20 +14,21 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, OnDestroy } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
-  UntypedFormBuilder,
-  UntypedFormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
   ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
 import {
   getDefaultClientSecurityConfig,
-  getDefaultServerSecurityConfig, Lwm2mClientKeyTooltipTranslationsMap,
+  getDefaultServerSecurityConfig,
+  Lwm2mClientKeyTooltipTranslationsMap,
   Lwm2mSecurityConfigModels,
   Lwm2mSecurityType,
   Lwm2mSecurityTypeTranslationMap
@@ -35,6 +36,11 @@ import {
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { isDefinedAndNotNull } from '@core/utils';
+import { DeviceId } from "@shared/models/id/device-id";
+import { DeviceService } from "@core/http/device.service";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { Store } from "@ngrx/store";
+import { AppState } from "@core/core.state";
 
 @Component({
   selector: 'tb-device-credentials-lwm2m',
@@ -65,7 +71,12 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
 
-  constructor(private fb: UntypedFormBuilder) {
+  @Input()
+  deviceId: DeviceId;
+
+  constructor(protected store: Store<AppState>,
+              private fb: UntypedFormBuilder,
+              private deviceService: DeviceService) {
     this.lwm2mConfigFormGroup = this.initLwm2mConfigForm();
   }
 
@@ -99,6 +110,41 @@ export class DeviceCredentialsLwm2mComponent implements ControlValueAccessor, Va
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  /**
+   * AbstractRpcController -> rpcController
+   * - API
+   * "/api/plugins/rpc/twoway/${this.deviceId.id}"
+   * - DiscoveryAll
+   * requestBody =  "{\"method\":\"DiscoverAll\"}";
+   * - "Registration Update Trigger",
+   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1/0/8\"}}
+   * - "Bootstrap-Request Trigger"
+   * requestBody =  "{\"method\": \"Execute\", \"params\": {\"id\": \"/1/0/9\"}}
+   */
+
+  public rebootDevice(isBootstrapServer: boolean): void {
+    this.deviceService.rebootDevice(this.deviceId.id, isBootstrapServer).subscribe(responseReboot => {
+      if (responseReboot.result === 'SUCCESS') {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: responseReboot.msg,
+            type: 'success',
+            duration: 1500,
+            verticalPosition: 'top',
+            horizontalPosition: 'left'
+          }));
+      } else {
+        this.store.dispatch(new ActionNotificationShow(
+          {
+            message: responseReboot.msg,
+            type: 'error',
+            verticalPosition: 'top',
+            horizontalPosition: 'left'
+          }));
+      }
+    });
   }
 
   private initClientSecurityConfig(config: Lwm2mSecurityConfigModels): void {

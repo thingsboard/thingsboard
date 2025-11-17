@@ -20,16 +20,16 @@ import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/wi
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { DataKey, DatasourceType, widgetType } from "@shared/models/widget.models";
-import { WidgetSubscriptionOptions } from "@core/api/widget-api.models";
-import { formattedDataFormDatasourceData } from "@core/utils";
+import { DatasourceType, widgetType } from '@shared/models/widget.models';
+import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
+import { formattedDataFormDatasourceData } from '@core/utils';
 
-import { UtilsService } from "@core/services/utils.service";
+import { UtilsService } from '@core/services/utils.service';
 import {
-  ApiUsageDataKeysSettings,
   apiUsageDefaultSettings,
-  ApiUsageWidgetSettings
-} from "@home/components/widget/lib/settings/cards/api-usage-settings.component.models";
+  ApiUsageWidgetSettings,
+  getUniqueDataKeys
+} from '@home/components/widget/lib/settings/cards/api-usage-settings.component.models';
 
 @Component({
   selector: 'tb-api-usage-widget',
@@ -80,7 +80,7 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
       type: DatasourceType.entity,
       name: '',
       entityAliasId: this.settings.dsEntityAliasId,
-      dataKeys: this.getUniqueDataKeys(this.settings.dataKeys)
+      dataKeys: getUniqueDataKeys(this.settings.apiUsageDataKeys)
     }
 
     const apiUsageSubscriptionOptions: WidgetSubscriptionOptions = {
@@ -94,7 +94,7 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
             const progress = data[0][key.maxLimit.key] !== 0 ? Math.min(100, ((data[0][key.current.key] / data[0][key.maxLimit.key]) * 100)) : 0;
             key.progress = isFinite(progress) ? progress : 0;
             key.status.value = data[0][key.status.key] ? data[0][key.status.key].toLowerCase() : 'enabled';
-            key.maxLimit.value = isFinite(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0  ? this.toShortNumber(data[0][key.maxLimit.key]) : '∞';
+            key.maxLimit.value = isFinite(data[0][key.maxLimit.key]) && data[0][key.maxLimit.key] !== 0 && data[0][key.maxLimit.key] !== '' ? this.toShortNumber(data[0][key.maxLimit.key]) : '∞';
             key.current.value = isFinite(data[0][key.current.key]) ? this.toShortNumber(data[0][key.current.key]) : 0;
           });
           this.cd.detectChanges();
@@ -122,7 +122,7 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
   }
 
   parseApiUsages() {
-    this.settings.dataKeys.forEach((key) => {
+    this.settings.apiUsageDataKeys.forEach((key) => {
       this.apiUsages.push({
         label: this.utils.customTranslation(key.label, key.label),
         state: key.state,
@@ -133,20 +133,6 @@ export class ApiUsageWidgetComponent implements OnInit, OnDestroy {
       });
     })
   }
-
-  getUniqueDataKeys(data: ApiUsageDataKeysSettings[]): DataKey[] {
-    const seenNames = new Set<string>();
-    return data
-      .flatMap(item => [item.status, item.maxLimit, item.current])
-      .filter(key => {
-        if (seenNames.has(key.name)) {
-          return false;
-        }
-        seenNames.add(key.name);
-        return true;
-      });
-  };
-
 
   ngOnDestroy() {
     if (this.contentResize$) {

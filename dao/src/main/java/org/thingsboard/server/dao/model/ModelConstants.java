@@ -26,8 +26,7 @@ import java.util.UUID;
 
 public class ModelConstants {
 
-    private ModelConstants() {
-    }
+    private ModelConstants() {}
 
     public static final UUID NULL_UUID = Uuids.startOf(0);
     public static final TenantId SYSTEM_TENANT = TenantId.fromUUID(ModelConstants.NULL_UUID);
@@ -730,15 +729,6 @@ public class ModelConstants {
     public static final String CALCULATED_FIELD_CONFIGURATION_VERSION = "configuration_version";
     public static final String CALCULATED_FIELD_CONFIGURATION = "configuration";
     public static final String CALCULATED_FIELD_VERSION = "version";
-
-    /**
-     * Calculated field links constants.
-     */
-    public static final String CALCULATED_FIELD_LINK_TABLE_NAME = "calculated_field_link";
-    public static final String CALCULATED_FIELD_LINK_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
-    public static final String CALCULATED_FIELD_LINK_ENTITY_TYPE = ENTITY_TYPE_COLUMN;
-    public static final String CALCULATED_FIELD_LINK_ENTITY_ID = ENTITY_ID_COLUMN;
-    public static final String CALCULATED_FIELD_LINK_CALCULATED_FIELD_ID = "calculated_field_id";
 
     /**
      * Tasks constants.

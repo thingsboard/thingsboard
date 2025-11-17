@@ -15,51 +15,53 @@
     limitations under the License.
 
 -->
-<section *ngIf="!versionLoadResult$">
-  <mat-toolbar *ngIf="entityDataInfo">
-    <h2>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
-    <span class="flex-1"></span>
-  </mat-toolbar>
-  <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
-                    *ngIf="entityDataInfo && (isLoading$ | async)">
-  </mat-progress-bar>
-  <mat-spinner *ngIf="!entityDataInfo" mode="indeterminate" diameter="80"></mat-spinner>
-  <form *ngIf="entityDataInfo" [formGroup]="restoreFormGroup" style="padding-top: 16px;">
-    <fieldset [disabled]="isLoading$ | async">
-      <div class="flex flex-1 flex-col">
-        <mat-checkbox *ngIf="entityDataInfo.hasCredentials" formControlName="loadCredentials" style="margin-bottom: 16px;">
-          {{ 'version-control.load-credentials' | translate }}
-        </mat-checkbox>
-        <mat-checkbox *ngIf="entityDataInfo.hasAttributes" formControlName="loadAttributes" style="margin-bottom: 16px;">
-          {{ 'version-control.load-attributes' | translate }}
-        </mat-checkbox>
-        <mat-checkbox *ngIf="entityDataInfo.hasRelations" formControlName="loadRelations" style="margin-bottom: 16px;">
-          {{ 'version-control.load-relations' | translate }}
-        </mat-checkbox>
-        <mat-checkbox *ngIf="entityDataInfo.hasCalculatedFields" formControlName="loadCalculatedFields" class="mb-4">
-          {{ 'version-control.load-calculated-fields' | translate }}
-        </mat-checkbox>
-      </div>
-    </fieldset>
-  </form>
-  <div *ngIf="entityDataInfo"  class="flex items-center justify-end gap-2">
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="restore()"
-            [disabled]="(isLoading$ | async) || restoreFormGroup.invalid">
-      {{ 'action.restore' | translate }}
-    </button>
-  </div>
-</section>
-<section *ngIf="versionLoadResult$">
-  <section *ngIf="(versionLoadResult$ | async)?.done || errorMessage; else progress">
-    <section *ngIf="errorMessage">
+@if (!versionLoadResult$) {
+  @if (entityDataInfo) {
+    <mat-toolbar>
+      <h2 tbTruncateWithTooltip>{{ 'version-control.restore-entity-from-version' | translate: {versionName} }}</h2>
+      <span class="flex-1"></span>
+    </mat-toolbar>
+    <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
+                      [class.hidden]="(isLoading$ | async) === false">
+    </mat-progress-bar>
+    <form [formGroup]="restoreFormGroup" style="padding-top: 16px;">
+      <fieldset [disabled]="isLoading$ | async">
+        <div class="flex flex-1 flex-col">
+          <mat-checkbox [class.hidden]="!entityDataInfo?.hasCredentials" formControlName="loadCredentials" style="margin-bottom: 16px;">
+            {{ 'version-control.load-credentials' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [class.hidden]="!entityDataInfo?.hasAttributes" formControlName="loadAttributes" style="margin-bottom: 16px;">
+            {{ 'version-control.load-attributes' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [class.hidden]="!entityDataInfo?.hasRelations" formControlName="loadRelations" style="margin-bottom: 16px;">
+            {{ 'version-control.load-relations' | translate }}
+          </mat-checkbox>
+          <mat-checkbox [class.hidden]="!entityDataInfo?.hasCalculatedFields" formControlName="loadCalculatedFields" class="mb-4">
+            {{ 'version-control.load-calculated-fields' | translate }}
+          </mat-checkbox>
+        </div>
+      </fieldset>
+    </form>
+    <div class="flex items-center justify-end gap-2">
+      <button mat-button color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async)"
+              (click)="cancel()" cdkFocusInitial>
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="restore()"
+              [disabled]="(isLoading$ | async) || restoreFormGroup.invalid">
+        {{ 'action.restore' | translate }}
+      </button>
+    </div>
+  } @else {
+    <mat-spinner mode="indeterminate" diameter="80"></mat-spinner>
+  }
+} @else {
+  @if ((versionLoadResult$ | async)?.done || errorMessage) {
+    <section [class.hidden]="!errorMessage">
       <div class="mat-headline-6 vc-result-message error" [innerHTML]="errorMessage"></div>
       <div class="flex items-center justify-end gap-2">
         <button mat-button color="primary"
@@ -70,13 +72,12 @@
         </button>
       </div>
     </section>
-  </section>
-  <ng-template #progress>
+  } @else {
     <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.restoring-entity-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
     </section>
-  </ng-template>
-</section>
+  }
+}

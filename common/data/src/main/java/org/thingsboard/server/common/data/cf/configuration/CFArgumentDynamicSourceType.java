@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.cf.configuration;
 
 public enum CFArgumentDynamicSourceType {
 
-    RELATION_QUERY
+    CURRENT_OWNER,
+    RELATION_PATH_QUERY
 
 }

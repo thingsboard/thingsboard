@@ -401,9 +401,10 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   }
 
   private onTimewindowTypeChange(selectedTab: TimewindowType) {
-    updateFormValuesOnTimewindowTypeChange(selectedTab, this.quickIntervalOnly, this.timewindowForm,
+    updateFormValuesOnTimewindowTypeChange(selectedTab, this.timewindowForm,
       this.realtimeDisableCustomInterval, this.historyDisableCustomInterval,
-      this.realtimeAdvancedParams, this.historyAdvancedParams);
+      this.realtimeAdvancedParams, this.historyAdvancedParams,
+      this.realtimeTimewindowOptions, this.historyTimewindowOptions);
   }
 
   update() {

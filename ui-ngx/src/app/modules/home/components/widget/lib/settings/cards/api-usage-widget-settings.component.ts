@@ -29,7 +29,7 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup,
   ValidationErrors,
-  ValidatorFn
+  ValidatorFn, Validators
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -37,15 +37,15 @@ import {
   ApiUsageDataKeysSettings,
   apiUsageDefaultSettings,
   ApiUsageSettingsContext
-} from "@home/components/widget/lib/settings/cards/api-usage-settings.component.models";
-import { deepClone } from "@core/utils";
-import { Observable, of } from "rxjs";
+} from '@home/components/widget/lib/settings/cards/api-usage-settings.component.models';
+import { deepClone } from '@core/utils';
+import { Observable, of } from 'rxjs';
 import {
   DataKeyConfigDialogComponent,
   DataKeyConfigDialogData
-} from "@home/components/widget/lib/settings/common/key/data-key-config-dialog.component";
-import { MatDialog } from "@angular/material/dialog";
-import { CdkDragDrop } from "@angular/cdk/drag-drop";
+} from '@home/components/widget/lib/settings/common/key/data-key-config-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
+import { CdkDragDrop } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'tb-api-usage-widget-settings',
@@ -82,11 +82,11 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected doUpdateSettings(settingsForm: UntypedFormGroup, settings: WidgetSettings) {
-    settingsForm.setControl('dataKeys', this.prepareDataKeysFormArray(settings?.dataKeys), {emitEvent: false});
+    settingsForm.setControl('apiUsageDataKeys', this.prepareDataKeysFormArray(settings?.apiUsageDataKeys), {emitEvent: false});
   }
 
   dataKeysFormArray(): UntypedFormArray {
-    return this.apiUsageWidgetSettingsForm.get('dataKeys') as UntypedFormArray;
+    return this.apiUsageWidgetSettingsForm.get('apiUsageDataKeys') as UntypedFormArray;
   }
 
   trackByDataKey(index: number): any {
@@ -104,7 +104,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   removeDataKey(index: number) {
-    (this.apiUsageWidgetSettingsForm.get('dataKeys') as UntypedFormArray).removeAt(index);
+    (this.apiUsageWidgetSettingsForm.get('apiUsageDataKeys') as UntypedFormArray).removeAt(index);
   }
 
   addDataKey() {
@@ -115,7 +115,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
       maxLimit: null,
       current: null
     };
-    const dataKeysArray = this.apiUsageWidgetSettingsForm.get('dataKeys') as UntypedFormArray;
+    const dataKeysArray = this.apiUsageWidgetSettingsForm.get('apiUsageDataKeys') as UntypedFormArray;
     const dataKeyControl = this.fb.control(dataKey, [this.apiUsageDataKeyValidator()]);
     dataKeysArray.push(dataKeyControl);
   }
@@ -131,7 +131,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     return {
       dsEntityAliasId: settings?.dsEntityAliasId,
-      dataKeys: settings?.dataKeys,
+      apiUsageDataKeys: settings?.apiUsageDataKeys,
       targetDashboardState: settings?.targetDashboardState,
       background: settings?.background,
       padding: settings.padding
@@ -140,8 +140,8 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.apiUsageWidgetSettingsForm = this.fb.group({
-      dsEntityAliasId: [settings?.dsEntityAliasId],
-      dataKeys: this.prepareDataKeysFormArray(settings?.dataKeys),
+      dsEntityAliasId: [settings?.dsEntityAliasId, Validators.required],
+      apiUsageDataKeys: this.prepareDataKeysFormArray(settings?.apiUsageDataKeys),
       targetDashboardState: [settings?.targetDashboardState],
       background: [settings?.background, []],
       padding: [settings.padding, []]

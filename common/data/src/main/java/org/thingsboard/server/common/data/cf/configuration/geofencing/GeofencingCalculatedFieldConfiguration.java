@@ -16,6 +16,8 @@
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -24,16 +26,26 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
 
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
 
+    @Valid
+    @NotNull
     private EntityCoordinates entityCoordinates;
+
+    @Valid
+    @NotNull
     private Map<String, ZoneGroupConfiguration> zoneGroups;
+
+    private boolean scheduledUpdateEnabled;
     private int scheduledUpdateInterval;
 
     private Output output;
@@ -51,9 +63,13 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
         return args;
     }
 
+
     @Override
-    public List<EntityId> getReferencedEntities() {
-        return zoneGroups.values().stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();
+    public Set<EntityId> getReferencedEntities() {
+        return zoneGroups == null ? Collections.emptySet() : zoneGroups.values().stream()
+                .map(ZoneGroupConfiguration::getRefEntityId)
+                .filter(Objects::nonNull)
+                .collect(toSet());
     }
 
     @Override
@@ -62,19 +78,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     }
 
     @Override
-    public boolean isScheduledUpdateEnabled() {
-        return scheduledUpdateInterval > 0 && zoneGroups.values().stream().anyMatch(ZoneGroupConfiguration::hasDynamicSource);
-    }
-
-    @Override
     public void validate() {
-        if (entityCoordinates == null) {
-            throw new IllegalArgumentException("Geofencing calculated field entity coordinates must be specified!");
-        }
-        entityCoordinates.validate();
-        if (zoneGroups == null || zoneGroups.isEmpty()) {
-            throw new IllegalArgumentException("Geofencing calculated field must contain at least one geofencing zone group defined!");
-        }
         zoneGroups.forEach((key, value) -> value.validate(key));
     }
 

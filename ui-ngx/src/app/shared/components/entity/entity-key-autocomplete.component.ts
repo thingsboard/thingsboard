@@ -84,7 +84,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
         return this.cachedResult ? of(this.cachedResult) : this.entityService.findEntityKeysByQuery({
           pageLink: { page: 0, pageSize: 100 },
           entityFilter: this.entityFilter(),
-        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType());
+        }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType(), {ignoreLoading: true});
       }),
       map(result => {
         this.cachedResult = result;
@@ -133,6 +133,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
 
     if (filterChanged || keyScopeChanged || keyTypeChanged) {
       this.keyControl.setValue('', {emitEvent: false});
+      this.cachedResult = null;
     }
   }
 
@@ -151,10 +152,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   registerOnTouched(_): void {}
 
   validate(): ValidationErrors | null {
-    return this.keyControl.valid ? null : { keyControl: false };
+    return this.keyControl.valid || this.keyControl.disabled ? null : { keyControl: false };
   }
 
   writeValue(value: string): void {
     this.keyControl.patchValue(value, {emitEvent: false});
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    if (isDisabled) {
+      this.keyControl.disable({emitEvent: false});
+    } else {
+      this.keyControl.enable({emitEvent: false});
+    }
   }
 }

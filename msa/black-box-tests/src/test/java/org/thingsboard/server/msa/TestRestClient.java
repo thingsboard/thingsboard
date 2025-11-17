@@ -266,6 +266,33 @@ public class TestRestClient {
                 .as(ArrayNode.class);
     }
 
+
+    public ValidatableResponse deleteEntityAttributes(EntityId entityId, AttributeScope scope, String keys) {
+        Map<String, String> pathParams = new HashMap<>();
+        pathParams.put("entityId", entityId.getId().toString());
+        pathParams.put("entityType", entityId.getEntityType().name());
+        pathParams.put("scope", scope.name());
+        return given().spec(requestSpec)
+                .pathParams(pathParams)
+                .queryParam("keys", keys)
+                .delete("/api/plugins/telemetry/{entityType}/{entityId}/{scope}")
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
+    public ValidatableResponse deleteEntityTimeseries(EntityId entityId, String keys, boolean deleteAllDataForKeys) {
+        Map<String, String> pathParams = new HashMap<>();
+        pathParams.put("entityType", entityId.getEntityType().name());
+        pathParams.put("entityId", entityId.getId().toString());
+        return given().spec(requestSpec)
+                .pathParams(pathParams)
+                .queryParam("keys", keys)
+                .queryParam("deleteAllDataForKeys", Boolean.toString(deleteAllDataForKeys))
+                .delete("/api/plugins/telemetry/{entityType}/{entityId}/timeseries/delete")
+                .then()
+                .statusCode(HTTP_OK);
+    }
+
     public JsonNode getLatestTelemetry(EntityId entityId) {
         return given().spec(requestSpec)
                 .get("/api/plugins/telemetry/" + entityId.getEntityType().name() + "/" + entityId.getId() + "/values/timeseries")
@@ -372,6 +399,23 @@ public class TestRestClient {
         return given().spec(requestSpec)
                 .body(entityRelation)
                 .post("/api/v2/relation")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityRelation.class);
+    }
+
+
+    public EntityRelation deleteEntityRelation(EntityId fromId, String relationType, EntityId toId) {
+        Map<String, String> queryParams = new HashMap<>();
+        queryParams.put("fromId", fromId.getId().toString());
+        queryParams.put("fromType", fromId.getEntityType().name());
+        queryParams.put("relationType", relationType);
+        queryParams.put("toId", toId.getId().toString());
+        queryParams.put("toType", toId.getEntityType().name());
+        return given().spec(requestSpec)
+                .queryParams(queryParams)
+                .delete("/api/v2/relation")
                 .then()
                 .statusCode(HTTP_OK)
                 .extract()

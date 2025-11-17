@@ -18,7 +18,7 @@ package org.thingsboard.server.service.cf.ctx.state.geofencing;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfTsGeofencingArg;
+import org.thingsboard.script.api.tbel.TbelCfGeofencingArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.util.ProtoUtils;
@@ -41,7 +41,7 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
     }
 
     public GeofencingArgumentEntry(EntityId entityId, TransportProtos.AttributeValueProto entry) {
-        this.zoneStates = toZones(Map.of(entityId, ProtoUtils.fromProto(entry)));
+        this(Map.of(entityId, ProtoUtils.fromProto(entry)));
     }
 
     public GeofencingArgumentEntry(Map<EntityId, KvEntry> entityIdkvEntryMap) {
@@ -63,6 +63,10 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
         if (!(entry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
             throw new IllegalArgumentException("Unsupported argument entry type for geofencing argument entry: " + entry.getType());
         }
+        if (geofencingArgumentEntry.isEmpty()) {
+            zoneStates.clear();
+            return true;
+        }
         boolean updated = false;
         for (var zoneEntry : geofencingArgumentEntry.getZoneStates().entrySet()) {
             if (updateZone(zoneEntry)) {
@@ -79,7 +83,7 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfTsGeofencingArg(zoneStates);
+        return new TbelCfGeofencingArg(zoneStates);
     }
 
     private Map<EntityId, GeofencingZoneState> toZones(Map<EntityId, KvEntry> entityIdKvEntryMap) {
@@ -95,6 +99,10 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
         GeofencingZoneState existingZoneState = zoneStates.get(zoneId);
         if (existingZoneState == null) {
             zoneStates.put(zoneId, newZoneState);
+            return true;
+        }
+        if (newZoneState.getPerimeterDefinition() == null) {
+            zoneStates.remove(zoneId);
             return true;
         }
         return existingZoneState.update(newZoneState);

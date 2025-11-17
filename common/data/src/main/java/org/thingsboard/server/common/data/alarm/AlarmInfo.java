@@ -21,11 +21,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serial;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Schema
 public class AlarmInfo extends Alarm {
 
+    @Serial
     private static final long serialVersionUID = 2807343093519543363L;
 
     @Getter
@@ -37,6 +40,11 @@ public class AlarmInfo extends Alarm {
     @Setter
     @Schema(description = "Alarm originator label", example = "Thermostat label")
     private String originatorLabel;
+
+    @Getter
+    @Setter
+    @Schema(description = "Originator display name", example = "Thermostat")
+    private String originatorDisplayName;
 
     @Getter
     @Setter
@@ -53,8 +61,8 @@ public class AlarmInfo extends Alarm {
 
     public AlarmInfo(AlarmInfo alarmInfo) {
         super(alarmInfo);
-        this.originatorName = alarmInfo.originatorName;
-        this.originatorLabel = alarmInfo.originatorLabel;
+        this.originatorName = alarmInfo.getOriginatorName();
+        this.originatorLabel = alarmInfo.getOriginatorLabel();
         this.assignee = alarmInfo.getAssignee();
     }
 

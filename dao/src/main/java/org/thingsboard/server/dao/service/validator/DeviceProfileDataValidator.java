@@ -69,6 +69,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isNotLwm2mServer;
+
 @Slf4j
 @Component
 public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<DeviceProfile> {
@@ -337,19 +341,22 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
 
-            if (serverConfig.getShortServerId() != null) {
-                if (serverConfig.isBootstrapServerIs()) {
-                    if (serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535) {
-                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
-                    }
-                } else {
-                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+            if (serverConfig.isBootstrapServerIs()){
+                if (serverConfig.getShortServerId() != null) {
+                    if (serverConfig.getShortServerId() == 0) {
+                        serverConfig.setShortServerId(null);
+                    } else {
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null!");
                     }
                 }
             } else {
-                String serverName = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-                throw new DeviceCredentialsValidationException(serverName + " ShortServerId must not be null!");
+                if (serverConfig.getShortServerId() != null) {
+                    if (isNotLwm2mServer(serverConfig.getShortServerId())) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!");
+                    }
+                } else {
+                    throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be null!");
+                }
             }
 
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";

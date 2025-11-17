@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.hash.Hashing;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -35,11 +36,13 @@ import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.TbResourceDataInfo;
 import org.thingsboard.server.common.data.TbResourceDeleteResult;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
@@ -56,6 +59,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
@@ -76,6 +80,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.UnaryOperator;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -92,16 +97,20 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final ResourceDataValidator resourceValidator;
     protected final WidgetTypeDao widgetTypeDao;
     protected final DashboardInfoDao dashboardInfoDao;
-    private final Map<EntityType, ResourceContainerDao<?>> resourceContainerDaoMap = new HashMap<>();
+    protected final RuleChainDao ruleChainDao;
+    private final Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap = new HashMap<>();
+    private final Map<EntityType, ResourceContainerDao<?>> generalResourceContainerDaoMap = new HashMap<>();
     protected static final int MAX_ENTITIES_TO_FIND = 10;
 
     @PostConstruct
     public void init() {
-        resourceContainerDaoMap.put(EntityType.WIDGET_TYPE, widgetTypeDao);
-        resourceContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
+        resourceLinkContainerDaoMap.put(EntityType.WIDGET_TYPE, widgetTypeDao);
+        resourceLinkContainerDaoMap.put(EntityType.DASHBOARD, dashboardInfoDao);
+        generalResourceContainerDaoMap.put(EntityType.RULE_CHAIN, ruleChainDao);
     }
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private ImageService imageService;
 
     private static final Map<String, String> DASHBOARD_RESOURCES_MAPPING = Map.of(
@@ -207,6 +216,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public TbResourceDataInfo getResourceDataInfo(TenantId tenantId, TbResourceId resourceId) {
+        log.trace("Executing getResourceDataInfo [{}] [{}]", tenantId, resourceId);
+        return resourceDao.getResourceDataInfo(tenantId, resourceId);
+    }
+
+    @Override
     public ResourceExportData exportResource(TbResourceInfo resourceInfo) {
         byte[] data = getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
         return ResourceExportData.builder()
@@ -263,7 +278,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResource toResource(TenantId tenantId, ResourceExportData exportData) {
         if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
-            || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
+                || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
             throw new IllegalArgumentException("Image import not supported");
         }
 
@@ -344,30 +359,46 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         }
 
         if (!force) {
-            if (resource.getResourceType() == ResourceType.JS_MODULE) {
-                var link = resource.getLink();
-                Map<String, List<? extends HasId<?>>> affectedEntities = new HashMap<>();
-
-                resourceContainerDaoMap.forEach((entityType, resourceContainerDao) -> {
-                    var entities = tenantId.isSysTenantId() ? resourceContainerDao.findByResourceLink(link, MAX_ENTITIES_TO_FIND) :
-                            resourceContainerDao.findByTenantIdAndResourceLink(tenantId, link, MAX_ENTITIES_TO_FIND);
-                    if (!entities.isEmpty()) {
-                        affectedEntities.put(entityType.name(), entities);
-                    }
-                });
-
-                if (!affectedEntities.isEmpty()) {
-                    success = false;
-                    result.references(affectedEntities);
-                }
+            Map<String, List<EntityInfo>> references = findResourceReferences(tenantId, resource);
+            if (!references.isEmpty()) {
+                success = false;
+                result.references(references);
             }
         }
         if (success) {
             resourceDao.removeById(tenantId, resourceId.getId());
+            publishEvictEvent(new ResourceInfoEvictEvent(tenantId, resourceId));
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
         }
 
         return result.success(success).build();
+    }
+
+    private Map<String, List<EntityInfo>> findResourceReferences(TenantId tenantId, TbResourceInfo resource) {
+        Map<String, List<EntityInfo>> references = new HashMap<>();
+
+        if (resource.getResourceType() == ResourceType.JS_MODULE) {
+            var ref = resource.getLink();
+            findReferences(tenantId, references, ref, resourceLinkContainerDaoMap);
+        }
+
+        if (resource.getResourceType() == ResourceType.GENERAL) {
+            var ref = resource.getId().getId().toString();
+            findReferences(tenantId, references, ref, generalResourceContainerDaoMap);
+        }
+
+        return references;
+    }
+
+    private void findReferences(TenantId tenantId, Map<String, List<EntityInfo>> references, String ref, Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap) {
+        resourceLinkContainerDaoMap.forEach((entityType, dao) -> {
+            List<EntityInfo> entities = tenantId.isSysTenantId()
+                    ? dao.findByResource(ref, MAX_ENTITIES_TO_FIND)
+                    : dao.findByTenantIdAndResource(tenantId, ref, MAX_ENTITIES_TO_FIND);
+            if (!entities.isEmpty()) {
+                references.put(entityType.name(), entities);
+            }
+        });
     }
 
     @Override
@@ -427,6 +458,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findResourceInfoById(tenantId, new TbResourceId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override
@@ -661,6 +698,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         resource.setData(data);
         log.info("{} system resource {}", (resource.getId() == null ? "Creating" : "Updating"), resourceKey);
         return saveResource(resource);
+    }
+
+    @Override
+    public List<TbResourceInfo> findSystemOrTenantResourcesByIds(TenantId tenantId, List<TbResourceId> resourceIds) {
+        log.trace("Executing findSystemOrTenantResourcesByIds, tenantId [{}], resourceIds [{}]", tenantId, resourceIds);
+        return resourceInfoDao.findSystemOrTenantResourcesByIds(tenantId, resourceIds);
     }
 
     @Override
