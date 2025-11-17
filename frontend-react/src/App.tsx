@@ -10,8 +10,8 @@ import CustomersPage from '@/pages/CustomersPage'
 import UsersPage from '@/pages/UsersPage'
 import TenantsPage from '@/pages/TenantsPage'
 import AlarmsPage from '@/pages/AlarmsPage'
-import RuleChainsPage from '@/pages/RuleChainsPage'
-import RuleChainDesignerPage from '@/pages/RuleChainDesignerPage'
+import RuleChainListPage from '@/pages/rulechains/RuleChainListPage'
+import RuleChainEditorPage from '@/pages/rulechains/RuleChainEditorPage'
 import GatewaysPage from '@/pages/GatewaysPage'
 import GatewayDetailsPage from '@/pages/GatewayDetailsPage'
 import WidgetsBundlesPage from '@/pages/WidgetsBundlesPage'
@@ -183,21 +183,24 @@ function App() {
 
       {/* Rule Chains - TENANT_ADMIN only */}
       <Route
-        path="/rule-chains"
+        path="/rulechains"
         element={
           <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
-            <RuleChainsPage />
+            <RuleChainListPage />
           </RoleBasedRoute>
         }
       />
       <Route
-        path="/rule-chains/:id"
+        path="/rulechains/:ruleChainId"
         element={
           <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
-            <RuleChainDesignerPage />
+            <RuleChainEditorPage />
           </RoleBasedRoute>
         }
       />
+      {/* Legacy route redirects */}
+      <Route path="/rule-chains" element={<Navigate to="/rulechains" replace />} />
+      <Route path="/rule-chains/:id" element={<Navigate to="/rulechains/:id" replace />} />
 
       {/* Widget Library - TENANT_ADMIN only */}
       <Route
