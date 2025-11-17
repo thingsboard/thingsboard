@@ -11,6 +11,8 @@ import DashboardEditor from '@/components/dashboard/DashboardEditor'
 import DashboardToolbar from '@/components/dashboard/DashboardToolbar'
 import WidgetLibrary from '@/components/dashboard/WidgetLibrary'
 import WidgetConfigDialog from '@/components/dashboard/WidgetConfigDialog'
+import TimewindowSelector from '@/components/dashboard/TimewindowSelector'
+import DashboardImport from '@/components/dashboard/DashboardImport'
 import { Widget, WidgetData, WidgetTypeId } from '@/types/dashboard'
 import '@/widgets' // Import to register all widgets
 
@@ -19,6 +21,8 @@ export default function DashboardPage() {
   const [hasChanges, setHasChanges] = useState(false)
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false)
   const [showWidgetConfig, setShowWidgetConfig] = useState(false)
+  const [showTimewindow, setShowTimewindow] = useState(false)
+  const [showImport, setShowImport] = useState(false)
   const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null)
   const [originalWidgets, setOriginalWidgets] = useState<Widget[]>([])
   const [currentWidgets, setCurrentWidgets] = useState<Widget[]>([])
@@ -158,8 +162,8 @@ export default function DashboardPage() {
           onSettings={() => alert('Dashboard settings coming soon!')}
           onFullscreen={handleFullscreen}
           onExport={() => exportDashboard(currentWidgets)}
-          onImport={() => alert('Import functionality coming soon!')}
-          onTimewindow={() => alert('Timewindow selector coming soon!')}
+          onImport={() => setShowImport(true)}
+          onTimewindow={() => setShowTimewindow(true)}
           onFilters={() => alert('Filters coming soon!')}
           hasChanges={hasChanges}
           dashboardTitle="Main Control Dashboard"
@@ -191,6 +195,30 @@ export default function DashboardPage() {
           onClose={() => setShowWidgetConfig(false)}
           widget={selectedWidget}
           onSave={handleWidgetConfigSave}
+        />
+
+        {/* Timewindow Selector */}
+        <TimewindowSelector
+          open={showTimewindow}
+          onClose={() => setShowTimewindow(false)}
+          onApply={(timewindow) => {
+            console.log('Timewindow applied:', timewindow)
+            // TODO: Apply timewindow to all widgets
+          }}
+        />
+
+        {/* Dashboard Import */}
+        <DashboardImport
+          open={showImport}
+          onClose={() => setShowImport(false)}
+          onImport={(dashboard, mode) => {
+            if (mode === 'replace') {
+              setCurrentWidgets(dashboard.widgets || [])
+            } else {
+              setCurrentWidgets([...currentWidgets, ...(dashboard.widgets || [])])
+            }
+            setHasChanges(true)
+          }}
         />
       </Box>
     </MainLayout>
