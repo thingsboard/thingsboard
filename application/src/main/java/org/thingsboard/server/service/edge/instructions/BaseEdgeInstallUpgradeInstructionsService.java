@@ -18,7 +18,7 @@ package org.thingsboard.server.service.edge.instructions;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
+import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.io.IOException;
@@ -35,9 +35,12 @@ public abstract class BaseEdgeInstallUpgradeInstructionsService {
 
     private final InstallScripts installScripts;
 
-    @Value("${app.version:unknown}")
     @Setter
-    protected String appVersion;
+    protected String edgeVersion = convertEdgeVersionToDocsFormat(EdgeVersion.V_4_2_0.name());
+
+    protected String convertEdgeVersionToDocsFormat(String edgeVersion) {
+        return edgeVersion.replace("_", ".").substring(2);
+    }
 
     protected String readFile(Path file) {
         try {

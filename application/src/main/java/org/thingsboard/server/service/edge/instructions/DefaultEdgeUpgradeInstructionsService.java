@@ -52,12 +52,11 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
 
     @Override
     public EdgeInstructions getUpgradeInstructions(String edgeVersion, String upgradeMethod) {
-        String tbVersion = appVersion.replace("-SNAPSHOT", "");
         String currentEdgeVersion = convertEdgeVersionToDocsFormat(edgeVersion);
         return switch (upgradeMethod.toLowerCase()) {
-            case "docker" -> getDockerUpgradeInstructions(tbVersion, currentEdgeVersion);
+            case "docker" -> getDockerUpgradeInstructions(this.edgeVersion, currentEdgeVersion);
             case "ubuntu", "centos" ->
-                    getLinuxUpgradeInstructions(tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
+                    getLinuxUpgradeInstructions(this.edgeVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
             default -> throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
         };
     }
@@ -74,8 +73,7 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
         Optional<AttributeKvEntry> attributeKvEntryOpt = attributesService.find(tenantId, edgeId, AttributeScope.SERVER_SCOPE, DataConstants.EDGE_VERSION_ATTR_KEY).get();
         if (attributeKvEntryOpt.isPresent()) {
             String edgeVersionFormatted = convertEdgeVersionToDocsFormat(attributeKvEntryOpt.get().getValueAsString());
-            String appVersionFormatted = appVersion.replace("-SNAPSHOT", "");
-            return isVersionGreaterOrEqualsThan(edgeVersionFormatted, "3.6.0") && !isVersionGreaterOrEqualsThan(edgeVersionFormatted, appVersionFormatted);
+            return isVersionGreaterOrEqualsThan(edgeVersionFormatted, "3.6.0") && !isVersionGreaterOrEqualsThan(edgeVersionFormatted, edgeVersion);
         }
         return false;
     }
@@ -153,10 +151,6 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
         String startService = readFile(resolveFile("start_service.md"));
         result.append(startService);
         return new EdgeInstructions(result.toString());
-    }
-
-    private String convertEdgeVersionToDocsFormat(String edgeVersion) {
-        return edgeVersion.replace("_", ".").substring(2);
     }
 
     @Override
