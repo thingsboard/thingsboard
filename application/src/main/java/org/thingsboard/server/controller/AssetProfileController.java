@@ -236,10 +236,10 @@ public class AssetProfileController extends BaseController {
             @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("assetProfileIds") String[] strAssetProfileIds) throws ThingsboardException, ExecutionException, InterruptedException {
         checkArrayParameter("assetProfileIds", strAssetProfileIds);
-        if (!accessControlService.hasPermission(getCurrentUser(), Resource.ASSET_PROFILE, Operation.READ)) {
+        SecurityUser user = getCurrentUser();
+        if (!accessControlService.hasPermission(user, Resource.ASSET_PROFILE, Operation.READ)) {
             return Collections.emptyList();
         }
-        SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
         List<AssetProfileId> assetProfileIds = new ArrayList<>();
         for (String strAssetProfileId : strAssetProfileIds) {

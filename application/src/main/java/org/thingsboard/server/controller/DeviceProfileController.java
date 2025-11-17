@@ -292,10 +292,10 @@ public class DeviceProfileController extends BaseController {
             @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("deviceProfileIds") String[] strDeviceProfileIds) throws ThingsboardException, ExecutionException, InterruptedException {
         checkArrayParameter("deviceProfileIds", strDeviceProfileIds);
-        if (!accessControlService.hasPermission(getCurrentUser(), Resource.DEVICE_PROFILE, Operation.READ)) {
+        SecurityUser user = getCurrentUser();
+        if (!accessControlService.hasPermission(user, Resource.DEVICE_PROFILE, Operation.READ)) {
             return Collections.emptyList();
         }
-        SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
         List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
         for (String strDeviceProfileId : strDeviceProfileIds) {
