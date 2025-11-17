@@ -18,6 +18,8 @@ import WidgetsBundlesPage from '@/pages/WidgetsBundlesPage'
 import AuditLogsPage from '@/pages/AuditLogsPage'
 import TenantProfilesPage from '@/pages/TenantProfilesPage'
 import QueueManagementPage from '@/pages/QueueManagementPage'
+import DeviceProfilesPage from '@/pages/DeviceProfilesPage'
+import AssetProfilesPage from '@/pages/AssetProfilesPage'
 import GeneralSettingsPage from '@/pages/settings/GeneralSettingsPage'
 import MailServerPage from '@/pages/settings/MailServerPage'
 import SmsProviderPage from '@/pages/settings/SmsProviderPage'
@@ -129,6 +131,26 @@ function App() {
         element={
           <RoleBasedRoute allowedRoles={['TENANT_ADMIN', 'CUSTOMER_USER']}>
             <AssetDetailsPage />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* Device Profiles - TENANT_ADMIN only */}
+      <Route
+        path="/device-profiles"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <DeviceProfilesPage />
+          </RoleBasedRoute>
+        }
+      />
+
+      {/* Asset Profiles - TENANT_ADMIN only */}
+      <Route
+        path="/asset-profiles"
+        element={
+          <RoleBasedRoute allowedRoles={['TENANT_ADMIN']}>
+            <AssetProfilesPage />
           </RoleBasedRoute>
         }
       />

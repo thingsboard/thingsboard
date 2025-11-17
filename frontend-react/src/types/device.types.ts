@@ -34,6 +34,14 @@ export interface OtaPackageId extends EntityId {
   entityType: 'OTA_PACKAGE'
 }
 
+export interface RuleChainId extends EntityId {
+  entityType: 'RULE_CHAIN'
+}
+
+export interface DashboardId extends EntityId {
+  entityType: 'DASHBOARD'
+}
+
 // ==================== Enums ====================
 
 export enum DeviceProfileType {
@@ -149,8 +157,8 @@ export interface DeviceProvisionConfiguration {
 }
 
 export interface DeviceProfile {
-  id: DeviceProfileId
-  createdTime: number
+  id?: DeviceProfileId
+  createdTime?: number
   tenantId: TenantId
   name: string
   description?: string
@@ -159,13 +167,26 @@ export interface DeviceProfile {
   transportType: DeviceTransportType
   provisionType: DeviceProvisionType
   profileData: DeviceProfileData
-  defaultRuleChainId?: EntityId
-  defaultDashboardId?: EntityId
+  defaultRuleChainId?: RuleChainId
+  defaultDashboardId?: DashboardId
   defaultQueueName?: string
+  provisionDeviceKey?: string
   firmwareId?: OtaPackageId
   softwareId?: OtaPackageId
+  defaultEdgeRuleChainId?: RuleChainId
+  externalId?: DeviceProfileId
   version?: number
   isDefault?: boolean
+}
+
+export interface DeviceProfileInfo {
+  id: DeviceProfileId
+  tenantId: TenantId
+  name: string
+  type: DeviceProfileType
+  image?: string
+  transportType: DeviceTransportType
+  defaultDashboardId?: DashboardId
 }
 
 // ==================== Device Connectivity ====================
@@ -184,6 +205,59 @@ export interface DeviceConnectivityStatus {
   lastActivityTime?: number
   lastConnectTime?: number
   lastDisconnectTime?: number
+}
+
+// ==================== Alarm Rules ====================
+
+export enum AlarmSeverity {
+  CRITICAL = 'CRITICAL',
+  MAJOR = 'MAJOR',
+  MINOR = 'MINOR',
+  WARNING = 'WARNING',
+  INDETERMINATE = 'INDETERMINATE',
+}
+
+export interface AlarmRule {
+  id?: string
+  alarmType: string
+  createRules?: Record<AlarmSeverity, AlarmConditionSpec>
+  clearRule?: AlarmConditionSpec
+  schedule?: AlarmSchedule
+}
+
+export interface AlarmConditionSpec {
+  condition: AlarmCondition
+  spec?: AlarmConditionFilterSpec
+}
+
+export interface AlarmCondition {
+  spec: AlarmConditionFilter[]
+}
+
+export interface AlarmConditionFilter {
+  key: AlarmConditionFilterKey
+  valueType: 'NUMERIC' | 'STRING' | 'BOOLEAN' | 'DATE_TIME'
+  value?: any
+  predicate: any
+}
+
+export interface AlarmConditionFilterKey {
+  type: 'TIME_SERIES' | 'ATTRIBUTE' | 'ENTITY_FIELD' | 'CONSTANT'
+  key: string
+}
+
+export interface AlarmConditionFilterSpec {
+  type: string
+  unit?: string
+  value?: number
+}
+
+export interface AlarmSchedule {
+  type: 'ANY_TIME' | 'SPECIFIC_TIME' | 'CUSTOM'
+  timezone?: string
+  daysOfWeek?: number[]
+  startsOn?: number
+  endsOn?: number
 }
 
 // ==================== 120% Enhanced Features ====================
@@ -324,4 +398,49 @@ export function getTransportIcon(transportType: TransportType): string {
     [BasicTransportType.HTTP]: 'Http',
   }
   return iconMap[transportType] || 'DeviceUnknown'
+}
+
+export function createDefaultDeviceProfile(): DeviceProfile {
+  return {
+    tenantId: { id: '', entityType: 'TENANT' },
+    name: '',
+    description: '',
+    type: DeviceProfileType.DEFAULT,
+    transportType: DeviceTransportType.DEFAULT,
+    provisionType: DeviceProvisionType.DISABLED,
+    isDefault: false,
+    profileData: {
+      configuration: {
+        type: DeviceProfileType.DEFAULT,
+      },
+      transportConfiguration: {
+        type: DeviceTransportType.DEFAULT,
+      },
+    },
+  }
+}
+
+export function isValidDeviceProfile(profile: DeviceProfile): boolean {
+  return (
+    profile.name.trim().length > 0 &&
+    profile.transportType !== undefined &&
+    profile.provisionType !== undefined
+  )
+}
+
+export function getAlarmSeverityColor(severity: AlarmSeverity): string {
+  switch (severity) {
+    case AlarmSeverity.CRITICAL:
+      return '#D32F2F'
+    case AlarmSeverity.MAJOR:
+      return '#F57C00'
+    case AlarmSeverity.MINOR:
+      return '#FBC02D'
+    case AlarmSeverity.WARNING:
+      return '#FDD835'
+    case AlarmSeverity.INDETERMINATE:
+      return '#757575'
+    default:
+      return '#757575'
+  }
 }
