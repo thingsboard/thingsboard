@@ -663,9 +663,9 @@
             "cleared-by-user": "Alarm was cleared by user {{userName}}",
             "assigned-to-user": "Alarm was assigned by user {{userName}} to user {{assigneeName}}",
             "unassigned-to-user": "Alarm was unassigned by user {{userName}}",
-            "unassigned-from-deleted-user": "Alarm was unassigned because user {{userName}} was deleted",
+            "unassigned-from-deleted-user": "Alarm was unassigned because user {{userName}} - was deleted",
             "comment-deleted": "User {{userName}} deleted his comment",
-            "severity-changed": "Alarm severity changed from {{userName}} to {{assigneeName}}"
+            "severity-changed": "Alarm severity was updated from {{oldSeverity}} to {{newSeverity}}"
         }
     },
     "alarm-activity": {
