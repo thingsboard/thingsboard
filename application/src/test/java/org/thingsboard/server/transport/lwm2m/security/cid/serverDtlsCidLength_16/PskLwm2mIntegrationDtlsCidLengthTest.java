@@ -13,21 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.security.cid.serverDtlsCidLength_0;
+package org.thingsboard.server.transport.lwm2m.security.cid.serverDtlsCidLength_16;
 
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.server.transport.lwm2m.security.cid.AbstractSecurityLwM2MIntegrationDtlsCidLength0Test;
+import org.thingsboard.server.transport.lwm2m.security.cid.AbstractSecurityLwM2MIntegrationDtlsCidLength16Test;
+import org.thingsboard.server.transport.lwm2m.security.cid.AbstractSecurityLwM2MIntegrationDtlsCidLength4Test;
 
 import static org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurityMode.PSK;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
 
-public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MIntegrationDtlsCidLength0Test {
+public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MIntegrationDtlsCidLength16Test {
 
     @Before
     public void createProfileRpc() {
         transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(PSK, NONE));
-        awaitAlias = "await on client state (Psk_Lwm2m) serverDtlsCidLength = 0";
+        awaitAlias = "await on client state (Psk_Lwm2m) serverDtlsCidLength = 16";
     }
 
     @Test
@@ -39,6 +40,7 @@ public class PskLwm2mIntegrationDtlsCidLengthTest extends AbstractSecurityLwM2MI
     public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_0() throws Exception {
         testPskDtlsCidLength(0);
     }
+
     @Test
     public void testWithPskConnectLwm2mSuccessClientDtlsCidLength_1() throws Exception {
         testPskDtlsCidLength(1);
