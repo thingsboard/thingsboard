@@ -10,6 +10,7 @@ import MainLayout from '@/components/layout/MainLayout'
 import DashboardEditor from '@/components/dashboard/DashboardEditor'
 import DashboardToolbar from '@/components/dashboard/DashboardToolbar'
 import WidgetLibrary from '@/components/dashboard/WidgetLibrary'
+import WidgetConfigDialog from '@/components/dashboard/WidgetConfigDialog'
 import { Widget, WidgetData, WidgetTypeId } from '@/types/dashboard'
 import '@/widgets' // Import to register all widgets
 
@@ -17,6 +18,8 @@ export default function DashboardPage() {
   const [editMode, setEditMode] = useState(false)
   const [hasChanges, setHasChanges] = useState(false)
   const [showWidgetLibrary, setShowWidgetLibrary] = useState(false)
+  const [showWidgetConfig, setShowWidgetConfig] = useState(false)
+  const [selectedWidget, setSelectedWidget] = useState<Widget | null>(null)
   const [originalWidgets, setOriginalWidgets] = useState<Widget[]>([])
   const [currentWidgets, setCurrentWidgets] = useState<Widget[]>([])
 
@@ -118,9 +121,16 @@ export default function DashboardPage() {
 
   // Handle widget edit
   const handleWidgetEdit = useCallback((widget: Widget) => {
-    console.log('Edit widget:', widget)
-    // TODO: Open widget configuration dialog
-    alert('Widget configuration dialog coming soon!')
+    setSelectedWidget(widget)
+    setShowWidgetConfig(true)
+  }, [])
+
+  // Handle widget config save
+  const handleWidgetConfigSave = useCallback((updatedWidget: Widget) => {
+    setCurrentWidgets((widgets) =>
+      widgets.map((w) => (w.id === updatedWidget.id ? updatedWidget : w))
+    )
+    setHasChanges(true)
   }, [])
 
   // Handle fullscreen
@@ -173,6 +183,14 @@ export default function DashboardPage() {
           open={showWidgetLibrary}
           onClose={() => setShowWidgetLibrary(false)}
           onSelectWidget={handleSelectWidget}
+        />
+
+        {/* Widget Configuration Dialog */}
+        <WidgetConfigDialog
+          open={showWidgetConfig}
+          onClose={() => setShowWidgetConfig(false)}
+          widget={selectedWidget}
+          onSave={handleWidgetConfigSave}
         />
       </Box>
     </MainLayout>
