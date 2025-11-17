@@ -40,7 +40,7 @@
               <mat-label translate>profile.current-password</mat-label>
               <input matInput type="password" name="current-password" formControlName="currentPassword" autocomplete="current-password"/>
               <tb-toggle-password [class.!hidden]="!changePassword.get('currentPassword').dirty && !changePassword.get('currentPassword').touched" matSuffix></tb-toggle-password>
-              <mat-error *ngIf="changePassword.get('currentPassword').hasError('differencePassword')">
+              <mat-error *ngIf="changePassword.get('currentPassword').hasError('passwordsNotMatch')">
                 {{ 'security.password-requirement.incorrect-password-try-again' | translate }}
               </mat-error>
             </mat-form-field>
@@ -52,13 +52,13 @@
               <mat-error *ngIf="changePassword.get('newPassword').errors
                               && !changePassword.get('newPassword').hasError('alreadyUsed')
                               && !changePassword.get('newPassword').hasError('hasWhitespaces')
-                              && !changePassword.get('newPassword').hasError('samePassword')">
+                              && !changePassword.get('newPassword').hasError('passwordSameAsOld')">
                 {{ 'security.password-requirement.password-not-meet-requirements' | translate }}
               </mat-error>
               <mat-error *ngIf="changePassword.get('newPassword').hasError('alreadyUsed')">
                 {{ changePassword.get('newPassword').getError('alreadyUsed') }}
               </mat-error>
-              <mat-error *ngIf="changePassword.get('newPassword').hasError('samePassword')">
+              <mat-error *ngIf="changePassword.get('newPassword').hasError('passwordSameAsOld')">
                 {{ 'security.password-requirement.password-should-difference' | translate }}
               </mat-error>
               <mat-error *ngIf="changePassword.get('newPassword').hasError('hasWhitespaces')">
@@ -72,7 +72,7 @@
               <mat-label translate>login.new-password-again</mat-label>
               <input matInput type="password" name="new-password" formControlName="newPassword2" autocomplete="new-password" required/>
               <tb-toggle-password [class.!hidden]="!changePassword.get('newPassword2').dirty && !changePassword.get('newPassword2').touched" matSuffix></tb-toggle-password>
-              <mat-error *ngIf="changePassword.get('newPassword2').hasError('differencePassword')">
+              <mat-error *ngIf="changePassword.get('newPassword2').hasError('passwordsNotMatch')">
                 {{ 'security.password-requirement.new-passwords-not-match' | translate }}
               </mat-error>
             </mat-form-field>
@@ -134,7 +134,7 @@
           </button>
           <button mat-raised-button color="primary"
                   type="submit"
-                  [disabled]="(isLoading$ | async)">
+                  [disabled]="(isLoading$ | async) || (!changePassword.valid && changePassword.touched)">
             {{ 'profile.change-password' | translate }}
           </button>
         </div>

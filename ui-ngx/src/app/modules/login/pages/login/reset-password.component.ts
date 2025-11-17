@@ -14,61 +14,75 @@
 /// limitations under the License.
 ///
 
-import { Component, OnDestroy, OnInit } from '@angular/core';
+import { Component } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { UntypedFormBuilder } from '@angular/forms';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { combineLatest } from 'rxjs';
+import { UserPasswordPolicy } from '@shared/models/settings.models';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import {
+  passwordsMatchValidator,
+  passwordStrengthValidator
+} from '@shared/models/password.models';
 
 @Component({
   selector: 'tb-reset-password',
   templateUrl: './reset-password.component.html',
   styleUrls: ['./reset-password.component.scss']
 })
-export class ResetPasswordComponent extends PageComponent implements OnInit, OnDestroy {
+export class ResetPasswordComponent extends PageComponent {
 
   isExpiredPassword: boolean;
 
   resetToken = '';
-  sub: Subscription;
 
-  resetPassword = this.fb.group({
-    newPassword: [''],
-    newPassword2: ['']
-  });
+  resetPassword: UntypedFormGroup;
+  passwordPolicy: UserPasswordPolicy;
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute,
               private router: Router,
               private authService: AuthService,
               private translate: TranslateService,
-              public fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder) {
     super(store);
-  }
-
-  ngOnInit() {
-    this.isExpiredPassword = this.route.snapshot.data.expiredPassword;
-    this.sub = this.route
-      .queryParams
-      .subscribe(params => {
-        this.resetToken = params.resetToken || '';
+    combineLatest([
+      this.route.queryParams,
+      this.route.data
+    ])
+      .pipe(takeUntilDestroyed())
+      .subscribe(([params, data]) => {
+        this.resetToken = params['resetToken'] || '';
+        this.passwordPolicy = data['passwordPolicy'];
+        this.isExpiredPassword = data['expiredPassword'] ?? false;
       });
+
+    this.buildResetPasswordForm();
   }
 
-  ngOnDestroy(): void {
-    super.ngOnDestroy();
-    this.sub.unsubscribe();
+  private buildResetPasswordForm() {
+    this.resetPassword = this.fb.group({
+      newPassword: ['', [Validators.required, passwordStrengthValidator(this.passwordPolicy)]],
+      newPassword2: ['']
+    }, {
+      validators: [
+        passwordsMatchValidator('newPassword', 'newPassword2'),
+      ]
+    });
+  }
+
+  get passwordErrorsLength(): number {
+    return Object.keys(this.resetPassword.get('newPassword')?.errors ?? {}).length;
   }
 
   onResetPassword() {
-    if (this.resetPassword.get('newPassword').value !== this.resetPassword.get('newPassword2').value) {
-      this.store.dispatch(new ActionNotificationShow({ message: this.translate.instant('login.passwords-mismatch-error'),
-        type: 'error' }));
+    if (this.resetPassword.invalid) {
+     this.resetPassword.markAllAsTouched();
     } else {
       this.authService.resetPassword(
         this.resetToken,
