@@ -5,7 +5,7 @@
 
 import React, { memo } from 'react'
 import { Handle, Position, NodeProps } from 'reactflow'
-import { Box, Typography, Paper, IconButton, Tooltip } from '@mui/material'
+import { Box, Typography, IconButton } from '@mui/material'
 import {
   FilterList,
   PlaylistAdd,
@@ -16,7 +16,6 @@ import {
   Input as InputIcon,
   HelpOutline,
   Settings,
-  BugReport,
 } from '@mui/icons-material'
 import { RuleNodeType, ruleNodeTypeDescriptors } from '../../types/rulechain.types'
 
@@ -44,16 +43,27 @@ function RuleNode({ data, selected }: NodeProps<RuleNodeData>) {
   const IconComponent = iconMap[descriptor.icon] || HelpOutline
 
   return (
-    <Paper
-      elevation={selected ? 8 : 3}
+    <Box
       sx={{
-        minWidth: 180,
-        border: selected ? `2px solid ${descriptor.color}` : `1px solid ${descriptor.color}40`,
-        borderRadius: 2,
-        bgcolor: 'background.paper',
+        position: 'relative',
+        minWidth: 150,
+        maxWidth: 150,
+        height: 42,
+        display: 'flex',
+        alignItems: 'center',
+        gap: 1,
+        px: '10px',
+        py: '5px',
+        borderRadius: '5px',
+        border: '1px solid #777',
+        bgcolor: descriptor.color,
+        color: '#333',
+        fontSize: '12px',
+        lineHeight: '16px',
+        boxShadow: selected ? '0 0 10px 6px #51cbee' : 'none',
         transition: 'all 0.2s',
         '&:hover': {
-          boxShadow: 6,
+          opacity: 0.85,
         },
       }}
     >
@@ -63,129 +73,110 @@ function RuleNode({ data, selected }: NodeProps<RuleNodeData>) {
           type="target"
           position={Position.Left}
           style={{
-            width: 12,
-            height: 12,
-            background: descriptor.color,
-            border: '2px solid white',
+            width: 14,
+            height: 14,
+            background: '#ccc',
+            border: '1px solid #333',
+            borderRadius: '5px',
+            left: '-20px',
           }}
         />
       )}
 
-      {/* Node Header */}
+      {/* Icon */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 1,
-          p: 1.5,
-          borderBottom: `2px solid ${descriptor.color}`,
-          bgcolor: `${descriptor.color}15`,
+          justifyContent: 'center',
+          width: 20,
+          minWidth: 20,
+          height: 20,
+          color: '#333',
         }}
       >
-        <Box
+        <IconComponent sx={{ fontSize: 20 }} />
+      </Box>
+
+      {/* Text Content */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minWidth: 0,
+          maxWidth: '85%',
+        }}
+      >
+        <Typography
           sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            width: 32,
-            height: 32,
-            borderRadius: 1,
-            bgcolor: descriptor.color,
-            color: 'white',
+            fontSize: '12px',
+            lineHeight: '16px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            color: '#333',
           }}
         >
-          <IconComponent sx={{ fontSize: 20 }} />
-        </Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+          {descriptor.name}
+        </Typography>
+        {data.label && data.label !== descriptor.name && (
           <Typography
-            variant="caption"
             sx={{
-              color: 'text.secondary',
-              fontSize: '0.65rem',
-              textTransform: 'uppercase',
-              letterSpacing: 0.5,
-            }}
-          >
-            {descriptor.name}
-          </Typography>
-          <Typography
-            variant="body2"
-            sx={{
-              fontWeight: 600,
+              fontSize: '12px',
+              lineHeight: '16px',
+              fontWeight: 500,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
+              color: '#333',
             }}
           >
             {data.label}
           </Typography>
-        </Box>
+        )}
       </Box>
 
-      {/* Node Actions */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          p: 0.5,
-          gap: 0.5,
-        }}
-      >
-        <Box sx={{ display: 'flex', gap: 0.5 }}>
-          {data.debugMode && (
-            <Tooltip title="Debug Mode Enabled">
-              <Box
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 0.5,
-                  px: 0.75,
-                  py: 0.25,
-                  borderRadius: 1,
-                  bgcolor: '#FFB300',
-                  color: 'white',
-                  fontSize: '0.65rem',
-                }}
-              >
-                <BugReport sx={{ fontSize: 14 }} />
-                <Typography variant="caption" sx={{ fontSize: '0.65rem', fontWeight: 600 }}>
-                  DEBUG
-                </Typography>
-              </Box>
-            </Tooltip>
-          )}
-        </Box>
-        <Tooltip title="Configure">
-          <IconButton
-            size="small"
-            onClick={data.onConfigure}
-            sx={{
-              width: 24,
-              height: 24,
-              '&:hover': {
-                bgcolor: `${descriptor.color}20`,
-                color: descriptor.color,
-              },
-            }}
-          >
-            <Settings sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
-      </Box>
+      {/* Edit/Configure Button (appears on hover in Angular) */}
+      {data.onConfigure && (
+        <IconButton
+          size="small"
+          onClick={data.onConfigure}
+          sx={{
+            position: 'absolute',
+            top: -10,
+            right: -10,
+            width: 20,
+            height: 20,
+            bgcolor: '#f83e05',
+            border: '2px solid #fff',
+            color: 'white',
+            '&:hover': {
+              bgcolor: '#d63404',
+            },
+            '& .MuiSvgIcon-root': {
+              fontSize: 14,
+            },
+          }}
+        >
+          <Settings />
+        </IconButton>
+      )}
 
       {/* Output Handle */}
       <Handle
         type="source"
         position={Position.Right}
         style={{
-          width: 12,
-          height: 12,
-          background: descriptor.color,
-          border: '2px solid white',
+          width: 14,
+          height: 14,
+          background: '#ccc',
+          border: '1px solid #333',
+          borderRadius: '5px',
+          right: '-20px',
         }}
       />
-    </Paper>
+    </Box>
   )
 }
 

@@ -63,71 +63,72 @@ export interface RuleNodeTypeDescriptor {
   special?: boolean
 }
 
+// Exact color scheme from Angular ThingsBoard (rule-node-colors.scss)
 export const ruleNodeTypeDescriptors: Record<RuleNodeType, RuleNodeTypeDescriptor> = {
   [RuleNodeType.FILTER]: {
     value: RuleNodeType.FILTER,
     name: 'Filter',
     details: 'Filter incoming messages',
-    nodeClass: 'filter-node',
+    nodeClass: 'tb-filter-type',
     icon: 'FilterList',
-    color: '#FFA726',
+    color: '#f1e861', // Exact Angular color
   },
   [RuleNodeType.ENRICHMENT]: {
     value: RuleNodeType.ENRICHMENT,
     name: 'Enrichment',
     details: 'Enrich message with additional data',
-    nodeClass: 'enrichment-node',
+    nodeClass: 'tb-enrichment-type',
     icon: 'PlaylistAdd',
-    color: '#42A5F5',
+    color: '#cdf14e', // Exact Angular color
   },
   [RuleNodeType.TRANSFORMATION]: {
     value: RuleNodeType.TRANSFORMATION,
     name: 'Transformation',
     details: 'Transform message format',
-    nodeClass: 'transformation-node',
+    nodeClass: 'tb-transformation-type',
     icon: 'Transform',
-    color: '#66BB6A',
+    color: '#79cef1', // Exact Angular color
   },
   [RuleNodeType.ACTION]: {
     value: RuleNodeType.ACTION,
     name: 'Action',
     details: 'Execute action on message',
-    nodeClass: 'action-node',
+    nodeClass: 'tb-action-type',
     icon: 'FlashOn',
-    color: '#EF5350',
+    color: '#f1928f', // Exact Angular color
   },
   [RuleNodeType.EXTERNAL]: {
     value: RuleNodeType.EXTERNAL,
     name: 'External',
     details: 'Send to external system',
-    nodeClass: 'external-node',
+    nodeClass: 'tb-external-type',
     icon: 'CloudUpload',
-    color: '#AB47BC',
+    color: '#fbc766', // Exact Angular color
   },
   [RuleNodeType.FLOW]: {
     value: RuleNodeType.FLOW,
     name: 'Flow',
     details: 'Control message flow',
-    nodeClass: 'flow-node',
+    nodeClass: 'tb-flow-type',
     icon: 'SettingsEthernet',
-    color: '#26A69A',
+    color: '#d6c4f1', // Exact Angular color
   },
   [RuleNodeType.INPUT]: {
     value: RuleNodeType.INPUT,
     name: 'Input',
     details: 'Rule chain input',
-    nodeClass: 'input-node',
+    nodeClass: 'tb-input-type',
     icon: 'Input',
-    color: '#78909C',
+    color: '#a3eaa9', // Exact Angular color
     special: true,
   },
   [RuleNodeType.UNKNOWN]: {
     value: RuleNodeType.UNKNOWN,
     name: 'Unknown',
     details: 'Unknown node type',
-    nodeClass: 'unknown-node',
+    nodeClass: 'tb-unknown-type',
     icon: 'HelpOutline',
-    color: '#9E9E9E',
+    color: '#f16c29', // Exact Angular color
   },
 }
 
