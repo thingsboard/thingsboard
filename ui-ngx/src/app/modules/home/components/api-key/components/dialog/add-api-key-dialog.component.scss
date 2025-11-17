@@ -15,9 +15,19 @@
  */
 @import '../../src/scss/constants';
 
-:host{
-  form {
-    width: 700px;
+:host {
+  display: grid;
+  width: 700px;
+  height: 100%;
+  max-width: 100%;
+  max-height: 100vh;
+  grid-template-rows: min-content 4px minmax(auto, 1fr) min-content;
+
+  .mat-mdc-dialog-content {
+    grid-row: 3;
+  }
+  .mat-mdc-dialog-actions {
+    grid-row: 4;
   }
   .api-key-text {
     position: relative;
