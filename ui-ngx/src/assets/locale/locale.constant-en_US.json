@@ -657,7 +657,16 @@
         "alarm-type": "Alarm type",
         "enter-alarm-type": "Enter alarm type",
         "no-alarm-types-matching": "No alarm types matching '{{entitySubtype}}' were found.",
-        "alarm-type-list-empty": "No alarm types selected."
+        "alarm-type-list-empty": "No alarm types selected.",
+        "system-comments": {
+            "acked-by-user": "Alarm was acknowledged by user {{userName}}",
+            "cleared-by-user": "Alarm was cleared by user {{userName}}",
+            "assigned-to-user": "Alarm was assigned by user {{userName}} to user {{assigneeName}}",
+            "unassigned-to-user": "Alarm was unassigned by user {{userName}}",
+            "unassigned-from-deleted-user": "Alarm was unassigned because user {{userName}} was deleted",
+            "comment-deleted": "User {{userName}} deleted his comment",
+            "severity-changed": "Alarm severity changed from {{userName}} to {{assigneeName}}"
+        }
     },
     "alarm-activity": {
         "add": "Add a comment...",

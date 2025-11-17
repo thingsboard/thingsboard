@@ -120,12 +120,25 @@ export enum AlarmCommentType {
   OTHER = 'OTHER'
 }
 
+export enum AlarmMessage {
+  ACKED_BY_USER = "alarm.system-comments.acked-by-user",
+  CLEARED_BY_USER = "alarm.system-comments.cleared-by-user",
+  ASSIGNED_TO_USER = "alarm.system-comments.assigned-to-user",
+  UNASSIGNED_BY_USER = "alarm.system-comments.unassigned-to-user",
+  UNASSIGNED_FROM_DELETED_USER = "alarm.system-comments.unassigned-from-deleted-user",
+  COMMENT_DELETED = "alarm.system-comments.comment-deleted",
+  SEVERITY_CHANGED = "alarm.system-comments.severity-changed",
+}
+
 export interface AlarmComment extends BaseData<AlarmCommentId> {
   alarmId: AlarmId;
   userId?: UserId;
   type: AlarmCommentType;
   comment: {
     text: string;
+    subtype?: keyof typeof AlarmMessage;
+    userName?: string;
+    assigneeName?: string;
     edited?: boolean;
     editedOn?: number;
   };
