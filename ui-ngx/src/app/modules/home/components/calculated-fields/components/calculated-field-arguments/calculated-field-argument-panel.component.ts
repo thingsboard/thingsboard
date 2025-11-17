@@ -175,7 +175,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   saveArgument(): void {
     const value = this.argumentFormGroup.value as CalculatedFieldArgumentValue;
     if (this.entityType === ArgumentEntityType.Owner) {
-      value.refDynamicSourceConfiguration.type = ArgumentEntityType.Owner;
+      value.refDynamicSourceConfiguration = {type: ArgumentEntityType.Owner};
     } else if (this.entityType === ArgumentEntityType.Tenant) {
       value.refEntityId = new TenantId(this.tenantId) as any;
     }

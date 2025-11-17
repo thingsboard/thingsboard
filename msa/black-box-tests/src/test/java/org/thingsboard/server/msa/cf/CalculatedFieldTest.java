@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -600,7 +600,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(entityId);
         calculatedField.setType(CalculatedFieldType.SIMPLE);
-        calculatedField.setName("C to F" + RandomStringUtils.randomAlphabetic(5));
+        calculatedField.setName("C to F" + RandomStringUtils.insecure().nextAlphabetic(5));
         calculatedField.setDebugSettings(DebugSettings.all());
 
         SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
@@ -624,15 +624,11 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         return testRestClient.postCalculatedField(calculatedField);
     }
 
-    private CalculatedField createScriptCalculatedField() {
-        return createScriptCalculatedField(device.getId(), asset.getId());
-    }
-
     private CalculatedField createScriptCalculatedField(EntityId entityId, EntityId refEntityId) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(entityId);
         calculatedField.setType(CalculatedFieldType.SCRIPT);
-        calculatedField.setName("Air density" + RandomStringUtils.randomAlphabetic(5));
+        calculatedField.setName("Air density" + RandomStringUtils.insecure().nextAlphabetic(5));
         calculatedField.setDebugSettings(DebugSettings.all());
 
         ScriptCalculatedFieldConfiguration config = new ScriptCalculatedFieldConfiguration();

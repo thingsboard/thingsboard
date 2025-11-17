@@ -29,7 +29,9 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @JsonTypeInfo(
@@ -57,16 +59,12 @@ public interface CalculatedFieldConfiguration {
     default void validate() {}
 
     @JsonIgnore
-    default List<EntityId> getReferencedEntities() {
-        return List.of();
+    default Set<EntityId> getReferencedEntities() {
+        return Collections.emptySet();
     }
 
     default CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
-        CalculatedFieldLink link = new CalculatedFieldLink();
-        link.setTenantId(tenantId);
-        link.setEntityId(referencedEntityId);
-        link.setCalculatedFieldId(calculatedFieldId);
-        return link;
+        return new CalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId);
     }
 
     default List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {

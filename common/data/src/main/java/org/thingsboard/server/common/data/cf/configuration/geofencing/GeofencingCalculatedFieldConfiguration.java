@@ -26,10 +26,13 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
 
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+
+import static java.util.stream.Collectors.toSet;
 
 @Data
 public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCalculatedFieldConfiguration, ScheduledUpdateSupportedCalculatedFieldConfiguration {
@@ -62,8 +65,11 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
 
     @Override
-    public List<EntityId> getReferencedEntities() {
-        return zoneGroups == null ? List.of() : zoneGroups.values().stream().map(ZoneGroupConfiguration::getRefEntityId).filter(Objects::nonNull).toList();
+    public Set<EntityId> getReferencedEntities() {
+        return zoneGroups == null ? Collections.emptySet() : zoneGroups.values().stream()
+                .map(ZoneGroupConfiguration::getRefEntityId)
+                .filter(Objects::nonNull)
+                .collect(toSet());
     }
 
     @Override
