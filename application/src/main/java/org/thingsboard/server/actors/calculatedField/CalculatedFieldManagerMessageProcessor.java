@@ -260,10 +260,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 calculatedFields.values().stream(),
                 entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
         ).forEach(CalculatedFieldCtx::updateTenantProfileProperties);
-
-        calculatedFields.values().forEach(ctx -> {
-            applyToTargetCfEntityActors(ctx, callback, (id, cb) -> initCfForEntity(id, ctx, StateAction.REFRESH_CTX, cb));
-        });
+        callback.onSuccess();
     }
 
     private void onEntityCreated(ComponentLifecycleMsg msg, TbCallback callback) {

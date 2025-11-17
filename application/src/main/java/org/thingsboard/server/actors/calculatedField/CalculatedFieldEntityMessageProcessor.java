@@ -123,7 +123,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state != null) {
             state.setCtx(msg.getCtx(), actorCtx);
             state.setPartition(msg.getPartition());
-            state.init(true);
             states.put(cfId, state);
         } else {
             removeState(cfId);
@@ -134,7 +133,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         log.debug("Processing CF state partition restore msg: {}", msg);
         for (CalculatedFieldState state : states.values()) {
             if (msg.getPartition().equals(state.getPartition())) {
-                state.init(false);
+                state.init(true);
             }
         }
     }
@@ -159,12 +158,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             } else {
                 state.setCtx(ctx, actorCtx);
             }
-            if (msg.getStateAction() != StateAction.REFRESH_CTX) {
-                if (state.isSizeOk()) {
-                    processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, null, msg.getCallback());
-                } else {
-                    throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
-                }
+            if (state.isSizeOk()) {
+                processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, null, msg.getCallback());
+            } else {
+                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
             }
         } catch (Exception e) {
             log.debug("[{}][{}] Failed to initialize CF state", entityId, ctx.getCfId(), e);

@@ -221,16 +221,18 @@ public class CalculatedFieldCtx implements Closeable {
                 return true;
             }
         }
-        long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getAlarmRulesReevaluationInterval());
         boolean requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
-        if (requiresScheduledReevaluation) {
-            if (now + cfCheckIntervalMillis >= lastReevaluationTs + reevaluationIntervalMillis) {
-                lastReevaluationTs = now;
-                return true;
+        if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration) {
+            long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getAlarmRulesReevaluationInterval());
+            if (requiresScheduledReevaluation) {
+                if (now + cfCheckIntervalMillis >= lastReevaluationTs + reevaluationIntervalMillis) {
+                    lastReevaluationTs = now;
+                    return true;
+                }
+                return false;
             }
-            return false;
         }
-        return false;
+        return requiresScheduledReevaluation;
     }
 
     public void init() {

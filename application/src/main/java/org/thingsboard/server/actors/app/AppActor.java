@@ -166,16 +166,17 @@ public class AppActor extends ContextAwareActor {
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         TbActorRef target = null;
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
-            if (msg.getEntityId() instanceof TenantProfileId tenantProfileId) {
-                tenantService.findTenantIdsByTenantProfileId(tenantProfileId).forEach(tenantId -> {
-                    TbActorRef tenantActor = getOrCreateTenantActor(tenantId).orElseGet(() -> {
-                        log.debug("Ignoring component lifecycle msg for tenant {} because it is not managed by this service", tenantId);
-                        return null;
+            if (systemContext.isTenantComponentsInitEnabled()) {
+                if (msg.getEntityId() instanceof TenantProfileId tenantProfileId) {
+                    tenantService.findTenantIdsByTenantProfileId(tenantProfileId).forEach(tenantId -> {
+                        getOrCreateTenantActor(tenantId).ifPresentOrElse(tenantActor -> {
+                            log.debug("[{}] Sending component lifecycle msg for tenant.", tenantId);
+                            tenantActor.tellWithHighPriority(msg);
+                        }, () -> {
+                            log.debug("Ignoring component lifecycle msg for tenant {} because it is not managed by this service", tenantId);
+                        });
                     });
-                    if (tenantActor != null) {
-                        tenantActor.tellWithHighPriority(msg);
-                    }
-                });
+                }
             }
             if (!msg.getEntityId().getEntityType().isOneOf(EntityType.TENANT_PROFILE, EntityType.TB_RESOURCE)) {
                 log.warn("Message has system tenant id: {}", msg);

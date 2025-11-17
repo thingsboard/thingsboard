@@ -127,7 +127,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         });
     }
 
-    public void fillMissingIntervals() {
+    private void fillMissingIntervals() {
         ZoneId zoneId = interval.getZoneId();
         long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
 
@@ -253,12 +253,12 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                     metricsNode.put(metricName, JacksonUtil.toString(resultValue));
                 }
             }
-            ObjectNode resultNode = JacksonUtil.newObjectNode();
             if (!metricsNode.isEmpty()) {
+                ObjectNode resultNode = JacksonUtil.newObjectNode();
                 resultNode.put("ts", interval.getEndTs() - 1);
                 resultNode.set("values", metricsNode);
+                result.add(resultNode);
             }
-            result.add(resultNode);
         });
         return result;
     }
