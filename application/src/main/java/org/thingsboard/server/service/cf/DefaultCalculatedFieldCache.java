@@ -83,19 +83,17 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         cfs.forEach(cf -> {
             if (cf != null) {
                 calculatedFields.putIfAbsent(cf.getId(), cf);
+                List<CalculatedFieldLink> links = cf.getConfiguration().buildCalculatedFieldLinks(cf.getTenantId(), cf.getEntityId(), cf.getId());
+                calculatedFieldLinks.put(cf.getId(), new CopyOnWriteArrayList<>(links));
             }
         });
         calculatedFields.values().forEach(cf -> {
             entityIdCalculatedFields.computeIfAbsent(cf.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(cf);
         });
-        PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(calculatedFieldService::findAllCalculatedFieldLinks, initFetchPackSize);
-        cfls.forEach(link -> {
-            calculatedFieldLinks.computeIfAbsent(link.getCalculatedFieldId(), id -> new CopyOnWriteArrayList<>()).add(link);
-        });
         calculatedFieldLinks.values().stream()
                 .flatMap(List::stream)
                 .forEach(link ->
-                        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link)
+                        entityIdCalculatedFieldLinks.computeIfAbsent(link.entityId(), id -> new CopyOnWriteArrayList<>()).add(link)
                 );
     }
 
@@ -225,7 +223,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field links from cache: {}", calculatedFieldId, oldCalculatedField);
         calculatedFieldsCtx.remove(calculatedFieldId);
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);
-        entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.getCalculatedFieldId().equals(calculatedFieldId)));
+        entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.calculatedFieldId().equals(calculatedFieldId)));
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
     }
 

@@ -173,7 +173,7 @@ public class DefaultCalculatedFieldQueueService implements CalculatedFieldQueueS
 
         List<CalculatedFieldLink> links = calculatedFieldCache.getCalculatedFieldLinksByEntityId(entityId);
         for (CalculatedFieldLink link : links) {
-            CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(link.getCalculatedFieldId());
+            CalculatedFieldCtx ctx = calculatedFieldCache.getCalculatedFieldCtx(link.calculatedFieldId());
             if (ctx != null && linkedEntityFilter.test(ctx)) {
                 return true;
             }

@@ -77,3 +77,10 @@ ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
 ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
 
 -- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
+
+DROP TABLE IF EXISTS calculated_field_link;
+ANALYZE calculated_field;
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE END

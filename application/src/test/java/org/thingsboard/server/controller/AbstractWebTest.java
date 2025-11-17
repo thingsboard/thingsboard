@@ -210,7 +210,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     protected static final String TEST_DIFFERENT_TENANT_NAME = "TEST DIFFERENT TENANT";
 
     protected static final String SYS_ADMIN_EMAIL = "sysadmin@thingsboard.org";
-    private static final String SYS_ADMIN_PASSWORD = "sysadmin";
+    protected static final String SYS_ADMIN_PASSWORD = "sysadmin";
 
     protected static final String TENANT_ADMIN_EMAIL = "testtenant@thingsboard.org";
     protected static final String TENANT_ADMIN_PASSWORD = "tenant";
@@ -686,9 +686,14 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     }
 
     protected Device createDevice(String name, String accessToken) throws Exception {
+        return createDevice(name, "default", null, accessToken);
+    }
+
+    protected Device createDevice(String name, String type, String label, String accessToken) throws Exception {
         Device device = new Device();
         device.setName(name);
-        device.setType("default");
+        device.setType(type);
+        device.setLabel(label);
         DeviceData deviceData = new DeviceData();
         deviceData.setTransportConfiguration(new DefaultDeviceTransportConfiguration());
         deviceData.setConfiguration(new DefaultDeviceConfiguration());
@@ -742,6 +747,12 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         SaveDeviceWithCredentialsRequest request = new SaveDeviceWithCredentialsRequest(device, credentials);
         return doPost("/api/device-with-credentials", request, Device.class);
+    }
+
+    protected ResultActions doGetAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
+        MockHttpServletRequestBuilder getRequest = get(urlTemplate).params(params);
+        setJwtToken(getRequest);
+        return mockMvc.perform(asyncDispatch(mockMvc.perform(getRequest).andExpect(request().asyncStarted()).andReturn()));
     }
 
     protected ResultActions doGet(String urlTemplate, Object... urlVariables) throws Exception {
@@ -943,6 +954,15 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return mockMvc.perform(deleteRequest);
     }
 
+    protected ResultActions doDeleteAsync(String urlTemplate, MultiValueMap<String, String> params) throws Exception {
+        MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate)
+                .params(params);
+        setJwtToken(deleteRequest);
+        MvcResult result = mockMvc.perform(deleteRequest).andReturn();
+        result.getAsyncResult(DEFAULT_TIMEOUT);
+        return mockMvc.perform(asyncDispatch(result));
+    }
+
     protected ResultActions doDeleteAsync(String urlTemplate, Long timeout, String... params) throws Exception {
         MockHttpServletRequestBuilder deleteRequest = delete(urlTemplate, params);
         setJwtToken(deleteRequest);
@@ -1133,7 +1153,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
             boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs()
-                              < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
+                    < System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
         });
@@ -1324,7 +1344,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs(List<JobType> types, List<UUID> entities) throws Exception {
         return doGetTypedWithPageLink("/api/jobs?types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) +
-                                      "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                        "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
                 new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 

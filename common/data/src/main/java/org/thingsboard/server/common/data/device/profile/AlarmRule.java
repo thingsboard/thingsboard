@@ -21,12 +21,16 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Schema
 @Data
 @Deprecated
 public class AlarmRule implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = -7617427132423304707L;
 
     @Valid
     @Schema(description = "JSON object representing the alarm rule condition")

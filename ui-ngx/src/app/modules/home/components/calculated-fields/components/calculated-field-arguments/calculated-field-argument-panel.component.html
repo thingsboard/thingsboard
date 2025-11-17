@@ -154,7 +154,7 @@
         @if (!hiddenDefaultValue) {
           <div class="tb-form-row">
             <div class="fixed-title-width" [class.tb-required]="defaultValueRequired">{{ 'calculated-fields.default-value' | translate }}</div>
-            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-form-field class="flex-1 overflow-hidden" appearance="outline" subscriptSizing="dynamic">
               <input matInput autocomplete="off" name="value" formControlName="defaultValue" placeholder="{{ 'action.set' | translate }}"/>
               @if (argumentFormGroup.get('defaultValue').touched && argumentFormGroup.get('defaultValue').hasError('required')) {
                 <mat-icon matSuffix

@@ -96,7 +96,7 @@
                       <mat-expansion-panel-header>
                         <mat-panel-title>
                           <mat-slide-toggle class="mat-slide flex items-center justify-start"
-                            (mousedown)="toggleExtensionPanel($event, i, provider.get('enable').value)"
+                            (mousedown)="toggleExtensionPanel($event, i+1, provider.get('enable').value)"
                             formControlName="enable">
                             {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                           </mat-slide-toggle>
