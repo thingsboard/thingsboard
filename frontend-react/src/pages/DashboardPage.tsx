@@ -1,17 +1,187 @@
 /**
  * Main Dashboard Page
  * Implements Payvar Industrial IoT Platform design with full ThingsBoard features
+ * Includes dashboard editor with drag-and-drop grid system
  */
 
-import { Box, Typography, Grid } from '@mui/material'
+import { useState, useCallback, useEffect } from 'react'
+import { Box } from '@mui/material'
 import MainLayout from '@/components/layout/MainLayout'
-import WidgetContainer from '@/components/dashboard/WidgetContainer'
-import { Widget, WidgetData } from '@/types/dashboard'
+import DashboardEditor from '@/components/dashboard/DashboardEditor'
+import DashboardToolbar from '@/components/dashboard/DashboardToolbar'
+import WidgetLibrary from '@/components/dashboard/WidgetLibrary'
+import { Widget, WidgetData, WidgetTypeId } from '@/types/dashboard'
 import '@/widgets' // Import to register all widgets
 
 export default function DashboardPage() {
-  // Mock widgets configuration matching the Payvar design
-  const widgets: Widget[] = [
+  const [editMode, setEditMode] = useState(false)
+  const [hasChanges, setHasChanges] = useState(false)
+  const [showWidgetLibrary, setShowWidgetLibrary] = useState(false)
+  const [originalWidgets, setOriginalWidgets] = useState<Widget[]>([])
+  const [currentWidgets, setCurrentWidgets] = useState<Widget[]>([])
+
+  // Initialize widgets on mount
+  useEffect(() => {
+    const initialWidgets = getInitialWidgets()
+    setOriginalWidgets(initialWidgets)
+    setCurrentWidgets(initialWidgets)
+  }, [])
+
+  // Handle edit mode toggle
+  const handleEditModeToggle = useCallback(() => {
+    if (editMode) {
+      // If exiting edit mode, prompt to save changes
+      if (hasChanges) {
+        const confirm = window.confirm('You have unsaved changes. Save before exiting edit mode?')
+        if (confirm) {
+          handleSave()
+        } else {
+          // Revert changes
+          setCurrentWidgets(originalWidgets)
+          setHasChanges(false)
+        }
+      }
+      setEditMode(false)
+    } else {
+      setEditMode(true)
+    }
+  }, [editMode, hasChanges, originalWidgets])
+
+  // Handle layout changes
+  const handleLayoutChange = useCallback((updatedWidgets: Widget[]) => {
+    setCurrentWidgets(updatedWidgets)
+    setHasChanges(true)
+  }, [])
+
+  // Handle save
+  const handleSave = useCallback(() => {
+    console.log('Saving dashboard layout...', currentWidgets)
+    // TODO: Integrate with backend API
+    setOriginalWidgets(currentWidgets)
+    setHasChanges(false)
+    setEditMode(false)
+    alert('Dashboard saved successfully!')
+  }, [currentWidgets])
+
+  // Handle cancel
+  const handleCancel = useCallback(() => {
+    const confirm = window.confirm('Discard all changes?')
+    if (confirm) {
+      setCurrentWidgets(originalWidgets)
+      setHasChanges(false)
+      setEditMode(false)
+    }
+  }, [originalWidgets])
+
+  // Handle add widget
+  const handleAddWidget = useCallback(() => {
+    setShowWidgetLibrary(true)
+  }, [])
+
+  // Handle widget selection from library
+  const handleSelectWidget = useCallback((typeId: WidgetTypeId) => {
+    // Find next available position in grid
+    const nextRow = currentWidgets.length > 0
+      ? Math.max(...currentWidgets.map(w => w.row + w.sizeY)) + 1
+      : 0
+
+    const newWidget: Widget = {
+      id: `widget-${Date.now()}`,
+      typeId,
+      type: typeId.includes('chart') || typeId.includes('timeseries') ? 'timeseries' :
+            typeId.includes('card') || typeId.includes('value') ? 'latest' :
+            typeId.includes('alarm') ? 'alarm' :
+            typeId.includes('rpc') ? 'rpc' : 'static',
+      row: nextRow,
+      col: 0,
+      sizeX: 6, // Default width
+      sizeY: 4, // Default height
+      config: {
+        datasources: [],
+        title: 'New Widget',
+        settings: {},
+      },
+    }
+
+    setCurrentWidgets([...currentWidgets, newWidget])
+    setHasChanges(true)
+  }, [currentWidgets])
+
+  // Handle widget delete
+  const handleWidgetDelete = useCallback((widgetId: string) => {
+    const confirm = window.confirm('Delete this widget?')
+    if (confirm) {
+      setCurrentWidgets(currentWidgets.filter(w => w.id !== widgetId))
+      setHasChanges(true)
+    }
+  }, [currentWidgets])
+
+  // Handle widget edit
+  const handleWidgetEdit = useCallback((widget: Widget) => {
+    console.log('Edit widget:', widget)
+    // TODO: Open widget configuration dialog
+    alert('Widget configuration dialog coming soon!')
+  }, [])
+
+  // Handle fullscreen
+  const handleFullscreen = useCallback(() => {
+    if (document.fullscreenElement) {
+      document.exitFullscreen()
+    } else {
+      document.documentElement.requestFullscreen()
+    }
+  }, [])
+
+  // Mock data for widgets (in production, this comes from WebSocket/API)
+  const mockData: Record<string, WidgetData> = generateMockData(currentWidgets)
+
+  return (
+    <MainLayout>
+      <Box sx={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 64px)' }}>
+        {/* Dashboard Toolbar */}
+        <DashboardToolbar
+          editMode={editMode}
+          onEditModeToggle={handleEditModeToggle}
+          onSave={handleSave}
+          onCancel={handleCancel}
+          onAddWidget={handleAddWidget}
+          onSettings={() => alert('Dashboard settings coming soon!')}
+          onFullscreen={handleFullscreen}
+          onExport={() => exportDashboard(currentWidgets)}
+          onImport={() => alert('Import functionality coming soon!')}
+          onTimewindow={() => alert('Timewindow selector coming soon!')}
+          onFilters={() => alert('Filters coming soon!')}
+          hasChanges={hasChanges}
+          dashboardTitle="Main Control Dashboard"
+        />
+
+        {/* Dashboard Editor */}
+        <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
+          <DashboardEditor
+            widgets={currentWidgets}
+            widgetData={mockData}
+            editMode={editMode}
+            onLayoutChange={handleLayoutChange}
+            onWidgetEdit={handleWidgetEdit}
+            onWidgetDelete={handleWidgetDelete}
+            onWidgetFullscreen={(id) => console.log('Fullscreen widget:', id)}
+          />
+        </Box>
+
+        {/* Widget Library Dialog */}
+        <WidgetLibrary
+          open={showWidgetLibrary}
+          onClose={() => setShowWidgetLibrary(false)}
+          onSelectWidget={handleSelectWidget}
+        />
+      </Box>
+    </MainLayout>
+  )
+}
+
+// Helper function to get initial widgets
+function getInitialWidgets(): Widget[] {
+  return [
     // Stats Cards Row
     {
       id: 'turbine-rpm',
@@ -19,8 +189,8 @@ export default function DashboardPage() {
       type: 'latest',
       row: 0,
       col: 0,
-      sizeX: 3,
-      sizeY: 2,
+      sizeX: 6,
+      sizeY: 3,
       config: {
         datasources: [
           {
@@ -43,9 +213,9 @@ export default function DashboardPage() {
       typeId: 'latest_value_card',
       type: 'latest',
       row: 0,
-      col: 3,
-      sizeX: 3,
-      sizeY: 2,
+      col: 6,
+      sizeX: 6,
+      sizeY: 3,
       config: {
         datasources: [
           {
@@ -68,9 +238,9 @@ export default function DashboardPage() {
       typeId: 'latest_value_card',
       type: 'latest',
       row: 0,
-      col: 6,
-      sizeX: 3,
-      sizeY: 2,
+      col: 12,
+      sizeX: 6,
+      sizeY: 3,
       config: {
         datasources: [
           {
@@ -93,9 +263,9 @@ export default function DashboardPage() {
       typeId: 'latest_value_card',
       type: 'latest',
       row: 0,
-      col: 9,
-      sizeX: 3,
-      sizeY: 2,
+      col: 18,
+      sizeX: 6,
+      sizeY: 3,
       config: {
         datasources: [
           {
@@ -116,15 +286,15 @@ export default function DashboardPage() {
       },
     },
 
-    // Process Flow and Alarm Panel Row
+    // Process Flow Chart
     {
       id: 'process-flow',
       typeId: 'timeseries_line_chart',
       type: 'timeseries',
-      row: 2,
+      row: 3,
       col: 0,
-      sizeX: 8,
-      sizeY: 6,
+      sizeX: 16,
+      sizeY: 8,
       config: {
         datasources: [
           {
@@ -169,14 +339,16 @@ export default function DashboardPage() {
         },
       },
     },
+
+    // Alarm Panel
     {
       id: 'alarm-panel',
       typeId: 'alarm_table',
       type: 'alarm',
-      row: 2,
-      col: 8,
-      sizeX: 4,
-      sizeY: 6,
+      row: 3,
+      col: 16,
+      sizeX: 8,
+      sizeY: 8,
       config: {
         datasources: [],
         title: 'Real-Time Alarms',
@@ -188,99 +360,40 @@ export default function DashboardPage() {
       },
     },
   ]
+}
 
-  // Mock data for widgets (in production, this comes from WebSocket/API)
-  const mockData: Record<string, WidgetData> = {
-    'turbine-rpm': {
-      datasources: [
-        {
-          datasource: widgets[0].config.datasources[0],
-          data: [{ ts: Date.now(), value: 4820 }],
-        },
-      ],
-    },
-    'coolant-pressure': {
-      datasources: [
-        {
-          datasource: widgets[1].config.datasources[0],
-          data: [{ ts: Date.now(), value: 250 }],
-        },
-      ],
-    },
-    'system-efficiency': {
-      datasources: [
-        {
-          datasource: widgets[2].config.datasources[0],
-          data: [{ ts: Date.now(), value: 98.7 }],
-        },
-      ],
-    },
-    'active-alarms': {
-      datasources: [
-        {
-          datasource: widgets[3].config.datasources[0],
-          data: [{ ts: Date.now(), value: 3 }],
-        },
-      ],
-    },
-    'process-flow': {
-      datasources: [
-        {
-          datasource: widgets[4].config.datasources[0],
-          data: generateTimeseriesData(),
-        },
-      ],
-    },
-  }
+// Helper function to generate mock data
+function generateMockData(widgets: Widget[]): Record<string, WidgetData> {
+  const mockData: Record<string, WidgetData> = {}
 
-  return (
-    <MainLayout>
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        {/* Page Header */}
-        <Typography
-          variant="h4"
-          sx={{
-            fontWeight: 'bold',
-            color: (theme) =>
-              theme.palette.mode === 'dark' ? '#E1E3E5' : '#121517',
-          }}
-        >
-          Main Control Dashboard
-        </Typography>
+  widgets.forEach((widget) => {
+    if (widget.typeId === 'latest_value_card') {
+      const value = widget.id.includes('rpm') ? 4820 :
+                    widget.id.includes('pressure') ? 250 :
+                    widget.id.includes('efficiency') ? 98.7 :
+                    widget.id.includes('alarm') ? 3 : 0
 
-        {/* Stats Cards Row */}
-        <Grid container spacing={3}>
-          {widgets.slice(0, 4).map((widget) => (
-            <Grid item xs={12} sm={6} md={3} key={widget.id}>
-              <Box sx={{ height: 150 }}>
-                <WidgetContainer widget={widget} data={mockData[widget.id]} />
-              </Box>
-            </Grid>
-          ))}
-        </Grid>
+      mockData[widget.id] = {
+        datasources: [
+          {
+            datasource: widget.config.datasources[0],
+            data: [{ ts: Date.now(), value }],
+          },
+        ],
+      }
+    } else if (widget.typeId === 'timeseries_line_chart') {
+      mockData[widget.id] = {
+        datasources: [
+          {
+            datasource: widget.config.datasources[0],
+            data: generateTimeseriesData(),
+          },
+        ],
+      }
+    }
+  })
 
-        {/* Process Flow and Alarms Row */}
-        <Grid container spacing={3}>
-          {/* Process Flow Chart */}
-          <Grid item xs={12} lg={8}>
-            <Box sx={{ height: 450 }}>
-              <WidgetContainer
-                widget={widgets[4]}
-                data={mockData['process-flow']}
-              />
-            </Box>
-          </Grid>
-
-          {/* Alarm Panel */}
-          <Grid item xs={12} lg={4}>
-            <Box sx={{ height: 450 }}>
-              <WidgetContainer widget={widgets[5]} />
-            </Box>
-          </Grid>
-        </Grid>
-      </Box>
-    </MainLayout>
-  )
+  return mockData
 }
 
 // Helper function to generate mock timeseries data
@@ -310,4 +423,23 @@ function generateTimeseriesData() {
   })
 
   return result
+}
+
+// Helper function to export dashboard
+function exportDashboard(widgets: Widget[]) {
+  const dashboardConfig = {
+    title: 'Main Control Dashboard',
+    version: '1.0.0',
+    widgets,
+    createdAt: new Date().toISOString(),
+  }
+
+  const dataStr = JSON.stringify(dashboardConfig, null, 2)
+  const dataBlob = new Blob([dataStr], { type: 'application/json' })
+  const url = URL.createObjectURL(dataBlob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = `dashboard-${Date.now()}.json`
+  link.click()
+  URL.revokeObjectURL(url)
 }
