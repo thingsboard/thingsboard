@@ -139,6 +139,8 @@ export interface AlarmComment extends BaseData<AlarmCommentId> {
     subtype?: keyof typeof AlarmMessage;
     userName?: string;
     assigneeName?: string;
+    oldSeverity?: AlarmSeverity;
+    newSeverity?: AlarmSeverity;
     edited?: boolean;
     editedOn?: number;
   };
