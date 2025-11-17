@@ -31,13 +31,13 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.AttributesOutput;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -183,10 +183,11 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         CalculatedField savedCalculatedField = createSimpleCalculatedField();
 
-        Output savedOutput = savedCalculatedField.getConfiguration().getOutput();
-        savedOutput.setType(OutputType.ATTRIBUTES);
-        savedOutput.setScope(SERVER_SCOPE);
-        savedOutput.setName("temperatureF");
+        AttributesOutput output = new AttributesOutput();
+        output.setScope(SERVER_SCOPE);
+        output.setName("temperatureF");
+        ((SimpleCalculatedFieldConfiguration) savedCalculatedField.getConfiguration()).setOutput(output);
+
         testRestClient.postCalculatedField(savedCalculatedField);
 
         await().alias("update CF output -> perform calculation with updated output").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -381,8 +382,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         cfg.setZoneGroups(Map.of("allowedZones", allowedZoneGroupConfiguration, "restrictedZones", restrictedZoneGroupConfiguration));
 
-        Output out = new Output();
-        out.setType(OutputType.ATTRIBUTES);
+        AttributesOutput out = new AttributesOutput();
         out.setScope(SERVER_SCOPE);
         cfg.setOutput(out);
         cf.setConfiguration(cfg);
@@ -458,8 +458,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         cfg.setExpression("{\"testResult\": t * 2}");
 
-        Output output = new Output();
-        output.setType(OutputType.ATTRIBUTES);
+        AttributesOutput output = new AttributesOutput();
         output.setScope(AttributeScope.SERVER_SCOPE);
         cfg.setOutput(output);
 
@@ -541,9 +540,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
         cfg.setArguments(Map.of("temperatureComputed", arg));
 
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        cfg.setOutput(output);
+        cfg.setOutput(new TimeSeriesOutput());
 
         cf.setConfiguration(cfg);
 
@@ -613,9 +610,8 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         config.setExpression("(T * 9/5) + 32");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("fahrenheitTemp");
-        output.setType(OutputType.TIME_SERIES);
         output.setDecimalsByDefault(2);
         config.setOutput(output);
 
@@ -647,9 +643,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         config.setExpression(exampleScript);
 
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        config.setOutput(output);
+        config.setOutput(new TimeSeriesOutput());
 
         calculatedField.setConfiguration(config);
 
