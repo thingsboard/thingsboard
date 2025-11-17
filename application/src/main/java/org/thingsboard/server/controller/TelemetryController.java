@@ -87,6 +87,7 @@ import org.thingsboard.server.service.telemetry.TsData;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -888,11 +889,11 @@ public class TelemetryController extends BaseController {
     }
 
     private List<String> toKeysList(String keys) {
-        List<String> keyList = null;
         if (!StringUtils.isEmpty(keys)) {
-            keyList = Arrays.asList(keys.split(","));
+            return Arrays.asList(keys.split(","));
+        } else {
+            return Collections.emptyList();
         }
-        return keyList;
     }
 
     private DeferredResult<ResponseEntity> getImmediateDeferredResult(String message, HttpStatus status) {
