@@ -42,12 +42,14 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupC
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -243,6 +245,26 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         byNameCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE, null, null,
                 List.of(deviceCalculatedField.getName(), profileCalculatedField.getName()));
         assertThat(byNameCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
+
+        PageData<String> names = getCalculatedFieldNames(CalculatedFieldType.SIMPLE, new PageLink(10, 0,
+                null, new SortOrder("", SortOrder.Direction.ASC)));
+        assertThat(names.getTotalElements()).isEqualTo(2);
+        assertThat(names.getData()).isSortedAccordingTo(Comparator.naturalOrder());
+        assertThat(names.getData()).contains(deviceCalculatedField.getName(), profileCalculatedField.getName());
+
+        names = getCalculatedFieldNames(CalculatedFieldType.SIMPLE, new PageLink(10, 0,
+                null, new SortOrder("", SortOrder.Direction.DESC)));
+        assertThat(names.getData()).isSortedAccordingTo(Comparator.reverseOrder());
+
+        names = getCalculatedFieldNames(CalculatedFieldType.SIMPLE, new PageLink(10, 0,
+                device.getId().toString(), new SortOrder("", SortOrder.Direction.DESC)));
+        assertThat(names.getTotalElements()).isEqualTo(1);
+        assertThat(names.getData()).containsOnly(deviceCalculatedField.getName());
+    }
+
+    private PageData<String> getCalculatedFieldNames(CalculatedFieldType type, PageLink pageLink) throws Exception {
+        return doGetTypedWithPageLink("/api/calculatedFields/names?type=" + type + "&",
+                new TypeReference<PageData<String>>() {}, pageLink);
     }
 
     private List<CalculatedFieldInfo> getCalculatedFields(CalculatedFieldType type,

@@ -161,6 +161,11 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     }
 
     @Override
+    public PageData<String> findCalculatedFieldNamesByTenantIdAndType(TenantId tenantId, CalculatedFieldType type, PageLink pageLink) {
+        return calculatedFieldDao.findNamesByTenantIdAndType(tenantId, type, pageLink);
+    }
+
+    @Override
     public PageData<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, CalculatedFieldType type, PageLink pageLink) {
         log.trace("Executing findAllByEntityId, entityId [{}], pageLink [{}]", entityId, pageLink);
         validateId(entityId.getId(), id -> INCORRECT_ENTITY_ID + id);

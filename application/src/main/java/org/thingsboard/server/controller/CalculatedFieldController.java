@@ -231,6 +231,24 @@ public class CalculatedFieldController extends BaseController {
         return calculatedFieldService.findCalculatedFieldsByTenantIdAndFilter(user.getTenantId(), filter, pageLink);
     }
 
+    @ApiOperation(value = "Get calculated field names (getCalculatedFieldNames)",
+            notes = "Fetch the list of calculated field names for specified type.")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/calculatedFields/names")
+    public PageData<String> getCalculatedFieldNames(@Parameter(description = "Calculated field type filter.")
+                                                    @RequestParam CalculatedFieldType type,
+                                                    @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                    @RequestParam int pageSize,
+                                                    @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                    @RequestParam int page,
+                                                    @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION)
+                                                    @RequestParam(required = false) String textSearch,
+                                                    @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+                                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, "name", sortOrder);
+        return calculatedFieldService.findCalculatedFieldNamesByTenantIdAndType(getTenantId(), type, pageLink);
+    }
+
     @ApiOperation(value = "Delete Calculated Field (deleteCalculatedField)",
             notes = "Deletes the calculated field. Referencing non-existing Calculated Field Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")

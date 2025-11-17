@@ -51,6 +51,11 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
     Page<CalculatedFieldEntity> findByTenantIdAndFilter(UUID tenantId, String type, List<String> entityTypes,
                                                         List<UUID> entityIds, List<String> names, String textSearch, Pageable pageable);
 
+    @Query("SELECT DISTINCT cf.name FROM CalculatedFieldEntity cf " +
+           "WHERE cf.tenantId = :tenantId AND cf.type = :type AND " +
+           "(:textSearch IS NULL OR ilike(cf.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<String> findNamesByTenantIdAndType(UUID tenantId, String type,String textSearch, Pageable pageable);
+
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
 
     List<CalculatedFieldEntity> removeAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);

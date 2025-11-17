@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.cf;
 
+import com.google.common.base.Strings;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -111,6 +112,12 @@ public class JpaCalculatedFieldDao extends JpaAbstractDao<CalculatedFieldEntity,
                 CollectionUtils.isNotEmpty(filter.getEntityIds()) ? filter.getEntityIds() : null,
                 CollectionUtils.isNotEmpty(filter.getNames()) ? filter.getNames() : null,
                 pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<String> findNamesByTenantIdAndType(TenantId tenantId, CalculatedFieldType type, PageLink pageLink) {
+        return DaoUtil.pageToPageData(calculatedFieldRepository.findNamesByTenantIdAndType(tenantId.getId(), type.name(),
+                Strings.emptyToNull(pageLink.getTextSearch()), DaoUtil.toPageable(pageLink, false)));
     }
 
     @Override

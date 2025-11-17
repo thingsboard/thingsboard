@@ -48,6 +48,8 @@ public interface CalculatedFieldService extends EntityDaoService {
 
     PageData<CalculatedFieldInfo> findCalculatedFieldsByTenantIdAndFilter(TenantId tenantId, CalculatedFieldFilter filter, PageLink pageLink);
 
+    PageData<String> findCalculatedFieldNamesByTenantIdAndType(TenantId tenantId, CalculatedFieldType type, PageLink pageLink);
+
     PageData<CalculatedField> findCalculatedFieldsByEntityId(TenantId tenantId, EntityId entityId, CalculatedFieldType type, PageLink pageLink);
 
     void deleteCalculatedField(TenantId tenantId, CalculatedFieldId calculatedFieldId);
