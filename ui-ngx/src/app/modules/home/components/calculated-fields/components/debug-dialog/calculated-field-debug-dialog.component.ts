@@ -58,7 +58,11 @@ export class CalculatedFieldDebugDialogComponent extends DialogComponent<Calcula
   }
 
   ngAfterViewInit(): void {
-    this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = (event => this.data.value.type === CalculatedFieldType.SCRIPT && !!(event as Event).body.arguments);
+    this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = (event => {
+      return (this.data.value.type === CalculatedFieldType.SCRIPT ||
+        (this.data.value.type === CalculatedFieldType.PROPAGATION && this.data.value.configuration.applyExpressionToResolvedArguments)
+      ) && !!(event as Event).body.arguments
+    });
     this.eventsTable.entitiesTable.updateData();
   }
 

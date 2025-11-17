@@ -83,6 +83,12 @@ public class JacksonUtil {
             .addModule(new Jdk8Module())
             .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
             .build();
+    public static final ObjectMapper CANONICAL_JSON_MAPPER = JsonMapper.builder()
+            .addModule(new Jdk8Module())
+            .configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true)
+            .configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true)
+            .serializationInclusion(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+            .build();
 
     public static ObjectMapper getObjectMapperWithJavaTimeModule() {
         return JsonMapper.builder()
@@ -205,6 +211,23 @@ public class JacksonUtil {
             log.trace("Trimming double quotes. Before trim: [{}], after trim: [{}]", dataBefore, data);
         }
         return data;
+    }
+
+    public static String toCanonicalString(Object value) {
+        try {
+            if (value == null) {
+                return null;
+            }
+
+            if (value instanceof JsonNode) {
+                Object pojo = CANONICAL_JSON_MAPPER.convertValue(value, Object.class);
+                return CANONICAL_JSON_MAPPER.writeValueAsString(pojo);
+            }
+
+            return CANONICAL_JSON_MAPPER.writeValueAsString(value);
+        } catch (Exception e) {
+            throw new IllegalArgumentException("The given Json object value cannot be transformed to a canonical String: " + value, e);
+        }
     }
 
     public static <T> T treeToValue(JsonNode node, Class<T> clazz) {

@@ -176,7 +176,7 @@
       </div>
     </ng-container>
     <ng-container>
-      @if (entityFilter.singleEntity?.id) {
+      @if (entityFilter.singleEntity?.id || entityType === ArgumentEntityType.RelationQuery || entityType === ArgumentEntityType.Current) {
         <div class="tb-form-row">
           <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{'calculated-fields.hint.perimeter-attribute-key' | translate}}">
             {{ 'calculated-fields.perimeter-attribute-key' | translate }}
