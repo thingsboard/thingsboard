@@ -151,7 +151,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         AlarmInfo alarmInfo = result.getAlarm();
         if (result.isModified()) {
             AlarmAssignee assignee = alarmInfo.getAssignee();
-            addSystemAlarmComment(alarmInfo, user, ASSIGNED_TO_USER,"userName", user.getTitle(), "assigneeName", assignee.getTitle());
+            addSystemAlarmComment(alarmInfo, user, ASSIGNED_TO_USER, "userName", user.getTitle(), "assigneeName", assignee.getTitle());
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ASSIGNED, user);
         } else {
@@ -219,13 +219,13 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     private void addSystemAlarmComment(Alarm alarm, User user, AlarmCommentSubType subType, String param, String value) {
-        Map<String, String> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>(1);
         params.put(param, value);
         addSystemAlarmComment(alarm, user, subType, params);
     }
 
     private void addSystemAlarmComment(Alarm alarm, User user, AlarmCommentSubType subType, String param, String value, String param2, String value2) {
-        Map<String, String> params = new LinkedHashMap<>();
+        Map<String, String> params = new LinkedHashMap<>(2);
         params.put(param, value);
         params.put(param2, value2);
         addSystemAlarmComment(alarm, user, subType, params);
