@@ -15,39 +15,19 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.common.data.AttributeScope;
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = TimeSeriesOutput.class, name = "TIME_SERIES"),
-        @JsonSubTypes.Type(value = AttributesOutput.class, name = "ATTRIBUTES")
+        @JsonSubTypes.Type(value = AttributesImmediateOutputStrategy.class, name = "IMMEDIATE"),
+        @JsonSubTypes.Type(value = AttributesRuleChainOutputStrategy.class, name = "RULE_CHAIN"),
 })
-@JsonInclude(JsonInclude.Include.NON_NULL)
-@JsonIgnoreProperties(ignoreUnknown = true)
-public interface Output {
-
-    @JsonIgnore
-    OutputType getType();
-
-    String getName();
-
-    OutputStrategy getStrategy();
-
-    default AttributeScope getScope() {
-        return null;
-    }
-
-    Integer getDecimalsByDefault();
-
-    void setDecimalsByDefault(Integer decimalsByDefault);
-
+public interface AttributesOutputStrategy extends OutputStrategy {
 }
