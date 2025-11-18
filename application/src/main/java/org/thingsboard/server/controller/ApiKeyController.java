@@ -30,6 +30,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -73,11 +74,10 @@ public class ApiKeyController extends BaseController {
     public ApiKey saveApiKey(
             @Parameter(description = "A JSON value representing the Api Key token.")
             @RequestBody @Valid ApiKeyInfo apiKeyInfo) throws ThingsboardException {
-        SecurityUser securityUser = getCurrentUser();
-        apiKeyInfo.setTenantId(securityUser.getTenantId());
+        User user = checkUserId(apiKeyInfo.getUserId(), Operation.WRITE);
+        apiKeyInfo.setTenantId(user.getTenantId());
         checkEntity(apiKeyInfo.getId(), apiKeyInfo, Resource.API_KEY);
-        checkUserId(apiKeyInfo.getUserId(), Operation.WRITE);
-        return checkNotNull(apiKeyService.saveApiKey(securityUser.getTenantId(), apiKeyInfo));
+        return checkNotNull(apiKeyService.saveApiKey(apiKeyInfo.getTenantId(), apiKeyInfo));
     }
 
     @ApiOperation(value = "Get User Api Keys (getUserApiKeys)",
@@ -102,8 +102,8 @@ public class ApiKeyController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         UserId userId = new UserId(toUUID(userIdStr));
         accessControlService.checkPermission(securityUser, Resource.API_KEY, Operation.READ);
-        checkUserId(userId, Operation.READ);
-        return apiKeyService.findApiKeysByUserId(securityUser.getTenantId(), userId, pageLink);
+        User user = checkUserId(userId, Operation.READ);
+        return apiKeyService.findApiKeysByUserId(user.getTenantId(), userId, pageLink);
     }
 
     @ApiOperation(value = "Update API key Description",
