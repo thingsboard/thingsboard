@@ -166,7 +166,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             tenantProfileCache.evict(tenantProfileId);
             if (componentLifecycleMsg.getEvent().equals(ComponentLifecycleEvent.UPDATED)) {
                 apiUsageStateService.onTenantProfileUpdate(tenantProfileId);
-                calculatedFieldCache.handleTenantProfileUpdate();
+                calculatedFieldCache.handleTenantProfileUpdate(tenantProfileId);
             }
         } else if (EntityType.TENANT.equals(componentLifecycleMsg.getEntityId().getEntityType())) {
             if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
