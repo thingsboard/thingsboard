@@ -100,6 +100,7 @@ import { OAuth2Service } from '@core/http/oauth2.service';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { PlatformType } from '@shared/models/oauth2.models';
 import { AiModelService } from '@core/http/ai-model.service';
+import { ResourceType } from "@shared/models/resource.models";
 
 @Injectable({
   providedIn: 'root'
@@ -297,6 +298,9 @@ export class EntityService {
           (id) => this.ruleChainService.getRuleChain(id, config),
           entityIds);
         break;
+      case EntityType.TB_RESOURCE:
+        observable = this.resourceService.getResourcesByIds(entityIds, config);
+        break;
     }
     return observable;
   }
@@ -472,7 +476,7 @@ export class EntityService {
         break;
       case EntityType.TB_RESOURCE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.resourceService.getTenantResources(pageLink, config);
+        entitiesObservable = this.resourceService.getResources(pageLink, subType as ResourceType, null, config);
         break;
       case EntityType.QUEUE_STATS:
         pageLink.sortOrder.property = 'createdTime';
@@ -813,6 +817,7 @@ export class EntityService {
     switch (entityType) {
       case EntityType.USER:
         entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.displayName.keyName);
         entityFieldKeys.push(entityFields.email.keyName);
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
@@ -842,6 +847,7 @@ export class EntityService {
       case EntityType.EDGE:
       case EntityType.ASSET:
         entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.displayName.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
         entityFieldKeys.push(entityFields.label.keyName);
         entityFieldKeys.push(entityFields.ownerName.keyName);

@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.metadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -29,7 +28,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "tenant attributes",
@@ -39,7 +37,9 @@ import org.thingsboard.server.common.data.util.TbPair;
         nodeDetails = "Useful when you need to retrieve some common configuration or threshold set " +
                 "that is stored as tenant attributes or telemetry data and use it for further message processing.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeTenantAttributesConfig")
+        configDirective = "tbEnrichmentNodeTenantAttributesConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/tenant-attributes/"
+)
 public class TbGetTenantAttributeNode extends TbAbstractGetEntityDataNode<TenantId> {
 
     @Override

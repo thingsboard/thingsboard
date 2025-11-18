@@ -335,12 +335,5 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationT
         sendRpcObserveOk("Observe", expectedId_1);
         sendRpcObserveOk("Observe", expectedId_2);
     }
-
-    private String sendRpcObserveReadAllWithResult(String params) throws Exception {
-        sendRpcObserveOk("Observe", params);
-        ObjectNode rpcActualResult = sendRpcObserveWithResult("ObserveReadAll", null);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        return rpcActualResult.get("value").asText();
-    }
 }
 

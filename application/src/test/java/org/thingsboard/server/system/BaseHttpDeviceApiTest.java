@@ -37,9 +37,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.request;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * @author Andrew Shvayka
- */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
         "transport.http.max_payload_size=/api/v1/*/rpc/**=10000;/api/v1/**=20000"

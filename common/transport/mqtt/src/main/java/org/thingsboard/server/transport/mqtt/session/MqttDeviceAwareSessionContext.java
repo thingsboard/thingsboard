@@ -25,9 +25,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
-/**
- * Created by ashvayka on 30.08.18.
- */
 @ToString(callSuper = true)
 public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionContext {
 
@@ -47,7 +44,7 @@ public abstract class MqttDeviceAwareSessionContext extends DeviceAwareSessionCo
                 .stream()
                 .filter(entry -> entry.getKey().matches(topic))
                 .map(Map.Entry::getValue)
-                .collect(Collectors.toList());
+                .toList();
         if (!qosList.isEmpty()) {
             return MqttQoS.valueOf(qosList.get(0));
         } else {

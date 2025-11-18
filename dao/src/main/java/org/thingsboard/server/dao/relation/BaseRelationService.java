@@ -31,26 +31,32 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationInfo;
+import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.relation.JpaRelationQueryExecutorService;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -64,9 +70,11 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Predicate;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validatePositiveNumber;
 
 @Slf4j
 @Service
@@ -78,6 +86,8 @@ class BaseRelationService implements RelationService {
     private final ApplicationEventPublisher eventPublisher;
     private final JpaExecutorService executor;
     private final JpaRelationQueryExecutorService relationsExecutor;
+    private final ApiLimitService apiLimitService;
+
     private ScheduledExecutorService timeoutExecutorService;
 
     @Value("${sql.relations.query_timeout:20}")
@@ -86,13 +96,14 @@ class BaseRelationService implements RelationService {
     public BaseRelationService(RelationDao relationDao, @Lazy EntityService entityService,
                                TbTransactionalCache<RelationCacheKey, RelationCacheValue> cache,
                                ApplicationEventPublisher eventPublisher, JpaExecutorService executor,
-                               JpaRelationQueryExecutorService relationsExecutor) {
+                               JpaRelationQueryExecutorService relationsExecutor, ApiLimitService apiLimitService) {
         this.relationDao = relationDao;
         this.entityService = entityService;
         this.cache = cache;
         this.eventPublisher = eventPublisher;
         this.executor = executor;
         this.relationsExecutor = relationsExecutor;
+        this.apiLimitService = apiLimitService;
     }
 
     @PostConstruct
@@ -482,6 +493,70 @@ class BaseRelationService implements RelationService {
         log.trace("Executing findRuleNodeToRuleChainRelations, tenantId [{}], ruleChainType {} and limit {}", tenantId, ruleChainType, limit);
         validateId(tenantId, id -> "Invalid tenant id: " + id);
         return relationDao.findRuleNodeToRuleChainRelations(ruleChainType, limit);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelation>> findByRelationPathQueryAsync(TenantId tenantId, EntityRelationPathQuery relationPathQuery) {
+        return findFilteredRelationsByPathQueryAsync(tenantId, relationPathQuery, null);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityRelation>> findFilteredRelationsByPathQueryAsync(TenantId tenantId, EntityRelationPathQuery relationPathQuery, Predicate<EntityRelation> relationFilter) {
+        log.trace("Executing findByRelationPathQuery, tenantId [{}], relationPathQuery {}", tenantId, relationPathQuery);
+        validateId(tenantId, id -> "Invalid tenant id: " + id);
+        validate(relationPathQuery);
+        int limit = (int) apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
+        validatePositiveNumber(limit, "Max related entities limit for relation path query must be positive!");
+        if (relationPathQuery.levels().size() == 1) {
+            RelationPathLevel relationPathLevel = relationPathQuery.levels().get(0);
+            var relationsFuture = switch (relationPathLevel.direction()) {
+                case FROM -> findByFromAndTypeAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
+                case TO -> findByToAndTypeAsync(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
+            };
+            return Futures.transform(relationsFuture, entityRelations -> {
+                if (entityRelations == null || entityRelations.isEmpty()) {
+                    return Collections.emptyList();
+                }
+                List<EntityRelation> relations = relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
+                return relations.size() > limit ? relations.subList(0, limit) : relations;
+            }, directExecutor());
+        }
+        return executor.submit(() -> {
+            List<EntityRelation> entityRelations = relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
+            return relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
+        });
+    }
+
+    private List<EntityRelation> filterRelations(List<EntityRelation> entityRelations,  Predicate<EntityRelation> relationFilter) {
+        return entityRelations.stream()
+                .filter(relationFilter)
+                .toList();
+    }
+
+    @Override
+    public List<EntityRelation> findByRelationPathQuery(TenantId tenantId, EntityRelationPathQuery relationPathQuery) {
+        log.trace("Executing findByRelationPathQuery, tenantId [{}], relationPathQuery {}", tenantId, relationPathQuery);
+        validateId(tenantId, id -> "Invalid tenant id: " + id);
+        validate(relationPathQuery);
+        int limit = (int) apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
+        if (relationPathQuery.levels().size() == 1) {
+            RelationPathLevel relationPathLevel = relationPathQuery.levels().get(0);
+            var relations = switch (relationPathLevel.direction()) {
+                case FROM -> findByFromAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
+                case TO -> findByToAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
+            };
+            return relations.size() > limit ? relations.subList(0, limit) : relations;
+        }
+        return relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
+    }
+
+    private void validate(EntityRelationPathQuery relationPathQuery) {
+        validateId((UUIDBased) relationPathQuery.rootEntityId(), id -> "Invalid root entity id: " + id);
+        List<RelationPathLevel> levels = relationPathQuery.levels();
+        if (CollectionUtils.isEmpty(levels)) {
+            throw new DataValidationException("Validation error: relation path levels should be specified!");
+        }
+        levels.forEach(RelationPathLevel::validate);
     }
 
     private static void validate(EntityRelation relation) {

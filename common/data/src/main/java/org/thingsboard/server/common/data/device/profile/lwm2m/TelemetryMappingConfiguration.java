@@ -36,6 +36,7 @@ public class TelemetryMappingConfiguration implements Serializable {
     private Set<String> attribute;
     private Set<String> telemetry;
     private Map<String, ObjectAttributes> attributeLwm2m;
+    private Boolean initAttrTelAsObsStrategy;
     private TelemetryObserveStrategy observeStrategy;
 
     @JsonCreator
@@ -45,6 +46,7 @@ public class TelemetryMappingConfiguration implements Serializable {
             @JsonProperty("attribute") Set<String> attribute,
             @JsonProperty("telemetry") Set<String> telemetry,
             @JsonProperty("attributeLwm2m") Map<String, ObjectAttributes> attributeLwm2m,
+            @JsonProperty("initAttrTelAsObsStrategy") Boolean initAttrTelAsObsStrategy,
             @JsonProperty("observeStrategy") TelemetryObserveStrategy observeStrategy) {
 
         this.keyName = keyName != null ? keyName : Collections.emptyMap();
@@ -52,6 +54,7 @@ public class TelemetryMappingConfiguration implements Serializable {
         this.attribute = attribute != null ? attribute : Collections.emptySet();
         this.telemetry = telemetry != null ? telemetry : Collections.emptySet();
         this.attributeLwm2m = attributeLwm2m != null ? attributeLwm2m : Collections.emptyMap();
+        this.initAttrTelAsObsStrategy = initAttrTelAsObsStrategy != null ? initAttrTelAsObsStrategy : false;
         this.observeStrategy = observeStrategy != null ? observeStrategy : TelemetryObserveStrategy.SINGLE;
     }
 }

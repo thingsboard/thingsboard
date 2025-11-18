@@ -18,12 +18,14 @@ package org.thingsboard.server.service.cf.ctx.state;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
+import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -41,8 +43,9 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
-import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -60,7 +63,7 @@ public class ScriptCalculatedFieldStateTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("5512071d-5abc-411d-a907-4cdb6539c2eb"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("5bc010ae-bcfd-46c8-98b9-8ee8c8955a76"));
 
-    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("assetHumidity", 43.0), 122L);
+    private final SingleValueArgumentEntry assetHumidityArgEntry = new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new DoubleDataEntry("assetHumidity", 86.0), 122L);
     private final TsRollingArgumentEntry deviceTemperatureArgEntry = createRollingArgEntry();
 
     private final long ts = System.currentTimeMillis();
@@ -71,15 +74,21 @@ public class ScriptCalculatedFieldStateTest {
     @Autowired
     private TbelInvokeService tbelInvokeService;
 
-    @MockBean
+    @MockitoBean
     private ApiLimitService apiLimitService;
 
     @BeforeEach
     void setUp() {
+        ActorSystemContext systemContext = Mockito.mock(ActorSystemContext.class);
+        when(systemContext.getTbelInvokeService()).thenReturn(tbelInvokeService);
+        when(systemContext.getApiLimitService()).thenReturn(apiLimitService);
+
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
-        ctx = new CalculatedFieldCtx(getCalculatedField(), tbelInvokeService, apiLimitService);
+        ctx = new CalculatedFieldCtx(getCalculatedField(), systemContext);
         ctx.init();
-        state = new ScriptCalculatedFieldState(ctx.getArgNames());
+        state = new ScriptCalculatedFieldState(ctx.getEntityId());
+        state.setCtx(ctx, null);
+        state.init(false);
     }
 
     @Test
@@ -92,7 +101,7 @@ public class ScriptCalculatedFieldStateTest {
         state.arguments = new HashMap<>(Map.of("assetHumidity", assetHumidityArgEntry));
 
         Map<String, ArgumentEntry> newArgs = Map.of("deviceTemperature", deviceTemperatureArgEntry);
-        boolean stateUpdated = state.updateState(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -109,7 +118,7 @@ public class ScriptCalculatedFieldStateTest {
 
         SingleValueArgumentEntry newArgEntry = new SingleValueArgumentEntry(ts, new LongDataEntry("assetHumidity", 41L), 349L);
         Map<String, ArgumentEntry> newArgs = Map.of("assetHumidity", newArgEntry);
-        boolean stateUpdated = state.updateState(ctx, newArgs);
+        boolean stateUpdated = !state.update(newArgs, ctx).isEmpty();
 
         assertThat(stateUpdated).isTrue();
         assertThat(state.getArguments()).containsExactlyInAnyOrderEntriesOf(
@@ -124,7 +133,7 @@ public class ScriptCalculatedFieldStateTest {
     void testPerformCalculation() throws ExecutionException, InterruptedException {
         state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
 
-        CalculatedFieldResult result = state.performCalculation(ctx).get();
+        TelemetryCalculatedFieldResult result = performCalculation();
 
         assertThat(result).isNotNull();
         Output output = getCalculatedFieldConfig().getOutput();
@@ -134,22 +143,39 @@ public class ScriptCalculatedFieldStateTest {
     }
 
     @Test
+    void testPerformCalculationWithLongEntry() throws ExecutionException, InterruptedException {
+        state.arguments = new HashMap<>(Map.of(
+                "deviceTemperature", deviceTemperatureArgEntry,
+                "assetHumidity", new SingleValueArgumentEntry(System.currentTimeMillis() - 10, new LongDataEntry("a", 45L), 10L)
+        ));
+
+        TelemetryCalculatedFieldResult result = performCalculation();
+
+        assertThat(result).isNotNull();
+        Output output = getCalculatedFieldConfig().getOutput();
+        assertThat(result.getType()).isEqualTo(output.getType());
+        assertThat(result.getScope()).isEqualTo(output.getScope());
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.valueToTree(Map.of("maxDeviceTemperature", 17.0, "assetHumidity", 22.5)));
+    }
+
+    @Test
     void testIsReadyWhenNotAllArgPresent() {
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains(state.getRequiredArguments());
     }
 
     @Test
     void testIsReadyWhenAllArgPresent() {
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry));
-
+        state.update(Map.of("deviceTemperature", deviceTemperatureArgEntry, "assetHumidity", assetHumidityArgEntry), ctx);
         assertThat(state.isReady()).isTrue();
+        assertThat(state.getReadinessStatus().errorMsg()).isNull();
     }
 
     @Test
     void testIsReadyWhenEmptyEntryPresents() {
-        state.arguments = new HashMap<>(Map.of("deviceTemperature", new TsRollingArgumentEntry(5, 30000L), "assetHumidity", assetHumidityArgEntry));
-
+        state.update(Map.of("deviceTemperature", new TsRollingArgumentEntry(5, 30000L), "assetHumidity", assetHumidityArgEntry), ctx);
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg()).contains("deviceTemperature");
     }
 
     private TsRollingArgumentEntry createRollingArgEntry() {
@@ -193,7 +219,7 @@ public class ScriptCalculatedFieldStateTest {
 
         config.setArguments(Map.of("deviceTemperature", argument1, "assetHumidity", argument2));
 
-        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity}");
+        config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity / 2 }");
 
         Output output = new Output();
         output.setType(OutputType.ATTRIBUTES);
@@ -202,6 +228,10 @@ public class ScriptCalculatedFieldStateTest {
         config.setOutput(output);
 
         return config;
+    }
+
+    private TelemetryCalculatedFieldResult performCalculation() throws InterruptedException, ExecutionException {
+        return (TelemetryCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
     }
 
 }

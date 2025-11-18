@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
@@ -224,7 +225,7 @@ public class DefaultEntityQueryService implements EntityQueryService {
 
     private EntityDataQuery buildEntityDataQuery(AlarmCountQuery query) {
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null,
-                new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY)));
+                new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, EntityKeyMapping.CREATED_TIME)));
         return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
     }
 
@@ -232,12 +233,12 @@ public class DefaultEntityQueryService implements EntityQueryService {
         EntityDataSortOrder sortOrder = query.getPageLink().getSortOrder();
         EntityDataSortOrder entitiesSortOrder;
         if (sortOrder == null || sortOrder.getKey().getType().equals(EntityKeyType.ALARM_FIELD)) {
-            entitiesSortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, ModelConstants.CREATED_TIME_PROPERTY));
+            entitiesSortOrder = new EntityDataSortOrder(new EntityKey(EntityKeyType.ENTITY_FIELD, EntityKeyMapping.CREATED_TIME));
         } else {
             entitiesSortOrder = sortOrder;
         }
         EntityDataPageLink edpl = new EntityDataPageLink(maxEntitiesPerAlarmSubscription, 0, null, entitiesSortOrder);
-        return new EntityDataQuery(query.getEntityFilter(), edpl, null, null, query.getKeyFilters());
+        return new EntityDataQuery(query.getEntityFilter(), edpl, query.getEntityFields(), query.getLatestValues(), query.getKeyFilters());
     }
 
     @Override

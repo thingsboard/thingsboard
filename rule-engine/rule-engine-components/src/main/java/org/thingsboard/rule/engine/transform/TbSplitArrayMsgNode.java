@@ -17,7 +17,6 @@ package org.thingsboard.rule.engine.transform;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.EmptyNodeConfiguration;
 import org.thingsboard.rule.engine.api.RuleNode;
@@ -25,7 +24,6 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -34,7 +32,6 @@ import org.thingsboard.server.common.msg.queue.TbMsgCallback;
 
 import java.util.concurrent.ExecutionException;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "split array msg",
@@ -44,16 +41,13 @@ import java.util.concurrent.ExecutionException;
                 "All outbound messages will have the same type and metadata as the original array message.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
         icon = "content_copy",
-        configDirective = "tbNodeEmptyConfig"
+        configDirective = "tbNodeEmptyConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/transformation/split-array-msg/"
 )
 public class TbSplitArrayMsgNode implements TbNode {
 
-    private EmptyNodeConfiguration config;
-
     @Override
-    public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, EmptyNodeConfiguration.class);
-    }
+    public void init(TbContext ctx, TbNodeConfiguration configuration) {}
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
@@ -89,4 +83,5 @@ public class TbSplitArrayMsgNode implements TbNode {
             ctx.tellFailure(msg, new RuntimeException("Msg data is not a JSON Array!"));
         }
     }
+
 }

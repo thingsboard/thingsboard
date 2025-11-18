@@ -45,7 +45,8 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
                 " where created using <code>to Email</code> transformation Node, please connect this Node " +
                 "with <code>to Email</code> Node using <code>Successful</code> chain.",
         configDirective = "tbExternalNodeSendEmailConfig",
-        icon = "send"
+        icon = "send",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/external/send-email/"
 )
 public class TbSendEmailNode extends TbAbstractExternalNode {
 
@@ -91,7 +92,7 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
         }
     }
 
-    private TbEmail getEmail(TbMsg msg) throws IOException {
+    private TbEmail getEmail(TbMsg msg) {
         TbEmail email = JacksonUtil.fromString(msg.getData(), TbEmail.class);
         if (StringUtils.isBlank(email.getTo())) {
             throw new IllegalStateException("Email destination can not be blank [" + email.getTo() + "]");
@@ -141,4 +142,5 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
         }
         return javaMailProperties;
     }
+
 }

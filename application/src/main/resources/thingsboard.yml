@@ -100,6 +100,9 @@ server:
     rate_limits:
       # Limit that prohibits resetting the password for the user too often. The value of the rate limit. By default, no more than 5 requests per hour
       reset_password_per_user: "${RESET_PASSWORD_PER_USER_RATE_LIMIT_CONFIGURATION:5:3600}"
+    rule_engine:
+      # Default timeout for waiting response of REST API request to Rule Engine in milliseconds
+      response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
 
 # Application info parameters
 app:
@@ -303,8 +306,11 @@ cassandra:
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
     # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
-    # Enable/Disable timestamp key-value partioning on read queries
+    # Enable/Disable timestamp key-value partitioning on read queries
     use_ts_key_value_partitioning_on_read: "${USE_TS_KV_PARTITIONING_ON_READ:true}"
+    # Safety trigger to fall back to use_ts_key_value_partitioning_on_read as true if estimated partitions count is greater than safety trigger value.
+    # It helps to prevent building huge partition list (OOM) for corner cases (like from 0 to infinity) and prefer fewer reads strategy from NoSQL database
+    use_ts_key_value_partitioning_on_read_max_estimated_partition_count: "${USE_TS_KV_PARTITIONING_ON_READ_MAX_ESTIMATED_PARTITION_COUNT:40}"
     # The number of partitions that are cached in memory of each service. It is useful to decrease the load of re-inserting the same partitions again
     ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     # Timeseries Time To Live (in seconds) for Cassandra Record. 0 - record has never expired
@@ -523,6 +529,11 @@ actors:
       configuration: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
     # Time in seconds to receive calculation result.
     calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
+    # Interval in seconds to check calculated fields for re-evaluation interval. 1 minute by default.
+    check_interval: "${ACTORS_CALCULATED_FIELDS_CHECK_INTERVAL_SEC:60}"
+  alarms:
+    # Interval in seconds to re-evaluate Alarm rules that have a time schedule. 2 minutes by default.
+    reevaluation_interval: "${ACTORS_ALARMS_REEVALUATION_INTERVAL_SEC:120}"
 
 debug:
   settings:
@@ -676,6 +687,9 @@ cache:
       maxSize: "${CACHE_SPECS_IMAGE_ETAGS_MAX_SIZE:10000}" # 0 means the cache is disabled
     systemImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_SYSTEM_BROWSER_TTL:0}" # Browser cache TTL for system images in minutes. 0 means the cache is disabled
     tenantImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_TENANT_BROWSER_TTL:0}" # Browser cache TTL for tenant images in minutes. 0 means the cache is disabled
+  tbResourceData:
+    timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_DATA_TTL:10080}" # TB resource data cache TTL
+    maxSize: "${CACHE_SPECS_RESOURCE_DATA_MAX_SIZE:100000}" # 0 means the cache is disabled
 
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
@@ -742,9 +756,9 @@ redis:
     # Minumum number of idle connections that can be maintained in the pool without being closed
     minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
     # Enable/Disable PING command sent when a connection is borrowed
-    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:false}"
     # The property is used to specify whether to test the connection before returning it to the connection pool.
-    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:false}"
     # The property is used in the context of connection pooling in Redis
     testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
     # Minimum time that an idle connection should be idle before it can be evicted from the connection pool. The value is set in milliseconds
@@ -1145,7 +1159,7 @@ transport:
       # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
       # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
       # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1190,7 +1204,7 @@ transport:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
       # Default value in LwM2M client after start in mode Bootstrap for the object : name "LWM2M Security" field: "Short Server ID" (deviceProfile: Bootstrap.BOOTSTRAP SERVER.Short ID)
-      id: "${LWM2M_SERVER_ID_BS:111}"
+      id: "${LWM2M_SERVER_ID_BS:0}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       # LwM2M bootstrap server bind port
@@ -1333,7 +1347,7 @@ coap:
     # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
     # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
     # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
@@ -1480,6 +1494,11 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+    # Time (in milliseconds) to subtract from the start timestamp when fetching edge events.
+    # This compensates for possible misordering between `created_time` (used for partitioning)
+    # and `seqId` (used for sorting). Without this, events with smaller seqId but larger created_time
+    # might be skipped, especially across partition boundaries.
+    misordering_compensation_millis: "${EDGES_MISORDERING_COMPENSATION_MILLIS:60000}"
   # Max number of high priority edge events per edge session. No persistence - stored in memory
   max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
@@ -1534,6 +1553,8 @@ swagger:
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
   group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
+  # Control the initial display state of API operations and tags (none or list)
+  doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
 # Queue configuration parameters
 queue:

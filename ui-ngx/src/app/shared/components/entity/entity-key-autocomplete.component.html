@@ -16,23 +16,23 @@
 
 -->
 <mat-form-field class="tb-flex no-gap !w-full" appearance="outline" subscriptSizing="dynamic">
-  <input matInput type="text" placeholder="{{ 'action.set' | translate }}"
+  <input matInput type="text" placeholder="{{ placeholder }}"
          #keyInput
          [formControl]="keyControl"
          required
          (focusin)="keyInputSubject.next()"
          [matAutocomplete]="keysAutocomplete">
-  @if (keyControl.value) {
+  @if (keyControl.value && keyControl.enabled) {
     <button type="button"
             matSuffix mat-icon-button aria-label="Clear"
             (click)="clear()">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
-  } @else if (keyControl.hasError('required') && keyControl.touched) {
+  } @else if (keyControl.hasError('required') && keyControl.touched && keyControl.enabled) {
     <mat-icon matSuffix
               matTooltipPosition="above"
               matTooltipClass="tb-error-tooltip"
-              [matTooltip]="'common.hint.key-required' | translate"
+              [matTooltip]="requiredText"
               class="tb-error">
       warning
     </mat-icon>

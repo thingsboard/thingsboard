@@ -14,33 +14,73 @@
 -- limitations under the License.
 --
 
--- UPDATE OTA PACKAGE EXTERNAL ID START
+-- UPDATE TENANT PROFILE CONFIGURATION START
 
-ALTER TABLE ota_package
-    ADD COLUMN IF NOT EXISTS external_id uuid;
+UPDATE tenant_profile
+SET profile_data = jsonb_set(
+        profile_data,
+        '{configuration}',
+        (profile_data -> 'configuration')
+            || jsonb_strip_nulls(
+                jsonb_build_object(
+                        'minAllowedScheduledUpdateIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END,
+                        'maxRelationLevelPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(10)
+                            END,
+                        'maxRelatedEntitiesToReturnPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(100)
+                            END,
+                        'minAllowedDeduplicationIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END,
+                        'minAllowedAggregationIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedAggregationIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END
+                )
+               ),
+        false
+                   )
+WHERE NOT (
+    (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+        AND
+    (profile_data -> 'configuration') ? 'minAllowedAggregationIntervalInSecForCF'
+    );
 
-DO
-$$
-    BEGIN
-        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'ota_package_external_id_unq_key') THEN
-            ALTER TABLE ota_package ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
-        END IF;
-    END;
-$$;
+-- UPDATE TENANT PROFILE CONFIGURATION END
 
--- UPDATE OTA PACKAGE EXTERNAL ID END
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE START
 
--- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT START
+ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
+ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
 
-DROP INDEX IF EXISTS idx_device_external_id;
-DROP INDEX IF EXISTS idx_device_profile_external_id;
-DROP INDEX IF EXISTS idx_asset_external_id;
-DROP INDEX IF EXISTS idx_entity_view_external_id;
-DROP INDEX IF EXISTS idx_rule_chain_external_id;
-DROP INDEX IF EXISTS idx_dashboard_external_id;
-DROP INDEX IF EXISTS idx_customer_external_id;
-DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
 
--- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
 
-ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS title varchar(255);
+DROP TABLE IF EXISTS calculated_field_link;
+ANALYZE calculated_field;
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE END

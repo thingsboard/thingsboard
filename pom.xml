@@ -38,7 +38,7 @@
         <pkg.implementationTitle>${project.name}</pkg.implementationTitle>
         <pkg.unixLogFolder>/var/log/${pkg.name}</pkg.unixLogFolder>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
-        <spring-boot.version>3.4.8</spring-boot.version>
+        <spring-boot.version>3.4.10</spring-boot.version>
         <javax.xml.bind-api.version>2.4.0-b180830.0359</javax.xml.bind-api.version>
         <jedis.version>5.1.5</jedis.version>
         <jjwt.version>0.12.5</jjwt.version>
@@ -129,7 +129,7 @@
         <testcontainers.version>1.20.6</testcontainers.version>
         <testcontainers-junit4-mock.version>1.0.2</testcontainers-junit4-mock.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
-        <webdrivermanager.version>5.8.0</webdrivermanager.version>
+        <webdrivermanager.version>6.1.0</webdrivermanager.version>
         <allure-testng.version>2.27.0</allure-testng.version>
         <allure-maven.version>2.12.0</allure-maven.version>
 
@@ -146,6 +146,7 @@
         <firebase-admin.version>9.2.0</firebase-admin.version>
         <snappy.version>1.1.10.5</snappy.version>
         <rocksdbjni.version>9.10.0</rocksdbjni.version>
+        <netty.version>4.1.125.Final</netty.version> <!-- to fix CVEs. TODO: remove when fixed in spring-boot-dependencies -->
     </properties>
 
     <modules>
@@ -896,6 +897,13 @@
     <dependencyManagement>
         <dependencies>
             <dependency>
+                <groupId>io.netty</groupId>
+                <artifactId>netty-bom</artifactId>
+                <version>${netty.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-dependencies</artifactId>
                 <version>${spring-boot.version}</version>
@@ -909,7 +917,6 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
-
             <dependency>
                 <groupId>org.thingsboard</groupId>
                 <artifactId>netty-mqtt</artifactId>
@@ -1922,9 +1929,6 @@
             <name>Typesafe Repository</name>
             <url>https://repo.typesafe.com/typesafe/releases/</url>
         </repository>
-        <repository>
-            <id>sonatype</id>
-            <url>https://oss.sonatype.org/content/groups/public</url>
-        </repository>
     </repositories>
+
 </project>
