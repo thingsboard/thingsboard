@@ -32,11 +32,14 @@ import {
   ArgumentEntityTypeTranslations,
   CalculatedFieldGeofencing,
   CalculatedFieldGeofencingValue,
+  FORBIDDEN_NAMES,
+  forbiddenNamesValidator,
   GeofencingDirectionLevelTranslations,
   GeofencingDirectionTranslations,
   GeofencingReportStrategy,
   GeofencingReportStrategyTranslations,
-  getCalculatedFieldCurrentEntityFilter
+  getCalculatedFieldCurrentEntityFilter,
+  uniqueNameValidator
 } from '@shared/models/calculated-field.models';
 import { debounceTime, distinctUntilChanged, map } from 'rxjs/operators';
 import { EntityType } from '@shared/models/entity-type.models';
@@ -76,7 +79,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   readonly maxRelationLevelPerCfArgument = getCurrentAuthState(this.store).maxRelationLevelPerCfArgument;
 
   geofencingFormGroup = this.fb.group({
-    name: ['', [Validators.required, this.uniqNameRequired(), this.forbiddenNameValidator(), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
+    name: ['', [Validators.required, forbiddenNamesValidator(FORBIDDEN_NAMES), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     refEntityId: this.fb.group({
       entityType: [ArgumentEntityType.Current],
       id: ['']
@@ -133,6 +136,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   }
 
   ngOnInit(): void {
+    this.updatedFormValidators();
     this.geofencingFormGroup.patchValue(this.zone, {emitEvent: false});
     if (this.zone.refDynamicSourceConfiguration?.type) {
       this.refEntityIdFormGroup.get('entityType').setValue(this.zone.refDynamicSourceConfiguration.type, {emitEvent: false});
@@ -157,6 +161,11 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   fetchOptions(searchText: string): Observable<Array<string>> {
     const search = searchText ? searchText?.toLowerCase() : '';
     return of(['Contains', 'Manages']).pipe(map(name => name?.filter(option => option.toLowerCase().includes(search))));
+  }
+
+  private updatedFormValidators(): void {
+    this.geofencingFormGroup.get('name').addValidators(uniqueNameValidator(this.usedNames));
+    this.geofencingFormGroup.get('name').updateValueAndValidity({emitEvent: false});
   }
 
   private observeCreateRelationZonesChanges(): void {
@@ -275,26 +284,9 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
       });
   }
 
-  private uniqNameRequired(): ValidatorFn {
-    return (control: FormControl) => {
-      const newName = control.value.trim().toLowerCase();
-      const isDuplicate = this.usedNames?.some(name => name.toLowerCase() === newName);
-
-      return isDuplicate ? { duplicateName: true } : null;
-    };
-  }
-
   private levelsRequired(): ValidatorFn {
     return (control: FormControl) => {
       return control.value.length ? null : { levelsRequired: true };
-    };
-  }
-
-  private forbiddenNameValidator(): ValidatorFn {
-    return (control: FormControl) => {
-      const trimmedValue = control.value.trim().toLowerCase();
-      const forbiddenNames = ['ctx', 'e', 'pi'];
-      return forbiddenNames.includes(trimmedValue) ? { forbiddenName: true } : null;
     };
   }
 

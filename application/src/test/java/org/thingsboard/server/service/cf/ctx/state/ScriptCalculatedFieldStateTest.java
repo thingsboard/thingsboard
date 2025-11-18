@@ -88,7 +88,7 @@ public class ScriptCalculatedFieldStateTest {
         ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getEntityId());
         state.setCtx(ctx, null);
-        state.init();
+        state.init(false);
     }
 
     @Test
