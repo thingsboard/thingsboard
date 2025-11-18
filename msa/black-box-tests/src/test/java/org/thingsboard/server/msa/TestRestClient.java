@@ -34,10 +34,12 @@ import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -816,4 +818,33 @@ public class TestRestClient {
                 .then()
                 .statusCode(HTTP_OK);
     }
+
+    public TenantProfile postTenantProfile(TenantProfile tenantProfile) {
+        return given().spec(requestSpec).body(tenantProfile)
+                .post("/api/tenantProfile")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(TenantProfile.class);
+    }
+
+    public EntityInfo getDefaultTenantProfileInfo() {
+        return given().spec(requestSpec)
+                .get("/api/tenantProfileInfo/default")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(EntityInfo.class);
+    }
+
+    public TenantProfile getTenantProfileById(String tenantProfileId) {
+        return given().spec(requestSpec)
+                .pathParams("tenantProfileId", tenantProfileId)
+                .get("/api/tenantProfile/{tenantProfileId}")
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(TenantProfile.class);
+    }
+
 }
