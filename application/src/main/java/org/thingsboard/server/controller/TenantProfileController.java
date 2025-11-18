@@ -164,9 +164,14 @@ public class TenantProfileController extends BaseController {
                     "      \"warnThreshold\": 0,\n" +
                     "      \"maxCalculatedFieldsPerEntity\": 5,\n" +
                     "      \"maxArgumentsPerCF\": 10,\n" +
+                    "      \"minAllowedScheduledUpdateIntervalInSecForCF\": 60,\n" +
+                    "      \"maxRelationLevelPerCfArgument\": 10,\n" +
+                    "      \"maxRelatedEntitiesToReturnPerCfArgument\": 100,\n" +
                     "      \"maxDataPointsPerRollingArg\": 1000,\n" +
                     "      \"maxStateSizeInKBytes\": 32,\n" +
                     "      \"maxSingleValueArgumentSizeInKBytes\": 2" +
+                    "      \"minAllowedDeduplicationIntervalInSecForCF\": 60" +
+                    "      \"minAllowedAggregationIntervalInSecForCF\": 60" +
                     "    }\n" +
                     "  },\n" +
                     "  \"default\": false\n" +

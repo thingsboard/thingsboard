@@ -105,7 +105,7 @@ public class PropagationCalculatedFieldStateTest {
 
         state = new PropagationCalculatedFieldState(ctx.getEntityId());
         state.setCtx(ctx, null);
-        state.init();
+        state.init(false);
     }
 
     @Test

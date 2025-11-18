@@ -28,6 +28,7 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
@@ -46,7 +47,8 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArg
         @Type(value = GeofencingCalculatedFieldState.class, name = "GEOFENCING"),
         @Type(value = AlarmCalculatedFieldState.class, name = "ALARM"),
         @Type(value = PropagationCalculatedFieldState.class, name = "PROPAGATION"),
-        @Type(value = RelatedEntitiesAggregationCalculatedFieldState.class, name = "RELATED_ENTITIES_AGGREGATION")
+        @Type(value = RelatedEntitiesAggregationCalculatedFieldState.class, name = "RELATED_ENTITIES_AGGREGATION"),
+        @Type(value = EntityAggregationCalculatedFieldState.class, name = "ENTITY_AGGREGATION")
 })
 public interface CalculatedFieldState extends Closeable {
 
@@ -61,7 +63,7 @@ public interface CalculatedFieldState extends Closeable {
 
     void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx);
 
-    void init();
+    void init(boolean restored);
 
     Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> arguments, CalculatedFieldCtx ctx);
 

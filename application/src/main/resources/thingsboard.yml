@@ -529,6 +529,8 @@ actors:
       configuration: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
     # Time in seconds to receive calculation result.
     calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
+    # Interval in seconds to check calculated fields for re-evaluation interval. 1 minute by default.
+    check_interval: "${ACTORS_CALCULATED_FIELDS_CHECK_INTERVAL_SEC:60}"
   alarms:
     # Interval in seconds to re-evaluate Alarm rules that have a time schedule. 2 minutes by default.
     reevaluation_interval: "${ACTORS_ALARMS_REEVALUATION_INTERVAL_SEC:120}"
@@ -1157,7 +1159,7 @@ transport:
       # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
       # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
       # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1345,7 +1347,7 @@ coap:
     # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
     # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
     # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
