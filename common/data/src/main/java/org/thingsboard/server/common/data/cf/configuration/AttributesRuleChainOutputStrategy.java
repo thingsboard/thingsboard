@@ -20,7 +20,7 @@ import lombok.NoArgsConstructor;
 
 @Data
 @NoArgsConstructor
-public class AttributeRuleChainOutputStrategy implements AttributeOutputStrategy {
+public class AttributesRuleChainOutputStrategy implements AttributesOutputStrategy {
 
     @Override
     public OutputStrategyType getType() {

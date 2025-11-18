@@ -48,10 +48,10 @@ import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessin
 import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.Deduplicate;
 import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.OnEveryMessage;
 import static org.thingsboard.rule.engine.telemetry.settings.AttributesProcessingSettings.WebSocketsOnly;
-import static org.thingsboard.rule.engine.util.TelemetryUtil.filterChangedAttr;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
+import static org.thingsboard.server.dao.util.KvUtils.filterChangedAttr;
 
 @RuleNode(
         type = ComponentType.ACTION,

@@ -25,10 +25,10 @@ public class AttributesOutput implements Output {
     private AttributeScope scope;
     private Integer decimalsByDefault;
 
-    private AttributeOutputStrategy strategy;
+    private AttributesOutputStrategy strategy;
 
     public AttributesOutput() {
-        this.strategy = new AttributeRuleChainOutputStrategy();
+        this.strategy = new AttributesRuleChainOutputStrategy();
     }
 
     @Override

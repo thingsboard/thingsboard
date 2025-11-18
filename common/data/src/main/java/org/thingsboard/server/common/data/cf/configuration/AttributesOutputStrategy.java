@@ -15,23 +15,19 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class AttributeImmediateOutputStrategy implements AttributeOutputStrategy {
-
-    private boolean updateAttributesOnlyOnValueChange;
-
-    private boolean saveAttribute;
-    private boolean sendWsUpdate;
-    private boolean processCfs;
-
-    @Override
-    public OutputStrategyType getType() {
-        return OutputStrategyType.IMMEDIATE;
-    }
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "type"
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = AttributesImmediateOutputStrategy.class, name = "IMMEDIATE"),
+        @JsonSubTypes.Type(value = AttributesRuleChainOutputStrategy.class, name = "RULE_CHAIN"),
+})
+public interface AttributesOutputStrategy extends OutputStrategy {
 }

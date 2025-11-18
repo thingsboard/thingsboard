@@ -37,7 +37,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.AttributeImmediateOutputStrategy;
+import org.thingsboard.server.common.data.cf.configuration.AttributesImmediateOutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.OutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
@@ -79,12 +79,12 @@ import java.util.concurrent.ExecutionException;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.rule.engine.util.TelemetryUtil.filterChangedAttr;
-import static org.thingsboard.rule.engine.util.TelemetryUtil.toTsKvEntryList;
 import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.dao.util.KvUtils.filterChangedAttr;
+import static org.thingsboard.server.dao.util.KvUtils.toTsKvEntryList;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultAttributeEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
@@ -379,7 +379,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     }
 
     private void saveAttributes(TenantId tenantId, EntityId entityId, JsonElement jsonResult, OutputStrategy outputStrategy, AttributeScope scope, List<CalculatedFieldId> cfIds, SettableFuture<Void> future) {
-        if (!(outputStrategy instanceof AttributeImmediateOutputStrategy attOutputStrategy)) {
+        if (!(outputStrategy instanceof AttributesImmediateOutputStrategy attOutputStrategy)) {
             future.setException(new IllegalArgumentException("Only AttributeImmediateOutputStrategy is supported."));
         } else {
             AttributesSaveRequest.Strategy strategy = new Strategy(attOutputStrategy.isSaveAttribute(), attOutputStrategy.isSendWsUpdate(), attOutputStrategy.isProcessCfs());
@@ -413,7 +413,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                                         List<AttributeKvEntry> entries,
                                         AttributesSaveRequest.Strategy strategy,
                                         SettableFuture<Void> future) {
-        tsSubService.saveAttributesInternal(AttributesSaveRequest.builder()
+        tsSubService.saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(entityId)
                 .scope(scope)
@@ -452,7 +452,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         if (cfIds != null && !cfIds.isEmpty()) {
             builder.previousCalculatedFieldIds(cfIds);
         }
-        tsSubService.saveTimeseriesInternal(builder.build());
+        tsSubService.saveTimeseries(builder.build());
     }
 
 }
