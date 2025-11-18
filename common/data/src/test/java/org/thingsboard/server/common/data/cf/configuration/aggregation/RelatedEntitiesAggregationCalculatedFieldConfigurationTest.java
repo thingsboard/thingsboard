@@ -19,8 +19,8 @@ import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
@@ -107,7 +107,7 @@ public class RelatedEntitiesAggregationCalculatedFieldConfigurationTest {
         metric.setInput(new AggKeyInput("unknown"));
         cfg.setMetrics(Map.of("m", metric));
 
-        cfg.setOutput(new Output());
+        cfg.setOutput(new TimeSeriesOutput());
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
