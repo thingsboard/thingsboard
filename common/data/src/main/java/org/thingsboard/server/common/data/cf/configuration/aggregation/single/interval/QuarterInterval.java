@@ -36,14 +36,13 @@ public class QuarterInterval extends BaseAggInterval {
     }
 
     @Override
-    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+    protected ZonedDateTime alignToIntervalStart(ZonedDateTime reference) {
         int month = reference.getMonthValue();
         int quarterStartMonth = ((month - 1) / 3) * 3 + 1; // 1, 4, 7, 10
-        ZonedDateTime base = ZonedDateTime.of(
+        return ZonedDateTime.of(
                 LocalDate.of(reference.getYear(), quarterStartMonth, 1),
                 LocalTime.MIDNIGHT,
                 reference.getZone());
-        return next ? base.plusMonths(3) : base;
     }
 
     @Override

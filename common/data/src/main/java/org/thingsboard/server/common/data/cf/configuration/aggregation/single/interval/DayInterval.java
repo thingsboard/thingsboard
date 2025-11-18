@@ -35,9 +35,8 @@ public class DayInterval extends BaseAggInterval {
     }
 
     @Override
-    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
-        ZonedDateTime base = reference.truncatedTo(ChronoUnit.DAYS);
-        return next ? base.plusDays(1) : base;
+    protected ZonedDateTime alignToIntervalStart(ZonedDateTime reference) {
+        return reference.truncatedTo(ChronoUnit.DAYS);
     }
 
     @Override

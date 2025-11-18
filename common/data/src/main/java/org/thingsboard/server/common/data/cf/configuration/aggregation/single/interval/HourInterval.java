@@ -37,9 +37,8 @@ public class HourInterval extends BaseAggInterval {
     }
 
     @Override
-    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
-        ZonedDateTime base = reference.truncatedTo(ChronoUnit.HOURS);
-        return next ? base.plusHours(1) : base;
+    protected ZonedDateTime alignToIntervalStart(ZonedDateTime reference) {
+        return reference.truncatedTo(ChronoUnit.HOURS);
     }
 
     @Override

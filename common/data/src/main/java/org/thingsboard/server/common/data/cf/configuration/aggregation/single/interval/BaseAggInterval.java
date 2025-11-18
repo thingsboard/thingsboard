@@ -81,7 +81,12 @@ public abstract class BaseAggInterval implements AggInterval {
         return actualEnd.toInstant().toEpochMilli();
     }
 
-    protected abstract ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next);
+    protected abstract ZonedDateTime alignToIntervalStart(ZonedDateTime reference);
+
+    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
+        ZonedDateTime base = alignToIntervalStart(reference);
+        return next ? getNextIntervalStart(base) : base;
+    }
 
     @Override
     public void validate() {

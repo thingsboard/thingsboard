@@ -35,9 +35,8 @@ public class MonthInterval extends BaseAggInterval {
     }
 
     @Override
-    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
-        ZonedDateTime base = reference.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
-        return next ? base.plusMonths(1) : base;
+    protected ZonedDateTime alignToIntervalStart(ZonedDateTime reference) {
+        return reference.withDayOfMonth(1).truncatedTo(ChronoUnit.DAYS);
     }
 
     @Override

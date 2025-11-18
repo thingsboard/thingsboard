@@ -37,10 +37,8 @@ public class WeekInterval extends BaseAggInterval {
     }
 
     @Override
-    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
-        ZonedDateTime startOfWeekDate = reference.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                .truncatedTo(ChronoUnit.DAYS);
-        return next ? startOfWeekDate.plusWeeks(1) : startOfWeekDate;
+    protected ZonedDateTime alignToIntervalStart(ZonedDateTime reference) {
+        return reference.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).truncatedTo(ChronoUnit.DAYS);
     }
 
     @Override

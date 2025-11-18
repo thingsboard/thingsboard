@@ -36,12 +36,11 @@ public class YearInterval extends BaseAggInterval {
     }
 
     @Override
-    protected ZonedDateTime getAlignedBoundary(ZonedDateTime reference, boolean next) {
-        ZonedDateTime base = ZonedDateTime.of(
+    protected ZonedDateTime alignToIntervalStart(ZonedDateTime reference) {
+        return ZonedDateTime.of(
                 LocalDate.of(reference.getYear(), 1, 1),
                 LocalTime.MIDNIGHT,
                 reference.getZone());
-        return next ? base.plusYears(1) : base;
     }
 
     @Override
