@@ -32,8 +32,8 @@ import {
   CalculatedFieldEntityAggregationConfiguration,
   CalculatedFieldOutput,
   CalculatedFieldType,
+  defaultCalculatedFieldOutput,
   notEmptyObjectValidator,
-  OutputType
 } from '@shared/models/calculated-field.models';
 import { filter, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -102,9 +102,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     watermark: this.fb.group({
       duration: [HOUR/SECOND, Validators.required],
     }),
-    output: this.fb.control<CalculatedFieldOutput>({
-      type: OutputType.Timeseries,
-    }),
+    output: this.fb.control<CalculatedFieldOutput>(defaultCalculatedFieldOutput),
   });
 
   arguments$ = this.entityAggregationConfiguration.get('arguments').valueChanges.pipe(
