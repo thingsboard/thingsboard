@@ -31,8 +31,8 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.AttributesOutput;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
@@ -235,8 +235,7 @@ public class PropagationCalculatedFieldStateTest {
         config.setArguments(Map.of(TEMPERATURE_ARGUMENT_NAME, temperatureArg));
         config.setExpression("{" + TEST_RESULT_EXPRESSION_KEY + ": " + TEMPERATURE_ARGUMENT_NAME + " * 2}");
 
-        Output output = new Output();
-        output.setType(OutputType.ATTRIBUTES);
+        AttributesOutput output = new AttributesOutput();
         output.setScope(AttributeScope.SERVER_SCOPE);
         config.setOutput(output);
 

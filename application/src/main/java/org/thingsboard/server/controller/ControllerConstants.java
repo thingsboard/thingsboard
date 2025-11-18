@@ -64,6 +64,7 @@ public class ControllerConstants {
     protected static final String WIDGET_TYPE_ID_PARAM_DESCRIPTION = "A string value representing the widget type id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String VC_REQUEST_ID_PARAM_DESCRIPTION = "A string value representing the version control request id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String RESOURCE_ID_PARAM_DESCRIPTION = "A string value representing the resource id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
+    protected static final String API_KEY_ID_PARAM_DESCRIPTION = "A string value representing the api key id. For example, '784f394c-42b6-435a-983c-b7beff2784f9'";
     protected static final String SYSTEM_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'SYS_ADMIN' authority.";
     protected static final String SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'SYS_ADMIN' or 'TENANT_ADMIN' authority.";
     protected static final String TENANT_AUTHORITY_PARAGRAPH = "\n\nAvailable for users with 'TENANT_ADMIN' authority.";
@@ -91,6 +92,7 @@ public class ControllerConstants {
     protected static final String RULE_CHAIN_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the rule chain name.";
     protected static final String DEVICE_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the device profile name.";
     protected static final String AI_MODEL_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the AI model name, provider and model ID.";
+    protected static final String API_KEY_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the description.";
 
     protected static final String ASSET_PROFILE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the asset profile name.";
     protected static final String CUSTOMER_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the customer title.";

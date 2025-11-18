@@ -109,6 +109,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -909,6 +910,11 @@ public class DefaultTbContext implements TbContext {
     @Override
     public JobManager getJobManager() {
         return mainCtx.getJobManager();
+    }
+
+    @Override
+    public ApiKeyService getApiKeyService() {
+        return mainCtx.getApiKeyService();
     }
 
     @Override

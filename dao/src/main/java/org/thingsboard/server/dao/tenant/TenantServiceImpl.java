@@ -174,7 +174,7 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         publishEvictEvent(new TenantEvictEvent(tenantId, true));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(tenantId).entity(tenant).build());
 
-        cleanUpService.removeTenantEntities(tenantId, // don't forget to implement deleteEntity from EntityDaoService when adding entity type to this list
+        cleanUpService.removeTenantEntities(tenantId, // remember to implement deleteEntity from EntityDaoService when adding an entity type to this list
                 EntityType.ADMIN_SETTINGS, EntityType.JOB, EntityType.ENTITY_VIEW, EntityType.WIDGETS_BUNDLE, EntityType.WIDGET_TYPE,
                 EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE, EntityType.DEVICE_PROFILE,
                 EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_CHAIN, EntityType.API_USAGE_STATE,
