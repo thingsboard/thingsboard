@@ -164,14 +164,12 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.changePassword = this.fb.group({
       currentPassword: [''],
       newPassword: ['', Validators.required],
-      newPassword2: ['', this.samePasswordValidation(false, 'newPassword')]
-    });
-
-    this.changePassword.get('newPassword').valueChanges.subscribe(() => {
-      const newPassword2 = this.changePassword.get('newPassword2');
-      if(newPassword2.touched) {
-        newPassword2.updateValueAndValidity();
-      }
+      newPassword2: ['']
+    }, {
+      validators: [
+        this.samePasswordValidator(true, 'currentPassword', 'newPassword'),
+        this.samePasswordValidator(false, 'newPassword', 'newPassword2')
+      ]
     });
   }
 
@@ -180,7 +178,6 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
       this.passwordPolicy = policy;
       this.changePassword.get('newPassword').setValidators([
         this.passwordStrengthValidator(),
-        this.samePasswordValidation(true, 'currentPassword'),
         Validators.required
       ]);
       this.changePassword.get('newPassword').updateValueAndValidity({emitEvent: false});
@@ -228,16 +225,37 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     };
   }
 
-  private samePasswordValidation(isSame: boolean, key: string): ValidatorFn {
+  private samePasswordValidator(isSame: boolean, field1Key: string, field2Key: string): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      if (!control.parent) return null;
-      const keyValue = control.parent.get(key)?.value;
-      if (!value || !keyValue) return null;
-      if (isSame) {
-        return value === keyValue ? {samePassword: true} : null;
+      const field1 = control.get(field1Key);
+      const field2 = control.get(field2Key);
+
+      if (!field1 || !field2 || !field1.value || !field2.value) {
+        return null;
       }
-      return value !== keyValue ? {differencePassword: true} : null;
+
+      let validationFailed: boolean;
+      let error: ValidationErrors;
+
+      if (isSame) {
+        validationFailed = field1.value === field2.value;
+        error = { samePassword: true };
+      } else {
+        validationFailed = field1.value !== field2.value;
+        error = { differencePassword: true };
+      }
+
+      if (validationFailed) {
+        field2.setErrors({...field2.errors, ...error});
+        return error;
+      } else {
+        if (field2.hasError(Object.keys(error)[0])) {
+          const errors = {...field2.errors};
+          delete errors[Object.keys(error)[0]];
+          field2.setErrors(Object.keys(errors).length ? errors : null);
+        }
+      }
+      return null;
     };
   }
 
