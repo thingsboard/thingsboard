@@ -17,7 +17,8 @@
 import {
   DateEntityTableColumn,
   EntityTableColumn,
-  EntityTableConfig
+  EntityTableConfig,
+  CellActionDescriptor
 } from '@home/models/entity/entities-table-config.models';
 import { EntityType, EntityTypeResource, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { Direction } from '@shared/models/page/sort-order';
@@ -32,14 +33,13 @@ import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { map } from 'rxjs/operators';
 import { UserId } from '@shared/models/id/user-id';
-import { AddApiKeyDialogComponent } from '@home/components/api-key/components/dialog/add-api-key-dialog.component';
+import { AddApiKeyDialogComponent } from '@home/components/api-key/add-api-key-dialog.component';
+import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/edit-api-key-description-panel.component';
+import { ApiKeysTableDialogData } from '@home/components/api-key/api-keys-table-dialog.component';
 import {
-  EditApiKeyDescriptionPanelComponent
-} from '@home/components/api-key/components/dialog/edit-api-key-description-panel.component';
-import { ApiKeysTableDialogData } from '@home/components/api-key/components/dialog/api-keys-table-dialog.component';
-import {
-  ApiKeyGeneratedDialogComponent, ApiKeyGeneratedDialogData
-} from '@home/components/api-key/components/dialog/api-key-generated-dialog.component';
+  ApiKeyGeneratedDialogComponent,
+  ApiKeyGeneratedDialogData
+} from '@home/components/api-key/api-key-generated-dialog.component';
 
 @Injectable()
 export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
@@ -65,6 +65,7 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
     this.entityTranslations = entityTypeTranslations.get(EntityType.API_KEY);
     this.entityResources = {} as EntityTypeResource<ApiKeyInfo>;
     this.tableTitle = this.translate.instant('api-key.api-keys');
+    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
     this.entitiesFetchFunction = pageLink => this.apiKeyService.getUserApiKeys(this.userId.id, pageLink);
     this.addEntity = () => this.addApiKey();
@@ -75,18 +76,7 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
     this.deleteEntitiesContent = () => this.translate.instant('api-key.delete-api-keys-text');
     this.deleteEntity = id => this.apiKeyService.deleteApiKey(id.id);
 
-    this.cellActionDescriptors = [{
-      name: '',
-      nameFunction: (entity) =>
-        this.translate.instant(entity.enabled ? 'api-key.disable' : 'api-key.enable'),
-      icon: 'mdi:toggle-switch',
-      isEnabled: (entity) => !entity.expired,
-      iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
-      onAction: ($event, entity) => this.toggleEnableMode($event, entity)
-    }];
-
-    this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
-
+    this.cellActionDescriptors = this.configureCellActions();
     this.columns.push(
       new DateEntityTableColumn<ApiKeyInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<ApiKeyInfo>('description', 'api-key.description', '100%',
@@ -106,6 +96,21 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
           this.translate.instant('api-key.expiration-time-never'),
         ),
     );
+  }
+
+  private configureCellActions(): Array<CellActionDescriptor<ApiKeyInfo>> {
+    const actions: Array<CellActionDescriptor<ApiKeyInfo>> = [];
+    actions.push(
+      {
+        name: '',
+        nameFunction: (entity) => this.translate.instant(entity.enabled ? 'api-key.disable' : 'api-key.enable'),
+        icon: 'mdi:toggle-switch',
+        isEnabled: (entity) => !entity.expired,
+        iconFunction: (entity) => entity.enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+        onAction: ($event, entity) => this.toggleEnableMode($event, entity)
+      }
+    )
+    return actions;
   }
 
   private addApiKey(): Observable<ApiKey> {
@@ -136,7 +141,6 @@ export class ApiKeysTableConfig extends EntityTableConfig<ApiKeyInfo> {
         this.updateData();
       });
   }
-
 
   private toggleEnableMode($event: Event, entity: ApiKeyInfo): void {
     if ($event) {

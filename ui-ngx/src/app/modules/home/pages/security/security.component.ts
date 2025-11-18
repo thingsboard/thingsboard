@@ -53,8 +53,9 @@ import { AuthService } from '@core/auth/auth.service';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
 import {
-  ApiKeysTableDialogComponent, ApiKeysTableDialogData
-} from '@home/components/api-key/components/dialog/api-keys-table-dialog.component';
+  ApiKeysTableDialogComponent,
+  ApiKeysTableDialogData
+} from '@home/components/api-key/api-keys-table-dialog.component';
 
 @Component({
   selector: 'tb-security',

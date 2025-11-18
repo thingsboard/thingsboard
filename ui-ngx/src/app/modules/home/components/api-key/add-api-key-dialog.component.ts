@@ -25,7 +25,7 @@ import { FormBuilder, Validators } from '@angular/forms';
 import { deepTrim } from '@core/utils';
 import { ApiKeyService } from '@core/http/api-key.service';
 import { ApiKeyInfo } from '@shared/models/api-key.models';
-import { ApiKeysTableDialogData } from '@home/components/api-key/components/dialog/api-keys-table-dialog.component';
+import { ApiKeysTableDialogData } from '@home/components/api-key/api-keys-table-dialog.component';
 import { DAY } from '@shared/models/time/time.models';
 
 @Component({

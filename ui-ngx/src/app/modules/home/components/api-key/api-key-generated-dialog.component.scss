@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../src/scss/constants';
+
 :host{
   display: grid;
   width: 500px;
@@ -34,8 +36,10 @@
         pre[class*=language-] {
           margin: 0;
           background: #F3F6FA;
-          border-color: #305680;
+          border-color: $tb-primary-color;
           padding-right: 38px;
+          overflow: hidden;
+          overflow-x: auto;
           padding-bottom: 4px;
           min-height: 42px;
           scrollbar-width: thin;
@@ -49,7 +53,7 @@
       button.clipboard-btn {
         right: -2px;
         p {
-          color: #305680;
+          color: $tb-primary-color;
         }
         p, div {
           background-color: #F3F6FA;
@@ -64,7 +68,7 @@
             display: block;
             width: 18px;
             height: 18px;
-            background: #305680;
+            background: $tb-primary-color;
             mask-image: url(/assets/copy-code-icon.svg);
             -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;

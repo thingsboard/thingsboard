@@ -198,16 +198,10 @@ import { CalculatedFieldsModule } from '@home/components/calculated-fields/calcu
 import { AlarmRuleModule } from "@home/components/alarm-rules/alarm-rule.module";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
 import { ApiKeysTableComponent } from '@home/components/api-key/api-keys-table.component';
-import { AddApiKeyDialogComponent } from '@home/components/api-key/components/dialog/add-api-key-dialog.component';
-import {
-  EditApiKeyDescriptionPanelComponent
-} from '@home/components/api-key/components/dialog/edit-api-key-description-panel.component';
-import {
-  ApiKeyGeneratedDialogComponent
-} from '@home/components/api-key/components/dialog/api-key-generated-dialog.component';
-import {
-  ApiKeysTableDialogComponent
-} from '@home/components/api-key/components/dialog/api-keys-table-dialog.component';
+import { AddApiKeyDialogComponent } from '@home/components/api-key/add-api-key-dialog.component';
+import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/edit-api-key-description-panel.component';
+import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key-generated-dialog.component';
+import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 
 @NgModule({
   declarations:
