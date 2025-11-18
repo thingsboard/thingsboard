@@ -20,9 +20,16 @@
     <div class="tb-form-panel-title" translate>widgets.input-widgets.general-settings</div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" translate>widgets.input-widgets.widget-title</div>
-      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="widgetTitle" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
+      <tb-string-pattern-autocomplete class="flex-1"
+                                      brackets="curly"
+                                      subscriptSizing="dynamic"
+                                      predefinedValuesButton="true"
+                                      appearance="outline"
+                                      label="{{ 'widgets.input-widgets.widget-title' | translate }}"
+                                      [predefinedValues]="predefinedValues"
+                                      placeholderText="{{ 'widget-config.set' | translate }}"
+                                      formControlName="widgetTitle"
+      ></tb-string-pattern-autocomplete>
     </div>
   </div>
   <div class="tb-form-panel">
