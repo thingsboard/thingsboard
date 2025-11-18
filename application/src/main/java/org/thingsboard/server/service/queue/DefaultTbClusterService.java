@@ -611,7 +611,8 @@ public class DefaultTbClusterService implements TbClusterService {
                 EntityType.ASSET_PROFILE,
                 EntityType.JOB,
                 EntityType.TB_RESOURCE,
-                EntityType.CUSTOMER)
+                EntityType.CUSTOMER,
+                EntityType.USER)
                 || (entityType == EntityType.ASSET && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
                 || (entityType == EntityType.DEVICE && msg.getEvent() == ComponentLifecycleEvent.UPDATED)
         ) {
@@ -626,11 +627,14 @@ public class DefaultTbClusterService implements TbClusterService {
             // No need to push notifications twice
             tbRuleEngineServices.removeAll(tbCoreServices);
         }
-        for (String serviceId : tbRuleEngineServices) {
-            TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
-            ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
-            toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
-            toRuleEngineNfs.incrementAndGet();
+        boolean toRuleEngine = entityType != EntityType.USER;
+        if (toRuleEngine) {
+            for (String serviceId : tbRuleEngineServices) {
+                TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_RULE_ENGINE, serviceId);
+                ToRuleEngineNotificationMsg toRuleEngineMsg = ToRuleEngineNotificationMsg.newBuilder().setComponentLifecycle(componentLifecycleMsgProto).build();
+                toRuleEngineProducer.send(tpi, new TbProtoQueueMsg<>(msg.getEntityId().getId(), toRuleEngineMsg), null);
+                toRuleEngineNfs.incrementAndGet();
+            }
         }
     }
 
