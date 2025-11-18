@@ -22,7 +22,6 @@ import {
   Inject,
   InjectionToken,
   Input,
-  OnDestroy,
   OnInit,
   Optional,
   TemplateRef,
@@ -51,7 +50,6 @@ export interface AlarmRuleFilterConfigData {
   initialAlarmRuleFilterConfig?: AlarmRuleFilterConfig;
 }
 
-// @dynamic
 @Component({
   selector: 'tb-alarm-rule-filter-config',
   templateUrl: './alarm-rule-filter-config.component.html',
@@ -64,7 +62,7 @@ export interface AlarmRuleFilterConfigData {
     }
   ]
 })
-export class AlarmRuleFilterConfigComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAccessor {
 
   @ViewChild('alarmRuleFilterPanel')
   alarmRuleFilterPanel: TemplateRef<any>;
@@ -150,9 +148,6 @@ export class AlarmRuleFilterConfigComponent implements OnInit, OnDestroy, Contro
     if (this.panelMode) {
       this.updateAlarmRuleConfigForm(this.alarmRuleFilterConfig);
     }
-  }
-
-  ngOnDestroy(): void {
   }
 
   registerOnChange(fn: any): void {

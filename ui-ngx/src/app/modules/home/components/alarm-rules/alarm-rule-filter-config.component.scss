@@ -37,14 +37,13 @@
 }
 
 ::ng-deep {
-  .tb-form-panel {
+
+  .tb-alarm-filter-config-component {
     max-width: 100%;
     width: 600px;
     min-width: 100%;
-  }
-
-  .tb-alarm-filter-config-component {
     flex: 1;
+
 
     tb-entity-subtype-list {
       flex: 1;

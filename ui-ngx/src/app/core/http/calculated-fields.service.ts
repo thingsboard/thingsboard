@@ -15,7 +15,12 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
+import {
+  createDefaultHttpOptions,
+  defaultHttpOptionsFromConfig,
+  defaultHttpOptionsFromParams,
+  RequestConfig
+} from './http-utils';
 import { Observable } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
 import { PageData } from '@shared/models/page/page-data';
@@ -52,11 +57,11 @@ export class CalculatedFieldsService {
   }
 
   public getCalculatedFieldsFilter(pageLink: PageLink, query: CalculatedFieldsQuery, config?: RequestConfig): Observable<PageData<CalculatedField>> {
-    return this.http.get<PageData<CalculatedField>>(`/api/calculatedFields${pageLink.toQuery()}`, createDefaultHttpOptions(query, config));
+    return this.http.get<PageData<CalculatedField>>(`/api/calculatedFields${pageLink.toQuery()}`, defaultHttpOptionsFromParams(query, config));
   }
 
   public getCalculatedFields({ entityType, id }: EntityId, pageLink: PageLink, type?: CalculatedFieldType, config?: RequestConfig): Observable<PageData<CalculatedField>> {
-    return this.http.get<PageData<CalculatedField>>(`/api/${entityType}/${id}/calculatedFields${pageLink.toQuery()}`, createDefaultHttpOptions(type ? {type} : null, config));
+    return this.http.get<PageData<CalculatedField>>(`/api/${entityType}/${id}/calculatedFields${pageLink.toQuery()}`, defaultHttpOptionsFromParams({type} , config));
   }
 
   public testScript(inputParams: CalculatedFieldTestScriptInputParams, config?: RequestConfig): Observable<EntityTestScriptResult> {
@@ -68,6 +73,6 @@ export class CalculatedFieldsService {
   }
 
   public getAlarmRuleNames(pageLink: PageLink, type: CalculatedFieldType, config?: RequestConfig): Observable<PageData<string>> {
-    return this.http.get<PageData<string>>(`/api/calculatedFields/names${pageLink.toQuery()}`, createDefaultHttpOptions({type}, config));
+    return this.http.get<PageData<string>>(`/api/calculatedFields/names${pageLink.toQuery()}`, defaultHttpOptionsFromParams({type}, config));
   }
 }

@@ -54,18 +54,14 @@
         </div>
         @if (!data.entityId) {
           <div class="flex flex-col gap-4" formGroupName="entityId">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <mat-label translate>alarm-rule.target-entity-type</mat-label>
-              <mat-select formControlName="entityType">
-                @for (type of alarmRuleEntityTypeList; track type) {
-                  <mat-option [value]="type">{{ entityTypeTranslations.get(type).type | translate }}</mat-option>
-                }
-              </mat-select>
-
-              @if (fieldFormGroup.get('entityId.entityType').hasError('required')) {
-                <mat-error>{{ 'alarm-rule.entity-type-required' | translate }}</mat-error>
-              }
-            </mat-form-field>
+            <tb-entity-type-select appearance="outline"
+                                   subscriptSizing="dynamic"
+                                   showLabel
+                                   label="{{ 'alarm-rule.target-entity-type' | translate }}"
+                                   [filterAllowedEntityTypes]="false"
+                                   [allowedEntityTypes]="alarmRuleEntityTypeList"
+                                   formControlName="entityType">
+            </tb-entity-type-select>
             @if (fieldFormGroup.get('entityId.entityType').value) {
               <tb-entity-autocomplete
                 formControlName="id"
