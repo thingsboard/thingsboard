@@ -20,10 +20,16 @@
     <table mat-table [dataSource]="dataSource" class="overflow-hidden bg-transparent" matSort
            [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
       <ng-container [matColumnDef]="'name'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="!w-1/5 xs:!w-full sm:!w-1/2">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="xs:!w-full sm:!w-1/2" [class]="{
+            '!w-1/5': !simpleMode,
+            '!w-1/2': simpleMode,
+        }">
           <div tbTruncateWithTooltip>{{ 'calculated-fields.metrics.metric-name' | translate }}</div>
         </mat-header-cell>
-        <mat-cell *matCellDef="let metric" class="argument-name-cell w-1/5 xs:w-full sm:w-1/2">
+        <mat-cell *matCellDef="let metric" class="argument-name-cell xs:w-full sm:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
           <div class="flex items-center">
             <div tbTruncateWithTooltip class="flex-1">{{ metric.name }}</div>
             <tb-copy-button class="copy-argument-name"
@@ -35,10 +41,16 @@
         </mat-cell>
       </ng-container>
       <ng-container [matColumnDef]="'function'">
-        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 xs:hidden lt-md:w-1/2">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="xs:hidden lt-md:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
           {{ 'calculated-fields.metrics.aggregation' | translate }}
         </mat-header-cell>
-        <mat-cell *matCellDef="let metric" class="w-1/5 xs:hidden lt-md:w-1/2">
+        <mat-cell *matCellDef="let metric" class="xs:hidden lt-md:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
           <div tbTruncateWithTooltip>{{ AggFunctionTranslations.get(metric.function) | translate }}</div>
         </mat-cell>
       </ng-container>
