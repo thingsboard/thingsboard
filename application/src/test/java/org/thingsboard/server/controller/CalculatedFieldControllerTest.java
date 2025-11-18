@@ -30,12 +30,11 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
@@ -362,13 +361,10 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         var zoneGroupConfiguration = new ZoneGroupConfiguration("perimeter", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
         zoneGroupConfiguration.setRefDynamicSourceConfiguration(refDynamicSourceConfiguration);
 
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-
         config.setEntityCoordinates(new EntityCoordinates("latitide", "longitude"));
         config.setZoneGroups(Map.of("safeArea", zoneGroupConfiguration));
         config.setScheduledUpdateEnabled(false);
-        config.setOutput(output);
+        config.setOutput(new TimeSeriesOutput());
 
         return config;
     }
@@ -386,10 +382,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         config.setApplyExpressionToResolvedArguments(false);
         config.setExpression(null);
-
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        config.setOutput(output);
+        config.setOutput(new TimeSeriesOutput());
 
         Argument arg = new Argument();
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
@@ -413,9 +406,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         config.setWatermark(new Watermark(TimeUnit.DAYS.toSeconds(1)));
         config.setInterval(new HourInterval("Europe/Kiev", TimeUnit.MINUTES.toSeconds(15)));
 
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        config.setOutput(output);
+        config.setOutput(new TimeSeriesOutput());
 
         return config;
     }
@@ -432,9 +423,8 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         config.setExpression("T - (100 - H) / 5");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("output");
-        output.setType(OutputType.TIME_SERIES);
 
         config.setOutput(output);
 

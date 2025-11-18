@@ -13,30 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.security.auth.jwt.extractor;
+package org.thingsboard.server.service.security.auth.extractor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationServiceException;
-import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
 
-@Component(value="jwtQueryTokenExtractor")
-public class JwtQueryTokenExtractor implements TokenExtractor {
+public abstract class AbstractHeaderTokenExtractor implements TokenExtractor {
+
+    private final String headerPrefix;
+
+    protected AbstractHeaderTokenExtractor(String headerPrefix) {
+        this.headerPrefix = headerPrefix;
+    }
 
     @Override
     public String extract(HttpServletRequest request) {
-        String token = null;
-        if (request.getParameterMap() != null && !request.getParameterMap().isEmpty()) {
-            String[] tokenParamValue = request.getParameterMap().get(ThingsboardSecurityConfiguration.JWT_TOKEN_QUERY_PARAM);
-            if (tokenParamValue != null && tokenParamValue.length == 1) {
-                token = tokenParamValue[0];
+        String header = request.getHeader(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER);
+        if (StringUtils.isBlank(header)) {
+            header = request.getHeader(ThingsboardSecurityConfiguration.AUTHORIZATION_HEADER_V2);
+            if (StringUtils.isBlank(header)) {
+                throw new AuthenticationServiceException("Authorization header cannot be blank!");
             }
         }
-        if (StringUtils.isBlank(token)) {
-            throw new AuthenticationServiceException("Authorization query parameter cannot be blank!");
+
+        if (header.length() < headerPrefix.length()) {
+            throw new AuthenticationServiceException("Invalid authorization header size.");
         }
 
-        return token;
+        return header.substring(headerPrefix.length());
     }
+
 }

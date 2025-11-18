@@ -21,8 +21,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
@@ -74,7 +74,7 @@ public class EntityAggregationCalculatedFieldConfigurationTest {
         cfg.setMetrics(Map.of("m", metric));
 
         cfg.setInterval(new HourInterval("Europe/Kiev", null));
-        cfg.setOutput(new Output());
+        cfg.setOutput(new TimeSeriesOutput());
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
@@ -92,7 +92,7 @@ public class EntityAggregationCalculatedFieldConfigurationTest {
         cfg.setMetrics(Map.of("m", metric));
 
         cfg.setInterval(new HourInterval("Europe/Kiev", null));
-        cfg.setOutput(new Output());
+        cfg.setOutput(new TimeSeriesOutput());
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)
@@ -106,7 +106,7 @@ public class EntityAggregationCalculatedFieldConfigurationTest {
         cfg.setArguments(Map.of("k", validArgument(ArgumentType.TS_LATEST)));
         cfg.setMetrics(Map.of("m", validMetric()));
         cfg.setInterval(null);
-        cfg.setOutput(new Output());
+        cfg.setOutput(new TimeSeriesOutput());
 
         assertThatThrownBy(cfg::validate)
                 .isInstanceOf(IllegalArgumentException.class)

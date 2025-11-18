@@ -78,6 +78,25 @@ ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (ent
 
 -- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
 
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE START
+
+UPDATE calculated_field
+SET configuration = jsonb_set(
+        configuration::jsonb,
+        '{output}',
+        (configuration::jsonb -> 'output')
+            || jsonb_build_object(
+                'strategy',
+                jsonb_build_object(
+                        'type', 'RULE_CHAIN'
+                )
+               ),
+        false
+                    )
+WHERE (configuration::jsonb -> 'output' -> 'strategy') IS NULL;
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE END
+
 -- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
 
 DROP TABLE IF EXISTS calculated_field_link;

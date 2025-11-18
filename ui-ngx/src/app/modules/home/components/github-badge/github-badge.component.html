@@ -17,10 +17,19 @@
 -->
 @if (githubStar > 0) {
   <section class="flex size-full items-center gap-4">
-    <a mat-stroked-button href="https://github.com/thingsboard/thingsboard" target="_blank">
-      <tb-icon class="tb-mat-20" matButtonIcon>mdi:github</tb-icon>
-      <div class="button-label flex gap-1">GitHub<tb-icon class="tb-mat-14 !mr-0">star</tb-icon>{{ githubStar | number  }}</div>
-    </a>
+    <div class="group relative">
+      <a mat-stroked-button href="https://github.com/thingsboard/thingsboard" target="_blank">
+        <tb-icon class="tb-mat-20" matButtonIcon>mdi:github</tb-icon>
+        <div class="button-label flex items-center gap-2">Star<mat-divider vertical class="h-full"></mat-divider>{{ githubStar | number }}</div>
+      </a>
+      <button
+        mat-icon-button
+        (click)="hideGithubStar($event)"
+        type="button"
+        class="tb-mat-16 absolute -right-2 -top-2 opacity-0 transition-opacity duration-150 ease-in-out group-hover:opacity-100">
+        <mat-icon class="scale-75">close</mat-icon>
+      </button>
+    </div>
     <mat-divider vertical class="h-full"></mat-divider>
   </section>
 }

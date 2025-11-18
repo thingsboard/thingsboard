@@ -206,16 +206,63 @@ export type CalculatedFieldOutput =
 export interface CalculatedFieldOutputAttribute {
   type: OutputType.Attribute,
   scope: AttributeScope;
+  strategy: AttributeOutputStrategy;
 }
 
 export interface CalculatedFieldOutputTimeSeries {
   type: OutputType.Timeseries;
+  strategy: TimeSeriesOutputStrategy;
 }
 
 export type CalculatedFieldSimpleOutput = CalculatedFieldOutput & {
   name: string;
   decimalsByDefault?: number;
 }
+
+export type AttributeOutputStrategy =
+  | AttributeImmediateOutputStrategy
+  | AttributeRuleChainOutputStrategy;
+
+export interface AttributeImmediateOutputStrategy {
+  type: OutputStrategyType.IMMEDIATE;
+  updateAttributesOnlyOnValueChange: boolean;
+  saveAttribute: boolean;
+  sendWsUpdate: boolean;
+  processCfs: boolean;
+}
+
+export interface AttributeRuleChainOutputStrategy {
+  type: OutputStrategyType.RULE_CHAIN;
+}
+
+export type TimeSeriesOutputStrategy =
+  | TimeSeriesRuleChainOutputStrategy
+  | TimeSeriesImmediateOutputStrategy;
+
+export interface TimeSeriesRuleChainOutputStrategy {
+  type: OutputStrategyType.IMMEDIATE;
+  ttl: number;
+  saveTimeSeries: boolean;
+  saveLatest: boolean;
+  sendWsUpdate: boolean;
+  processCfs: boolean;
+}
+
+export interface TimeSeriesImmediateOutputStrategy {
+  type: OutputStrategyType.RULE_CHAIN;
+}
+
+export enum  OutputStrategyType {
+  IMMEDIATE = 'IMMEDIATE',
+  RULE_CHAIN = 'RULE_CHAIN'
+}
+
+export const OutputStrategyTypeTranslations = new Map<OutputStrategyType, string>(
+  [
+    [OutputStrategyType.IMMEDIATE, 'calculated-fields.output-strategy.process-right-away'],
+    [OutputStrategyType.RULE_CHAIN, 'calculated-fields.output-strategy.process-rule-chains'],
+  ]
+)
 
 export enum ArgumentEntityType {
   Current = 'CURRENT',
@@ -510,6 +557,23 @@ export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = Calculated
 export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> | CalculatedFieldLatestTelemetryArgumentValue<ValueType> | CalculatedFieldRollingTelemetryArgumentValue<ValueType>;
 
 export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
+
+export const defaultCalculatedFieldOutput: CalculatedFieldOutputTimeSeries = {
+  type: OutputType.Timeseries,
+  strategy: {
+    type: OutputStrategyType.IMMEDIATE,
+    ttl: 0,
+    saveTimeSeries: true,
+    saveLatest: true,
+    sendWsUpdate: true,
+    processCfs: true
+  }
+}
+
+export const defaultSimpleCalculatedFieldOutput: CalculatedFieldSimpleOutput = {
+  name: '',
+  ...defaultCalculatedFieldOutput
+}
 
 export const CalculatedFieldCtxLatestTelemetryArgumentAutocomplete = {
   meta: 'object',
