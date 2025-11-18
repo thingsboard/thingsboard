@@ -72,6 +72,9 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   entityName: string;
 
   @Input({required: true})
+  ownerId: EntityId;
+
+  @Input({required: true})
   testScript: () => Observable<string>;
 
   propagateConfiguration = this.fb.group({

@@ -123,9 +123,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state != null) {
             state.setCtx(msg.getCtx(), actorCtx);
             state.setPartition(msg.getPartition());
-            if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
-                relatedEntitiesAggState.scheduleReevaluation();
-            }
             states.put(cfId, state);
         } else {
             removeState(cfId);
@@ -136,7 +133,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         log.debug("Processing CF state partition restore msg: {}", msg);
         for (CalculatedFieldState state : states.values()) {
             if (msg.getPartition().equals(state.getPartition())) {
-                state.init();
+                state.init(true);
             }
         }
     }
@@ -451,7 +448,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private void initState(CalculatedFieldState state, CalculatedFieldCtx ctx) {
         state.setCtx(ctx, actorCtx);
-        state.init();
+        state.init(false);
 
         if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isRelationQueryDynamicArguments()) {
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
@@ -500,7 +497,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             } else {
                 if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
                     String errorMsg = ctx.isInitialized() ? state.getReadinessStatus().errorMsg() : "Calculated field state is not initialized!";
-                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null,  errorMsg);
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, errorMsg);
                 }
                 callback.onSuccess();
             }

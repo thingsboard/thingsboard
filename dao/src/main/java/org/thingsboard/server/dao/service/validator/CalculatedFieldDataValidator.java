@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalcula
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.cf.CalculatedFieldDao;
@@ -31,6 +32,7 @@ import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 @Component
@@ -49,6 +51,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         validateSchedulingConfiguration(tenantId, calculatedField);
         validateRelationQuerySourceArguments(tenantId, calculatedField);
         validateAggregationConfiguration(tenantId, calculatedField);
+        validateEntityAggregationConfiguration(tenantId, calculatedField);
     }
 
     @Override
@@ -120,10 +123,24 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         if (!(calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfiguration)) {
             return;
         }
-        long minAllowedDeduplicationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedDeduplicationIntervalInSecForCF);
-        if (aggConfiguration.getDeduplicationIntervalInSec() < minAllowedDeduplicationInterval) {
+        long minDeduplicationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedDeduplicationIntervalInSecForCF);
+        if (aggConfiguration.getDeduplicationIntervalInSec() < minDeduplicationInterval) {
             throw new IllegalArgumentException("Deduplication interval is less than configured " +
-                    "minimum allowed interval in tenant profile: " + minAllowedDeduplicationInterval);
+                    "minimum allowed interval in tenant profile: " + minDeduplicationInterval);
+        }
+    }
+
+    private void validateEntityAggregationConfiguration(TenantId tenantId, CalculatedField calculatedField) {
+        if (!(calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration aggConfiguration)) {
+            return;
+        }
+        long minAggregationIntervalInSec = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedAggregationIntervalInSecForCF);
+        if (minAggregationIntervalInSec <= 0) {
+            return;
+        }
+        if (aggConfiguration.getInterval().getCurrentIntervalDurationMillis() < TimeUnit.SECONDS.toMillis(minAggregationIntervalInSec)) {
+            throw new IllegalArgumentException("Aggregation interval duration is less than configured " +
+                    "minimum allowed aggregation interval in tenant profile: " + minAggregationIntervalInSec + " sec.");
         }
     }
 

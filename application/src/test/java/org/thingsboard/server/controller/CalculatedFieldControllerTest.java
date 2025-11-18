@@ -31,6 +31,11 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.HourInterval;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.Watermark;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -44,6 +49,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -166,6 +172,34 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testSaveEntityAggregationCalculatedField() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        CalculatedField calculatedField = getCalculatedField(testDevice.getId(), CalculatedFieldType.ENTITY_AGGREGATION);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        assertThat(savedCalculatedField).isNotNull();
+        assertThat(savedCalculatedField.getId()).isNotNull();
+        assertThat(savedCalculatedField.getCreatedTime()).isGreaterThan(0);
+        assertThat(savedCalculatedField.getTenantId()).isEqualTo(savedTenant.getId());
+        assertThat(savedCalculatedField.getEntityId()).isEqualTo(calculatedField.getEntityId());
+        assertThat(savedCalculatedField.getType()).isEqualTo(calculatedField.getType());
+        assertThat(savedCalculatedField.getName()).isEqualTo(calculatedField.getName());
+        assertThat(savedCalculatedField.getConfiguration()).isEqualTo(getEntityAggregationCalculatedFieldConfig());
+        assertThat(savedCalculatedField.getVersion()).isEqualTo(1L);
+
+        savedCalculatedField.setName("Test CF");
+
+        CalculatedField updatedCalculatedField = doPost("/api/calculatedField", savedCalculatedField, CalculatedField.class);
+
+        assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
+        assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
+
+        doDelete("/api/calculatedField/" + savedCalculatedField.getId().getId().toString())
+                .andExpect(status().isOk());
+    }
+
+    @Test
     public void testSavePropagationCalculatedFieldWithNullArguments() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
         CalculatedField calculatedField = getCalculatedField(testDevice.getId(), CalculatedFieldType.PROPAGATION, getPropagationCalculatedFieldConfig(null));
@@ -236,6 +270,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
             case SIMPLE -> calculatedField.setConfiguration(getSimpleCalculatedFieldConfig());
             case GEOFENCING -> calculatedField.setConfiguration(getGeofencingCalculatedFieldConfig());
             case PROPAGATION -> calculatedField.setConfiguration(getPropagationCalculatedFieldConfig());
+            case ENTITY_AGGREGATION -> calculatedField.setConfiguration(getEntityAggregationCalculatedFieldConfig());
         }
         calculatedField.setVersion(1L);
         return calculatedField;
@@ -276,6 +311,26 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         Argument arg = new Argument();
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
         config.setArguments(arguments);
+
+        return config;
+    }
+
+    private CalculatedFieldConfiguration getEntityAggregationCalculatedFieldConfig() {
+        var config = new EntityAggregationCalculatedFieldConfiguration();
+
+        Argument energyArgument = new Argument();
+        energyArgument.setRefEntityKey(new ReferencedEntityKey("energy", ArgumentType.TS_LATEST, null));
+        config.setArguments(Map.of("en", energyArgument));
+
+        AggMetric metric = new AggMetric();
+        metric.setInput(new AggKeyInput("en"));
+        metric.setDefaultValue(9999L);
+        config.setMetrics(Map.of("consumption", metric));
+
+        config.setWatermark(new Watermark(TimeUnit.DAYS.toSeconds(1)));
+        config.setInterval(new HourInterval("Europe/Kiev", TimeUnit.MINUTES.toSeconds(15)));
+
+        config.setOutput(new TimeSeriesOutput());
 
         return config;
     }

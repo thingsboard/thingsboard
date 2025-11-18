@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.profile;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -29,9 +30,14 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.device.profile.AlarmCondition;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
+import org.thingsboard.server.common.data.device.profile.AlarmRule;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.exception.ApiUsageLimitsExceededException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -39,6 +45,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.query.DynamicValue;
+import org.thingsboard.server.common.data.query.DynamicValueSourceType;
 import org.thingsboard.server.common.data.query.EntityKey;
 import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
@@ -56,6 +64,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
@@ -88,6 +97,10 @@ class DeviceState {
         this.deviceId = deviceId;
         this.deviceProfile = deviceProfile;
 
+        if (hasDurationRulesWithDynamicValueFromCurrentDevice(deviceProfile)) {
+            latestValues = fetchLatestValues(ctx, deviceId);
+        }
+
         this.dynamicPredicateValueCtx = new DynamicPredicateValueCtxImpl(ctx.getTenantId(), deviceId, ctx);
 
         if (config.isPersistAlarmRulesState()) {
@@ -117,7 +130,10 @@ class DeviceState {
     public void updateProfile(TbContext ctx, DeviceProfile deviceProfile) throws ExecutionException, InterruptedException {
         Set<AlarmConditionFilterKey> oldKeys = Set.copyOf(this.deviceProfile.getEntityKeys());
         this.deviceProfile.updateDeviceProfile(deviceProfile);
-        if (latestValues != null) {
+
+        if (latestValues == null && hasDurationRulesWithDynamicValueFromCurrentDevice(this.deviceProfile)) {
+            latestValues = fetchLatestValues(ctx, deviceId);
+        } else if (latestValues != null) {
             Set<AlarmConditionFilterKey> keysToFetch = new HashSet<>(this.deviceProfile.getEntityKeys());
             keysToFetch.removeAll(oldKeys);
             if (!keysToFetch.isEmpty()) {
@@ -135,10 +151,31 @@ class DeviceState {
         }
     }
 
+    private static boolean hasDurationRulesWithDynamicValueFromCurrentDevice(ProfileState deviceProfile) {
+        return deviceProfile.getAlarmSettings().stream().anyMatch(DeviceState::isDurationRuleWithDynamicValueFromCurrentDevice);
+    }
+
+    private static boolean isDurationRuleWithDynamicValueFromCurrentDevice(DeviceProfileAlarm alarm) {
+        return Stream.concat(alarm.getCreateRules().values().stream(), Stream.ofNullable(alarm.getClearRule()))
+                .map(AlarmRule::getCondition)
+                .map(AlarmCondition::getSpec)
+                .anyMatch(spec -> isDurationRule(spec) && hasDynamicDurationValueFromCurrentDevice((DurationAlarmConditionSpec) spec));
+    }
+
+    private static boolean isDurationRule(AlarmConditionSpec spec) {
+        return spec instanceof DurationAlarmConditionSpec durationSpec && durationSpec.getType() == AlarmConditionSpecType.DURATION;
+    }
+
+    private static boolean hasDynamicDurationValueFromCurrentDevice(DurationAlarmConditionSpec spec) {
+        DynamicValue<Long> dynamicValue = spec.getPredicate().getDynamicValue();
+        return dynamicValue != null && dynamicValue.getSourceType() == DynamicValueSourceType.CURRENT_DEVICE;
+    }
+
     public void harvestAlarms(TbContext ctx, long ts) throws ExecutionException, InterruptedException {
         log.debug("[{}] Going to harvest alarms: {}", ctx.getSelfId(), ts);
         boolean stateChanged = false;
         for (AlarmState state : alarmStates.values()) {
+            state.setDataSnapshot(latestValues);
             stateChanged |= state.process(ctx, ts);
         }
         if (persistState && stateChanged) {
@@ -348,7 +385,8 @@ class DeviceState {
         return EntityKeyType.ATTRIBUTE;
     }
 
-    private DataSnapshot fetchLatestValues(TbContext ctx, EntityId originator) throws ExecutionException, InterruptedException {
+    @SneakyThrows
+    private DataSnapshot fetchLatestValues(TbContext ctx, EntityId originator) {
         Set<AlarmConditionFilterKey> entityKeysToFetch = deviceProfile.getEntityKeys();
         DataSnapshot result = new DataSnapshot(entityKeysToFetch);
         addEntityKeysToSnapshot(ctx, originator, entityKeysToFetch, result);
