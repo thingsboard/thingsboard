@@ -17,7 +17,7 @@
 -->
 <div class="tb-form-panel" [formGroup]="outputForm">
   <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
-  <div class="flex flex-col gap-3">
+  <div [class]=containerInputClass>
     <div class="flex gap-3 xs:flex-col">
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ 'calculated-fields.output-type' | translate }}</mat-label>
@@ -44,7 +44,7 @@
     </div>
     @if (simpleMode) {
       @if (hiddenName) {
-        <div class="grid grid-cols-2 items-start gap-3 xs:grid-cols-1">
+        <div class="grid items-start gap-3 has-[.simpleMode]:grid-cols-2 xs:grid-cols-1">
           <ng-container *ngTemplateOutlet="decimalsByDefaultField"></ng-container>
           <ng-content select=".simpleMode"></ng-content>
         </div>

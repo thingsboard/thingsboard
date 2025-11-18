@@ -342,17 +342,17 @@
         </div>
         <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
           <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
-            <mat-label translate>tenant-profile.relation-search-entity-limit</mat-label>
-            <input matInput required min="1" step="1"
-                   formControlName="maxRelatedEntitiesToReturnPerCfArgument"
+            <mat-label translate>tenant-profile.min-allowed-aggregation-interval</mat-label>
+            <input matInput required min="0" step="1"
+                   formControlName="minAllowedAggregationIntervalInSecForCF"
                    type="number">
-            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('required')">
-              {{ 'tenant-profile.relation-search-entity-limit-required' | translate}}
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedAggregationIntervalInSecForCF').hasError('required')">
+              {{ 'tenant-profile.min-allowed-aggregation-interval-required' | translate}}
             </mat-error>
-            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('min')">
-              {{ 'tenant-profile.relation-search-entity-limit-range' | translate}}
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('minAllowedAggregationIntervalInSecForCF').hasError('min')">
+              {{ 'tenant-profile.min-allowed-aggregation-interval-range' | translate}}
             </mat-error>
-            <mat-hint translate>tenant-profile.relation-search-entity-limit-hint</mat-hint>
+            <mat-hint></mat-hint>
           </mat-form-field>
           <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
             <mat-label translate>tenant-profile.min-allowed-deduplication-interval</mat-label>
@@ -367,6 +367,22 @@
             </mat-error>
             <mat-hint></mat-hint>
           </mat-form-field>
+        </div>
+        <div class="flex flex-1 flex-row xs:flex-col gt-xs:gap-4">
+          <mat-form-field class="mat-block flex-1" appearance="fill" subscriptSizing="dynamic">
+            <mat-label translate>tenant-profile.relation-search-entity-limit</mat-label>
+            <input matInput required min="1" step="1"
+                   formControlName="maxRelatedEntitiesToReturnPerCfArgument"
+                   type="number">
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('required')">
+              {{ 'tenant-profile.relation-search-entity-limit-required' | translate}}
+            </mat-error>
+            <mat-error *ngIf="tenantProfileConfigurationForm.get('maxRelatedEntitiesToReturnPerCfArgument').hasError('min')">
+              {{ 'tenant-profile.relation-search-entity-limit-range' | translate}}
+            </mat-error>
+            <mat-hint translate>tenant-profile.relation-search-entity-limit-hint</mat-hint>
+          </mat-form-field>
+          <div class="flex-1"></div>
         </div>
       </ng-template>
     </mat-expansion-panel>
