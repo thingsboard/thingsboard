@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex size-full max-w-4xl flex-col">
+<div [formGroup]="fieldFormGroup" class="calculated-field-dialog-container flex h-full flex-col">
   <mat-toolbar color="primary">
     <h2>{{ 'alarm-rule.alarm-rule' | translate}}</h2>
     <span class="flex-1"></span>
@@ -52,12 +52,38 @@
             [additionalActionConfig]="additionalDebugActionConfig"
           />
         </div>
+        @if (!data.entityId) {
+          <div class="flex flex-col gap-4" formGroupName="entityId">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <mat-label translate>alarm-rule.target-entity-type</mat-label>
+              <mat-select formControlName="entityType">
+                @for (type of alarmRuleEntityTypeList; track type) {
+                  <mat-option [value]="type">{{ entityTypeTranslations.get(type).type | translate }}</mat-option>
+                }
+              </mat-select>
+
+              @if (fieldFormGroup.get('entityId.entityType').hasError('required')) {
+                <mat-error>{{ 'alarm-rule.entity-type-required' | translate }}</mat-error>
+              }
+            </mat-form-field>
+            @if (fieldFormGroup.get('entityId.entityType').value) {
+              <tb-entity-autocomplete
+                formControlName="id"
+                appearance="outline"
+                subscriptSizing="dynamic"
+                [placeholder]="'action.set' | translate"
+                [required]="true"
+                [entityType]="fieldFormGroup.get('entityId.entityType').value"
+              />
+            }
+          </div>
+        }
       </div>
       <ng-container formGroupName="configuration">
         <div class="tb-form-panel">
           <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
           <tb-calculated-field-arguments-table formControlName="arguments"
-                                               [entityId]="data.entityId"
+                                               [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
                                                [tenantId]="data.tenantId"
                                                [ownerId]="data.ownerId"
                                                [entityName]="data.entityName"/>

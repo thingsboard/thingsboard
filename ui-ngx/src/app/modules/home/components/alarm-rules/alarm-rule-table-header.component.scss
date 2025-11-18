@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .white-background {
-    --mat-sidenav-content-background-color: white;
-  }
+
+:host {
+  padding-right: 8px;
+  overflow: hidden;
+  max-width: 100%;
 }

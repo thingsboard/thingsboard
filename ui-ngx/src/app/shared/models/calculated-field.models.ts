@@ -911,3 +911,10 @@ export function notEmptyObjectValidator(): ValidatorFn {
     return null;
   };
 }
+
+export interface CalculatedFieldsQuery {
+  type: CalculatedFieldType;
+  entityType?: EntityType;
+  entities?: Array<string>;
+  name?: string;
+}
