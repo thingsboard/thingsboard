@@ -32,14 +32,13 @@ import {
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
 import { phoneNumberPattern } from '@shared/models/settings.models';
-import { deepClone, isDefinedAndNotNull, isEqual, unwrapModule } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, unwrapModule } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import printTemplate from '@home/pages/security/authentication-dialog/backup-code-print-template.raw';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { mergeMap, tap } from 'rxjs/operators';
-import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 enum ForceTwoFAState {
   SETUP = 'setup',
