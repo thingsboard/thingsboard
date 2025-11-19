@@ -47,8 +47,13 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -258,6 +263,40 @@ public class CustomerControllerTest extends AbstractControllerTest {
 
         doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    public void testFindCustomersByIds() throws Exception {
+        List<Customer> savedCustomers = new ArrayList<>();
+        for (int i = 0; i < 5; i++) {
+            Customer customer = new Customer();
+            customer.setTitle("My customer " + i);
+            savedCustomers.add(doPost("/api/customer", customer, Customer.class));
+        }
+
+        String idsParam = savedCustomers.stream()
+                .map(c -> c.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        Customer[] foundCustomers = doGet("/api/customers?customerIds=" + idsParam, Customer[].class);
+
+        Assert.assertNotNull(foundCustomers);
+        Assert.assertEquals(savedCustomers.size(), foundCustomers.length);
+
+        Map<UUID, Customer> foundById = Arrays.stream(foundCustomers)
+                .collect(Collectors.toMap(c -> c.getId().getId(), Function.identity()));
+
+        for (Customer savedCustomer : savedCustomers) {
+            UUID id = savedCustomer.getId().getId();
+            Customer foundCustomer = foundById.get(id);
+            Assert.assertNotNull("Customer not found for id " + id, foundCustomer);
+            Assert.assertEquals(savedCustomer, foundCustomer);
+        }
+
+        for (Customer savedCustomer : savedCustomers) {
+            doDelete("/api/customer/" + savedCustomer.getId().getId().toString())
+                    .andExpect(status().isOk());
+        }
     }
 
     @Test

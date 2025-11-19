@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -84,6 +85,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
 import static org.thingsboard.server.controller.ControllerConstants.ALARM_ID_PARAM_DESCRIPTION;
@@ -591,6 +595,32 @@ public class UserController extends BaseController {
     public void removeMobileSession(@RequestHeader(MOBILE_TOKEN_HEADER) String mobileToken,
                                     @AuthenticationPrincipal SecurityUser user) {
         userService.removeMobileSession(user.getTenantId(), mobileToken);
+    }
+
+    @ApiOperation(value = "Get Users By Ids (getUsersByIds)",
+            notes = "Requested users must be owned by tenant or assigned to customer which user is performing the request. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/users", params = {"userIds"})
+    public List<User> getUsersByIds(
+            @Parameter(description = "A list of user ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("userIds") String[] strUserIds) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkArrayParameter("userIds", strUserIds);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<UserId> userIds = new ArrayList<>();
+        for (String strUserId : strUserIds) {
+            userIds.add(new UserId(toUUID(strUserId)));
+        }
+        return Objects.requireNonNull(checkNotNull(userService.findUsersByTenantIdAndIdsAsync(tenantId, userIds).get()))
+                .stream()
+                .filter(e -> {
+                    try {
+                        return accessControlService.hasPermission(user, Resource.USER, Operation.READ, e.getId(), e);
+                    } catch (ThingsboardException ex) {
+                        return false;
+                    }
+                })
+                .toList();
     }
 
     private void checkNotReserved(String strType, UserSettingsType type) throws ThingsboardException {

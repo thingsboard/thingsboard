@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.widget;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -109,6 +110,17 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     @Override
     public PageData<WidgetsBundle> findAllWidgetsBundles(PageLink pageLink) {
         return DaoUtil.toPageData(widgetsBundleRepository.findAll(DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ListenableFuture<List<WidgetsBundle>> findSystemWidgetBundlesByIdsAsync(UUID tenantId, List<UUID> widgetsBundleIds) {
+        return service.submit(() -> DaoUtil.convertDataList(widgetsBundleRepository.findSystemWidgetsBundlesByIdIn(NULL_UUID, widgetsBundleIds)));
+    }
+
+    @Override
+    public ListenableFuture<List<WidgetsBundle>> findAllTenantWidgetBundlesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> widgetsBundleIds) {
+        return service.submit(() -> DaoUtil.convertDataList(widgetsBundleRepository
+                .findAllTenantWidgetsBundlesByTenantIdAndIdIn(tenantId, NULL_UUID, widgetsBundleIds)));
     }
 
     private PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIds(List<UUID> tenantIds, WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {

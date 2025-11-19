@@ -16,10 +16,12 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,13 +47,17 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -232,6 +238,38 @@ public class WidgetsBundleController extends BaseController {
             TenantId tenantId = getCurrentUser().getTenantId();
             return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         }
+    }
+
+    @ApiOperation(value = "Get Widgets Bundles By Ids (getWidgetsBundlesByIds)",
+            notes = "Requested widgets bundles must be system level or owned by tenant of the user which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles", params = {"widgetsBundleIds"})
+    public List<WidgetsBundle> getWidgetsBundlesByIds(
+            @Parameter(description = "A list of widgets bundle ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("widgetsBundleIds") String[] strWidgetsBundleIds) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkArrayParameter("widgetsBundleIds", strWidgetsBundleIds);
+        List<WidgetsBundleId> widgetsBundleIds = new ArrayList<>();
+        for (String strWidgetsBundleId : strWidgetsBundleIds) {
+            widgetsBundleIds.add(new WidgetsBundleId(toUUID(strWidgetsBundleId)));
+        }
+        List<WidgetsBundle> result;
+        if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
+            result = checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByIdsAsync(getTenantId(), widgetsBundleIds).get());
+        } else {
+            result = checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByIdsAsync(getTenantId(), widgetsBundleIds).get());
+        }
+
+        return Objects.requireNonNull(result)
+                .stream()
+                .filter(e -> {
+                    try {
+                        return accessControlService.hasPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ, e.getId(), e);
+                    } catch (ThingsboardException ex) {
+                        return false;
+                    }
+                })
+                .toList();
     }
 
 }

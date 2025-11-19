@@ -264,5 +264,4 @@ public class TenantProfileController extends BaseController {
         return tenantProfileService.findTenantProfilesByIds(TenantId.SYS_TENANT_ID, ids);
     }
 
-
 }

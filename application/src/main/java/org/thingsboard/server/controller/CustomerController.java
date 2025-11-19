@@ -18,10 +18,12 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -40,8 +42,14 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.customer.TbCustomerService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -181,6 +189,33 @@ public class CustomerController extends BaseController {
             @RequestParam String customerTitle) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         return checkNotNull(customerService.findCustomerByTenantIdAndTitle(tenantId, customerTitle), "Customer with title [" + customerTitle + "] is not found");
+    }
+
+    @ApiOperation(value = "Get customers by Customer Ids (getCustomersByIds)",
+            notes = "Returns a list of Customer objects based on the provided ids." +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/customers", params = {"customerIds"})
+    public List<Customer> getCustomersByIds(
+            @Parameter(description = "A list of customer ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("customerIds") String[] strCustomerIds) throws ThingsboardException, ExecutionException, InterruptedException {
+        checkArrayParameter("customerIds", strCustomerIds);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<CustomerId> customerIds = new ArrayList<>();
+        for (String strCustomerId : strCustomerIds) {
+            customerIds.add(new CustomerId(toUUID(strCustomerId)));
+        }
+        return Objects.requireNonNull(checkNotNull(customerService.findCustomersByTenantIdAndIdsAsync(tenantId, customerIds).get()))
+                .stream()
+                .filter(e -> {
+                    try {
+                        return accessControlService.hasPermission(user, Resource.CUSTOMER, Operation.READ, e.getId(), e);
+                    } catch (ThingsboardException ex) {
+                        return false;
+                    }
+                })
+                .toList();
     }
 
 }

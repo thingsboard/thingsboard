@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.customer;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -24,6 +25,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -77,5 +79,7 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, E
      * @return the page of customer objects
      */
     PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink);
+
+    ListenableFuture<List<Customer>> findCustomersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> customerIds);
 
 }
