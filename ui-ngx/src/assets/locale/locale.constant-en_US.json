@@ -4256,6 +4256,8 @@
         "print": "Print",
         "verification-code": "6-digit code",
         "verification-code-invalid": "Invalid verification code format",
+        "verification-code-incorrect": "Verification code is incorrect",
+        "verification-code-many-request": "Too many requests check verification code",
         "scan-qr-code": "Scan this QR code with your verification app",
         "phone-input": {
             "phone-input-label": "Phone number",

@@ -32,13 +32,14 @@ import {
   TwoFactorAuthProviderType
 } from '@shared/models/two-factor-auth.models';
 import { phoneNumberPattern } from '@shared/models/settings.models';
-import { deepClone, isDefinedAndNotNull, unwrapModule } from '@core/utils';
+import { deepClone, isDefinedAndNotNull, isEqual, unwrapModule } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import printTemplate from '@home/pages/security/authentication-dialog/backup-code-print-template.raw';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { mergeMap, tap } from 'rxjs/operators';
+import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 enum ForceTwoFAState {
   SETUP = 'setup',
@@ -239,22 +240,31 @@ export class ForceTwoFactorAuthLoginComponent extends PageComponent implements O
   saveConfig(type: TwoFactorAuthProviderType) {
     if (this.configForm.valid) {
       this.twoFaService.verifyAndSaveTwoFaAccountConfig(this.authAccountConfig,
-        this.configForm.get('verificationCode').value).subscribe((config) => {
-        switch (type) {
-          case TwoFactorAuthProviderType.TOTP:
-            this.appState.set(ProvidersState.SUCCESS);
-            break;
-          case TwoFactorAuthProviderType.SMS:
-            this.smsState.set(ProvidersState.SUCCESS);
-            break;
-          case TwoFactorAuthProviderType.EMAIL:
-            this.emailState.set(ProvidersState.SUCCESS);
-            break;
+        this.configForm.get('verificationCode').value).subscribe({
+        next: (config) => {
+          switch (type) {
+            case TwoFactorAuthProviderType.TOTP:
+              this.appState.set(ProvidersState.SUCCESS);
+              break;
+            case TwoFactorAuthProviderType.SMS:
+              this.smsState.set(ProvidersState.SUCCESS);
+              break;
+            case TwoFactorAuthProviderType.EMAIL:
+              this.emailState.set(ProvidersState.SUCCESS);
+              break;
+          }
+          this.config = config;
+          this.authAccountConfig = null;
+          this.allowedProviders();
+        },
+        error: error => {
+          if (error.status === 400) {
+            this.configForm.get('verificationCode').setErrors({incorrectCode: true});
+          } else if (error.status === 429) {
+            this.configForm.get('verificationCode').setErrors({tooManyRequest: true});
+          }
         }
-        this.config = config;
-        this.authAccountConfig = null;
-        this.allowedProviders();
-      });
+      })
     }
   }
 
