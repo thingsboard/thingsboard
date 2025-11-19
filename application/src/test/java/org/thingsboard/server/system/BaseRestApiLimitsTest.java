@@ -45,10 +45,6 @@ import java.util.concurrent.TimeoutException;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * @author Illia Barkov
- */
-
 @Slf4j
 public abstract class BaseRestApiLimitsTest extends AbstractControllerTest {
 

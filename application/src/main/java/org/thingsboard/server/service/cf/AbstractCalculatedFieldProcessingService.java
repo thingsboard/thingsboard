@@ -15,20 +15,39 @@
  */
 package org.thingsboard.server.service.cf;
 
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.ThingsBoardExecutors;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest;
+import org.thingsboard.rule.engine.api.AttributesSaveRequest.Strategy;
+import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.AttributesImmediateOutputStrategy;
+import org.thingsboard.server.common.data.cf.configuration.OutputStrategy;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesImmediateOutputStrategy;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.single.interval.AggInterval;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -36,12 +55,14 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -49,14 +70,18 @@ import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -64,9 +89,14 @@ import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGAT
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.dao.util.KvUtils.filterChangedAttr;
+import static org.thingsboard.server.dao.util.KvUtils.toTsKvEntryList;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultAttributeEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultKvEntry;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformAggMetricArgument;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformAggregationArgument;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformSingleValueArgument;
+import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.transformTsRollingArgument;
 
 @Data
 @Slf4j
@@ -74,6 +104,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
     protected final AttributesService attributesService;
     protected final TimeseriesService timeseriesService;
+    protected final TelemetrySubscriptionService tsSubService;
     protected final ApiLimitService apiLimitService;
     protected final RelationService relationService;
     protected final OwnerService ownerService;
@@ -100,6 +131,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
             case GEOFENCING -> fetchGeofencingCalculatedFieldArguments(ctx, entityId, false, ts);
             case SIMPLE, SCRIPT, ALARM, PROPAGATION -> getBaseCalculatedFieldArguments(ctx, entityId, ts);
             case RELATED_ENTITIES_AGGREGATION -> fetchRelatedEntitiesAggArguments(ctx, entityId, ts);
+            case ENTITY_AGGREGATION -> fetchEntityAggArguments(ctx, entityId, ts);
         };
         if (ctx.getCfType() == PROPAGATION) {
             argFutures.put(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId));
@@ -133,17 +165,19 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return argFutures.entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey, // Keep the key as is
-                        entry -> {
-                            try {
-                                return entry.getValue().get();
-                            } catch (ExecutionException e) {
-                                Throwable cause = e.getCause();
-                                throw new RuntimeException("Failed to fetch " + entry.getKey() + ": " + cause.getMessage(), cause);
-                            } catch (InterruptedException e) {
-                                throw new RuntimeException("Failed to fetch" + entry.getKey(), e);
-                            }
-                        }
+                        entry -> resolveArgumentValue(entry.getKey(), entry.getValue())
                 ));
+    }
+
+    protected ArgumentEntry resolveArgumentValue(String key, ListenableFuture<ArgumentEntry> future) {
+        try {
+            return future.get();
+        } catch (ExecutionException e) {
+            Throwable cause = e.getCause();
+            throw new RuntimeException("Failed to fetch " + key + ": " + cause.getMessage(), cause);
+        } catch (InterruptedException e) {
+            throw new RuntimeException("Failed to fetch" + key, e);
+        }
     }
 
     protected ListenableFuture<ArgumentEntry> fetchPropagationCalculatedFieldArgument(CalculatedFieldCtx ctx, EntityId entityId) {
@@ -183,6 +217,17 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
                         entry -> Futures.transformAsync(relatedEntitiesFut, relatedEntities -> fetchRelatedEntitiesArgumentEntry(ctx.getTenantId(), relatedEntities, entry.getValue(), ts), MoreExecutors.directExecutor())
+                ));
+    }
+
+    protected Map<String, ListenableFuture<ArgumentEntry>> fetchEntityAggArguments(CalculatedFieldCtx ctx, EntityId entityId, long ts) {
+        if (!(ctx.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration config)) {
+            return Collections.emptyMap();
+        }
+        return config.getArguments().entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> fetchTimeSeries(ctx.getTenantId(), entityId, entry.getValue(), config.getInterval(), ts)
                 ));
     }
 
@@ -285,17 +330,26 @@ public abstract class AbstractCalculatedFieldProcessingService {
         };
     }
 
+    protected ArgumentEntry fetchMetricDuringInterval(TenantId tenantId, EntityId entityId, String argKey, AggMetric metric, AggIntervalEntry interval) {
+        AggFunction function = metric.getFunction();
+        long intervalMs = interval.getEndTs() - interval.getStartTs();
+        BaseReadTsKvQuery query = new BaseReadTsKvQuery(argKey, interval.getStartTs(), interval.getEndTs(), intervalMs, 1, Aggregation.valueOf(function.name()));
+        ListenableFuture<ArgumentEntry> argumentEntryFut = fetchTimeSeriesInternal(tenantId, entityId, query, timeSeries -> transformAggMetricArgument(timeSeries, argKey, metric));
+        return resolveArgumentValue(argKey, argumentEntryFut);
+    }
+
+    private ListenableFuture<ArgumentEntry> fetchTimeSeries(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval, long queryEndTs) {
+        long intervalStartTs = interval.getCurrentIntervalStartTs();
+        long intervalEndTs = interval.getCurrentIntervalEndTs();
+        ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), intervalStartTs, queryEndTs, 0, 1, Aggregation.NONE);
+        return fetchTimeSeriesInternal(tenantId, entityId, query, timeSeries -> transformAggregationArgument(timeSeries, intervalStartTs, intervalEndTs));
+    }
+
     private ListenableFuture<ArgumentEntry> fetchTsRolling(TenantId tenantId, EntityId entityId, Argument argument, long queryEndTs) {
         long argTimeWindow = argument.getTimeWindow() == 0 ? queryEndTs : argument.getTimeWindow();
         long startInterval = queryEndTs - argTimeWindow;
         ReadTsKvQuery query = buildTsRollingQuery(tenantId, argument, startInterval, queryEndTs);
-
-        log.trace("[{}][{}] Fetching timeseries for query {}", tenantId, entityId, query);
-        ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
-        return Futures.transform(tsRollingFuture, tsRolling -> {
-            log.debug("[{}][{}] Fetched {} timeseries for query {}", tenantId, entityId, tsRolling == null ? 0 : tsRolling.size(), query);
-            return ArgumentEntry.createTsRollingArgument(tsRolling, query.getLimit(), argTimeWindow);
-        }, calculatedFieldCallbackExecutor);
+        return fetchTimeSeriesInternal(tenantId, entityId, query, tsRolling -> transformTsRollingArgument(tsRolling, query.getLimit(), argTimeWindow));
     }
 
     private ListenableFuture<ArgumentEntry> fetchAttribute(TenantId tenantId, EntityId entityId, Argument argument, long defaultLastUpdateTs) {
@@ -321,12 +375,125 @@ public abstract class AbstractCalculatedFieldProcessingService {
                         }, calculatedFieldCallbackExecutor));
     }
 
+    private ListenableFuture<ArgumentEntry> fetchTimeSeriesInternal(TenantId tenantId, EntityId entityId, ReadTsKvQuery query, Function<List<TsKvEntry>, ArgumentEntry> transformArgument) {
+        log.trace("[{}][{}] Fetching timeseries for query {}", tenantId, entityId, query);
+        ListenableFuture<List<TsKvEntry>> tsRollingFuture = timeseriesService.findAll(tenantId, entityId, List.of(query));
+        return Futures.transform(tsRollingFuture, tsRolling -> {
+            log.debug("[{}][{}] Fetched {} timeseries for query {}", tenantId, entityId, tsRolling == null ? 0 : tsRolling.size(), query);
+            return transformArgument.apply(tsRolling);
+        }, calculatedFieldCallbackExecutor);
+    }
+
     private ReadTsKvQuery buildTsRollingQuery(TenantId tenantId, Argument argument, long startTs, long endTs) {
         long maxDataPoints = apiLimitService.getLimit(
                 tenantId, DefaultTenantProfileConfiguration::getMaxDataPointsPerRollingArg);
         int argumentLimit = argument.getLimit();
         int limit = argumentLimit == 0 || argumentLimit > maxDataPoints ? (int) maxDataPoints : argumentLimit;
         return new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE);
+    }
+
+    protected void saveTelemetryResult(TenantId tenantId, EntityId entityId, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+        OutputType type = cfResult.getType();
+        JsonElement jsonResult = JsonParser.parseString(Objects.requireNonNull(cfResult.stringValue()));
+
+        log.trace("[{}][{}] Saving CF result: {}", tenantId, entityId, jsonResult);
+
+        SettableFuture<Void> future = SettableFuture.create();
+        switch (type) {
+            case ATTRIBUTES -> saveAttributes(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfResult.getScope(), cfIds, future);
+            case TIME_SERIES -> saveTimeSeries(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfIds, System.currentTimeMillis(), future);
+        }
+
+        Futures.addCallback(future, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void v) {
+                callback.onSuccess();
+                log.debug("[{}][{}] Saved CF result: {}", tenantId, entityId, cfResult);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                callback.onFailure(t);
+                log.error("[{}][{}] Failed to save CF result {}", tenantId, entityId, cfResult, t);
+            }
+        }, MoreExecutors.directExecutor());
+    }
+
+    private void saveAttributes(TenantId tenantId, EntityId entityId, JsonElement jsonResult, OutputStrategy outputStrategy, AttributeScope scope, List<CalculatedFieldId> cfIds, SettableFuture<Void> future) {
+        if (!(outputStrategy instanceof AttributesImmediateOutputStrategy attOutputStrategy)) {
+            future.setException(new IllegalArgumentException("Only AttributeImmediateOutputStrategy is supported."));
+        } else {
+            AttributesSaveRequest.Strategy strategy = new Strategy(attOutputStrategy.isSaveAttribute(), attOutputStrategy.isSendWsUpdate(), attOutputStrategy.isProcessCfs());
+            List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(jsonResult);
+
+            if (!attOutputStrategy.isUpdateAttributesOnlyOnValueChange()) {
+                saveAttributesInternal(tenantId, entityId, scope, cfIds, newAttributes, strategy, future);
+                return;
+            }
+
+            List<String> keys = newAttributes.stream().map(KvEntry::getKey).collect(Collectors.toList());
+            ListenableFuture<List<AttributeKvEntry>> findFuture = attributesService.find(tenantId, entityId, scope, keys);
+
+            DonAsynchron.withCallback(findFuture,
+                    existingAttributes -> {
+                        List<AttributeKvEntry> changed = filterChangedAttr(existingAttributes, newAttributes);
+                        if (changed.isEmpty()) {
+                            future.set(null);
+                            return;
+                        }
+                        saveAttributesInternal(tenantId, entityId, scope, cfIds, changed, strategy, future);
+                    },
+                    future::setException,
+                    MoreExecutors.directExecutor());
+        }
+    }
+
+    private void saveAttributesInternal(TenantId tenantId, EntityId entityId,
+                                        AttributeScope scope,
+                                        List<CalculatedFieldId> cfIds,
+                                        List<AttributeKvEntry> entries,
+                                        AttributesSaveRequest.Strategy strategy,
+                                        SettableFuture<Void> future) {
+        tsSubService.saveAttributes(AttributesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .scope(scope)
+                .entries(entries)
+                .strategy(strategy)
+                .previousCalculatedFieldIds(cfIds)
+                .future(future)
+                .build());
+    }
+
+    private void saveTimeSeries(TenantId tenantId, EntityId entityId, JsonElement jsonResult, OutputStrategy outputStrategy, List<CalculatedFieldId> cfIds, long ts, SettableFuture<Void> future) {
+        if (!(outputStrategy instanceof TimeSeriesImmediateOutputStrategy tsOutputStrategy)) {
+            future.setException(new IllegalArgumentException("Only TimeSeriesImmediateOutputStrategy is supported."));
+        } else {
+            TimeseriesSaveRequest.Strategy strategy = new TimeseriesSaveRequest.Strategy(tsOutputStrategy.isSaveTimeSeries(), tsOutputStrategy.isSaveLatest(), tsOutputStrategy.isSendWsUpdate(), tsOutputStrategy.isProcessCfs());
+            saveTimeSeriesInternal(tenantId, entityId, jsonResult, tsOutputStrategy.getTtl(), cfIds, ts, strategy, future);
+        }
+    }
+
+    private void saveTimeSeriesInternal(TenantId tenantId, EntityId entityId, JsonElement jsonResult, Long ttl, List<CalculatedFieldId> cfIds, long ts, TimeseriesSaveRequest.Strategy strategy, SettableFuture<Void> future) {
+        Map<Long, List<KvEntry>> tsKvMap = JsonConverter.convertToTelemetry(jsonResult, ts);
+        if (tsKvMap.isEmpty()) {
+            future.set(null);
+            return;
+        }
+        List<TsKvEntry> tsEntries = toTsKvEntryList(tsKvMap);
+        TimeseriesSaveRequest.Builder builder = TimeseriesSaveRequest.builder()
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .entries(tsEntries)
+                .strategy(strategy)
+                .future(future);
+        if (ttl != null) {
+            builder.ttl(ttl);
+        }
+        if (cfIds != null && !cfIds.isEmpty()) {
+            builder.previousCalculatedFieldIds(cfIds);
+        }
+        tsSubService.saveTimeseries(builder.build());
     }
 
 }

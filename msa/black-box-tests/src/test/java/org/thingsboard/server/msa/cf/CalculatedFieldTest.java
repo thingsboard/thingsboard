@@ -31,13 +31,18 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.AttributesOutput;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -53,6 +58,8 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.msa.AbstractContainerTest;
 import org.thingsboard.server.msa.ui.utils.EntityPrototypes;
 
@@ -99,6 +106,14 @@ public class CalculatedFieldTest extends AbstractContainerTest {
     @BeforeClass
     public void beforeClass() {
         testRestClient.login("sysadmin@thingsboard.org", "sysadmin");
+
+        updateDefaultTenantProfile(tenantProfile -> {
+            TenantProfileData profileData = tenantProfile.getProfileData();
+            DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+            profileConfiguration.setMinAllowedDeduplicationIntervalInSecForCF(1);
+            profileConfiguration.setMinAllowedScheduledUpdateIntervalInSecForCF(1);
+            tenantProfile.setProfileData(profileData);
+        });
 
         tenantId = testRestClient.postTenant(EntityPrototypes.defaultTenantPrototype("Tenant")).getId();
         tenantAdminId = testRestClient.createUserAndLogin(defaultTenantAdmin(tenantId, "tenantAdmin@thingsboard.org"), "tenant");
@@ -183,10 +198,11 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         CalculatedField savedCalculatedField = createSimpleCalculatedField();
 
-        Output savedOutput = savedCalculatedField.getConfiguration().getOutput();
-        savedOutput.setType(OutputType.ATTRIBUTES);
-        savedOutput.setScope(SERVER_SCOPE);
-        savedOutput.setName("temperatureF");
+        AttributesOutput output = new AttributesOutput();
+        output.setScope(SERVER_SCOPE);
+        output.setName("temperatureF");
+        ((SimpleCalculatedFieldConfiguration) savedCalculatedField.getConfiguration()).setOutput(output);
+
         testRestClient.postCalculatedField(savedCalculatedField);
 
         await().alias("update CF output -> perform calculation with updated output").atMost(TIMEOUT, TimeUnit.SECONDS)
@@ -381,8 +397,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         cfg.setZoneGroups(Map.of("allowedZones", allowedZoneGroupConfiguration, "restrictedZones", restrictedZoneGroupConfiguration));
 
-        Output out = new Output();
-        out.setType(OutputType.ATTRIBUTES);
+        AttributesOutput out = new AttributesOutput();
         out.setScope(SERVER_SCOPE);
         cfg.setOutput(out);
         cf.setConfiguration(cfg);
@@ -458,8 +473,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         cfg.setExpression("{\"testResult\": t * 2}");
 
-        Output output = new Output();
-        output.setType(OutputType.ATTRIBUTES);
+        AttributesOutput output = new AttributesOutput();
         output.setScope(AttributeScope.SERVER_SCOPE);
         cfg.setOutput(output);
 
@@ -541,9 +555,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
         cfg.setArguments(Map.of("temperatureComputed", arg));
 
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        cfg.setOutput(output);
+        cfg.setOutput(new TimeSeriesOutput());
 
         cf.setConfiguration(cfg);
 
@@ -592,6 +604,186 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.deleteCalculatedFieldIfExists(saved.getId());
     }
 
+    @Test
+    public void testRelatedEntitiesAggregationCalculatedField() {
+        // login tenant admin
+        testRestClient.getAndSetUserToken(tenantAdminId);
+
+        // --- Create entities ---
+        String device_1_1_token = "000000011";
+        Device device_1_1 = testRestClient.postDevice(device_1_1_token, createDevice("Device 1-1", deviceProfileId));
+        String device_1_2_token = "000000012";
+        Device device_1_2 = testRestClient.postDevice(device_1_2_token, createDevice("Device 1-2", deviceProfileId));
+
+        // Create relations FROM asset TO devices
+        EntityRelation rel_1_1 = new EntityRelation(asset.getId(), device_1_1.getId(), EntityRelation.CONTAINS_TYPE);
+        EntityRelation rel_1_2 = new EntityRelation(asset.getId(), device_1_2.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel_1_1);
+        testRestClient.postEntityRelation(rel_1_2);
+
+        // Post telemetry
+        testRestClient.postTelemetry(device_1_1_token, JacksonUtil.toJsonNode("{\"occupied\":true}"));
+        testRestClient.postTelemetry(device_1_2_token, JacksonUtil.toJsonNode("{\"occupied\":false}"));
+
+        // --- Create CF: Related entities aggregation ---
+        CalculatedField calculatedField = createOccupancyCF(assetProfileId);
+
+        // --- Assert aggregation ---
+        await().alias("create cf -> check aggregation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode occupancy = testRestClient.getLatestTelemetry(asset.getId());
+                    assertThat(occupancy).isNotNull();
+
+                    assertThat(occupancy.get("freeSpaces")).isNotNull();
+                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
+
+                    assertThat(occupancy.get("occupiedSpaces")).isNotNull();
+                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("1");
+
+                    assertThat(occupancy.get("totalSpaces")).isNotNull();
+                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+                });
+
+        // Post telemetry
+        testRestClient.postTelemetry(device_1_2_token, JacksonUtil.toJsonNode("{\"occupied\":true}"));
+
+        // --- Assert aggregation ---
+        await().alias("update telemetry -> check aggregation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode occupancy = testRestClient.getLatestTelemetry(asset.getId());
+                    assertThat(occupancy).isNotNull();
+
+                    assertThat(occupancy.get("freeSpaces")).isNotNull();
+                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("0");
+
+                    assertThat(occupancy.get("occupiedSpaces")).isNotNull();
+                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("2");
+
+                    assertThat(occupancy.get("totalSpaces")).isNotNull();
+                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+                });
+
+        // Add entity to profile
+        Asset asset2 = testRestClient.postAsset(createAsset("Asset 2", assetProfileId));
+        String device_2_1_token = "000000021";
+        Device device_2_1 = testRestClient.postDevice(device_2_1_token, createDevice("Device 2-1", deviceProfileId));
+        String device_2_2_token = "000000022";
+        Device device_2_2 = testRestClient.postDevice(device_2_2_token, createDevice("Device 2-2", deviceProfileId));
+
+        // Post telemetry
+        testRestClient.postTelemetry(device_2_1_token, JacksonUtil.toJsonNode("{\"occupied\":true}"));
+        testRestClient.postTelemetry(device_2_2_token, JacksonUtil.toJsonNode("{\"occupied\":false}"));
+
+        // --- Assert aggregation ---
+        await().alias("add entity to profile cf -> no aggregated values since no relations")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode occupancy = testRestClient.getLatestTelemetry(asset2.getId());
+                    assertThat(occupancy).isNullOrEmpty();
+                });
+
+        // Create relations FROM asset TO devices
+        EntityRelation rel_2_1 = new EntityRelation(asset2.getId(), device_2_1.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel_2_1);
+        EntityRelation rel_2_2 = new EntityRelation(asset2.getId(), device_2_2.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel_2_2);
+
+        // --- Assert aggregation ---
+        await().alias("create relation -> check aggregation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode occupancy = testRestClient.getLatestTelemetry(asset2.getId());
+                    assertThat(occupancy).isNotNull();
+
+                    assertThat(occupancy.get("freeSpaces")).isNotNull();
+                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("1");
+
+                    assertThat(occupancy.get("occupiedSpaces")).isNotNull();
+                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("1");
+
+                    assertThat(occupancy.get("totalSpaces")).isNotNull();
+                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("2");
+                });
+
+        testRestClient.deleteEntityRelation(asset2.getId(), EntityRelation.CONTAINS_TYPE, device_2_2.getId());
+
+        // --- Assert aggregation ---
+        await().alias("delete relation -> check aggregation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    JsonNode occupancy = testRestClient.getLatestTelemetry(asset2.getId());
+                    assertThat(occupancy).isNotNull();
+
+                    assertThat(occupancy.get("freeSpaces")).isNotNull();
+                    assertThat(occupancy.get("freeSpaces").get(0).get("value").asText()).isEqualTo("0");
+
+                    assertThat(occupancy.get("occupiedSpaces")).isNotNull();
+                    assertThat(occupancy.get("occupiedSpaces").get(0).get("value").asText()).isEqualTo("1");
+
+                    assertThat(occupancy.get("totalSpaces")).isNotNull();
+                    assertThat(occupancy.get("totalSpaces").get(0).get("value").asText()).isEqualTo("1");
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(calculatedField.getId());
+    }
+
+    private CalculatedField createOccupancyCF(EntityId entityId) {
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setName("Occupancy");
+        calculatedField.setEntityId(entityId);
+        calculatedField.setType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION);
+
+        RelatedEntitiesAggregationCalculatedFieldConfiguration configuration = new RelatedEntitiesAggregationCalculatedFieldConfiguration();
+
+        configuration.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, "Contains"));
+
+        Map<String, Argument> arguments = new HashMap<>();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("occupied", ArgumentType.TS_LATEST, null));
+        argument.setDefaultValue("false");
+        arguments.put("oc", argument);
+        configuration.setArguments(arguments);
+
+        configuration.setDeduplicationIntervalInSec(5);
+        configuration.setScheduledUpdateInterval(10);
+
+        Map<String, AggMetric> aggMetrics = new HashMap<>();
+
+        AggMetric freeSpaces = new AggMetric();
+        freeSpaces.setFunction(AggFunction.COUNT);
+        freeSpaces.setFilter("return oc == false;");
+        freeSpaces.setInput(new AggKeyInput("oc"));
+        aggMetrics.put("freeSpaces", freeSpaces);
+
+        AggMetric occupiedSpaces = new AggMetric();
+        occupiedSpaces.setFunction(AggFunction.COUNT);
+        occupiedSpaces.setFilter("return oc == true;");
+        occupiedSpaces.setInput(new AggKeyInput("oc"));
+        aggMetrics.put("occupiedSpaces", occupiedSpaces);
+
+        AggMetric totalSpaces = new AggMetric();
+        totalSpaces.setFunction(AggFunction.COUNT);
+        totalSpaces.setInput(new AggFunctionInput("return 1;"));
+        aggMetrics.put("totalSpaces", totalSpaces);
+        configuration.setMetrics(aggMetrics);
+
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setDecimalsByDefault(0);
+        configuration.setOutput(output);
+
+        calculatedField.setConfiguration(configuration);
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        return testRestClient.postCalculatedField(calculatedField);
+    }
+
     private CalculatedField createSimpleCalculatedField() {
         return createSimpleCalculatedField(device.getId());
     }
@@ -613,9 +805,8 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         config.setExpression("(T * 9/5) + 32");
 
-        Output output = new Output();
+        TimeSeriesOutput output = new TimeSeriesOutput();
         output.setName("fahrenheitTemp");
-        output.setType(OutputType.TIME_SERIES);
         output.setDecimalsByDefault(2);
         config.setOutput(output);
 
@@ -647,9 +838,7 @@ public class CalculatedFieldTest extends AbstractContainerTest {
 
         config.setExpression(exampleScript);
 
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        config.setOutput(output);
+        config.setOutput(new TimeSeriesOutput());
 
         calculatedField.setConfiguration(config);
 

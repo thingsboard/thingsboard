@@ -24,12 +24,12 @@
          [matAutocomplete]="optionsAutocomplete">
   <button *ngIf="selectionFormControl.value && !disabled"
           type="button"
-          class="tb-icon-24 mr-2"
+          class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <mat-icon *ngIf="selectionFormControl.hasError('required') && selectionFormControl.touched && !showInlineError"
+  <mat-icon *ngIf="selectionFormControl.errors && selectionFormControl.touched && !showInlineError"
             matIconSuffix
             [matTooltip]="errorText"
             matTooltipPosition="above"
@@ -37,7 +37,7 @@
             class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
-  <mat-error *ngIf="selectionFormControl.hasError('required') && showInlineError">
+  <mat-error *ngIf="selectionFormControl.errors && showInlineError">
     {{errorText}}
   </mat-error>
   <mat-autocomplete

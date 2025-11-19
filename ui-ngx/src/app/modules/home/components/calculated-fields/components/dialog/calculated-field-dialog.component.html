@@ -79,6 +79,7 @@
                                         [entityId]="data.entityId"
                                         [entityName]="data.entityName"
                                         [tenantId]="data.tenantId"
+                                        [ownerId]="data.ownerId"
                                         [testScript]="onTestScript.bind(this)"
           ></tb-propagation-configuration>
         }
@@ -88,6 +89,13 @@
                                                      [entityName]="data.entityName"
                                                      [tenantId]="data.tenantId"
           ></tb-related-entities-aggregation-component>
+        }
+        @case (CalculatedFieldType.ENTITY_AGGREGATION) {
+          <tb-entity-aggregation-component formControlName="configuration"
+                                           [entityId]="data.entityId"
+                                           [entityName]="data.entityName"
+                                           [tenantId]="data.tenantId"
+          ></tb-entity-aggregation-component>
         }
         @default {
           <tb-simple-configuration formControlName="configuration"

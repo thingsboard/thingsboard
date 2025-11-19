@@ -31,9 +31,9 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.AttributesOutput;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -88,7 +88,7 @@ public class ScriptCalculatedFieldStateTest {
         ctx.init();
         state = new ScriptCalculatedFieldState(ctx.getEntityId());
         state.setCtx(ctx, null);
-        state.init();
+        state.init(false);
     }
 
     @Test
@@ -221,8 +221,7 @@ public class ScriptCalculatedFieldStateTest {
 
         config.setExpression("return {\"maxDeviceTemperature\": deviceTemperature.max(), \"assetHumidity\": assetHumidity / 2 }");
 
-        Output output = new Output();
-        output.setType(OutputType.ATTRIBUTES);
+        AttributesOutput output = new AttributesOutput();
         output.setScope(AttributeScope.SERVER_SCOPE);
 
         config.setOutput(output);
