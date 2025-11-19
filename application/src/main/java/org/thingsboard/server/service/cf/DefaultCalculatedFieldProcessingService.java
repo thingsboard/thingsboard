@@ -156,7 +156,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         }
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
-                    (entity, res, cb) -> saveTelemetryResult(tenantId, entityId, res, cfIds, cb));
+                    (entity, res, cb) -> saveTelemetryResult(tenantId, entity, res, cfIds, cb));
             return;
         }
         callback.onSuccess();
@@ -165,7 +165,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     private void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
-                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entityId, cb, res.toTbMsg(entity, cfIds)));
+                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entity, cb, res.toTbMsg(entity, cfIds)));
             return;
         }
 
