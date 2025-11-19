@@ -153,6 +153,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         EntityId affectedEntity = query.getAffectedEntityId();
         AlarmStatusFilter asf = AlarmStatusFilter.from(query);
         if (affectedEntity != null) {
+            if (affectedEntity.getEntityType() == EntityType.TENANT) {
+                tenantId = (TenantId) affectedEntity;
+            }
             return DaoUtil.toPageData(
                     alarmRepository.findAlarms(
                             tenantId.getId(),
@@ -216,6 +219,9 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
         List<AlarmSeverity> severityList = query.getSeverityList() != null && !query.getSeverityList().isEmpty() ? query.getSeverityList() : null;
         AlarmStatusFilter asf = AlarmStatusFilter.from(query.getStatusList());
         if (affectedEntity != null) {
+            if (affectedEntity.getEntityType() == EntityType.TENANT) {
+                tenantId = (TenantId) affectedEntity;
+            }
             return DaoUtil.toPageData(
                     alarmRepository.findAlarmsV2(
                             tenantId.getId(),
