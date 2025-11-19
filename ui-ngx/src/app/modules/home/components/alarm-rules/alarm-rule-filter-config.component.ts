@@ -100,7 +100,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
 
   entityType = EntityType;
 
-  listEntityTypes = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE, EntityType.CUSTOMER];
+  listEntityTypes = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
   entityTypeTranslations = entityTypeTranslations;
 
   private alarmRuleFilterConfig: AlarmRuleFilterConfig;

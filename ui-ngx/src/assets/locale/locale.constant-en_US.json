@@ -1373,7 +1373,7 @@
         "schedule-days-of-week-required": "At least one day of week should be selected.",
         "expression-type": {
             "simple": "Simple",
-            "tbel": "TBEL"
+            "script": "Script"
         },
         "operation-type": {
             "and": "And",
@@ -1411,8 +1411,8 @@
         "condition-repeating-value-range": "Count of events should be in a range from 1 to 2147483647.",
         "condition-repeating-value-pattern": "Count of events should be integers.",
         "condition-repeating-value-required": "Count of events is required.",
-        "create-alarm-rules": "Create alarm rules",
-        "clear-alarm-rule": "Clear alarm rule",
+        "create-conditions": "Create conditions",
+        "clear-condition": "Clear condition",
         "no-clear-alarm-rule": "No clear condition configured",
         "advanced-settings": "Advanced settings",
         "propagate-alarm": "Propagate alarm to related entities",

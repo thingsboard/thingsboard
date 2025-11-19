@@ -79,7 +79,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
   readonly EntityType = EntityType;
   readonly entityTypeTranslations = entityTypeTranslations;
-  readonly alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE, EntityType.CUSTOMER];
+  readonly alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly ScriptLanguage = ScriptLanguage;
 
@@ -166,7 +166,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId, ...value } = this.data.value ?? {};
+    const { configuration = {}, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.data.entityId, ...value } = this.data.value ?? {};
     this.fieldFormGroup.patchValue({ configuration, type, debugSettings, entityId, ...value }, {emitEvent: false});
   }
 

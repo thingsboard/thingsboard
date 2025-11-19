@@ -55,6 +55,7 @@
   </div>
   <div *ngIf="!disabled">
     <button mat-stroked-button color="primary"
+            [disabled]="createAlarmRulesFormArray().controls.length > 4"
             type="button"
             (click)="addCreateAlarmRule()"
             matTooltip="{{ 'alarm-rule.add-create-alarm-rule' | translate }}"

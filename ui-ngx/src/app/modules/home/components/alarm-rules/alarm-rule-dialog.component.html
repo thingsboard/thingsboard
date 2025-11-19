@@ -47,6 +47,7 @@
           </mat-form-field>
           <tb-entity-debug-settings-button
             formControlName="debugSettings"
+            entityLabel="alarm-rule.alarm-rule"
             [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
             [entityType]="EntityType.CALCULATED_FIELD"
             [additionalActionConfig]="additionalDebugActionConfig"
@@ -85,14 +86,14 @@
                                                [entityName]="data.entityName"/>
         </div>
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.create-alarm-rules' | translate }}</div>
+          <div class="tb-form-panel-title">{{ 'alarm-rule.create-conditions' | translate }}</div>
           <div class="flex flex-1 flex-col">
             <tb-create-cf-alarm-rules formControlName="createRules" [arguments]="arguments">
             </tb-create-cf-alarm-rules>
           </div>
         </div>
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.clear-alarm-rule' | translate }}</div>
+          <div class="tb-form-panel-title">{{ 'alarm-rule.clear-condition' | translate }}</div>
           <div class="flex flex-row items-center justify-start gap-2 pb-2"
                [class.!hidden]="!configFormGroup.get('clearRule').value">
             <div class="clear-alarm-rule flex flex-1 flex-row">
