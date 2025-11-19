@@ -21,14 +21,13 @@ import {
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormControl,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { isDefinedAndNotNull } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AlarmRule } from "@shared/models/alarm-rule.models";
+import { AlarmRule, AlarmRuleCondition } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import {
   AlarmRuleDetailsDialogComponent,
@@ -69,7 +68,7 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   private modelValue: AlarmRule;
 
   alarmRuleFormGroup = this.fb.group({
-    condition: this.fb.control({}, Validators.required),
+    condition: this.fb.control<AlarmRuleCondition | null>(null),
     alarmDetails: [null],
     dashboardId: [null]
   });
@@ -106,12 +105,14 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   writeValue(value: AlarmRule): void {
-    this.modelValue = value;
-    const model = this.modelValue ? {
-      ...this.modelValue,
-      dashboardId: this.modelValue.dashboardId?.id
-    } : null;
-    this.alarmRuleFormGroup.patchValue(model, {emitEvent: false});
+    if (value) {
+      this.modelValue = value;
+      const model = this.modelValue ? {
+        ...this.modelValue,
+        dashboardId: this.modelValue.dashboardId?.id
+      } : null;
+      this.alarmRuleFormGroup.patchValue(model, {emitEvent: false});
+    }
   }
 
   public openEditDetailsDialog($event: Event) {

@@ -20,41 +20,38 @@
     display: grid;
     grid-template-rows: min-content minmax(auto, 1fr) min-content;
   }
-
-  .tbel-script-lang-chip {
-    line-height: 20px;
-    font-size: 14px;
-    font-weight: 500;
-    color: white;
-    border-radius: 100px;
-    width: 70px;
-    min-width: 70px;
-    display: flex;
-    justify-content: center;
-    margin-top: 2px;
-    margin-right: 4px;
-  }
-
-  .tb-js-func {
-    .ace_tb {
-      &.ace_calculated-field {
-        &-ctx {
-          color: #C52F00;
-        }
-        &-args {
-          color: #185F2A;
-        }
-        &-key {
-          color: #c24c1a;
-        }
-        &-time-window, &-values, &-func, &-value, &-ts, &-latestTs {
-          color: #7214D0;
-        }
-        &-start-ts, &-end-ts {
-          color: #2CAA00;
-        }
+}
+.tbel-script-lang-chip {
+  line-height: 20px;
+  font-size: 14px;
+  font-weight: 500;
+  color: white;
+  border-radius: 100px;
+  width: 70px;
+  min-width: 70px;
+  display: flex;
+  justify-content: center;
+  margin-top: 2px;
+  margin-right: 4px;
+}
+.tb-js-func {
+  .ace_tb {
+    &.ace_calculated-field {
+      &-ctx {
+        color: #C52F00;
+      }
+      &-args {
+        color: #185F2A;
+      }
+      &-key {
+        color: #c24c1a;
+      }
+      &-time-window, &-values, &-func, &-value, &-ts, &-latestTs {
+        color: #7214D0;
+      }
+      &-start-ts, &-end-ts {
+        color: #2CAA00;
       }
     }
   }
 }
-

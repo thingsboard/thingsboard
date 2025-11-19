@@ -1051,3 +1051,10 @@ export function uniqueNameValidator(existingNames: string[]): ValidatorFn {
     return namesSet.has(newName) ? { duplicateName: true } : null;
   };
 }
+
+export interface CalculatedFieldsQuery {
+  type: CalculatedFieldType;
+  entityType?: EntityType;
+  entities?: Array<string>;
+  name?: string;
+}

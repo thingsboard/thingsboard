@@ -31,6 +31,8 @@ import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
+import { CalculatedFieldType } from "@shared/models/calculated-field.models";
+import { CalculatedFieldsService } from "@core/http/calculated-fields.service";
 
 @Component({
   selector: 'tb-entity-subtype-list',
@@ -78,6 +80,9 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   entityType: EntityType;
 
   @Input()
+  calculatedFieldType: CalculatedFieldType;
+
+  @Input()
   emptyInputPlaceholder: string;
 
   @Input()
@@ -117,12 +122,14 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   private propagateChange = (v: any) => { };
 
   private hasPageDataEntitySubTypes = new Set<EntityType>([
-    EntityType.ALARM
+    EntityType.ALARM,
+    EntityType.CALCULATED_FIELD
   ]);
 
   constructor(private broadcast: BroadcastService,
               public translate: TranslateService,
               private alarmService: AlarmService,
+              private calculatedFieldsService: CalculatedFieldsService,
               private utils: UtilsService,
               private fb: FormBuilder,
               private entityService: EntityService) {
@@ -193,6 +200,13 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
         this.secondaryPlaceholder = '+' + this.translate.instant('alarm.alarm-type');
         this.noSubtypesMathingText = 'alarm.no-alarm-types-matching';
         this.subtypeListEmptyText = 'alarm.alarm-type-list-empty';
+        break;
+      case EntityType.CALCULATED_FIELD:
+        this.placeholder = this.required ? this.translate.instant('alarm.enter-alarm-rule-type')
+          : this.translate.instant('alarm-rule.any-type');
+        this.secondaryPlaceholder = '+' + this.translate.instant('alarm-rule.alarm-rule');
+        this.noSubtypesMathingText = 'alarm-rule.no-alarm-rule-types-matching';
+        this.subtypeListEmptyText = 'alarm-rule.alarm-rule-type-list-empty';
         break;
     }
 
@@ -315,14 +329,21 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
     if (this.hasPageDataEntitySubTypes.has(this.entityType)) {
       const pageLink = new PageLink(25, 0, searchText);
       let subTypesPagesObservable: Observable<PageData<EntitySubtype>>;
+      let subTypesCfPagesObservable: Observable<PageData<string>>;
       switch (this.entityType) {
         case EntityType.ALARM:
           subTypesPagesObservable = this.alarmService.getAlarmTypes(pageLink, {ignoreLoading: true});
           break;
+        case EntityType.CALCULATED_FIELD:
+          subTypesCfPagesObservable = this.calculatedFieldsService.getAlarmRuleNames(pageLink, CalculatedFieldType.ALARM, {ignoreLoading: true});
       }
       if (subTypesPagesObservable) {
         this.entitySubtypes = subTypesPagesObservable.pipe(
             map(subTypesPage => subTypesPage.data.map(subType => subType.type)),
+        );
+      } else if (subTypesCfPagesObservable) {
+        this.entitySubtypes = subTypesCfPagesObservable.pipe(
+          map(subTypesPage => subTypesPage.data)
         );
       } else {
         return throwError(null);
