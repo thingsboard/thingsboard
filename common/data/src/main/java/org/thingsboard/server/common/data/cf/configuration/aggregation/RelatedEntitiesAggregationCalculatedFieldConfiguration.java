@@ -38,6 +38,8 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
     @Valid
     @NotEmpty
     private Map<String, AggMetric> metrics;
+    @Valid
+    @NotNull
     private Output output;
     private boolean useLatestTs;
 
@@ -55,12 +57,43 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
 
     @Override
     public void validate() {
+        validateRelation();
+        validateArguments();
+        validateMetrics();
+    }
+
+    private void validateRelation() {
+        if (relation == null) {
+            throw new IllegalArgumentException("Relation must be specified!");
+        }
         relation.validate();
+    }
+
+    private void validateArguments() {
+        if (arguments == null || arguments.isEmpty()) {
+            throw new IllegalArgumentException("Arguments map cannot be empty.");
+        }
         if (arguments.containsKey("ctx")) {
             throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
         }
         if (arguments.values().stream().anyMatch(Argument::hasTsRollingArgument)) {
             throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support TS_ROLLING arguments.");
+        }
+    }
+
+    private void validateMetrics() {
+        if (metrics == null || metrics.isEmpty()) {
+            throw new IllegalArgumentException("Metrics map cannot be empty.");
+        }
+
+        for (AggMetric metric : metrics.values()) {
+            if (metric.getInput() instanceof AggKeyInput aggKeyInput) {
+                if (!arguments.containsKey(aggKeyInput.getKey())) {
+                    throw new IllegalArgumentException(
+                            "Metric references unknown argument: '" + aggKeyInput.getKey() + "'."
+                    );
+                }
+            }
         }
     }
 

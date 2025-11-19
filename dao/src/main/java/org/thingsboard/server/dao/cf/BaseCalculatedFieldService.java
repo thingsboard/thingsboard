@@ -19,8 +19,11 @@ import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldFilter;
+import org.thingsboard.server.common.data.cf.CalculatedFieldInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.CalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -30,6 +33,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
@@ -37,8 +41,10 @@ import org.thingsboard.server.dao.service.validator.CalculatedFieldDataValidator
 
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -53,6 +59,7 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
     public static final String INCORRECT_CALCULATED_FIELD_ID = "Incorrect calculatedFieldId ";
     public static final String INCORRECT_ENTITY_ID = "Incorrect entityId ";
 
+    private final EntityService entityService;
     private final CalculatedFieldDao calculatedFieldDao;
     private final CalculatedFieldDataValidator calculatedFieldDataValidator;
 
@@ -138,6 +145,24 @@ public class BaseCalculatedFieldService extends AbstractEntityService implements
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);
         return calculatedFieldDao.findAllByTenantId(tenantId, pageLink);
+    }
+
+    @Override
+    public PageData<CalculatedFieldInfo> findCalculatedFieldsByTenantIdAndFilter(TenantId tenantId, CalculatedFieldFilter filter, PageLink pageLink) {
+        PageData<CalculatedField> calculatedFields = calculatedFieldDao.findByTenantIdAndFilter(tenantId, filter, pageLink);
+        Set<EntityId> entityIds = calculatedFields.getData().stream()
+                .map(CalculatedField::getEntityId)
+                .collect(Collectors.toSet());
+        Map<EntityId, EntityInfo> entityInfos = entityService.fetchEntityInfos(tenantId, null, entityIds);
+        return calculatedFields.mapData(calculatedField -> {
+            EntityInfo entityInfo = entityInfos.get(calculatedField.getEntityId());
+            return new CalculatedFieldInfo(calculatedField, entityInfo.getName());
+        });
+    }
+
+    @Override
+    public PageData<String> findCalculatedFieldNamesByTenantIdAndType(TenantId tenantId, CalculatedFieldType type, PageLink pageLink) {
+        return calculatedFieldDao.findNamesByTenantIdAndType(tenantId, type, pageLink);
     }
 
     @Override

@@ -271,7 +271,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
       return acc;
     }, {} as Record<EntityType, string[]>);
     const tasks = Object.entries(entitiesByType).map(([entityType, ids]) =>
-      this.entityService.getEntities(entityType as EntityType, ids)
+      this.entityService.getEntities(entityType as EntityType, ids, {ignoreLoading: true})
     );
     if (!tasks.length) {
       return;

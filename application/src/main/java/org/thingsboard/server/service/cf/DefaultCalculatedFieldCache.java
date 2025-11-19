@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.ConcurrentReferenceHashMap;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -33,8 +34,10 @@ import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -49,6 +52,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Predicate;
+import java.util.stream.Stream;
 
 @Service
 @Slf4j
@@ -60,6 +64,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     private final CalculatedFieldService calculatedFieldService;
     private final TbAssetProfileCache assetProfileCache;
     private final TbDeviceProfileCache deviceProfileCache;
+    private final TbTenantProfileCache tenantProfileCache;
     @Lazy
     private final ActorSystemContext systemContext;
     private final OwnerService ownerService;
@@ -146,12 +151,10 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
     }
 
     @Override
-    public List<CalculatedFieldCtx> getAggCalculatedFieldCtxsByFilter(Predicate<CalculatedFieldCtx> relatedEntityFilter) {
+    public Stream<CalculatedFieldCtx> getCalculatedFieldCtxsByType(CalculatedFieldType cfType) {
         return calculatedFields.values().stream()
-                .filter(cf -> CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cf.getType()))
-                .map(cf -> getCalculatedFieldCtx(cf.getId()))
-                .filter(relatedEntityFilter)
-                .toList();
+                .filter(cf -> cfType.equals(cf.getType()))
+                .map(cf -> getCalculatedFieldCtx(cf.getId()));
     }
 
     @Override
@@ -226,6 +229,16 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
         log.debug("[{}] evict calculated field ctx from cache: {}", calculatedFieldId, oldCalculatedField);
         entityIdCalculatedFieldLinks.forEach((entityId, calculatedFieldLinks) -> calculatedFieldLinks.removeIf(link -> link.calculatedFieldId().equals(calculatedFieldId)));
         log.debug("[{}] evict calculated field links from cached links by entity id: {}", calculatedFieldId, oldCalculatedField);
+    }
+
+    @Override
+    public void handleTenantProfileUpdate(TenantProfileId tenantProfileId) {
+        calculatedFieldsCtx.values().stream()
+                .filter(ctx -> {
+                    TenantProfile tenantProfile = tenantProfileCache.get(ctx.getTenantId());
+                    return tenantProfile != null && tenantProfileId.equals(tenantProfile.getId());
+                })
+                .forEach(CalculatedFieldCtx::updateTenantProfileProperties);
     }
 
     @Override

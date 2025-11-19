@@ -32,6 +32,7 @@ import org.thingsboard.server.actors.tenant.TenantActor;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.msg.MsgType;
@@ -165,6 +166,18 @@ public class AppActor extends ContextAwareActor {
     private void onComponentLifecycleMsg(ComponentLifecycleMsg msg) {
         TbActorRef target = null;
         if (TenantId.SYS_TENANT_ID.equals(msg.getTenantId())) {
+            if (systemContext.isTenantComponentsInitEnabled()) {
+                if (msg.getEntityId() instanceof TenantProfileId tenantProfileId) {
+                    tenantService.findTenantIdsByTenantProfileId(tenantProfileId).forEach(tenantId -> {
+                        getOrCreateTenantActor(tenantId).ifPresentOrElse(tenantActor -> {
+                            log.debug("[{}] Sending component lifecycle msg for tenant.", tenantId);
+                            tenantActor.tellWithHighPriority(msg);
+                        }, () -> {
+                            log.debug("Ignoring component lifecycle msg for tenant {} because it is not managed by this service", tenantId);
+                        });
+                    });
+                }
+            }
             if (!msg.getEntityId().getEntityType().isOneOf(EntityType.TENANT_PROFILE, EntityType.TB_RESOURCE)) {
                 log.warn("Message has system tenant id: {}", msg);
             }
