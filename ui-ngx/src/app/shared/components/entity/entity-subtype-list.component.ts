@@ -299,7 +299,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
   }
 
   selected(event: MatAutocompleteSelectedEvent): void {
-    this.add(event.option.viewValue);
+    this.add(event.option.value);
     this.clear('');
   }
 
