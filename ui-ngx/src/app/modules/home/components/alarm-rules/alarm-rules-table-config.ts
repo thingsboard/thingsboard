@@ -224,7 +224,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   private copyCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
     const copyCalculatedAlarmRule = deepClone(calculatedField);
     copyCalculatedAlarmRule.entityId = null;
-    this.getCalculatedAlarmDialog(calculatedField, 'action.apply', isDirty)
+    this.getCalculatedAlarmDialog(copyCalculatedAlarmRule, 'action.apply', isDirty)
       .subscribe((res) => {
         if (res) {
           this.updateData();
