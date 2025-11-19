@@ -4092,7 +4092,7 @@
         "remember-me": "Remember me",
         "forgot-password": "Forgot Password?",
         "password-reset": "Password Reset",
-        "expired-password-reset-message": "Your password has expired! Please enter a new password.",
+        "expired-password-reset-message": "Your password has expired! \nPlease enter a new password.",
         "new-password": "New password",
         "new-password-again": "Confirm new password",
         "password-link-sent-message": "Reset link has been sent",
