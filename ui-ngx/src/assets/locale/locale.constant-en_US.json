@@ -485,6 +485,7 @@
         "2fa":  {
             "2fa": "Two-factor authentication",
             "available-providers": "Available providers",
+            "available-providers-required": "At least one 2FA provider should be configured.",
             "issuer-name": "Issuer name",
             "issuer-name-required": "Issuer name is required.",
             "max-verification-failures-before-user-lockout": "Max verification failures before user lockout",
