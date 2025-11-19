@@ -1006,7 +1006,7 @@
         "expiration-time-custom": "Custom",
         "generate": "Generate",
         "generate-title": "Generate API key",
-        "generate-text": "Note: The API key's permissions will inherit the rights of the user account that generates it.",
+        "generate-text": "Note: The API key inherits the permissions of the user it is created for.",
         "generated-api-key-title": "API key generated. Let’s check connectivity!",
         "generated-api-key-copy": "Make sure to copy and save your API key now as you will not be able to see it again.",
         "generated-api-key-command": "Use the following instructions to check connectivity. As a result, you should receive the current user information:",
