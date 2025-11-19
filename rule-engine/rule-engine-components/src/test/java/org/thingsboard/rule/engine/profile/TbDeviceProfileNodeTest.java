@@ -41,7 +41,7 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
@@ -178,7 +178,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        AlarmCondition alarmCreateCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
+        AlarmConditionOld alarmCreateCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCreateCondition);
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
@@ -187,7 +187,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setCreateRules(new TreeMap<>(Collections.singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         AlarmRule clearRule = new AlarmRule();
-        AlarmCondition clearCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", LESS, 10.0);
+        AlarmConditionOld clearCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", LESS, 10.0);
         clearRule.setCondition(clearCondition);
         dpa.setClearRule(clearRule);
 
@@ -252,12 +252,12 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        AlarmCondition alarmTempCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
+        AlarmConditionOld alarmTempCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmRule alarmTempRule = new AlarmRule();
         alarmTempRule.setCondition(alarmTempCondition);
 
         AlarmConditionFilter highTempFilter = getAlarmConditionFilter(TIME_SERIES, "temperature", GREATER, 50.0);
-        AlarmCondition alarmHighTempCondition = new AlarmCondition();
+        AlarmConditionOld alarmHighTempCondition = new AlarmConditionOld();
         alarmHighTempCondition.setCondition(Collections.singletonList(highTempFilter));
         AlarmRule alarmHighTempRule = new AlarmRule();
         alarmHighTempRule.setCondition(alarmHighTempCondition);
@@ -385,7 +385,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
         temperatureFilter.setPredicate(temperaturePredicate);
 
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -478,7 +478,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
         temperatureFilter.setPredicate(temperaturePredicate);
 
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -563,7 +563,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute")
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -657,7 +657,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         FilterPredicateValue<Long> filterPredicateValue = new FilterPredicateValue<>(
@@ -792,7 +792,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         FilterPredicateValue<Long> filterPredicateValue = new FilterPredicateValue<>(
@@ -924,7 +924,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         FilterPredicateValue<Integer> filterPredicateValue = new FilterPredicateValue<>(
@@ -1052,7 +1052,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute", false)
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         FilterPredicateValue<Integer> filterPredicateValue = new FilterPredicateValue<>(
@@ -1169,7 +1169,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute")
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         FilterPredicateValue<Long> filterPredicateValue = new FilterPredicateValue<>(
@@ -1286,7 +1286,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "greaterAttribute")
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         RepeatingAlarmConditionSpec repeating = new RepeatingAlarmConditionSpec();
@@ -1382,7 +1382,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 null
         ));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         CustomTimeSchedule schedule = new CustomTimeSchedule();
@@ -1480,7 +1480,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         ));
 
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
 
         CustomTimeSchedule schedule = new CustomTimeSchedule();
@@ -1581,7 +1581,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                         new DynamicValue<>(DynamicValueSourceType.CURRENT_CUSTOMER, "lessAttribute"))
         );
         lowTempFilter.setPredicate(lowTempPredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -1667,7 +1667,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                         new DynamicValue<>(DynamicValueSourceType.CURRENT_TENANT, "lessAttribute"))
         );
         lowTempFilter.setPredicate(lowTempPredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -1757,7 +1757,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                         new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "tenantAttribute", true))
         );
         lowTempFilter.setPredicate(lowTempPredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -1853,7 +1853,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                         new DynamicValue<>(DynamicValueSourceType.CURRENT_CUSTOMER, "tenantAttribute", true))
         );
         lowTempFilter.setPredicate(lowTempPredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(lowTempFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -1972,14 +1972,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         AlarmConditionFilter filter = getAlarmConditionFilter(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmConditionFilter filter2 = getAlarmConditionFilter(ATTRIBUTE, "battery", LESS, 10.0);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(List.of(filter, filter2));
         AlarmRule createRule = new AlarmRule();
         createRule.setCondition(alarmCondition);
 
         AlarmConditionFilter filter3 = getAlarmConditionFilter(TIME_SERIES, "temperature", LESS, 10.0);
         AlarmConditionFilter filter4 = getAlarmConditionFilter(ATTRIBUTE, "battery", GREATER, 50.0);
-        AlarmCondition clearCondition = new AlarmCondition();
+        AlarmConditionOld clearCondition = new AlarmConditionOld();
         clearCondition.setCondition(List.of(filter3, filter4));
         AlarmRule clearRule = new AlarmRule();
         clearRule.setCondition(clearCondition);
@@ -2039,9 +2039,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         return tsKv.toData();
     }
 
-    private AlarmCondition getNumericAlarmCondition(AlarmConditionKeyType alarmConditionKeyType, String key, NumericOperation operation, Double value) {
+    private AlarmConditionOld getNumericAlarmCondition(AlarmConditionKeyType alarmConditionKeyType, String key, NumericOperation operation, Double value) {
         AlarmConditionFilter filter = getAlarmConditionFilter(alarmConditionKeyType, key, operation, value);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(filter));
         return alarmCondition;
     }
@@ -2071,7 +2071,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         highTemperaturePredicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
         highTemperaturePredicate.setValue(new FilterPredicateValue<>(30.0));
         highTempFilter.setPredicate(highTemperaturePredicate);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Collections.singletonList(highTempFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -2088,7 +2088,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         lowTemperaturePredicate.setValue(new FilterPredicateValue<>(10.0));
         lowTempFilter.setPredicate(lowTemperaturePredicate);
         AlarmRule clearRule = new AlarmRule();
-        AlarmCondition clearCondition = new AlarmCondition();
+        AlarmConditionOld clearCondition = new AlarmConditionOld();
         clearCondition.setCondition(Collections.singletonList(lowTempFilter));
         clearRule.setCondition(clearCondition);
         dpa.setClearRule(clearRule);

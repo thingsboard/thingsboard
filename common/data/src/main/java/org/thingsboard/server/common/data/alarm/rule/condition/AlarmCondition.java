@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSch
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AnyTimeSchedule;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
+@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXISTING_PROPERTY)
 @JsonSubTypes({
         @Type(name = "SIMPLE", value = SimpleAlarmCondition.class),
         @Type(name = "DURATION", value = DurationAlarmCondition.class),

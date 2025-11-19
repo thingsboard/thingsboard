@@ -20,7 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.profile.state.PersistedAlarmRuleState;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
@@ -310,7 +310,7 @@ class AlarmRuleState {
         }
     }
 
-    private boolean eval(AlarmCondition condition, DataSnapshot data) {
+    private boolean eval(AlarmConditionOld condition, DataSnapshot data) {
         boolean eval = true;
         for (var filter : condition.getCondition()) {
             EntityKeyValue value;

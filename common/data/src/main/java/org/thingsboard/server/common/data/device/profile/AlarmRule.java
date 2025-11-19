@@ -34,7 +34,7 @@ public class AlarmRule implements Serializable {
 
     @Valid
     @Schema(description = "JSON object representing the alarm rule condition")
-    private AlarmCondition condition;
+    private AlarmConditionOld condition;
     @Schema(description = "JSON object representing time interval during which the rule is active")
     private AlarmSchedule schedule;
     // Advanced

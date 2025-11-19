@@ -37,11 +37,10 @@ public class TbSwaggerModelConverter implements ModelConverter {
         JavaType javaType = Json.mapper().constructType(type.getType());
         if (javaType != null) {
             Class<?> cls = javaType.getRawClass();
-
             // Remove "empty" property from Map types
             removeEmptyProperty(schema, cls);
             // Add discriminator mappings for polymorphic types
-            fixPolymorphicSchemas(cls, schema, context, nextConverter);
+           fixPolymorphicSchemas(cls, schema, context, nextConverter);
         }
 
         return schema;
@@ -115,7 +114,6 @@ public class TbSwaggerModelConverter implements ModelConverter {
         if (baseType == null) {
             return;
         }
-
 
         /// We don't want to work with declarations here
         if(schema.get$ref() ==null) {
@@ -217,7 +215,7 @@ public class TbSwaggerModelConverter implements ModelConverter {
             return;
         }
 
-        HashMap<String, Schema> schemas = new HashMap<>(openAPI.getComponents().getSchemas());
+        Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
 
 
         // First pass: remove all allOf declarations
@@ -231,20 +229,29 @@ public class TbSwaggerModelConverter implements ModelConverter {
             Schema schema = entry.getValue();
             replaceInlinedOneOfInSchema(schema, schemas);
         }
-        openAPI.getComponents().setSchemas(schemas);
+      //  openAPI.getComponents().setSchemas(schemas);
 
     }
 /// Remove allOf from subtypes and add oneOf to base type
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static void clearAllOff(Schema schema, HashMap<String, Schema> schemas, String schemaName) {
+    private static void clearAllOff(Schema schema, Map<String, Schema> schemas, String schemaName) {
         String refString = refPrefix + schemaName;
-        List<Schema> allOffs = schema.getAllOf();
-        if (allOffs != null && !allOffs.isEmpty()) {
-            String baseTypeRef = allOffs.get(0).get$ref();
-            String baseTypeName = getSchemaNameFromRef(baseTypeRef);
-            Schema baseSchema = schemas.get(baseTypeName);
-            if (baseSchema != null) {
-                schema.setAllOf(null);
+        if (schema.getAllOf() == null || schema.getAllOf().isEmpty()) {
+        return;
+        }
+       List<Schema> allOffs= schema.getAllOf();
+        /// Find a base type in list of allOffs and replace it with ref
+            for (Schema off : allOffs) {
+                if(off.get$ref() == null){
+                    continue;
+                }
+                String baseTypeRef = off.get$ref();
+                String baseTypeName = getSchemaNameFromRef(baseTypeRef);
+                Schema baseSchema = schemas.get(baseTypeName);
+                if (baseSchema == null) {
+                    return;
+                }
+
                 List<Schema> oneOffs = baseSchema.getOneOf();
 
                 if (oneOffs != null) {
@@ -256,12 +263,15 @@ public class TbSwaggerModelConverter implements ModelConverter {
                 ref.set$ref(refString);
                 oneOffs.add(ref);
                 baseSchema.setOneOf(oneOffs);
-                schemas.put(schemaName, schema);
-                schemas.put(baseTypeName, baseSchema);
-
             }
-
+            /// Find declaration of subtype in allOffs
+      Schema declaration =   allOffs.stream().filter(s -> s.get$ref() == null).findFirst().orElse(null);
+        if(declaration != null) {
+            /// copy required and replace subtype schema
+            declaration.setRequired(schema.getRequired());
+          schemas.put(schemaName, declaration);
         }
+
     }
 
     /**

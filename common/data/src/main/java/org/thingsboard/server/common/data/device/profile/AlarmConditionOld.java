@@ -27,8 +27,7 @@ import java.util.List;
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
 @Deprecated
-public class AlarmCondition implements Serializable {
-
+public class AlarmConditionOld implements Serializable {
     @Valid
     @Schema(description = "JSON array of alarm condition filters")
     private List<AlarmConditionFilter> condition;
