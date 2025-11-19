@@ -73,7 +73,7 @@ public class LwM2mObjectModelUtils {
         try {
             List<ObjectModel> objectModels =
                     ddfFileParser.parse(new ByteArrayInputStream(resource.getData()), resource.getSearchText());
-            if (objectModels.size() == 0) {
+            if (objectModels.isEmpty()) {
                 return null;
             } else {
                 ObjectModel obj = objectModels.get(0);
@@ -95,7 +95,7 @@ public class LwM2mObjectModelUtils {
                         resources.add(lwM2MResourceObserve);
                     }
                 });
-                if (isSave || resources.size() > 0) {
+                if (isSave || !resources.isEmpty()) {
                     instance.setResources(resources.toArray(LwM2mResourceObserve[]::new));
                     lwM2mObject.setInstances(new LwM2mInstance[]{instance});
                     return lwM2mObject;
