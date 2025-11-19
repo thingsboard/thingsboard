@@ -1099,7 +1099,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
         cfg.setArguments(Map.of("temperatureComputed", arg));
 
-        cfg.setOutput(new TimeSeriesOutput());
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setStrategy(new TimeSeriesImmediateOutputStrategy(0, true, true, true, true));
+        cfg.setOutput(output);
 
         cf.setConfiguration(cfg);
 
