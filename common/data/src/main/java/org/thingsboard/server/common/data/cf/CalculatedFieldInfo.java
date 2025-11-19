@@ -13,8 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host ::ng-deep {
-  .white-background {
-    --mat-sidenav-content-background-color: white;
-  }
+package org.thingsboard.server.common.data.cf;
+
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
+
+@Data
+@EqualsAndHashCode(callSuper = true)
+@NoArgsConstructor
+public class CalculatedFieldInfo extends CalculatedField {
+
+    private String entityName;
+
+    public CalculatedFieldInfo(CalculatedField calculatedField, String entityName) {
+        super(calculatedField);
+        this.entityName = entityName;
+    }
+
 }
