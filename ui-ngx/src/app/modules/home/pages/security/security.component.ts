@@ -23,7 +23,6 @@ import {
   AbstractControl,
   UntypedFormBuilder,
   UntypedFormGroup, FormGroupDirective,
-  NgForm,
   ValidationErrors,
   ValidatorFn,
   Validators
@@ -48,10 +47,14 @@ import {
 import { authenticationDialogMap } from '@home/pages/security/authentication-dialog/authentication-dialog.map';
 import { takeUntil, tap } from 'rxjs/operators';
 import { Observable, of, Subject } from 'rxjs';
-import { isDefinedAndNotNull, isEqual } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { AuthService } from '@core/auth/auth.service';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { MatCheckboxChange } from '@angular/material/checkbox';
+import {
+  passwordsMatchValidator,
+  passwordStrengthValidator
+} from '@shared/models/password.models';
 
 @Component({
   selector: 'tb-security',
@@ -167,8 +170,8 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
       newPassword2: ['']
     }, {
       validators: [
-        this.samePasswordValidator(true, 'currentPassword', 'newPassword'),
-        this.samePasswordValidator(false, 'newPassword', 'newPassword2')
+        this.passwordNotSameAsOld(),
+        passwordsMatchValidator('newPassword', 'newPassword2'),
       ]
     });
   }
@@ -177,85 +180,36 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
     this.authService.getUserPasswordPolicy().subscribe(policy => {
       this.passwordPolicy = policy;
       this.changePassword.get('newPassword').setValidators([
-        this.passwordStrengthValidator(),
+        passwordStrengthValidator(this.passwordPolicy),
         Validators.required
       ]);
       this.changePassword.get('newPassword').updateValueAndValidity({emitEvent: false});
     });
   }
 
-  private passwordStrengthValidator(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const value: string = control.value;
-      const errors: any = {};
+  passwordNotSameAsOld(): ValidatorFn {
+    return (group: AbstractControl): ValidationErrors | null => {
+      const currentPassControl = group.get('currentPassword');
+      const newPassControl = group.get('newPassword');
 
-      if (this.passwordPolicy.minimumUppercaseLetters > 0 &&
-        !new RegExp(`(?:.*?[A-Z]){${this.passwordPolicy.minimumUppercaseLetters}}`).test(value)) {
-        errors.notUpperCase = true;
-      }
 
-      if (this.passwordPolicy.minimumLowercaseLetters > 0 &&
-        !new RegExp(`(?:.*?[a-z]){${this.passwordPolicy.minimumLowercaseLetters}}`).test(value)) {
-        errors.notLowerCase = true;
-      }
+      const current = currentPassControl?.value ?? '';
+      const newPass = newPassControl?.value ?? '';
 
-      if (this.passwordPolicy.minimumDigits > 0
-        && !new RegExp(`(?:.*?\\d){${this.passwordPolicy.minimumDigits}}`).test(value)) {
-        errors.notNumeric = true;
-      }
-
-      if (this.passwordPolicy.minimumSpecialCharacters > 0 &&
-        !new RegExp(`(?:.*?[\\W_]){${this.passwordPolicy.minimumSpecialCharacters}}`).test(value)) {
-        errors.notSpecial = true;
-      }
-
-      if (!this.passwordPolicy.allowWhitespaces && /\s/.test(value)) {
-        errors.hasWhitespaces = true;
-      }
-
-      if (this.passwordPolicy.minimumLength > 0 && value.length < this.passwordPolicy.minimumLength) {
-        errors.minLength = true;
-      }
-
-      if (!value.length || this.passwordPolicy.maximumLength > 0 && value.length > this.passwordPolicy.maximumLength) {
-        errors.maxLength = true;
-      }
-
-      return isEqual(errors, {}) ? null : errors;
-    };
-  }
-
-  private samePasswordValidator(isSame: boolean, field1Key: string, field2Key: string): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      const field1 = control.get(field1Key);
-      const field2 = control.get(field2Key);
-
-      if (!field1 || !field2 || !field1.value || !field2.value) {
+      if (current && newPass && current === newPass) {
+        newPassControl?.setErrors({
+          ...newPassControl.errors,
+          passwordSameAsOld: true
+        });
+        return { passwordSameAsOld: true };
+      } else {
+        const currentErrors = newPassControl?.errors;
+        if (currentErrors?.passwordSameAsOld) {
+          const { passwordSameAsOld, ...rest } = currentErrors;
+          newPassControl.setErrors(Object.keys(rest).length ? rest : null);
+        }
         return null;
       }
-
-      let validationFailed: boolean;
-      let error: ValidationErrors;
-
-      if (isSame) {
-        validationFailed = field1.value === field2.value;
-        error = { samePassword: true };
-      } else {
-        validationFailed = field1.value !== field2.value;
-        error = { differencePassword: true };
-      }
-
-      if (validationFailed) {
-        field2.setErrors({...field2.errors, ...error});
-        return error;
-      } else {
-        if (field2.hasError(Object.keys(error)[0])) {
-          const errors = {...field2.errors};
-          delete errors[Object.keys(error)[0]];
-          field2.setErrors(Object.keys(errors).length ? errors : null);
-        }
-      }
-      return null;
     };
   }
 
