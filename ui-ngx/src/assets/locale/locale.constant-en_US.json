@@ -4257,7 +4257,7 @@
         "verification-code": "6-digit code",
         "verification-code-invalid": "Invalid verification code format",
         "verification-code-incorrect": "Verification code is incorrect",
-        "verification-code-many-request": "Too many requests check verification code",
+        "verification-code-many-request": "Too many requests to check verification code",
         "scan-qr-code": "Scan this QR code with your verification app",
         "phone-input": {
             "phone-input-label": "Phone number",
@@ -4833,7 +4833,7 @@
                 "verification-code": "6-digit code",
                 "verification-code-invalid": "Invalid verification code format",
                 "verification-code-incorrect": "Verification code is incorrect",
-                "verification-code-many-request": "Too many requests check verification code",
+                "verification-code-many-request": "Too many requests to check verification code",
                 "verification-step-description": "Enter a 6-digit code we just sent to {{address}}",
                 "verification-step-label": "Verification"
             },
