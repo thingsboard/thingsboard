@@ -124,6 +124,7 @@ public class CalculatedFieldUtils {
             if (alarmState.getClearRuleState() != null) {
                 alarmStateProto.setClearRuleState(toAlarmRuleStateProto(alarmState.getClearRuleState()));
             }
+            builder.setAlarmState(alarmStateProto);
         }
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
             builder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
@@ -137,7 +138,7 @@ public class CalculatedFieldUtils {
                 .setSeverity(Optional.ofNullable(ruleState.getSeverity()).map(Enum::name).orElse(""))
                 .setEventCount(ruleState.getEventCount())
                 .setFirstEventTs(ruleState.getFirstEventTs())
-                .setLastEventTs(ruleState.getLastEventTs())
+                .setLastCheckTs(ruleState.getLastCheckTs())
                 .build();
     }
 
@@ -146,7 +147,7 @@ public class CalculatedFieldUtils {
         AlarmRuleState ruleState = new AlarmRuleState(severity, null, state);
         ruleState.setEventCount(proto.getEventCount());
         ruleState.setFirstEventTs(proto.getFirstEventTs());
-        ruleState.setLastEventTs(proto.getLastEventTs());
+        ruleState.setLastCheckTs(proto.getLastCheckTs());
         return ruleState;
     }
 
