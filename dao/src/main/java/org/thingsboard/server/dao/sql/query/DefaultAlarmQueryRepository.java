@@ -319,7 +319,11 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
         SqlQueryContext ctx = new SqlQueryContext(new QueryContext(tenantId, null, EntityType.ALARM));
 
         if (query.isSearchPropagatedAlarms()) {
-            ctx.append("select count(distinct(a.id)) from alarm_info a ");
+            if (query.getEntityFilter() == null) {
+                ctx.append("select count(distinct(a.id)) from alarm_info a ");
+            } else {
+                ctx.append("select count(a.id) from alarm_info a ");
+            }
             ctx.append(JOIN_ENTITY_ALARMS);
             if (orderedEntityIds != null) {
                 if (orderedEntityIds.isEmpty()) {
