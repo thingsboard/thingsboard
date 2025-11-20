@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm.rule.condition.schedule;
 
+@Deprecated
 public class AnyTimeSchedule implements AlarmSchedule {
 
     @Override

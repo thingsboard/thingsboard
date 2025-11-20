@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.profile;
 
 import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
@@ -72,7 +72,7 @@ public class AlarmStateTest {
     }
 
     private AlarmRuleState createMockAlarmRuleState(AlarmConditionSpec spec) {
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setSpec(spec);
 
         AlarmRule alarmRule = new AlarmRule();

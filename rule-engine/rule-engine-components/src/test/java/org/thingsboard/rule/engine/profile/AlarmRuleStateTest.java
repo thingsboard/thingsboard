@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
@@ -75,7 +75,7 @@ public class AlarmRuleStateTest {
             List<AlarmConditionFilter> condition = new ArrayList<>();
             condition.add(alarmConditionFilter);
 
-            AlarmCondition alarmCondition = new AlarmCondition();
+            AlarmConditionOld alarmCondition = new AlarmConditionOld();
             alarmCondition.setSpec(new SimpleAlarmConditionSpec());
             alarmCondition.setCondition(condition);
 

@@ -21,18 +21,18 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.query.DynamicValue;
 
 import java.io.Serializable;
-
+@Schema(name="AlarmScheduleDep")
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
         property = "type")
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = AnyTimeScheduleOld.class, name = "ANY_TIME"),
-        @JsonSubTypes.Type(value = SpecificTimeScheduleOld.class, name = "SPECIFIC_TIME"),
-        @JsonSubTypes.Type(value = CustomTimeScheduleOld.class, name = "CUSTOM")})
+        @JsonSubTypes.Type(value = AnyTimeSchedule.class, name = "ANY_TIME"),
+        @JsonSubTypes.Type(value = SpecificTimeSchedule.class, name = "SPECIFIC_TIME"),
+        @JsonSubTypes.Type(value = CustomTimeSchedule.class, name = "CUSTOM")})
 @Deprecated
-public interface AlarmScheduleOld extends Serializable {
+public interface AlarmSchedule extends Serializable {
 
     AlarmScheduleType getType();
 

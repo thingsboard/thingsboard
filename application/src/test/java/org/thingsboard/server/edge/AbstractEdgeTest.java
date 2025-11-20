@@ -45,7 +45,7 @@ import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.debug.DebugSettings;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
@@ -228,7 +228,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         deviceProfileAlarm.setAlarmType("High Temperature");
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setAlarmDetails("Alarm Details");
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
         List<AlarmConditionFilter> condition = new ArrayList<>();
         AlarmConditionFilter alarmConditionFilter = new AlarmConditionFilter();

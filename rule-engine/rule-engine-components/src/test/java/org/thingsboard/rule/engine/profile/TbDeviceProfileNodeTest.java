@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.profile;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.provider.Arguments;
@@ -41,7 +42,7 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmModificationRequest;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
@@ -58,6 +59,10 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
+import org.thingsboard.server.common.data.kv.DoubleDataEntry;
+import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -98,9 +103,17 @@ import static java.util.Collections.singleton;
 import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThatNoException;
+import static com.google.common.util.concurrent.Futures.immediateFuture;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singleton;
+import static java.util.Collections.singletonList;
+import static java.util.Collections.singletonMap;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anySet;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
@@ -144,6 +157,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
     }
 
+    @BeforeEach
+    public void setup() {
+        lenient().when(ctx.getTenantId()).thenReturn(tenantId);
+        lenient().when(ctx.getDeviceProfileCache()).thenReturn(cache);
+        lenient().when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
+        lenient().when(ctx.getAlarmService()).thenReturn(alarmService);
+        lenient().when(ctx.getDeviceService()).thenReturn(deviceService);
+        lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
+    }
+
     @Test
     public void testRandomMessageType() throws Exception {
         init();
@@ -151,8 +174,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         deviceProfileData.setAlarms(emptyList());
+        deviceProfileData.setAlarms(emptyList());
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
@@ -175,8 +200,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
         deviceProfileData.setAlarms(emptyList());
+        deviceProfileData.setAlarms(emptyList());
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
@@ -199,22 +226,28 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        AlarmCondition alarmCreateCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
+        AlarmConditionOld alarmCreateCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCreateCondition);
         DeviceProfileAlarm dpa = new DeviceProfileAlarm();
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         AlarmRule clearRule = new AlarmRule();
-        AlarmCondition clearCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", LESS, 10.0);
+        AlarmConditionOld clearCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", LESS, 10.0);
         clearRule.setCondition(clearCondition);
         dpa.setClearRule(clearRule);
 
         deviceProfileData.setAlarms(singletonList(dpa));
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -273,7 +306,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         DeviceProfile deviceProfile = new DeviceProfile();
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
-        AlarmCondition alarmTempCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
+        AlarmConditionOld alarmTempCondition = getNumericAlarmCondition(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmRule alarmTempRule = new AlarmRule();
         alarmTempRule.setCondition(alarmTempCondition);
 
@@ -294,8 +327,13 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setCreateRules(createRules);
 
         deviceProfileData.setAlarms(singletonList(dpa));
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm1")).thenReturn(null);
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -384,6 +422,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> attrListListenableFuture = immediateFuture(singletonList(entry));
+        ListenableFuture<List<AttributeKvEntry>> attrListListenableFuture = immediateFuture(singletonList(entry));
 
         AlarmConditionFilter alarmEnabledFilter = new AlarmConditionFilter();
         alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
@@ -406,7 +445,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
         temperatureFilter.setPredicate(temperaturePredicate);
 
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -414,7 +453,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("alarmEnabledAlarmID");
         dpa.setAlarmType("alarmEnabledAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -422,8 +463,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(attrListListenableFuture);
@@ -434,6 +481,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
                 .copyMetaData(TbMsgMetaData.EMPTY)
                 .data(TbMsg.EMPTY_STRING)
                 .build();
+        when(ctx.newMsg(Mockito.any(), Mockito.any(TbMsgType.class), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
         when(ctx.newMsg(Mockito.any(), Mockito.any(TbMsgType.class), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.anyString()))
                 .thenReturn(theMsg);
 
@@ -477,6 +525,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<Optional<AttributeKvEntry>> attrListListenableFuture = immediateFuture(Optional.of(entry));
+        ListenableFuture<Optional<AttributeKvEntry>> attrListListenableFuture = immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter alarmEnabledFilter = new AlarmConditionFilter();
         alarmEnabledFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.CONSTANT, "alarmEnabled"));
@@ -499,7 +548,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         temperaturePredicate.setValue(new FilterPredicateValue<>(20.0, null, null));
         temperatureFilter.setPredicate(temperaturePredicate);
 
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(Arrays.asList(alarmEnabledFilter, temperatureFilter));
         AlarmRule alarmRule = new AlarmRule();
         alarmRule.setCondition(alarmCondition);
@@ -507,7 +556,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("alarmEnabledAlarmID");
         dpa.setAlarmType("alarmEnabledAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -516,8 +567,19 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
+        when(deviceService.findDeviceById(tenantId, deviceId)).thenReturn(device);
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "alarmEnabledAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
+                .thenReturn(immediateFuture(emptyList()));
+        when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
+                .thenReturn(immediateFuture(Optional.empty()));
+        when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(immediateFuture(emptyList()));
@@ -572,6 +634,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
                 immediateFuture(singletonList(entry));
+                immediateFuture(singletonList(entry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -592,7 +655,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -600,8 +665,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
@@ -666,6 +737,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<List<AttributeKvEntry>> listListenableFuture =
                 immediateFuture(Arrays.asList(entry, alarmDelayAttributeKvEntry));
+                immediateFuture(Arrays.asList(entry, alarmDelayAttributeKvEntry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -698,7 +770,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -706,8 +780,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -857,6 +937,105 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
+    public void testCurrentDeviceAttributeForDynamicDurationValue_noMessagesReceivedFromDeviceBeforeAlarmHarvesting() throws Exception {
+        init();
+
+        // 1. Setup device profile that has no alarm rules
+        var deviceProfileData = new DeviceProfileData();
+        deviceProfileData.setAlarms(emptyList());
+
+        var deviceProfile = new DeviceProfile(deviceProfileId);
+        deviceProfile.setTenantId(tenantId);
+        deviceProfile.setName("default");
+        deviceProfile.setProfileData(deviceProfileData);
+
+        given(cache.get(tenantId, deviceId)).willReturn(deviceProfile);
+
+        // 2. Initialize device state by sending ENTITY_CREATED event
+        var device = new Device(deviceId);
+        device.setTenantId(tenantId);
+        device.setName("device");
+        device.setDeviceProfileId(deviceProfileId);
+        device.setType("default");
+
+        var entityCreatedEvent = TbMsg.newMsg()
+                .type(TbMsgType.ENTITY_CREATED)
+                .originator(deviceId)
+                .data(JacksonUtil.toString(device))
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        node.onMsg(ctx, entityCreatedEvent);
+
+        // 3. Update device profile so it now has dynamic duration rule with value taken from current device
+        var predicate = new NumericFilterPredicate();
+        predicate.setOperation(NumericOperation.GREATER_OR_EQUAL);
+        predicate.setValue(new FilterPredicateValue<>(100.0));
+
+        var filter = new AlarmConditionFilter();
+        filter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
+        filter.setValueType(EntityKeyValueType.NUMERIC);
+        filter.setPredicate(predicate);
+
+        var durationSpec = new DurationAlarmConditionSpec();
+        durationSpec.setUnit(TimeUnit.SECONDS);
+        durationSpec.setPredicate(
+                new FilterPredicateValue<>(10L, null, new DynamicValue<>(DynamicValueSourceType.CURRENT_DEVICE, "duration", false))
+        );
+
+        var alarmCondition = new AlarmCondition();
+        alarmCondition.setCondition(singletonList(filter));
+        alarmCondition.setSpec(durationSpec);
+
+        var alarmRule = new AlarmRule();
+        alarmRule.setCondition(alarmCondition);
+
+        var dpa = new DeviceProfileAlarm();
+        dpa.setId("c4486528-84f2-bd72-589e-2f9a60f89c17");
+        dpa.setAlarmType("Test alarm");
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+
+        deviceProfileData.setAlarms(singletonList(dpa));
+
+        // 4. Mock DB calls for keys used in alarm rule
+        given(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature"))).willReturn(immediateFuture(
+                List.of(new BasicTsKvEntry(123L, new DoubleDataEntry("temperature", 55.6)))
+        ));
+
+        given(attributesService.find(tenantId, deviceId, AttributeScope.CLIENT_SCOPE, singleton("duration"))).willReturn(immediateFuture(emptyList()));
+        given(attributesService.find(tenantId, deviceId, AttributeScope.SHARED_SCOPE, singleton("duration"))).willReturn(immediateFuture(emptyList()));
+        given(attributesService.find(tenantId, deviceId, AttributeScope.SERVER_SCOPE, singleton("duration"))).willReturn(immediateFuture(
+                List.of(new BaseAttributeKvEntry(123L, new LongDataEntry("duration", 20L)))
+        ));
+
+        // 5. Send DEVICE_PROFILE_UPDATE_SELF_MSG so alarm state (inside device state) gets initialized
+        given(cache.get(tenantId, deviceProfileId)).willReturn(deviceProfile);
+
+        var deviceProfileUpdateMsg = TbMsg.newMsg()
+                .originator(tenantId)
+                .type(TbMsgType.DEVICE_PROFILE_UPDATE_SELF_MSG)
+                .data(deviceProfileId.toString())
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        node.onMsg(ctx, deviceProfileUpdateMsg);
+
+        // 6. Not sending anything else to simulate no activity
+
+        // 7. Simulate periodic alarm harvesting by manually sending DEVICE_PROFILE_PERIODIC_SELF_MSG message
+        var periodicCheck = TbMsg.newMsg()
+                .type(TbMsgType.DEVICE_PROFILE_PERIODIC_SELF_MSG)
+                .originator(tenantId)
+                .customerId(customerId)
+                .metaData(TbMsgMetaData.EMPTY)
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .build();
+
+        // NPE should NOT happen here: dynamic value of duration condition should be correctly resolved
+        assertThatNoException().isThrownBy(() -> node.onMsg(ctx, periodicCheck));
+    }
+
+    @Test
     public void testInheritTenantAttributeForDuration() throws Exception {
         init();
 
@@ -896,9 +1075,12 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<Optional<AttributeKvEntry>> optionalDurationAttribute =
                 immediateFuture(Optional.of(alarmDelayAttributeKvEntry));
+                immediateFuture(Optional.of(alarmDelayAttributeKvEntry));
         ListenableFuture<List<AttributeKvEntry>> listNoDurationAttribute =
                 immediateFuture(singletonList(entry));
+                immediateFuture(singletonList(entry));
         ListenableFuture<Optional<AttributeKvEntry>> emptyOptional =
+                immediateFuture(Optional.empty());
                 immediateFuture(Optional.empty());
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
@@ -932,10 +1114,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -944,11 +1132,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
+        when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
         when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
         when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
+        when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(emptyOptional);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
@@ -1032,6 +1225,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<List<AttributeKvEntry>> listListenableFuture =
                 immediateFuture(Arrays.asList(entry, alarmDelayAttributeKvEntry));
+                immediateFuture(Arrays.asList(entry, alarmDelayAttributeKvEntry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -1064,7 +1258,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -1072,8 +1268,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -1156,9 +1358,12 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<Optional<AttributeKvEntry>> optionalDurationAttribute =
                 immediateFuture(Optional.of(alarmDelayAttributeKvEntry));
+                immediateFuture(Optional.of(alarmDelayAttributeKvEntry));
         ListenableFuture<List<AttributeKvEntry>> listNoDurationAttribute =
                 immediateFuture(singletonList(entry));
+                immediateFuture(singletonList(entry));
         ListenableFuture<Optional<AttributeKvEntry>> emptyOptional =
+                immediateFuture(Optional.empty());
                 immediateFuture(Optional.empty());
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
@@ -1191,10 +1396,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -1203,11 +1414,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
+        when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
         when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
         when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
+        when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(emptyOptional);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
@@ -1277,6 +1493,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<List<AttributeKvEntry>> listListenableFuture =
                 immediateFuture(singletonList(entry));
+                immediateFuture(singletonList(entry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -1309,7 +1526,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -1317,8 +1536,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -1394,6 +1619,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<List<AttributeKvEntry>> listListenableFuture =
                 immediateFuture(singletonList(entry));
+                immediateFuture(singletonList(entry));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -1423,7 +1649,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -1431,8 +1659,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
@@ -1490,6 +1724,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureActiveSchedule =
                 immediateFuture(singletonList(entryActiveSchedule));
+                immediateFuture(singletonList(entryActiveSchedule));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -1516,7 +1751,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         deviceProfileAlarmActiveSchedule.setId("highTemperatureAlarmID");
         deviceProfileAlarmActiveSchedule.setAlarmType("highTemperatureAlarm");
         deviceProfileAlarmActiveSchedule.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        deviceProfileAlarmActiveSchedule.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(deviceProfileAlarmActiveSchedule));
         deviceProfileData.setAlarms(singletonList(deviceProfileAlarmActiveSchedule));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -1524,8 +1761,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureActiveSchedule);
@@ -1587,6 +1830,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureInactiveSchedule =
                 immediateFuture(singletonList(entryInactiveSchedule));
+                immediateFuture(singletonList(entryInactiveSchedule));
 
         AlarmConditionFilter highTempFilter = new AlarmConditionFilter();
         highTempFilter.setKey(new AlarmConditionFilterKey(TIME_SERIES, "temperature"));
@@ -1625,7 +1869,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         deviceProfileAlarmNonactiveSchedule.setId("highTemperatureAlarmID");
         deviceProfileAlarmNonactiveSchedule.setAlarmType("highTemperatureAlarm");
         deviceProfileAlarmNonactiveSchedule.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        deviceProfileAlarmNonactiveSchedule.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(deviceProfileAlarmNonactiveSchedule));
         deviceProfileData.setAlarms(singletonList(deviceProfileAlarmNonactiveSchedule));
         deviceProfile.setProfileData(deviceProfileData);
 
@@ -1633,7 +1879,13 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureInactiveSchedule);
@@ -1686,7 +1938,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
                 immediateFuture(emptyList());
+                immediateFuture(emptyList());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
+                immediateFuture(Optional.of(entry));
                 immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
@@ -1709,10 +1963,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("lesstempID");
         dpa.setAlarmType("lessTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -1721,9 +1981,13 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
         when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
+        when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
+        when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
         when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
@@ -1772,7 +2036,9 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
                 immediateFuture(emptyList());
+                immediateFuture(emptyList());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
+                immediateFuture(Optional.of(entry));
                 immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
@@ -1795,10 +2061,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("lesstempID");
         dpa.setAlarmType("lessTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -1807,7 +2079,10 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
+        when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
         when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
@@ -1860,9 +2135,12 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
                 immediateFuture(emptyList());
+                immediateFuture(emptyList());
         ListenableFuture<Optional<AttributeKvEntry>> emptyOptionalFuture =
                 immediateFuture(Optional.empty());
+                immediateFuture(Optional.empty());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
+                immediateFuture(Optional.of(entry));
                 immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
@@ -1885,10 +2163,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("lesstempID");
         dpa.setAlarmType("lessTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "lessTemperatureAlarm"))
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -1897,11 +2181,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
         when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
+        when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
+        when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
         when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
@@ -1956,9 +2245,12 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         AttributeKvEntry entry = attributeKvEntity.toData();
         ListenableFuture<List<AttributeKvEntry>> listListenableFutureWithLess =
                 immediateFuture(emptyList());
+                immediateFuture(emptyList());
         ListenableFuture<Optional<AttributeKvEntry>> emptyOptionalFuture =
                 immediateFuture(Optional.empty());
+                immediateFuture(Optional.empty());
         ListenableFuture<Optional<AttributeKvEntry>> optionalListenableFutureWithLess =
+                immediateFuture(Optional.of(entry));
                 immediateFuture(Optional.of(entry));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
@@ -1981,10 +2273,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("lesstempID");
         dpa.setAlarmType("greaterTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "greaterTemperatureAlarm"))
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));
@@ -1993,11 +2291,16 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
+        when(ctx.getAttributesService()).thenReturn(attributesService);
+        when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
+        when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
         when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
         when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
+        when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
+        when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
         when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
@@ -2031,7 +2334,12 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setFetchAlarmRulesStateOnStart(false);
         config.setPersistAlarmRulesState(false);
 
+        var config = new TbDeviceProfileNodeConfiguration();
+        config.setFetchAlarmRulesStateOnStart(false);
+        config.setPersistAlarmRulesState(false);
+
         node = new TbDeviceProfileNode();
+        node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
     }
 
@@ -2089,14 +2397,14 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
         AlarmConditionFilter filter = getAlarmConditionFilter(TIME_SERIES, "temperature", GREATER, 30.0);
         AlarmConditionFilter filter2 = getAlarmConditionFilter(ATTRIBUTE, "battery", LESS, 10.0);
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setCondition(List.of(filter, filter2));
         AlarmRule createRule = new AlarmRule();
         createRule.setCondition(alarmCondition);
 
         AlarmConditionFilter filter3 = getAlarmConditionFilter(TIME_SERIES, "temperature", LESS, 10.0);
         AlarmConditionFilter filter4 = getAlarmConditionFilter(ATTRIBUTE, "battery", GREATER, 50.0);
-        AlarmCondition clearCondition = new AlarmCondition();
+        AlarmConditionOld clearCondition = new AlarmConditionOld();
         clearCondition.setCondition(List.of(filter3, filter4));
         AlarmRule clearRule = new AlarmRule();
         clearRule.setCondition(clearCondition);
@@ -2105,21 +2413,29 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, createRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, createRule)));
         dpa.setClearRule(clearRule);
 
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
         ListenableFuture<List<TsKvEntry>> tsKvList =
                 immediateFuture(singletonList(getTsKvEntry("temperature", 35L)));
+                immediateFuture(singletonList(getTsKvEntry("temperature", 35L)));
         ListenableFuture<List<AttributeKvEntry>> attrList =
+                immediateFuture(emptyList());
                 immediateFuture(emptyList());
 
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(tsKvList);
         when(attributesService.find(eq(tenantId), eq(deviceId), any(), anySet()))
+        when(attributesService.find(eq(tenantId), eq(deviceId), any(), anySet()))
                 .thenReturn(attrList);
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
         when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
 
@@ -2156,7 +2472,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         return tsKv.toData();
     }
 
-    private AlarmCondition getNumericAlarmCondition(AlarmConditionKeyType alarmConditionKeyType, String key, NumericOperation operation, Double value) {
+    private AlarmConditionOld getNumericAlarmCondition(AlarmConditionKeyType alarmConditionKeyType, String key, NumericOperation operation, Double value) {
         AlarmConditionFilter filter = getAlarmConditionFilter(alarmConditionKeyType, key, operation, value);
         AlarmCondition alarmCondition = new AlarmCondition();
         alarmCondition.setCondition(singletonList(filter));
@@ -2196,6 +2512,7 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setId("highTemperatureAlarmID");
         dpa.setAlarmType("highTemperatureAlarm");
         dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
+        dpa.setCreateRules(new TreeMap<>(singletonMap(AlarmSeverity.CRITICAL, alarmRule)));
 
         AlarmConditionFilter lowTempFilter = new AlarmConditionFilter();
         lowTempFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.TIME_SERIES, "temperature"));
@@ -2211,8 +2528,13 @@ public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
         dpa.setClearRule(clearRule);
 
         deviceProfileData.setAlarms(singletonList(dpa));
+        deviceProfileData.setAlarms(singletonList(dpa));
         deviceProfile.setProfileData(deviceProfileData);
 
+        when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
+        when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
+                .thenReturn(immediateFuture(emptyList()));
+        when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm")).thenReturn(null);
         when(cache.get(tenantId, deviceId)).thenReturn(deviceProfile);
         when(timeseriesService.findLatest(tenantId, deviceId, singleton("temperature")))
                 .thenReturn(immediateFuture(emptyList()));

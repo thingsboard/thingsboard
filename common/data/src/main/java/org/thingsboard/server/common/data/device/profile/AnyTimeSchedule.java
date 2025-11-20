@@ -15,25 +15,19 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import lombok.Data;
 import org.thingsboard.server.common.data.query.DynamicValue;
-
-import java.util.Set;
-
-@Data
+@Schema(name="AnyTimeScheduleDep")
 @Deprecated
-public class SpecificTimeScheduleOld implements AlarmScheduleOld {
-
-    private String timezone;
-    private Set<Integer> daysOfWeek;
-    private long startsOn;
-    private long endsOn;
-
-    private DynamicValue<String> dynamicValue;
+public class AnyTimeSchedule implements AlarmSchedule {
 
     @Override
     public AlarmScheduleType getType() {
-        return AlarmScheduleType.SPECIFIC_TIME;
+        return AlarmScheduleType.ANY_TIME;
+    }
+
+    @Override
+    public DynamicValue<String> getDynamicValue() {
+        return null;
     }
 
 }

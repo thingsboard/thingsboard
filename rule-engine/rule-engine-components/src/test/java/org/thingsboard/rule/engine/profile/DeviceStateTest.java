@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmCreateOrUpdateActiveRequest;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
+import org.thingsboard.server.common.data.device.profile.AlarmConditionOld;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
@@ -204,7 +204,7 @@ public class DeviceStateTest {
         alarmConfig.setId("MyAlarmID");
         alarmConfig.setAlarmType("MyAlarm");
         AlarmRule alarmRule = new AlarmRule();
-        AlarmCondition alarmCondition = new AlarmCondition();
+        AlarmConditionOld alarmCondition = new AlarmConditionOld();
         alarmCondition.setSpec(new SimpleAlarmConditionSpec());
         alarmCondition.setCondition(List.of(condition));
         alarmRule.setCondition(alarmCondition);

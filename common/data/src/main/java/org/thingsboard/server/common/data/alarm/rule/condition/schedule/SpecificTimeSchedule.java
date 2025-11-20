@@ -20,6 +20,7 @@ import lombok.Data;
 import java.util.Set;
 
 @Data
+@Deprecated
 public class SpecificTimeSchedule implements AlarmSchedule {
 
     private String timezone;

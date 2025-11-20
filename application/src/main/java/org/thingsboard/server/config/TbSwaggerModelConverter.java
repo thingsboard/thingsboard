@@ -239,6 +239,7 @@ public class TbSwaggerModelConverter implements ModelConverter {
         }
 
         Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
+        Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
 
 
         // First pass: remove all allOf declarations
@@ -253,10 +254,12 @@ public class TbSwaggerModelConverter implements ModelConverter {
             replaceInlinedOneOfInSchema(schema, schemas);
         }
       //  openAPI.getComponents().setSchemas(schemas);
+      //  openAPI.getComponents().setSchemas(schemas);
 
     }
 /// Remove allOf from subtypes and add oneOf to base type
     @SuppressWarnings({"rawtypes", "unchecked"})
+    private static void clearAllOff(Schema schema, Map<String, Schema> schemas, String schemaName) {
     private static void clearAllOff(Schema schema, Map<String, Schema> schemas, String schemaName) {
         String refString = refPrefix + schemaName;
         if (schema.getAllOf() == null || schema.getAllOf().isEmpty()) {
@@ -292,6 +295,15 @@ public class TbSwaggerModelConverter implements ModelConverter {
                 ref.set$ref(refString);
                 oneOffs.add(ref);
                 baseSchema.setOneOf(oneOffs);
+            }
+            /// Find declaration of subtype in allOffs
+      Schema declaration =   allOffs.stream().filter(s -> s.get$ref() == null).findFirst().orElse(null);
+        if(declaration != null) {
+            /// copy required and replace subtype schema
+            declaration.setRequired(schema.getRequired());
+          schemas.put(schemaName, declaration);
+        }
+
             }
             /// Find declaration of subtype in allOffs
       Schema declaration =   allOffs.stream().filter(s -> s.get$ref() == null).findFirst().orElse(null);
