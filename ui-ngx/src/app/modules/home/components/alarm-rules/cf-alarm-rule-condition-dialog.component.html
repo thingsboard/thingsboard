@@ -63,7 +63,9 @@
                         [functionArgs]="functionArgs"
                         [highlightRules]="argumentsHighlightRules"
                         [editorCompleter]="argumentsEditorCompleter"
-                        noValidate="true">
+                        noValidate="true"
+                        [helpPopupStyle]="{ width: '1200px' }"
+                        helpId="alarm-rule/expression_fn">
               <div toolbarPrefixButton
                    class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.expression-type.script' | translate }}
               </div>

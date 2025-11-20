@@ -58,6 +58,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.util.TimeUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -66,6 +67,7 @@ import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculat
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.io.Closeable;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -215,8 +217,13 @@ public class CalculatedFieldCtx implements Closeable {
             if (watermark != null && watermark.getDuration() > 0) {
                 return true;
             }
-            long intervalDurationMillis = entityAggregationConfig.getInterval().getCurrentIntervalDurationMillis();
-            if (now - lastReevaluationTs >= intervalDurationMillis) {
+            if (lastReevaluationTs == 0) {
+                lastReevaluationTs = now;
+                return true;
+            }
+            ZonedDateTime lastReevaluationTime = TimeUtils.toZonedDateTime(lastReevaluationTs, entityAggregationConfig.getInterval().getZoneId());
+            long previousIntervalEndTs = entityAggregationConfig.getInterval().getDateTimeIntervalEndTs(lastReevaluationTime);
+            if (now >= previousIntervalEndTs) {
                 lastReevaluationTs = now;
                 return true;
             }
