@@ -55,7 +55,7 @@ public class AlarmRuleState {
 
     private long eventCount;
     private long firstEventTs; // when duration condition started
-    private long lastEventTs;
+    private long lastCheckTs;
     private transient long duration;
     private ScheduledFuture<?> durationCheckFuture;
     private Boolean active;
@@ -98,10 +98,17 @@ public class AlarmRuleState {
                     return AlarmEvalResult.FALSE;
                 }
                 long requiredDuration = getRequiredDurationInMs();
-                if (requiredDuration > 0 && lastEventTs > 0 && ts > lastEventTs) {
+                if (requiredDuration > 0 && firstEventTs > 0 && ts > firstEventTs) {
                     duration = ts - firstEventTs;
+                    long prevDuration = lastCheckTs - firstEventTs;
+                    lastCheckTs = ts;
+
                     long leftDuration = requiredDuration - duration;
                     if (leftDuration <= 0) {
+                        if (prevDuration >= requiredDuration) {
+                            // already evaluated as true on previous check, no need to update alarm
+                            return AlarmEvalResult.EMPTY;
+                        }
                         return AlarmEvalResult.TRUE;
                     } else {
                         return AlarmEvalResult.notYetTrue(0, leftDuration);
@@ -143,21 +150,15 @@ public class AlarmRuleState {
 
     private AlarmEvalResult evalDuration(CalculatedFieldCtx ctx) {
         if (eval(condition.getExpression(), ctx)) {
-            long eventTs = state.getLatestTimestamp();
-            if (lastEventTs > 0) {
-                if (eventTs > lastEventTs) {
-                    if (firstEventTs == 0) {
-                        firstEventTs = lastEventTs;
-                    }
-                    lastEventTs = eventTs;
-                }
-            } else {
-                firstEventTs = eventTs;
-                lastEventTs = eventTs;
+            long ts = System.currentTimeMillis();
+            if (firstEventTs == 0) {
+                firstEventTs = state.getLatestTimestamp();
             }
-            duration = lastEventTs - firstEventTs;
+            lastCheckTs = ts;
+
             long requiredDuration = getRequiredDurationInMs();
-            if (requiredDuration > 0) {
+            if (requiredDuration > 0 && firstEventTs > 0 && ts > firstEventTs) {
+                duration = ts - firstEventTs;
                 long leftDuration = requiredDuration - duration;
                 if (leftDuration <= 0) {
                     return AlarmEvalResult.TRUE;
@@ -247,7 +248,7 @@ public class AlarmRuleState {
 
     private void clearDurationConditionState() {
         firstEventTs = 0L;
-        lastEventTs = 0L;
+        lastCheckTs = 0L;
         duration = 0L;
         if (durationCheckFuture != null) {
             durationCheckFuture.cancel(true);
@@ -256,7 +257,7 @@ public class AlarmRuleState {
     }
 
     public boolean isEmpty() {
-        return eventCount == 0L && firstEventTs == 0L && lastEventTs == 0L && durationCheckFuture == null;
+        return eventCount == 0L && firstEventTs == 0L && lastCheckTs == 0L && durationCheckFuture == null;
     }
 
     private AlarmSchedule parseSchedule(String str) {
@@ -330,7 +331,7 @@ public class AlarmRuleState {
                ", condition=" + condition +
                ", eventCount=" + eventCount +
                ", firstEventTs=" + firstEventTs +
-               ", lastEventTs=" + lastEventTs +
+               ", lastCheckTs=" + lastCheckTs +
                ", duration=" + duration +
                ", durationCheckFuture=" + durationCheckFuture +
                '}';
