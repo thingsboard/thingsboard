@@ -21,4 +21,6 @@ public record AmazonBedrockProviderConfig(
         @NotNull String region,
         @NotNull String accessKeyId,
         @NotNull String secretAccessKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+
+}

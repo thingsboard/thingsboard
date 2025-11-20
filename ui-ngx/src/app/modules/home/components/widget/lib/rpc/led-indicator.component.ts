@@ -332,11 +332,16 @@ export class LedIndicatorComponent extends PageComponent implements OnInit, OnDe
       if (keyData && keyData.data && keyData.data[0]) {
         const attrValue = keyData.data[0][1];
         if (isDefined(attrValue)) {
-          let parsed = null;
+          let valueToParse = attrValue;
           try {
-            parsed = this.parseValueFunction(JSON.parse(attrValue));
-          } catch (e){/**/}
-          value = !!parsed;
+            valueToParse = JSON.parse(attrValue);
+          } catch (e) {/**/}
+
+          try {
+            value = !!this.parseValueFunction(valueToParse);
+          } catch (e) {
+            value = false;
+          }
         }
       }
     }

@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionSpecType;
 import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.AlarmSchedule;
+import org.thingsboard.server.common.data.device.profile.AlarmScheduleOld;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DurationAlarmConditionSpec;
 import org.thingsboard.server.common.data.device.profile.RepeatingAlarmConditionSpec;
@@ -45,6 +45,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
 
+@Deprecated
 class ProfileState {
 
     private DeviceProfile deviceProfile;
@@ -78,7 +79,7 @@ class ProfileState {
                         addDynamicValuesRecursively(keyFilter.getPredicate(), entityKeys, ruleKeys);
                     }
                     addEntityKeysFromAlarmConditionSpec(alarmRule);
-                    AlarmSchedule schedule = alarmRule.getSchedule();
+                    AlarmScheduleOld schedule = alarmRule.getSchedule();
                     if (schedule != null) {
                         addScheduleDynamicValues(schedule, entityKeys);
                     }
@@ -96,7 +97,7 @@ class ProfileState {
         }
     }
 
-    void addScheduleDynamicValues(AlarmSchedule schedule, final Set<AlarmConditionFilterKey> entityKeys) {
+    void addScheduleDynamicValues(AlarmScheduleOld schedule, final Set<AlarmConditionFilterKey> entityKeys) {
         DynamicValue<String> dynamicValue = schedule.getDynamicValue();
         if (dynamicValue != null && dynamicValue.getSourceAttribute() != null) {
             entityKeys.add(

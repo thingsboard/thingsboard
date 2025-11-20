@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.io.Serializable;
 
@@ -31,9 +32,13 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = SimpleAlarmConditionSpec.class, name = "SIMPLE"),
         @JsonSubTypes.Type(value = DurationAlarmConditionSpec.class, name = "DURATION"),
         @JsonSubTypes.Type(value = RepeatingAlarmConditionSpec.class, name = "REPEATING")})
+@Schema(
+        oneOf =  {  SimpleAlarmConditionSpec.class, DurationAlarmConditionSpec.class, RepeatingAlarmConditionSpec.class}
+)
+@Deprecated
 public interface AlarmConditionSpec extends Serializable {
 
-    @JsonIgnore
+
     AlarmConditionSpecType getType();
 
 }

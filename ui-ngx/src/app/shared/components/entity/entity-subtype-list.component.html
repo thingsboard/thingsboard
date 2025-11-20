@@ -47,7 +47,7 @@
                     (optionSelected)="selected($event)"
                     [displayWith]="displayEntitySubtypeFn">
     <mat-option *ngFor="let entitySubtype of filteredEntitySubtypeList | async" [value]="entitySubtype">
-      <span [innerHTML]="entitySubtype | highlight:searchText"></span>
+      <span [innerHTML]="entitySubtype | customTranslate | highlight:searchText"></span>
     </mat-option>
   </mat-autocomplete>
   <div matSuffix>

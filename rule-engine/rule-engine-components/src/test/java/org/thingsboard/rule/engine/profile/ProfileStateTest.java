@@ -22,7 +22,7 @@ import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullSource;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
 import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.SpecificTimeSchedule;
+import org.thingsboard.server.common.data.device.profile.SpecificTimeScheduleOld;
 import org.thingsboard.server.common.data.query.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
@@ -56,7 +56,7 @@ class ProfileStateTest {
     void addScheduleDynamicValuesSourceAttribute(DynamicValueSourceType sourceType) {
         willCallRealMethod().given(profileState).addScheduleDynamicValues(any(), any());
         final DynamicValue<String> dynamicValue = new DynamicValue<>(sourceType, "myKey");
-        SpecificTimeSchedule schedule = new SpecificTimeSchedule();
+        SpecificTimeScheduleOld schedule = new SpecificTimeScheduleOld();
         schedule.setDynamicValue(dynamicValue);
 
         Assertions.assertThat(entityKeys.isEmpty()).isTrue();
@@ -74,7 +74,7 @@ class ProfileStateTest {
     void addScheduleDynamicValuesSourceAttributeIsNull(DynamicValueSourceType sourceType) {
         willCallRealMethod().given(profileState).addScheduleDynamicValues(any(), any());
         DynamicValue<String> dynamicValue = new DynamicValue<>(sourceType, null);
-        SpecificTimeSchedule schedule = new SpecificTimeSchedule();
+        SpecificTimeScheduleOld schedule = new SpecificTimeScheduleOld();
         schedule.setDynamicValue(dynamicValue);
 
         Assertions.assertThat(entityKeys.isEmpty()).isTrue();

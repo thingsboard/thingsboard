@@ -94,11 +94,12 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleNodeStateService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -117,6 +118,7 @@ import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldQueueService;
 import org.thingsboard.server.service.cf.CalculatedFieldStateService;
+import org.thingsboard.server.service.cf.OwnerService;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
@@ -571,6 +573,14 @@ public class ActorSystemContext {
     @Getter
     private JobManager jobManager;
 
+    @Autowired
+    @Getter
+    private ApiKeyService apiKeyService;
+
+    @Autowired
+    @Getter
+    private OwnerService ownerService;
+
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
     @Getter
     private int maxConcurrentSessionsPerDevice;
@@ -658,6 +668,14 @@ public class ActorSystemContext {
     @Value("${actors.calculated_fields.calculation_timeout:5}")
     @Getter
     private long cfCalculationResultTimeout;
+
+    @Value("${actors.calculated_fields.check_interval:60}")
+    @Getter
+    private long cfCheckInterval;
+
+    @Value("${actors.alarms.reevaluation_interval:120}")
+    @Getter
+    private long alarmRulesReevaluationInterval;
 
     @Autowired
     @Getter
@@ -842,7 +860,7 @@ public class ActorSystemContext {
                 if (arguments != null) {
                     eventBuilder.arguments(JacksonUtil.toString(
                             arguments.entrySet().stream()
-                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue()))
                     ));
                 }
                 if (result != null) {
@@ -851,8 +869,9 @@ public class ActorSystemContext {
                 if (errorMessage != null) {
                     eventBuilder.error(errorMessage);
                 }
-
-                ListenableFuture<Void> future = eventService.saveAsync(eventBuilder.build());
+                CalculatedFieldDebugEvent event = eventBuilder.build();
+                log.debug("Persisting calculated field debug event: {}", event);
+                ListenableFuture<Void> future = eventService.saveAsync(event);
                 Futures.addCallback(future, CALCULATED_FIELD_DEBUG_EVENT_ERROR_CALLBACK, MoreExecutors.directExecutor());
             } catch (IllegalArgumentException ex) {
                 log.warn("Failed to persist calculated field debug message", ex);
@@ -862,7 +881,7 @@ public class ActorSystemContext {
 
     private boolean checkLimits(TenantId tenantId) {
         if (debugModeRateLimitsConfig.isCalculatedFieldDebugPerTenantLimitsEnabled() &&
-                !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration())) {
+            !rateLimitService.checkRateLimit(LimitedApi.CALCULATED_FIELD_DEBUG_EVENTS, (Object) tenantId, debugModeRateLimitsConfig.getCalculatedFieldDebugPerTenantLimitsConfiguration())) {
             log.trace("[{}] Calculated field debug event limits exceeded!", tenantId);
             return false;
         }
@@ -886,12 +905,13 @@ public class ActorSystemContext {
         return getScheduler().scheduleWithFixedDelay(() -> ctx.tell(msg), delayInMs, periodInMs, TimeUnit.MILLISECONDS);
     }
 
-    public void scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {
+    public ScheduledFuture<?> scheduleMsgWithDelay(TbActorRef ctx, TbActorMsg msg, long delayInMs) {
         log.debug("Scheduling msg {} with delay {} ms", msg, delayInMs);
         if (delayInMs > 0) {
-            getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
+            return getScheduler().schedule(() -> ctx.tell(msg), delayInMs, TimeUnit.MILLISECONDS);
         } else {
             ctx.tell(msg);
+            return null;
         }
     }
 

@@ -19,4 +19,5 @@ import jakarta.validation.constraints.NotNull;
 
 public record AnthropicProviderConfig(
         @NotNull String apiKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+}

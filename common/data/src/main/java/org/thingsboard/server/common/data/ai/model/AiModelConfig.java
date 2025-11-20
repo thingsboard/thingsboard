@@ -15,17 +15,13 @@
  */
 package org.thingsboard.server.common.data.ai.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import org.thingsboard.server.common.data.ai.model.chat.AmazonBedrockChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.AnthropicChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.AzureOpenAiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.GitHubModelsChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleAiGeminiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.GoogleVertexAiGeminiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.MistralAiChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.OllamaChatModelConfig;
-import org.thingsboard.server.common.data.ai.model.chat.OpenAiChatModelConfig;
+import io.swagger.v3.oas.annotations.media.DiscriminatorMapping;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.ToString;
+import org.thingsboard.server.common.data.ai.model.chat.*;
 import org.thingsboard.server.common.data.ai.provider.AiProvider;
 import org.thingsboard.server.common.data.ai.provider.AiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.AmazonBedrockProviderConfig;
@@ -37,28 +33,23 @@ import org.thingsboard.server.common.data.ai.provider.GoogleVertexAiGeminiProvid
 import org.thingsboard.server.common.data.ai.provider.MistralAiProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OllamaProviderConfig;
 import org.thingsboard.server.common.data.ai.provider.OpenAiProviderConfig;
-
-@JsonTypeInfo(
-        use = JsonTypeInfo.Id.NAME,
-        include = JsonTypeInfo.As.EXISTING_PROPERTY,
-        property = "provider",
-        visible = true
-)
+@JsonTypeInfo(property = "modelType", include =  JsonTypeInfo.As.PROPERTY, use = JsonTypeInfo.Id.NAME)
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = OpenAiChatModelConfig.class, name = "OPENAI"),
-        @JsonSubTypes.Type(value = AzureOpenAiChatModelConfig.class, name = "AZURE_OPENAI"),
-        @JsonSubTypes.Type(value = GoogleAiGeminiChatModelConfig.class, name = "GOOGLE_AI_GEMINI"),
-        @JsonSubTypes.Type(value = GoogleVertexAiGeminiChatModelConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
-        @JsonSubTypes.Type(value = MistralAiChatModelConfig.class, name = "MISTRAL_AI"),
-        @JsonSubTypes.Type(value = AnthropicChatModelConfig.class, name = "ANTHROPIC"),
-        @JsonSubTypes.Type(value = AmazonBedrockChatModelConfig.class, name = "AMAZON_BEDROCK"),
-        @JsonSubTypes.Type(value = GitHubModelsChatModelConfig.class, name = "GITHUB_MODELS"),
-        @JsonSubTypes.Type(value = OllamaChatModelConfig.class, name = "OLLAMA")
+        @JsonSubTypes.Type(value = AiChatModelConfig.class, name = "CHAT"),
 })
+@Schema(
+        oneOf = {
+                AiChatModelConfig.class,
+        },
+        discriminatorProperty = "modelType",
+        discriminatorMapping = {
+                 @DiscriminatorMapping(value = "CHAT", schema = AiChatModelConfig.class)
+        }
+
+)
 public interface AiModelConfig {
 
     AiProvider provider();
-
     @JsonTypeInfo(
             use = JsonTypeInfo.Id.NAME,
             include = JsonTypeInfo.As.EXTERNAL_PROPERTY,
@@ -76,7 +67,6 @@ public interface AiModelConfig {
             @JsonSubTypes.Type(value = OllamaProviderConfig.class, name = "OLLAMA")
     })
     AiProviderConfig providerConfig();
-
+@Schema
     AiModelType modelType();
-
 }

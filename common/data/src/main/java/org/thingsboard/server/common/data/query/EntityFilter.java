@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
@@ -46,9 +47,27 @@ import static org.thingsboard.server.common.data.query.AliasEntityId.resolveAlia
         @JsonSubTypes.Type(value = EntityViewSearchQueryFilter.class, name = "entityViewSearchQuery"),
         @JsonSubTypes.Type(value = EdgeSearchQueryFilter.class, name = "edgeSearchQuery")
 })
+@Schema(
+        oneOf = {
+                SingleEntityFilter.class,
+                EntityListFilter.class,
+                EntityNameFilter.class,
+                EntityTypeFilter.class,
+                AssetTypeFilter.class,
+                DeviceTypeFilter.class,
+                EdgeTypeFilter.class,
+                EntityViewTypeFilter.class,
+                ApiUsageStateFilter.class,
+                RelationsQueryFilter.class,
+                AssetSearchQueryFilter.class,
+                DeviceSearchQueryFilter.class,
+                EntityViewSearchQueryFilter.class,
+                EdgeSearchQueryFilter.class
+        }
+)
 public interface EntityFilter {
 
-    @JsonIgnore
+
     EntityFilterType getType();
 
     static void resolveEntityFilter(EntityFilter filter, TenantId tenantId, UserId userId, EntityId userOwnerId) {

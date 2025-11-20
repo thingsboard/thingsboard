@@ -23,11 +23,11 @@ import lombok.Data;
 import java.io.Serializable;
 import java.util.List;
 
-@Schema
+@Schema(name = "AlarmConditionDep")
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class AlarmCondition implements Serializable {
-
     @Valid
     @Schema(description = "JSON array of alarm condition filters")
     private List<AlarmConditionFilter> condition;

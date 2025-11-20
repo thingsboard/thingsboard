@@ -21,4 +21,6 @@ public record AzureOpenAiProviderConfig(
         @NotNull String endpoint,
         String serviceVersion,
         @NotNull String apiKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+
+}

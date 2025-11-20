@@ -23,7 +23,7 @@ import dev.langchain4j.model.chat.request.ChatRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import org.thingsboard.server.common.data.ai.model.chat.AiChatModelConfig;
+import org.thingsboard.server.common.data.ai.model.chat.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -44,11 +44,21 @@ public record TbChatRequest(
         )
         @NotNull @Valid
         TbUserMessage userMessage,
-
         @Schema(
                 requiredMode = Schema.RequiredMode.REQUIRED,
                 accessMode = Schema.AccessMode.READ_WRITE,
-                description = "Configuration of the AI chat model that should execute the request"
+                description = "Configuration of the AI chat model that should execute the request",
+                oneOf = {
+                        AmazonBedrockChatModelConfig.class,
+                        AnthropicChatModelConfig.class,
+                        AzureOpenAiChatModelConfig.class,
+                        GitHubModelsChatModelConfig.class,
+                        GoogleAiGeminiChatModelConfig.class,
+                        GoogleVertexAiGeminiChatModelConfig.class,
+                        MistralAiChatModelConfig.class,
+                        OllamaChatModelConfig.class,
+                        OpenAiChatModelConfig.class
+                }
         )
         @NotNull @Valid
         AiChatModelConfig<?> chatModelConfig

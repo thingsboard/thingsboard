@@ -189,6 +189,12 @@ export class EntityService {
       case EntityType.AI_MODEL:
         observable = this.aiModelService.getAiModelById(entityId, config);
         break;
+      case EntityType.DEVICE_PROFILE:
+        observable = this.deviceProfileService.getDeviceProfile(entityId, config);
+        break;
+      case EntityType.ASSET_PROFILE:
+        observable = this.assetProfileService.getAssetProfile(entityId, config);
+        break;
     }
     return observable;
   }

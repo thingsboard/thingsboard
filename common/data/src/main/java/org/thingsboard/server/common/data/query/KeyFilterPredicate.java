@@ -18,6 +18,9 @@ package org.thingsboard.server.common.data.query;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import lombok.NonNull;
 
 import java.io.Serializable;
 
@@ -30,9 +33,11 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = NumericFilterPredicate.class, name = "NUMERIC"),
         @JsonSubTypes.Type(value = BooleanFilterPredicate.class, name = "BOOLEAN"),
         @JsonSubTypes.Type(value = ComplexFilterPredicate.class, name = "COMPLEX")})
+@Schema(
+        oneOf = {StringFilterPredicate.class, NumericFilterPredicate.class, BooleanFilterPredicate.class, ComplexFilterPredicate.class}
+)
 public interface KeyFilterPredicate extends Serializable {
 
-    @JsonIgnore
     FilterPredicateType getType();
 
 }

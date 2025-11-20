@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.server.config;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -15,11 +30,13 @@ import io.swagger.v3.oas.models.media.Discriminator;
 import io.swagger.v3.oas.models.media.Schema;
 import io.swagger.v3.oas.models.responses.ApiResponses;
 import lombok.extern.log4j.Log4j2;
-
+import io.swagger.v3.core.jackson.ModelResolver;
 import java.beans.BeanInfo;
 import java.beans.Introspector;
 import java.beans.PropertyDescriptor;
 import java.util.*;
+
+import static org.thingsboard.server.config.SwaggerConfiguration.useSwaggerOptimizations;
 
 @Log4j2
 public class TbSwaggerModelConverter implements ModelConverter {
@@ -37,11 +54,11 @@ public class TbSwaggerModelConverter implements ModelConverter {
         JavaType javaType = Json.mapper().constructType(type.getType());
         if (javaType != null) {
             Class<?> cls = javaType.getRawClass();
-
             // Remove "empty" property from Map types
             removeEmptyProperty(schema, cls);
             // Add discriminator mappings for polymorphic types
-            fixPolymorphicSchemas(cls, schema, context, nextConverter);
+            if(useSwaggerOptimizations)
+           fixPolymorphicSchemas(cls, schema, context, nextConverter);
         }
 
         return schema;
@@ -63,6 +80,9 @@ public class TbSwaggerModelConverter implements ModelConverter {
 
     /// Helper to get a type of discriminator property from a class
     public static Class<?> getJsonTypeInfoPropertyType(Class<?> cls) throws Exception {
+        if(cls.getSimpleName().equals("AiChatModelConfig") || cls.getSimpleName().equals("AiModelConfig")) {
+            log.info("Found AiChatModelConfig");
+        }
         // Find @JsonTypeInfo annotation (on the class or its members)
         JsonTypeInfo typeInfo = cls.getAnnotation(JsonTypeInfo.class);
         if (typeInfo == null) {
@@ -84,6 +104,9 @@ public class TbSwaggerModelConverter implements ModelConverter {
 
         // Use Java Beans introspection
         BeanInfo beanInfo = Introspector.getBeanInfo(cls);
+        if(cls.getSuperclass() != null && typeInfo.include() == JsonTypeInfo.As.PROPERTY) {
+            beanInfo = Introspector.getBeanInfo(cls.getSuperclass());
+        }
 
 
         PropertyDescriptor[] props = beanInfo.getPropertyDescriptors();
@@ -116,7 +139,6 @@ public class TbSwaggerModelConverter implements ModelConverter {
             return;
         }
 
-
         /// We don't want to work with declarations here
         if(schema.get$ref() ==null) {
             return;
@@ -126,9 +148,9 @@ public class TbSwaggerModelConverter implements ModelConverter {
             return;
         }
         /// Add mapping object to a declaration since it's not generated from Jackson annotations
-        fixMapping(cls, context, discriminator, baseType);
+       // fixMapping(cls, context, discriminator, baseType);
         /// Fix discriminator property, in some cases it gets declared without reference
-        fixDiscriminatorProperty(cls, context, baseType);
+      //  fixDiscriminatorProperty(cls, context, baseType);
 
     }
 
@@ -137,7 +159,6 @@ public class TbSwaggerModelConverter implements ModelConverter {
         JsonTypeInfo annotation = cls.getAnnotation(JsonTypeInfo.class);
         final String propName = annotation.property();
         try {
-
             final Class<?> propertyType = getJsonTypeInfoPropertyType(cls);
             /// If we can't find a type of discriminator prop we generate a new type based on mapping
             Schema<String> propSchema = new Schema();
@@ -217,7 +238,7 @@ public class TbSwaggerModelConverter implements ModelConverter {
             return;
         }
 
-        HashMap<String, Schema> schemas = new HashMap<>(openAPI.getComponents().getSchemas());
+        Map<String, Schema> schemas = openAPI.getComponents().getSchemas();
 
 
         // First pass: remove all allOf declarations
@@ -231,20 +252,35 @@ public class TbSwaggerModelConverter implements ModelConverter {
             Schema schema = entry.getValue();
             replaceInlinedOneOfInSchema(schema, schemas);
         }
-        openAPI.getComponents().setSchemas(schemas);
+      //  openAPI.getComponents().setSchemas(schemas);
 
     }
 /// Remove allOf from subtypes and add oneOf to base type
     @SuppressWarnings({"rawtypes", "unchecked"})
-    private static void clearAllOff(Schema schema, HashMap<String, Schema> schemas, String schemaName) {
+    private static void clearAllOff(Schema schema, Map<String, Schema> schemas, String schemaName) {
         String refString = refPrefix + schemaName;
-        List<Schema> allOffs = schema.getAllOf();
-        if (allOffs != null && !allOffs.isEmpty()) {
-            String baseTypeRef = allOffs.get(0).get$ref();
-            String baseTypeName = getSchemaNameFromRef(baseTypeRef);
-            Schema baseSchema = schemas.get(baseTypeName);
-            if (baseSchema != null) {
-                schema.setAllOf(null);
+        if (schema.getAllOf() == null || schema.getAllOf().isEmpty()) {
+        return;
+        }
+        if(true) {
+            schema.setAllOf(null);
+            return;
+        }
+
+
+       List<Schema> allOffs= schema.getAllOf();
+        /// Find a base type in list of allOffs and replace it with ref
+            for (Schema off : allOffs) {
+                if(off.get$ref() == null){
+                    continue;
+                }
+                String baseTypeRef = off.get$ref();
+                String baseTypeName = getSchemaNameFromRef(baseTypeRef);
+                Schema baseSchema = schemas.get(baseTypeName);
+                if (baseSchema == null) {
+                    return;
+                }
+
                 List<Schema> oneOffs = baseSchema.getOneOf();
 
                 if (oneOffs != null) {
@@ -256,12 +292,15 @@ public class TbSwaggerModelConverter implements ModelConverter {
                 ref.set$ref(refString);
                 oneOffs.add(ref);
                 baseSchema.setOneOf(oneOffs);
-                schemas.put(schemaName, schema);
-                schemas.put(baseTypeName, baseSchema);
-
             }
-
+            /// Find declaration of subtype in allOffs
+      Schema declaration =   allOffs.stream().filter(s -> s.get$ref() == null).findFirst().orElse(null);
+        if(declaration != null) {
+            /// copy required and replace subtype schema
+            declaration.setRequired(schema.getRequired());
+          schemas.put(schemaName, declaration);
         }
+
     }
 
     /**

@@ -15,11 +15,39 @@
  */
 package org.thingsboard.server.common.data.ai.model.chat;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.*;
 import dev.langchain4j.model.chat.ChatModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import org.thingsboard.server.common.data.ai.model.AiModelConfig;
 import org.thingsboard.server.common.data.ai.model.AiModelType;
-
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.PROPERTY,
+        property = "provider",
+        visible = true
+)
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = OpenAiChatModelConfig.class, name = "OPENAI"),
+        @JsonSubTypes.Type(value = AzureOpenAiChatModelConfig.class, name = "AZURE_OPENAI"),
+        @JsonSubTypes.Type(value = GoogleAiGeminiChatModelConfig.class, name = "GOOGLE_AI_GEMINI"),
+        @JsonSubTypes.Type(value = GoogleVertexAiGeminiChatModelConfig.class, name = "GOOGLE_VERTEX_AI_GEMINI"),
+        @JsonSubTypes.Type(value = MistralAiChatModelConfig.class, name = "MISTRAL_AI"),
+        @JsonSubTypes.Type(value = AnthropicChatModelConfig.class, name = "ANTHROPIC"),
+        @JsonSubTypes.Type(value = AmazonBedrockChatModelConfig.class, name = "AMAZON_BEDROCK"),
+        @JsonSubTypes.Type(value = GitHubModelsChatModelConfig.class, name = "GITHUB_MODELS"),
+        @JsonSubTypes.Type(value = OllamaChatModelConfig.class, name = "OLLAMA")
+})
+@Schema(oneOf  = {
+AmazonBedrockChatModelConfig.class,
+AnthropicChatModelConfig.class,
+AzureOpenAiChatModelConfig.class,
+GitHubModelsChatModelConfig.class,
+GoogleAiGeminiChatModelConfig.class,
+GoogleVertexAiGeminiChatModelConfig.class,
+MistralAiChatModelConfig.class,
+OllamaChatModelConfig.class,
+OpenAiChatModelConfig.class
+                })
 public sealed interface AiChatModelConfig<C extends AiChatModelConfig<C>> extends AiModelConfig
         permits
         OpenAiChatModelConfig, AzureOpenAiChatModelConfig, GoogleAiGeminiChatModelConfig,

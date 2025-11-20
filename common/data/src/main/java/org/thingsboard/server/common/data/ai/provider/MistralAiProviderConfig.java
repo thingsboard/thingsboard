@@ -19,4 +19,5 @@ import jakarta.validation.constraints.NotNull;
 
 public record MistralAiProviderConfig(
         @NotNull String apiKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+}

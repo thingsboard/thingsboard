@@ -73,9 +73,11 @@ import static org.thingsboard.server.config.TbSwaggerModelConverter.*;
 @ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${springdoc.api-docs.enabled:true}'=='true'")
 @Profile("!test")
 public class SwaggerConfiguration {
+    public static final boolean useSwaggerOptimizations = false;
     /// Force Jackson to generate enums as separate schema objects in Swagger
     static {
-        io.swagger.v3.core.jackson.ModelResolver.enumsAsRef = true;
+     io.swagger.v3.core.jackson.ModelResolver.enumsAsRef = true;
+        io.swagger.v3.core.jackson.ModelResolver.composedModelPropertiesAsSibling = true;
     }
 
     public static final String LOGIN_ENDPOINT = "/api/auth/login";
@@ -346,9 +348,12 @@ public class SwaggerConfiguration {
             openAPI.setPaths(sortedPaths);
 
             // Fix polymorphic type inlining - move oneOf from inlined fields to base schema, remove allOfs
-            fixPolymorphicSchemas(openAPI);
-            // Fix schema of requests(Query params, and Responses)
-            fixRequestSchemas(openAPI);
+            if(useSwaggerOptimizations) {
+                fixPolymorphicSchemas(openAPI);
+                // Fix schema of requests(Query params, and Responses)
+                fixRequestSchemas(openAPI);
+            }
+
             var sortedSchemas = new TreeMap<>(openAPI.getComponents().getSchemas());
             openAPI.getComponents().setSchemas(new LinkedHashMap<>(sortedSchemas));
         };

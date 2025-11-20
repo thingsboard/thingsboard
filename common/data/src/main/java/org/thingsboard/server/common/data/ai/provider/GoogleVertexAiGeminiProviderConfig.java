@@ -23,4 +23,5 @@ public record GoogleVertexAiGeminiProviderConfig(
         @NotNull String projectId,
         @NotNull String location,
         @NotNull String serviceAccountKey
-) implements AiProviderConfig {}
+) implements AiProviderConfig {
+}

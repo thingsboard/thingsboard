@@ -42,5 +42,4 @@ public record OpenAiProviderConfig(
         }
         return true;
     }
-
 }

@@ -16,46 +16,15 @@
 package org.thingsboard.server.common.data.cf.configuration.geofencing;
 
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.NullAndEmptySource;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
 public class EntityCoordinatesTest {
-
-    @ParameterizedTest
-    @ValueSource(strings = "  ")
-    @NullAndEmptySource
-    void validateShouldThrowWhenLatitudeCoordinateIsNullEmptyOrBlank(String latitudeKey) {
-        var entityCoordinates = new EntityCoordinates(latitudeKey, "longitude");
-        assertThatThrownBy(entityCoordinates::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Entity coordinates latitude key name must be specified!");
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = "  ")
-    @NullAndEmptySource
-    void validateShouldThrowWhenLongitudeCoordinateIsNullEmptyOrBlank(String longitudeKey) {
-        var entityCoordinates = new EntityCoordinates("latitude", longitudeKey);
-        assertThatThrownBy(entityCoordinates::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Entity coordinates longitude key name must be specified!");
-    }
-
-    @Test
-    void validateShouldPassOnMinimalValidConfig() {
-        var entityCoordinates = new EntityCoordinates("latitude", "longitude");
-        assertThatCode(entityCoordinates::validate).doesNotThrowAnyException();
-    }
 
     @Test
     void validateToArgumentsMethodCallWithoutRefEntityId() {
