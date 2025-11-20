@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.Strings;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -150,14 +152,15 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
                 partitioningRepository.save(sqlPartition);
                 log.trace("Adding partition to Set: {}", sqlPartition);
                 partitions.put(sqlPartition.getStart(), sqlPartition);
-            } catch (DataIntegrityViolationException ex) {
+            } catch (Exception ex) {
                 log.trace("Error occurred during partition save:", ex);
-                if (ex.getCause() instanceof ConstraintViolationException) {
-                    log.warn("Saving partition [{}] rejected. Timeseries data will save to the ts_kv_indefinite (DEFAULT) partition.", sqlPartition.getPartitionDate());
+                String error = ExceptionUtils.getRootCauseMessage(ex);
+                if (Strings.CS.containsAny(error, "would overlap partition", "already exists")) {
+                    log.warn("Couldn't save partition {}-{} for ts_kv: {}", sqlPartition.getStart(), sqlPartition.getEnd(), error);
                     partitions.put(sqlPartition.getStart(), sqlPartition);
-                } else {
-                    throw new RuntimeException(ex);
                 }
+
+                log.warn("Unexpected error while saving partition {}-{} for ts_kv: {}", sqlPartition.getStart(), sqlPartition.getEnd(), error, ex);
             } finally {
                 partitionCreationLock.unlock();
             }
