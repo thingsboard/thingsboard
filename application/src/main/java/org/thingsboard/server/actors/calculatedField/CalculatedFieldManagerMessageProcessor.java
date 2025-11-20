@@ -165,7 +165,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         if (ctx != null) {
             msg.setCtx(ctx);
             log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
-            getOrCreateActor(msg.getId().entityId()).tell(msg);
+            getOrCreateActor(msg.getId().entityId()).tellWithHighPriority(msg);
         } else {
             cfStateService.deleteState(msg.getId(), msg.getCallback());
         }

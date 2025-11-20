@@ -342,17 +342,18 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     public void process(CalculatedFieldReevaluateMsg msg) throws CalculatedFieldException {
-        CalculatedFieldId cfId = msg.getCtx().getCfId();
+        CalculatedFieldCtx ctx = msg.getCtx();
+        CalculatedFieldId cfId = ctx.getCfId();
         CalculatedFieldState state = states.get(cfId);
         if (state == null) {
-            log.debug("[{}][{}] Failed to find CF state for entity to handle {}", entityId, cfId, msg);
+            log.warn("[{}][{}] Failed to find CF state (probably wasn't restored properly) for entity to handle {}", entityId, cfId, msg);
+            state = createState(ctx);
+        }
+        if (state.isSizeOk()) {
+            log.debug("[{}][{}] Reevaluating CF state", entityId, cfId);
+            processStateIfReady(state, null, ctx, Collections.singletonList(cfId), null, null, msg.getCallback());
         } else {
-            if (state.isSizeOk()) {
-                log.debug("[{}][{}] Reevaluating CF state", entityId, cfId);
-                processStateIfReady(state, null, msg.getCtx(), Collections.singletonList(cfId), null, null, msg.getCallback());
-            } else {
-                throw new RuntimeException(msg.getCtx().getSizeExceedsLimitMessage());
-            }
+            throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
         }
     }
 

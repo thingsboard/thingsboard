@@ -1929,5 +1929,5 @@ message AlarmRuleStateProto {
   string severity = 1;
   int64 eventCount = 2;
   int64 firstEventTs = 3;
-  int64 lastEventTs = 4;
+  int64 lastCheckTs = 4;
 }
