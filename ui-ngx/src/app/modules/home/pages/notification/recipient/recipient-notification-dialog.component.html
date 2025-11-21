@@ -70,6 +70,7 @@
               <ng-container *ngIf="targetNotificationForm.get('configuration.usersFilter.filterByTenants').value; else tenantProfiles">
                 <tb-entity-list
                   formControlName="tenantsIds"
+                  syncIdsWithDB
                   subscriptSizing="dynamic"
                   labelText="{{ 'tenant.tenants' | translate }}"
                   placeholderText="{{ 'tenant.tenants' | translate }}"
@@ -80,6 +81,7 @@
               <ng-template #tenantProfiles>
                 <tb-entity-list
                   formControlName="tenantProfilesIds"
+                  syncIdsWithDB
                   subscriptSizing="dynamic"
                   labelText="{{ 'tenant-profile.tenant-profiles' | translate }}"
                   placeholderText="{{ 'tenant-profile.tenant-profiles' | translate }}"
@@ -103,6 +105,7 @@
           <ng-container *ngSwitchCase="notificationTargetConfigType.CUSTOMER_USERS">
             <tb-entity-autocomplete
               required
+              syncIdsWithDB
               formControlName="customerId"
               [entityType]="entityType.CUSTOMER">
             </tb-entity-autocomplete>
