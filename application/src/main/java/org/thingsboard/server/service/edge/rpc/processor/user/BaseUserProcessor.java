@@ -78,6 +78,15 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         return Pair.of(isCreated, userEmailUpdated);
     }
 
+    protected User deleteUser(TenantId tenantId, UserId userId) {
+        User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
+        if (userById == null) {
+            throw new IllegalArgumentException(String.format("[%s] Failed to find User with id [%s]", tenantId, userId));
+        }
+        edgeCtx.getUserService().deleteUser(tenantId, userById);
+        return userById;
+    }
+
     protected void updateUserCredentials(TenantId tenantId, UserCredentialsUpdateMsg updateMsg) {
         UserCredentials userCredentialsFromUpdateMsg = JacksonUtil.fromString(updateMsg.getEntity(), UserCredentials.class, true);
         if (userCredentialsFromUpdateMsg == null) {
@@ -117,7 +126,6 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
                     tenantId, user.getName(), updateMsg, e);
             throw new RuntimeException(e);
         }
-
     }
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, User user, UserUpdateMsg userUpdateMsg);

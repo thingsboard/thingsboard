@@ -61,6 +61,10 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
                     saveOrUpdateUser(tenantId, userId, userUpdateMsg, edge);
                     yield Futures.immediateFuture(null);
                 }
+                case ENTITY_DELETED_RPC_MESSAGE -> {
+                    deleteUserAndPushEntityDeletedEventToRuleEngine(tenantId, userId, edge);
+                    yield Futures.immediateFuture(null);
+                }
                 default -> handleUnsupportedMsgType(userUpdateMsg.getMsgType());
             };
         } catch (DataValidationException e) {
@@ -116,7 +120,15 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         }
     }
 
-    @Override
+    private void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId, Edge edge) {
+        User removedUser = deleteUser(tenantId, userId);
+        CustomerId userCustomerId = removedUser.getCustomerId();
+        String userAsString = JacksonUtil.toString(removedUser);
+        TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, userCustomerId);
+        pushEntityEventToRuleEngine(tenantId, userId, userCustomerId, TbMsgType.ENTITY_DELETED, userAsString, msgMetaData);
+    }
+
+        @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         UserId userId = new UserId(edgeEvent.getEntityId());
         switch (edgeEvent.getAction()) {
