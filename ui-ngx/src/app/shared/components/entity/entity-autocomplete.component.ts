@@ -138,6 +138,11 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   @coerceArray()
   additionalClasses: Array<string>;
 
+  @Input()
+  @coerceBoolean()
+  syncIdsWithDB = false;
+
+
   @Output()
   entityChanged = new EventEmitter<BaseData<EntityId>>();
 
@@ -360,12 +365,38 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       try {
         entity = await firstValueFrom(this.entityService.getEntity(targetEntityType, id, {ignoreLoading: true, ignoreErrors: true}));
       } catch (e) {
-        this.propagateChange(null);
+        if (this.syncIdsWithDB) {
+          this.modelValue = null;
+          this.entityURL = '';
+          this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+          this.entityChanged.emit(null);
+          this.propagateChange(null);
+          this.dirty = true;
+          return;
+        } else {
+          this.propagateChange(null);
+        }
       }
-      this.modelValue = entity !== null ? (this.useFullEntityId ? entity.id : entity.id.id) : null;
-      this.entityURL = !entity ? '' : getEntityDetailsPageURL(entity.id.id, targetEntityType);
-      this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
-      this.entityChanged.emit(entity);
+
+      if (entity !== null) {
+        this.modelValue = this.useFullEntityId ? entity.id : entity.id.id;
+        this.entityURL = getEntityDetailsPageURL(entity.id.id, targetEntityType);
+        this.selectEntityFormGroup.get('entity').patchValue(entity, {emitEvent: false});
+        this.entityChanged.emit(entity);
+      } else {
+        if (this.syncIdsWithDB) {
+          this.modelValue = null;
+          this.entityURL = '';
+          this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+          this.entityChanged.emit(null);
+          this.propagateChange(null);
+        } else {
+          this.modelValue = null;
+          this.entityURL = '';
+          this.selectEntityFormGroup.get('entity').patchValue('', {emitEvent: false});
+          this.entityChanged.emit(null);
+        }
+      }
     } else {
       this.modelValue = null;
       this.entityURL = '';
