@@ -95,6 +95,13 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     autofocus: false,
     branding: false,
     promotion: false,
+    setup: (editor) => {
+      editor.on('PostRender', function() {
+        const container = editor.getContainer().closest('.mat-mdc-dialog-container');
+        const uiContainer = document.querySelector('.tox.tox-tinymce-aux');
+        container.parentNode.appendChild(uiContainer);
+      });
+    },
     relative_urls: false,
     urlconverter_callback: (url) => url
   };
