@@ -17,7 +17,6 @@ package org.thingsboard.server.service.security.auth.rest;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.InsufficientAuthenticationException;
 import org.springframework.security.authentication.LockedException;
@@ -27,14 +26,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.id.CustomerId;
-import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
@@ -43,6 +37,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
+import org.thingsboard.server.service.security.auth.AbstractAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.MfaAuthenticationToken;
 import org.thingsboard.server.service.security.auth.MfaConfigurationToken;
 import org.thingsboard.server.service.security.auth.mfa.TwoFactorAuthService;
@@ -51,18 +46,14 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.util.UUID;
-
-
 @Component
 @Slf4j
 @TbCoreComponent
-public class RestAuthenticationProvider implements AuthenticationProvider {
+public class RestAuthenticationProvider extends AbstractAuthenticationProvider {
 
     private final SystemSecurityService systemSecurityService;
     private final SecuritySettingsService securitySettingsService;
     private final UserService userService;
-    private final CustomerService customerService;
     private final TwoFactorAuthService twoFactorAuthService;
 
     @Autowired
@@ -71,8 +62,8 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
                                       final SystemSecurityService systemSecurityService,
                                       SecuritySettingsService securitySettingsService,
                                       TwoFactorAuthService twoFactorAuthService) {
+        super(customerService, null);
         this.userService = userService;
-        this.customerService = customerService;
         this.systemSecurityService = systemSecurityService;
         this.securitySettingsService = securitySettingsService;
         this.twoFactorAuthService = twoFactorAuthService;
@@ -125,7 +116,6 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
         }
 
         try {
-
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(TenantId.SYS_TENANT_ID, user.getId());
             if (userCredentials == null) {
                 throw new UsernameNotFoundException("User credentials not found");
@@ -138,8 +128,9 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
                 throw e;
             }
 
-            if (user.getAuthority() == null)
+            if (user.getAuthority() == null) {
                 throw new InsufficientAuthenticationException("User has no authority assigned");
+            }
 
             return new SecurityUser(user, userCredentials.isEnabled(), userPrincipal);
         } catch (Exception e) {
@@ -149,28 +140,7 @@ public class RestAuthenticationProvider implements AuthenticationProvider {
     }
 
     private SecurityUser authenticateByPublicId(UserPrincipal userPrincipal, String publicId) {
-        CustomerId customerId;
-        try {
-            customerId = new CustomerId(UUID.fromString(publicId));
-        } catch (Exception e) {
-            throw new BadCredentialsException("Authentication Failed. Public Id is not valid.");
-        }
-        Customer publicCustomer = customerService.findCustomerById(TenantId.SYS_TENANT_ID, customerId);
-        if (publicCustomer == null) {
-            throw new UsernameNotFoundException("Public entity not found: " + publicId);
-        }
-        if (!publicCustomer.isPublic()) {
-            throw new BadCredentialsException("Authentication Failed. Public Id is not valid.");
-        }
-        User user = new User(new UserId(EntityId.NULL_UUID));
-        user.setTenantId(publicCustomer.getTenantId());
-        user.setCustomerId(publicCustomer.getId());
-        user.setEmail(publicId);
-        user.setAuthority(Authority.CUSTOMER_USER);
-        user.setFirstName("Public");
-        user.setLastName("Public");
-
-        return new SecurityUser(user, true, userPrincipal);
+        return super.authenticateByPublicId(publicId, "Public Id", userPrincipal);
     }
 
     @Override

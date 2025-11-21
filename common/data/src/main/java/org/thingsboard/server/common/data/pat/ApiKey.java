@@ -32,7 +32,7 @@ public class ApiKey extends ApiKeyInfo {
     private static final long serialVersionUID = -2313196723950490263L;
 
     @NoXss
-    @Schema(description = "Api key value", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "API key value", requiredMode = Schema.RequiredMode.REQUIRED)
     private String value;
 
     public ApiKey() {

@@ -29,7 +29,7 @@ import org.springframework.security.web.authentication.AbstractAuthenticationPro
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.thingsboard.server.service.security.auth.extractor.TokenExtractor;
-import org.thingsboard.server.service.security.model.token.RawApiKey;
+import org.thingsboard.server.service.security.model.token.ApiKeyAuthRequest;
 
 import java.io.IOException;
 
@@ -52,8 +52,9 @@ public class ApiKeyTokenAuthenticationProcessingFilter extends AbstractAuthentic
 
     @Override
     public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response) throws AuthenticationException {
-        RawApiKey rawApiKey = new RawApiKey(tokenExtractor.extract(request));
-        return getAuthenticationManager().authenticate(new ApiKeyAuthenticationToken(rawApiKey));
+        String apiKeyValue = tokenExtractor.extract(request);
+        ApiKeyAuthRequest apiKeyAuthRequest = new ApiKeyAuthRequest(apiKeyValue);
+        return getAuthenticationManager().authenticate(new ApiKeyAuthenticationToken(apiKeyAuthRequest));
     }
 
     @Override

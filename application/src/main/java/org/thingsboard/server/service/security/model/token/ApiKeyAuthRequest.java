@@ -15,4 +15,4 @@
  */
 package org.thingsboard.server.service.security.model.token;
 
-public record RawApiKey(String apiKey) {}
+public record ApiKeyAuthRequest(String apiKey) {}

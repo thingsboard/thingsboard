@@ -42,6 +42,7 @@ public class ApiKeyServiceTest extends AbstractServiceTest {
 
     @Autowired
     ApiKeyService apiKeyService;
+
     @Autowired
     UserService userService;
 
