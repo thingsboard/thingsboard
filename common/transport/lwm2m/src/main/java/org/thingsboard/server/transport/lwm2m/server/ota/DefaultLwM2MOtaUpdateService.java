@@ -201,35 +201,39 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         }
 
         var clientSettings = clientContext.getProfile(client.getRegistration()).getClientLwM2mSettings();
-        initFwStrategy(client, clientSettings);
-        initSwStrategy(client, clientSettings);
+        if (clientSettings != null) {
+            initFwStrategy(client, clientSettings);
+            initSwStrategy(client, clientSettings);
 
-        if (!attributesToFetch.isEmpty()) {
-            var future = attributesService.getSharedAttributes(client, attributesToFetch);
-            DonAsynchron.withCallback(future, attrs -> {
-                if (fwInfo.isSupported()) {
-                    Optional<String> newFwTitle = getAttributeValue(attrs, FIRMWARE_TITLE);
-                    Optional<String> newFwVersion = getAttributeValue(attrs, FIRMWARE_VERSION);
-                    Optional<String> newFwTag = getAttributeValue(attrs, FIRMWARE_TAG);
-                    Optional<String> newFwUrl = getAttributeValue(attrs, FIRMWARE_URL);
-                    if (newFwTitle.isPresent() && newFwVersion.isPresent() && !isOtaDownloading(client) && !UPDATING.equals(fwInfo.status)) {
-                        onTargetFirmwareUpdate(client, newFwTitle.get(), newFwVersion.get(), newFwUrl, newFwTag);
+
+            if (!attributesToFetch.isEmpty()) {
+                var future = attributesService.getSharedAttributes(client, attributesToFetch);
+                DonAsynchron.withCallback(future, attrs -> {
+                    if (fwInfo.isSupported()) {
+                        Optional<String> newFwTitle = getAttributeValue(attrs, FIRMWARE_TITLE);
+                        Optional<String> newFwVersion = getAttributeValue(attrs, FIRMWARE_VERSION);
+                        Optional<String> newFwTag = getAttributeValue(attrs, FIRMWARE_TAG);
+                        Optional<String> newFwUrl = getAttributeValue(attrs, FIRMWARE_URL);
+                        if (newFwTitle.isPresent() && newFwVersion.isPresent() && !isOtaDownloading(client) && !UPDATING.equals(fwInfo.status)) {
+                            onTargetFirmwareUpdate(client, newFwTitle.get(), newFwVersion.get(), newFwUrl, newFwTag);
+                        }
                     }
-                }
-                if (swInfo.isSupported()) {
-                    Optional<String> newSwTitle = getAttributeValue(attrs, SOFTWARE_TITLE);
-                    Optional<String> newSwVersion = getAttributeValue(attrs, SOFTWARE_VERSION);
-                    Optional<String> newSwTag = getAttributeValue(attrs, SOFTWARE_TAG);
-                    Optional<String> newSwUrl = getAttributeValue(attrs, SOFTWARE_URL);
-                    if (newSwTitle.isPresent() && newSwVersion.isPresent()) {
-                        onTargetSoftwareUpdate(client, newSwTitle.get(), newSwVersion.get(), newSwUrl, newSwTag);
+                    if (swInfo.isSupported()) {
+                        Optional<String> newSwTitle = getAttributeValue(attrs, SOFTWARE_TITLE);
+                        Optional<String> newSwVersion = getAttributeValue(attrs, SOFTWARE_VERSION);
+                        Optional<String> newSwTag = getAttributeValue(attrs, SOFTWARE_TAG);
+                        Optional<String> newSwUrl = getAttributeValue(attrs, SOFTWARE_URL);
+                        if (newSwTitle.isPresent() && newSwVersion.isPresent()) {
+                            onTargetSoftwareUpdate(client, newSwTitle.get(), newSwVersion.get(), newSwUrl, newSwTag);
+                        }
                     }
-                }
-            }, throwable -> {
-                if (fwInfo.isSupported()) {
-                    update(fwInfo);
-                }
-            }, executor);
+
+                }, throwable -> {
+                    if (fwInfo.isSupported()) {
+                        update(fwInfo);
+                    }
+                }, executor);
+            }
         }
     }
 
