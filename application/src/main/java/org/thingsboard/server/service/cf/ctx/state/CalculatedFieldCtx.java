@@ -640,6 +640,9 @@ public class CalculatedFieldCtx implements Closeable {
                 // if the rules have any changes not tracked by hasStateChanges
                 return true;
             }
+            if (!thisConfig.propagationSettingsEqual(otherConfig)) {
+                return true;
+            }
         }
         if (scheduledUpdateIntervalMillis != other.scheduledUpdateIntervalMillis) {
             return true;
