@@ -105,6 +105,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     public static final String CLAIMING = "claiming";
     public static final String ATTRIBUTE = "attribute";
     public static final String RPC_RESPONSE = "Rpc response";
+    public static final String CONNECT = "connect";
     public static final String ATTRIBUTES_REQUEST = "attributes request";
 
     protected final MqttTransportContext context;
@@ -257,12 +258,14 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     protected void processOnConnect(MqttPublishMessage msg, String deviceName, String deviceType) {
         log.trace("[{}][{}][{}] onDeviceConnect: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
+        int msgId = getMsgId(msg);
+        AtomicBoolean ackSent = new AtomicBoolean(false);
         process(onDeviceConnect(deviceName, deviceType),
                 result -> {
                     ack(msg, MqttReasonCodes.PubAck.SUCCESS);
                     log.trace("[{}][{}][{}] onDeviceConnectOk: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
                 },
-                t -> logDeviceCreationError(t, deviceName));
+                t -> processFailure(msgId, deviceName, CONNECT, ackSent, t));
     }
 
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
