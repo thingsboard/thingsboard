@@ -44,6 +44,12 @@
     }
   }
 
+  .max-args-warning {
+    .mat-icon {
+      color: #FAA405;
+    }
+  }
+
   .limit-field-row {
     @media screen and (max-width: 520px) {
       display: flex;

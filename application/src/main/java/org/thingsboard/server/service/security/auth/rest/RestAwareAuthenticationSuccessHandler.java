@@ -73,7 +73,7 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
                 .flatMap(settings -> Optional.ofNullable(settings.getTotalAllowedTimeForVerification())
                         .filter(time -> time > 0))
                 .orElse((int) TimeUnit.MINUTES.toSeconds(30));
-        tokenPair.setToken(tokenFactory.createMfaToken(securityUser, scope, preVerificationTokenLifetime).getToken());
+        tokenPair.setToken(tokenFactory.createMfaToken(securityUser, scope, preVerificationTokenLifetime).token());
         tokenPair.setRefreshToken(null);
         tokenPair.setScope(scope);
         return tokenPair;
@@ -93,4 +93,5 @@ public class RestAwareAuthenticationSuccessHandler implements AuthenticationSucc
 
         session.removeAttribute(WebAttributes.AUTHENTICATION_EXCEPTION);
     }
+
 }

@@ -31,6 +31,7 @@ import {
   CalculatedFieldSimpleConfiguration,
   CalculatedFieldSimpleOutput,
   CalculatedFieldType,
+  defaultSimpleCalculatedFieldOutput,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
   OutputType
@@ -84,11 +85,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     arguments: this.fb.control({}),
     expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
     expressionSCRIPT: [calculatedFieldDefaultScript],
-    output: this.fb.control<CalculatedFieldSimpleOutput>({
-      name: '',
-      type: OutputType.Timeseries,
-      decimalsByDefault: null
-    }),
+    output: this.fb.control<CalculatedFieldSimpleOutput>(defaultSimpleCalculatedFieldOutput),
     useLatestTs: [false]
   });
 

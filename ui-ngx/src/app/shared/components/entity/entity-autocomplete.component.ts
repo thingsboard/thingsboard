@@ -301,6 +301,18 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityRequiredText = 'ai-models.model-required';
           this.notFoundEntities = 'ai-models.no-model-text';
           break;
+        case EntityType.DEVICE_PROFILE:
+          this.entityText = 'device-profile.device-profile';
+          this.noEntitiesMatchingText = 'device-profile.no-device-profiles-matching';
+          this.entityRequiredText = 'device-profile.device-profile-required';
+          this.notFoundEntities = 'device-profile.no-device-profiles-text';
+          break;
+        case EntityType.ASSET_PROFILE:
+          this.entityText = 'asset-profile.asset-profile';
+          this.noEntitiesMatchingText = 'asset-profile.no-asset-profiles-matching';
+          this.entityRequiredText = 'asset-profile.asset-profile-required';
+          this.notFoundEntities = 'asset-profile.no-asset-profiles-text';
+          break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
           this.noEntitiesMatchingText = 'customer.no-customers-matching';

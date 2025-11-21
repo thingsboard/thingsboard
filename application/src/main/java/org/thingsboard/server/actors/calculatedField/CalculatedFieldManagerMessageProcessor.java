@@ -71,6 +71,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,6 +84,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 
@@ -163,7 +165,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         if (ctx != null) {
             msg.setCtx(ctx);
             log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
-            getOrCreateActor(msg.getId().entityId()).tell(msg);
+            getOrCreateActor(msg.getId().entityId()).tellWithHighPriority(msg);
         } else {
             cfStateService.deleteState(msg.getId(), msg.getCallback());
         }
@@ -187,7 +189,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (Exception e) {
                 log.warn("[{}] Failed to trigger CFs reevaluation", tenantId, e);
             }
-        }, systemContext.getAlarmRulesReevaluationInterval(), systemContext.getAlarmRulesReevaluationInterval(), TimeUnit.SECONDS);
+        }, systemContext.getCfCheckInterval(), systemContext.getCfCheckInterval(), TimeUnit.SECONDS);
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
@@ -222,6 +224,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     default -> msg.getCallback().onSuccess();
                 }
             }
+            case TENANT_PROFILE -> {
+                switch (event) {
+                    case UPDATED -> onTenantProfileUpdated(msg.getData(), msg.getCallback());
+                    default -> msg.getCallback().onSuccess();
+                }
+            }
             default -> msg.getCallback().onSuccess();
         }
     }
@@ -244,6 +252,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onProfileDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         entityProfileCache.removeProfileId(msg.getEntityId());
+        callback.onSuccess();
+    }
+
+    private void onTenantProfileUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
+        Stream.concat(
+                calculatedFields.values().stream(),
+                entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
+        ).forEach(CalculatedFieldCtx::updateTenantProfileProperties);
         callback.onSuccess();
     }
 
@@ -611,7 +627,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         var proto = msg.getProto();
         List<CalculatedFieldEntityCtxId> result = new ArrayList<>();
         for (var link : getCalculatedFieldLinksByEntityId(entityId)) {
-            CalculatedFieldCtx ctx = calculatedFields.get(link.getCalculatedFieldId());
+            CalculatedFieldCtx ctx = calculatedFields.get(link.calculatedFieldId());
             if (ctx.linkMatches(entityId, proto)) {
                 result.add(ctx.toCalculatedFieldEntityCtxId());
             }
@@ -738,13 +754,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void addLinks(CalculatedField newCf) {
         var newLinks = newCf.getConfiguration().buildCalculatedFieldLinks(tenantId, newCf.getEntityId(), newCf.getId());
-        newLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link));
+        newLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.entityId(), id -> new CopyOnWriteArrayList<>()).add(link));
     }
 
     private void deleteLinks(CalculatedFieldCtx cfCtx) {
         var oldCf = cfCtx.getCalculatedField();
         var oldLinks = oldCf.getConfiguration().buildCalculatedFieldLinks(tenantId, oldCf.getEntityId(), oldCf.getId());
-        oldLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).remove(link));
+        oldLinks.forEach(link -> entityIdCalculatedFieldLinks.computeIfAbsent(link.entityId(), id -> new CopyOnWriteArrayList<>()).remove(link));
     }
 
     public void onPartitionChange(CalculatedFieldPartitionChangeMsg msg) {
@@ -757,14 +773,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             log.trace("Processing calculated field record: {}", cf);
             try {
                 initCalculatedField(cf);
+                initCalculatedFieldLinks(cf);
             } catch (CalculatedFieldException e) {
                 log.error("Failed to process calculated field record: {}", cf, e);
             }
-        });
-        PageDataIterable<CalculatedFieldLink> cfls = new PageDataIterable<>(pageLink -> cfDaoService.findAllCalculatedFieldLinksByTenantId(tenantId, pageLink), cfSettings.getInitTenantFetchPackSize());
-        cfls.forEach(link -> {
-            log.trace("Processing calculated field link record: {}", link);
-            initCalculatedFieldLink(link);
         });
     }
 
@@ -782,10 +794,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
     }
 
-    private void initCalculatedFieldLink(CalculatedFieldLink link) {
-        // We use copy on write lists to safely pass the reference to another actor for the iteration.
-        // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
-        entityIdCalculatedFieldLinks.computeIfAbsent(link.getEntityId(), id -> new CopyOnWriteArrayList<>()).add(link);
+    private void initCalculatedFieldLinks(CalculatedField cf) {
+        List<CalculatedFieldLink> links = cf.getConfiguration().buildCalculatedFieldLinks(cf.getTenantId(), cf.getEntityId(), cf.getId());
+        for (CalculatedFieldLink link : links) {
+            // We use copy on write lists to safely pass the reference to another actor for the iteration.
+            // Alternative approach would be to use any list but avoid modifications to the list (change the complete map value instead)
+            entityIdCalculatedFieldLinks.computeIfAbsent(link.entityId(), id -> new CopyOnWriteArrayList<>()).add(link);
+        }
     }
 
     private void initEntitiesCache() {

@@ -198,6 +198,11 @@ import {
 import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 import { AlarmRuleModule } from "@home/components/alarm-rules/alarm-rule.module";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
+import { ApiKeysTableComponent } from '@home/components/api-key/api-keys-table.component';
+import { AddApiKeyDialogComponent } from '@home/components/api-key/add-api-key-dialog.component';
+import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/edit-api-key-description-panel.component';
+import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key-generated-dialog.component';
+import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
 
 @NgModule({
@@ -350,6 +355,11 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
       AIModelDialogComponent,
       ResourcesDialogComponent,
       ResourcesLibraryComponent,
+      ApiKeysTableComponent,
+      ApiKeysTableDialogComponent,
+      AddApiKeyDialogComponent,
+      EditApiKeyDescriptionPanelComponent,
+      ApiKeyGeneratedDialogComponent,
       AuditLogHeaderComponent,
       AuditLogFilterComponent
     ],
@@ -498,6 +508,8 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
     AIModelDialogComponent,
     ResourcesDialogComponent,
     ResourcesLibraryComponent,
+    ApiKeysTableComponent,
+    ApiKeysTableDialogComponent,
   ],
   providers: [
     WidgetComponentService,

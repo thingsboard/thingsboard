@@ -29,6 +29,7 @@ import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AlarmRuleStateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AlarmStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ArgumentIntervalProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
@@ -47,6 +48,10 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntryStatus;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
@@ -105,6 +110,10 @@ public class CalculatedFieldUtils {
                     relatedEntitiesArgumentEntry.getEntityInputs()
                             .forEach((entityId, entry) -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
                 }
+                case ENTITY_AGGREGATION -> {
+                    EntityAggregationArgumentEntry entityAggregationArgumentEntry = (EntityAggregationArgumentEntry) argEntry;
+                    entityAggregationArgumentEntry.getAggIntervals().forEach((interval, argumentStatus) -> builder.addAggregationArguments(toArgumentIntervalProto(argName, interval, argumentStatus)));
+                }
             }
         });
         if (state instanceof AlarmCalculatedFieldState alarmState) {
@@ -115,6 +124,7 @@ public class CalculatedFieldUtils {
             if (alarmState.getClearRuleState() != null) {
                 alarmStateProto.setClearRuleState(toAlarmRuleStateProto(alarmState.getClearRuleState()));
             }
+            builder.setAlarmState(alarmStateProto);
         }
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
             builder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
@@ -128,7 +138,7 @@ public class CalculatedFieldUtils {
                 .setSeverity(Optional.ofNullable(ruleState.getSeverity()).map(Enum::name).orElse(""))
                 .setEventCount(ruleState.getEventCount())
                 .setFirstEventTs(ruleState.getFirstEventTs())
-                .setLastEventTs(ruleState.getLastEventTs())
+                .setLastCheckTs(ruleState.getLastCheckTs())
                 .build();
     }
 
@@ -137,7 +147,7 @@ public class CalculatedFieldUtils {
         AlarmRuleState ruleState = new AlarmRuleState(severity, null, state);
         ruleState.setEventCount(proto.getEventCount());
         ruleState.setFirstEventTs(proto.getFirstEventTs());
-        ruleState.setLastEventTs(proto.getLastEventTs());
+        ruleState.setLastCheckTs(proto.getLastCheckTs());
         return ruleState;
     }
 
@@ -156,6 +166,16 @@ public class CalculatedFieldUtils {
         }
 
         return builder.build();
+    }
+
+    public static ArgumentIntervalProto toArgumentIntervalProto(String argName, AggIntervalEntry intervalEntry, AggIntervalEntryStatus argumentStatus) {
+        return ArgumentIntervalProto.newBuilder()
+                .setArgName(argName)
+                .setStartTs(intervalEntry.getStartTs())
+                .setEndTs(intervalEntry.getEndTs())
+                .setLastArgsRefreshTs(argumentStatus.getLastArgsRefreshTs())
+                .setLastMetricsEvalTs(argumentStatus.getLastMetricsEvalTs())
+                .build();
     }
 
     public static TsRollingArgumentProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
@@ -204,6 +224,7 @@ public class CalculatedFieldUtils {
             case ALARM -> new AlarmCalculatedFieldState(id.entityId());
             case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
             case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(id.entityId());
+            case ENTITY_AGGREGATION -> new EntityAggregationCalculatedFieldState(id.entityId());
         };
 
         if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
@@ -219,6 +240,21 @@ public class CalculatedFieldUtils {
             relatedEntitiesAggState.setLastMetricsEvalTs(proto.getLastMetricsEvalTs());
 
             return relatedEntitiesAggState;
+        }
+
+        if (state instanceof EntityAggregationCalculatedFieldState entityAggregationState) {
+            Map<String, EntityAggregationArgumentEntry> arguments = new HashMap<>();
+
+            proto.getAggregationArgumentsList().forEach(argProto -> {
+                AggIntervalEntry intervalEntry = new AggIntervalEntry(argProto.getStartTs(), argProto.getEndTs());
+                AggIntervalEntryStatus intervalStatus = new AggIntervalEntryStatus(argProto.getLastArgsRefreshTs(), argProto.getLastMetricsEvalTs());
+                EntityAggregationArgumentEntry argEntry = arguments.computeIfAbsent(argProto.getArgName(), name -> new EntityAggregationArgumentEntry(new HashMap<>()));
+                argEntry.getAggIntervals().put(intervalEntry, intervalStatus);
+            });
+
+            entityAggregationState.getArguments().putAll(arguments);
+
+            return entityAggregationState;
         }
 
         proto.getSingleValueArgumentsList().forEach(argProto ->

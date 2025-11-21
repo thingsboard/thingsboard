@@ -31,6 +31,7 @@ import {
   CalculatedFieldOutput,
   CalculatedFieldPropagationConfiguration,
   CalculatedFieldType,
+  defaultCalculatedFieldOutput,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
   notEmptyObjectValidator,
@@ -71,6 +72,9 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   entityName: string;
 
   @Input({required: true})
+  ownerId: EntityId;
+
+  @Input({required: true})
   testScript: () => Observable<string>;
 
   propagateConfiguration = this.fb.group({
@@ -81,9 +85,7 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
       relationType: ['Contains', Validators.required],
     }),
     expression: [calculatedFieldDefaultScript],
-    output: this.fb.control<CalculatedFieldOutput>({
-      type: OutputType.Timeseries,
-    }),
+    output: this.fb.control<CalculatedFieldOutput>(defaultCalculatedFieldOutput),
   });
 
   readonly ScriptLanguage = ScriptLanguage;

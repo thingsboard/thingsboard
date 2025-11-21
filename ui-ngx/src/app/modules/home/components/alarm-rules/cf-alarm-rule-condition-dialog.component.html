@@ -22,7 +22,7 @@
     <div formGroupName="expression" class="flex flex-row items-center justify-start gt-xs:gap-4" style="min-width: fit-content;">
       <tb-toggle-select formControlName="type" appearance="fill-invert" selectMediaBreakpoint="xs">
         <tb-toggle-option [value]="AlarmRuleExpressionType.SIMPLE">{{ 'alarm-rule.expression-type.simple' | translate }}</tb-toggle-option>
-        <tb-toggle-option [value]="AlarmRuleExpressionType.TBEL">{{ 'alarm-rule.expression-type.tbel' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="AlarmRuleExpressionType.TBEL">{{ 'alarm-rule.expression-type.script' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
     <button mat-icon-button
@@ -57,14 +57,17 @@
             </div>
             <tb-js-func formControlName="expression"
                         functionName="expression"
+                        class="tb-alarm-rule-script"
                         [disableUndefinedCheck]="true"
                         [scriptLanguage]="scriptLanguage.TBEL"
                         [functionArgs]="functionArgs"
                         [highlightRules]="argumentsHighlightRules"
                         [editorCompleter]="argumentsEditorCompleter"
-                        noValidate="true">
+                        noValidate="true"
+                        [helpPopupStyle]="{ width: '1200px' }"
+                        helpId="alarm-rule/expression_fn">
               <div toolbarPrefixButton
-                   class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.expression-type.tbel' | translate }}
+                   class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.expression-type.script' | translate }}
               </div>
             </tb-js-func>
           </div>

@@ -66,7 +66,7 @@ public class DefaultJwtSettingsValidator implements JwtSettingsValidator {
             throw new DataValidationException("JWT token signing key should be a Base64 encoded string representing at least 512 bits of data!");
         }
 
-        System.arraycopy(decodedKey, 0, RandomUtils.nextBytes(decodedKey.length), 0, decodedKey.length); //secure memory
+        System.arraycopy(decodedKey, 0, RandomUtils.secure().randomBytes(decodedKey.length), 0, decodedKey.length); // secure memory
     }
 
 }

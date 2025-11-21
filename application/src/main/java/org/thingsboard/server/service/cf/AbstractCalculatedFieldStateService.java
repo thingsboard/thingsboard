@@ -84,7 +84,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state, TopicPartitionInfo partition) {
         partition = partition.withTopic(DataConstants.CF_STATES_QUEUE_NAME);
-        actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state, partition));
+        actorSystemContext.tellWithHighPriority(new CalculatedFieldStateRestoreMsg(id, state, partition));
     }
 
     @Override

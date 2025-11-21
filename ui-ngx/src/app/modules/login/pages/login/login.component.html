@@ -21,7 +21,7 @@
       <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
         <fieldset class="flex flex-col">
           <div class="flex flex-col items-center justify-start" style="padding: 15px 0;">
-            <tb-logo class="login-logo"></tb-logo>
+            <tb-logo link="https://thingsboard.io" target="_blank" class="login-logo"></tb-logo>
           </div>
           <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
           </mat-progress-bar>

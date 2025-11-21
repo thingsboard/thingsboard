@@ -94,11 +94,12 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
-import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.resource.ResourceService;
+import org.thingsboard.server.dao.resource.TbResourceDataCache;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.rule.RuleNodeStateService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
@@ -574,6 +575,10 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
+    private ApiKeyService apiKeyService;
+
+    @Autowired
+    @Getter
     private OwnerService ownerService;
 
     @Value("${actors.session.max_concurrent_sessions_per_device:1}")
@@ -663,6 +668,10 @@ public class ActorSystemContext {
     @Value("${actors.calculated_fields.calculation_timeout:5}")
     @Getter
     private long cfCalculationResultTimeout;
+
+    @Value("${actors.calculated_fields.check_interval:60}")
+    @Getter
+    private long cfCheckInterval;
 
     @Value("${actors.alarms.reevaluation_interval:120}")
     @Getter
@@ -851,7 +860,7 @@ public class ActorSystemContext {
                 if (arguments != null) {
                     eventBuilder.arguments(JacksonUtil.toString(
                             arguments.entrySet().stream()
-                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toTbelCfArg()))
+                                    .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue()))
                     ));
                 }
                 if (result != null) {

@@ -70,7 +70,7 @@ public class DefaultAccessControlService implements AccessControlService {
             permissionDenied();
         }
         Optional<PermissionChecker> permissionChecker = permissions.getPermissionChecker(resource);
-        if (!permissionChecker.isPresent()) {
+        if (permissionChecker.isEmpty()) {
             permissionDenied();
         }
         return permissionChecker.get();
