@@ -131,7 +131,7 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
         pushEntityEventToRuleEngine(tenantId, userId, userCustomerId, TbMsgType.ENTITY_DELETED, userAsString, msgMetaData);
     }
 
-        @Override
+    @Override
     public DownlinkMsg convertEdgeEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
         UserId userId = new UserId(edgeEvent.getEntityId());
         switch (edgeEvent.getAction()) {
