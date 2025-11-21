@@ -81,7 +81,8 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
     protected User deleteUser(TenantId tenantId, UserId userId) {
         User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
         if (userById == null) {
-            throw new IllegalArgumentException(String.format("[%s] Failed to find User with id [%s]", tenantId, userId));
+            log.trace("[{}] User with id {} does not exist", tenantId, userId);
+            return null;
         }
         edgeCtx.getUserService().deleteUser(tenantId, userById);
         return userById;

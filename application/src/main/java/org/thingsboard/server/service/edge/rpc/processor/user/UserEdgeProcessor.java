@@ -122,6 +122,9 @@ public class UserEdgeProcessor extends BaseUserProcessor implements UserProcesso
 
     private void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId, Edge edge) {
         User removedUser = deleteUser(tenantId, userId);
+        if (removedUser == null) {
+            return;
+        }
         CustomerId userCustomerId = removedUser.getCustomerId();
         String userAsString = JacksonUtil.toString(removedUser);
         TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, userCustomerId);
