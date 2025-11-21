@@ -360,7 +360,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     @Override
     public Lwm2mDeviceProfileTransportConfiguration getProfile(Registration registration) {
         UUID profileId = getClientByEndpoint(registration.getEndpoint()).getProfileId();
-        return doGetAndCache(profileId);
+        return profileId != null ? doGetAndCache(profileId) : null;
     }
 
     private Lwm2mDeviceProfileTransportConfiguration doGetAndCache(UUID profileId) {
