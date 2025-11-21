@@ -169,7 +169,7 @@ export class DashboardUtilsService {
     }
 
     if (isUndefined(dashboard.configuration.timewindow)) {
-      dashboard.configuration.timewindow = this.timeService.defaultTimewindow();
+      dashboard.configuration.timewindow = this.timeService.defaultTimewindow(true);
     }
     if (isUndefined(dashboard.configuration.settings)) {
       dashboard.configuration.settings = {};

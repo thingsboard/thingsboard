@@ -101,10 +101,10 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       history: {
         historyType: HistoryWindowType.INTERVAL,
         quickInterval: QuickTimeInterval.CURRENT_MONTH_SO_FAR,
+        interval: 12 * HOUR,
       },
       aggregation: {
         type: AggregationType.AVG,
-        interval: 12 * HOUR,
         limit: 5000
       }
     };
