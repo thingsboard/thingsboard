@@ -106,6 +106,7 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { DateFormatSettings, ValueFormatProcessor } from '@shared/models/widget-settings.models';
+import moment from 'moment';
 
 export enum TabSortKey {
   NAME_ASC = 'NAME_ASC',
@@ -1012,9 +1013,12 @@ class TimeseriesDatasource implements DataSource<TimeseriesRow> {
           columnData.forEach((cellData) => {
             const timestamp = cellData[0];
             let row = rowsMap[timestamp];
+            const widgetConfig = this.widgetContext.widgetConfig;
+            const dashboardTimewindow = this.widgetContext.dashboardTimewindow;
+            const timezone = widgetConfig.useDashboardTimewindow ? dashboardTimewindow.timezone : this.widgetContext.timeWindow.timezone;
             if (!row) {
               row = {
-                formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter)
+                formattedTs: this.datePipe.transform(timestamp, this.dateFormatFilter, moment.tz(timestamp, timezone).format('Z').replace(':', ''))
               };
               if (this.cellButtonActions.length) {
                 if (this.usedShowCellActionFunction) {
