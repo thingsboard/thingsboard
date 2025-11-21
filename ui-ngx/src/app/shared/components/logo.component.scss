@@ -15,9 +15,12 @@
  */
 :host {
   pointer-events: auto;
-  a img {
-    width: 100%;
-    height: 100%;
+  a {
+    border: none;
+    img {
+      width: 100%;
+      height: 100%;
+    }
   }
 }
 

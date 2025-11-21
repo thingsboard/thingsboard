@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-@if (isLogin) {
-  <a href="https://thingsboard.io" target="_blank">
+@if (isExternal) {
+  <a [href]="link" [target]="target">
     <ng-container *ngTemplateOutlet="logo"></ng-container>
   </a>
 } @else {
-  <a [routerLink]="link">
+  <a [routerLink]="link" [target]="target">
     <ng-container *ngTemplateOutlet="logo"></ng-container>
   </a>
 }
