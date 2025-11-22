@@ -490,6 +490,57 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return deviceDao.findDevicesByIdsAsync(toUUIDs(deviceIds));
     }
 
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdAndIdsAsync(TenantId tenantId, List<DeviceId> deviceIds) {
+        log.trace("Executing findDeviceInfosByTenantIdAndIdsAsync, tenantId [{}], deviceIds [{}]", tenantId, deviceIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(deviceIds, ids -> "Incorrect deviceIds " + ids);
+        return deviceDao.findDeviceInfosByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(deviceIds));
+    }
+
+    @Override
+    public List<DeviceInfo> findDeviceInfosByIds(List<DeviceId> deviceIds) {
+        log.trace("Executing findDeviceInfosByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, ids -> "Incorrect deviceIds " + ids);
+        return deviceDao.findDeviceInfosByIds(toUUIDs(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByIdsAsync(List<DeviceId> deviceIds) {
+        log.trace("Executing findDeviceInfosByIdsAsync, deviceIds [{}]", deviceIds);
+        validateIds(deviceIds, ids -> "Incorrect deviceIds " + ids);
+        return deviceDao.findDeviceInfosByIdsAsync(toUUIDs(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByTenantIdCustomerIdAndIdsAsync(TenantId tenantId, CustomerId customerId, List<DeviceId> deviceIds) {
+        log.trace("Executing findDeviceInfosByTenantIdCustomerIdAndIdsAsync, tenantId [{}], customerId [{}], deviceIds [{}]", tenantId, customerId, deviceIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
+        validateIds(deviceIds, ids -> "Incorrect deviceIds " + ids);
+        return deviceDao.findDeviceInfosByTenantIdCustomerIdAndIdsAsync(tenantId.getId(),
+                customerId.getId(), toUUIDs(deviceIds));
+    }
+
+    @Override
+    public ListenableFuture<List<DeviceInfo>> findDeviceInfosByQuery(TenantId tenantId, DeviceSearchQuery query) {
+        ListenableFuture<List<EntityRelation>> relations = relationService.findByQuery(tenantId, query.toEntitySearchQuery());
+        return Futures.transform(relations, r -> {
+            EntitySearchDirection direction = query.toEntitySearchQuery().getParameters().getDirection();
+            List<DeviceInfo> devices = new ArrayList<>();
+            for (EntityRelation relation : r) {
+                EntityId entityId = direction == EntitySearchDirection.FROM ? relation.getTo() : relation.getFrom();
+                if (entityId.getEntityType() == EntityType.DEVICE) {
+                    DeviceInfo device = findDeviceInfoById(tenantId, new DeviceId(entityId.getId()));
+                    if (query.getDeviceTypes().contains(device.getType())) {
+                        devices.add(device);
+                    }
+                }
+            }
+            return devices;
+        }, MoreExecutors.directExecutor());
+    }
+
     @Transactional
     @Override
     public void deleteDevicesByTenantId(TenantId tenantId) {
