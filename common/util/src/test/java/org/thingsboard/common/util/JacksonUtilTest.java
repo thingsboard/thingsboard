@@ -82,4 +82,41 @@ public class JacksonUtilTest {
         assertThat(JacksonUtil.writeValueAsString(Set.of(Optional.empty()))).isEqualTo("[null]");
     }
 
+    @Test
+    public void replaceUuidsRecursivelyTest() {
+        UUID oldUuid = UUID.randomUUID();
+        UUID newUuid = UUID.randomUUID();
+        String oldUuidStr = oldUuid.toString();
+        String newUuidStr = newUuid.toString();
+
+        ObjectNode root = JacksonUtil.newObjectNode();
+        root.put("id", oldUuidStr);
+        root.put("name", "test");
+        
+        ObjectNode child = JacksonUtil.newObjectNode();
+        child.put("childId", oldUuidStr);
+        child.put("description", "child node " + oldUuidStr);
+        root.set("child", child);
+
+        ArrayNode array = JacksonUtil.newArrayNode();
+        array.add(oldUuidStr);
+        ObjectNode arrayObj = JacksonUtil.newObjectNode();
+        arrayObj.put("arrId", oldUuidStr);
+        array.add(arrayObj);
+        root.set("list", array);
+
+        JacksonUtil.replaceUuidsRecursively(root, Set.of(), null, uuid -> {
+            if (uuid.equals(oldUuid)) {
+                return newUuid;
+            }
+            return uuid;
+        }, true);
+
+        assertThat(root.get("id").asText()).isEqualTo(newUuidStr);
+        assertThat(root.get("child").get("childId").asText()).isEqualTo(newUuidStr);
+        assertThat(root.get("child").get("description").asText()).isEqualTo("child node " + newUuidStr);
+        assertThat(root.get("list").get(0).asText()).isEqualTo(newUuidStr);
+        assertThat(root.get("list").get(1).get("arrId").asText()).isEqualTo(newUuidStr);
+    }
+
 }

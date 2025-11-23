@@ -368,40 +368,52 @@ public class JacksonUtil {
             return;
         }
         if (node.isObject()) {
-            ObjectNode objectNode = (ObjectNode) node;
-            List<String> fieldNames = Lists.newArrayList(objectNode.fieldNames());
-            for (String fieldName : fieldNames) {
-                if (root && skippedRootFields.contains(fieldName)) {
+            replaceInObject((ObjectNode) node, skippedRootFields, includedFieldsPattern, replacer, root);
+        } else if (node.isArray()) {
+            replaceInArray((ArrayNode) node, skippedRootFields, includedFieldsPattern, replacer);
+        }
+    }
+
+    private static void replaceInObject(ObjectNode objectNode, Set<String> skippedRootFields, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer, boolean root) {
+        List<String> fieldNames = Lists.newArrayList(objectNode.fieldNames());
+        for (String fieldName : fieldNames) {
+            if (root && skippedRootFields.contains(fieldName)) {
+                continue;
+            }
+            var child = objectNode.get(fieldName);
+            if (child.isObject() || child.isArray()) {
+                replaceUuidsRecursively(child, skippedRootFields, includedFieldsPattern, replacer, false);
+            } else if (child.isTextual()) {
+                if (includedFieldsPattern != null && !RegexUtils.matches(fieldName, includedFieldsPattern)) {
                     continue;
                 }
-                var child = objectNode.get(fieldName);
-                if (child.isObject() || child.isArray()) {
-                    replaceUuidsRecursively(child, skippedRootFields, includedFieldsPattern, replacer, false);
-                } else if (child.isTextual()) {
-                    if (includedFieldsPattern != null && !RegexUtils.matches(fieldName, includedFieldsPattern)) {
-                        continue;
-                    }
-                    String text = child.asText();
-                    String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
-                    if (!text.equals(newText)) {
-                        objectNode.put(fieldName, newText);
-                    }
-                }
+                replaceInTextNode(objectNode, fieldName, child.asText(), replacer);
             }
-        } else if (node.isArray()) {
-            ArrayNode array = (ArrayNode) node;
-            for (int i = 0; i < array.size(); i++) {
-                JsonNode arrayElement = array.get(i);
-                if (arrayElement.isObject() || arrayElement.isArray()) {
-                    replaceUuidsRecursively(arrayElement, skippedRootFields, includedFieldsPattern, replacer, false);
-                } else if (arrayElement.isTextual()) {
-                    String text = arrayElement.asText();
-                    String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
-                    if (!text.equals(newText)) {
-                        array.set(i, newText);
-                    }
-                }
+        }
+    }
+
+    private static void replaceInArray(ArrayNode array, Set<String> skippedRootFields, Pattern includedFieldsPattern, UnaryOperator<UUID> replacer) {
+        for (int i = 0; i < array.size(); i++) {
+            JsonNode arrayElement = array.get(i);
+            if (arrayElement.isObject() || arrayElement.isArray()) {
+                replaceUuidsRecursively(arrayElement, skippedRootFields, includedFieldsPattern, replacer, false);
+            } else if (arrayElement.isTextual()) {
+                replaceInTextArray(array, i, arrayElement.asText(), replacer);
             }
+        }
+    }
+
+    private static void replaceInTextNode(ObjectNode parent, String fieldName, String text, UnaryOperator<UUID> replacer) {
+        String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
+        if (!text.equals(newText)) {
+            parent.put(fieldName, newText);
+        }
+    }
+
+    private static void replaceInTextArray(ArrayNode parent, int index, String text, UnaryOperator<UUID> replacer) {
+        String newText = RegexUtils.replace(text, RegexUtils.UUID_PATTERN, uuid -> replacer.apply(UUID.fromString(uuid)).toString());
+        if (!text.equals(newText)) {
+            parent.set(index, newText);
         }
     }
 
