@@ -952,7 +952,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         argument.setRefEntityKey(new ReferencedEntityKey("createAlarm", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
         configuration.setArguments(Map.of("createAlarm", argument));
         AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setAlarmDetails("attribute is ${bool}");
+        alarmRule.setAlarmDetails("attribute is ${createAlarm}");
         SimpleAlarmCondition condition = new SimpleAlarmCondition();
         TbelAlarmConditionExpression expression = new TbelAlarmConditionExpression();
         expression.setExpression("return createAlarm == true;");

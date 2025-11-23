@@ -41,9 +41,22 @@
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widget-config.title</div>
           <div class="flex flex-1 flex-row items-center justify-start gap-2">
-            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-              <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
-            </mat-form-field>
+            @if (widgetType === widgetTypes.static || widgetType === widgetTypes.alarm) {
+              <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+                <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+              </mat-form-field>
+            } @else {
+              <tb-string-pattern-autocomplete class="flex-1"
+                                              appearance="outline"
+                                              brackets="curly"
+                                              subscriptSizing="dynamic"
+                                              [predefinedValuesButton]="true"
+                                              [disabled]="!widgetSettings.get('showTitle').value"
+                                              [predefinedValues]="predefinedValues"
+                                              placeholderText="{{ 'widget-config.set' | translate }}"
+                                              formControlName="title"
+              ></tb-string-pattern-autocomplete>
+            }
             <tb-font-settings formControlName="titleFont"
                               clearButton
                               [previewText]="widgetSettings.get('title').value"

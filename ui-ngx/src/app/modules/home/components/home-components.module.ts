@@ -23,6 +23,7 @@ import { DetailsPanelComponent } from '@home/components/details-panel.component'
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
 import { AuditLogDetailsDialogComponent } from '@home/components/audit-log/audit-log-details-dialog.component';
 import { AuditLogTableComponent } from '@home/components/audit-log/audit-log-table.component';
+import { AuditLogHeaderComponent } from '@home/components/audit-log/audit-log-header.component';
 import { EventTableHeaderComponent } from '@home/components/event/event-table-header.component';
 import { EventTableComponent } from '@home/components/event/event-table.component';
 import { EventFilterPanelComponent } from '@home/components/event/event-filter-panel.component';
@@ -197,6 +198,12 @@ import {
 import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 import { AlarmRuleModule } from "@home/components/alarm-rules/alarm-rule.module";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
+import { ApiKeysTableComponent } from '@home/components/api-key/api-keys-table.component';
+import { AddApiKeyDialogComponent } from '@home/components/api-key/add-api-key-dialog.component';
+import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/edit-api-key-description-panel.component';
+import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key-generated-dialog.component';
+import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
+import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
 
 @NgModule({
   declarations:
@@ -348,6 +355,13 @@ import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rul
       AIModelDialogComponent,
       ResourcesDialogComponent,
       ResourcesLibraryComponent,
+      ApiKeysTableComponent,
+      ApiKeysTableDialogComponent,
+      AddApiKeyDialogComponent,
+      EditApiKeyDescriptionPanelComponent,
+      ApiKeyGeneratedDialogComponent,
+      AuditLogHeaderComponent,
+      AuditLogFilterComponent
     ],
   imports: [
     CommonModule,
@@ -494,6 +508,8 @@ import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rul
     AIModelDialogComponent,
     ResourcesDialogComponent,
     ResourcesLibraryComponent,
+    ApiKeysTableComponent,
+    ApiKeysTableDialogComponent,
   ],
   providers: [
     WidgetComponentService,

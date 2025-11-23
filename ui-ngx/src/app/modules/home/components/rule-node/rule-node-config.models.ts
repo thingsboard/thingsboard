@@ -272,7 +272,8 @@ export enum HttpRequestType {
   GET = 'GET',
   POST = 'POST',
   PUT = 'PUT',
-  DELETE = 'DELETE'
+  DELETE = 'DELETE',
+  PATCH = 'PATCH'
 }
 
 export const ToByteStandartCharsetTypes = [

@@ -40,6 +40,7 @@ import {
   Widget,
   widgetTypeCanHaveTimewindow,
   WidgetConfigMode,
+  widgetTitleAutocompleteValues,
   widgetType
 } from '@shared/models/widget.models';
 import {
@@ -178,6 +179,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   headerOptions: ToggleHeaderOption[] = [];
   selectedOption: string;
+  predefinedValues = widgetTitleAutocompleteValues;
 
   public dataSettings: UntypedFormGroup;
   public targetDeviceSettings: UntypedFormGroup;

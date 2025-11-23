@@ -75,11 +75,15 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   disabled: boolean;
 
   @Input()
+  @coerceBoolean()
+  required: boolean;
+
+  @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
   alarmRuleConditionFormGroup = this.fb.group({
     type: ['SIMPLE'],
-    expression: [{type: AlarmRuleExpressionType.SIMPLE}, Validators.required],
+    expression: [{type: AlarmRuleExpressionType.SIMPLE}],
     schedule: [null],
   });
 
@@ -114,19 +118,21 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   writeValue(value: AlarmRuleCondition): void {
-    this.modelValue = value;
-    this.updateConditionInfo();
+    if (value) {
+      this.modelValue = value;
+      this.updateConditionInfo();
+    }
   }
 
   public conditionSet() {
-    return this.modelValue && (this.modelValue.expression?.expression || this.modelValue.expression?.filters);
+    return this.modelValue && (this.modelValue.expression?.expression || this.modelValue.expression?.filters) || !this.required;
   }
 
   public validate(c: UntypedFormControl) {
     return this.conditionSet() ? null : {
       alarmRuleCondition: {
         valid: false,
-      },
+      }
     };
   }
 

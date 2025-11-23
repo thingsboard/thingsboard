@@ -974,6 +974,9 @@ public class AlarmServiceTest extends AbstractServiceTest {
         alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery, List.of(parentId));
         Assert.assertEquals(1, alarmsCount);
 
+        alarmsCount = alarmService.countAlarmsByQuery(tenantId, null, countQuery, List.of(childId, parentId));
+        Assert.assertEquals(2, alarmsCount);
+
         created = alarmService.acknowledgeAlarm(tenantId, created.getId(), System.currentTimeMillis()).getAlarm();
 
         countQuery.setStatusList(List.of(AlarmSearchStatus.UNACK));

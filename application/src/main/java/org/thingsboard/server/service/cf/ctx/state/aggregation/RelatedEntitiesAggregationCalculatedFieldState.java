@@ -75,6 +75,14 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     @Override
+    public void init(boolean restored) {
+        super.init(restored);
+        if (restored) {
+            scheduleReevaluation();
+        }
+    }
+
+    @Override
     public void close() {
         super.close();
         if (reevaluationFuture != null) {
@@ -166,6 +174,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
             lastMetricsEvalTs = System.currentTimeMillis();
             scheduleReevaluation();
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                    .outputStrategy(output.getStrategy())
                     .type(output.getType())
                     .scope(output.getScope())
                     .result(toSimpleResult(ctx.isUseLatestTs(), aggResult))
