@@ -75,11 +75,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.lenient;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.ALARM_ORIGINATOR;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.CUSTOMER;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.TENANT;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.*;
 
 @ExtendWith(MockitoExtension.class)
 public class TbChangeOriginatorNodeTest {

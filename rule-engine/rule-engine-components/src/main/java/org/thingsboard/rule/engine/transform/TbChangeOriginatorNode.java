@@ -24,6 +24,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.rule.engine.util.EntitiesAlarmOriginatorIdAsyncLoader;
+import org.thingsboard.rule.engine.util.EntitiesByIdAndTypeLoader;
 import org.thingsboard.rule.engine.util.EntitiesByNameAndTypeLoader;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.EntityType;
@@ -36,8 +37,7 @@ import java.util.List;
 import java.util.NoSuchElementException;
 
 import static com.google.common.util.concurrent.Futures.immediateFuture;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
-import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.*;
 
 @Slf4j
 @RuleNode(
