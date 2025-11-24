@@ -361,7 +361,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
         try {
             userCredentialsDao.removeById(tenantId, oldCredentialsUuid);
-
+            userCredentials.setId(null);
             if (userCredentials.getPassword() != null) {
                 updatePasswordHistory(userCredentials);
             }
