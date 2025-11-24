@@ -38,8 +38,6 @@ import org.mockito.Mockito;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.http.HttpHeaders;
@@ -53,6 +51,8 @@ import org.springframework.mock.http.MockHttpInputMessage;
 import org.springframework.mock.http.MockHttpOutputMessage;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.mock.web.MockPart;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
@@ -154,6 +154,7 @@ import org.thingsboard.server.service.entitiy.tenant.profile.TbTenantProfileServ
 import org.thingsboard.server.service.security.auth.jwt.RefreshTokenRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
+import org.thingsboard.server.service.system.SystemPatchApplier;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -278,17 +279,20 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
     @Autowired
     private JwtTokenFactory jwtTokenFactory;
 
-    @SpyBean
-    protected MailService mailService;
-
     @Autowired
     protected InMemoryStorage storage;
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
-    @MockBean
+    @MockitoSpyBean
+    protected MailService mailService;
+
+    @MockitoBean
     protected CfRocksDb cfRocksDb;
+
+    @MockitoBean
+    protected SystemPatchApplier systemPatchApplier;
 
     @Rule
     public TestRule watcher = new TestWatcher() {
@@ -1274,7 +1278,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected List<Job> findJobs(List<JobType> types, List<UUID> entities) throws Exception {
         return doGetTypedWithPageLink("/api/jobs?types=" + types.stream().map(Enum::name).collect(Collectors.joining(",")) +
-                                      "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
+                        "&entities=" + entities.stream().map(UUID::toString).collect(Collectors.joining(",")) + "&",
                 new TypeReference<PageData<Job>>() {}, new PageLink(100, 0, null, new SortOrder("createdTime", SortOrder.Direction.DESC))).getData();
     }
 

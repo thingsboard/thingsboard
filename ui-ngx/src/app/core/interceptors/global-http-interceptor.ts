@@ -125,6 +125,10 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
           this.showError(req.method + ': ' + req.url + '<br/>' +
             errorResponse.status + ': ' + errorResponse.statusText);
         }
+      } else if (errorResponse.status === 504) {
+        if (!ignoreErrors) {
+          this.showError('Request timeout');
+        }
       } else {
         unhandled = true;
       }
