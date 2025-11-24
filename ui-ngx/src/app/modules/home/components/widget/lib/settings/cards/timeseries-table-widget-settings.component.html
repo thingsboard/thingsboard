@@ -113,17 +113,24 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.table.table-tabs</div>
     <mat-slide-toggle class="mat-slide" formControlName="useEntityLabel">
-      {{ 'widgets.table.use-entity-label-tab-name' | translate }}
+      {{ 'widgets.table.use-entity-label-header-title' | translate }}
     </mat-slide-toggle>
-   <div class="tb-form-row justify-between">
+   <div class="tb-form-row justify-between column-xs" formGroupName="sortOrder">
     <div class="fixed-title-width" translate>widgets.table.sort-by</div>
-    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-      <mat-select formControlName="tabSortKey" placeholder="{{ 'widget-config.set' | translate }}">
-        <mat-option [value]="TabSortKey.TIMESTAMP">{{ 'widgets.table.sort-timestamp-option' | translate }}</mat-option>
-        <mat-option  [value]="TabSortKey.NAME_ASC">{{ 'widgets.table.sort-asc' | translate }}</mat-option>
-        <mat-option  [value]="TabSortKey.NAME_DESC">{{ 'widgets.table.sort-desc' | translate }}</mat-option>
-      </mat-select>
-    </mat-form-field>
+     <div class="flex flex-1 flex-row justify-end gap-2 ">
+       <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
+         <mat-select formControlName="property" placeholder="{{ 'widget-config.set' | translate }}">
+           <mat-option [value]="entityFields.createdTime.value">{{ entityFields.createdTime.name | translate }}</mat-option>
+           <mat-option  [value]="entityFields.name.value">{{ entityFields.name.name | translate }}</mat-option>
+         </mat-select>
+       </mat-form-field>
+       <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
+         <mat-select formControlName="direction" placeholder="{{ 'widget-config.set' | translate }}">
+           <mat-option  [value]="Direction.ASC">{{ 'widgets.table.sort-asc' | translate }}</mat-option>
+           <mat-option  [value]="Direction.DESC">{{ 'widgets.table.sort-desc' | translate }}</mat-option>
+         </mat-select>
+       </mat-form-field>
+     </div>
    </div>
   </div>
   <div class="tb-form-panel tb-slide-toggle">

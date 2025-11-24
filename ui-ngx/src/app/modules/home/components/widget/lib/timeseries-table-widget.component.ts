@@ -106,19 +106,14 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { DateFormatSettings, ValueFormatProcessor } from '@shared/models/widget-settings.models';
-
-export enum TabSortKey {
-  NAME_ASC = 'NAME_ASC',
-  NAME_DESC = 'NAME_DESC',
-  TIMESTAMP = 'timestamp'
-}
+import { entityFields } from '@shared/models/entity.models';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
   dateFormat: DateFormatSettings;
-  tabSortKey: TabSortKey;
+  sortOrder: SortOrder;
 }
 
 interface TimeseriesWidgetLatestDataKeySettings extends TableWidgetDataKeySettings {
@@ -405,7 +400,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       return entityLabelCache.get(source.entityId);
     }
 
-    const value = this.useEntityLabel 
+    const value = this.useEntityLabel
       ? (source.entityLabel || source.entityName)
       : source.entityName;
 
@@ -414,19 +409,78 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return translated;
   }
 
-  private sortDatasources(source: Datasource[], entityLabelCache:Map<string,string>): Datasource[] {
+  private sortDatasources(source: Datasource[], entityLabelCache: Map<string, string>): Datasource[] {
+    const property = this.settings?.sortOrder?.property;
+    const direction = this.settings?.sortOrder?.direction;
+    const isAsc = direction === Direction.ASC;
+    let sortedSource = [...source];
+
     source.forEach(ds => this.getTabLabel(ds, entityLabelCache));
 
-    if (this.settings.tabSortKey === TabSortKey.TIMESTAMP) {
-      return source;
+    if (property === entityFields.name.keyName) {
+      const collator = new Intl.Collator(undefined, {
+        sensitivity: "variant",
+        numeric: true,
+        ignorePunctuation: false
+      });
+
+      sortedSource.sort((a, b) => {
+        const valueA = entityLabelCache.get(a.entityId) || '';
+        const valueB = entityLabelCache.get(b.entityId) || '';
+
+        return isAsc
+          ? collator.compare(valueA, valueB)
+          : collator.compare(valueB, valueA);
+      });
+    } else if (property === entityFields.createdTime.keyName) {
+      if (!isAsc) {
+        sortedSource.reverse();
+      }
     }
-    return source.sort((a, b) => {
-      const valueA = entityLabelCache.get(a.entityId);
-      const valueB = entityLabelCache.get(b.entityId);
-      return this.settings.tabSortKey === TabSortKey.NAME_ASC
-        ? valueA.localeCompare(valueB)
-        : valueB.localeCompare(valueA);
+    this.reorderDataArrays(source, sortedSource);
+    return sortedSource;
+  }
+
+  private reorderDataArrays(originalOrder: Datasource[], newOrder: Datasource[]): void {
+    const indexMap = new Map<number, number>();
+    originalOrder.forEach((ds, oldIndex) => {
+      const newIndex = newOrder.findIndex(newDs => newDs.entityId === ds.entityId);
+      indexMap.set(oldIndex, newIndex);
     });
+
+    const newData: Array<DatasourceData> = [];
+    originalOrder.forEach((ds, oldIndex) => {
+      const dataKeys = ds.dataKeys;
+      const startIdx = oldIndex * dataKeys.length;
+      const endIdx = startIdx + dataKeys.length;
+      const datasourceData = this.data.slice(startIdx, endIdx);
+
+      const newIndex = indexMap.get(oldIndex);
+      const newStartIdx = newIndex * dataKeys.length;
+
+      datasourceData.forEach((data, i) => {
+        newData[newStartIdx + i] = data;
+      });
+    });
+    this.data = newData;
+
+    if (this.latestData && this.latestData.length > 0) {
+      const newLatestData: Array<DatasourceData> = [];
+      originalOrder.forEach((ds, oldIndex) => {
+        const latestDataKeys = ds.latestDataKeys || [];
+        const startIdx = oldIndex * latestDataKeys.length;
+        const endIdx = startIdx + latestDataKeys.length;
+        const datasourceLatestData = this.latestData.slice(startIdx, endIdx);
+
+        const newIndex = indexMap.get(oldIndex);
+        const newStartIdx = newIndex * latestDataKeys.length;
+
+        datasourceLatestData.forEach((data, i) => {
+          newLatestData[newStartIdx + i] = data;
+        });
+      });
+      this.latestData = newLatestData;
+    }
   }
 
   private updateDatasources() {
