@@ -45,7 +45,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultMetricArgumentEntry;
 
@@ -190,10 +192,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                processMetric(intervalEntry, argName, false, results);
+                processArgument(intervalEntry, argName, false, results);
             } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                processMetric(intervalEntry, argName, true, results);
+                processArgument(intervalEntry, argName, true, results);
             }
         });
     }
@@ -206,38 +208,39 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 if (argEntryIntervalStatus.argsUpdated()) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     argEntryIntervalStatus.setLastArgsRefreshTs(-1);
-                    processMetric(intervalEntry, argName, false, results);
+                    processArgument(intervalEntry, argName, false, results);
                 } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                    processMetric(intervalEntry, argName, true, results);
+                    processArgument(intervalEntry, argName, true, results);
                 }
             }
         });
     }
 
-    private void processMetric(AggIntervalEntry intervalEntry,
-                               String argName,
-                               boolean useDefault,
-                               Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
-        String metricName = findMetricName(argName);
-        if (metricName != null) {
-            AggMetric metric = metrics.get(metricName);
-            String argKey = ctx.getArguments().get(argName).getRefEntityKey().getKey();
-            ArgumentEntry metricEntry = useDefault
-                    ? createDefaultMetricArgumentEntry(argKey, metric)
-                    : cfProcessingService.fetchMetricDuringInterval(ctx.getTenantId(), entityId, argKey, metric, intervalEntry);
-            if (!metricEntry.isEmpty()) {
-                results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metricEntry);
-            }
+    private void processArgument(AggIntervalEntry intervalEntry,
+                                 String argName,
+                                 boolean useDefault,
+                                 Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
+        Set<String> metrics = findMetrics(argName);
+        if (!metrics.isEmpty()) {
+            metrics.forEach(metricName -> {
+                AggMetric metric = this.metrics.get(metricName);
+                String argKey = ctx.getArguments().get(argName).getRefEntityKey().getKey();
+                ArgumentEntry metricEntry = useDefault
+                        ? createDefaultMetricArgumentEntry(argKey, metric)
+                        : cfProcessingService.fetchMetricDuringInterval(ctx.getTenantId(), entityId, argKey, metric, intervalEntry);
+                if (!metricEntry.isEmpty()) {
+                    results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metricEntry);
+                }
+            });
         }
     }
 
-    private String findMetricName(String argName) {
+    private Set<String> findMetrics(String argName) {
         return metrics.entrySet().stream()
                 .filter(e -> ((AggKeyInput) e.getValue().getInput()).getKey().equals(argName))
                 .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
+                .collect(Collectors.toSet());
     }
 
     protected ArrayNode toResult(Map<AggIntervalEntry, Map<String, ArgumentEntry>> results, Integer precision) {
