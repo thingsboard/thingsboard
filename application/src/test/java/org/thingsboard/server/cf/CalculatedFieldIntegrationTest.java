@@ -714,7 +714,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         doPost("/api/calculatedField", cf, CalculatedField.class);
 
-        // --- Assert initial evaluation (ENTERED / OUTSIDE) ---
+        // --- Assert initial evaluation (INSIDE / OUTSIDE) ---
         await().alias("initial geofencing evaluation")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -722,10 +722,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ArrayNode attrs = getServerAttributes(device.getId(),
                             "allowedZonesEvent", "allowedZonesStatus", "restrictedZonesStatus", "restrictedZonesEvent");
                     // --- no restrictedZonesEvent as no transition happened yet
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(3);
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
-                            .containsEntry("allowedZonesStatus", "INSIDE")
+                    assertThat(m).containsEntry("allowedZonesStatus", "INSIDE")
                             .containsEntry("restrictedZonesStatus", "OUTSIDE");
                 });
 
@@ -737,8 +736,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 JacksonUtil.toJsonNode("{\"restrictedZone\":" + restrictedPolygon + "}")).andExpect(status().isOk());
 
         // --- Assert no transition ---
-        // --- Assert attributes updated with the same values for restrictedZones ---
-        // --- Assert attributes updated with the new values for allowedZones ---
         await().alias("evaluation after version bump of geo argument")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -824,17 +821,16 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         doPost("/api/calculatedField", cf, CalculatedField.class);
 
-        // --- Assert initial evaluation (ENTERED / OUTSIDE) ---
+        // --- Assert initial evaluation (INSIDE / OUTSIDE) ---
         await().alias("initial geofencing evaluation")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode attrs = getServerAttributes(device.getId(),
                             "allowedZonesEvent", "allowedZonesStatus", "restrictedZonesStatus");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(3);
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
-                            .containsEntry("allowedZonesStatus", "INSIDE")
+                    assertThat(m).containsEntry("allowedZonesStatus", "INSIDE")
                             .containsEntry("restrictedZonesStatus", "OUTSIDE");
                 });
 
@@ -935,10 +931,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode attrs = getServerAttributes(device.getId(), "allowedZonesEvent", "allowedZonesStatus");
-                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(2);
+                    assertThat(attrs).isNotNull().isNotEmpty().hasSize(1);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
-                            .containsEntry("allowedZonesStatus", "INSIDE");
+                    assertThat(m).containsEntry("allowedZonesStatus", "INSIDE");
                 });
 
         // --- Move device OUTSIDE Zone A (expect LEFT) ---

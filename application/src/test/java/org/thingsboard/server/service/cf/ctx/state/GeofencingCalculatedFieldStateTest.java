@@ -221,7 +221,7 @@ public class GeofencingCalculatedFieldStateTest {
                 ENTITY_ID_LATITUDE_ARGUMENT_KEY, latitudeArgEntry,
                 ENTITY_ID_LONGITUDE_ARGUMENT_KEY, longitudeArgEntry,
                 "allowedZones", geofencingAllowedZoneArgEntry,
-                "restrictedZones", new GeofencingArgumentEntry()
+                "restrictedZones", new GeofencingArgumentEntry(Collections.emptyMap())
         ), ctx);
         assertThat(state.isReady()).isFalse();
         assertThat(state.getReadinessStatus().errorMsg()).contains("restrictedZones");
@@ -249,7 +249,6 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result.getScope()).isEqualTo(output.getScope());
         assertThat(result.getResult()).isEqualTo(
                 JacksonUtil.newObjectNode()
-                        .put("allowedZonesEvent", "ENTERED")
                         .put("allowedZonesStatus", "INSIDE")
                         .put("restrictedZonesStatus", "OUTSIDE")
         );
@@ -290,10 +289,17 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(relationFromSecondIteration.getType()).isEqualTo("CurrentZone");
 
         ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
-        verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
-        EntityRelation leftRelation = deleteCaptor.getValue();
-        assertThat(leftRelation.getFrom()).isEqualTo(ZONE_1_ID);
-        assertThat(leftRelation.getTo()).isEqualTo(ctx.getEntityId());
+        verify(relationService, times(2)).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
+        List<EntityRelation> deleteValues = deleteCaptor.getAllValues();
+        assertThat(deleteValues).hasSize(2);
+
+        EntityRelation deleteRelationFromFirstIteration = deleteValues.get(0);
+        assertThat(deleteRelationFromFirstIteration.getFrom()).isEqualTo(ZONE_2_ID);
+        assertThat(deleteRelationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
+
+        EntityRelation deleteRelationFromSecondIteration = deleteValues.get(1);
+        assertThat(deleteRelationFromSecondIteration.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(deleteRelationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
     }
 
     @Test
@@ -322,9 +328,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result).isNotNull();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResult()).isEqualTo(
-                JacksonUtil.newObjectNode().put("allowedZonesEvent", "ENTERED")
-        );
+        assertThat(result.getResult()).isEqualTo(JacksonUtil.newObjectNode());
 
         SingleValueArgumentEntry newLatitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 50.4760), 146L);
         SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
@@ -360,10 +364,17 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(relationFromSecondIteration.getType()).isEqualTo("CurrentZone");
 
         ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
-        verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
-        EntityRelation leftRelation = deleteCaptor.getValue();
-        assertThat(leftRelation.getFrom()).isEqualTo(ZONE_1_ID);
-        assertThat(leftRelation.getTo()).isEqualTo(ctx.getEntityId());
+        verify(relationService, times(2)).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
+        List<EntityRelation> deleteValues = deleteCaptor.getAllValues();
+        assertThat(deleteValues).hasSize(2);
+
+        EntityRelation deleteRelationFromFirstIteration = deleteValues.get(0);
+        assertThat(deleteRelationFromFirstIteration.getFrom()).isEqualTo(ZONE_2_ID);
+        assertThat(deleteRelationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
+
+        EntityRelation deleteRelationFromSecondIteration = deleteValues.get(1);
+        assertThat(deleteRelationFromSecondIteration.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(deleteRelationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
     }
 
     @Test
@@ -432,10 +443,17 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(relationFromSecondIteration.getType()).isEqualTo("CurrentZone");
 
         ArgumentCaptor<EntityRelation> deleteCaptor = ArgumentCaptor.forClass(EntityRelation.class);
-        verify(relationService).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
-        EntityRelation leftRelation = deleteCaptor.getValue();
-        assertThat(leftRelation.getFrom()).isEqualTo(ZONE_1_ID);
-        assertThat(leftRelation.getTo()).isEqualTo(ctx.getEntityId());
+        verify(relationService, times(2)).deleteRelationAsync(eq(ctx.getTenantId()), deleteCaptor.capture());
+        List<EntityRelation> deleteValues = deleteCaptor.getAllValues();
+        assertThat(deleteValues).hasSize(2);
+
+        EntityRelation deleteRelationFromFirstIteration = deleteValues.get(0);
+        assertThat(deleteRelationFromFirstIteration.getFrom()).isEqualTo(ZONE_2_ID);
+        assertThat(deleteRelationFromFirstIteration.getTo()).isEqualTo(ctx.getEntityId());
+
+        EntityRelation deleteRelationFromSecondIteration = deleteValues.get(1);
+        assertThat(deleteRelationFromSecondIteration.getFrom()).isEqualTo(ZONE_1_ID);
+        assertThat(deleteRelationFromSecondIteration.getTo()).isEqualTo(ctx.getEntityId());
     }
 
     private CalculatedField getCalculatedField() {

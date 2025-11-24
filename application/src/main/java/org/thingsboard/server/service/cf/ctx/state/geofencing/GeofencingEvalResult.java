@@ -20,5 +20,5 @@ import org.thingsboard.server.common.data.cf.configuration.geofencing.Geofencing
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent;
 
 public record GeofencingEvalResult(@Nullable GeofencingTransitionEvent transition,
-                                   GeofencingPresenceStatus status) {
+                                   GeofencingPresenceStatus status, boolean firstEvaluation) {
 }

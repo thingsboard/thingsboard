@@ -29,6 +29,7 @@ import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingReportStrategy;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingTransitionEvent;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -112,7 +113,12 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
                 if (createRelationsWithMatchedZones) {
                     GeofencingTransitionEvent transitionEvent = eval.transition();
                     if (transitionEvent == null) {
-                        return;
+                        if (!eval.firstEvaluation()) {
+                            return;
+                        }
+                        transitionEvent = eval.status() == GeofencingPresenceStatus.INSIDE ?
+                                GeofencingTransitionEvent.ENTERED :
+                                GeofencingTransitionEvent.LEFT;
                     }
                     EntityRelation relation = switch (zoneGroupCfg.getDirection()) {
                         case TO -> new EntityRelation(zoneId, entityId, zoneGroupCfg.getRelationType());
@@ -178,15 +184,27 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
     private GeofencingEvalResult aggregateZoneGroup(List<GeofencingEvalResult> zoneResults) {
         boolean nowInside = zoneResults.stream().anyMatch(r -> INSIDE.equals(r.status()));
-        boolean prevInside = zoneResults.stream()
-                .anyMatch(r -> GeofencingTransitionEvent.LEFT.equals(r.transition()) || r.transition() == null && r.status() == INSIDE);
+
+        boolean firstEvaluation = zoneResults.stream().allMatch(GeofencingEvalResult::firstEvaluation);
+        if (firstEvaluation) {
+            return new GeofencingEvalResult(null, nowInside ? INSIDE : OUTSIDE, true);
+        }
+
+        boolean prevInside = zoneResults.stream().anyMatch(r -> {
+            if (r.firstEvaluation()) {
+                return false;
+            }
+            return GeofencingTransitionEvent.LEFT.equals(r.transition())
+                   || (r.transition() == null && r.status() == INSIDE);
+        });
+
         GeofencingTransitionEvent transition = null;
         if (!prevInside && nowInside) {
             transition = GeofencingTransitionEvent.ENTERED;
         } else if (prevInside && !nowInside) {
             transition = GeofencingTransitionEvent.LEFT;
         }
-        return new GeofencingEvalResult(transition, nowInside ? INSIDE : OUTSIDE);
+        return new GeofencingEvalResult(transition, nowInside ? INSIDE : OUTSIDE, false);
     }
 
     private void addTransitionEventIfExists(ObjectNode resultNode, GeofencingEvalResult aggregationResult, String eventKey) {
