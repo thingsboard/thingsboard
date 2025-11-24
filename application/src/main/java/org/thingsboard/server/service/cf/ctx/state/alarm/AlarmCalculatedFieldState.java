@@ -71,6 +71,8 @@ import java.util.function.Function;
 
 import static org.thingsboard.server.common.data.StringUtils.equalsAny;
 import static org.thingsboard.server.common.data.StringUtils.splitByCommaWithoutQuotes;
+import static org.thingsboard.server.service.cf.ctx.state.alarm.AlarmEvalResult.Cause.NEW_EVENT;
+import static org.thingsboard.server.service.cf.ctx.state.alarm.AlarmEvalResult.Cause.SCHEDULED_REEVALUATION;
 import static org.thingsboard.server.service.cf.ctx.state.alarm.AlarmEvalResult.Status.FALSE;
 import static org.thingsboard.server.service.cf.ctx.state.alarm.AlarmEvalResult.Status.NOT_YET_TRUE;
 import static org.thingsboard.server.service.cf.ctx.state.alarm.AlarmEvalResult.Status.TRUE;
@@ -213,9 +215,9 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                         state.setDurationCheckFuture(future);
                     }
                 }
-                return evalResult;
+                return evalResult.withCause(NEW_EVENT);
             } else {
-                return state.reeval(System.currentTimeMillis(), ctx);
+                return state.reeval(System.currentTimeMillis(), ctx).withCause(SCHEDULED_REEVALUATION);
             }
         }, ctx);
         return Futures.immediateFuture(AlarmCalculatedFieldResult.builder()
@@ -248,12 +250,12 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
 
     private TbAlarmResult createOrClearAlarms(Function<AlarmRuleState, AlarmEvalResult> evalFunction,
                                               CalculatedFieldCtx ctx) {
-        TbAlarmResult result = null;
+        AlarmEvalResult evalResult = null;
         AlarmRuleState resultState = null;
         AlarmRuleState.StateInfo resultStateInfo = null;
 
         for (AlarmRuleState state : createRuleStates.values()) {
-            AlarmEvalResult evalResult = evalFunction.apply(state);
+            evalResult = evalFunction.apply(state);
             log.debug("Evaluated create rule {} with args {}. Result: {}", state, arguments, evalResult);
             if (evalResult.getStatus() == TRUE) {
                 resultState = state;
@@ -263,13 +265,14 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             }
         }
 
+        TbAlarmResult result = null;
         if (resultState != null) {
-            result = calculateAlarmResult(resultState, ctx);
+            result = calculateAlarmResult(resultState, evalResult, ctx);
             resultStateInfo = resultState.getStateInfo();
             log.debug("Alarm result for state {}: {}", resultState, result);
             clearState(clearRuleState);
         } else if (currentAlarm != null && clearRuleState != null) {
-            AlarmEvalResult evalResult = evalFunction.apply(clearRuleState);
+            evalResult = evalFunction.apply(clearRuleState);
             log.debug("Evaluated clear rule {} with args {}. Result: {}", clearRuleState, arguments, evalResult);
             if (evalResult.getStatus() == TRUE) {
                 resultStateInfo = clearRuleState.getStateInfo();
@@ -316,21 +319,25 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         }
     }
 
-    private TbAlarmResult calculateAlarmResult(AlarmRuleState ruleState, CalculatedFieldCtx ctx) {
+    private TbAlarmResult calculateAlarmResult(AlarmRuleState ruleState, AlarmEvalResult evalResult, CalculatedFieldCtx ctx) {
         AlarmSeverity severity = ruleState.getSeverity();
         if (currentAlarm != null) {
-            currentAlarm.setEndTs(System.currentTimeMillis());
             AlarmSeverity oldSeverity = currentAlarm.getSeverity();
-            // Skip update if severity is decreased.
-            if (severity.ordinal() <= oldSeverity.ordinal()) {
-                currentAlarm.setDetails(createDetails(ruleState));
-                currentAlarm.setSeverity(severity);
-                AlarmApiCallResult result = ctx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(currentAlarm));
-                currentAlarm = result.getAlarm();
-                return TbAlarmResult.fromAlarmResult(result);
-            } else {
+            if (severity.ordinal() > oldSeverity.ordinal()) {
+                log.trace("Skipping alarm update for result state {} for eval result {} because severity is decreased", ruleState, evalResult);
                 return null;
             }
+            if (severity.ordinal() == oldSeverity.ordinal() && evalResult.getCause() == SCHEDULED_REEVALUATION) {
+                log.trace("Skipping alarm update for result state {} for eval result {}", ruleState, evalResult);
+                return null;
+            }
+
+            currentAlarm.setEndTs(System.currentTimeMillis());
+            currentAlarm.setDetails(createDetails(ruleState));
+            currentAlarm.setSeverity(severity);
+            AlarmApiCallResult result = ctx.getAlarmService().updateAlarm(AlarmUpdateRequest.fromAlarm(currentAlarm));
+            currentAlarm = result.getAlarm();
+            return TbAlarmResult.fromAlarmResult(result);
         } else {
             var newAlarm = new Alarm();
             newAlarm.setType(alarmType);
@@ -339,7 +346,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             newAlarm.setSeverity(severity);
             long startTs = latestTimestamp;
             long currentTime = System.currentTimeMillis();
-            if (startTs == 0L || startTs > currentTime) {
+            if (startTs <= 0L || startTs > currentTime) {
                 startTs = currentTime;
             }
             newAlarm.setStartTs(startTs);
@@ -518,7 +525,9 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
         long passedMs = System.currentTimeMillis() - argument.getTs();
         long duration = resolveValue(predicate.getDuration(), KvUtil::getLongValue);
         if (duration > 0) {
-            return passedMs >= predicate.getUnit().toMillis(duration);
+            long requiredDuration = predicate.getUnit().toMillis(duration);
+            log.trace("[{}] No data for argument {} during {} ms, required duration: {} ms", ctx, argument, passedMs, requiredDuration);
+            return passedMs >= requiredDuration;
         } else {
             return false;
         }

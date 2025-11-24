@@ -230,7 +230,6 @@ public class CalculatedFieldCtx implements Closeable {
         }
         boolean requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration) {
-            // TODO: handle reeaval for no-data conditions!
             if (requiresScheduledReevaluation) {
                 long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getAlarmRulesReevaluationInterval());
                 if (now - lastReevaluationTs >= reevaluationIntervalMillis) {
