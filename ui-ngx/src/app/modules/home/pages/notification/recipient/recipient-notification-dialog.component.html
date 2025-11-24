@@ -105,7 +105,6 @@
           <ng-container *ngSwitchCase="notificationTargetConfigType.CUSTOMER_USERS">
             <tb-entity-autocomplete
               required
-              syncIdsWithDB
               formControlName="customerId"
               [entityType]="entityType.CUSTOMER">
             </tb-entity-autocomplete>
