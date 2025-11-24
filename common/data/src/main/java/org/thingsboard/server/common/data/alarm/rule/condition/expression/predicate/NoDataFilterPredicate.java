@@ -13,27 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule;
+package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
-import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
-import org.thingsboard.server.common.data.id.DashboardId;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
+
+import java.util.concurrent.TimeUnit;
 
 @Data
-public class AlarmRule {
+public class NoDataFilterPredicate implements KeyFilterPredicate {
 
+    @NotNull
+    private TimeUnit unit;
     @Valid
     @NotNull
-    private AlarmCondition condition;
-    private String alarmDetails;
-    private DashboardId dashboardId;
+    private AlarmConditionValue<Long> duration;
 
-    @JsonIgnore
-    public boolean requiresScheduledReevaluation() {
-        return condition.requiresScheduledReevaluation();
+    @Override
+    public FilterPredicateType getType() {
+        return FilterPredicateType.NO_DATA;
     }
 
 }

@@ -179,7 +179,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         cfsReevaluationTask = systemContext.getScheduler().scheduleWithFixedDelay(() -> {
             try {
                 calculatedFields.values().forEach(cf -> {
-                    if (cf.isRequiresScheduledReevaluation()) {
+                    if (cf.requiresScheduledReevaluation()) {
                         applyToTargetCfEntityActors(cf, TbCallback.EMPTY, (entityId, callback) -> {
                             log.debug("[{}][{}] Pushing scheduled CF reevaluate msg", entityId, cf.getCfId());
                             getOrCreateActor(entityId).tell(new CalculatedFieldReevaluateMsg(tenantId, cf));

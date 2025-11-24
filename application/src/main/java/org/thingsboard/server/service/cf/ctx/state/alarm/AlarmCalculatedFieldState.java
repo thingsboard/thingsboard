@@ -46,6 +46,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAl
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.ComplexFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.KeyFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NoDataFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -428,6 +429,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             case STRING -> evalStrPredicate(argument, (StringFilterPredicate) predicate);
             case NUMERIC -> evalNumPredicate(argument, (NumericFilterPredicate) predicate);
             case BOOLEAN -> evalBooleanPredicate(argument, (BooleanFilterPredicate) predicate);
+            case NO_DATA -> evalNoDataPredicate(argument, (NoDataFilterPredicate) predicate);
             case COMPLEX -> evalComplexPredicate(argument, (ComplexFilterPredicate) predicate);
         };
     }
@@ -510,6 +512,16 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             case IN -> equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
             case NOT_IN -> !equalsAny(value, splitByCommaWithoutQuotes(predicateValue));
         };
+    }
+
+    private boolean evalNoDataPredicate(SingleValueArgumentEntry argument, NoDataFilterPredicate predicate) {
+        long passedMs = System.currentTimeMillis() - argument.getTs();
+        long duration = resolveValue(predicate.getDuration(), KvUtil::getLongValue);
+        if (duration > 0) {
+            return passedMs >= predicate.getUnit().toMillis(duration);
+        } else {
+            return false;
+        }
     }
 
     protected <T> T resolveValue(AlarmConditionValue<T> conditionValue, Function<KvEntry, T> mapper) {

@@ -51,6 +51,11 @@ public abstract class AlarmCondition {
     }
 
     @JsonIgnore
+    public boolean requiresScheduledReevaluation() {
+        return hasSchedule() || expression.requiresScheduledReevaluation();
+    }
+
+    @JsonIgnore
     public abstract AlarmConditionType getType();
 
 }
