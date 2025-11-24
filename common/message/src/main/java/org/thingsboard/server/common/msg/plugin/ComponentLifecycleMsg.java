@@ -30,9 +30,6 @@ import org.thingsboard.server.common.msg.cluster.ToAllNodesMsg;
 import java.io.Serial;
 import java.util.Optional;
 
-/**
- * @author Andrew Shvayka
- */
 @Data
 public class ComponentLifecycleMsg implements TenantAwareMsg, ToAllNodesMsg {
 

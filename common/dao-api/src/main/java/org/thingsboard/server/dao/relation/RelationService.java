@@ -28,9 +28,6 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import java.util.List;
 import java.util.function.Predicate;
 
-/**
- * Created by ashvayka on 27.04.17.
- */
 public interface RelationService {
 
     ListenableFuture<Boolean> checkRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);

@@ -25,6 +25,7 @@ public class AlarmEvalResult {
     public static final AlarmEvalResult TRUE = new AlarmEvalResult(Status.TRUE);
     public static final AlarmEvalResult FALSE = new AlarmEvalResult(Status.FALSE);
     public static final AlarmEvalResult NOT_YET_TRUE = new AlarmEvalResult(Status.NOT_YET_TRUE);
+    public static final AlarmEvalResult EMPTY = new AlarmEvalResult(null);
 
     private final Status status;
     private final long leftDuration;

@@ -18,10 +18,15 @@
 <section class="tb-widget-settings" [formGroup]="updateAttributeGeneralSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field class="mat-block flex-1">
-      <mat-label translate>widgets.input-widgets.widget-title</mat-label>
-      <input matInput formControlName="widgetTitle">
-    </mat-form-field>
+    <tb-string-pattern-autocomplete class="mat-block flex-1" 
+                                              brackets="curly" 
+                                              subscriptSizing="fixed"
+                                              predefinedValuesButton="true"
+                                              label="{{ 'widgets.input-widgets.widget-title' | translate }}"
+                                              [predefinedValues]="predefinedValues"
+                                              placeholderText="{{ 'widget-config.set' | translate }}"
+                                              formControlName="widgetTitle"
+    ></tb-string-pattern-autocomplete>
     <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
       <mat-slide-toggle class="flex-1 gt-xs:max-w-25% gt-xs:flex-full" formControlName="showLabel">
         {{ 'widgets.input-widgets.show-label' | translate }}

@@ -113,6 +113,13 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         var monthResult = result.get("t").get(0);
         Assert.assertEquals(22L, monthResult.get("value").asLong());
         Assert.assertEquals(middleOfTheInterval, monthResult.get("ts").asLong());
+
+        // get all latest (without keys parameter)
+        ObjectNode allLatest = doGetAsync("/api/plugins/telemetry/DEVICE/" + device.getId() +
+                        "/values/timeseries?startTs={startTs}&endTs={endTs}&agg={agg}&intervalType={intervalType}&timeZone={timeZone}",
+                ObjectNode.class, startTs, endTs, "SUM", "WEEK_ISO", "Europe/Kyiv");
+        Assert.assertNotNull(allLatest);
+        Assert.assertNotNull(allLatest.get("t"));
     }
 
     @Test

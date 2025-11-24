@@ -20,9 +20,15 @@
     <div class="tb-form-panel-title" translate>widgets.table.table-header</div>
     <div class="tb-form-row">
       <div class="fixed-title-width">{{ 'widgets.table.entities-table-title' | translate }}</div>
-      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="entitiesTitle" placeholder="{{ 'widget-config.set' | translate }}">
-      </mat-form-field>
+      <tb-string-pattern-autocomplete class="flex-1" 
+                                        appearance="outline"
+                                        brackets="curly" 
+                                        subscriptSizing="dynamic"
+                                        predefinedValuesButton="true"
+                                        [predefinedValues]="predefinedValues"
+                                        placeholderText="{{ 'widget-config.set' | translate }}"
+                                        formControlName="entitiesTitle"
+      ></tb-string-pattern-autocomplete>
     </div>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide"  formControlName="enableStickyHeader">

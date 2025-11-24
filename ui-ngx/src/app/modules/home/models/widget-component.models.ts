@@ -553,7 +553,7 @@ export class LabelVariablePattern {
         const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
         label = createLabelFromSubscriptionEntityInfo(entityInfo, label);
       } else {
-        const datasource = this.ctx.defaultSubscription?.firstDatasource;
+        const datasource = this.ctx.defaultSubscription?.firstDatasource ?? (this.ctx as any).mapInstance?.getData()[0];
         label = createLabelFromDatasource(datasource, label);
       }
     }

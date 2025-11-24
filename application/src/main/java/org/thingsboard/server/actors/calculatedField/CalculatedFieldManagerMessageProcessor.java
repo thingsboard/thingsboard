@@ -71,6 +71,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -83,6 +84,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
 
@@ -163,7 +165,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         if (ctx != null) {
             msg.setCtx(ctx);
             log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
-            getOrCreateActor(msg.getId().entityId()).tell(msg);
+            getOrCreateActor(msg.getId().entityId()).tellWithHighPriority(msg);
         } else {
             cfStateService.deleteState(msg.getId(), msg.getCallback());
         }
@@ -187,7 +189,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (Exception e) {
                 log.warn("[{}] Failed to trigger CFs reevaluation", tenantId, e);
             }
-        }, systemContext.getAlarmRulesReevaluationInterval(), systemContext.getAlarmRulesReevaluationInterval(), TimeUnit.SECONDS);
+        }, systemContext.getCfCheckInterval(), systemContext.getCfCheckInterval(), TimeUnit.SECONDS);
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
@@ -222,6 +224,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     default -> msg.getCallback().onSuccess();
                 }
             }
+            case TENANT_PROFILE -> {
+                switch (event) {
+                    case UPDATED -> onTenantProfileUpdated(msg.getData(), msg.getCallback());
+                    default -> msg.getCallback().onSuccess();
+                }
+            }
             default -> msg.getCallback().onSuccess();
         }
     }
@@ -244,6 +252,14 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
 
     private void onProfileDeleted(ComponentLifecycleMsg msg, TbCallback callback) {
         entityProfileCache.removeProfileId(msg.getEntityId());
+        callback.onSuccess();
+    }
+
+    private void onTenantProfileUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
+        Stream.concat(
+                calculatedFields.values().stream(),
+                entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
+        ).forEach(CalculatedFieldCtx::updateTenantProfileProperties);
         callback.onSuccess();
     }
 
