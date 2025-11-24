@@ -23,6 +23,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.service.DataValidator;
@@ -107,6 +108,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         try {
             UserCredentials existing = edgeCtx.getUserService().findUserCredentialsByUserId(tenantId, user.getId());
             boolean created = existing == null;
+            UserCredentialsId oldCredentialsId = created ? null : existing.getId();
 
             UserCredentials updated = created ? new UserCredentials() : existing;
             updated.setId(userCredentialsFromUpdateMsg.getId());
@@ -120,7 +122,7 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             if (created) {
                 edgeCtx.getUserService().saveUserCredentials(tenantId, updated, false);
             } else {
-                edgeCtx.getUserService().replaceUserCredentials(tenantId, updated, existing.getId(), false);
+                edgeCtx.getUserService().replaceUserCredentials(tenantId, updated, oldCredentialsId, false);
             }
         } catch (Exception e) {
             log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
