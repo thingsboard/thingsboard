@@ -37,6 +37,7 @@ import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.rule.engine.flow.TbRuleChainInputNode;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
@@ -266,7 +267,7 @@ public class EdgeController extends BaseController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             return checkNotNull(edgeService.findEdgesByTenantIdAndType(tenantId, type, pageLink));
         } else {
             return checkNotNull(edgeService.findEdgesByTenantId(tenantId, pageLink));
@@ -293,7 +294,7 @@ public class EdgeController extends BaseController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             return checkNotNull(edgeService.findEdgeInfosByTenantIdAndType(tenantId, type, pageLink));
         } else {
             return checkNotNull(edgeService.findEdgeInfosByTenantId(tenantId, pageLink));
@@ -357,7 +358,7 @@ public class EdgeController extends BaseController {
         checkCustomerId(customerId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         PageData<Edge> result;
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             result = edgeService.findEdgesByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink);
         } else {
             result = edgeService.findEdgesByTenantIdAndCustomerId(tenantId, customerId, pageLink);
@@ -392,7 +393,7 @@ public class EdgeController extends BaseController {
         checkCustomerId(customerId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         PageData<EdgeInfo> result;
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             result = edgeService.findEdgeInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink);
         } else {
             result = edgeService.findEdgeInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink);

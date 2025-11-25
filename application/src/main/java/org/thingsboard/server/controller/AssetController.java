@@ -258,7 +258,7 @@ public class AssetController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (StringUtils.isNotBlank(type)) {
             return checkNotNull(assetService.findAssetInfosByTenantIdAndType(tenantId, type, pageLink));
-        } else if (assetProfileId != null && !assetProfileId.isEmpty()) {
+        } else if (StringUtils.isNotEmpty(assetProfileId)) {
             AssetProfileId profileId = new AssetProfileId(toUUID(assetProfileId));
             return checkNotNull(assetService.findAssetInfosByTenantIdAndAssetProfileId(tenantId, profileId, pageLink));
         } else {
@@ -339,7 +339,7 @@ public class AssetController extends BaseController {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         if (StringUtils.isNotBlank(type)) {
             return checkNotNull(assetService.findAssetInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
-        } else if (assetProfileId != null && !assetProfileId.isEmpty()) {
+        } else if (StringUtils.isNotEmpty(assetProfileId)) {
             AssetProfileId profileId = new AssetProfileId(toUUID(assetProfileId));
             return checkNotNull(assetService.findAssetInfosByTenantIdAndCustomerIdAndAssetProfileId(tenantId, customerId, profileId, pageLink));
         } else {
