@@ -25,7 +25,6 @@ import { ResetPasswordComponent } from '@modules/login/pages/login/reset-passwor
 import { CreatePasswordComponent } from '@modules/login/pages/login/create-password.component';
 import { TwoFactorAuthLoginComponent } from '@modules/login/pages/login/two-factor-auth-login.component';
 import { LinkExpiredComponent } from '@modules/login/pages/login/link-expired.component';
-import { PasswordRequirementsTooltipComponent } from '@modules/login/pages/login/password-requirements-tooltip.component';
 
 @NgModule({
   declarations: [
@@ -34,8 +33,7 @@ import { PasswordRequirementsTooltipComponent } from '@modules/login/pages/login
     ResetPasswordComponent,
     CreatePasswordComponent,
     TwoFactorAuthLoginComponent,
-    LinkExpiredComponent,
-    PasswordRequirementsTooltipComponent
+    LinkExpiredComponent
   ],
   imports: [
     CommonModule,
