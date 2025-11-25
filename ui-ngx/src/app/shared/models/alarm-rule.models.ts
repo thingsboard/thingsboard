@@ -157,3 +157,7 @@ export interface AlarmRuleFilterConfig {
   entityType?: EntityType;
   entities?: Array<string>;
 }
+
+export const alarmRuleDefaultScript =
+  '// Sample expression for an alarm rule: triggers when temperature is above 20 degree\n' +
+  'return temperature > 20;'

@@ -67,9 +67,26 @@
                         [helpPopupStyle]="{ width: '1200px' }"
                         helpId="alarm-rule/expression_fn">
               <div toolbarPrefixButton
-                   class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.expression-type.script' | translate }}
+                   class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.tbel' | translate }}
               </div>
+              <button toolbarSuffixButton
+                      mat-icon-button
+                      matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                      matTooltipPosition="above"
+                      class="tb-mat-32"
+                      [disabled]="!argumentsList.length"
+                      (click)="onTestScript()">
+                <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+              </button>
             </tb-js-func>
+            <div>
+              <button mat-button mat-raised-button color="primary"
+                      type="button"
+                      (click)="onTestScript()"
+                      [disabled]="!argumentsList.length">
+                {{ 'calculated-fields.test-script-function' | translate }}
+              </button>
+            </div>
           </div>
         }
       </div>

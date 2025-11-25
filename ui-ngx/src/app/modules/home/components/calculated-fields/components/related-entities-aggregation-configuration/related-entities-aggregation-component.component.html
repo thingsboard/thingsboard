@@ -55,6 +55,7 @@
       {{ 'calculated-fields.metrics.metrics' | translate }}
     </div>
     <tb-calculated-field-metrics-table formControlName="metrics"
+                                       [calculatedFieldId]="calculatedFieldId"
                                        [arguments]="arguments$ | async"
                                        [highlightRules]="argumentsHighlightRules$ | async"
                                        [editorCompleter]="argumentsEditorCompleter$ | async"

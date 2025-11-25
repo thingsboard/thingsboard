@@ -21,8 +21,7 @@ import {
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormControl,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
@@ -44,7 +43,7 @@ import {
   AlarmRuleSchedule,
   AlarmRuleScheduleType
 } from "@shared/models/alarm-rule.models";
-import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import {
   AlarmRuleScheduleDialogData,
   CfAlarmScheduleDialogComponent
@@ -80,6 +79,13 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
+
+  @Input()
+  @coerceBoolean()
+  isClearCondition = false;
+
+  @Input()
+  value: CalculatedField;
 
   alarmRuleConditionFormGroup = this.fb.group({
     type: ['SIMPLE'],
@@ -118,10 +124,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   writeValue(value: AlarmRuleCondition): void {
-    if (value) {
-      this.modelValue = value;
-      this.updateConditionInfo();
-    }
+    this.modelValue = value;
+    this.updateConditionInfo();
   }
 
   public conditionSet() {
@@ -147,7 +151,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
       data: {
         readonly: this.disabled,
         condition: this.disabled ? this.modelValue : deepClone(this.modelValue),
-        arguments: this.arguments
+        arguments: this.arguments,
+        value: this.value,
       }
     }).afterClosed().subscribe((result) => {
       if (result) {

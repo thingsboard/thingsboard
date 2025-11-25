@@ -26,7 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog } from '@angular/material/dialog';
 import { PageLink } from '@shared/models/page/page-link';
-import { Observable, of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Store } from '@ngrx/store';
@@ -59,6 +59,7 @@ import { AlarmSeverity, alarmSeverityTranslations } from "@shared/models/alarm.m
 import { UtilsService } from "@core/services/utils.service";
 import { deepClone, getEntityDetailsPageURL } from "@core/utils";
 import { AlarmRuleTableHeaderComponent } from "@home/components/alarm-rules/alarm-rule-table-header.component";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 export class AlarmRulesTableConfig extends EntityTableConfig<any> {
 
@@ -223,7 +224,10 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
 
   private copyCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
     const copyCalculatedAlarmRule = deepClone(calculatedField);
-    copyCalculatedAlarmRule.entityId = null;
+    if (this.pageMode) {
+      copyCalculatedAlarmRule.entityId = null;
+    }
+    delete copyCalculatedAlarmRule.id;
     this.getCalculatedAlarmDialog(copyCalculatedAlarmRule, 'action.apply', isDirty)
       .subscribe((res) => {
         if (res) {
@@ -277,6 +281,19 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     this.importExportService.openCalculatedFieldImportDialog()
       .pipe(
         filter(Boolean),
+        switchMap(calculatedField => {
+          if (calculatedField.type !== CalculatedFieldType.ALARM) {
+            this.store.dispatch(new ActionNotificationShow({
+              message: this.translate.instant('alarm-rule.import-invalid-alarm-rule-type'),
+              type: 'error',
+              verticalPosition: 'top',
+              horizontalPosition: 'left',
+              duration: 5000
+            }));
+            return EMPTY;
+          }
+          return of(calculatedField);
+        }),
         switchMap(calculatedField => this.getCalculatedAlarmDialog(this.updateImportedCalculatedField(calculatedField), 'action.add', true)),
         filter(Boolean),
         switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
@@ -287,15 +304,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   }
 
   private updateImportedCalculatedField(calculatedField: CalculatedField): CalculatedField {
-    if (calculatedField.type === CalculatedFieldType.GEOFENCING) {
-      calculatedField.configuration.zoneGroups = Object.keys(calculatedField.configuration.zoneGroups).reduce((acc, key) => {
-        const arg = calculatedField.configuration.zoneGroups[key];
-        acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant
-          ? { ...arg, refEntityId: { id: this.tenantId, entityType: ArgumentEntityType.Tenant } }
-          : arg;
-        return acc;
-      }, {});
-    } else {
+    if (calculatedField.type === CalculatedFieldType.ALARM) {
       calculatedField.configuration.arguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
         const arg = calculatedField.configuration.arguments[key];
         acc[key] = arg.refEntityId?.entityType === ArgumentEntityType.Tenant

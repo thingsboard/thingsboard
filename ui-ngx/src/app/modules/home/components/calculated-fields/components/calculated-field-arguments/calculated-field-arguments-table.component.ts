@@ -87,6 +87,8 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   @Input() entityName: string;
   @Input() ownerId: EntityId;
   @Input() isScript: boolean;
+  @Input() disabledAddButton = false;
+  @Input() watchKeyChange = false;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -181,6 +183,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         tenantId: this.tenantId,
         entityName: this.entityName,
         ownerId: this.ownerId,
+        watchKeyChange: this.watchKeyChange,
         usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argument.argumentName),
       };
       this.popoverComponent = this.popoverService.displayPopover({

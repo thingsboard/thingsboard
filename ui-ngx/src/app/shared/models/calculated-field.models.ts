@@ -65,11 +65,18 @@ export interface CalculatedFieldAlarmRule extends BaseCalculatedField {
   configuration: CalculatedFieldAlarmRuleConfiguration;
 }
 
+export interface CalculatedFieldRelatedEntityAggregation extends BaseCalculatedField {
+  type: CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
+  configuration: CalculatedFieldRelatedAggregationConfiguration;
+}
+
+
 export type CalculatedField =
   | CalculatedFieldSimple
   | CalculatedFieldScript
   | CalculatedFieldGeofencing
   | CalculatedFieldPropagation
+  | CalculatedFieldRelatedEntityAggregation
   | CalculatedFieldAlarmRule;
 
 export enum CalculatedFieldType {

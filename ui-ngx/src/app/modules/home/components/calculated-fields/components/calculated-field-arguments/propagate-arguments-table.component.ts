@@ -94,6 +94,7 @@ export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTa
       this.panelAdditionalCtx = {
         argumentEntityTypes: [ArgumentEntityType.Current],
         isOutputKey: true,
+        watchKeyChange: true,
         forbiddenNames: [...FORBIDDEN_NAMES, 'propagationCtx'],
       };
     }

@@ -34,7 +34,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <tb-cf-alarm-rule formControlName="alarmRule" [arguments]="arguments" required class="flex-1">
+        <tb-cf-alarm-rule formControlName="alarmRule" [arguments]="arguments" [value]="value" required class="flex-1">
         </tb-cf-alarm-rule>
       </div>
       <button *ngIf="!disabled"
@@ -58,7 +58,6 @@
             [disabled]="createAlarmRulesFormArray().controls.length > 4"
             type="button"
             (click)="addCreateAlarmRule()"
-            matTooltip="{{ 'alarm-rule.add-create-alarm-rule' | translate }}"
             matTooltipPosition="above">
       {{ 'alarm-rule.add-create-alarm-rule' | translate }}
     </button>

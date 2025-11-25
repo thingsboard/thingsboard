@@ -27,7 +27,7 @@
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'calculated-fields.hint.name-required' | translate"
+                    [matTooltip]="'calculated-fields.metrics.metric-name-required' | translate"
                     class="tb-error">
             warning
           </mat-icon>
@@ -35,7 +35,7 @@
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'calculated-fields.hint.name-duplicate' | translate"
+                    [matTooltip]="'calculated-fields.metrics.metric-name-duplicate' | translate"
                     class="tb-error">
             warning
           </mat-icon>
@@ -43,7 +43,7 @@
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'calculated-fields.hint.name-pattern' | translate"
+                    [matTooltip]="'calculated-fields.metrics.metric-name-pattern' | translate"
                     class="tb-error">
             warning
           </mat-icon>
@@ -51,7 +51,7 @@
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'calculated-fields.hint.name-max-length' | translate"
+                    [matTooltip]="'calculated-fields.metrics.metric-name-max-length' | translate"
                     class="tb-error">
             warning
           </mat-icon>
@@ -59,7 +59,7 @@
           <mat-icon matSuffix
                     matTooltipPosition="above"
                     matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'calculated-fields.hint.name-forbidden' | translate"
+                    [matTooltip]="'calculated-fields.metrics.metric-name-forbidden' | translate"
                     class="tb-error">
             warning
           </mat-icon>
@@ -105,7 +105,24 @@
               <div toolbarPrefixButton
                    class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
               </div>
+              <button toolbarSuffixButton
+                      mat-icon-button
+                      matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                      matTooltipPosition="above"
+                      class="tb-mat-32"
+                      [disabled]="!argumentsList.length"
+                      (click)="onTestScript('filter')">
+                <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+              </button>
             </tb-js-func>
+            <div>
+              <button mat-button mat-raised-button color="primary"
+                      type="button"
+                      (click)="onTestScript('filter')"
+                      [disabled]="!argumentsList.length">
+                {{ 'calculated-fields.test-script-function' | translate }}
+              </button>
+            </div>
           </ng-template>
         </mat-expansion-panel>
       </div>
@@ -128,7 +145,7 @@
           <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="key" placeholder="{{ 'action.set' | translate }}">
-              @for (argument of arguments; track argument) {
+              @for (argument of argumentsList; track argument) {
                 <mat-option [value]="argument">{{ argument }}</mat-option>
               }
             </mat-select>
@@ -146,7 +163,7 @@
       } @else {
         <tb-js-func required
                     formControlName="function"
-                    functionName="filter"
+                    functionName="map"
                     [functionArgs]="functionArgs"
                     [disableUndefinedCheck]="true"
                     [scriptLanguage]="ScriptLanguage.TBEL"
@@ -157,7 +174,24 @@
           <div toolbarPrefixButton
                class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
           </div>
+          <button toolbarSuffixButton
+                  mat-icon-button
+                  matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                  matTooltipPosition="above"
+                  class="tb-mat-32"
+                  [disabled]="!argumentsList.length"
+                  (click)="onTestScript('input.function')">
+            <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+          </button>
         </tb-js-func>
+        <div>
+          <button mat-button mat-raised-button color="primary"
+                  type="button"
+                  (click)="onTestScript('input.function')"
+                  [disabled]="!argumentsList.length">
+            {{ 'calculated-fields.test-script-function' | translate }}
+          </button>
+        </div>
       }
     </ng-container>
     @if (simpleMode) {

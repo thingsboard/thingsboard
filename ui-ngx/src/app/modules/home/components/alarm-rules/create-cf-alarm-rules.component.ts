@@ -29,7 +29,7 @@ import {
 } from '@angular/forms';
 import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
-import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { AlarmSeverityNotificationColors } from "@shared/models/notification.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { coerceBoolean } from "@shared/decorators/coercion";
@@ -60,6 +60,8 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
+  @Input()
+  value: CalculatedField;
 
   alarmSeverities = Object.keys(AlarmSeverity);
   alarmSeverityEnum = AlarmSeverity;
