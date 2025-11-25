@@ -151,7 +151,7 @@ public class PropagationCalculatedFieldStateTest {
         state.update(args, ctx);
         assertThat(state.isReady()).isFalse();
         assertThat(state.getReadinessStatus().errorMsg())
-                .isEqualTo("No entities found via 'Propagation path to related entities'. Verify the relation type and direction configured.");
+                .isEqualTo("No entities found via 'Propagation path to related entities'. Verify the configured relation type and direction.");
     }
 
     @Test

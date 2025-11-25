@@ -105,7 +105,7 @@ public interface CalculatedFieldState extends Closeable {
 
         private static final String MISSING_REQUIRED_ARGUMENTS_ERROR = "Required arguments are missing: ";
         private static final String MISSING_PROPAGATION_TARGETS_ERROR = "No entities found via 'Propagation path to related entities'. " +
-                                                                        "Verify the relation type and direction configured.";
+                                                                        "Verify the configured relation type and direction.";
         private static final String MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR = MISSING_PROPAGATION_TARGETS_ERROR + " Missing arguments to propagate: ";
         private static final ReadinessStatus READY = new ReadinessStatus(true, null);
 
