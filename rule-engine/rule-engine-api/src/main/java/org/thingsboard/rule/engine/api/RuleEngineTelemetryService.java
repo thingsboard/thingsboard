@@ -15,9 +15,6 @@
  */
 package org.thingsboard.rule.engine.api;
 
-/**
- * Created by ashvayka on 02.04.18.
- */
 public interface RuleEngineTelemetryService {
 
     void saveTimeseries(TimeseriesSaveRequest request);

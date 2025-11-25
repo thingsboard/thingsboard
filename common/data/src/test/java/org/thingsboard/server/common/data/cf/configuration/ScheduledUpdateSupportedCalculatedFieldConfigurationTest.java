@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 public class ScheduledUpdateSupportedCalculatedFieldConfigurationTest {
 
     @Test
-    void validateShouldThrowWhenScheduledUpdateIntervalIsSetButTimeUnitIsNotSupported() {
+    void validateDoesNotThrowAnyExceptionWhenScheduledUpdateIntervalIsGreaterThanMinAllowedIntervalInTenantProfile() {
         int scheduledUpdateInterval = 60;
         int minAllowedInterval = scheduledUpdateInterval - 1;
 

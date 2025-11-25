@@ -40,10 +40,9 @@ import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
-import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScriptCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MBootstrapClientCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.NoSecBootstrapClientCredential;
@@ -241,9 +240,7 @@ public class MonitoringEntityService {
                 TEST_TELEMETRY_KEY, testDataArgument
         ));
         configuration.setExpression("return { \"" + TEST_CF_TELEMETRY_KEY + "\": " + TEST_TELEMETRY_KEY + " + \"-cf\" };");
-        Output output = new Output();
-        output.setType(OutputType.TIME_SERIES);
-        configuration.setOutput(output);
+        configuration.setOutput(new TimeSeriesOutput());
         calculatedField.setConfiguration(configuration);
         calculatedField.setDebugMode(true);
         tbClient.saveCalculatedField(calculatedField);

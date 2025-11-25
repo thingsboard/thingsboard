@@ -17,6 +17,7 @@ package org.thingsboard.server.utils;
 
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingPresenceStatus;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -26,6 +27,9 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.util.KvProtoUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
+import org.thingsboard.server.gen.transport.TransportProtos.AlarmRuleStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.AlarmStateProto;
+import org.thingsboard.server.gen.transport.TransportProtos.ArgumentIntervalProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
@@ -38,14 +42,24 @@ import org.thingsboard.server.gen.transport.TransportProtos.TsValueProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SimpleCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntryStatus;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -87,15 +101,54 @@ public class CalculatedFieldUtils {
                 .setType(state.getType().name());
 
         state.getArguments().forEach((argName, argEntry) -> {
-            if (argEntry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-                builder.addSingleValueArguments(toSingleValueArgumentProto(argName, singleValueArgumentEntry));
-            } else if (argEntry instanceof TsRollingArgumentEntry rollingArgumentEntry) {
-                builder.addRollingValueArguments(toRollingArgumentProto(argName, rollingArgumentEntry));
-            } else if (argEntry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
-                builder.addGeofencingArguments(toGeofencingArgumentProto(argName, geofencingArgumentEntry));
+            switch (argEntry.getType()) {
+                case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
+                case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
+                case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
+                case RELATED_ENTITIES -> {
+                    RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
+                    relatedEntitiesArgumentEntry.getEntityInputs()
+                            .forEach((entityId, entry) -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
+                }
+                case ENTITY_AGGREGATION -> {
+                    EntityAggregationArgumentEntry entityAggregationArgumentEntry = (EntityAggregationArgumentEntry) argEntry;
+                    entityAggregationArgumentEntry.getAggIntervals().forEach((interval, argumentStatus) -> builder.addAggregationArguments(toArgumentIntervalProto(argName, interval, argumentStatus)));
+                }
             }
         });
+        if (state instanceof AlarmCalculatedFieldState alarmState) {
+            AlarmStateProto.Builder alarmStateProto = AlarmStateProto.newBuilder();
+            alarmState.getCreateRuleStates().forEach((severity, ruleState) -> {
+                alarmStateProto.addCreateRuleStates(toAlarmRuleStateProto(ruleState));
+            });
+            if (alarmState.getClearRuleState() != null) {
+                alarmStateProto.setClearRuleState(toAlarmRuleStateProto(alarmState.getClearRuleState()));
+            }
+            builder.setAlarmState(alarmStateProto);
+        }
+        if (state instanceof RelatedEntitiesAggregationCalculatedFieldState aggState) {
+            builder.setLastArgsUpdateTs(aggState.getLastArgsRefreshTs());
+            builder.setLastMetricsEvalTs(aggState.getLastMetricsEvalTs());
+        }
         return builder.build();
+    }
+
+    private static AlarmRuleStateProto toAlarmRuleStateProto(AlarmRuleState ruleState) {
+        return AlarmRuleStateProto.newBuilder()
+                .setSeverity(Optional.ofNullable(ruleState.getSeverity()).map(Enum::name).orElse(""))
+                .setEventCount(ruleState.getEventCount())
+                .setFirstEventTs(ruleState.getFirstEventTs())
+                .setLastCheckTs(ruleState.getLastCheckTs())
+                .build();
+    }
+
+    private static AlarmRuleState fromAlarmRuleStateProto(AlarmRuleStateProto proto, AlarmCalculatedFieldState state) {
+        AlarmSeverity severity = StringUtils.isNotEmpty(proto.getSeverity()) ? AlarmSeverity.valueOf(proto.getSeverity()) : null;
+        AlarmRuleState ruleState = new AlarmRuleState(severity, null, state);
+        ruleState.setEventCount(proto.getEventCount());
+        ruleState.setFirstEventTs(proto.getFirstEventTs());
+        ruleState.setLastCheckTs(proto.getLastCheckTs());
+        return ruleState;
     }
 
     public static SingleValueArgumentProto toSingleValueArgumentProto(String argName, SingleValueArgumentEntry entry) {
@@ -108,7 +161,21 @@ public class CalculatedFieldUtils {
 
         Optional.ofNullable(entry.getVersion()).ifPresent(builder::setVersion);
 
+        if (entry.getEntityId() != null) {
+            builder.setEntityId(ProtoUtils.toProto(entry.getEntityId()));
+        }
+
         return builder.build();
+    }
+
+    public static ArgumentIntervalProto toArgumentIntervalProto(String argName, AggIntervalEntry intervalEntry, AggIntervalEntryStatus argumentStatus) {
+        return ArgumentIntervalProto.newBuilder()
+                .setArgName(argName)
+                .setStartTs(intervalEntry.getStartTs())
+                .setEndTs(intervalEntry.getEndTs())
+                .setLastArgsRefreshTs(argumentStatus.getLastArgsRefreshTs())
+                .setLastMetricsEvalTs(argumentStatus.getLastMetricsEvalTs())
+                .build();
     }
 
     public static TsRollingArgumentProto toRollingArgumentProto(String argName, TsRollingArgumentEntry entry) {
@@ -143,7 +210,7 @@ public class CalculatedFieldUtils {
         return builder.build();
     }
 
-    public static CalculatedFieldState fromProto(CalculatedFieldStateProto proto) {
+    public static CalculatedFieldState fromProto(CalculatedFieldEntityCtxId id, CalculatedFieldStateProto proto) {
         if (StringUtils.isEmpty(proto.getType())) {
             return null;
         }
@@ -151,22 +218,68 @@ public class CalculatedFieldUtils {
         CalculatedFieldType type = CalculatedFieldType.valueOf(proto.getType());
 
         CalculatedFieldState state = switch (type) {
-            case SIMPLE -> new SimpleCalculatedFieldState();
-            case SCRIPT -> new ScriptCalculatedFieldState();
-            case GEOFENCING -> new GeofencingCalculatedFieldState();
+            case SIMPLE -> new SimpleCalculatedFieldState(id.entityId());
+            case SCRIPT -> new ScriptCalculatedFieldState(id.entityId());
+            case GEOFENCING -> new GeofencingCalculatedFieldState(id.entityId());
+            case ALARM -> new AlarmCalculatedFieldState(id.entityId());
+            case PROPAGATION -> new PropagationCalculatedFieldState(id.entityId());
+            case RELATED_ENTITIES_AGGREGATION -> new RelatedEntitiesAggregationCalculatedFieldState(id.entityId());
+            case ENTITY_AGGREGATION -> new EntityAggregationCalculatedFieldState(id.entityId());
         };
+
+        if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
+            Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
+            proto.getSingleValueArgumentsList().forEach(argProto -> {
+                SingleValueArgumentEntry entry = fromSingleValueArgumentProto(argProto);
+                arguments.computeIfAbsent(argProto.getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
+            });
+            arguments.forEach((argName, entityInputs) -> {
+                relatedEntitiesAggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
+            });
+            relatedEntitiesAggState.setLastArgsRefreshTs(proto.getLastArgsUpdateTs());
+            relatedEntitiesAggState.setLastMetricsEvalTs(proto.getLastMetricsEvalTs());
+
+            return relatedEntitiesAggState;
+        }
+
+        if (state instanceof EntityAggregationCalculatedFieldState entityAggregationState) {
+            Map<String, EntityAggregationArgumentEntry> arguments = new HashMap<>();
+
+            proto.getAggregationArgumentsList().forEach(argProto -> {
+                AggIntervalEntry intervalEntry = new AggIntervalEntry(argProto.getStartTs(), argProto.getEndTs());
+                AggIntervalEntryStatus intervalStatus = new AggIntervalEntryStatus(argProto.getLastArgsRefreshTs(), argProto.getLastMetricsEvalTs());
+                EntityAggregationArgumentEntry argEntry = arguments.computeIfAbsent(argProto.getArgName(), name -> new EntityAggregationArgumentEntry(new HashMap<>()));
+                argEntry.getAggIntervals().put(intervalEntry, intervalStatus);
+            });
+
+            entityAggregationState.getArguments().putAll(arguments);
+
+            return entityAggregationState;
+        }
 
         proto.getSingleValueArgumentsList().forEach(argProto ->
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
-        if (CalculatedFieldType.SCRIPT.equals(type)) {
-            proto.getRollingValueArgumentsList().forEach(argProto ->
-                    state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
-        }
-
-        if (CalculatedFieldType.GEOFENCING.equals(type)) {
-            proto.getGeofencingArgumentsList().forEach(argProto ->
-                    state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
+        switch (type) {
+            case SCRIPT -> {
+                proto.getRollingValueArgumentsList().forEach(argProto ->
+                        state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
+            }
+            case GEOFENCING -> {
+                proto.getGeofencingArgumentsList().forEach(argProto ->
+                        state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
+            }
+            case ALARM -> {
+                AlarmCalculatedFieldState alarmState = (AlarmCalculatedFieldState) state;
+                AlarmStateProto alarmStateProto = proto.getAlarmState();
+                for (AlarmRuleStateProto ruleStateProto : alarmStateProto.getCreateRuleStatesList()) {
+                    AlarmRuleState ruleState = fromAlarmRuleStateProto(ruleStateProto, alarmState);
+                    alarmState.getCreateRuleStates().put(ruleState.getSeverity(), ruleState);
+                }
+                if (alarmStateProto.hasClearRuleState()) {
+                    alarmState.setClearRuleState(fromAlarmRuleStateProto(alarmStateProto.getClearRuleState(), alarmState));
+                }
+            }
         }
 
         return state;
@@ -177,11 +290,14 @@ public class CalculatedFieldUtils {
             return new SingleValueArgumentEntry();
         }
         TsValueProto tsValueProto = proto.getValue();
-        return new SingleValueArgumentEntry(
-                tsValueProto.getTs(),
-                (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto),
-                proto.getVersion()
-        );
+        BasicKvEntry kvEntry = (BasicKvEntry) KvProtoUtil.fromTsValueProto(proto.getArgName(), tsValueProto);
+        long ts = tsValueProto.getTs();
+        long version = proto.getVersion();
+        if (proto.hasEntityId()) {
+            EntityId entityId = ProtoUtils.fromProto(proto.getEntityId());
+            return new SingleValueArgumentEntry(entityId, ts, kvEntry, version);
+        }
+        return new SingleValueArgumentEntry(ts, kvEntry, version);
     }
 
     public static TsRollingArgumentEntry fromRollingArgumentProto(TsRollingArgumentProto proto) {

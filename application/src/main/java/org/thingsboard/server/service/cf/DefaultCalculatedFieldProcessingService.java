@@ -17,21 +17,20 @@ package org.thingsboard.server.service.cf;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -51,15 +50,18 @@ import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
-import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.AggIntervalEntry;
+import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 
-import static org.thingsboard.server.common.data.DataConstants.SCOPE;
+import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @TbRuleEngineComponent
@@ -74,9 +76,11 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                                                    TimeseriesService timeseriesService,
                                                    ApiLimitService apiLimitService,
                                                    RelationService relationService,
+                                                   OwnerService ownerService,
                                                    TbClusterService clusterService,
+                                                   TelemetrySubscriptionService tsSubService,
                                                    PartitionService partitionService) {
-        super(attributesService, timeseriesService, apiLimitService, relationService);
+        super(attributesService, timeseriesService, tsSubService, apiLimitService, relationService, ownerService);
         this.clusterService = clusterService;
         this.partitionService = partitionService;
     }
@@ -87,27 +91,40 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public ListenableFuture<CalculatedFieldState> fetchStateFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        return super.fetchStateFromDb(ctx, entityId);
+    public ListenableFuture<Map<String, ArgumentEntry>> fetchArguments(CalculatedFieldCtx ctx, EntityId entityId) {
+        return super.fetchArguments(ctx, entityId, System.currentTimeMillis());
     }
 
     @Override
     public Map<String, ArgumentEntry> fetchDynamicArgsFromDb(CalculatedFieldCtx ctx, EntityId entityId) {
-        // only geofencing calculated fields supports dynamic arguments scheduled updates
-        if (!ctx.getCalculatedField().getType().equals(CalculatedFieldType.GEOFENCING)) {
-            return Map.of();
+        return switch (ctx.getCfType()) {
+            case GEOFENCING -> resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true, System.currentTimeMillis()));
+            case PROPAGATION -> resolveArgumentFutures(Map.of(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
+            default -> Collections.emptyMap();
+        };
+    }
+
+    @Override
+    public List<EntityId> fetchRelatedEntities(CalculatedFieldCtx ctx, EntityId entityId) {
+        try {
+            if (ctx.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration config) {
+                return resolveRelatedEntities(ctx.getTenantId(), entityId, config.getRelation()).get();
+            }
+            return Collections.emptyList();
+        } catch (ExecutionException | InterruptedException e) {
+            Throwable cause = e.getCause();
+            throw new RuntimeException("Failed to fetch related entities for entity [" + entityId + "]: " + cause.getMessage(), cause);
         }
-        return resolveArgumentFutures(fetchGeofencingCalculatedFieldArguments(ctx, entityId, true));
     }
 
     @Override
     public Map<String, ArgumentEntry> fetchArgsFromDb(TenantId tenantId, EntityId entityId, Map<String, Argument> arguments) {
         Map<String, ListenableFuture<ArgumentEntry>> argFutures = new HashMap<>();
         for (var entry : arguments.entrySet()) {
-            if (entry.getValue().hasDynamicSource()) {
+            if (entry.getValue().hasRelationQuerySource()) {
                 continue;
             }
-            var argEntityId = resolveEntityId(entityId, entry.getValue());
+            var argEntityId = resolveEntityId(tenantId, entityId, entry.getValue());
             var argValueFuture = fetchArgumentValue(tenantId, argEntityId, entry.getValue(), System.currentTimeMillis());
             argFutures.put(entry.getKey(), argValueFuture);
         }
@@ -115,17 +132,71 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
     }
 
     @Override
-    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult calculatedFieldResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    public ArgumentEntry fetchMetricDuringInterval(TenantId tenantId, EntityId entityId, String argKey, AggMetric metric, AggIntervalEntry interval) {
+        return super.fetchMetricDuringInterval(tenantId, entityId, argKey, metric, interval);
+    }
+
+    public void processResult(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+        if (result instanceof AlarmCalculatedFieldResult) {
+            sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+            return;
+        }
+        TelemetryCalculatedFieldResult telemetryResult = result instanceof TelemetryCalculatedFieldResult telemetryRes
+                ? telemetryRes : ((PropagationCalculatedFieldResult) result).getResult();
+        switch (telemetryResult.getOutputStrategy().getType()) {
+            case IMMEDIATE -> processImmediately(tenantId, entityId, result, cfIds, callback);
+            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
+        }
+    }
+
+    private void processImmediately(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+        if (result instanceof TelemetryCalculatedFieldResult telemetryResult) {
+            saveTelemetryResult(tenantId, entityId, telemetryResult, cfIds, callback);
+            return;
+        }
+        if (result instanceof PropagationCalculatedFieldResult propagationResult) {
+            handlePropagationResults(propagationResult, callback,
+                    (entity, res, cb) -> saveTelemetryResult(tenantId, entity, res, cfIds, cb));
+            return;
+        }
+        callback.onSuccess();
+    }
+
+    private void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+        if (result instanceof PropagationCalculatedFieldResult propagationResult) {
+            handlePropagationResults(propagationResult, callback,
+                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entity, cb, res.toTbMsg(entity, cfIds)));
+            return;
+        }
+
+        sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+    }
+
+    private void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,
+                                          TriConsumer<EntityId, TelemetryCalculatedFieldResult, TbCallback> telemetryResultHandler) {
+        List<EntityId> propagationEntityIds = propagationResult.getPropagationEntityIds();
+        if (propagationEntityIds.isEmpty()) {
+            callback.onSuccess();
+            return;
+        }
+        if (propagationEntityIds.size() == 1) {
+            EntityId propagationEntityId = propagationEntityIds.get(0);
+            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), callback);
+            return;
+        }
+        MultipleTbCallback multipleTbCallback = new MultipleTbCallback(propagationEntityIds.size(), callback);
+        for (var propagationEntityId : propagationEntityIds) {
+            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), multipleTbCallback);
+        }
+    }
+
+    private void sendMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbCallback callback, TbMsg msg) {
         try {
-            OutputType type = calculatedFieldResult.getType();
-            TbMsgType msgType = OutputType.ATTRIBUTES.equals(type) ? TbMsgType.POST_ATTRIBUTES_REQUEST : TbMsgType.POST_TELEMETRY_REQUEST;
-            TbMsgMetaData md = OutputType.ATTRIBUTES.equals(type) ? new TbMsgMetaData(Map.of(SCOPE, calculatedFieldResult.getScope().name())) : TbMsgMetaData.EMPTY;
-            TbMsg msg = TbMsg.newMsg().type(msgType).originator(entityId).previousCalculatedFieldIds(cfIds).metaData(md).data(calculatedFieldResult.toStringOrElseNull()).build();
             clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
                 @Override
                 public void onSuccess(TbQueueMsgMetadata metadata) {
-                    callback.onSuccess();
                     log.trace("[{}][{}] Pushed message to rule engine: {} ", tenantId, entityId, msg);
+                    callback.onSuccess();
                 }
 
                 @Override
@@ -134,7 +205,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                 }
             });
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push message to rule engine. CalculatedFieldResult: {}", tenantId, entityId, calculatedFieldResult, e);
+            log.warn("[{}][{}] Failed to push message to rule engine: {}", tenantId, entityId, msg, e);
             callback.onFailure(e);
         }
     }
@@ -208,6 +279,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         public void onFailure(Throwable t) {
             callback.onFailure(t);
         }
+
     }
 
 }

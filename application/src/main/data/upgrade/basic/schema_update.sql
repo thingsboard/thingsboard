@@ -34,6 +34,24 @@ SET profile_data = jsonb_set(
                             WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
                                 THEN NULL
                             ELSE to_jsonb(10)
+                            END,
+                        'maxRelatedEntitiesToReturnPerCfArgument',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+                                THEN NULL
+                            ELSE to_jsonb(100)
+                            END,
+                        'minAllowedDeduplicationIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
+                            END,
+                        'minAllowedAggregationIntervalInSecForCF',
+                        CASE
+                            WHEN (profile_data -> 'configuration') ? 'minAllowedAggregationIntervalInSecForCF'
+                                THEN NULL
+                            ELSE to_jsonb(60)
                             END
                 )
                ),
@@ -43,6 +61,45 @@ WHERE NOT (
     (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
         AND
     (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
+        AND
+    (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
+        AND
+    (profile_data -> 'configuration') ? 'minAllowedAggregationIntervalInSecForCF'
     );
 
 -- UPDATE TENANT PROFILE CONFIGURATION END
+
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE START
+
+ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
+ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
+
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE START
+
+UPDATE calculated_field
+SET configuration = jsonb_set(
+        configuration::jsonb,
+        '{output}',
+        (configuration::jsonb -> 'output')
+            || jsonb_build_object(
+                'strategy',
+                jsonb_build_object(
+                        'type', 'RULE_CHAIN'
+                )
+               ),
+        false
+                    )
+WHERE (configuration::jsonb -> 'output' -> 'strategy') IS NULL;
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE END
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
+
+DROP TABLE IF EXISTS calculated_field_link;
+ANALYZE calculated_field;
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE END

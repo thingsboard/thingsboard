@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.domain;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -39,16 +40,15 @@ import org.thingsboard.server.dao.service.validator.DomainDataValidator;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+
 @Slf4j
 @Service
 public class DomainServiceImpl extends AbstractEntityService implements DomainService {
-
-    public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Autowired
     private OAuth2ClientDao oauth2ClientDao;
@@ -66,8 +66,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedDomain.getId()).entity(savedDomain).build());
             return savedDomain;
         } catch (Exception e) {
-            checkConstraintViolation(e,
-                    Map.of("domain_name_key", "Domain with such name and scheme already exists!"));
+            checkConstraintViolation(e, "domain_name_key", "Domain with such name and scheme already exists!");
             throw e;
         }
     }
@@ -143,6 +142,12 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     }
 
     @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(domainDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
+    }
+
+    @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteDomainById(tenantId, (DomainId) id);
@@ -163,4 +168,5 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     public EntityType getEntityType() {
         return EntityType.DOMAIN;
     }
+
 }

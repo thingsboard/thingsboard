@@ -29,7 +29,7 @@ import {
   UntypedFormBuilder,
   UntypedFormGroup,
   ValidationErrors,
-  ValidatorFn
+  ValidatorFn, Validators
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -140,7 +140,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.apiUsageWidgetSettingsForm = this.fb.group({
-      dsEntityAliasId: [settings?.dsEntityAliasId],
+      dsEntityAliasId: [settings?.dsEntityAliasId, Validators.required],
       apiUsageDataKeys: this.prepareDataKeysFormArray(settings?.apiUsageDataKeys),
       targetDashboardState: [settings?.targetDashboardState],
       background: [settings?.background, []],

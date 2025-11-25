@@ -40,13 +40,13 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
 @RuleNode(
         type = ComponentType.ACTION,
-        name = "calculated fields",
+        name = "calculated fields and alarm rules",
         configClazz = EmptyNodeConfiguration.class,
-        nodeDescription = "Pushes incoming messages to calculated fields service",
-        nodeDetails = "Node enables the processing of calculated fields without persisting incoming messages to the database. " +
-                "By default, the processing of calculated fields is triggered by the <b>save attributes</b> and <b>save time series</b> nodes. " +
+        nodeDescription = "Pushes incoming messages to calculated fields and alarm rules services",
+        nodeDetails = "Node enables the processing of calculated fields and alarm rules without persisting incoming messages to the database. " +
+                "By default, the processing of calculated fields and alarm rules is triggered by the <b>save attributes</b> and <b>save time series</b> nodes. " +
                 "This rule node accepts the same messages as these nodes but allows you to trigger the processing of calculated " +
-                "fields independently, ensuring that derived data can be computed and utilized in real time without storing the original message in the database.",
+                "fields or alarm rules independently, ensuring that derived data can be computed and utilized in real time without storing the original message in the database.",
         configDirective = "tbNodeEmptyConfig",
         icon = "published_with_changes",
         docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/calculated-fields/"

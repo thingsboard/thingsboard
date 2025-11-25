@@ -94,6 +94,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfig;
 import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfigService;
@@ -222,8 +224,11 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     log.info("[{}] Closing old session: {}", registration.getEndpoint(), new UUID(oldSessionInfo.get().getSessionIdMSB(), oldSessionInfo.get().getSessionIdLSB()));
                     sessionManager.deregister(oldSessionInfo.get());
                 }
-                logService.log(lwM2MClient, LOG_LWM2M_INFO + ": Client registered with registration id: " + registration.getId() + " version: "
-                        + registration.getLwM2mVersion() + " and modes: " + registration.getQueueMode() + ", " + registration.getBindingMode());
+                String msgLogService = String.format("""
+                %s: Endpoint [%s] Client registered with registration id: [%s] LwM2mVersion: [%s], SupportedObjectIdVer [%s] QueueMode [%s], BindingMode %s
+                """, LOG_LWM2M_INFO,  registration.getEndpoint(), registration.getId(), registration.getLwM2mVersion(), registration.getSupportedObject(), registration.getQueueMode(), registration.getBindingMode());
+                logService.log(lwM2MClient, msgLogService);
+                log.debug(msgLogService);
                 sessionManager.register(lwM2MClient.getSession());
                 this.initClientTelemetry(lwM2MClient);
                 this.initAttributes(lwM2MClient, true);
@@ -242,7 +247,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     logService.log(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to invalid state: " + stateException.getState());
                 }
             } catch (Throwable t) {
-                log.error("[{}] endpoint [{}] error Unable registration.", registration.getEndpoint(), t);
+                log.error("Endpoint [{}], Error Unable registration: [{}].", registration.getEndpoint(), t.getMessage(), t);
                 logService.log(lwM2MClient, LOG_LWM2M_WARN + ": Client registration failed due to: " + t.getMessage());
             }
         });
@@ -288,7 +293,6 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             clientContext.unregister(client, registration);
             SessionInfoProto sessionInfo = client.getSession();
             if (sessionInfo != null) {
-                securityStore.remove(client.getEndpoint(), client.getRegistration().getId());
                 sessionManager.deregister(sessionInfo);
                 sessionStore.remove(registration.getEndpoint());
                 log.info("Client close session: [{}] unReg [{}] name  [{}] profile ", registration.getId(), registration.getEndpoint(), sessionInfo.getDeviceType());
@@ -483,9 +487,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void initClientTelemetry(LwM2mClient lwM2MClient) {
         Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getRegistration());
         Set<String> supportedObjects = clientContext.getSupportedIdVerInClient(lwM2MClient);
-        if (supportedObjects != null && supportedObjects.size() > 0) {
-            this.sendReadRequests(lwM2MClient, profile, supportedObjects);
+        if (supportedObjects != null && !supportedObjects.isEmpty()) {
             this.sendInitObserveRequests(lwM2MClient, profile, supportedObjects);
+            this.sendReadRequests(lwM2MClient, profile, supportedObjects);
             this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
 //            Removed. Used only for debug.
 //            this.sendDiscoverRequests(lwM2MClient, profile, supportedObjects);
@@ -495,14 +499,30 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void sendReadRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
         try {
             Set<String> targetIds = new HashSet<>(profile.getObserveAttr().getAttribute());
+            Boolean initAttrTelAsObsStrategy = profile.getObserveAttr().getInitAttrTelAsObsStrategy();
             targetIds.addAll(profile.getObserveAttr().getTelemetry());
             targetIds = diffSets(profile.getObserveAttr().getObserve(), targetIds);
             targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
-
-            CountDownLatch latch = new CountDownLatch(targetIds.size());
-            targetIds.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId,
-                    new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
-            latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
+            if (!targetIds.isEmpty()) {
+                TelemetryObserveStrategy observeStrategy = profile.getObserveAttr().getObserveStrategy();
+                long timeoutMs = config.getTimeout();
+                if (initAttrTelAsObsStrategy && observeStrategy != SINGLE) {
+                    switch (observeStrategy) {
+                        case COMPOSITE_ALL -> {
+                            sendReadCompositeRequest(lwM2MClient, targetIds.toArray(new String[0]));
+                        }
+                        case COMPOSITE_BY_OBJECT -> {
+                            Map<Integer, String[]> versionedObjectIds = groupByObjectIdVersionedIds(targetIds);
+                            versionedObjectIds.forEach((k, v) -> sendReadCompositeRequest(lwM2MClient, v));
+                        }
+                    }
+                } else {
+                    CountDownLatch latch = new CountDownLatch(targetIds.size());
+                    targetIds.forEach(versionedId -> sendReadSingleRequest(lwM2MClient, versionedId,
+                            new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
+                    latch.await(timeoutMs, TimeUnit.MILLISECONDS);
+                }
+            }
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint(), e);
         } catch (Exception e) {
@@ -529,17 +549,11 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                         if (!completed) log.trace("[{}] Timeout occurred during SINGLE observe init", lwM2MClient.getEndpoint());
                     }
                     case COMPOSITE_ALL -> {
-                        CountDownLatch latch = new CountDownLatch(targetIds.size());
                         sendObserveCompositeRequest(lwM2MClient, targetIds.toArray(new String[0]));
-                        boolean completed = latch.await(timeoutMs, TimeUnit.MILLISECONDS);
-                        if (!completed) log.trace("[{}] Timeout occurred during COMPOSITE_ALL observe init", lwM2MClient.getEndpoint());
                     }
                     case COMPOSITE_BY_OBJECT -> {
                         Map<Integer, String[]> versionedObjectIds = groupByObjectIdVersionedIds(targetIds);
-                        CountDownLatch latch = new CountDownLatch(versionedObjectIds.size());
                         versionedObjectIds.forEach((k, v) -> sendObserveCompositeRequest(lwM2MClient, v));
-                        boolean completed = latch.await(timeoutMs, TimeUnit.MILLISECONDS);
-                        if (!completed) log.trace("[{}] Timeout occurred during COMPOSITE_BY_OBJECT observe init", lwM2MClient.getEndpoint());
                     }
                 }
             }
@@ -562,23 +576,22 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
-    private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId) {
-        sendReadRequest(lwM2MClient, versionedId, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId));
-    }
-
-    private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
+    private void sendReadSingleRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, callback);
     }
 
-    private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId) {
-        sendObserveRequest(lwM2MClient, versionedId, new TbLwM2MObserveCallback(this, logService, lwM2MClient, versionedId));
+    private void sendReadCompositeRequest(LwM2mClient lwM2MClient, String[] versionedIds) {
+        TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
+        var mainCallback = new TbLwM2MReadCompositeCallback(this, logService, lwM2MClient, versionedIds);
+        defaultLwM2MDownlinkMsgHandler.sendReadCompositeRequest(lwM2MClient, request, mainCallback );
     }
 
     private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ObserveRequest, ObserveResponse> callback) {
         TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, callback);
     }
+
     private void sendObserveCompositeRequest(LwM2mClient lwM2MClient, String[] versionedIds) {
 
         TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
@@ -853,7 +866,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             ResourceUpdateResult updateResource = new ResourceUpdateResult(lwM2MClient);
             request.getObjectInstances().forEach(instance ->
                             instance.getResources().forEach((resId, lwM2mResource) ->{
-                                this.updateResourcesValue(updateResource, lwM2mResource, versionId + "/" + resId, Mode.REPLACE, 0);
+                                String path = versionId.endsWith("/") ? versionId + resId : versionId + "/" + resId;
+                                this.updateResourcesValue(updateResource, lwM2mResource, path, Mode.REPLACE, 0);
                             })
             );
             clientContext.update(lwM2MClient);

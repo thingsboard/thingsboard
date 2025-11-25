@@ -45,6 +45,7 @@
       </tb-entity-type-select>
       <tb-entity-list required
                       appearance="outline"
+                      syncIdsWithDB
                       labelText="{{'entity.entity-list' | translate}}"
                       [entityType]="filterFormGroup.get('entityType').value"
                       formControlName="entityList">

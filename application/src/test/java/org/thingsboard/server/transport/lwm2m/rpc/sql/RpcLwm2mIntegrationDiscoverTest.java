@@ -192,11 +192,6 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         assertTrue(rpcActualResult.get("error").asText().contains(expected));
     }
 
-    private String sendDiscover(String path) throws Exception {
-        String setRpcRequest = "{\"method\": \"Discover\", \"params\": {\"id\": \"" + path + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
-    }
-
     private  String convertObjectIdToVerId(String path, String ver) {
         ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
         try {

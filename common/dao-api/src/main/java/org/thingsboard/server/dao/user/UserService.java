@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.user;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -111,8 +112,12 @@ public interface UserService extends EntityDaoService {
 
     void removeMobileSession(TenantId tenantId, String mobileToken);
 
+    int countTenantAdmins(TenantId tenantId);
+
     PageData<User> findUsersByFilter(TenantId tenantId, UsersFilter filter, PageLink pageLink);
 
     boolean matchesFilter(TenantId tenantId, SystemLevelUsersFilter filter, User user);
+
+    UserAuthDetails findUserAuthDetailsByUserId(TenantId tenantId, UserId userId);
 
 }

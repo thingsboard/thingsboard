@@ -228,7 +228,9 @@ import { JsFuncModuleRowComponent } from '@shared/components/js-func-module-row.
 import { EntityKeyAutocompleteComponent } from '@shared/components/entity/entity-key-autocomplete.component';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { MqttVersionSelectComponent } from '@shared/components/mqtt-version-select.component';
+import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
 import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
+import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -237,6 +239,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
 @NgModule({
   providers: [
     DatePipe,
+    SelectableColumnsPipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
     HighlightPipe,
@@ -393,6 +396,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
+    DateExpirationPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
@@ -445,6 +449,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityKeyAutocompleteComponent,
     MqttVersionSelectComponent,
     TimeUnitInputComponent,
+    StringPatternAutocompleteComponent
   ],
   imports: [
     CommonModule,
@@ -659,6 +664,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
+    DateExpirationPipe,
     RouterModule,
     TranslateModule,
     JsonObjectEditDialogComponent,
@@ -710,6 +716,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EntityKeyAutocompleteComponent,
     MqttVersionSelectComponent,
     TimeUnitInputComponent,
+    StringPatternAutocompleteComponent
   ]
 })
 export class SharedModule { }
