@@ -1643,6 +1643,8 @@
         "documentation": "Documentation",
         "time-left": "{{time}} left",
         "output": "Output",
+        "sort-asc": "Ascending",
+        "sort-desc": "Descending",
         "suffix": {
             "s": "s",
             "ms": "ms"
@@ -9542,8 +9544,6 @@
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode",
             "disable-sorting": "Disable sorting",
             "sort-by": "Sort tabs by",
-            "sort-asc": "Name Ascending",
-            "sort-desc": "Name Descending",
             "sort-timestamp-option": "Created time"
         },
         "latest-chart": {
