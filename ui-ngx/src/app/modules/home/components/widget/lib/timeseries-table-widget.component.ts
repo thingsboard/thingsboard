@@ -409,13 +409,10 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     return translated;
   }
 
-  private sortDatasources(source: Datasource[], entityLabelCache: Map<string, string>): Datasource[] {
+  private sortDatasources(source: TimeseriesTableSource[], entityLabelCache: Map<string, string>) {
     const property = this.settings?.sortOrder?.property;
     const direction = this.settings?.sortOrder?.direction;
     const isAsc = direction === Direction.ASC;
-    let sortedSource = [...source];
-
-    source.forEach(ds => this.getTabLabel(ds, entityLabelCache));
 
     if (property === entityFields.name.keyName) {
       const collator = new Intl.Collator(undefined, {
@@ -424,62 +421,18 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         ignorePunctuation: false
       });
 
-      sortedSource.sort((a, b) => {
-        const valueA = entityLabelCache.get(a.entityId) || '';
-        const valueB = entityLabelCache.get(b.entityId) || '';
+      source.sort((a, b) => {
+        const valueA = entityLabelCache.get(a.datasource.entityId) || '';
+        const valueB = entityLabelCache.get(a.datasource.entityId) || '';
 
         return isAsc
           ? collator.compare(valueA, valueB)
           : collator.compare(valueB, valueA);
       });
     } else if (property === entityFields.createdTime.keyName) {
-      if (!isAsc) {
-        sortedSource.reverse();
+      if (isAsc) {
+        source.reverse();
       }
-    }
-    this.reorderDataArrays(source, sortedSource);
-    return sortedSource;
-  }
-
-  private reorderDataArrays(originalOrder: Datasource[], newOrder: Datasource[]): void {
-    const indexMap = new Map<number, number>();
-    originalOrder.forEach((ds, oldIndex) => {
-      const newIndex = newOrder.findIndex(newDs => newDs.entityId === ds.entityId);
-      indexMap.set(oldIndex, newIndex);
-    });
-
-    const newData: Array<DatasourceData> = [];
-    originalOrder.forEach((ds, oldIndex) => {
-      const dataKeys = ds.dataKeys;
-      const startIdx = oldIndex * dataKeys.length;
-      const endIdx = startIdx + dataKeys.length;
-      const datasourceData = this.data.slice(startIdx, endIdx);
-
-      const newIndex = indexMap.get(oldIndex);
-      const newStartIdx = newIndex * dataKeys.length;
-
-      datasourceData.forEach((data, i) => {
-        newData[newStartIdx + i] = data;
-      });
-    });
-    this.data = newData;
-
-    if (this.latestData && this.latestData.length > 0) {
-      const newLatestData: Array<DatasourceData> = [];
-      originalOrder.forEach((ds, oldIndex) => {
-        const latestDataKeys = ds.latestDataKeys || [];
-        const startIdx = oldIndex * latestDataKeys.length;
-        const endIdx = startIdx + latestDataKeys.length;
-        const datasourceLatestData = this.latestData.slice(startIdx, endIdx);
-
-        const newIndex = indexMap.get(oldIndex);
-        const newStartIdx = newIndex * latestDataKeys.length;
-
-        datasourceLatestData.forEach((data, i) => {
-          newLatestData[newStartIdx + i] = data;
-        });
-      });
-      this.latestData = newLatestData;
     }
   }
 
@@ -491,8 +444,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     const entityLabelCache = new Map<string,string>();
     const pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
     if (this.datasources) {
-      const sortedDatasources = this.sortDatasources(this.datasources, entityLabelCache);
-      for (const datasource of sortedDatasources) {
+      this.datasources.forEach(ds => this.getTabLabel(ds, entityLabelCache));
+      for (const datasource of this.datasources) {
         const sortOrder: SortOrder = sortOrderFromString(this.defaultSortOrder);
         const source = {} as TimeseriesTableSource;
         source.header = this.prepareHeader(datasource);
@@ -529,6 +482,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       }
     }
     if (this.sources.length) {
+      this.sortDatasources(this.sources, entityLabelCache);
       this.sources.forEach((source, index) => {
         this.prepareDisplayedColumn(index);
         source.displayedColumns = this.displayedColumns[index].filter(value => value.display).map(value => value.def);

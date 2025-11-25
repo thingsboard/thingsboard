@@ -1639,6 +1639,8 @@
         "documentation": "Documentation",
         "time-left": "{{time}} left",
         "output": "Output",
+        "sort-asc": "Ascending",
+        "sort-desc": "Descending",
         "suffix": {
             "s": "s",
             "ms": "ms"
@@ -9482,7 +9484,7 @@
             "page-step-increment": "Step increment",
             "page-step-count-format-message": "Should be an integer value, in the range from 1 to 100.",
             "page-step-increment-format-message": "Should be an integer value, greater or equal to 1.",
-            "use-entity-label-header-title": "Use entity label in header title",
+            "use-entity-label-tab-name": "Use entity label in tab name",
             "hide-empty-lines": "Hide empty lines",
             "row-style": "Row style",
             "use-row-style-function": "Use row style function",
@@ -9538,8 +9540,6 @@
             "show-cell-actions-menu-mobile": "Show cell actions dropdown menu in mobile mode",
             "disable-sorting": "Disable sorting",
             "sort-by": "Sort tabs by",
-            "sort-asc": "Ascending",
-            "sort-desc": "Descending",
             "sort-timestamp-option": "Created time"
         },
         "latest-chart": {

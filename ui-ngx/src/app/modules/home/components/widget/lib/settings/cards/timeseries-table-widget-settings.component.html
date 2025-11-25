@@ -113,7 +113,7 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.table.table-tabs</div>
     <mat-slide-toggle class="mat-slide" formControlName="useEntityLabel">
-      {{ 'widgets.table.use-entity-label-header-title' | translate }}
+      {{ 'widgets.table.use-entity-label-tab-name' | translate }}
     </mat-slide-toggle>
    <div class="tb-form-row justify-between column-xs" formGroupName="sortOrder">
     <div class="fixed-title-width" translate>widgets.table.sort-by</div>
@@ -126,8 +126,8 @@
        </mat-form-field>
        <mat-form-field class="flex-lt-lg medium-width" appearance="outline" subscriptSizing="dynamic">
          <mat-select formControlName="direction" placeholder="{{ 'widget-config.set' | translate }}">
-           <mat-option  [value]="Direction.ASC">{{ 'widgets.table.sort-asc' | translate }}</mat-option>
-           <mat-option  [value]="Direction.DESC">{{ 'widgets.table.sort-desc' | translate }}</mat-option>
+           <mat-option  [value]="Direction.ASC">{{ 'common.sort-asc' | translate }}</mat-option>
+           <mat-option  [value]="Direction.DESC">{{ 'common.sort-desc' | translate }}</mat-option>
          </mat-select>
        </mat-form-field>
      </div>

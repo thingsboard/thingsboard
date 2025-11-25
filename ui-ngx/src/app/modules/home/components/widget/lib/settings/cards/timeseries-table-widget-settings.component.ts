@@ -46,7 +46,6 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected defaultSettings(): WidgetSettings {
-    console.log("default")
     return {
       enableSearch: true,
       enableSelectColumnDisplay: true,
@@ -67,7 +66,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       rowStyleFunction: '',
       sortOrder: {
         property: this.entityFields.name.keyName,
-        direction: Direction.ASC
+        direction: Direction.DESC
       }
     };
   }
@@ -75,11 +74,10 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
     settings.sortOrder = {
-      property: settings.sortOrder?.property || this.entityFields.name.keyName,
-      direction: settings.sortOrder?.direction || Direction.ASC
+      property: settings.sortOrder?.property || this.entityFields.createdTime.keyName,
+      direction: settings.sortOrder?.direction || Direction.DESC
     };
     this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
-    console.log("input",settings)
     return settings;
   }
 
@@ -128,10 +126,9 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
 
   protected prepareOutputSettings(settings: WidgetSettings): WidgetSettings {
     settings.sortOrder = {
-      property: settings.sortOrder?.property || this.entityFields.name.keyName,
-      direction: settings.sortOrder?.direction || Direction.ASC
+      property: settings.sortOrder?.property || this.entityFields.createdTime.keyName,
+      direction: settings.sortOrder?.direction || Direction.DESC
     };
-    console.log("output",settings)
     return settings;
   }
 
