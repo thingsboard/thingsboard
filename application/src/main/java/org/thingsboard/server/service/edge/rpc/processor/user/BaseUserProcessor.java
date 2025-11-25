@@ -47,8 +47,12 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             }
 
             User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
-            isCreated = userById == null;
-            user.setId(isCreated ? null : userId);
+            if (userById == null) {
+                isCreated = true;
+                user.setId(null);
+            } else {
+                user.setId(userId);
+            }
 
             String userEmail = user.getEmail();
             User existing = edgeCtx.getUserService().findUserByTenantIdAndEmail(tenantId, user.getEmail());
