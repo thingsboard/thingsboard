@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -353,6 +354,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
     }
 
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     record IntervalDebugArgument(Long intervalStartTs, Long intervalEndTs, JsonNode updatedArguments) {
 
         public IntervalDebugArgument(Long intervalStartTs, Long intervalEndTs, Map<String, TbelCfArg> updatedArguments) {
