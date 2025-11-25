@@ -29,7 +29,7 @@
         labelText="rule-node-config.ai.model"
         (entityChanged)="onEntityChange($event)"
         [entityType]="entityType.AI_MODEL"
-        (createNew)="createModelAi('modelId')"
+        (createNew)="createModelAi($event, 'modelId')"
         formControlName="modelId">
       </tb-entity-autocomplete>
     </section>
@@ -70,6 +70,17 @@
             {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
           </mat-error>
         </mat-form-field>
+        <tb-entity-list
+          class="flex-1"
+          syncIdsWithDB
+          allowCreateNew
+          placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
+          [inlineField]="true"
+          [entityType]="EntityType.TB_RESOURCE"
+          [subType]="ResourceType.GENERAL"
+          (createNew)="createAiResources($event, 'resourceIds')"
+          formControlName="resourceIds">
+        </tb-entity-list>
       </div>
     </mat-expansion-panel>
   </div>
@@ -79,25 +90,24 @@
       <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ getResponseFormatHint }}">
         {{ 'rule-node-config.ai.response-format' | translate }}
       </div>
-      <tb-toggle-select formControlName="type" [disabled]="disabledResponseFormatType">
+      <tb-toggle-select formControlName="type">
         <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
         <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
         <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
       </tb-toggle-select>
     </div>
-    @if (aiConfigForm.get('responseFormat.type').value === responseFormat.JSON_SCHEMA) {
-      <tb-json-object-edit
-        jsonRequired
-        label="{{ 'rule-node-config.ai.response-json-schema' | translate }}"
-        formControlName="schema">
-        <button mat-icon-button class="tb-mat-32"
-                toolbarSuffixButton
-                matTooltip="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon class="material-icons">info_outline</mat-icon>
-        </button>
-      </tb-json-object-edit>
-    }
+    <tb-json-object-edit
+      jsonRequired
+      [class.!hidden]="aiConfigForm.get('responseFormat.type').value !== responseFormat.JSON_SCHEMA"
+      label="{{ 'rule-node-config.ai.response-json-schema' | translate }}"
+      formControlName="schema">
+      <button mat-icon-button class="tb-mat-32"
+              toolbarSuffixButton
+              matTooltip="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon class="material-icons">info_outline</mat-icon>
+      </button>
+    </tb-json-object-edit>
   </div>
 
   <div class="tb-form-panel stroked no-padding no-gap">

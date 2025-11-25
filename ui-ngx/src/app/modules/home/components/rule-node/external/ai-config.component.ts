@@ -23,6 +23,9 @@ import { AIModelDialogComponent, AIModelDialogData } from '@home/components/ai-m
 import { AiModel, AiRuleNodeResponseFormatTypeOnlyText, ResponseFormat } from '@shared/models/ai-model.models';
 import { deepTrim } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
+import { jsonRequired } from '@shared/components/json-object-edit.component';
+import { Resource, ResourceType } from "@shared/models/resource.models";
+import { ResourcesDialogComponent, ResourcesDialogData } from "@home/components/resources/resources-dialog.component";
 
 @Component({
   selector: 'tb-external-node-ai-config',
@@ -37,7 +40,8 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
 
   responseFormat = ResponseFormat;
 
-  disabledResponseFormatType: boolean;
+  EntityType = EntityType;
+  ResourceType = ResourceType;
 
   constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
@@ -52,11 +56,12 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
   protected onConfigurationSet(configuration: RuleNodeConfiguration) {
     this.aiConfigForm = this.fb.group({
       modelId: [configuration?.modelId ?? null, [Validators.required]],
-      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
-      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(10000), Validators.pattern(/.*\S.*/)]],
+      systemPrompt: [configuration?.systemPrompt ?? '', [Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      userPrompt: [configuration?.userPrompt ?? '', [Validators.required, Validators.maxLength(500_000), Validators.pattern(/.*\S.*/)]],
+      resourceIds: [configuration?.resourceIds ?? []],
       responseFormat: this.fb.group({
         type: [configuration?.responseFormat?.type ?? ResponseFormat.JSON, []],
-        schema: [configuration?.responseFormat?.schema ?? null, [Validators.required]],
+        schema: [configuration?.responseFormat?.schema ?? null, [jsonRequired]],
       }),
       timeoutSeconds: [configuration?.timeoutSeconds ?? 60, []],
       forceAck: [configuration?.forceAck ?? true, []]
@@ -75,11 +80,15 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     }
   }
 
-  protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+  protected prepareOutputConfig(): RuleNodeConfiguration {
+    const config = this.configForm().getRawValue();
     if (!this.aiConfigForm.get('systemPrompt').value) {
-      delete configuration.systemPrompt;
+      delete config.systemPrompt;
     }
-    return deepTrim(configuration);
+    if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.JSON_SCHEMA) {
+      delete config.responseFormat.schema;
+    }
+    return deepTrim(config);
   }
 
   onEntityChange($event: AiModel) {
@@ -88,10 +97,10 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
         if (this.aiConfigForm.get('responseFormat.type').value !== ResponseFormat.TEXT) {
           this.aiConfigForm.get('responseFormat.type').patchValue(ResponseFormat.TEXT, {emitEvent: true});
         }
-        this.disabledResponseFormatType = true;
+        this.aiConfigForm.get('responseFormat.type').disable({emitEvent: false});
       }
     } else {
-      this.disabledResponseFormatType = false;
+      this.aiConfigForm.get('responseFormat.type').enable({emitEvent: false});
     }
   }
 
@@ -99,17 +108,36 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
   }
 
-  createModelAi(formControl: string) {
+  createModelAi(name: string, formControl: string) {
     this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        isAdd: true
+        isAdd: true,
+        name
       }
     }).afterClosed()
       .subscribe((model) => {
         if (model) {
           this.aiConfigForm.get(formControl).patchValue(model.id);
+          this.aiConfigForm.get(formControl).markAsDirty();
+        }
+      });
+  };
+
+  createAiResources(name: string, formControl: string) {
+    this.dialog.open<ResourcesDialogComponent, ResourcesDialogData, Resource>(ResourcesDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        resources: {title: name, resourceType: ResourceType.GENERAL},
+        isAdd: true
+      }
+    }).afterClosed()
+      .subscribe((resource) => {
+        if (resource) {
+          const resourceIds = [...(this.aiConfigForm.get(formControl).value || []), resource.id.id];
+          this.aiConfigForm.get(formControl).patchValue(resourceIds);
           this.aiConfigForm.get(formControl).markAsDirty();
         }
       });

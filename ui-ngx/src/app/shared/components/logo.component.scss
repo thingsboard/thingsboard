@@ -13,12 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+:host {
+  pointer-events: auto;
+  a {
+    border: none;
+    img {
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
 :host-context(.login-logo) {
-  img.tb-logo-title {
-    width: 280px;
-    height: 60px;
+  width: 280px;
+  height: 60px;
+  a {
     text-decoration: none;
-    cursor: pointer;
     border: none;
     transform: none;
 

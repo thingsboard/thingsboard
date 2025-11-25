@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { TargetDevice, WidgetConfig, } from '@shared/models/widget.models';
+import { TargetDevice, WidgetConfig, widgetTitleAutocompleteValues, } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { formatValue, isUndefined } from '@core/utils';
 import { ValueType } from '@shared/models/constants';
@@ -58,6 +58,8 @@ export class SliderBasicConfigComponent extends BasicWidgetConfigComponent {
   sliderWidgetConfigForm: UntypedFormGroup;
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

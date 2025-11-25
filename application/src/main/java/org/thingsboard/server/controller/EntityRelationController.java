@@ -17,7 +17,6 @@ package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -36,6 +34,7 @@ import org.thingsboard.server.common.data.relation.EntityRelationInfo;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.config.annotations.ApiOperation;
+import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.entity.relation.TbEntityRelationService;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -43,7 +42,6 @@ import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_PARAM_DESCRIPTION;
@@ -78,8 +76,7 @@ public class EntityRelationController extends BaseController {
                     "Relations unique key is a combination of from/to entity id and relation type group and relation type. " +
                     SECURITY_CHECKS_ENTITIES_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PostMapping(value = "/relation")
-    @ResponseStatus(value = HttpStatus.OK)
+    @PostMapping("/relation")
     public void saveRelation(@Parameter(description = "A JSON value representing the relation.", required = true)
                              @RequestBody EntityRelation relation) throws ThingsboardException {
         doSave(relation);
@@ -90,21 +87,19 @@ public class EntityRelationController extends BaseController {
                     "Relations unique key is a combination of from/to entity id and relation type group and relation type. " +
                     SECURITY_CHECKS_ENTITIES_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PostMapping(value = "/v2/relation")
-    @ResponseStatus(value = HttpStatus.OK)
+    @PostMapping("/v2/relation")
     public EntityRelation saveRelationV2(@Parameter(description = "A JSON value representing the relation.", required = true)
                                          @RequestBody EntityRelation relation) throws ThingsboardException {
         return doSave(relation);
     }
 
     private EntityRelation doSave(EntityRelation relation) throws ThingsboardException {
-        checkNotNull(relation);
-        checkCanCreateRelation(relation.getFrom());
-        checkCanCreateRelation(relation.getTo());
         if (relation.getTypeGroup() == null) {
             relation.setTypeGroup(RelationTypeGroup.COMMON);
         }
-
+        ConstraintValidator.validateFields(relation);
+        checkCanCreateRelation(relation.getFrom());
+        checkCanCreateRelation(relation.getTo());
         return tbEntityRelationService.save(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
@@ -112,7 +107,6 @@ public class EntityRelationController extends BaseController {
             notes = "Deletes a relation between two entities in the platform. " + SECURITY_CHECKS_ENTITIES_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/relation", params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
-    @ResponseStatus(value = HttpStatus.OK)
     public void deleteRelation(@Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
                                @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                @Parameter(description = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
@@ -126,7 +120,6 @@ public class EntityRelationController extends BaseController {
             notes = "Deletes a relation between two entities in the platform. " + SECURITY_CHECKS_ENTITIES_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/v2/relation", params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
-    @ResponseStatus(value = HttpStatus.OK)
     public EntityRelation deleteRelationV2(@Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
                                            @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                            @Parameter(description = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
@@ -139,7 +132,6 @@ public class EntityRelationController extends BaseController {
     private EntityRelation doDelete(String strFromId, String strFromType, String strRelationType, String strRelationTypeGroup, String strToId, String strToType) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
-        checkParameter(RELATION_TYPE, strRelationType);
         checkParameter(TO_ID, strToId);
         checkParameter(TO_TYPE, strToType);
         EntityId fromId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
@@ -157,7 +149,6 @@ public class EntityRelationController extends BaseController {
                     SECURITY_CHECKS_ENTITY_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN','TENANT_ADMIN', 'CUSTOMER_USER')")
     @DeleteMapping(value = "/relations", params = {"entityId", "entityType"})
-    @ResponseStatus(value = HttpStatus.OK)
     public void deleteRelations(@Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam("entityId") String strId,
                                 @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam("entityType") String strType) throws ThingsboardException {
         checkParameter("entityId", strId);
@@ -179,7 +170,6 @@ public class EntityRelationController extends BaseController {
                                       @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(TO_TYPE) String strToType) throws ThingsboardException {
         checkParameter(FROM_ID, strFromId);
         checkParameter(FROM_TYPE, strFromType);
-        checkParameter(RELATION_TYPE, strRelationType);
         checkParameter(TO_ID, strToId);
         checkParameter(TO_TYPE, strToType);
         EntityId fromId = EntityIdFactory.getByTypeAndId(strFromType, strFromId);
@@ -301,10 +291,9 @@ public class EntityRelationController extends BaseController {
                     "The entity id, relation type, entity types, depth of the search, and other query parameters defined using complex 'EntityRelationsQuery' object. " +
                     "See 'Model' tab of the Parameters for more info.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PostMapping(value = "/relations")
+    @PostMapping("/relations")
     public List<EntityRelation> findByQuery(@Parameter(description = "A JSON value representing the entity relations query object.", required = true)
                                             @RequestBody EntityRelationsQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
@@ -316,10 +305,9 @@ public class EntityRelationController extends BaseController {
                     "The entity id, relation type, entity types, depth of the search, and other query parameters defined using complex 'EntityRelationsQuery' object. " +
                     "See 'Model' tab of the Parameters for more info. " + RELATION_INFO_DESCRIPTION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @PostMapping(value = "/relations/info")
+    @PostMapping("/relations/info")
     public List<EntityRelationInfo> findInfoByQuery(@Parameter(description = "A JSON value representing the entity relations query object.", required = true)
                                                     @RequestBody EntityRelationsQuery query) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkNotNull(query);
         checkNotNull(query.getParameters());
         checkNotNull(query.getFilters());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
@@ -347,17 +335,18 @@ public class EntityRelationController extends BaseController {
                 return false;
             }
             return true;
-        }).collect(Collectors.toList());
+        }).toList();
     }
 
-    private RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
-        RelationTypeGroup result = defaultValue;
-        if (StringUtils.isNotBlank(strRelationTypeGroup)) {
-            try {
-                result = RelationTypeGroup.valueOf(strRelationTypeGroup);
-            } catch (IllegalArgumentException ignored) {}
+    private static RelationTypeGroup parseRelationTypeGroup(String strRelationTypeGroup, RelationTypeGroup defaultValue) {
+        if (StringUtils.isBlank(strRelationTypeGroup)) {
+            return defaultValue;
         }
-        return result;
+        try {
+            return RelationTypeGroup.valueOf(strRelationTypeGroup);
+        } catch (IllegalArgumentException e) {
+            return defaultValue;
+        }
     }
 
 }

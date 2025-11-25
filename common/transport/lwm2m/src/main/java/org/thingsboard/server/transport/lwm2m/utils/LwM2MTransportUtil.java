@@ -81,7 +81,8 @@ public class LwM2MTransportUtil {
     public static final String LOG_LWM2M_INFO = "info";
     public static final String LOG_LWM2M_ERROR = "error";
     public static final String LOG_LWM2M_WARN = "warn";
-    public static final int BOOTSTRAP_DEFAULT_SHORT_ID_0 = 0;
+    public static final String REGISTRATION_TRIGGER_PARAMS_ID = "/1/0/8";
+    public static final String BOOTSTRAP_TRIGGER_PARAMS_ID = "/1/0/9";;
 
     public static LwM2mOtaConvert convertOtaUpdateValueToString(String pathIdVer, Object value, ResourceModel.Type currentType) {
         String path = fromVersionedIdToObjectId(pathIdVer);
@@ -118,10 +119,6 @@ public class LwM2MTransportUtil {
             log.info("[{}] Received profile with invalid transport configuration: {}", deviceProfile.getId(), deviceProfile.getProfileData().getTransportConfiguration());
             throw new IllegalArgumentException("Received profile with invalid transport configuration: " + transportConfiguration.getType());
         }
-    }
-
-    public static List<LwM2MBootstrapServerCredential> getBootstrapParametersFromThingsboard(DeviceProfile deviceProfile) {
-        return toLwM2MClientProfile(deviceProfile).getBootstrap();
     }
 
     public static String fromVersionedIdToObjectId(String pathIdVer) {
@@ -396,13 +393,6 @@ public class LwM2MTransportUtil {
         } else {
             serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);
         }
-    }
-
-    public static int calculateSzx(int size) {
-        if (size < 16 || size > 1024 || (size & (size - 1)) != 0) {
-            throw new IllegalArgumentException("Size must be a power of 2 between 16 and 1024.");
-        }
-        return (int) (Math.log(size / 16) / Math.log(2));
     }
 
     public static ConcurrentHashMap<Integer, String[]> groupByObjectIdVersionedIds(Set<String> targetIds) {

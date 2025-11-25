@@ -330,6 +330,15 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
 
     if (this.displayPagination) {
       this.sort.sortChange.pipe(takeUntil(this.destroy$)).subscribe(() => this.paginator.pageIndex = 0);
+
+      this.ctx.aliasController?.filtersChanged.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe((filters) => {
+        let currentFilterId = this.ctx.defaultSubscription.options.alarmSource?.filterId;
+        if (currentFilterId && filters.includes(currentFilterId)) {
+          this.paginator.firstPage();
+        }
+      });
     }
     ((this.displayPagination ? merge(this.sort.sortChange, this.paginator.page) : this.sort.sortChange) as Observable<any>).pipe(
       takeUntil(this.destroy$)
@@ -851,6 +860,9 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
               content = this.defaultContent(key, contentInfo, value);
             }
             if (isDefined(content)) {
+              if (typeof content === 'object') {
+                content = JSON.stringify(content);
+              }
               content = this.utils.customTranslation(content, content);
               switch (typeof content) {
                 case 'string':

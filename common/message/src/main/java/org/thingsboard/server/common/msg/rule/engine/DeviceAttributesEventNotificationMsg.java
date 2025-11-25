@@ -23,16 +23,15 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.MsgType;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 
+import java.io.Serial;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-/**
- * @author Andrew Shvayka
- */
 @Data
 public class DeviceAttributesEventNotificationMsg implements ToDeviceActorNotificationMsg {
 
+    @Serial
     private static final long serialVersionUID = 2422071590415277039L;
 
     private final TenantId tenantId;
@@ -56,4 +55,5 @@ public class DeviceAttributesEventNotificationMsg implements ToDeviceActorNotifi
     public MsgType getMsgType() {
         return MsgType.DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG;
     }
+
 }

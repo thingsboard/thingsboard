@@ -1,26 +1,26 @@
 {
   "name": "thingsboard-web-ui",
   "private": true,
-  "version": "4.2.0",
+  "version": "4.3.0",
   "description": "ThingsBoard Web UI Microservice",
   "main": "server.ts",
   "bin": "server.js",
   "scripts": {
-    "pkg": "tsc && pkg -t node18-linux-x64,node18-win-x64 --out-path ./target ./target/src && node install.js",
+    "pkg": "tsc && pkg -t node22-linux-x64,node22-win-x64 --out-path ./target ./target/src && node install.js",
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web ts-node server.ts'",
     "start-prod": "nodemon --watch '.' --ext 'ts' --exec 'WEB_FOLDER=./target/web NODE_ENV=production ts-node server.ts'",
     "build": "tsc"
   },
   "dependencies": {
-    "compression": "^1.7.5",
+    "compression": "^1.8.1",
     "config": "^3.3.12",
-    "connect-history-api-fallback": "^1.6.0",
-    "express": "^4.21.1",
+    "connect-history-api-fallback": "1.6.0",
+    "express": "^5.1.0",
     "http": "0.0.0",
     "http-proxy": "^1.18.1",
     "js-yaml": "^4.1.0",
-    "winston": "^3.16.0",
+    "winston": "^3.17.0",
     "winston-daily-rotate-file": "^5.0.0"
   },
   "nyc": {
@@ -32,17 +32,17 @@
     ]
   },
   "devDependencies": {
-    "@types/compression": "^1.7.5",
+    "@types/compression": "^1.8.1",
     "@types/config": "^3.3.5",
-    "@types/connect-history-api-fallback": "^1.5.4",
-    "@types/express": "~4.17.21",
-    "@types/http-proxy": "^1.17.15",
-    "@types/node": "~20.17.6",
-    "fs-extra": "^11.2.0",
-    "nodemon": "^3.1.7",
-    "pkg": "^5.8.1",
+    "@types/connect-history-api-fallback": "1.5.4",
+    "@types/express": "~5.0.3",
+    "@types/http-proxy": "^1.17.16",
+    "@types/node": "~22.17.2",
+    "@yao-pkg/pkg": "^6.6.0",
+    "fs-extra": "^11.3.1",
+    "nodemon": "^3.1.10",
     "ts-node": "^10.9.2",
-    "typescript": "5.5.4"
+    "typescript": "5.9.2"
   },
   "pkg": {
     "assets": [

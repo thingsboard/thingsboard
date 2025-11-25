@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -39,6 +40,8 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
+import org.thingsboard.server.common.data.NameConflictPolicy;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.ProfileEntityIdInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
@@ -89,6 +92,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
@@ -126,23 +130,21 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     public Device findDeviceById(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceById [{}]", deviceId);
         validateId(deviceId, id -> INCORRECT_DEVICE_ID + id);
-        if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            return cache.get(new DeviceCacheKey(deviceId),
-                    () -> deviceDao.findById(tenantId, deviceId.getId()));
-        } else {
-            return cache.get(new DeviceCacheKey(tenantId, deviceId),
-                    () -> deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId()));
-        }
+        return findDeviceByIdInternal(tenantId, deviceId);
     }
 
     @Override
     public ListenableFuture<Device> findDeviceByIdAsync(TenantId tenantId, DeviceId deviceId) {
         log.trace("Executing findDeviceByIdAsync [{}]", deviceId);
         validateId(deviceId, id -> INCORRECT_DEVICE_ID + id);
+        return executor.submit(() -> findDeviceByIdInternal(tenantId, deviceId));
+    }
+
+    private Device findDeviceByIdInternal(TenantId tenantId, DeviceId deviceId) {
         if (TenantId.SYS_TENANT_ID.equals(tenantId)) {
-            return deviceDao.findByIdAsync(tenantId, deviceId.getId());
+            return cache.get(new DeviceCacheKey(deviceId), () -> deviceDao.findById(tenantId, deviceId.getId()));
         } else {
-            return deviceDao.findDeviceByTenantIdAndIdAsync(tenantId, deviceId.getId());
+            return cache.get(new DeviceCacheKey(tenantId, deviceId), () -> deviceDao.findDeviceByTenantIdAndId(tenantId, deviceId.getId()));
         }
     }
 
@@ -167,6 +169,12 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return doSaveDevice(device, accessToken, true);
     }
 
+    @Transactional
+    @Override
+    public Device saveDeviceWithAccessToken(Device device, String accessToken, NameConflictStrategy nameConflictStrategy) {
+        return doSaveDevice(device, accessToken, true, nameConflictStrategy);
+    }
+
     @Override
     public Device saveDevice(Device device, boolean doValidate) {
         return doSaveDevice(device, null, doValidate);
@@ -181,7 +189,17 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Transactional
     @Override
     public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, true);
+        return saveDeviceWithCredentials(device, deviceCredentials, NameConflictStrategy.DEFAULT);
+    }
+
+    @Transactional
+    @Override
+    public Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
+        return saveEntity(device, () -> doSaveWithCredentials(device, deviceCredentials, nameConflictStrategy));
+    }
+
+    private Device doSaveWithCredentials(Device device, DeviceCredentials deviceCredentials, NameConflictStrategy nameConflictStrategy) {
+        Device savedDevice = doSaveDeviceWithoutCredentials(device, true, nameConflictStrategy);
         deviceCredentials.setDeviceId(savedDevice.getId());
         if (device.getId() == null) {
             deviceCredentialsService.createDeviceCredentials(savedDevice.getTenantId(), deviceCredentials);
@@ -198,7 +216,15 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     private Device doSaveDevice(Device device, String accessToken, boolean doValidate) {
-        Device savedDevice = this.saveDeviceWithoutCredentials(device, doValidate);
+        return doSaveDevice(device, accessToken, doValidate, NameConflictStrategy.DEFAULT);
+    }
+
+    private Device doSaveDevice(Device device, String accessToken, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
+        return saveEntity(device, () -> saveWithoutCredentials(device, accessToken, doValidate, nameConflictStrategy));
+    }
+
+    private Device saveWithoutCredentials(Device device, String accessToken, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
+        Device savedDevice = doSaveDeviceWithoutCredentials(device, doValidate, nameConflictStrategy);
         if (device.getId() == null) {
             DeviceCredentials deviceCredentials = new DeviceCredentials();
             deviceCredentials.setDeviceId(new DeviceId(savedDevice.getUuidId()));
@@ -209,13 +235,14 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         return savedDevice;
     }
 
-    private Device saveDeviceWithoutCredentials(Device device, boolean doValidate) {
+    private Device doSaveDeviceWithoutCredentials(Device device, boolean doValidate, NameConflictStrategy nameConflictStrategy) {
         log.trace("Executing saveDevice [{}]", device);
-        Device oldDevice = null;
+        Device oldDevice = (device.getId() != null) ? deviceDao.findById(device.getTenantId(), device.getId().getId()) : null;
+        if (nameConflictStrategy.policy() == NameConflictPolicy.UNIQUIFY && (oldDevice == null || !oldDevice.getName().equals(device.getName()))) {
+            uniquifyEntityName(device, oldDevice, device::setName, EntityType.DEVICE, nameConflictStrategy);
+        }
         if (doValidate) {
-            oldDevice = deviceValidator.validate(device, Device::getTenantId);
-        } else if (device.getId() != null) {
-            oldDevice = findDeviceById(device.getTenantId(), device.getId());
+            deviceValidator.validate(device, Device::getTenantId);
         }
         DeviceCacheEvictEvent deviceCacheEvictEvent = new DeviceCacheEvictEvent(device.getTenantId(), device.getId(), device.getName(), oldDevice != null ? oldDevice.getName() : null);
         try {
@@ -256,8 +283,8 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         }
     }
 
-    @TransactionalEventListener(classes = DeviceCacheEvictEvent.class)
     @Override
+    @TransactionalEventListener
     public void handleEvictEvent(DeviceCacheEvictEvent event) {
         List<DeviceCacheKey> toEvict = new ArrayList<>(3);
         toEvict.add(new DeviceCacheKey(event.getTenantId(), event.getNewName()));
@@ -727,6 +754,12 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findDeviceById(tenantId, new DeviceId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findDeviceByIdAsync(tenantId, new DeviceId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

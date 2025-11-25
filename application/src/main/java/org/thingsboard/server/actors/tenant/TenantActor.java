@@ -50,6 +50,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.ToCalculatedFieldSystemMsg;
 import org.thingsboard.server.common.msg.aware.DeviceAwareMsg;
 import org.thingsboard.server.common.msg.aware.RuleChainAwareMsg;
+import org.thingsboard.server.common.msg.aware.TenantAwareMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -155,6 +156,9 @@ public class TenantActor extends RuleChainManagerActor {
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
                 break;
+            case CF_ENTITY_ACTION_EVENT_MSG:
+                forwardToCfActor((TenantAwareMsg) msg, true);
+                break;
             case QUEUE_TO_RULE_ENGINE_MSG:
                 onQueueToRuleEngineMsg((QueueToRuleEngineMsg) msg);
                 break;
@@ -180,16 +184,14 @@ public class TenantActor extends RuleChainManagerActor {
                 onRuleChainMsg((RuleChainAwareMsg) msg);
                 break;
             case CF_CACHE_INIT_MSG:
-            case CF_INIT_PROFILE_ENTITY_MSG:
-            case CF_INIT_MSG:
-            case CF_LINK_INIT_MSG:
             case CF_STATE_RESTORE_MSG:
             case CF_PARTITIONS_CHANGE_MSG:
-                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, true);
+            case CF_STATE_PARTITION_RESTORE_MSG:
+                forwardToCfActor((ToCalculatedFieldSystemMsg) msg, true);
                 break;
             case CF_TELEMETRY_MSG:
             case CF_LINKED_TELEMETRY_MSG:
-                onToCalculatedFieldSystemActorMsg((ToCalculatedFieldSystemMsg) msg, false);
+                forwardToCfActor((ToCalculatedFieldSystemMsg) msg, false);
                 break;
             default:
                 return false;
@@ -197,7 +199,7 @@ public class TenantActor extends RuleChainManagerActor {
         return true;
     }
 
-    private void onToCalculatedFieldSystemActorMsg(ToCalculatedFieldSystemMsg msg, boolean priority) {
+    private void forwardToCfActor(TenantAwareMsg msg, boolean priority) {
         if (cfActor == null) {
             if (msg instanceof CalculatedFieldStateRestoreMsg) {
                 log.warn("[{}] CF Actor is not initialized. ToCalculatedFieldSystemMsg: [{}]", tenantId, msg);
@@ -348,7 +350,7 @@ public class TenantActor extends RuleChainManagerActor {
                 }
             }
             if (cfActor != null) {
-                if (msg.getEntityId().getEntityType().isOneOf(EntityType.CALCULATED_FIELD, EntityType.DEVICE, EntityType.ASSET)) {
+                if (msg.getEntityId().getEntityType().isOneOf(EntityType.CALCULATED_FIELD, EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.TENANT_PROFILE)) {
                     cfActor.tellWithHighPriority(new CalculatedFieldEntityLifecycleMsg(tenantId, msg));
                 }
             }
@@ -393,6 +395,7 @@ public class TenantActor extends RuleChainManagerActor {
         public TbActor createActor() {
             return new TenantActor(context, tenantId);
         }
+
     }
 
 }

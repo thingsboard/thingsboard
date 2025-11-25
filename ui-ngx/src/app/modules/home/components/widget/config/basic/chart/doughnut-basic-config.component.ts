@@ -19,7 +19,7 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { DataKey } from '@shared/models/widget.models';
+import { DataKey, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
@@ -40,6 +40,8 @@ export class DoughnutBasicConfigComponent extends LatestChartBasicConfigComponen
 
   @ViewChild('doughnutChart')
   doughnutChartConfigTemplate: TemplateRef<any>;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -86,9 +88,11 @@ export class DoughnutBasicConfigComponent extends LatestChartBasicConfigComponen
     if (totalEnabled) {
       latestChartWidgetConfigForm.get('totalValueFont').enable();
       latestChartWidgetConfigForm.get('totalValueColor').enable();
+      latestChartWidgetConfigForm.get('legendShowTotal').disable();
     } else {
       latestChartWidgetConfigForm.get('totalValueFont').disable();
       latestChartWidgetConfigForm.get('totalValueColor').disable();
+      latestChartWidgetConfigForm.get('legendShowTotal').enable();
     }
   }
 }

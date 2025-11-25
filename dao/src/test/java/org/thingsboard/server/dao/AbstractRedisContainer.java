@@ -27,7 +27,7 @@ import java.util.List;
 public class AbstractRedisContainer {
 
     @ClassRule(order = 0)
-    public static GenericContainer redis = new GenericContainer("bitnami/valkey:8.0")
+    public static GenericContainer redis = new GenericContainer("bitnamilegacy/valkey:8.0")
             .withEnv("ALLOW_EMPTY_PASSWORD","yes")
             .withLogConsumer(s -> log.warn(((OutputFrame) s).getUtf8String().trim()))
             .withExposedPorts(6379);

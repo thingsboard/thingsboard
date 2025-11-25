@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.user;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -100,5 +101,9 @@ public interface UserDao extends Dao<User>, TenantEntityDao<User> {
     PageData<User> findByAuthorityAndTenantsIds(Authority authority, List<TenantId> tenantsIds, PageLink pageLink);
 
     PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink);
+
+    int countTenantAdmins(UUID tenantId);
+
+    UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId);
 
 }

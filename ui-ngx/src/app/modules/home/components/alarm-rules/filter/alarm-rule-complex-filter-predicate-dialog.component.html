@@ -1,0 +1,56 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="complexFilterFormGroup" (ngSubmit)="save()" style="width: 1200px;">
+  <mat-toolbar class="justify-between" color="primary">
+    <h2 translate>filter.complex-filter</h2>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <mat-form-field class="mat-block" appearance="outline">
+      <mat-label translate>filter.operation.operation</mat-label>
+      <mat-select required formControlName="operation">
+        <mat-option *ngFor="let operation of complexOperations" [value]="operation">
+          {{complexOperationTranslations.get(complexOperationEnum[operation]) | translate}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <tb-alarm-rule-filter-predicate-list [valueType]="data.valueType"
+                                         [arguments]="arguments"
+                                         [argumentInUse]="data.argumentInUse"
+                                         [operation]="complexFilterFormGroup.get('operation').value"
+                                         formControlName="predicates">
+    </tb-alarm-rule-filter-predicate-list>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()"
+            cdkFocusInitial>
+      {{'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            type="submit"
+            [disabled]="complexFilterFormGroup.invalid || !complexFilterFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.update') | translate }}
+    </button>
+  </div>
+</form>

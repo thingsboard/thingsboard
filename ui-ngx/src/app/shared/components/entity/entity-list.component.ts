@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, forwardRef, Input, OnChanges, OnInit, SimpleChanges, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -28,7 +39,7 @@ import { Observable } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, getEntityDisplayName } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
@@ -93,6 +104,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   @Input()
+  @coerceBoolean()
   disabled: boolean;
 
   @Input()
@@ -108,6 +120,17 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   @coerceBoolean()
   inlineField: boolean;
+
+  @Input()
+  @coerceBoolean()
+  allowCreateNew: boolean;
+
+  @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
+
+  @Output()
+  createNew = new EventEmitter<string>();
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
@@ -134,6 +157,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   private updateValidators() {
     this.entityListFormGroup.get('entities').setValidators(this.required ? [Validators.required] : []);
     this.entityListFormGroup.get('entities').updateValueAndValidity();
+  }
+
+  createNewEntity($event: Event, searchText?: string) {
+    $event.stopPropagation();
+    this.createNew.emit(searchText);
   }
 
   registerOnChange(fn: any): void {
@@ -185,22 +213,27 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
     this.searchText = '';
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
-      this.entityService.getEntities(this.entityType, value).subscribe(
-        (entities) => {
-          this.entities = entities;
+      this.entityService.getEntities(this.entityType, value)
+        .subscribe(resolvedEntities => {
+          this.entities = resolvedEntities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
-          if (this.syncIdsWithDB && this.modelValue.length !== entities.length) {
-            this.modelValue = entities.map(entity => entity.id.id);
+          if (this.syncIdsWithDB && this.modelValue.length !== this.entities.length) {
+            this.modelValue = this.entities.map(entity => entity.id.id);
+            if (!this.modelValue.length) {
+              this.modelValue = null;
+            }
             this.propagateChange(this.modelValue);
           }
-        }
-      );
+        });
     } else {
       this.entities = [];
       this.entityListFormGroup.get('entities').setValue(this.entities);
       this.modelValue = null;
     }
     this.dirty = true;
+    if (this.entityInput) {
+      this.entityInput.nativeElement.value = '';
+    }
   }
 
   validate(): ValidationErrors | null {
@@ -250,7 +283,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   public displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
+    return entity ? (this.useEntityDisplayName ? getEntityDisplayName(entity) : entity.name) : undefined;
   }
 
   private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {

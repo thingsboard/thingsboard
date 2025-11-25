@@ -224,7 +224,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     this.dashboardWidgets.parentDashboard = this.parentDashboard;
     this.dashboardWidgets.popoverComponent = this.popoverComponent;
     if (!this.dashboardTimewindow) {
-      this.dashboardTimewindow = this.timeService.defaultTimewindow();
+      this.dashboardTimewindow = this.timeService.defaultTimewindow(true);
     }
     this.gridsterOpts = {
       gridType: this.gridType || GridType.ScrollVertical,

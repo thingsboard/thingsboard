@@ -72,9 +72,19 @@
   }
 
   ::ng-deep {
+    .tb-two-factor-auth-login-content {
+      .tb-two-factor-auth-login-card {
+        button.mat-mdc-icon-button {
+          .mat-icon {
+            color: rgba(255, 255, 255, 0.8);
+          }
+        }
+      }
+    }
     button.provider {
       text-align: start;
       font-weight: 400;
+      color: rgba(255, 255, 255, 0.8);
       &:not([disabled][disabled]) {
         border-color: rgba(255, 255, 255, .8);
       }

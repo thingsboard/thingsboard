@@ -118,7 +118,7 @@ public class DashboardController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/serverTime")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "1636023857137")))
-    public long getServerTime() throws ThingsboardException {
+    public long getServerTime() {
         return System.currentTimeMillis();
     }
 
@@ -130,7 +130,7 @@ public class DashboardController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/dashboard/maxDatapointsLimit")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "5000")))
-    public long getMaxDatapointsLimit() throws ThingsboardException {
+    public long getMaxDatapointsLimit() {
         return maxDatapointsLimit;
     }
 
