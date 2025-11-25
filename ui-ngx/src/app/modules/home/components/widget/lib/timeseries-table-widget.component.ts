@@ -423,7 +423,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
 
       source.sort((a, b) => {
         const valueA = entityLabelCache.get(a.datasource.entityId) || '';
-        const valueB = entityLabelCache.get(a.datasource.entityId) || '';
+        const valueB = entityLabelCache.get(b.datasource.entityId) || '';
 
         return isAsc
           ? collator.compare(valueA, valueB)
