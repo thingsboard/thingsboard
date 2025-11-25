@@ -178,7 +178,7 @@ public class AppActor extends ContextAwareActor {
                     });
                 }
             }
-            if (!msg.getEntityId().getEntityType().isOneOf(EntityType.TENANT_PROFILE, EntityType.TB_RESOURCE)) {
+            if (!msg.getEntityId().getEntityType().isOneOf(EntityType.TENANT_PROFILE, EntityType.TB_RESOURCE, EntityType.USER)) {
                 log.warn("Message has system tenant id: {}", msg);
             }
         } else {

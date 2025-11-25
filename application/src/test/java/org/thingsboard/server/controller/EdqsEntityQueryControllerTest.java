@@ -19,8 +19,8 @@ import org.assertj.core.api.ThrowingConsumer;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.EdqsState.EdqsApiMode;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
@@ -59,7 +59,7 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     @Autowired
     private DiscoveryService discoveryService;
 
-    @MockBean // so that we don't do backup for tests
+    @MockitoBean // so that we don't do backup for tests
     private EdqsRocksDb edqsRocksDb;
 
     @Before
