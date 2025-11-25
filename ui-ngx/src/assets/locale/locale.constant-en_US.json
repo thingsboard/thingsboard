@@ -485,6 +485,7 @@
         "2fa":  {
             "2fa": "Two-factor authentication",
             "available-providers": "Available providers",
+            "available-providers-required": "At least one 2FA provider should be configured.",
             "issuer-name": "Issuer name",
             "issuer-name-required": "Issuer name is required.",
             "max-verification-failures-before-user-lockout": "Max verification failures before user lockout",
@@ -1074,7 +1075,13 @@
         "type-provision-failure": "Device provisioning was failed",
         "type-timeseries-updated": "Telemetry updated",
         "type-timeseries-deleted": "Telemetry deleted",
-        "type-sms-sent": "SMS sent"
+        "type-sms-sent": "SMS sent",
+        "any":"Any",
+        "filter":"Audit Log Filters",
+        "audit-log-filter-title": "Audit Log Filter",
+        "filter-title": "Filter",
+        "filter-type-add": "+ Add type",
+        "filter-types": "Audit Log Types"
     },
     "debug-settings": {
         "label": "Debug Configuration",
@@ -4207,8 +4214,8 @@
         "username": "Username (email)",
         "remember-me": "Remember me",
         "forgot-password": "Forgot Password?",
-        "password-reset": "Password reset",
-        "expired-password-reset-message": "Your credentials has been expired! Please create new password.",
+        "password-reset": "Password Reset",
+        "expired-password-reset-message": "Your password has expired! \nPlease enter a new password.",
         "new-password": "New password",
         "new-password-again": "Confirm new password",
         "password-link-sent-message": "Reset link has been sent",
@@ -4268,6 +4275,8 @@
         "print": "Print",
         "verification-code": "6-digit code",
         "verification-code-invalid": "Invalid verification code format",
+        "verification-code-incorrect": "Verification code is incorrect",
+        "verification-code-many-request": "Too many requests to check verification code",
         "scan-qr-code": "Scan this QR code with your verification app",
         "phone-input": {
             "phone-input-label": "Phone number",
@@ -4843,7 +4852,7 @@
                 "verification-code": "6-digit code",
                 "verification-code-invalid": "Invalid verification code format",
                 "verification-code-incorrect": "Verification code is incorrect",
-                "verification-code-many-request": "Too many requests check verification code",
+                "verification-code-many-request": "Too many requests to check verification code",
                 "verification-step-description": "Enter a 6-digit code we just sent to {{address}}",
                 "verification-step-label": "Verification"
             },

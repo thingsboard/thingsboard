@@ -84,6 +84,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import static org.thingsboard.server.utils.CalculatedFieldUtils.fromProto;
@@ -562,15 +563,20 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             };
             RelationPathLevel inverseRelation = new RelationPathLevel(inverseDirection, relation.relationType());
             List<EntityRelation> byRelationPathQuery = relationService.findByRelationPathQuery(tenantId, new EntityRelationPathQuery(entityId, List.of(inverseRelation)));
+            EntityId cfEntityId = cf.getEntityId();
+            Predicate<EntityId> matchesCfEntity = relatedEntity -> cfEntityId.equals(relatedEntity) || cfEntityId.equals(getProfileId(tenantId, relatedEntity));
             if (byRelationPathQuery != null && !byRelationPathQuery.isEmpty()) {
                 switch (relation.direction()) {
                     case FROM -> {
                         EntityRelation entityRelation = byRelationPathQuery.get(0); // only one supported
-                        result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getFrom()));
+                        EntityId relatedId = entityRelation.getFrom();
+                        if (matchesCfEntity.test(relatedId)) {
+                            result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), relatedId));
+                        }
                     }
                     case TO -> {
                         byRelationPathQuery.stream()
-                                .filter(entityRelation -> entityRelation.getTo().equals(cf.getEntityId()))
+                                .filter(entityRelation -> matchesCfEntity.test(entityRelation.getTo()))
                                 .forEach(entityRelation -> result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo())));
                     }
                 }

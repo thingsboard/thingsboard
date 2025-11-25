@@ -279,14 +279,14 @@ export const historyInterval = (timewindowMs: number): Timewindow => ({
   }
 });
 
-export const defaultTimewindow = (timeService: TimeService): Timewindow => {
+export const defaultTimewindow = (timeService: TimeService, isDashboard = false): Timewindow => {
   const currentTime = moment().valueOf();
   return {
     selectedTab: TimewindowType.REALTIME,
     realtime: {
       realtimeType: RealtimeWindowType.LAST_INTERVAL,
       interval: SECOND,
-      timewindowMs: MINUTE,
+      timewindowMs: isDashboard ? HOUR : MINUTE,
       quickInterval: QuickTimeInterval.CURRENT_DAY,
     },
     history: {
@@ -300,8 +300,8 @@ export const defaultTimewindow = (timeService: TimeService): Timewindow => {
       quickInterval: QuickTimeInterval.CURRENT_DAY,
     },
     aggregation: {
-      type: AggregationType.AVG,
-      limit: Math.floor(timeService.getMaxDatapointsLimit() / 2)
+      type: isDashboard ? AggregationType.NONE : AggregationType.AVG ,
+      limit: isDashboard ? timeService.getMaxDatapointsLimit() : Math.floor(timeService.getMaxDatapointsLimit() / 2)
     }
   };
 };
@@ -1270,6 +1270,16 @@ export const defaultTimeIntervals = new Array<TimeInterval>(
     name: 'timeinterval.hours-interval',
     translateParams: {hours: 5},
     value: 5 * HOUR
+  },
+  {
+    name: 'timeinterval.hours-interval',
+    translateParams: {hours: 6},
+    value: 6 * HOUR
+  },
+  {
+    name: 'timeinterval.hours-interval',
+    translateParams: {hours: 8},
+    value: 8 * HOUR
   },
   {
     name: 'timeinterval.hours-interval',

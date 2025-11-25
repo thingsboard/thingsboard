@@ -184,6 +184,13 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
     });
   }
 
+  get atListOneProvider():boolean {
+    if (this.twoFaFormGroup.get('enforceTwoFa').value) {
+      return this.providersForm.value.some(value => value.enable);
+    }
+    return true;
+  }
+
   private setAuthConfigFormValue(settings: TwoFactorAuthSettings) {
     const [checkRateLimitNumber, checkRateLimitTime] = this.splitRateLimit(settings?.verificationCodeCheckRateLimit);
     const allowProvidersConfig = settings?.providers.map(provider => provider.providerType) || [];

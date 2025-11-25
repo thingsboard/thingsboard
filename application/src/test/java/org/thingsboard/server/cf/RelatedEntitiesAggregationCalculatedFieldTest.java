@@ -673,6 +673,54 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
                 });
     }
 
+
+    @Test
+    public void testTheSameRelationTypeAndKeyButDifferentCfs_checkAggregation() throws Exception {
+        postTelemetry(device1.getId(), "{\"temperature\":24.2}");
+        postTelemetry(device2.getId(), "{\"temperature\":19.6}");
+        CalculatedField cf = createAvgTemperatureCF(asset.getId());
+
+        Asset asset2 = createAsset("Asset 2", assetProfile.getId());
+        Device device3 = createDevice("Device 3", "1234567890333");
+        createEntityRelation(asset2.getId(), device3.getId(), "Contains");
+        postTelemetry(device3.getId(), "{\"temperature\":10.2}");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setName("Average temperature");
+        calculatedField.setEntityId(asset2.getId());
+        calculatedField.setType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION);
+
+        var config = (RelatedEntitiesAggregationCalculatedFieldConfiguration) cf.getConfiguration();
+        AggMetric avgMetric = new AggMetric();
+        avgMetric.setFunction(AggFunction.AVG);
+        avgMetric.setInput(new AggKeyInput("temp"));
+        config.setMetrics(Map.of("avgTemperature_2", avgMetric));
+
+        calculatedField.setConfiguration(config);
+        calculatedField.setDebugSettings(DebugSettings.all());
+        saveCalculatedField(calculatedField);
+
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode avgTemperature = getLatestTelemetry(asset.getId(), "avgTemperature", "avgTemperature_2");
+                    assertThat(avgTemperature).isNotNull();
+                    assertThat(avgTemperature.get("avgTemperature").get(0).get("value").asText()).isEqualTo("24");
+                    assertThat(avgTemperature.get("avgTemperature_2").get(0).get("value").isNull()).isTrue();
+                });
+
+        postTelemetry(device1.getId(), "{\"temperature\":26.2}");
+
+        await().alias("create avg temp cf and perform initial aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode avgTemperature = getLatestTelemetry(asset.getId(), "avgTemperature", "avgTemperature_2");
+                    assertThat(avgTemperature).isNotNull();
+                    assertThat(avgTemperature.get("avgTemperature").get(0).get("value").asText()).isEqualTo("26");
+                    assertThat(avgTemperature.get("avgTemperature_2").get(0).get("value").isNull()).isTrue();
+                });
+    }
+
     private void checkInitialCalculation() {
         await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
