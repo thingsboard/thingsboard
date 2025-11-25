@@ -100,8 +100,8 @@
                         "displayPagination": true,
                         "defaultPageSize": 10,
                         "sortOrder": {
-                            "property": "createdTime",
-                            "direction": "DESC"
+                            "property": "name",
+                            "direction": "ASC"
                         }
                     },
                     "title": "{i18n:api-usage.exceptions}",
