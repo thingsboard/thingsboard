@@ -101,8 +101,20 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
 
     @Override
     public ListenableFuture<Boolean> processEdgeEvents() {
+        if (!isConnected() || isSyncInProgress() || isHighPriorityProcessing) {
+            log.warn("[{}][{}] Session is not ready (connected={}, syncInProgress={}, highPriority={}), skip starting edge event consumer",
+                    tenantId, edge != null ? edge.getId() : null, isConnected(), isSyncInProgress(), isHighPriorityProcessing);
+            return Futures.immediateFuture(Boolean.FALSE);
+        }
         if (consumer == null || (consumer.getConsumer() != null && consumer.getConsumer().isStopped())) {
             try {
+                if (this.consumerExecutor != null && !this.consumerExecutor.isShutdown()) {
+                    try {
+                        this.consumerExecutor.shutdown();
+                    } catch (Exception e) {
+                        log.warn("[{}][{}] Failed to shutdown previous consumer executor", tenantId, edge.getId(), e);
+                    }
+                }
                 this.consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("edge-event-consumer"));
                 this.consumer = QueueConsumerManager.<TbProtoQueueMsg<ToEdgeEventNotificationMsg>>builder()
                         .name("TB Edge events [" + edge.getId() + "]")
@@ -133,6 +145,7 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
     public boolean destroy() {
         try {
             if (consumer != null) {
+                log.info("[{}][{}] Stopping edge event consumer...", tenantId, edge != null ? edge.getId() : null);
                 consumer.stop();
             }
         } catch (Exception e) {
@@ -143,9 +156,14 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
         try {
             if (consumerExecutor != null) {
                 consumerExecutor.shutdown();
+                try {
+                    consumerExecutor.awaitTermination(5, java.util.concurrent.TimeUnit.SECONDS);
+                } catch (InterruptedException ie) {
+                    log.warn("[{}][{}] Interrupted while awaiting consumer executor termination", tenantId, edge.getId());
+                }
             }
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to shutdown consumer executor", tenantId, edge.getId(), e);
+            log.warn("[{}][{}] Failed to stop edge event consumer", tenantId, edge.getId(), e);
             return false;
         }
         return true;
