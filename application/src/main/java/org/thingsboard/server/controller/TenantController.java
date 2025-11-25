@@ -21,12 +21,13 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.Tenant;
@@ -70,8 +71,7 @@ public class TenantController extends BaseController {
     @ApiOperation(value = "Get Tenant (getTenantById)",
             notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/{tenantId}")
     public Tenant getTenantById(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
@@ -86,8 +86,7 @@ public class TenantController extends BaseController {
             notes = "Fetch the Tenant Info object based on the provided Tenant Id. " +
                     TENANT_INFO_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/info/{tenantId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/info/{tenantId}")
     public TenantInfo getTenantInfoById(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
@@ -105,8 +104,7 @@ public class TenantController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Tenant entity." +
                     SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/tenant")
     public Tenant saveTenant(@Parameter(description = "A JSON value representing the tenant.")
                              @RequestBody Tenant tenant) throws Exception {
         checkEntity(tenant.getId(), tenant, Resource.TENANT);
@@ -116,7 +114,7 @@ public class TenantController extends BaseController {
     @ApiOperation(value = "Delete Tenant (deleteTenant)",
             notes = "Deletes the tenant, it's customers, rule chains, devices and all other related entities. Referencing non-existing tenant Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/tenant/{tenantId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenant(@Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
                              @PathVariable(TENANT_ID) String strTenantId) throws Exception {
@@ -128,8 +126,7 @@ public class TenantController extends BaseController {
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenants", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenants", params = {"pageSize", "page"})
     public PageData<Tenant> getTenants(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -148,8 +145,7 @@ public class TenantController extends BaseController {
     @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
             + TENANT_INFO_DESCRIPTION + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenantInfos", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenantInfos", params = {"pageSize", "page"})
     public PageData<TenantInfo> getTenantInfos(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,

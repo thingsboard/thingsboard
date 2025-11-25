@@ -20,7 +20,8 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { buildPageStepSizeValues } from '@home/components/widget/lib/table-widget.models';
-import { TabSortKey } from '@app/modules/home/components/widget/lib/timeseries-table-widget.component'
+import { Direction } from '@shared/models/page/sort-order';
+import { entityFields } from '@shared/models/entity.models';
 
 @Component({
   selector: 'tb-timeseries-table-widget-settings',
@@ -29,7 +30,8 @@ import { TabSortKey } from '@app/modules/home/components/widget/lib/timeseries-t
 })
 export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsComponent {
 
-  TabSortKey = TabSortKey;
+  entityFields = entityFields;
+  Direction = Direction;
 
   timeseriesTableWidgetSettingsForm: UntypedFormGroup;
   pageStepSizeValues = [];
@@ -62,13 +64,19 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       disableStickyHeader: false,
       useRowStyleFunction: false,
       rowStyleFunction: '',
-      tabSortKey: TabSortKey.TIMESTAMP
+      sortOrder: {
+        property: this.entityFields.createdTime.keyName,
+        direction: Direction.DESC
+      }
     };
   }
 
   protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
     settings.pageStepIncrement = settings.pageStepIncrement ?? settings.defaultPageSize;
-    settings.tabSortKey = settings.tabSortKey ?? TabSortKey.TIMESTAMP;
+    settings.sortOrder = {
+      property: settings.sortOrder?.property || this.entityFields.createdTime.keyName,
+      direction: settings.sortOrder?.direction || Direction.DESC
+    };
     this.pageStepSizeValues = buildPageStepSizeValues(settings.pageStepCount, settings.pageStepIncrement);
     return settings;
   }
@@ -99,12 +107,29 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       disableStickyHeader: [settings.disableStickyHeader, []],
       useRowStyleFunction: [settings.useRowStyleFunction, []],
       rowStyleFunction: [settings.rowStyleFunction, [Validators.required]],
-      tabSortKey: [settings.tabSortKey, []],
+      sortOrder: this.fb.group({
+        property: [
+          settings.sortOrder.property,
+          Validators.required
+        ],
+        direction: [
+          settings.sortOrder.direction,
+          Validators.required
+        ]
+      })
     });
   }
 
   protected validatorTriggers(): string[] {
     return ['useRowStyleFunction', 'displayPagination', 'pageStepCount', 'pageStepIncrement'];
+  }
+
+  protected prepareOutputSettings(settings: WidgetSettings): WidgetSettings {
+    settings.sortOrder = {
+      property: settings.sortOrder?.property || this.entityFields.createdTime.keyName,
+      direction: settings.sortOrder?.direction || Direction.DESC
+    };
+    return settings;
   }
 
   protected updateValidators(emitEvent: boolean, trigger: string) {
