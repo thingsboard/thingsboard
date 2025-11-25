@@ -673,7 +673,7 @@ public class ActorSystemContext {
     @Getter
     private long cfCheckInterval;
 
-    @Value("${actors.alarms.reevaluation_interval:120}")
+    @Value("${actors.alarms.reevaluation_interval:60}")
     @Getter
     private long alarmRulesReevaluationInterval;
 
