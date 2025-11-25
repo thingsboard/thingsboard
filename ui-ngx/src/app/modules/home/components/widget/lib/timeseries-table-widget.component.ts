@@ -395,21 +395,15 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.updateDatasources();
   }
 
-  private getTabLabel(source: Datasource, entityLabelCache:Map<string,string>):string {
-    if (entityLabelCache.has(source.entityId)) {
-      return entityLabelCache.get(source.entityId);
-    }
-
+  private getTabLabel(source: Datasource):string {
     const value = this.useEntityLabel
       ? (source.entityLabel || source.entityName)
       : source.entityName;
 
-    const translated = this.utils.customTranslation(value);
-    entityLabelCache.set(source.entityId, translated);
-    return translated;
+    return this.utils.customTranslation(value);
   }
 
-  private sortDatasources(source: TimeseriesTableSource[], entityLabelCache: Map<string, string>) {
+  private sortDatasources(source: TimeseriesTableSource[]) {
     const property = this.settings?.sortOrder?.property;
     const direction = this.settings?.sortOrder?.direction;
     const isAsc = direction === Direction.ASC;
@@ -422,8 +416,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       });
 
       source.sort((a, b) => {
-        const valueA = entityLabelCache.get(a.datasource.entityId) || '';
-        const valueB = entityLabelCache.get(b.datasource.entityId) || '';
+        const valueA = a.displayName || '';
+        const valueB = b.displayName || '';
 
         return isAsc
           ? collator.compare(valueA, valueB)
@@ -441,10 +435,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.sourceIndex = 0;
     let keyOffset = 0;
     let latestKeyOffset = 0;
-    const entityLabelCache = new Map<string,string>();
     const pageSize = this.displayPagination ? this.defaultPageSize : Number.POSITIVE_INFINITY;
     if (this.datasources) {
-      this.datasources.forEach(ds => this.getTabLabel(ds, entityLabelCache));
       for (const datasource of this.datasources) {
         const sortOrder: SortOrder = sortOrderFromString(this.defaultSortOrder);
         const source = {} as TimeseriesTableSource;
@@ -462,7 +454,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         source.pageLink = new PageLink(pageSize, 0, null, sortOrder);
         source.rowDataTemplate = {};
         source.rowDataTemplate.Timestamp = null;
-        source.displayName = entityLabelCache.get(datasource.entityId);
+        source.displayName = this.getTabLabel(datasource);
         if (this.showTimestamp) {
           source.displayedColumns.push('0');
         }
@@ -482,7 +474,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       }
     }
     if (this.sources.length) {
-      this.sortDatasources(this.sources, entityLabelCache);
+      this.sortDatasources(this.sources);
       this.sources.forEach((source, index) => {
         this.prepareDisplayedColumn(index);
         source.displayedColumns = this.displayedColumns[index].filter(value => value.display).map(value => value.def);

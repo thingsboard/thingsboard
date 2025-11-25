@@ -65,7 +65,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       useRowStyleFunction: false,
       rowStyleFunction: '',
       sortOrder: {
-        property: this.entityFields.name.keyName,
+        property: this.entityFields.createdTime.keyName,
         direction: Direction.DESC
       }
     };

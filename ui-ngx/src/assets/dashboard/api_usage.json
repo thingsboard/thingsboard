@@ -99,7 +99,10 @@
                         "showTimestamp": true,
                         "displayPagination": true,
                         "defaultPageSize": 10,
-                        "tabSortKey": "NAME_ASC"
+                        "sortOrder": {
+                            "property": "createdTime",
+                            "direction": "DESC"
+                        }
                     },
                     "title": "{i18n:api-usage.exceptions}",
                     "dropShadow": true,
