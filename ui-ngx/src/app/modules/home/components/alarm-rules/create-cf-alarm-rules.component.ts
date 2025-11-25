@@ -159,7 +159,7 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   }
 
   public validate(c: UntypedFormControl) {
-    return (this.createAlarmRulesFormArray().length && this.createAlarmRulesFormGroup.valid) ? null : {
+    return this.createAlarmRulesFormArray().length ? null : {
       createAlarmRules: {
         valid: false,
       },
