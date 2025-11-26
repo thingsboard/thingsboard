@@ -28,7 +28,7 @@ public interface EdgeUpgradeInstructionsService {
 
     void updateInstructionMap(Map<String, EdgeUpgradeInfo> upgradeVersions);
 
-    void setEdgeVersion(String version);
+    void setPlatformEdgeVersion(String version);
 
     boolean isUpgradeAvailable(TenantId tenantId, EdgeId edgeId) throws Exception;
 

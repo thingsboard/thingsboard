@@ -18,13 +18,14 @@ package org.thingsboard.server.service.edge.instructions;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.service.install.InstallScripts;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+
+import static org.thingsboard.edge.rpc.EdgeGrpcClient.getNewestEdgeVersion;
 
 @Slf4j
 @RequiredArgsConstructor
@@ -36,7 +37,7 @@ public abstract class BaseEdgeInstallUpgradeInstructionsService {
     private final InstallScripts installScripts;
 
     @Setter
-    protected String edgeVersion = convertEdgeVersionToDocsFormat(EdgeVersion.V_4_2_0.name());
+    protected String platformEdgeVersion = convertEdgeVersionToDocsFormat(getNewestEdgeVersion().name());
 
     protected String convertEdgeVersionToDocsFormat(String edgeVersion) {
         return edgeVersion.replace("_", ".").substring(2);

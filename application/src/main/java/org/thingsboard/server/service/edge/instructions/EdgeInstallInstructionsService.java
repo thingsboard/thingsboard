@@ -23,6 +23,6 @@ public interface EdgeInstallInstructionsService {
 
     EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request);
 
-    void setEdgeVersion(String version);
+    void setPlatformEdgeVersion(String version);
 
 }
