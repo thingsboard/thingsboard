@@ -18,7 +18,6 @@ import { Component } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableHeaderComponent } from '../../components/entity/entity-table-header.component';
-import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { CalculatedFieldAlarmRule, CalculatedFieldsQuery } from "@shared/models/calculated-field.models";
 import { AlarmRulesTableConfig } from "@home/components/alarm-rules/alarm-rules-table-config";
 

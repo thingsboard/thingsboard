@@ -34,6 +34,7 @@ import {
   AlarmRuleDetailsDialogData
 } from "@home/components/alarm-rules/alarm-rule-details-dialog.component";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'tb-cf-alarm-rule',
@@ -64,6 +65,13 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
+
+  @Input()
+  @coerceBoolean()
+  isClearCondition = false;
+
+  @Input({required: true})
+  testScript: (expression: string) => Observable<string>;
 
   private modelValue: AlarmRule;
 

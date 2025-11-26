@@ -33,11 +33,11 @@
   </mat-tab>
   @if (authUser.authority === authorities.TENANT_ADMIN) {
     <mat-tab label="{{ 'entity.type-calculated-fields' | translate }}" #calculatedFieldsTab="matTab">
-      <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [ownerId]="entity.tenantId"/>
+      <tb-calculated-fields-table [active]="calculatedFieldsTab.isActive" [entityId]="entity.id" [ownerId]="ownerId"/>
     </mat-tab>
     <mat-tab #alarmRules="matTab"
              label="{{'alarm-rule.alarm-rules' | translate }}">
-      <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="entity.tenantId"></tb-alarm-rules-table>
+      <tb-alarm-rules-table [active]="alarmRules.isActive" [entityId]="entity.id" [entityName]="entity.name" [ownerId]="ownerId"></tb-alarm-rules-table>
     </mat-tab>
   }
   <mat-tab label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
