@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -23,6 +24,7 @@ import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
@@ -31,9 +33,11 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInp
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.function.AggEntry;
@@ -44,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.concurrent.ScheduledFuture;
+import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 
@@ -62,6 +67,8 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
 
     private ScheduledFuture<?> reevaluationFuture;
 
+    private EntityService entityService;
+
     public RelatedEntitiesAggregationCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
@@ -72,6 +79,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         var configuration = (RelatedEntitiesAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         metrics = configuration.getMetrics();
         deduplicationIntervalMs = SECONDS.toMillis(configuration.getDeduplicationIntervalInSec());
+        entityService = ctx.getSystemContext().getEntityService();
     }
 
     @Override
@@ -246,5 +254,23 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
             return entityInputs.get(inputKey).getValue();
         }
     }
+
+    @Override
+    public JsonNode getArgumentsJson() {
+        List<EntityArgument> entitiesArguments = new ArrayList<>();
+        prepareInputs().forEach((entityId, entityArguments) -> {
+            entityService.fetchEntityName(ctx.getTenantId(), entityId).ifPresent(entityName -> {
+                EntityInfo entityInfo = new EntityInfo(entityId, entityName);
+                JsonNode entityArgumentsJson = JacksonUtil.valueToTree(entityArguments.entrySet().stream()
+                        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().jsonValue())));
+                entitiesArguments.add(new EntityArgument(entityInfo, entityArgumentsJson));
+            });
+        });
+        return JacksonUtil.valueToTree(new RelatedEntitiesArgument(ArgumentEntryType.RELATED_ENTITIES, entitiesArguments));
+    }
+
+    record RelatedEntitiesArgument(ArgumentEntryType type, List<EntityArgument> entitiesArguments) {}
+
+    record EntityArgument(EntityInfo entity, JsonNode entityArguments) {}
 
 }
