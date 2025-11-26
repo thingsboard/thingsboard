@@ -69,6 +69,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +83,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_CONNECT_TIME;
@@ -654,31 +656,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     private void cleanupZombieSessions() {
         try {
-            List<EdgeId> toRemove = new ArrayList<>();
-            for (EdgeGrpcSession session : sessions.values()) {
-                if (session instanceof KafkaEdgeGrpcSession kafkaSession &&
-                    !kafkaSession.isConnected() &&
-                    kafkaSession.getConsumer() != null &&
-                    kafkaSession.getConsumer().getConsumer() != null &&
-                    !kafkaSession.getConsumer().getConsumer().isStopped()) {
-                    toRemove.add(kafkaSession.getEdge().getId());
-                }
-                if (session instanceof KafkaEdgeGrpcSession kafkaSession) {
-                    log.debug("[{}] kafkaSession.isConnected() = {}, kafkaSession.getConsumer().getConsumer().isStopped() = {}",
-                            kafkaSession.getEdge().getId(),
-                            kafkaSession.isConnected(),
-                            kafkaSession.getConsumer() != null ? kafkaSession.getConsumer().getConsumer() != null ? kafkaSession.getConsumer().getConsumer().isStopped() : null : null);
-                }
-            }
-            for (EdgeId edgeId : toRemove) {
-                log.info("[{}] Destroying session for edge because edge is not connected", edgeId);
-                EdgeGrpcSession removed = sessions.get(edgeId);
-                if (removed instanceof KafkaEdgeGrpcSession kafkaSession) {
-                    if (kafkaSession.destroy()) {
-                        sessions.remove(edgeId);
-                    }
-                }
-            }
+            tryToDestroyZombieSessions(getZombieSessions(sessions.values()), s -> sessions.remove(s.getEdge().getId()));
+            tryToDestroyZombieSessions(getZombieSessions(sessionsById.values()), s -> sessionsById.remove(s.getSessionId()));
+
             zombieSessions.removeIf(zombie -> {
                 if (zombie.destroy()) {
                     log.info("[{}][{}] Successfully cleaned up zombie session [{}] for edge [{}].",
@@ -693,6 +673,40 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         } catch (Exception e) {
             log.warn("Failed to cleanup kafka sessions", e);
         }
+    }
+
+    private List<EdgeGrpcSession> getZombieSessions(Collection<EdgeGrpcSession> sessions) {
+        List<EdgeGrpcSession> result = new ArrayList<>();
+        for (EdgeGrpcSession session : sessions) {
+            if (isKafkaSessionAndZombie(session)) {
+                result.add(session);
+            }
+        }
+        return result;
+    }
+
+    private void tryToDestroyZombieSessions(List<EdgeGrpcSession> sessionsToRemove, Function<EdgeGrpcSession, EdgeGrpcSession> removeFunc) {
+        for (EdgeGrpcSession toRemove : sessionsToRemove) {
+            log.info("[{}] Destroying session for edge because edge is not connected", toRemove.getEdge().getId());
+            if (toRemove.destroy()) {
+                removeFunc.apply(toRemove);
+            }
+        }
+    }
+
+    private boolean isKafkaSessionAndZombie(EdgeGrpcSession session) {
+        if (session instanceof KafkaEdgeGrpcSession kafkaSession) {
+            log.debug("[{}] kafkaSession.isConnected() = {}, kafkaSession.getConsumer().getConsumer().isStopped() = {}",
+                    kafkaSession.getEdge().getId(),
+                    kafkaSession.isConnected(),
+                    kafkaSession.getConsumer() != null ? kafkaSession.getConsumer().getConsumer() != null ? kafkaSession.getConsumer().getConsumer().isStopped() : null : null);
+            return !kafkaSession.isConnected() &&
+                    kafkaSession.getConsumer() != null &&
+                    kafkaSession.getConsumer().getConsumer() != null &&
+                    !kafkaSession.getConsumer().getConsumer().isStopped();
+        }
+        return false;
+
     }
 
 }
