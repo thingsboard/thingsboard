@@ -16,15 +16,11 @@
 
 import { Component } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
-import { combineLatest } from 'rxjs';
 import {
   passwordsMatchValidator,
   passwordStrengthValidator
@@ -37,26 +33,21 @@ import {
 })
 export class CreatePasswordComponent extends PageComponent {
 
-  activateToken = '';
-  createPassword: UntypedFormGroup;
   passwordPolicy: UserPasswordPolicy;
+  createPassword: FormGroup;
 
-  constructor(protected store: Store<AppState>,
-              private route: ActivatedRoute,
+  private activateToken: string;
+
+  constructor(private route: ActivatedRoute,
               private authService: AuthService,
-              private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
-    super(store);
+              private fb: FormBuilder) {
+    super();
 
-    combineLatest([
-      this.route.queryParams,
-      this.route.data
-    ])
+    this.activateToken = this.route.snapshot.queryParams['activateToken'] || '';
+
+    this.route.data
       .pipe(takeUntilDestroyed())
-      .subscribe(([params, data]) => {
-        this.activateToken = params['activateToken'] || '';
-        this.passwordPolicy = data['passwordPolicy'];
-      });
+      .subscribe((data) => this.passwordPolicy = data['passwordPolicy']);
 
     this.buildCreatePasswordForm();
   }
@@ -72,17 +63,13 @@ export class CreatePasswordComponent extends PageComponent {
     });
   }
 
-  get passwordErrorsLength(): number {
-    return Object.keys(this.createPassword.get('newPassword')?.errors ?? {}).length;
-  }
-
   onCreatePassword() {
     if (this.createPassword.invalid) {
       this.createPassword.markAllAsTouched();
     } else {
       this.authService.activate(
         this.activateToken,
-        this.createPassword.get('password').value, true).subscribe();
+        this.createPassword.get('newPassword').value, true).subscribe();
     }
   }
 }

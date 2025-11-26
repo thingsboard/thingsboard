@@ -16,13 +16,9 @@
 
 import { Component } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { TranslateService } from '@ngx-translate/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { combineLatest } from 'rxjs';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
@@ -39,25 +35,22 @@ export class ResetPasswordComponent extends PageComponent {
 
   isExpiredPassword: boolean;
 
-  resetToken = '';
-
-  resetPassword: UntypedFormGroup;
+  resetPassword: FormGroup;
   passwordPolicy: UserPasswordPolicy;
 
-  constructor(protected store: Store<AppState>,
-              private route: ActivatedRoute,
+  private resetToken: string;
+
+  constructor(private route: ActivatedRoute,
               private router: Router,
               private authService: AuthService,
-              private translate: TranslateService,
-              private fb: UntypedFormBuilder) {
-    super(store);
-    combineLatest([
-      this.route.queryParams,
-      this.route.data
-    ])
+              private fb: FormBuilder) {
+    super();
+
+    this.resetToken = this.route.snapshot.queryParams['resetToken'] || '';
+
+    this.route.data
       .pipe(takeUntilDestroyed())
-      .subscribe(([params, data]) => {
-        this.resetToken = params['resetToken'] || '';
+      .subscribe((data) => {
         this.passwordPolicy = data['passwordPolicy'];
         this.isExpiredPassword = data['expiredPassword'] ?? false;
       });
@@ -74,10 +67,6 @@ export class ResetPasswordComponent extends PageComponent {
         passwordsMatchValidator('newPassword', 'newPassword2'),
       ]
     });
-  }
-
-  get passwordErrorsLength(): number {
-    return Object.keys(this.resetPassword.get('newPassword')?.errors ?? {}).length;
   }
 
   onResetPassword() {

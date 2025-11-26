@@ -18,24 +18,14 @@ import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { AbstractControl, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { isEqual } from '@core/utils';
 
-export enum PasswordErrorMessageKey {
-  minLength = 'security.password-requirement.password-min-length',
-  maxLength = 'security.password-requirement.password-max-length',
-  notUpperCase = 'security.password-requirement.password-uppercase',
-  notLowerCase = 'security.password-requirement.password-lowercase',
-  notNumeric = 'security.password-requirement.password-digit',
-  notSpecial = 'security.password-requirement.password-special-characters',
-  hasWhitespaces = 'security.password-requirement.password-should-not-contain-spaces',
-  default = 'security.password-requirement.password-not-meet-requirements'
-}
-
 export enum TooltipPasswordErrorMessageKey {
   minLength = 'security.password-requirement.password-tooltip-min-length',
   maxLength = 'security.password-requirement.password-tooltip-max-length',
   notUpperCase = 'security.password-requirement.password-tooltip-uppercase',
   notLowerCase = 'security.password-requirement.password-tooltip-lowercase',
   notNumeric = 'security.password-requirement.password-tooltip-digit',
-  notSpecial = 'security.password-requirement.password-tooltip-special-characters'
+  notSpecial = 'security.password-requirement.password-tooltip-special-characters',
+  hasWhitespaces = 'security.password-requirement.password-should-not-contain-spaces'
 }
 
 export const passwordErrorRules = [
@@ -45,6 +35,7 @@ export const passwordErrorRules = [
   { key: 'notNumeric', policyProp: 'minimumDigits', translation: TooltipPasswordErrorMessageKey.notNumeric },
   { key: 'notSpecial', policyProp: 'minimumSpecialCharacters', translation: TooltipPasswordErrorMessageKey.notSpecial },
   { key: 'maxLength', policyProp: 'maximumLength', translation: TooltipPasswordErrorMessageKey.maxLength },
+  { key: 'hasWhitespaces', policyProp: 'hasWhitespaces', translation: TooltipPasswordErrorMessageKey.hasWhitespaces },
 ];
 
 export const passwordsMatchValidator = (firstControlName: string, secondControlName: string): ValidatorFn =>{
@@ -59,14 +50,7 @@ export const passwordsMatchValidator = (firstControlName: string, secondControlN
     const newPass = newPassControl.value ?? '';
     const confirm = confirmControl.value ?? '';
 
-    const userInteracted =
-      confirmControl.touched || confirmControl.dirty || group.touched;
-
-    if (!userInteracted) {
-      return null;
-    }
-
-    if (newPass && confirm !== newPass) {
+    if ((newPass || confirm) && confirm !== newPass) {
       confirmControl.setErrors({ passwordsNotMatch: true });
       return { passwordsNotMatch: true };
     } else {
