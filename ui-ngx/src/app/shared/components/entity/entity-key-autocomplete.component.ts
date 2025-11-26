@@ -66,6 +66,7 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
 
   @Input() placeholder = this.translate.instant('action.set');
   @Input() requiredText = this.translate.instant('common.hint.key-required');
+  @Input() enableAutocomplete = true;
 
   entityFilter = input.required<EntityFilter>();
   dataKeyType = input.required<DataKeyType>();
@@ -81,12 +82,18 @@ export class EntityKeyAutocompleteComponent implements ControlValueAccessor, Val
   keys$ = this.keyInputSubject.asObservable()
     .pipe(
       switchMap(() => {
+        if (!this.enableAutocomplete) {
+          return of([] as string[]);
+        }
         return this.cachedResult ? of(this.cachedResult) : this.entityService.findEntityKeysByQuery({
           pageLink: { page: 0, pageSize: 100 },
           entityFilter: this.entityFilter(),
         }, this.dataKeyType() === DataKeyType.attribute, this.dataKeyType() === DataKeyType.timeseries, this.keyScopeType(), {ignoreLoading: true});
       }),
       map(result => {
+        if (Array.isArray(result)) {
+          return result;
+        }
         this.cachedResult = result;
         switch (this.dataKeyType()) {
           case DataKeyType.attribute:

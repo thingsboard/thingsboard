@@ -13,20 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  width: 100%;
-  .tb-alarm-rule-details, .tb-alarm-rule-dashboard {
-    padding: 4px;
-    &.title {
-      opacity: 0.7;
-      overflow: visible;
-    }
-  }
-  .tb-alarm-rule-details {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-    cursor: pointer;
-  }
-}
+package org.thingsboard.server.service.security.model.token;
 
+public record ApiKeyAuthRequest(String apiKey) {}

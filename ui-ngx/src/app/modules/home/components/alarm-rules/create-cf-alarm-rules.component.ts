@@ -33,6 +33,7 @@ import { CalculatedFieldArgument } from "@shared/models/calculated-field.models"
 import { AlarmSeverityNotificationColors } from "@shared/models/notification.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'tb-create-cf-alarm-rules',
@@ -60,6 +61,8 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
+  @Input({required: true})
+  testScript: (expression: string) => Observable<string>;
 
   alarmSeverities = Object.keys(AlarmSeverity);
   alarmSeverityEnum = AlarmSeverity;
@@ -157,7 +160,7 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   }
 
   public validate(c: UntypedFormControl) {
-    return (this.createAlarmRulesFormArray().length && this.createAlarmRulesFormGroup.valid) ? null : {
+    return this.createAlarmRulesFormArray().length ? null : {
       createAlarmRules: {
         valid: false,
       },

@@ -38,26 +38,26 @@ public class ApiKeyInfo extends BaseData<ApiKeyId> implements HasTenantId {
     @Serial
     private static final long serialVersionUID = -2313196723950490263L;
 
-    @Schema(description = "JSON object with Tenant Id. Tenant Id of the api key cannot be changed.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "JSON object with Tenant Id. Tenant Id of the API key cannot be changed.", accessMode = Schema.AccessMode.READ_ONLY)
     private TenantId tenantId;
 
-    @Schema(description = "JSON object with User Id. User Id of the api key cannot be changed.")
+    @Schema(description = "JSON object with User Id. User Id of the API key cannot be changed.")
     private UserId userId;
 
-    @Schema(description = "Expiration time of the api key.")
+    @Schema(description = "Expiration time of the API key.")
     private long expirationTime;
 
     @NoXss
     @NotBlank
     @Length(fieldName = "description")
-    @Schema(description = "Api Key description.", example = "Api Key description")
+    @Schema(description = "API Key description.", example = "API Key description")
     private String description;
 
-    @Schema(description = "Enabled/disabled api key.", example = "true")
+    @Schema(description = "Enabled/disabled API key.", example = "true")
     private boolean enabled;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @Schema(description = "Indicates if the api key is expired based on current time. Returns false if expirationTime is 0 (no expiry).",
+    @Schema(description = "Indicates if the API key is expired based on current time. Returns false if expirationTime is 0 (no expiry).",
             example = "false",
             accessMode = Schema.AccessMode.READ_ONLY)
     public boolean isExpired() {
@@ -67,10 +67,10 @@ public class ApiKeyInfo extends BaseData<ApiKeyId> implements HasTenantId {
         return System.currentTimeMillis() > expirationTime;
     }
 
-    @Schema(description = "JSON object with the Api Key Id. " +
-            "Specify this field to update the Api Key. " +
-            "Referencing non-existing Api Key Id will cause error. " +
-            "Omit this field to create new Api Key.")
+    @Schema(description = "JSON object with the API Key Id. " +
+            "Specify this field to update the API Key. " +
+            "Referencing non-existing API Key Id will cause error. " +
+            "Omit this field to create new API Key.")
     @Override
     public ApiKeyId getId() {
         return super.getId();

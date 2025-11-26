@@ -15,32 +15,24 @@
 ///
 
 import { Component } from '@angular/core';
+import { AppState } from '@app/core/public-api';
+import { AuditLog, AuditLogFilter, TimePageLink } from '@app/shared/public-api';
+import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
 import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { DeviceInfo } from '@shared/models/device.models';
-import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
-import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
-  selector: 'tb-device-tabs',
-  templateUrl: './device-tabs.component.html',
-  styleUrls: []
+  selector: 'tb-audit-log-header',
+  templateUrl: './audit-log-header.component.html',
+  styles: ``
 })
-export class DeviceTabsComponent extends EntityTabsComponent<DeviceInfo> {
-
-  ownerId: EntityId;
+export class AuditLogHeaderComponent extends EntityTableHeaderComponent<AuditLog, TimePageLink> {
 
   constructor(protected store: Store<AppState>) {
-    super(store);
+    super(store)
   }
 
-  ngOnInit() {
-    super.ngOnInit();
+  auditLogFiltersChanged(auditLogFilter: AuditLogFilter) {
+    this.entitiesTableConfig.componentsData.auditLogFilter = auditLogFilter;
+    this.entitiesTableConfig.getTable().resetSortAndFilter(true, true);
   }
-
-  protected setEntity(entity: DeviceInfo) {
-    this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
-    super.setEntity(entity);
-  }
-
 }

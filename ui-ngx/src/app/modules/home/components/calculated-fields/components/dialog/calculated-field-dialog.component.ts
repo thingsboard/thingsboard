@@ -105,19 +105,19 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     }
   }
 
-  onTestScript(): Observable<string> {
+  onTestScript(expression?: string): Observable<string> {
     const calculatedFieldId = this.data.value?.id?.id;
     if (calculatedFieldId) {
       return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
         .pipe(
           switchMap(event => {
             const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.data.getTestScriptDialogFn(this.fromGroupValue, args, false);
+            return this.data.getTestScriptDialogFn(this.fromGroupValue, args, false, expression);
           }),
           takeUntilDestroyed(this.destroyRef)
         )
     }
-    return this.data.getTestScriptDialogFn(this.fromGroupValue, null, false);
+    return this.data.getTestScriptDialogFn(this.fromGroupValue, null, false, expression);
   }
 
   private applyDialogData(): void {

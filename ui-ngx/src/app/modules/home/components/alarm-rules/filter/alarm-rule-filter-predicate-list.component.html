@@ -69,17 +69,13 @@
     <button mat-button mat-raised-button color="primary"
             [class.!hidden]="disabled"
             (click)="addPredicate(false)"
-            type="button"
-            matTooltip="{{ 'filter.add-filter' | translate }}"
-            matTooltipPosition="above">
+            type="button">
       {{ 'action.add' | translate }}
     </button>
     <button mat-button mat-raised-button color="primary"
             [class.!hidden]="disabled"
             (click)="addPredicate(true)"
-            type="button"
-            matTooltip="{{ 'filter.add-complex-filter' | translate }}"
-            matTooltipPosition="above">
+            type="button">
       {{ 'filter.add-complex' | translate }}
     </button>
   </div>

@@ -33,6 +33,7 @@ import { EntityFilter } from '@shared/models/query/query.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
+import { Observable } from "rxjs";
 
 interface CalculatedFieldAggMetricValuePanel extends CalculatedFieldAggMetricValue {
   allowFilter: boolean;
@@ -52,6 +53,7 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
   @Input() simpleMode: boolean;
   @Input() editorCompleter: TbEditorCompleter;
   @Input() highlightRules: AceHighlightRules;
+  @Input({required: true}) testScript: (expression?: string) => Observable<string>;
 
   metricDataApplied = output<CalculatedFieldAggMetricValue>();
   filterExpanded = false;
@@ -81,7 +83,7 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
 
   constructor(
     private fb: FormBuilder,
-    private popover: TbPopoverComponent<CalculatedFieldMetricsPanelComponent>
+    private popover: TbPopoverComponent<CalculatedFieldMetricsPanelComponent>,
   ) {
     this.observeFilterAllowChange();
     this.observeInputTypeChange();
@@ -162,5 +164,12 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
       this.metricForm.get('input.key').setValue(null);
       this.metricForm.get('input.key').markAsTouched();
     }
+  }
+
+  onTestScript(scriptFunc: 'filter' | 'input.function') {
+    this.testScript(this.metricForm.get(scriptFunc).value).subscribe(expression => {
+      this.metricForm.get(scriptFunc).setValue(expression);
+      this.metricForm.get(scriptFunc).markAsDirty();
+    });
   }
 }

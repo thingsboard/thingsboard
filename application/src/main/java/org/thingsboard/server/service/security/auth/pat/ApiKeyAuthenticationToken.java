@@ -17,7 +17,7 @@ package org.thingsboard.server.service.security.auth.pat;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.security.model.token.RawApiKey;
+import org.thingsboard.server.service.security.model.token.ApiKeyAuthRequest;
 
 import java.io.Serial;
 
@@ -26,12 +26,12 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     @Serial
     private static final long serialVersionUID = 2978710889397403536L;
 
-    private RawApiKey rawApiKey;
+    private ApiKeyAuthRequest apiKeyAuthRequest;
     private SecurityUser securityUser;
 
-    public ApiKeyAuthenticationToken(RawApiKey rawApiKey) {
+    public ApiKeyAuthenticationToken(ApiKeyAuthRequest apiKeyAuthRequest) {
         super(null);
-        this.rawApiKey = rawApiKey;
+        this.apiKeyAuthRequest = apiKeyAuthRequest;
         setAuthenticated(false);
     }
 
@@ -44,7 +44,7 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
 
     @Override
     public Object getCredentials() {
-        return rawApiKey;
+        return apiKeyAuthRequest;
     }
 
     @Override
@@ -55,7 +55,7 @@ public class ApiKeyAuthenticationToken extends AbstractAuthenticationToken {
     @Override
     public void eraseCredentials() {
         super.eraseCredentials();
-        this.rawApiKey = null;
+        this.apiKeyAuthRequest = null;
     }
 
 }
