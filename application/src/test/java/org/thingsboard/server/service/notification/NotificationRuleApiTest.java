@@ -855,19 +855,19 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
         loginSysAdmin();
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
-                .ramThreshold(1f)
-                .cpuThreshold(1f)
-                .storageThreshold(1f)
+                .ramThreshold(0.99f)
+                .cpuThreshold(0.99f)
+                .storageThreshold(0.99f)
                 .build();
         NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
-        // Mock SystemUtil to return 15% usages (not exceeds 100% threshold)
+        // Mock SystemUtil to return 15% usages (not exceeds 99% threshold)
         Method method;
         try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
             mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(15));
             mockedSystemUtil.when(SystemUtil::getCpuUsage).thenReturn(Optional.of(15));
-            mockedSystemUtil.when(SystemUtil::getDiscSpaceUsage).thenReturn(Optional.of(15L));
+            mockedSystemUtil.when(SystemUtil::getDiscSpaceUsage).thenReturn(Optional.of(15));
 
             method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
             method.setAccessible(true);
