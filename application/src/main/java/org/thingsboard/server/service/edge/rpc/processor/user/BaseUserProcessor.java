@@ -21,10 +21,14 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
@@ -82,7 +86,23 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
         return Pair.of(isCreated, userEmailUpdated);
     }
 
-    protected User deleteUser(TenantId tenantId, UserId userId) {
+    protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId) {
+        deleteUserAndPushEntityDeletedEventToRuleEngine(tenantId, userId, null);
+    }
+
+    protected void deleteUserAndPushEntityDeletedEventToRuleEngine(TenantId tenantId, UserId userId, Edge edge) {
+        User removedUser = deleteUser(tenantId, userId);
+        if (removedUser == null) {
+            return;
+        }
+        CustomerId userCustomerId = removedUser.getCustomerId();
+        String userAsString = JacksonUtil.toString(removedUser);
+        TbMsgMetaData msgMetaData = edge == null ? new TbMsgMetaData() : getEdgeActionTbMsgMetaData(edge, userCustomerId);
+        addRemovedUserMetadata(msgMetaData, removedUser);
+        pushEntityEventToRuleEngine(tenantId, userId, userCustomerId, TbMsgType.ENTITY_DELETED, userAsString, msgMetaData);
+    }
+
+    private User deleteUser(TenantId tenantId, UserId userId) {
         User userById = edgeCtx.getUserService().findUserById(tenantId, userId);
         if (userById == null) {
             log.trace("[{}] User with id {} does not exist", tenantId, userId);
@@ -115,6 +135,18 @@ public abstract class BaseUserProcessor extends BaseEdgeProcessor {
             log.error("[{}] Can't update user credentials for user [{}], userCredentialsUpdateMsg [{}]",
                     tenantId, user.getName(), updateMsg, e);
             throw new RuntimeException(e);
+        }
+    }
+
+    private void addRemovedUserMetadata(TbMsgMetaData metaData, User removedUser) {
+        metaData.putValue("userId", removedUser.getId().toString());
+        metaData.putValue("userName", removedUser.getName());
+        metaData.putValue("userEmail", removedUser.getEmail());
+        if (removedUser.getFirstName() != null) {
+            metaData.putValue("userFirstName", removedUser.getFirstName());
+        }
+        if (removedUser.getLastName() != null) {
+            metaData.putValue("userLastName", removedUser.getLastName());
         }
     }
 
