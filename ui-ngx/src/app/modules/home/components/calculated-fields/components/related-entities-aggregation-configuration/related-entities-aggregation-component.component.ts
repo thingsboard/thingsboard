@@ -73,7 +73,8 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   @Input({required: true})
   entityName: string;
 
-  @Input() calculatedFieldId: string;
+  @Input({required: true})
+  testScript: (expression?: string) => Observable<string>;
 
   readonly ScriptLanguage = ScriptLanguage;
   readonly CalculatedFieldType = CalculatedFieldType;
@@ -95,7 +96,7 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   });
 
   arguments$ = this.relatedAggregationConfiguration.get('arguments').valueChanges.pipe(
-    map(argumentsObj => argumentsObj)
+    map(argumentsObj => Object.keys(argumentsObj))
   );
 
   argumentsEditorCompleter$ = this.relatedAggregationConfiguration.get('arguments').valueChanges.pipe(

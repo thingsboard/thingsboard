@@ -43,12 +43,13 @@ import {
   AlarmRuleSchedule,
   AlarmRuleScheduleType
 } from "@shared/models/alarm-rule.models";
-import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import {
   AlarmRuleScheduleDialogData,
   CfAlarmScheduleDialogComponent
 } from "@home/components/alarm-rules/cf-alarm-schedule-dialog.component";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'tb-cf-alarm-rule-condition',
@@ -84,8 +85,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   @coerceBoolean()
   isClearCondition = false;
 
-  @Input()
-  value: CalculatedField;
+  @Input({required: true})
+  testScript: (expression: string) => Observable<string>;
 
   alarmRuleConditionFormGroup = this.fb.group({
     type: ['SIMPLE'],
@@ -152,7 +153,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
         readonly: this.disabled,
         condition: this.disabled ? this.modelValue : deepClone(this.modelValue),
         arguments: this.arguments,
-        value: this.value,
+        testScript: this.testScript
       }
     }).afterClosed().subscribe((result) => {
       if (result) {

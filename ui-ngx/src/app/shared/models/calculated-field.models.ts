@@ -496,7 +496,7 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
   entityName?: string;
 }
 
-export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean, expression?: string) => Observable<string>;
 
 export interface CalculatedFieldTestScriptInputParams {
   arguments: CalculatedFieldEventArguments;

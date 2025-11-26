@@ -42,7 +42,7 @@ import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { merge } from 'rxjs';
+import { merge, Observable } from 'rxjs';
 import { TranslateService } from '@ngx-translate/core';
 import _moment from 'moment';
 
@@ -84,6 +84,8 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
 
   @Input({required: true})
   entityName: string;
+
+  @Input() testScript: (expression?: string) => Observable<string>;
 
   readonly minAllowedAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedAggregationIntervalInSecForCF;
   readonly DayInSec = DAY / SECOND;

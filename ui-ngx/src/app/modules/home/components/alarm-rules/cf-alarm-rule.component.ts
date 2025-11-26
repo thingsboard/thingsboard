@@ -28,12 +28,13 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { DashboardId } from '@shared/models/id/dashboard-id';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AlarmRule, AlarmRuleCondition } from "@shared/models/alarm-rule.models";
-import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import {
   AlarmRuleDetailsDialogComponent,
   AlarmRuleDetailsDialogData
 } from "@home/components/alarm-rules/alarm-rule-details-dialog.component";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'tb-cf-alarm-rule',
@@ -69,8 +70,8 @@ export class CfAlarmRuleComponent implements ControlValueAccessor, OnInit, Valid
   @coerceBoolean()
   isClearCondition = false;
 
-  @Input()
-  value: CalculatedField;
+  @Input({required: true})
+  testScript: (expression: string) => Observable<string>;
 
   private modelValue: AlarmRule;
 

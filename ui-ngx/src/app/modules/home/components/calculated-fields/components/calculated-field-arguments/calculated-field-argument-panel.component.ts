@@ -71,7 +71,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() ownerId: EntityId;
   @Input() isScript: boolean;
   @Input() usedArgumentNames: string[];
-  @Input() isOutputKey = false;
   @Input() watchKeyChange = false;
   @Input() hiddenEntityTypes = false;
   @Input() hiddenEntityKeyTypes = false;
@@ -81,6 +80,14 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() predefinedEntityFilter: EntityFilter;
   @Input() forbiddenNames = FORBIDDEN_NAMES;
   @Input() argumentEntityTypes = Object.values(ArgumentEntityType).filter(value => value !== ArgumentEntityType.RelationQuery) as ArgumentEntityType[];
+  @Input() argumentNameContext: {[key: string]: string} = {
+    label: 'calculated-fields.argument-name',
+    required: 'calculated-fields.hint.argument-name-required',
+    duplicate: 'calculated-fields.hint.argument-name-duplicate',
+    pattern: 'calculated-fields.hint.argument-name-pattern',
+    maxlength: 'calculated-fields.hint.argument-name-max-length',
+    forbidden: 'calculated-fields.hint.argument-name-forbidden'
+  };
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
@@ -109,15 +116,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   entityNameSubject = new BehaviorSubject<string>(null);
 
   enableAutocomplete = false;
-
-  argumentNameContext = {
-    label: 'calculated-fields.argument-name',
-    required: 'calculated-fields.hint.argument-name-required',
-    duplicate: 'calculated-fields.hint.argument-name-duplicate',
-    pattern: 'calculated-fields.hint.argument-name-pattern',
-    maxlength: 'calculated-fields.hint.argument-name-max-length',
-    forbidden: 'calculated-fields.hint.argument-name-forbidden'
-  }
 
   readonly ArgumentEntityTypeTranslations = ArgumentEntityTypeTranslations;
   readonly ArgumentType = ArgumentType;
@@ -169,17 +167,6 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     this.setInitialEntityType();
     if (this.watchKeyChange) {
       this.setWatchKeyChange();
-    }
-
-    if (this.isOutputKey) {
-      this.argumentNameContext = {
-        label: 'calculated-fields.output-key',
-        required: 'calculated-fields.hint.output-key-required',
-        duplicate: 'calculated-fields.hint.output-key-duplicate',
-        pattern: 'calculated-fields.hint.output-key-pattern',
-        maxlength: 'calculated-fields.hint.output-key-max-length',
-        forbidden: 'calculated-fields.hint.output-key-forbidden'
-      }
     }
 
     if (this.defaultValueRequired) {

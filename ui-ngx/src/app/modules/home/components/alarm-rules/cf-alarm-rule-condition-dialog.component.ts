@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, Inject } from '@angular/core';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { Component, Inject } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, Validators } from '@angular/forms';
@@ -32,10 +32,7 @@ import {
   AlarmRuleExpressionType
 } from "@shared/models/alarm-rule.models";
 import {
-  ArgumentType,
-  CalculatedField,
   CalculatedFieldArgument,
-  CalculatedFieldEventArguments,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights
 } from "@shared/models/calculated-field.models";
@@ -43,19 +40,12 @@ import { TbEditorCompleter } from "@shared/models/ace/completion.models";
 import { AceHighlightRules } from "@shared/models/ace/ace.models";
 import { ComplexOperation, complexOperationTranslationMap } from "@shared/models/query/query.models";
 import { Observable } from "rxjs";
-import { filter, switchMap, tap } from "rxjs/operators";
-import { isObject } from "@core/utils";
-import {
-  CalculatedFieldScriptTestDialogComponent,
-  CalculatedFieldTestScriptDialogData
-} from "@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component";
-import { CalculatedFieldsService } from "@core/http/calculated-fields.service";
 
 export interface CfAlarmRuleConditionDialogData {
   readonly: boolean;
   condition: AlarmRuleCondition;
   arguments?: Record<string, CalculatedFieldArgument>;
-  value?: CalculatedField;
+  testScript: (expression: string) => Observable<string>;
 }
 
 @Component({
@@ -119,10 +109,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CfAlarmRuleConditionDialogData,
               public dialogRef: MatDialogRef<CfAlarmRuleConditionDialogComponent, AlarmRuleCondition>,
-              private fb: FormBuilder,
-              private calculatedFieldsService: CalculatedFieldsService,
-              private destroyRef: DestroyRef,
-              private dialog: MatDialog) {
+              private fb: FormBuilder) {
     super(store, router, dialogRef);
 
     this.functionArgs = ['ctx', ...Object.keys(this.data.arguments)];
@@ -240,50 +227,10 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   }
 
   onTestScript() {
-    this.testScript().subscribe(
+    this.data.testScript(this.conditionFormGroup.get('expression.expression').value).subscribe(
       (expression) => {
         this.conditionFormGroup.get('expression.expression').setValue(expression);
         this.conditionFormGroup.get('expression.expression').markAsDirty();
       })
   }
-
-  testScript(): Observable<string> {
-    if (this.data.value?.id?.id) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(this.data.value?.id?.id, {ignoreLoading: true})
-        .pipe(
-          switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.getTestScriptDialog(this.arguments, this.conditionFormGroup.get('expression.expression').value, args);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
-    }
-    return this.getTestScriptDialog(this.arguments, this.conditionFormGroup.get('expression.expression').value, null);
-  }
-
-  getTestScriptDialog(argumentsList: Record<string, CalculatedFieldArgument>, expression: string, argumentsObj?: CalculatedFieldEventArguments): Observable<string> {
-    const resultArguments = Object.keys(argumentsList).reduce((acc, key) => {
-      const type = argumentsList[key].refEntityKey.type;
-      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
-        ? {...argumentsObj[key], type}
-        : type === ArgumentType.Rolling ? {values: [], type} : {value: '', type, ts: new Date().getTime()};
-      return acc;
-    }, {});
-    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
-      {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
-        data: {
-          arguments: resultArguments,
-          expression: expression,
-          argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(argumentsList),
-          argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(argumentsList)
-        }
-      }).afterClosed()
-      .pipe(
-        filter(Boolean),
-        tap(expression => expression)
-      );
-  }
-
 }

@@ -110,7 +110,7 @@
                       matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                       matTooltipPosition="above"
                       class="tb-mat-32"
-                      [disabled]="!argumentsList.length"
+                      [disabled]="!arguments.length"
                       (click)="onTestScript('filter')">
                 <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
               </button>
@@ -119,7 +119,7 @@
               <button mat-button mat-raised-button color="primary"
                       type="button"
                       (click)="onTestScript('filter')"
-                      [disabled]="!argumentsList.length">
+                      [disabled]="!arguments.length">
                 {{ 'calculated-fields.test-script-function' | translate }}
               </button>
             </div>
@@ -145,7 +145,7 @@
           <div class="fixed-title-width tb-required">{{ 'calculated-fields.argument-name' | translate }}</div>
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="key" placeholder="{{ 'action.set' | translate }}">
-              @for (argument of argumentsList; track argument) {
+              @for (argument of arguments; track argument) {
                 <mat-option [value]="argument">{{ argument }}</mat-option>
               }
             </mat-select>
@@ -179,7 +179,7 @@
                   matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                   matTooltipPosition="above"
                   class="tb-mat-32"
-                  [disabled]="!argumentsList.length"
+                  [disabled]="!arguments.length"
                   (click)="onTestScript('input.function')">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
@@ -188,7 +188,7 @@
           <button mat-button mat-raised-button color="primary"
                   type="button"
                   (click)="onTestScript('input.function')"
-                  [disabled]="!argumentsList.length">
+                  [disabled]="!arguments.length">
             {{ 'calculated-fields.test-script-function' | translate }}
           </button>
         </div>

@@ -309,9 +309,10 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
+  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true, expression?: string): Observable<string> {
     if (
       calculatedField.type === CalculatedFieldType.SCRIPT ||
+      calculatedField.type === CalculatedFieldType.RELATED_ENTITIES_AGGREGATION ||
       (calculatedField.type === CalculatedFieldType.PROPAGATION && calculatedField.configuration.applyExpressionToResolvedArguments === true)
     ) {
       const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
@@ -327,7 +328,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
           panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
           data: {
             arguments: resultArguments,
-            expression: (calculatedField.configuration as CalculatedFieldScriptConfiguration | PropagationWithExpression).expression,
+            expression: expression ?? (calculatedField.configuration as CalculatedFieldScriptConfiguration | PropagationWithExpression).expression,
             argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
             argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
             openCalculatedFieldEdit

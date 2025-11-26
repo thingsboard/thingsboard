@@ -88,7 +88,7 @@
                                                      [entityId]="data.entityId"
                                                      [entityName]="data.entityName"
                                                      [tenantId]="data.tenantId"
-                                                     [calculatedFieldId]="data.value?.id?.id"
+                                                     [testScript]="onTestScript.bind(this)"
           ></tb-related-entities-aggregation-component>
         }
         @case (CalculatedFieldType.ENTITY_AGGREGATION) {

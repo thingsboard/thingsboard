@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, Input, OnInit, output } from '@angular/core';
+import { Component, Input, OnInit, output } from '@angular/core';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { FormBuilder, Validators } from '@angular/forms';
 import { charsWithNumRegex } from '@shared/models/regex.constants';
@@ -23,14 +23,9 @@ import {
   AggFunctionTranslations,
   AggInputType,
   AggInputTypeTranslations,
-  ArgumentType,
   CalculatedFieldAggMetricValue,
-  CalculatedFieldArgument,
-  CalculatedFieldEventArguments,
   FORBIDDEN_NAMES,
   forbiddenNamesValidator,
-  getCalculatedFieldArgumentsEditorCompleter,
-  getCalculatedFieldArgumentsHighlights,
   uniqueNameValidator
 } from '@shared/models/calculated-field.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -38,15 +33,7 @@ import { EntityFilter } from '@shared/models/query/query.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
-import { MatDialog } from "@angular/material/dialog";
 import { Observable } from "rxjs";
-import { isObject } from "@core/utils";
-import {
-  CalculatedFieldScriptTestDialogComponent,
-  CalculatedFieldTestScriptDialogData
-} from "@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component";
-import { filter, switchMap, tap } from "rxjs/operators";
-import { CalculatedFieldsService } from "@core/http/calculated-fields.service";
 
 interface CalculatedFieldAggMetricValuePanel extends CalculatedFieldAggMetricValue {
   allowFilter: boolean;
@@ -62,15 +49,14 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
   @Input() buttonTitle: string;
   @Input() metric: CalculatedFieldAggMetricValue;
   @Input() usedNames: string[];
-  @Input() arguments: Record<string, CalculatedFieldArgument>;
+  @Input() arguments: Array<string>;
   @Input() simpleMode: boolean;
   @Input() editorCompleter: TbEditorCompleter;
   @Input() highlightRules: AceHighlightRules;
-  @Input() calculatedFieldId: string;
+  @Input({required: true}) testScript: (expression?: string) => Observable<string>;
 
   metricDataApplied = output<CalculatedFieldAggMetricValue>();
   filterExpanded = false;
-  argumentsList: Array<string>
   functionArgs: Array<string>
 
   metricForm = this.fb.group({
@@ -98,9 +84,6 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
   constructor(
     private fb: FormBuilder,
     private popover: TbPopoverComponent<CalculatedFieldMetricsPanelComponent>,
-    private dialog: MatDialog,
-    private calculatedFieldsService: CalculatedFieldsService,
-    private destroyRef: DestroyRef
   ) {
     this.observeFilterAllowChange();
     this.observeInputTypeChange();
@@ -119,8 +102,7 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     this.validateInputTypeFilter(data.input?.type ?? AggInputType.key);
     this.validateInputKey();
 
-    this.argumentsList = Object.keys(this.arguments);
-    this.functionArgs = ['ctx', ...this.argumentsList];
+    this.functionArgs = ['ctx', ...this.arguments];
   }
 
   saveMetric(): void {
@@ -178,55 +160,16 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
   }
 
   private validateInputKey() {
-    if (this.metric.input?.type === AggInputType.key && !Object.keys(this.arguments).includes(this.metric.input.key)) {
+    if (this.metric.input?.type === AggInputType.key && !this.arguments.includes(this.metric.input.key)) {
       this.metricForm.get('input.key').setValue(null);
       this.metricForm.get('input.key').markAsTouched();
     }
   }
 
   onTestScript(scriptFunc: 'filter' | 'input.function') {
-    this.testScript(scriptFunc).subscribe(expression => {
+    this.testScript(this.metricForm.get(scriptFunc).value).subscribe(expression => {
       this.metricForm.get(scriptFunc).setValue(expression);
       this.metricForm.get(scriptFunc).markAsDirty();
     });
-  }
-
-  testScript(scriptFunc: 'filter' | 'input.function'): Observable<string> {
-    if (this.calculatedFieldId) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(this.calculatedFieldId, {ignoreLoading: true})
-        .pipe(
-          switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.getTestScriptDialog(this.arguments, this.metricForm.get(scriptFunc).value, args);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
-    }
-    return this.getTestScriptDialog(this.arguments, this.metricForm.get(scriptFunc).value, null);
-  }
-
-  getTestScriptDialog(argumentsList: Record<string, CalculatedFieldArgument>, expression: string, argumentsObj?: CalculatedFieldEventArguments): Observable<string> {
-    const resultArguments = Object.keys(argumentsList).reduce((acc, key) => {
-      const type = argumentsList[key].refEntityKey.type;
-      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
-        ? {...argumentsObj[key], type}
-        : type === ArgumentType.Rolling ? {values: [], type} : {value: '', type, ts: new Date().getTime()};
-      return acc;
-    }, {});
-    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
-      {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
-        data: {
-          arguments: resultArguments,
-          expression: expression,
-          argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(argumentsList),
-          argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(argumentsList)
-        }
-      }).afterClosed()
-      .pipe(
-        filter(Boolean),
-        tap(expression => expression)
-      );
   }
 }

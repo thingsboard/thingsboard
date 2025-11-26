@@ -93,7 +93,14 @@ export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTa
       this.displayColumns = ['name', 'type', 'key', 'actions'];
       this.panelAdditionalCtx = {
         argumentEntityTypes: [ArgumentEntityType.Current],
-        isOutputKey: true,
+        argumentNameContext: {
+          label: 'calculated-fields.output-key',
+          required: 'calculated-fields.hint.output-key-required',
+          duplicate: 'calculated-fields.hint.output-key-duplicate',
+          pattern: 'calculated-fields.hint.output-key-pattern',
+          maxlength: 'calculated-fields.hint.output-key-max-length',
+          forbidden: 'calculated-fields.hint.output-key-forbidden'
+        },
         watchKeyChange: true,
         forbiddenNames: [...FORBIDDEN_NAMES, 'propagationCtx'],
       };

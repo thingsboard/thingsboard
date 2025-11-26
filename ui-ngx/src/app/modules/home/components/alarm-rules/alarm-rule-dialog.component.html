@@ -91,7 +91,7 @@
         <div class="tb-form-panel">
           <div class="tb-form-panel-title">{{ 'alarm-rule.create-conditions' | translate }}</div>
           <div class="flex flex-1 flex-col">
-            <tb-create-cf-alarm-rules formControlName="createRules" [arguments]="arguments" [value]="data.value">
+            <tb-create-cf-alarm-rules formControlName="createRules" [arguments]="arguments" [testScript]="onTestScript.bind(this)">
             </tb-create-cf-alarm-rules>
           </div>
         </div>
@@ -100,7 +100,7 @@
           <div class="flex flex-row items-center justify-start gap-2 pb-2"
                [class.!hidden]="!configFormGroup.get('clearRule').value">
             <div class="clear-alarm-rule flex flex-1 flex-row">
-              <tb-cf-alarm-rule formControlName="clearRule" class="flex-1" [arguments]="arguments" [value]="data.value" isClearCondition>
+              <tb-cf-alarm-rule formControlName="clearRule" class="flex-1" [arguments]="arguments" [testScript]="onTestScript.bind(this)" isClearCondition>
               </tb-cf-alarm-rule>
             </div>
             <button mat-icon-button
@@ -119,8 +119,7 @@
           <div [class.!hidden]="configFormGroup.get('clearRule').value">
             <button mat-stroked-button color="primary"
                     type="button"
-                    (click)="addClearAlarmRule()"
-                    matTooltipPosition="above">
+                    (click)="addClearAlarmRule()">
               {{ 'alarm-rule.add-clear-alarm-rule' | translate }}
             </button>
           </div>
