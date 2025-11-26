@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { Component, Input, ViewEncapsulation } from '@angular/core';
 import { CdkOverlayOrigin, ConnectionPositionPair } from '@angular/cdk/overlay';
 import { passwordErrorRules } from '@shared/models/password.models';
 import { AbstractControl } from '@angular/forms';
@@ -23,7 +23,8 @@ import { UserPasswordPolicy } from '@shared/models/settings.models';
 @Component({
   selector: 'tb-password-requirements-tooltip',
   templateUrl: './password-requirements-tooltip.component.html',
-  styleUrl: './password-requirements-tooltip.component.scss'
+  styleUrl: './password-requirements-tooltip.component.scss',
+  encapsulation: ViewEncapsulation.None
 })
 export class PasswordRequirementsTooltipComponent {
   @Input() passwordControl: AbstractControl;

@@ -55,7 +55,7 @@ export class CreatePasswordComponent extends PageComponent {
   private buildCreatePasswordForm() {
     this.createPassword = this.fb.group({
       newPassword: ['', [Validators.required, passwordStrengthValidator(this.passwordPolicy)]],
-      newPassword2:['']
+      newPassword2: ['']
     }, {
       validators: [
         passwordsMatchValidator('newPassword', 'newPassword2'),
