@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.tenant.profile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -175,14 +174,16 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long maxArgumentsPerCF = 10;
     @Schema(example = "60")
     private int minAllowedScheduledUpdateIntervalInSecForCF = 60;
+    @Builder.Default
     @Schema(example = "10")
     @Positive
     private int maxRelationLevelPerCfArgument = 10;
+    @Builder.Default
     @Schema(example = "100")
     @Positive
     private int maxRelatedEntitiesToReturnPerCfArgument = 100;
     @Builder.Default
-    @Min(value = 1, message = "must be at least 1")
+    @Positive
     @Schema(example = "1000")
     private long maxDataPointsPerRollingArg = 1000;
     @Schema(example = "32")
