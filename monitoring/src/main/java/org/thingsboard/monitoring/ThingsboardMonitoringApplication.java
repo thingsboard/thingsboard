@@ -50,7 +50,7 @@ public class ThingsboardMonitoringApplication {
     @Value("${monitoring.monitoring_rate_ms}")
     private int monitoringRateMs;
 
-    ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("monitoring-executor");
+    ScheduledExecutorService scheduler = ThingsBoardExecutors.newSingleThreadScheduledExecutor("monitoring");
 
     public static void main(String[] args) {
         new SpringApplicationBuilder(ThingsboardMonitoringApplication.class)
@@ -63,12 +63,15 @@ public class ThingsboardMonitoringApplication {
         entityService.checkEntities();
         monitoringServices.forEach(BaseMonitoringService::init);
 
-        scheduler.scheduleWithFixedDelay(() -> {
-            monitoringServices.forEach(monitoringService -> {
-                monitoringService.runChecks();
-            });
-        }, 0, monitoringRateMs, TimeUnit.MILLISECONDS);
-        notificationService.sendNotification(new InfoNotification(":rocket: Monitoring started"));
+        for (int i = 0; i < monitoringServices.size(); i++) {
+            int initialDelay = (monitoringRateMs / monitoringServices.size()) * i;
+            BaseMonitoringService<?, ?> service = monitoringServices.get(i);
+            log.info("Scheduling initialDelay {}, fixedDelay {} for monitoring '{}' ", initialDelay, monitoringRateMs, service.getClass().getSimpleName());
+            scheduler.scheduleWithFixedDelay(service::runChecks, initialDelay, monitoringRateMs, TimeUnit.MILLISECONDS);
+        }
+
+        String publicDashboardUrl = entityService.getDashboardPublicLink();
+        notificationService.sendNotification(new InfoNotification(":rocket: <"+publicDashboardUrl+"|Monitoring> started"));
     }
 
     @EventListener(ContextClosedEvent.class)

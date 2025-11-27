@@ -91,6 +91,8 @@ public class MonitoringEntityService {
     @Value("${monitoring.calculated_fields.enabled:true}")
     private boolean calculatedFieldsMonitoringEnabled;
 
+    DashboardId dashboardId = null;
+
     public void checkEntities() {
         RuleChain ruleChain = tbClient.getRuleChains(RuleChainType.CORE, new PageLink(10)).getData().stream()
                 .filter(RuleChain::isRoot)
@@ -132,7 +134,7 @@ public class MonitoringEntityService {
         tbClient.assignAssetToPublicCustomer(asset.getId());
         tbClient.assignDashboardToPublicCustomer(dashboard.getId());
 
-        getDashboardPublicLink(dashboard);
+        this.dashboardId = Optional.ofNullable(dashboard).map(Dashboard::getId).orElse(null);
     }
 
     public Asset getOrCreateMonitoringAsset() {
@@ -266,10 +268,10 @@ public class MonitoringEntityService {
         tbClient.saveCalculatedField(calculatedField);
     }
 
-    private String getDashboardPublicLink(Dashboard dashboard) {
+    public String getDashboardPublicLink() {
         String link = "";
         try {
-            Optional<DashboardInfo> infoOpt = tbClient.getDashboardInfoById(dashboard.getId());
+            Optional<DashboardInfo> infoOpt = tbClient.getDashboardInfoById(dashboardId);
             if (infoOpt.isPresent()) {
                 String publicCustomerId = null;
                 Set<ShortCustomerInfo> customers = infoOpt.get().getAssignedCustomers();
@@ -280,7 +282,7 @@ public class MonitoringEntityService {
                             .findFirst().orElse(null);
                 }
                 if (publicCustomerId != null) {
-                    link = buildPublicDashboardLink(dashboard.getId(), publicCustomerId);
+                    link = buildPublicDashboardLink(dashboardId, publicCustomerId);
                     log.info("Public Monitoring dashboard link: {}", link);
                 } else {
                     log.warn("Dashboard is not assigned to public customer. Public link can't be generated.");
