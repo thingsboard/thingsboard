@@ -21,7 +21,10 @@
   <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>api-key.description</mat-label>
     <textarea #input cdkTextareaAutosize matInput [formControl]="descriptionFormControl" rows="2" maxLength="255"></textarea>
-    <mat-hint align="end">{{input.value?.length || 0}}/255</mat-hint>
+    <mat-error *ngIf="descriptionFormControl.hasError('required')">
+      {{ 'asset.description-required' | translate }}
+    </mat-error>
+    <mat-hint align="end">{{ input.value?.length || 0 }}/255</mat-hint>
   </mat-form-field>
   <div class="tb-edit-api-key-description-panel-buttons">
     <button mat-button
