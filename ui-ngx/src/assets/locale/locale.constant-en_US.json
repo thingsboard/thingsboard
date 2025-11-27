@@ -772,6 +772,7 @@
         "name-max-length": "Name should be less than 256",
         "label-max-length": "Label should be less than 256",
         "description": "Description",
+        "description-required": "Description is required.",
         "type": "Type",
         "type-required": "Type is required.",
         "details": "Details",
