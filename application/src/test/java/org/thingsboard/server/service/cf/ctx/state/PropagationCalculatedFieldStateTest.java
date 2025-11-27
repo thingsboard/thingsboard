@@ -19,6 +19,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.micrometer.core.instrument.simple.SimpleMeterRegistry;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -52,10 +54,12 @@ import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalcul
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -126,21 +130,28 @@ public class PropagationCalculatedFieldStateTest {
         assertThat(state.isReady()).isFalse();
     }
 
-    @Test
-    void testIsReadyWhenPropagationArgIsNull() {
-        initCtxAndState(false);
-        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry), ctx);
-        assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
+    private static Stream<ArgumentEntry> provideInvalidPropagationArgs() {
+        return Stream.of(
+                null,
+                new PropagationArgumentEntry(Collections.emptyList())
+        );
     }
 
-    @Test
-    void testIsReadyWhenPropagationArgIsEmpty() {
+    @ParameterizedTest
+    @MethodSource("provideInvalidPropagationArgs")
+    void testIsReadyWhenPropagationArgIsNullOrEmpty(ArgumentEntry propagationEntry) {
         initCtxAndState(false);
-        state.update(Map.of(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry,
-                PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())), ctx);
+
+        Map<String, ArgumentEntry> args = new HashMap<>();
+        args.put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry); // Valid user arg
+
+        if (propagationEntry != null) {
+            args.put(PROPAGATION_CONFIG_ARGUMENT, propagationEntry);
+        }
+        state.update(args, ctx);
         assertThat(state.isReady()).isFalse();
-        assertThat(state.getReadinessStatus().errorMsg()).contains(PROPAGATION_CONFIG_ARGUMENT);
+        assertThat(state.getReadinessStatus().errorMsg())
+                .isEqualTo("No entities found via 'Propagation path to related entities'. Verify the configured relation type and direction.");
     }
 
     @Test

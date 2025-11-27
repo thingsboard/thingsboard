@@ -25,6 +25,8 @@ import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
 import java.io.Closeable;
@@ -164,6 +166,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
                     .mapToLong(e -> (e instanceof SingleValueArgumentEntry s) ? s.getTs() : 0L)
                     .max()
                     .orElse(0L);
+        } else if (entry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
+            newTs = geofencingArgumentEntry.getZoneStates().values().stream()
+                    .mapToLong(GeofencingZoneState::getTs).max().orElse(0L);
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
     }
