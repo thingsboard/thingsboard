@@ -297,6 +297,7 @@ export class DashboardUtilsService {
     }
     widgetConfig.datasources = this.validateAndUpdateDatasources(widgetConfig.datasources);
     if (type === widgetType.latest) {
+      // TODO: the following won't work for maps
       if (datasourcesHasAggregation(widgetConfig.datasources)) {
         const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
         widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true,
