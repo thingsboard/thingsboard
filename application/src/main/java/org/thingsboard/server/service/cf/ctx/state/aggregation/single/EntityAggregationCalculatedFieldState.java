@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.apache.commons.lang3.concurrent.LazyInitializer;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
@@ -103,10 +102,11 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         long now = System.currentTimeMillis();
 
         if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
-            LazyInitializer<EntityAggregationDebugArgumentsTracker> lazy = LazyInitializer.<EntityAggregationDebugArgumentsTracker>builder()
-                            .setInitializer(() -> new EntityAggregationDebugArgumentsTracker(new HashMap<>()))
-                            .get();
-            debugTracker = lazy.get();
+            if (debugTracker == null) {
+                debugTracker = new EntityAggregationDebugArgumentsTracker(new HashMap<>());
+            } else {
+                debugTracker.reset();
+            }
             debugTracker.recordUpdatedArgs(updatedArgs, arguments);
         }
 
@@ -313,6 +313,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     record EntityAggregationDebugArgumentsTracker(Map<AggIntervalEntry, Map<String, TbelCfArg>> processedIntervals) {
+
+        public void reset() {
+            processedIntervals.clear();
+        }
 
         public void addInterval(AggIntervalEntry interval) {
             processedIntervals.computeIfAbsent(interval, k -> new HashMap<>());

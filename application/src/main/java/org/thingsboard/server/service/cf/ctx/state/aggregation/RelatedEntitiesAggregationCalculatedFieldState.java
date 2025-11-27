@@ -262,9 +262,11 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         List<EntityArgument> entitiesArguments = new ArrayList<>();
         inputs.forEach((entityId, entityArguments) -> {
             EntityInfo entityInfo = entityIdEntityInfos.get(entityId);
-            JsonNode entityArgumentsJson = JacksonUtil.valueToTree(entityArguments.entrySet().stream()
-                    .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().jsonValue())));
-            entitiesArguments.add(new EntityArgument(entityInfo, entityArgumentsJson));
+            if (entityInfo != null) {
+                JsonNode entityArgumentsJson = JacksonUtil.valueToTree(entityArguments.entrySet().stream()
+                        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().jsonValue())));
+                entitiesArguments.add(new EntityArgument(entityInfo, entityArgumentsJson));
+            }
         });
         return JacksonUtil.valueToTree(new RelatedEntitiesArgument(ArgumentEntryType.RELATED_ENTITIES, entitiesArguments));
     }
