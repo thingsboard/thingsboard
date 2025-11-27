@@ -257,14 +257,14 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
 
     @Override
     public JsonNode getArgumentsJson() {
+        Map<EntityId, Map<String, ArgumentEntry>> inputs = prepareInputs();
+        Map<EntityId, EntityInfo> entityIdEntityInfos = entityService.fetchEntityInfos(ctx.getTenantId(), null, inputs.keySet());
         List<EntityArgument> entitiesArguments = new ArrayList<>();
-        prepareInputs().forEach((entityId, entityArguments) -> {
-            entityService.fetchEntityName(ctx.getTenantId(), entityId).ifPresent(entityName -> {
-                EntityInfo entityInfo = new EntityInfo(entityId, entityName);
-                JsonNode entityArgumentsJson = JacksonUtil.valueToTree(entityArguments.entrySet().stream()
-                        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().jsonValue())));
-                entitiesArguments.add(new EntityArgument(entityInfo, entityArgumentsJson));
-            });
+        inputs.forEach((entityId, entityArguments) -> {
+            EntityInfo entityInfo = entityIdEntityInfos.get(entityId);
+            JsonNode entityArgumentsJson = JacksonUtil.valueToTree(entityArguments.entrySet().stream()
+                    .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().jsonValue())));
+            entitiesArguments.add(new EntityArgument(entityInfo, entityArgumentsJson));
         });
         return JacksonUtil.valueToTree(new RelatedEntitiesArgument(ArgumentEntryType.RELATED_ENTITIES, entitiesArguments));
     }

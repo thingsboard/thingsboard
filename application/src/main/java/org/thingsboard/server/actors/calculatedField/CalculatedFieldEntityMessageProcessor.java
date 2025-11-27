@@ -70,7 +70,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.CF_REEVALUATION_MSG;
+import static org.thingsboard.server.common.data.DataConstants.REEVALUATION_MSG;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
 
 /**
@@ -355,7 +355,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
         if (state.isSizeOk()) {
             log.debug("[{}][{}] Reevaluating CF state", entityId, cfId);
-            processStateIfReady(state, null, ctx, Collections.singletonList(cfId), null, CF_REEVALUATION_MSG, msg.getCallback());
+            processStateIfReady(state, null, ctx, Collections.singletonList(cfId), null, REEVALUATION_MSG, msg.getCallback());
         } else {
             throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
         }
