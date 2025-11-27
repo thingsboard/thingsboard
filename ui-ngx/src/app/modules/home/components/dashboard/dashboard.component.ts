@@ -34,7 +34,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
+import { initModelFromDefaultTimewindow, Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
 import { GridsterComponent, GridsterConfig, GridType } from 'angular-gridster2';
 import {
@@ -223,9 +223,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   ngOnInit(): void {
     this.dashboardWidgets.parentDashboard = this.parentDashboard;
     this.dashboardWidgets.popoverComponent = this.popoverComponent;
-    if (!this.dashboardTimewindow) {
-      this.dashboardTimewindow = this.timeService.defaultTimewindow(true);
-    }
+    this.dashboardTimewindow = initModelFromDefaultTimewindow(this.dashboardTimewindow,
+      false, false, this.timeService, true, true);
     this.gridsterOpts = {
       gridType: this.gridType || GridType.ScrollVertical,
       keepFixedHeightInMobile: true,
