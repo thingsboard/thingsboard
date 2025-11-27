@@ -23,7 +23,7 @@ import {
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormArray,
-  UntypedFormControl,
+  ValidationErrors,
   Validator,
   Validators
 } from '@angular/forms';
@@ -159,8 +159,8 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
     return null;
   }
 
-  public validate(c: UntypedFormControl) {
-    return this.createAlarmRulesFormArray().length ? null : {
+  public validate(): ValidationErrors | null {
+    return this.createAlarmRulesFormGroup.valid && this.createAlarmRulesFormArray().length > 0 ? null : {
       createAlarmRules: {
         valid: false,
       },
