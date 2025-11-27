@@ -1119,7 +1119,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private Map<String, String> getNamesFromProfileForSharedAttributes(LwM2mClient lwM2MClient) {
         Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getRegistration());
-        return profile.getObserveAttr().getKeyName();
+        return profile != null ? profile.getObserveAttr().getKeyName() : Collections.emptyMap();
     }
 
     public LwM2MTransportServerConfig getConfig() {
