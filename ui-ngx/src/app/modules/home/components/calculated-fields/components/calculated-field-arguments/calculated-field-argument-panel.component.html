@@ -24,15 +24,8 @@
       </div>
     }
     <div class="tb-form-panel no-border no-padding">
-      @if (!isOutputKey) {
-        <ng-container *ngTemplateOutlet="argumentNameTemplate; context: {
-          label: 'calculated-fields.argument-name',
-          required: 'calculated-fields.hint.argument-name-required',
-          duplicate: 'calculated-fields.hint.argument-name-duplicate',
-          pattern: 'calculated-fields.hint.argument-name-pattern',
-          maxlength: 'calculated-fields.hint.argument-name-max-length',
-          forbidden: 'calculated-fields.hint.argument-name-forbidden'
-        }"></ng-container>
+      @if (!watchKeyChange) {
+        <ng-container *ngTemplateOutlet="argumentNameTemplate; context: argumentNameContext"></ng-container>
       }
       <ng-container>
         @if (!hiddenEntityTypes) {
@@ -105,7 +98,7 @@
                 <ng-container [ngTemplateOutlet]="timeseriesKeyAutocomplete"/>
               }
               <ng-template #timeseriesKeyAutocomplete>
-                <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter"/>
+                <tb-entity-key-autocomplete class="flex-1" formControlName="key" [dataKeyType]="DataKeyType.timeseries" [entityFilter]="entityFilter" [enableAutocomplete]="!enableAutocomplete"/>
               </ng-template>
             </div>
           } @else {
@@ -132,6 +125,7 @@
               <tb-entity-key-autocomplete
                 formControlName="key"
                 class="flex-1"
+                [enableAutocomplete]="!enableAutocomplete"
                 [dataKeyType]="DataKeyType.attribute"
                 [entityFilter]="entityFilter"
                 [keyScopeType]="argumentFormGroup.get('refEntityKey').get('scope').value"
@@ -140,15 +134,8 @@
           }
         }
       </ng-container>
-      @if (isOutputKey) {
-        <ng-container *ngTemplateOutlet="argumentNameTemplate; context: {
-          label: 'calculated-fields.output-key',
-          required: 'calculated-fields.hint.output-key-required',
-          duplicate: 'calculated-fields.hint.output-key-duplicate',
-          pattern: 'calculated-fields.hint.output-key-pattern',
-          maxlength: 'calculated-fields.hint.output-key-max-length',
-          forbidden: 'calculated-fields.hint.output-key-forbidden'
-        }"></ng-container>
+      @if (watchKeyChange) {
+        <ng-container *ngTemplateOutlet="argumentNameTemplate; context: argumentNameContext"></ng-container>
       }
       @if (refEntityKeyFormGroup.get('type').value !== ArgumentType.Rolling) {
         @if (!hiddenDefaultValue) {

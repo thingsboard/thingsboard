@@ -174,9 +174,9 @@ public abstract class AbstractCalculatedFieldProcessingService {
             return future.get();
         } catch (ExecutionException e) {
             Throwable cause = e.getCause();
-            throw new RuntimeException("Failed to fetch " + key + ": " + cause.getMessage(), cause);
+            throw new RuntimeException("Failed to fetch '" + key + "' argument: " + cause.getMessage(), cause);
         } catch (InterruptedException e) {
-            throw new RuntimeException("Failed to fetch" + key, e);
+            throw new RuntimeException("Failed to fetch '" + key + "' argument!", e);
         }
     }
 

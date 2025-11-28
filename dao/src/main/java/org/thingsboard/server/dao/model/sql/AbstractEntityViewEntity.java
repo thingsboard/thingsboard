@@ -40,10 +40,6 @@ import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.ENTITY_TYPE_PROPERTY;
 
-/**
- * Created by Victor Basanets on 8/30/2017.
- */
-
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass

@@ -20,9 +20,8 @@ import {
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormControl,
-  Validator,
-  Validators
+  ValidationErrors,
+  Validator
 } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
@@ -50,6 +49,7 @@ import {
   CfAlarmScheduleDialogComponent
 } from "@home/components/alarm-rules/cf-alarm-schedule-dialog.component";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'tb-cf-alarm-rule-condition',
@@ -80,6 +80,13 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
 
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
+
+  @Input()
+  @coerceBoolean()
+  isClearCondition = false;
+
+  @Input({required: true})
+  testScript: (expression: string) => Observable<string>;
 
   alarmRuleConditionFormGroup = this.fb.group({
     type: ['SIMPLE'],
@@ -118,17 +125,15 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   writeValue(value: AlarmRuleCondition): void {
-    if (value) {
-      this.modelValue = value;
-      this.updateConditionInfo();
-    }
+    this.modelValue = value;
+    this.updateConditionInfo();
   }
 
   public conditionSet() {
-    return this.modelValue && (this.modelValue.expression?.expression || this.modelValue.expression?.filters) || !this.required;
+    return this.modelValue && (this.modelValue.expression?.expression || this.modelValue.expression?.filters);
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(): ValidationErrors | null {
     return this.conditionSet() ? null : {
       alarmRuleCondition: {
         valid: false,
@@ -147,7 +152,8 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
       data: {
         readonly: this.disabled,
         condition: this.disabled ? this.modelValue : deepClone(this.modelValue),
-        arguments: this.arguments
+        arguments: this.arguments,
+        testScript: this.testScript
       }
     }).afterClosed().subscribe((result) => {
       if (result) {
@@ -160,11 +166,11 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
 
   private updateConditionInfo() {
     this.alarmRuleConditionFormGroup.patchValue(
-      {
+      this.modelValue ? {
         type: this.modelValue?.type,
         expression: this.modelValue?.expression,
         schedule: this.modelValue?.schedule,
-      }, {emitEvent: false}
+      } : null, {emitEvent: false}
     );
     this.updateScheduleText();
     this.updateSpecText();

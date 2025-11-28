@@ -70,6 +70,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.REEVALUATION_MSG;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
 
 /**
@@ -311,6 +312,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             }
         } catch (Exception e) {
             log.debug("[{}][{}] Failed to process linked CF telemetry msg: {}", entityId, ctx.getCfId(), msg, e);
+            if (e instanceof CalculatedFieldException cfe) {
+                throw cfe;
+            }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
@@ -351,7 +355,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
         if (state.isSizeOk()) {
             log.debug("[{}][{}] Reevaluating CF state", entityId, cfId);
-            processStateIfReady(state, null, ctx, Collections.singletonList(cfId), null, null, msg.getCallback());
+            processStateIfReady(state, null, ctx, Collections.singletonList(cfId), null, REEVALUATION_MSG, msg.getCallback());
         } else {
             throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
         }
@@ -432,7 +436,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (!updatedArgs.isEmpty() || justRestored) {
                 cfIdList = new ArrayList<>(cfIdList);
                 cfIdList.add(ctx.getCfId());
-                processStateIfReady(state, updatedArgs, ctx, cfIdList, tbMsgId, tbMsgType, callback);
+                String msgType = tbMsgType == null ? null : tbMsgType.name();
+                processStateIfReady(state, updatedArgs, ctx, cfIdList, tbMsgId, msgType, callback);
             } else {
                 callback.onSuccess();
             }
@@ -474,7 +479,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private void processStateIfReady(CalculatedFieldState state, Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx,
-                                     List<CalculatedFieldId> cfIdList, UUID tbMsgId, TbMsgType tbMsgType, TbCallback callback) throws CalculatedFieldException {
+                                     List<CalculatedFieldId> cfIdList, UUID tbMsgId, String tbMsgType, TbCallback callback) throws CalculatedFieldException {
         callback = new MultipleTbCallback(CALLBACKS_PER_CF, callback);
         log.trace("[{}][{}] Processing state if ready. Current args: {}, updated args: {}", entityId, ctx.getCfId(), state.getArguments(), updatedArgs);
         CalculatedFieldEntityCtxId ctxId = new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId);
@@ -492,19 +497,19 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         callback.onSuccess();
                     }
                     if (DebugModeUtil.isDebugAllAvailable(ctx.getCalculatedField())) {
-                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, calculationResult.stringValue(), null);
+                        systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArgumentsJson(), tbMsgId, tbMsgType, calculationResult.stringValue(), null);
                     }
                 }
             } else {
                 if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
                     String errorMsg = ctx.isInitialized() ? state.getReadinessStatus().errorMsg() : "Calculated field state is not initialized!";
-                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArguments(), tbMsgId, tbMsgType, null, errorMsg);
+                    systemContext.persistCalculatedFieldDebugEvent(tenantId, ctx.getCfId(), entityId, state.getArgumentsJson(), tbMsgId, tbMsgType, null, errorMsg);
                 }
                 callback.onSuccess();
             }
         } catch (Exception e) {
             log.debug("[{}][{}] Failed to process CF state", entityId, ctx.getCfId(), e);
-            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArguments()).cause(e).build();
+            throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).msgId(tbMsgId).msgType(tbMsgType).arguments(state.getArgumentsJson()).cause(e).build();
         } finally {
             if (!stateSizeChecked) {
                 state.checkStateSize(ctxId, ctx.getMaxStateSize());

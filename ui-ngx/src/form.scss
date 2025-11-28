@@ -257,6 +257,12 @@
           flex: 1;
         }
       }
+      &.flex-lt-lg {
+        @media #{$mat-lt-lg} {
+          width: auto;
+          flex: 1;
+        }
+      }
     }
     .fixed-title-width {
       min-width: 200px;
