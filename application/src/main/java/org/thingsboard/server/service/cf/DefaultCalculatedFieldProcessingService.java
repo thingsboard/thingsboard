@@ -133,40 +133,40 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         return super.fetchMetricDuringInterval(tenantId, entityId, argKey, metric, interval);
     }
 
-    public void processResult(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    public void processResult(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof AlarmCalculatedFieldResult) {
-            sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+            sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));
             return;
         }
         TelemetryCalculatedFieldResult telemetryResult = result instanceof TelemetryCalculatedFieldResult telemetryRes
                 ? telemetryRes : ((PropagationCalculatedFieldResult) result).getResult();
         switch (telemetryResult.getOutputStrategy().getType()) {
-            case IMMEDIATE -> processImmediately(tenantId, entityId, result, cfIds, callback);
-            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
+            case IMMEDIATE -> processImmediately(tenantId, entityId, cfName, result, cfIds, callback);
+            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, cfName, result, cfIds, callback);
         }
     }
 
-    private void processImmediately(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    private void processImmediately(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof TelemetryCalculatedFieldResult telemetryResult) {
-            saveTelemetryResult(tenantId, entityId, telemetryResult, cfIds, callback);
+            saveTelemetryResult(tenantId, entityId, cfName, telemetryResult, cfIds, callback);
             return;
         }
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
-                    (entity, res, cb) -> saveTelemetryResult(tenantId, entity, res, cfIds, cb));
+                    (entity, res, cb) -> saveTelemetryResult(tenantId, entity, cfName, res, cfIds, cb));
             return;
         }
         callback.onSuccess();
     }
 
-    private void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    private void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
-                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entity, cb, res.toTbMsg(entity, cfIds)));
+                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entity, cb, res.toTbMsg(entity, cfName, cfIds)));
             return;
         }
 
-        sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+        sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));
     }
 
     private void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,

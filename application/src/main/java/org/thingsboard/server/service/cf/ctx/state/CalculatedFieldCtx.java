@@ -86,6 +86,7 @@ public class CalculatedFieldCtx implements Closeable {
     private CalculatedField calculatedField;
 
     private CalculatedFieldId cfId;
+    private String cfName;
     private TenantId tenantId;
     private EntityId entityId;
     private CalculatedFieldType cfType;
@@ -130,6 +131,7 @@ public class CalculatedFieldCtx implements Closeable {
         this.calculatedField = calculatedField;
 
         this.cfId = calculatedField.getId();
+        this.cfName = calculatedField.getName();
         this.tenantId = calculatedField.getTenantId();
         this.entityId = calculatedField.getEntityId();
         this.cfType = calculatedField.getType();

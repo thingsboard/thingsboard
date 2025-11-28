@@ -36,7 +36,6 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 @Builder
 public final class TelemetryCalculatedFieldResult implements CalculatedFieldResult {
 
-    private final String calculatedFieldName;
     private final OutputType type;
     private final AttributeScope scope;
     private final OutputStrategy outputStrategy;
@@ -45,13 +44,13 @@ public final class TelemetryCalculatedFieldResult implements CalculatedFieldResu
     public static final TelemetryCalculatedFieldResult EMPTY = TelemetryCalculatedFieldResult.builder().result(null).build();
 
     @Override
-    public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
+    public TbMsg toTbMsg(EntityId entityId, String cfName, List<CalculatedFieldId> cfIds) {
         TbMsgType msgType = switch (type) {
             case ATTRIBUTES -> TbMsgType.POST_ATTRIBUTES_REQUEST;
             case TIME_SERIES -> TbMsgType.POST_TELEMETRY_REQUEST;
         };
         TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue(CF_NAME_METADATA_KEY, calculatedFieldName);
+        metaData.putValue(CF_NAME_METADATA_KEY, cfName);
         if (OutputType.ATTRIBUTES == type) {
             metaData.putValue(SCOPE, scope.name());
         }

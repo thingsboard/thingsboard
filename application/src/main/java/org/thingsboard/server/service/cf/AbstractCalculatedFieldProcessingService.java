@@ -422,13 +422,13 @@ public abstract class AbstractCalculatedFieldProcessingService {
         }
     }
 
-    protected void saveTelemetryResult(TenantId tenantId, EntityId entityId, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    protected void saveTelemetryResult(TenantId tenantId, EntityId entityId, String cfName, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
         OutputType type = cfResult.getType();
         JsonElement jsonResult = JsonParser.parseString(Objects.requireNonNull(cfResult.stringValue()));
 
         log.trace("[{}][{}] Saving CF result: {}", tenantId, entityId, jsonResult);
         switch (type) {
-            case ATTRIBUTES -> saveAttributes(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfResult.getScope(), cfResult.getCalculatedFieldName(), cfIds, callback);
+            case ATTRIBUTES -> saveAttributes(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfResult.getScope(), cfName, cfIds, callback);
             case TIME_SERIES -> saveTimeSeries(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfIds, System.currentTimeMillis(), callback);
         }
     }
@@ -477,18 +477,20 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .entries(entries)
                 .strategy(strategy)
                 .previousCalculatedFieldIds(cfIds)
-                .callback(new FutureCallback<Void>() {
+                .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(Void result) {
                         if (sendAttributesUpdatedNotification) {
                             sendAttributesUpdatedMsg(tenantId, entityId, scope, cfName, entries);
                         }
                         callback.onSuccess();
+                        log.debug("[{}][{}] Saved CF result: {}", tenantId, entityId, entries);
                     }
 
                     @Override
                     public void onFailure(Throwable t) {
                         callback.onFailure(t);
+                        log.error("[{}][{}] Failed to save CF result {}", tenantId, entityId, entries, t);
                     }
                 })
                 .build());
@@ -515,15 +517,17 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .entityId(entityId)
                 .entries(tsEntries)
                 .strategy(strategy)
-                .callback(new FutureCallback<Void>() {
+                .callback(new FutureCallback<>() {
                     @Override
                     public void onSuccess(Void result) {
                         callback.onSuccess();
+                        log.debug("[{}][{}] Saved CF result: {}", tenantId, entityId, tsEntries);
                     }
 
                     @Override
                     public void onFailure(Throwable t) {
                         callback.onFailure(t);
+                        log.error("[{}][{}] Failed to save CF result {}", tenantId, entityId, tsEntries, t);
                     }
                 });
         if (ttl != null) {
