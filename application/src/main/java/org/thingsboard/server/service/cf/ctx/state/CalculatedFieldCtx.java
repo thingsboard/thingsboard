@@ -646,13 +646,15 @@ public class CalculatedFieldCtx implements Closeable {
         }
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
             && other.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig
-            && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec() || !thisConfig.getMetrics().equals(otherConfig.getMetrics()))) {
+            && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec()
+                || !thisConfig.getMetrics().equals(otherConfig.getMetrics())
+                || thisConfig.isUseLatestTs() != otherConfig.isUseLatestTs())) {
             return true;
         }
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
             && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
-            boolean metricsChanged = thisConfig.getMetrics().equals(otherConfig.getMetrics());
-            boolean watermarkChanged = thisConfig.getWatermark().equals(otherConfig.getWatermark());
+            boolean metricsChanged = !Objects.equals(thisConfig.getMetrics(), otherConfig.getMetrics());
+            boolean watermarkChanged = !Objects.equals(thisConfig.getWatermark(), otherConfig.getWatermark());
             return metricsChanged || watermarkChanged;
         }
         return false;

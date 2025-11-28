@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -38,6 +39,7 @@ import java.io.Closeable;
 import java.util.List;
 import java.util.Map;
 
+import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
 
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
@@ -58,6 +60,8 @@ public interface CalculatedFieldState extends Closeable {
     EntityId getEntityId();
 
     Map<String, ArgumentEntry> getArguments();
+
+    JsonNode getArgumentsJson();
 
     long getLatestTimestamp();
 
@@ -102,14 +106,25 @@ public interface CalculatedFieldState extends Closeable {
 
     record ReadinessStatus(boolean ready, String errorMsg) {
 
-        private static final String ERROR_MESSAGE = "Required arguments are missing: ";
+        private static final String MISSING_REQUIRED_ARGUMENTS_ERROR = "Required arguments are missing: ";
+        private static final String MISSING_PROPAGATION_TARGETS_ERROR = "No entities found via 'Propagation path to related entities'. " +
+                                                                        "Verify the configured relation type and direction.";
+        private static final String MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR = MISSING_PROPAGATION_TARGETS_ERROR + " Missing arguments to propagate: ";
         private static final ReadinessStatus READY = new ReadinessStatus(true, null);
 
         public static ReadinessStatus from(List<String> emptyOrMissingArguments) {
             if (CollectionsUtil.isEmpty(emptyOrMissingArguments)) {
                 return ReadinessStatus.READY;
             }
-            return new ReadinessStatus(false, ERROR_MESSAGE + String.join(", ", emptyOrMissingArguments));
+            boolean propagationCtxIsEmpty = emptyOrMissingArguments.remove(PROPAGATION_CONFIG_ARGUMENT);
+            if (!propagationCtxIsEmpty) {
+                return new ReadinessStatus(false, MISSING_REQUIRED_ARGUMENTS_ERROR + String.join(", ", emptyOrMissingArguments));
+            }
+            if (emptyOrMissingArguments.isEmpty()) {
+                return new ReadinessStatus(false, MISSING_PROPAGATION_TARGETS_ERROR);
+            }
+            return new ReadinessStatus(false, MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR +
+                                              String.join(", ", emptyOrMissingArguments));
         }
     }
 

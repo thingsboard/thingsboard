@@ -15,12 +15,16 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.single;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbUtils;
+import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
@@ -36,6 +40,7 @@ import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -45,7 +50,9 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultMetricArgumentEntry;
 
@@ -55,6 +62,8 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     private long watermarkDuration;
     private long checkInterval;
     private Map<String, AggMetric> metrics;
+
+    private EntityAggregationDebugArgumentsTracker debugTracker;
 
     private CalculatedFieldProcessingService cfProcessingService;
 
@@ -92,6 +101,15 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         createIntervalIfNotExist();
         long now = System.currentTimeMillis();
 
+        if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+            if (debugTracker == null) {
+                debugTracker = new EntityAggregationDebugArgumentsTracker(new HashMap<>());
+            } else {
+                debugTracker.reset();
+            }
+            debugTracker.recordUpdatedArgs(updatedArgs, arguments);
+        }
+
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
         getIntervals().forEach((intervalEntry, argIntervalStatuses) -> {
@@ -110,6 +128,12 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 .scope(output.getScope())
                 .result(result)
                 .build());
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        createIntervalIfNotExist();
+        return super.update(argumentValues, ctx);
     }
 
     private void removeExpiredIntervals(List<AggIntervalEntry> expiredIntervals) {
@@ -181,6 +205,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
             handleActiveInterval(intervalEntry, args, results);
+            if (watermarkDuration == 0) {
+                expiredIntervals.add(intervalEntry);
+            }
         }
     }
 
@@ -190,10 +217,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         args.forEach((argName, argEntryIntervalStatus) -> {
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                processMetric(intervalEntry, argName, false, results);
+                processArgument(intervalEntry, argName, false, results);
             } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                processMetric(intervalEntry, argName, true, results);
+                processArgument(intervalEntry, argName, true, results);
             }
         });
     }
@@ -206,38 +233,39 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 if (argEntryIntervalStatus.argsUpdated()) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     argEntryIntervalStatus.setLastArgsRefreshTs(-1);
-                    processMetric(intervalEntry, argName, false, results);
+                    processArgument(intervalEntry, argName, false, results);
                 } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                    processMetric(intervalEntry, argName, true, results);
+                    processArgument(intervalEntry, argName, true, results);
                 }
             }
         });
     }
 
-    private void processMetric(AggIntervalEntry intervalEntry,
-                               String argName,
-                               boolean useDefault,
-                               Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
-        String metricName = findMetricName(argName);
-        if (metricName != null) {
-            AggMetric metric = metrics.get(metricName);
-            String argKey = ctx.getArguments().get(argName).getRefEntityKey().getKey();
-            ArgumentEntry metricEntry = useDefault
-                    ? createDefaultMetricArgumentEntry(argKey, metric)
-                    : cfProcessingService.fetchMetricDuringInterval(ctx.getTenantId(), entityId, argKey, metric, intervalEntry);
-            if (!metricEntry.isEmpty()) {
-                results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metricEntry);
-            }
+    private void processArgument(AggIntervalEntry intervalEntry,
+                                 String argName,
+                                 boolean useDefault,
+                                 Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
+        Set<String> metrics = findMetrics(argName);
+        if (!metrics.isEmpty()) {
+            metrics.forEach(metricName -> {
+                AggMetric metric = this.metrics.get(metricName);
+                String argKey = ctx.getArguments().get(argName).getRefEntityKey().getKey();
+                ArgumentEntry metricEntry = useDefault
+                        ? createDefaultMetricArgumentEntry(argKey, metric)
+                        : cfProcessingService.fetchMetricDuringInterval(ctx.getTenantId(), entityId, argKey, metric, intervalEntry);
+                if (!metricEntry.isEmpty()) {
+                    results.computeIfAbsent(intervalEntry, i -> new HashMap<>()).put(metricName, metricEntry);
+                }
+            });
         }
     }
 
-    private String findMetricName(String argName) {
+    private Set<String> findMetrics(String argName) {
         return metrics.entrySet().stream()
                 .filter(e -> ((AggKeyInput) e.getValue().getInput()).getKey().equals(argName))
                 .map(Map.Entry::getKey)
-                .findFirst()
-                .orElse(null);
+                .collect(Collectors.toSet());
     }
 
     protected ArrayNode toResult(Map<AggIntervalEntry, Map<String, ArgumentEntry>> results, Integer precision) {
@@ -259,14 +287,89 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 resultNode.put("ts", interval.getEndTs() - 1);
                 resultNode.set("values", metricsNode);
                 result.add(resultNode);
+
+                if (DebugModeUtil.isDebugFailuresAvailable(ctx.getCalculatedField())) {
+                    if (debugTracker != null) {
+                        debugTracker.addInterval(interval);
+                    }
+                }
             }
         });
         return result;
     }
 
     @Override
+    public JsonNode getArgumentsJson() {
+        if (debugTracker == null) {
+            return null;
+        }
+        EntityAggregationDebugArguments debugArguments = debugTracker.toDebugArguments();
+        return debugArguments == null ? null : JacksonUtil.valueToTree(debugArguments);
+    }
+
+    @Override
     public boolean isReady() {
         return true;
+    }
+
+    record EntityAggregationDebugArgumentsTracker(Map<AggIntervalEntry, Map<String, TbelCfArg>> processedIntervals) {
+
+        public void reset() {
+            processedIntervals.clear();
+        }
+
+        public void addInterval(AggIntervalEntry interval) {
+            processedIntervals.computeIfAbsent(interval, k -> new HashMap<>());
+        }
+
+        public void recordUpdatedArgs(Map<String, ArgumentEntry> updatedArgs, Map<String, ArgumentEntry> arguments) {
+            if (updatedArgs != null && !updatedArgs.isEmpty()) {
+                updatedArgs.forEach((argName, argEntry) -> {
+                    ArgumentEntry argumentEntry = arguments.get(argName);
+                    if (argumentEntry instanceof EntityAggregationArgumentEntry entityAggEntry && argEntry instanceof SingleValueArgumentEntry singleEntry) {
+                        entityAggEntry.getAggIntervals().forEach((aggIntervalEntry, aggIntervalEntryStatus) -> {
+                            boolean match = singleEntry.isForceResetPrevious() || aggIntervalEntry.belongsToInterval(singleEntry.getTs());
+                            if (match) {
+                                recordArg(aggIntervalEntry, argName, singleEntry.toTbelCfArg());
+                            }
+                        });
+                    }
+                });
+            }
+        }
+
+        public void recordArg(AggIntervalEntry interval, String argName, TbelCfArg value) {
+            processedIntervals.computeIfAbsent(interval, k -> new HashMap<>()).put(argName, value);
+        }
+
+        public EntityAggregationDebugArguments toDebugArguments() {
+            if (processedIntervals.isEmpty()) {
+                return null;
+            }
+            return EntityAggregationDebugArguments.toDebugArguments(processedIntervals);
+        }
+
+    }
+
+    record EntityAggregationDebugArguments(List<IntervalDebugArgument> processedIntervals) {
+
+        public static EntityAggregationDebugArguments toDebugArguments(Map<AggIntervalEntry, Map<String, TbelCfArg>> processedIntervals) {
+            List<IntervalDebugArgument> result = new ArrayList<>();
+            processedIntervals.forEach((interval, args) -> {
+                result.add(new IntervalDebugArgument(interval.getStartTs(), interval.getEndTs(), args));
+            });
+            return new EntityAggregationDebugArguments(result);
+        }
+
+    }
+
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    record IntervalDebugArgument(Long intervalStartTs, Long intervalEndTs, JsonNode updatedArguments) {
+
+        public IntervalDebugArgument(Long intervalStartTs, Long intervalEndTs, Map<String, TbelCfArg> updatedArguments) {
+            this(intervalStartTs, intervalEndTs, updatedArguments == null || updatedArguments.isEmpty() ? null : JacksonUtil.valueToTree(updatedArguments));
+        }
+
     }
 
 }

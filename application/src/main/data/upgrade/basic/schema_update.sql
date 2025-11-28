@@ -18,56 +18,27 @@
 
 UPDATE tenant_profile
 SET profile_data = jsonb_set(
-        profile_data,
-        '{configuration}',
-        (profile_data -> 'configuration')
-            || jsonb_strip_nulls(
-                jsonb_build_object(
-                        'minAllowedScheduledUpdateIntervalInSecForCF',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
-                                THEN NULL
-                            ELSE to_jsonb(60)
-                            END,
-                        'maxRelationLevelPerCfArgument',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
-                                THEN NULL
-                            ELSE to_jsonb(10)
-                            END,
-                        'maxRelatedEntitiesToReturnPerCfArgument',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
-                                THEN NULL
-                            ELSE to_jsonb(100)
-                            END,
-                        'minAllowedDeduplicationIntervalInSecForCF',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
-                                THEN NULL
-                            ELSE to_jsonb(60)
-                            END,
-                        'minAllowedAggregationIntervalInSecForCF',
-                        CASE
-                            WHEN (profile_data -> 'configuration') ? 'minAllowedAggregationIntervalInSecForCF'
-                                THEN NULL
-                            ELSE to_jsonb(60)
-                            END
-                )
-               ),
-        false
-                   )
+    profile_data,
+    '{configuration}',
+    jsonb_build_object(
+        'minAllowedScheduledUpdateIntervalInSecForCF', 60,
+        'maxRelationLevelPerCfArgument', 10,
+        'maxRelatedEntitiesToReturnPerCfArgument', 100,
+        'minAllowedDeduplicationIntervalInSecForCF', 60,
+        'minAllowedAggregationIntervalInSecForCF', 60
+    )
+    ||
+    jsonb_strip_nulls(profile_data -> 'configuration')
+)
 WHERE NOT (
-    (profile_data -> 'configuration') ? 'minAllowedScheduledUpdateIntervalInSecForCF'
-        AND
-    (profile_data -> 'configuration') ? 'maxRelationLevelPerCfArgument'
-        AND
-    (profile_data -> 'configuration') ? 'maxRelatedEntitiesToReturnPerCfArgument'
-        AND
-    (profile_data -> 'configuration') ? 'minAllowedDeduplicationIntervalInSecForCF'
-        AND
-    (profile_data -> 'configuration') ? 'minAllowedAggregationIntervalInSecForCF'
-    );
+    jsonb_strip_nulls(profile_data -> 'configuration') ?& ARRAY[
+        'minAllowedScheduledUpdateIntervalInSecForCF',
+        'maxRelationLevelPerCfArgument',
+        'maxRelatedEntitiesToReturnPerCfArgument',
+        'minAllowedDeduplicationIntervalInSecForCF',
+        'minAllowedAggregationIntervalInSecForCF'
+    ]
+);
 
 -- UPDATE TENANT PROFILE CONFIGURATION END
 

@@ -204,7 +204,7 @@ export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit,
       case EntityType.CALCULATED_FIELD:
         this.placeholder = this.required ? this.translate.instant('alarm.enter-alarm-rule-type')
           : this.translate.instant('alarm-rule.any-type');
-        this.secondaryPlaceholder = '+' + this.translate.instant('alarm-rule.alarm-rule');
+        this.secondaryPlaceholder = '+' + this.translate.instant('alarm-rule.alarm-type');
         this.noSubtypesMathingText = 'alarm-rule.no-alarm-rule-types-matching';
         this.subtypeListEmptyText = 'alarm-rule.alarm-rule-type-list-empty';
         break;

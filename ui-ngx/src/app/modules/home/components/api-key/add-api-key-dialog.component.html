@@ -35,7 +35,10 @@
     </div>
     <mat-form-field class="mat-block" appearance="outline" subscriptSizing="dynamic">
       <mat-label translate>api-key.description</mat-label>
-      <textarea #input cdkTextareaAutosize matInput formControlName="description" rows="2" maxLength="255"></textarea>
+      <textarea cdkTextareaAutosize matInput formControlName="description" rows="2" maxLength="255"></textarea>
+      <mat-error *ngIf="apiKeyForm.get('description').hasError('required')">
+        {{ 'asset.description-required' | translate }}
+      </mat-error>
     </mat-form-field>
     <mat-slide-toggle class="mat-slide" formControlName="enabled">
       {{ 'api-key.enable' | translate }}

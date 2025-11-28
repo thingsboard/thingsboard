@@ -67,7 +67,10 @@
 
       <section class="tb-form-panel">
         <div class="flex flex-row items-center justify-between">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.filter' | translate }}</div>
+          <div class="tb-form-panel-title"
+               tb-hint-tooltip-icon="{{ filterFormGroup.get('valueType').value === entityKeyValueTypeEnum.DATE_TIME ? ('alarm-rule.date-time-hint' | translate) : '' }}">
+            {{ 'alarm-rule.filter' | translate }}
+          </div>
           <tb-toggle-select formControlName="operation"
                             selectMediaBreakpoint="xs">
             <tb-toggle-option [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate }}</tb-toggle-option>
