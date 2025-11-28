@@ -25,17 +25,17 @@ public enum SmppDataCoding {
 
     SMSC_DEFAULT_ALPHABET((byte) 0, Data.ENC_GSM7BIT),
     IA5((byte) 1, Data.ENC_ASCII),
-    OCTET_UNSPECIFIED_2((byte) 2, null),
+    OCTET_UNSPECIFIED_2((byte) 2, Data.ENC_GSM7BIT),
     LATIN1((byte) 3, Data.ENC_ISO8859_1),
-    OCTET_UNSPECIFIED_4((byte) 4, null),
-    JIS((byte) 5, null),
-    CYRILLIC((byte) 6, null),
-    LATIN_HEBREW((byte) 7,  null),
+    OCTET_UNSPECIFIED_4((byte) 4, Data.ENC_GSM7BIT),
+    JIS((byte) 5, Data.ENC_GSM7BIT),
+    CYRILLIC((byte) 6, Data.ENC_GSM7BIT),
+    LATIN_HEBREW((byte) 7,  Data.ENC_GSM7BIT),
     UCS2((byte) 8, Data.ENC_UTF16_BE),
-    PICTOGRAM((byte) 9, null),
-    MUSIC_CODES((byte) 10, null),
-    EXTENDED_KANJI((byte) 13, null),
-    KOREAN((byte) 14, null);
+    PICTOGRAM((byte) 9, Data.ENC_GSM7BIT),
+    MUSIC_CODES((byte) 10, Data.ENC_GSM7BIT),
+    EXTENDED_KANJI((byte) 13, Data.ENC_GSM7BIT),
+    KOREAN((byte) 14, Data.ENC_GSM7BIT);
 
     private final byte code;
     private final String encodingName;

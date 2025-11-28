@@ -90,7 +90,7 @@ public class SmppSmsSender extends AbstractSmsSender {
             SmppDataCoding smppDataCoding = Optional.ofNullable(SmppDataCoding.fromCode(dataCoding)).orElse(SmppDataCoding.SMSC_DEFAULT_ALPHABET);
 
             request.setShortMessage(message, smppDataCoding.getEncodingName());
-            request.setDataCoding(dataCoding);
+            request.setDataCoding(smppDataCoding.getCode());
             request.setDataCoding(Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0));
             request.setReplaceIfPresentFlag((byte) 0);
             request.setEsmClass((byte) 0);
