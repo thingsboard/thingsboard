@@ -162,7 +162,7 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   reset() {
     if (this.initialAuditLogFilter) {
-      if (!auditLogFilterEquals(this.auditLogFilterForm.getRawValue(), this.initialAuditLogFilter)) {
+      if (!auditLogFilterEquals(this.auditLogFilterForm.value, this.initialAuditLogFilter)) {
         this.updateAuditLogFilterForm(this.initialAuditLogFilter);
         this.auditLogFilterForm.markAsDirty();
       }
