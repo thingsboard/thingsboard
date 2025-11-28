@@ -55,18 +55,17 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
         try {
             edgeSynchronizationManager.getEdgeId().set(edge.getId());
 
-            switch (assetUpdateMsg.getMsgType()) {
-                case ENTITY_CREATED_RPC_MESSAGE:
-                case ENTITY_UPDATED_RPC_MESSAGE:
+            return switch (assetUpdateMsg.getMsgType()) {
+                case ENTITY_CREATED_RPC_MESSAGE, ENTITY_UPDATED_RPC_MESSAGE -> {
                     saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edge);
-                    return Futures.immediateFuture(null);
-                case ENTITY_DELETED_RPC_MESSAGE:
+                    yield Futures.immediateFuture(null);
+                }
+                case ENTITY_DELETED_RPC_MESSAGE -> {
                     deleteAsset(tenantId, edge, assetId);
-                    return Futures.immediateFuture(null);
-                case UNRECOGNIZED:
-                default:
-                    return handleUnsupportedMsgType(assetUpdateMsg.getMsgType());
-            }
+                    yield Futures.immediateFuture(null);
+                }
+                default -> handleUnsupportedMsgType(assetUpdateMsg.getMsgType());
+            };
         } catch (DataValidationException e) {
             if (e.getMessage().contains("limit reached")) {
                 log.warn("[{}] Number of allowed asset violated {}", tenantId, assetUpdateMsg, e);
@@ -94,14 +93,8 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
     }
 
     private void pushAssetCreatedEventToRuleEngine(TenantId tenantId, Edge edge, AssetId assetId) {
-        try {
-            Asset asset = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
-            String assetAsString = JacksonUtil.toString(asset);
-            TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, asset.getCustomerId());
-            pushEntityEventToRuleEngine(tenantId, assetId, asset.getCustomerId(), TbMsgType.ENTITY_CREATED, assetAsString, msgMetaData);
-        } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push asset action to rule engine: {}", tenantId, assetId, TbMsgType.ENTITY_CREATED.name(), e);
-        }
+        Asset asset = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
+        pushEntityEventToRuleEngine(tenantId, edge, asset, TbMsgType.ENTITY_CREATED);
     }
 
     @Override
