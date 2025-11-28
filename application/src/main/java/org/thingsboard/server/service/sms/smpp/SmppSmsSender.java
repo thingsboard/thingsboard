@@ -85,7 +85,12 @@ public class SmppSmsSender extends AbstractSmsSender {
                 request.setSourceAddr(new Address(config.getSourceTon(), config.getSourceNpi(), config.getSourceAddress()));
             }
             request.setDestAddr(new Address(config.getDestinationTon(), config.getDestinationNpi(), prepareNumber(numberTo)));
-            request.setShortMessage(message);
+
+            byte dataCoding = config.getCodingScheme();
+            SmppDataCoding smppDataCoding = Optional.ofNullable(SmppDataCoding.fromCode(dataCoding)).orElse(SmppDataCoding.SMSC_DEFAULT_ALPHABET);
+
+            request.setShortMessage(message, smppDataCoding.getEncodingName());
+            request.setDataCoding(dataCoding);
             request.setDataCoding(Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0));
             request.setReplaceIfPresentFlag((byte) 0);
             request.setEsmClass((byte) 0);
