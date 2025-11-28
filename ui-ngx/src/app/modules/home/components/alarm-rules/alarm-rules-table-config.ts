@@ -152,7 +152,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
 
     this.cellActionDescriptors.push(
       {
-        name: this.translate.instant('notification.copy-template'),
+        name: this.translate.instant('alarm-rule.copy'),
         icon: 'content_copy',
         isEnabled: () => true,
         onAction: ($event, entity) => this.copyCalculatedField(entity)
