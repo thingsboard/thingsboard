@@ -38,6 +38,9 @@ import org.thingsboard.server.common.data.sms.config.SmppSmsProviderConfiguratio
 import org.thingsboard.server.service.sms.AbstractSmsSender;
 
 import java.io.IOException;
+import org.smpp.util.ByteBuffer;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @Slf4j
@@ -86,12 +89,24 @@ public class SmppSmsSender extends AbstractSmsSender {
             }
             request.setDestAddr(new Address(config.getDestinationTon(), config.getDestinationNpi(), prepareNumber(numberTo)));
 
-            byte dataCoding = config.getCodingScheme();
-            SmppDataCoding smppDataCoding = Optional.ofNullable(SmppDataCoding.fromCode(dataCoding)).orElse(SmppDataCoding.SMSC_DEFAULT_ALPHABET);
+            byte dataCoding = Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0);
+            request.setDataCoding(dataCoding);
+            Charset charset = resolveCharset(dataCoding);
+            if (charset != null) {
+                ByteBuffer buf = new ByteBuffer();
+                buf.appendBytes(message.getBytes(charset));
+                request.setShortMessageData(buf);
+            } else {
+                switch (dataCoding) {
+                    case 2, 4, 9, 13 -> {
+                        ByteBuffer buf = new ByteBuffer();
+                        buf.appendBytes(message.getBytes(StandardCharsets.ISO_8859_1));
+                        request.setShortMessageData(buf);
+                    }
+                    default -> request.setShortMessage(message);
+                }
+            }
 
-            request.setShortMessage(message, smppDataCoding.getEncodingName());
-            request.setDataCoding(smppDataCoding.getCode());
-            request.setDataCoding(Optional.ofNullable(config.getCodingScheme()).orElse((byte) 0));
             request.setReplaceIfPresentFlag((byte) 0);
             request.setEsmClass((byte) 0);
             request.setProtocolId((byte) 0);
@@ -107,6 +122,19 @@ public class SmppSmsSender extends AbstractSmsSender {
         }
 
         return countMessageSegments(message);
+    }
+
+    private Charset resolveCharset(byte dataCoding) {
+        return switch (dataCoding) {
+            case 1 -> Charset.forName("ISO-8859-9");
+            case 3 -> StandardCharsets.ISO_8859_1;
+            case 6 -> Charset.forName("ISO-8859-5");
+            case 7 -> Charset.forName("ISO-8859-8");
+            case 8 -> StandardCharsets.UTF_16BE;
+            case 10 -> Charset.forName("ISO-2022-JP");
+            case 14 -> Charset.forName("EUC-KR");
+            default -> null;
+        };
     }
 
     private synchronized void checkSmppSession() {
