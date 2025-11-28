@@ -182,6 +182,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
             lastMetricsEvalTs = System.currentTimeMillis();
             scheduleReevaluation();
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                    .calculatedFieldName(ctx.getCalculatedField().getName())
                     .outputStrategy(output.getStrategy())
                     .type(output.getType())
                     .scope(output.getScope())

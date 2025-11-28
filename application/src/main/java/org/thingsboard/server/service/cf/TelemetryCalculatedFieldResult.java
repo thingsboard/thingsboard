@@ -28,14 +28,15 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.List;
-import java.util.Map;
 
+import static org.thingsboard.server.common.data.DataConstants.CF_NAME_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 
 @Data
 @Builder
 public final class TelemetryCalculatedFieldResult implements CalculatedFieldResult {
 
+    private final String calculatedFieldName;
     private final OutputType type;
     private final AttributeScope scope;
     private final OutputStrategy outputStrategy;
@@ -49,10 +50,11 @@ public final class TelemetryCalculatedFieldResult implements CalculatedFieldResu
             case ATTRIBUTES -> TbMsgType.POST_ATTRIBUTES_REQUEST;
             case TIME_SERIES -> TbMsgType.POST_TELEMETRY_REQUEST;
         };
-        TbMsgMetaData metaData = switch (type) {
-            case ATTRIBUTES -> new TbMsgMetaData(Map.of(SCOPE, scope.name()));
-            case TIME_SERIES -> TbMsgMetaData.EMPTY;
-        };
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue(CF_NAME_METADATA_KEY, calculatedFieldName);
+        if (OutputType.ATTRIBUTES == type) {
+            metaData.putValue(SCOPE, scope.name());
+        }
         return TbMsg.newMsg()
                 .type(msgType)
                 .originator(entityId)

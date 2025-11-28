@@ -123,6 +123,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);
         }
         return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .calculatedFieldName(ctx.getCalculatedField().getName())
                 .outputStrategy(output.getStrategy())
                 .type(output.getType())
                 .scope(output.getScope())

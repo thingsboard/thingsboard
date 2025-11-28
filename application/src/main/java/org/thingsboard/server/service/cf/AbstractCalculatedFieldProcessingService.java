@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,10 +29,12 @@ import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest.Strategy;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.cf.CalculatedField;
@@ -62,11 +65,15 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.queue.TbQueueCallback;
+import org.thingsboard.server.queue.TbQueueMsgMetadata;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
@@ -85,10 +92,13 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.CF_NAME_METADATA_KEY;
+import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
 import static org.thingsboard.server.dao.util.KvUtils.filterChangedAttr;
 import static org.thingsboard.server.dao.util.KvUtils.toTsKvEntryList;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultAttributeEntry;
@@ -108,6 +118,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
     protected final ApiLimitService apiLimitService;
     protected final RelationService relationService;
     protected final OwnerService ownerService;
+    protected final TbClusterService clusterService;
 
     protected ListeningExecutorService calculatedFieldCallbackExecutor;
 
@@ -392,6 +403,26 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE);
     }
 
+    protected void sendMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbCallback callback, TbMsg msg) {
+        try {
+            clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
+                @Override
+                public void onSuccess(TbQueueMsgMetadata metadata) {
+                    log.trace("[{}][{}] Pushed message to rule engine: {} ", tenantId, entityId, msg);
+                    callback.onSuccess();
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    callback.onFailure(t);
+                }
+            });
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to push message to rule engine: {}", tenantId, entityId, msg, e);
+            callback.onFailure(e);
+        }
+    }
+
     protected void saveTelemetryResult(TenantId tenantId, EntityId entityId, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
         OutputType type = cfResult.getType();
         JsonElement jsonResult = JsonParser.parseString(Objects.requireNonNull(cfResult.stringValue()));
@@ -400,7 +431,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
         SettableFuture<Void> future = SettableFuture.create();
         switch (type) {
-            case ATTRIBUTES -> saveAttributes(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfResult.getScope(), cfIds, future);
+            case ATTRIBUTES -> saveAttributes(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfResult.getScope(), cfResult.getCalculatedFieldName(), cfIds, future);
             case TIME_SERIES -> saveTimeSeries(tenantId, entityId, jsonResult, cfResult.getOutputStrategy(), cfIds, System.currentTimeMillis(), future);
         }
 
@@ -419,7 +450,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         }, MoreExecutors.directExecutor());
     }
 
-    private void saveAttributes(TenantId tenantId, EntityId entityId, JsonElement jsonResult, OutputStrategy outputStrategy, AttributeScope scope, List<CalculatedFieldId> cfIds, SettableFuture<Void> future) {
+    private void saveAttributes(TenantId tenantId, EntityId entityId, JsonElement jsonResult, OutputStrategy outputStrategy, AttributeScope scope, String cfName, List<CalculatedFieldId> cfIds, SettableFuture<Void> future) {
         if (!(outputStrategy instanceof AttributesImmediateOutputStrategy attOutputStrategy)) {
             future.setException(new IllegalArgumentException("Only AttributeImmediateOutputStrategy is supported."));
         } else {
@@ -427,7 +458,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
             List<AttributeKvEntry> newAttributes = JsonConverter.convertToAttributes(jsonResult);
 
             if (!attOutputStrategy.isUpdateAttributesOnlyOnValueChange()) {
-                saveAttributesInternal(tenantId, entityId, scope, cfIds, newAttributes, strategy, future);
+                saveAttributesInternal(tenantId, entityId, scope, cfName, cfIds, newAttributes, strategy, attOutputStrategy.isSendAttributesUpdatedNotification(), future);
                 return;
             }
 
@@ -441,7 +472,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                             future.set(null);
                             return;
                         }
-                        saveAttributesInternal(tenantId, entityId, scope, cfIds, changed, strategy, future);
+                        saveAttributesInternal(tenantId, entityId, scope, cfName, cfIds, changed, strategy, attOutputStrategy.isSendAttributesUpdatedNotification(), future);
                     },
                     future::setException,
                     MoreExecutors.directExecutor());
@@ -450,10 +481,15 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
     private void saveAttributesInternal(TenantId tenantId, EntityId entityId,
                                         AttributeScope scope,
+                                        String cfName,
                                         List<CalculatedFieldId> cfIds,
                                         List<AttributeKvEntry> entries,
                                         AttributesSaveRequest.Strategy strategy,
+                                        boolean sendAttributesUpdatedNotification,
                                         SettableFuture<Void> future) {
+        Runnable onSuccess = sendAttributesUpdatedNotification
+                ? () -> sendAttributesUpdatedMsg(tenantId, entityId, scope, cfName, entries)
+                : null;
         tsSubService.saveAttributes(AttributesSaveRequest.builder()
                 .tenantId(tenantId)
                 .entityId(entityId)
@@ -461,7 +497,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
                 .entries(entries)
                 .strategy(strategy)
                 .previousCalculatedFieldIds(cfIds)
-                .future(future)
+                .callback(wrapWithSuccessHandler(future, onSuccess))
                 .build());
     }
 
@@ -494,6 +530,45 @@ public abstract class AbstractCalculatedFieldProcessingService {
             builder.previousCalculatedFieldIds(cfIds);
         }
         tsSubService.saveTimeseries(builder.build());
+    }
+
+    private void sendAttributesUpdatedMsg(TenantId tenantId, EntityId entityId,
+                                          AttributeScope scope,
+                                          String cfName,
+                                          List<AttributeKvEntry> entries) {
+        ObjectNode entityNode = JacksonUtil.newObjectNode();
+        if (entries != null) {
+            entries.forEach(attributeKvEntry -> JacksonUtil.addKvEntry(entityNode, attributeKvEntry));
+        }
+
+        TbMsg attributesUpdatedMsg = TbMsg.newMsg()
+                .type(ATTRIBUTES_UPDATED)
+                .originator(entityId)
+                .data(JacksonUtil.toString(entityNode))
+                .metaData(new TbMsgMetaData(Map.of(
+                        CF_NAME_METADATA_KEY, cfName,
+                        SCOPE, scope.name()
+                )))
+                .build();
+
+        sendMsgToRuleEngine(tenantId, entityId, TbCallback.EMPTY, attributesUpdatedMsg);
+    }
+
+    private FutureCallback<Void> wrapWithSuccessHandler(SettableFuture<Void> future, Runnable onSuccess) {
+        return new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                future.set(result);
+                if (onSuccess != null) {
+                    onSuccess.run();
+                }
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                future.setException(t);
+            }
+        };
     }
 
 }

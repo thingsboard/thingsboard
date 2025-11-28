@@ -85,6 +85,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         Output output = ctx.getOutput();
         TelemetryCalculatedFieldResult.TelemetryCalculatedFieldResultBuilder telemetryCfBuilder =
                 TelemetryCalculatedFieldResult.builder()
+                        .calculatedFieldName(ctx.getCalculatedField().getName())
                         .outputStrategy(output.getStrategy())
                         .type(output.getType())
                         .scope(output.getScope());

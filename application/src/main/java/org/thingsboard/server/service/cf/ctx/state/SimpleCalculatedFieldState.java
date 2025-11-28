@@ -56,6 +56,7 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
         JsonNode outputResult = createResultJson(ctx.isUseLatestTs(), output.getName(), result);
 
         return Futures.immediateFuture(TelemetryCalculatedFieldResult.builder()
+                .calculatedFieldName(ctx.getCalculatedField().getName())
                 .outputStrategy(output.getStrategy())
                 .type(output.getType())
                 .scope(output.getScope())
