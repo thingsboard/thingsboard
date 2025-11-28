@@ -60,7 +60,7 @@ public class EntityViewEdgeProcessor extends BaseEntityViewProcessor implements 
                     yield Futures.immediateFuture(null);
                 }
                 case ENTITY_DELETED_RPC_MESSAGE -> {
-                    deleteEntityView(tenantId, entityViewId);
+                    deleteEntityView(tenantId, edge, entityViewId);
                     yield Futures.immediateFuture(null);
                 }
                 default -> handleUnsupportedMsgType(entityViewUpdateMsg.getMsgType());
