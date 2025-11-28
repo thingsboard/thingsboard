@@ -20,7 +20,6 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.EdqsState.EdqsApiMode;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
@@ -33,7 +32,6 @@ import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.edqs.util.EdqsRocksDb;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 
 import java.util.concurrent.TimeUnit;
@@ -58,9 +56,6 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
 
     @Autowired
     private DiscoveryService discoveryService;
-
-    @MockitoBean // so that we don't do backup for tests
-    private EdqsRocksDb edqsRocksDb;
 
     @Before
     public void before() {
