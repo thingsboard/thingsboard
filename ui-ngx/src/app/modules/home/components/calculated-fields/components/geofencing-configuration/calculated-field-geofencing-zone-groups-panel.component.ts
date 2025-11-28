@@ -97,6 +97,8 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   entityFilter: EntityFilter;
   entityNameSubject = new BehaviorSubject<string>(null);
 
+  enableAutocomplete = false;
+
   readonly ArgumentEntityType = ArgumentEntityType;
   readonly argumentEntityTypes = Object.values(ArgumentEntityType) as ArgumentEntityType[];
   readonly ArgumentEntityTypeTranslations = ArgumentEntityTypeTranslations;
@@ -151,6 +153,8 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     } else {
       this.addKey();
     }
+    this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE) &&
+      this.refEntityIdFormGroup.get('entityType').value === ArgumentEntityType.Owner;
     this.validateDirectionAndRelationType(this.zone?.createRelationsWithMatchedZones);
     this.validateRefDynamicSourceConfiguration(this.zone?.refEntityId?.entityType || this.zone?.refDynamicSourceConfiguration?.type);
 
@@ -265,18 +269,17 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
     )
       .pipe(debounceTime(50), takeUntilDestroyed())
       .subscribe(() => this.updateEntityFilter(this.entityType));
-
-    this.refEntityIdFormGroup.get('id').valueChanges.pipe(distinctUntilChanged(), takeUntilDestroyed()).subscribe(() => this.geofencingFormGroup.get('perimeterKeyName').reset(''));
   }
 
   private observeEntityTypeChanges(): void {
     this.refEntityIdFormGroup.get('entityType').valueChanges
       .pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(type => {
+        this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE) && type === ArgumentEntityType.Owner;
         this.geofencingFormGroup.get('refEntityId').get('id').setValue(null);
-        const isEntityWithId = type !== ArgumentEntityType.Tenant && type !== ArgumentEntityType.Current && type !== ArgumentEntityType.RelationQuery;
-        this.geofencingFormGroup.get('refEntityId')
-          .get('id')[isEntityWithId ? 'enable' : 'disable']();
+        this.geofencingFormGroup.get('perimeterKeyName').reset('');
+        const isEntityWithId = !!type && ![ArgumentEntityType.Tenant, ArgumentEntityType.Current, ArgumentEntityType.Owner].includes(type);
+        this.geofencingFormGroup.get('refEntityId').get('id')[isEntityWithId ? 'enable' : 'disable']();
         if (!isEntityWithId) {
           this.entityNameSubject.next(null);
         }

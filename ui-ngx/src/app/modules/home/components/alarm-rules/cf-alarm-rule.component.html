@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-form-panel no-border no-padding" [formGroup]="alarmRuleFormGroup">
-  <tb-cf-alarm-rule-condition formControlName="condition" [arguments]="arguments" [required]="required">
+  <tb-cf-alarm-rule-condition formControlName="condition" [arguments]="arguments" [required]="required" [testScript]="testScript" [isClearCondition]="isClearCondition">
   </tb-cf-alarm-rule-condition>
   @if (!disabled || alarmRuleFormGroup.get('alarmDetails').value) {
     <div class="tb-form-row space-between column-xs">

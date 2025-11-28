@@ -56,6 +56,7 @@ import {
 } from '@home/components/calculated-fields/components/metrics/calculated-field-metrics-panel.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { AceHighlightRules } from '@shared/models/ace/ace.models';
+import { Observable } from "rxjs";
 
 @Component({
   selector: 'tb-calculated-field-metrics-table',
@@ -80,6 +81,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   @Input() editorCompleter: TbEditorCompleter;
   @Input() highlightRules: AceHighlightRules;
   @Input({transform: booleanAttribute}) simpleMode: boolean = false;
+  @Input({required: true}) testScript: (expression?: string) => Observable<string>;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 
@@ -166,6 +168,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
         editorCompleter: this.editorCompleter,
         highlightRules: this.highlightRules,
         simpleMode: this.simpleMode,
+        testScript: this.testScript
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,

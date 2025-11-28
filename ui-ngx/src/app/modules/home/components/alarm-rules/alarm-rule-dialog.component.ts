@@ -31,8 +31,15 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 import { COMMA, ENTER, SEMICOLON } from "@angular/cdk/keycodes";
 import { MatChipInputEvent } from "@angular/material/chips";
-import { AlarmRule, AlarmRuleConditionType, AlarmRuleExpressionType } from "@shared/models/alarm-rule.models";
+import {
+  AlarmRule,
+  AlarmRuleConditionType,
+  AlarmRuleExpressionType,
+  AlarmRuleTestScriptFn
+} from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
+import { Observable } from "rxjs";
+import { switchMap } from "rxjs/operators";
 
 export interface AlarmRuleDialogData {
   value?: CalculatedField;
@@ -43,6 +50,7 @@ export interface AlarmRuleDialogData {
   ownerId: EntityId;
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   isDirty?: boolean;
+  getTestScriptDialogFn: AlarmRuleTestScriptFn,
 }
 
 @Component({
@@ -59,7 +67,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     debugSettings: [],
     entityId: this.fb.group({
       entityType: this.fb.control<EntityType | AliasEntityType | null>(null, Validators.required),
-      id: ['', Validators.required],
+      id: [null as null | string, Validators.required],
     }),
     configuration: this.fb.group({
       arguments: this.fb.control({}),
@@ -93,7 +101,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
               private destroyRef: DestroyRef,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
-    this.observeIsLoading();
     this.applyDialogData();
   }
 
@@ -170,16 +177,18 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     this.fieldFormGroup.patchValue({ configuration, type, debugSettings, entityId, ...value }, {emitEvent: false});
   }
 
-  private observeIsLoading(): void {
-    this.isLoading$.pipe(takeUntilDestroyed()).subscribe(loading => {
-      if (loading) {
-        this.fieldFormGroup.disable({emitEvent: false});
-      } else {
-        this.fieldFormGroup.enable({emitEvent: false});
-        if (this.data.isDirty) {
-          this.fieldFormGroup.markAsDirty();
-        }
-      }
-    });
+  onTestScript(expression: string): Observable<string> {
+    const calculatedFieldId = this.data.value?.id?.id;
+    if (calculatedFieldId) {
+      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
+        .pipe(
+          switchMap(event => {
+            const args = event?.arguments ? JSON.parse(event.arguments) : null;
+            return this.data.getTestScriptDialogFn(this.fromGroupValue, expression, args, false);
+          }),
+          takeUntilDestroyed(this.destroyRef)
+        )
+    }
+    return this.data.getTestScriptDialogFn(this.fromGroupValue, expression, null, false);
   }
 }

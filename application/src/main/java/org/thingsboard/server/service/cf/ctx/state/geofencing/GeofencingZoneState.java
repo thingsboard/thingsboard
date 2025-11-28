@@ -46,10 +46,13 @@ public class GeofencingZoneState {
     public GeofencingZoneState(EntityId zoneId, KvEntry entry) {
         this.zoneId = zoneId;
         if (!(entry instanceof AttributeKvEntry attributeKvEntry)) {
-            throw new IllegalArgumentException("Unsupported KvEntry type for geofencing zone state: " + entry.getClass().getSimpleName());
+            throw new IllegalArgumentException("Invalid perimeter data source for zone with id: " + zoneId + ". Perimeter definition must be stored as attribute!");
         }
         this.ts = attributeKvEntry.getLastUpdateTs();
         this.version = attributeKvEntry.getVersion();
+        if (entry.getValueAsString() == null) {
+            throw new IllegalArgumentException("Perimeter attribute key '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
+        }
         this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class);
     }
 
