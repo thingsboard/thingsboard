@@ -61,10 +61,7 @@ public class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProce
                     saveOrUpdateAsset(tenantId, assetId, assetUpdateMsg, edge);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Asset assetToDelete = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
-                    if (assetToDelete != null) {
-                        edgeCtx.getAssetService().unassignAssetFromEdge(tenantId, assetId, edge.getId());
-                    }
+                    deleteAsset(tenantId, edge, assetId);
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
                 default:

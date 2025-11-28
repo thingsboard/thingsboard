@@ -363,7 +363,7 @@ public abstract class BaseEdgeProcessor implements EdgeProcessor {
 
             pushEntityEventToRuleEngine(tenantId, entity.getId(), customerId, msgType, entityAsString, tbMsgMetaData);
         } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push entity of type {} action to rule engine: {}", tenantId, entity.getId(), entity.getId().getEntityType(), msgType.name(), e);
+            log.warn("[{}][{}] Failed to push entity action for {} to rule engine: {}", tenantId, entity.getId(), entity.getId().getEntityType(), msgType.name(), e);
         }
     }
 
