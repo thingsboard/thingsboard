@@ -80,11 +80,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg);
 
     protected void deleteAsset(TenantId tenantId, AssetId assetId) {
-        Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
-        if (assetById != null) {
-            edgeCtx.getAssetService().deleteAsset(tenantId, assetId);
-            pushEntityEventToRuleEngine(tenantId, null, assetById, TbMsgType.ENTITY_DELETED);
-        }
+        deleteAsset(tenantId, null, assetId);
     }
 
     protected void deleteAsset(TenantId tenantId, Edge edge, AssetId assetId) {
