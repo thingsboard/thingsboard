@@ -34,7 +34,10 @@ export interface ApiKeyGeneratedDialogData {
 })
 export class ApiKeyGeneratedDialogComponent extends DialogComponent<ApiKeyGeneratedDialogComponent, void> {
 
-  apiKeyCommand = userInfoCommand(this.data.apiKey.value);
+  private baseUrl = window.location.origin;
+
+  apiKeyCommand = userInfoCommand(this.baseUrl, this.data.apiKey.value);
+  secureUrl = this.baseUrl.startsWith('https');
   selectedTab: number;
 
   constructor(protected store: Store<AppState>,
