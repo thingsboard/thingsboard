@@ -28,7 +28,8 @@ import {
   AlarmRuleCondition,
   AlarmRuleConditionType,
   AlarmRuleConditionTypeTranslationMap,
-  AlarmRuleExpressionType
+  AlarmRuleExpressionType,
+  AlarmRuleFilter
 } from "@shared/models/alarm-rule.models";
 import {
   CalculatedFieldArgument,
@@ -102,6 +103,8 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   arguments = this.data.arguments;
   argumentsList: Array<string>;
 
+  isNoData: boolean = false;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CfAlarmRuleConditionDialogData,
@@ -136,10 +139,18 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.durationDynamicModeControl.patchValue(!!this.condition?.value?.dynamicValueArgument, {emitEvent: false});
     this.repeatingDynamicModeControl.patchValue(!!this.condition?.count?.dynamicValueArgument, {emitEvent: false});
 
+    this.checkIsNoData(this.condition?.expression?.filters);
+
     this.conditionFormGroup.get('type').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((type) => {
       this.updateValidators(type, true);
+    });
+
+    this.conditionFormGroup.get('expression.filters').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((filters) => {
+      this.checkIsNoData(filters);
     });
 
     this.conditionFormGroup.get('expression.type').valueChanges.pipe(
@@ -184,6 +195,25 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
       this.conditionFormGroup.get(`expression.filters`).disable({emitEvent: false});
     }
   }
+
+  private checkIsNoData(filters: Array<AlarmRuleFilter>) {
+    this.isNoData = this.hasNoData(filters);
+    if (this.isNoData && this.conditionFormGroup.get('type').value !== AlarmRuleConditionType.SIMPLE) {
+      this.conditionFormGroup.get('type').patchValue(AlarmRuleConditionType.SIMPLE);
+    }
+  }
+
+  private hasNoData(data: Array<AlarmRuleFilter>) {
+    const search = (filter) => {
+      if (!filter) return false;
+      if (Array.isArray(filter)) return filter.some(search);
+      if (typeof filter !== 'object') return false;
+      if (filter.type === 'NO_DATA') return true;
+      if (filter.predicates?.length) return filter.predicates.some(search);
+      return false;
+    };
+    return search(data);
+  };
 
   private updateValidators(type: AlarmRuleConditionType, emitEvent = false) {
     switch (type) {

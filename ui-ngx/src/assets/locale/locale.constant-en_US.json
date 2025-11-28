@@ -1466,6 +1466,7 @@
         "enter-alarm-rule-condition-prompt": "Please add alarm rule condition",
         "edit-alarm-rule-condition": "Edit alarm rule condition",
         "condition-type": "Condition type",
+        "condition-type-hint": "\"Duration\" and \"Repeating\" options are not available when the \"Missing for\" operation is used in the filter.",
         "select-alarm-severity": "Select alarm severity",
         "add-create-alarm-rule-prompt": "Please add create alarm rule",
         "add-create-alarm-rule": "Add create condition",
@@ -1497,7 +1498,12 @@
         "no-alarm-rule-types-matching": "No alarm rule types matching '{{entitySubtype}}' were found.",
         "alarm-rule-type-list-empty": "No alarm rule types selected.",
         "alarm-rule-type-list": "Alarm rule type list",
-        "alarm-rule-entity-list": "Entity list"
+        "alarm-rule-entity-list": "Entity list",
+        "missing-for": "missing for",
+        "time-unit": "Unit",
+        "value-required": "Value is required.",
+        "min-value": "Value must be 0 or greater.",
+        "argument-in-use": "Argument is used as general argument."
     },
     "ai-models": {
         "ai-models": "AI models",

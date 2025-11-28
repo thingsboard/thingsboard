@@ -78,7 +78,7 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
     this.filterFormGroup = this.fb.group(
       {
-        argument: [this.data.filter.argument, [Validators.required]],
+        argument: [this.argumentsList.includes(this.data.filter.argument) ? this.data.filter.argument : '' , [Validators.required]],
         valueType: [this.data.filter.valueType ?? EntityKeyValueType.STRING, [Validators.required]],
         predicates: [this.data.filter.predicates, [Validators.required]],
         operation: [this.data.filter.operation ?? ComplexOperation.AND]

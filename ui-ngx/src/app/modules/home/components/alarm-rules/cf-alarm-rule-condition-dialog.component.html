@@ -78,10 +78,14 @@
         <mat-form-field class="mat-block" hideRequiredMarker appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>alarm-rule.condition-type</mat-label>
           <mat-select formControlName="type" required>
-            <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
+            <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType"
+                        [disabled]="isNoData ? alarmConditionType === AlarmConditionType.REPEATING || alarmConditionType === AlarmConditionType.DURATION : false">
               {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
             </mat-option>
           </mat-select>
+          @if (isNoData) {
+            <mat-hint translate>alarm-rule.condition-type-hint</mat-hint>
+          }
         </mat-form-field>
         @if (conditionFormGroup.get('type').value == AlarmConditionType.DURATION) {
           <div class="tb-form-panel stroked no-padding-bottom">
