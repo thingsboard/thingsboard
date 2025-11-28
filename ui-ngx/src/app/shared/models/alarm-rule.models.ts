@@ -118,7 +118,8 @@ export interface AlarmRulePredicateInfo {
 export type AlarmRuleFilterPredicate = StringAlarmRuleFilterPredicate |
   NumericAlarmRuleFilterPredicate |
   BooleanAlarmRuleFilterPredicate |
-  ComplexAlarmRuleFilterPredicate;
+  ComplexAlarmRuleFilterPredicate |
+  NoDataAlarmRuleFilterPredicate;
 
 export interface AlarmRuleValue<T> {
   dynamicValueArgument?: string;
@@ -126,26 +127,33 @@ export interface AlarmRuleValue<T> {
 }
 
 export interface StringAlarmRuleFilterPredicate {
-  type: FilterPredicateType.STRING;
-  operation: StringOperation;
+  type: AlarmRuleFilterPredicateType.STRING;
+  operation: AlarmRuleStringOperation;
   value: AlarmRuleValue<string>;
   ignoreCase: boolean;
 }
 
 export interface NumericAlarmRuleFilterPredicate {
-  type: FilterPredicateType.NUMERIC;
-  operation: NumericOperation;
+  type: AlarmRuleFilterPredicateType.NUMERIC;
+  operation: AlarmRuleNumericOperation;
   value: AlarmRuleValue<number>;
 }
 
 export interface BooleanAlarmRuleFilterPredicate {
-  type: FilterPredicateType.BOOLEAN;
-  operation: BooleanOperation;
+  type: AlarmRuleFilterPredicateType.BOOLEAN;
+  operation: AlarmRuleBooleanOperation;
   value: AlarmRuleValue<boolean>;
 }
 
+export interface NoDataAlarmRuleFilterPredicate {
+  type: AlarmRuleFilterPredicateType.NO_DATA;
+  unit: TimeUnit,
+  operation: AlarmRuleStringOperation.NO_DATA | AlarmRuleNumericOperation.NO_DATA | AlarmRuleBooleanOperation.NO_DATA;
+  duration: AlarmRuleValue<number>;
+}
+
 export interface BaseComplexFilterPredicate<T extends AlarmRuleFilterPredicate> {
-  type: FilterPredicateType.COMPLEX;
+  type: AlarmRuleFilterPredicateType.COMPLEX;
   operation: ComplexOperation;
   predicates: Array<T>;
 }
@@ -157,3 +165,73 @@ export interface AlarmRuleFilterConfig {
   entityType?: EntityType;
   entities?: Array<string>;
 }
+
+export enum AlarmRuleFilterPredicateType {
+  STRING = 'STRING',
+  NUMERIC = 'NUMERIC',
+  BOOLEAN = 'BOOLEAN',
+  COMPLEX = 'COMPLEX',
+  NO_DATA = 'NO_DATA'
+}
+
+export enum AlarmRuleStringOperation {
+  EQUAL = 'EQUAL',
+  NOT_EQUAL = 'NOT_EQUAL',
+  NO_DATA = 'NO_DATA',
+  STARTS_WITH = 'STARTS_WITH',
+  ENDS_WITH = 'ENDS_WITH',
+  CONTAINS = 'CONTAINS',
+  NOT_CONTAINS = 'NOT_CONTAINS',
+  IN = 'IN',
+  NOT_IN = 'NOT_IN',
+}
+
+export const alarmRuleStringOperationTranslationMap = new Map<AlarmRuleStringOperation, string>(
+  [
+    [AlarmRuleStringOperation.EQUAL, 'filter.operation.equal'],
+    [AlarmRuleStringOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [AlarmRuleStringOperation.STARTS_WITH, 'filter.operation.starts-with'],
+    [AlarmRuleStringOperation.ENDS_WITH, 'filter.operation.ends-with'],
+    [AlarmRuleStringOperation.CONTAINS, 'filter.operation.contains'],
+    [AlarmRuleStringOperation.NOT_CONTAINS, 'filter.operation.not-contains'],
+    [AlarmRuleStringOperation.IN, 'filter.operation.in'],
+    [AlarmRuleStringOperation.NOT_IN, 'filter.operation.not-in'],
+    [AlarmRuleStringOperation.NO_DATA, 'alarm-rule.missing-for']
+  ]
+);
+
+export enum AlarmRuleNumericOperation {
+  EQUAL = 'EQUAL',
+  NOT_EQUAL = 'NOT_EQUAL',
+  NO_DATA = 'NO_DATA',
+  GREATER = 'GREATER',
+  LESS = 'LESS',
+  GREATER_OR_EQUAL = 'GREATER_OR_EQUAL',
+  LESS_OR_EQUAL = 'LESS_OR_EQUAL'
+}
+
+export const alarmRuleNumericOperationTranslationMap = new Map<AlarmRuleNumericOperation, string>(
+  [
+    [AlarmRuleNumericOperation.EQUAL, 'filter.operation.equal'],
+    [AlarmRuleNumericOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [AlarmRuleNumericOperation.GREATER, 'filter.operation.greater'],
+    [AlarmRuleNumericOperation.LESS, 'filter.operation.less'],
+    [AlarmRuleNumericOperation.GREATER_OR_EQUAL, 'filter.operation.greater-or-equal'],
+    [AlarmRuleNumericOperation.LESS_OR_EQUAL, 'filter.operation.less-or-equal'],
+    [AlarmRuleNumericOperation.NO_DATA, 'alarm-rule.missing-for']
+  ]
+);
+
+export enum AlarmRuleBooleanOperation {
+  EQUAL = 'EQUAL',
+  NOT_EQUAL = 'NOT_EQUAL',
+  NO_DATA = 'NO_DATA',
+}
+
+export const alarmRuleBooleanOperationTranslationMap = new Map<AlarmRuleBooleanOperation, string>(
+  [
+    [AlarmRuleBooleanOperation.EQUAL, 'filter.operation.equal'],
+    [AlarmRuleBooleanOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [AlarmRuleBooleanOperation.NO_DATA, 'alarm-rule.missing-for']
+  ]
+);

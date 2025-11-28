@@ -40,7 +40,7 @@
         <div class="flex max-w-92% flex-full flex-col">
           <div class="flex flex-row items-center justify-start">
             <div class="flex-1">{{ filterControl.value?.argument }}</div>
-            <div class="flex-1">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.predicates[0]?.type) | translate }}</div>
+            <div class="flex-1">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.valueType) | translate }}</div>
             <button mat-icon-button color="primary"
                     type="button"
                     (click)="editFilter(index)"

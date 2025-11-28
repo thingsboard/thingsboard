@@ -27,9 +27,11 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-chip-listbox formControlName="ignoreCase" [hideSingleSelectionIndicator]="true">
-            <mat-chip-option color="primary" [value]="true">{{ 'alarm-rule.ignore-case' | translate }}</mat-chip-option>
-          </mat-chip-listbox>
+          @if (filterPredicateFormGroup.get('operation').value !== stringOperation.NO_DATA) {
+            <mat-chip-listbox formControlName="ignoreCase" [hideSingleSelectionIndicator]="true">
+              <mat-chip-option color="primary" [value]="true">{{ 'alarm-rule.ignore-case' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+          }
         </div>
       }
       @case (filterPredicateType.NUMERIC) {
@@ -68,7 +70,14 @@
         </div>
       }
     }
-    @if (type !== filterPredicateType.COMPLEX) {
+    @if (filterPredicateFormGroup.get('operation').value === stringOperation.NO_DATA) {
+      <tb-alarm-rule-filter-predicate-no-data-value class="flex-full"
+                                                    [arguments]="arguments"
+                                                    [argumentInUse]="argumentInUse"
+                                                    [valueType]="valueType"
+                                                    formControlName="duration">
+      </tb-alarm-rule-filter-predicate-no-data-value>
+    } @else if (type !== filterPredicateType.COMPLEX) {
       <tb-alarm-rule-filter-predicate-value class="flex-full"
                                             [arguments]="arguments"
                                             [argumentInUse]="argumentInUse"

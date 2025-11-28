@@ -24,10 +24,13 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import {
   ComplexOperation,
   complexOperationTranslationMap,
-  EntityKeyValueType,
-  FilterPredicateType
+  EntityKeyValueType
 } from '@shared/models/query/query.models';
-import { AlarmRuleFilterPredicate, ComplexAlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+import {
+  AlarmRuleFilterPredicate,
+  AlarmRuleFilterPredicateType,
+  ComplexAlarmRuleFilterPredicate
+} from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 export interface AlarmRuleComplexFilterPredicateDialogData {
@@ -81,7 +84,7 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
 
   save(): void {
     const predicate = this.complexFilterFormGroup.value as ComplexAlarmRuleFilterPredicate;
-    predicate.type = FilterPredicateType.COMPLEX;
+    predicate.type = AlarmRuleFilterPredicateType.COMPLEX;
     this.dialogRef.close(predicate);
   }
 }
