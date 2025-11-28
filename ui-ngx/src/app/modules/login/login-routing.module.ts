@@ -34,7 +34,7 @@ const passwordPolicyResolver: ResolveFn<UserPasswordPolicy> = (route: ActivatedR
    state: RouterStateSnapshot,
    router = inject(Router),
    authService = inject(AuthService)) => {
-    return authService.getUserPasswordPolicy().pipe(
+    return authService.getUserPasswordPolicy({ignoreErrors: true}).pipe(
       catchError(() => {
         return of({} as UserPasswordPolicy);
       })

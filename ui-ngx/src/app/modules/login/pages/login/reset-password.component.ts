@@ -20,7 +20,6 @@ import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   passwordsMatchValidator,
   passwordStrengthValidator
@@ -47,13 +46,8 @@ export class ResetPasswordComponent extends PageComponent {
     super();
 
     this.resetToken = this.route.snapshot.queryParams['resetToken'] || '';
-
-    this.route.data
-      .pipe(takeUntilDestroyed())
-      .subscribe((data) => {
-        this.passwordPolicy = data['passwordPolicy'];
-        this.isExpiredPassword = data['expiredPassword'] ?? false;
-      });
+    this.passwordPolicy = this.route.snapshot.data['passwordPolicy'];
+    this.isExpiredPassword = this.route.snapshot.data['expiredPassword'] ?? false;
 
     this.buildResetPasswordForm();
   }

@@ -19,6 +19,7 @@ import { CdkOverlayOrigin, ConnectionPositionPair } from '@angular/cdk/overlay';
 import { passwordErrorRules } from '@shared/models/password.models';
 import { AbstractControl } from '@angular/forms';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
+import { POSITION_MAP } from '@shared/models/overlay.models';
 
 @Component({
   selector: 'tb-password-requirements-tooltip',
@@ -35,13 +36,7 @@ export class PasswordRequirementsTooltipComponent {
   isTooltipOpen = false;
 
   overlayPositions: ConnectionPositionPair[] = [
-    {
-      originX: 'center',
-      originY: 'top',
-      overlayX: 'center',
-      overlayY: 'bottom',
-      offsetY: -20
-    }
+    {...POSITION_MAP.top, offsetY: -20}
   ];
 
   checkForError(errorName: string): boolean {

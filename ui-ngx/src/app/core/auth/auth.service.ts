@@ -164,8 +164,8 @@ export class AuthService {
       ));
   }
 
-  public getUserPasswordPolicy() {
-    return this.http.get<UserPasswordPolicy>(`/api/noauth/userPasswordPolicy`, defaultHttpOptions());
+  public getUserPasswordPolicy(config?: RequestConfig) {
+    return this.http.get<UserPasswordPolicy>(`/api/noauth/userPasswordPolicy`, defaultHttpOptionsFromConfig(config));
   }
 
   public activateByEmailCode(emailCode: string): Observable<LoginResponse> {
