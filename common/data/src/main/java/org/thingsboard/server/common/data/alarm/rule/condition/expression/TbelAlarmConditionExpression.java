@@ -16,9 +16,13 @@
 package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
 import jakarta.validation.constraints.NotBlank;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class TbelAlarmConditionExpression implements AlarmConditionExpression {
 
     @NotBlank
