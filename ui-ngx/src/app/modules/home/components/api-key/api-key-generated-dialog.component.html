@@ -96,6 +96,10 @@
 <ng-template #executeCommand>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
+    <div class="tb-form-hint tb-primary-fill insecure-url-warning flex items-center gap-2" [class.hidden]="secureUrl">
+      <mat-icon class="tb-mat-20">warning</mat-icon>
+      <span>{{ 'api-key.generated-api-key-insecure-url' | translate }}</span>
+    </div>
     <tb-markdown usePlainMarkdown containerClass="tb-command-code" [data]='createMarkDownCommand(apiKeyCommand)'></tb-markdown>
   </div>
 </ng-template>

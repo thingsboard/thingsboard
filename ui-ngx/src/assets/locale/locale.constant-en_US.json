@@ -1012,6 +1012,7 @@
         "generated-api-key-title": "API key generated. Let’s check connectivity!",
         "generated-api-key-copy": "Make sure to copy and save your API key now as you will not be able to see it again.",
         "generated-api-key-command": "Use the following instructions to check connectivity. As a result, you should receive the current user information:",
+        "generated-api-key-insecure-url": "Executing commands over an insecure HTTP connection will send your API key unencrypted, making it vulnerable to interception.",
         "list": "{ count, plural, =1 {One API key} other {List of # API keys} }",
         "manage": "Manage",
         "manage-api-keys": "Manage API keys",
