@@ -28,6 +28,16 @@ import java.nio.file.Paths;
 import java.util.Optional;
 
 @Slf4j
+    /**
+ * Utility class that provides helper methods for retrieving 
+ * system and environment information such as OS name, CPU details, 
+ * and memory usage. 
+ * 
+ * These methods are used across ThingsBoard to avoid repeating 
+ * low-level system code in multiple places, improving maintainability 
+ * and readability.
+ */
+
 public class SystemUtil {
 
     private static final HardwareAbstractionLayer HARDWARE;
@@ -35,6 +45,12 @@ public class SystemUtil {
     static {
         HARDWARE = new SystemInfo().getHardware();
     }
+/**
+ * Returns the percentage of used physical memory on the system.
+ *
+ * @return Optional containing memory usage as an integer percentage (0–100);
+ *         Optional.empty() if the value cannot be retrieved
+ */
 
     public static Optional<Integer> getMemoryUsage() {
         try {
@@ -47,6 +63,12 @@ public class SystemUtil {
         }
         return Optional.empty();
     }
+/**
+ * Returns the total amount of physical memory available on the machine.
+ *
+ * @return Optional containing total memory in bytes;
+ *         Optional.empty() if the value cannot be retrieved
+ */
 
     public static Optional<Long> getTotalMemory() {
         try {
@@ -56,6 +78,12 @@ public class SystemUtil {
         }
         return Optional.empty();
     }
+/**
+ * Returns the current system-wide CPU usage.
+ *
+ * @return Optional containing CPU usage as a percentage (0–100);
+ *         Optional.empty() if the value cannot be retrieved
+ */
 
     public static Optional<Integer> getCpuUsage() {
         try {
@@ -65,6 +93,12 @@ public class SystemUtil {
         }
         return Optional.empty();
     }
+/**
+ * Returns the number of logical CPU cores available on the system.
+ *
+ * @return Optional containing logical processor count;
+ *         Optional.empty() if it cannot be retrieved
+ */
 
     public static Optional<Integer> getCpuCount() {
         try {
@@ -74,6 +108,12 @@ public class SystemUtil {
         }
         return Optional.empty();
     }
+/**
+ * Returns the percentage of disk space currently used on the root file system.
+ *
+ * @return Optional containing disk usage as an integer percentage (0–100);
+ *         Optional.empty() if the value cannot be retrieved
+ */
 
     public static Optional<Integer> getDiscSpaceUsage() {
         try {
@@ -86,6 +126,12 @@ public class SystemUtil {
         }
         return Optional.empty();
     }
+/**
+ * Returns the total disk capacity of the root file system.
+ *
+ * @return Optional containing total disk space in bytes;
+ *         Optional.empty() if the value cannot be retrieved
+ */
 
     public static Optional<Long> getTotalDiscSpace() {
         try {
