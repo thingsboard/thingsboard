@@ -15,7 +15,7 @@
  */
 package org.thingsboard.common.util;
 
-import lombok.extern.slf4j.Slf4j;
+import lombok.extern.slf4j.Slf4j;/
 import oshi.SystemInfo;
 import oshi.hardware.GlobalMemory;
 import oshi.hardware.HardwareAbstractionLayer;
