@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AttributesImmediateOutputStrategy implements AttributesOutputStrategy {
 
+    private boolean sendAttributesUpdatedNotification;
     private boolean updateAttributesOnlyOnValueChange;
 
     private boolean saveAttribute;

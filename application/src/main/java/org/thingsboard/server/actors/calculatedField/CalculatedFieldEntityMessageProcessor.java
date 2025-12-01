@@ -492,7 +492,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 stateSizeChecked = true;
                 if (state.isSizeOk()) {
                     if (!calculationResult.isEmpty()) {
-                        cfService.processResult(tenantId, entityId, calculationResult, cfIdList, callback);
+                        cfService.processResult(tenantId, entityId, ctx.getCfName(), calculationResult, cfIdList, callback);
                     } else {
                         callback.onSuccess();
                     }

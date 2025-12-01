@@ -23,7 +23,7 @@ import java.util.List;
 
 public interface CalculatedFieldResult {
 
-    TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds);
+    TbMsg toTbMsg(EntityId entityId, String cfName, List<CalculatedFieldId> cfIds);
 
     String stringValue();
 

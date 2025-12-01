@@ -104,6 +104,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       sendWsUpdate: [true],
       processCfs: [true],
       updateAttributesOnlyOnValueChange: [true],
+      sendAttributesUpdatedNotification: [false],
       useCustomTtl: [false],
       ttl: [0]
     })
@@ -230,6 +231,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       if (outputType === OutputType.Attribute) {
         this.outputForm.get('strategy.saveAttribute').enable({emitEvent: false});
         this.outputForm.get('strategy.updateAttributesOnlyOnValueChange').enable({emitEvent: false});
+        this.outputForm.get('strategy.sendAttributesUpdatedNotification').enable({emitEvent: false});
       } else {
         this.outputForm.get('strategy.saveTimeSeries').enable({emitEvent: false});
         this.outputForm.get('strategy.saveLatest').enable({emitEvent: false});
