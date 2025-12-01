@@ -32,8 +32,8 @@ public final class PropagationCalculatedFieldResult implements CalculatedFieldRe
     private final TelemetryCalculatedFieldResult result;
 
     @Override
-    public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
-        return result.toTbMsg(entityId, cfIds);
+    public TbMsg toTbMsg(EntityId entityId, String cfName, List<CalculatedFieldId> cfIds) {
+        return result.toTbMsg(entityId, cfName, cfIds);
     }
 
     @Override

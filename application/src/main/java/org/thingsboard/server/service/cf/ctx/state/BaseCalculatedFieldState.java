@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.Getter;
 import lombok.Setter;
@@ -35,6 +36,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Getter
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
@@ -188,6 +190,12 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             }
         }
         return ReadinessStatus.from(emptyArguments);
+    }
+
+    @Override
+    public JsonNode getArgumentsJson() {
+        return JacksonUtil.valueToTree(arguments.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue())));
     }
 
 }

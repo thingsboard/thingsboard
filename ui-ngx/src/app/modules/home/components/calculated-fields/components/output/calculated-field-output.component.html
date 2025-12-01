@@ -95,40 +95,37 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       @if (outputForm.get('strategy.type').value === OutputStrategyType.IMMEDIATE) {
-        @if (outputForm.get('type').value === OutputType.Timeseries) {
-          <div class="tb-form-row flex-1">
+        <div class="tb-form-panel stroked">
+          <div class="tb-form-panel-title" translate>calculated-fields.output-strategy.processing-parameters</div>
+          @if (outputForm.get('type').value === OutputType.Timeseries) {
             <mat-slide-toggle class="mat-slide" formControlName="saveTimeSeries">
               <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-time-series' | translate }}">
                 <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-time-series</div>
               </div>
             </mat-slide-toggle>
-          </div>
-          <div class="tb-form-row flex-1">
             <mat-slide-toggle class="mat-slide" formControlName="saveLatest">
               <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-latest-values' | translate }}">
                 <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-latest-values</div>
               </div>
             </mat-slide-toggle>
-          </div>
-        } @else {
-          <div class="tb-form-row flex-1">
+          } @else {
             <mat-slide-toggle class="mat-slide" formControlName="saveAttribute">
               <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-database' | translate }}">
                 <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-database</div>
               </div>
             </mat-slide-toggle>
-          </div>
-        }
-        <div class="tb-form-row flex-1">
+          }
           <mat-slide-toggle class="mat-slide" formControlName="sendWsUpdate">
-            <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.send-web-sockets' | translate }}">
+            <div tb-hint-tooltip-icon="{{ (outputForm.get('type').value === OutputType.Attribute
+                                            ? 'calculated-fields.output-strategy.hint.send-web-sockets-attribute'
+                                            : 'calculated-fields.output-strategy.hint.send-web-sockets-time-series') | translate }}">
               <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.send-web-sockets</div>
             </div>
           </mat-slide-toggle>
-        </div>
-        <div class="tb-form-row flex-1">
           <mat-slide-toggle class="mat-slide" formControlName="processCfs">
-            <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-calculated-fields' | translate }}">
+            <div tb-hint-tooltip-icon="{{ (outputForm.get('type').value === OutputType.Attribute
+                                            ? 'calculated-fields.output-strategy.hint.save-calculated-fields-attribute'
+                                            : 'calculated-fields.output-strategy.hint.save-calculated-fields-time-series') | translate }}">
               <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-calculated-fields</div>
             </div>
           </mat-slide-toggle>
@@ -137,9 +134,16 @@
           <div class="tb-form-row flex-1">
             <mat-slide-toggle class="mat-slide" formControlName="updateAttributesOnlyOnValueChange">
               <div tb-hint-tooltip-icon="{{ (outputForm.get('strategy.updateAttributesOnlyOnValueChange').value
-                                         ? 'calculated-fields.output-strategy.hint.update-attributes-only-on-value-change-enabled'
-                                         : 'calculated-fields.output-strategy.hint.update-attributes-only-on-value-change') | translate }}">
-                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.update-attributes-only-on-value-change</div>
+                                              ? 'calculated-fields.output-strategy.hint.update-attribute-only-on-value-change-enabled'
+                                              : 'calculated-fields.output-strategy.hint.update-attribute-only-on-value-change') | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.update-attribute-only-on-value-change</div>
+              </div>
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row flex-1">
+            <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.send-attributes-updated-notification' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.send-attributes-updated-notification</div>
               </div>
             </mat-slide-toggle>
           </div>

@@ -19,6 +19,7 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -59,6 +60,8 @@ public interface CalculatedFieldState extends Closeable {
     EntityId getEntityId();
 
     Map<String, ArgumentEntry> getArguments();
+
+    JsonNode getArgumentsJson();
 
     long getLatestTimestamp();
 

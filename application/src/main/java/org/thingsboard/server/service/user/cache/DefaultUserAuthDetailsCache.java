@@ -29,13 +29,11 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Service
-@TbCoreComponent
 @RequiredArgsConstructor
 public class DefaultUserAuthDetailsCache implements UserAuthDetailsCache {
 

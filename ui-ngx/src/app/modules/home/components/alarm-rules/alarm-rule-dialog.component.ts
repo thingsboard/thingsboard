@@ -67,7 +67,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     debugSettings: [],
     entityId: this.fb.group({
       entityType: this.fb.control<EntityType | AliasEntityType | null>(null, Validators.required),
-      id: ['', Validators.required],
+      id: [null as null | string, Validators.required],
     }),
     configuration: this.fb.group({
       arguments: this.fb.control({}),
@@ -101,7 +101,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
               private destroyRef: DestroyRef,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
-    this.observeIsLoading();
     this.applyDialogData();
   }
 
@@ -176,19 +175,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   private applyDialogData(): void {
     const { configuration = {}, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.data.entityId, ...value } = this.data.value ?? {};
     this.fieldFormGroup.patchValue({ configuration, type, debugSettings, entityId, ...value }, {emitEvent: false});
-  }
-
-  private observeIsLoading(): void {
-    this.isLoading$.pipe(takeUntilDestroyed()).subscribe(loading => {
-      if (loading) {
-        this.fieldFormGroup.disable({emitEvent: false});
-      } else {
-        this.fieldFormGroup.enable({emitEvent: false});
-        if (this.data.isDirty) {
-          this.fieldFormGroup.markAsDirty();
-        }
-      }
-    });
   }
 
   onTestScript(expression: string): Observable<string> {

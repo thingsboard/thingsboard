@@ -233,6 +233,7 @@ export type AttributeOutputStrategy =
 export interface AttributeImmediateOutputStrategy {
   type: OutputStrategyType.IMMEDIATE;
   updateAttributesOnlyOnValueChange: boolean;
+  sendAttributesUpdatedNotification: boolean;
   saveAttribute: boolean;
   sendWsUpdate: boolean;
   processCfs: boolean;
