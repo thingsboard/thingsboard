@@ -383,24 +383,6 @@ public class SwaggerConfiguration {
         ));
     }
 
-    private void securityCustomization(Map.Entry<String, PathItem> entry, SecurityRequirement jwtBearerRequirement, SecurityRequirement apiKeyRequirement) {
-        var path = entry.getKey();
-
-        if (path.matches(securityPathRegex)
-                && !path.matches(nonSecurityPathRegex)
-                && !path.equals(LOGIN_ENDPOINT)
-                && !path.equals(REFRESH_TOKEN_ENDPOINT)) {
-
-            entry.getValue()
-                    .readOperationsMap()
-                    .values()
-                    .forEach(operation -> {
-                        operation.addSecurityItem(jwtBearerRequirement);
-                        operation.addSecurityItem(apiKeyRequirement);
-                    });
-        }
-    }
-
     private Tag extractTagFromPath(Map.Entry<String, PathItem> entry) {
         var tagName = tagItemFromPathItem(entry.getValue());
         return tagName != null ? tagFromTagItem(tagName) : null;
@@ -439,17 +421,30 @@ public class SwaggerConfiguration {
 
             var responses = operation.getResponses();
             if (responses == null) {
-                responses = new ApiResponses();
-                operation.setResponses(responses);
+                responses = errorResponses;
+            } else {
+                ApiResponses updated = responses;
+                errorResponses.forEach((key, apiResponse) -> {
+                    if (!updated.containsKey(key)) {
+                        updated.put(key, apiResponse);
+                    }
+                });
             }
-
-            ApiResponses finalResponses = responses;
-            errorResponses.forEach((code, response) -> {
-                if (!finalResponses.containsKey(code)) {
-                    finalResponses.put(code, response);
-                }
-            });
+            operation.setResponses(responses);
         });
+    }
+
+    private void securityCustomization(Map.Entry<String, PathItem> entry, SecurityRequirement jwtBearerRequirement, SecurityRequirement apiKeyRequirement) {
+        var path = entry.getKey();
+        if (path.matches(securityPathRegex) && !path.matches(nonSecurityPathRegex) && !path.equals(LOGIN_ENDPOINT) && !path.equals(REFRESH_TOKEN_ENDPOINT)) {
+            entry.getValue()
+                    .readOperationsMap()
+                    .values()
+                    .forEach(operation -> {
+                        operation.addSecurityItem(jwtBearerRequirement);
+                        operation.addSecurityItem(apiKeyRequirement);
+                    });
+        }
     }
 
     private static ApiResponses loginResponses() {
