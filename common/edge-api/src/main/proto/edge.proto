@@ -449,6 +449,8 @@ message UplinkMsg {
   repeated CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = 25;
   repeated CalculatedFieldRequestMsg calculatedFieldRequestMsg = 26;
   repeated AiModelUpdateMsg aiModelUpdateMsg = 27;
+  repeated UserUpdateMsg userUpdateMsg = 28;
+  repeated UserCredentialsUpdateMsg userCredentialsUpdateMsg = 29;
 }
 
 message UplinkResponseMsg {

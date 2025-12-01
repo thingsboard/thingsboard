@@ -65,7 +65,7 @@ public class AggIntervalTest {
 
     @ParameterizedTest
     @MethodSource("intervals")
-    void testGetStartAndEndWithoutOffset(LongFunction<AggInterval> intervalCreator) {
+    void testGetStartAndEndWithoutOffset(LongFunction<AggInterval> intervalCreator, long expectedDuration) {
         AggInterval interval = intervalCreator.apply(0L);
 
         ZonedDateTime dateTime = ZonedDateTime.of(
@@ -76,7 +76,7 @@ public class AggIntervalTest {
         long endTs = interval.getDateTimeIntervalEndTs(dateTime);
 
         assertThat(endTs).isGreaterThan(startTs);
-        assertThat(endTs - startTs).isEqualTo(interval.getCurrentIntervalDurationMillis());
+        assertThat(endTs - startTs).isEqualTo(expectedDuration);
     }
 
     @ParameterizedTest
@@ -88,7 +88,7 @@ public class AggIntervalTest {
 
         ZonedDateTime dateTime = ZonedDateTime.of(
                 // 2025.11.11 11:20:00 - chosen so 15m offset shifts into a new interval
-                2025, 11, 11, 11, 20, 0, 0, ZoneId.of(TZ)
+                2025, 6, 6, 6, 20, 0, 0, ZoneId.of(TZ)
         );
 
         long startWithOffsetTs = intervalWithOffset.getDateTimeIntervalStartTs(dateTime);
@@ -103,14 +103,14 @@ public class AggIntervalTest {
 
     private static Stream<Arguments> intervals() {
         return Stream.of(
-                Arguments.of((LongFunction<AggInterval>) offset -> new HourInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new DayInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new WeekInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new WeekSunSatInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new MonthInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new QuarterInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new YearInterval(TZ, offset)),
-                Arguments.of((LongFunction<AggInterval>) offset -> new CustomInterval(TZ, offset, TimeUnit.HOURS.toSeconds(4)))
+                Arguments.of((LongFunction<AggInterval>) offset -> new HourInterval(TZ, offset), TimeUnit.HOURS.toMillis(1)),
+                Arguments.of((LongFunction<AggInterval>) offset -> new DayInterval(TZ, offset), TimeUnit.DAYS.toMillis(1)),
+                Arguments.of((LongFunction<AggInterval>) offset -> new WeekInterval(TZ, offset), TimeUnit.DAYS.toMillis(7)),
+                Arguments.of((LongFunction<AggInterval>) offset -> new WeekSunSatInterval(TZ, offset), TimeUnit.DAYS.toMillis(7)),
+                Arguments.of((LongFunction<AggInterval>) offset -> new MonthInterval(TZ, offset), TimeUnit.DAYS.toMillis(30)),
+                Arguments.of((LongFunction<AggInterval>) offset -> new QuarterInterval(TZ, offset), TimeUnit.DAYS.toMillis(92) + TimeUnit.HOURS.toMillis(1)),// Includes DST fallback (2025-10-26), so duration = 92 days + 1 hour(expected for Europe/Kyiv timezone).
+                Arguments.of((LongFunction<AggInterval>) offset -> new YearInterval(TZ, offset), TimeUnit.DAYS.toMillis(365)),
+                Arguments.of((LongFunction<AggInterval>) offset -> new CustomInterval(TZ, offset, TimeUnit.HOURS.toSeconds(4)), TimeUnit.HOURS.toMillis(4))
         );
     }
 

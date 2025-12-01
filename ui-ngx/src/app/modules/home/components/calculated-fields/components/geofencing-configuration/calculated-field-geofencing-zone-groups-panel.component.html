@@ -176,7 +176,7 @@
       </div>
     </ng-container>
     <ng-container>
-      @if (entityFilter.singleEntity?.id || entityType === ArgumentEntityType.RelationQuery || entityType === ArgumentEntityType.Current) {
+      @if (entityFilter.singleEntity?.id || entityType === ArgumentEntityType.RelationQuery || entityType === ArgumentEntityType.Current || entityType === ArgumentEntityType.Owner) {
         <div class="tb-form-row">
           <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{'calculated-fields.hint.perimeter-attribute-key' | translate}}">
             {{ 'calculated-fields.perimeter-attribute-key' | translate }}
@@ -204,6 +204,7 @@
             </mat-form-field>
           } @else {
             <tb-entity-key-autocomplete class="flex-1" formControlName="perimeterKeyName"
+                                        [enableAutocomplete]="!enableAutocomplete"
                                         [dataKeyType]="DataKeyType.attribute" [entityFilter]="entityFilter"
                                         [keyScopeType]="AttributeScope.SERVER_SCOPE"/>
           }

@@ -71,7 +71,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() ownerId: EntityId;
   @Input() isScript: boolean;
   @Input() usedArgumentNames: string[];
-  @Input() isOutputKey = false;
+  @Input() watchKeyChange = false;
   @Input() hiddenEntityTypes = false;
   @Input() hiddenEntityKeyTypes = false;
   @Input() hiddenDefaultValue = false;
@@ -80,6 +80,14 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   @Input() predefinedEntityFilter: EntityFilter;
   @Input() forbiddenNames = FORBIDDEN_NAMES;
   @Input() argumentEntityTypes = Object.values(ArgumentEntityType).filter(value => value !== ArgumentEntityType.RelationQuery) as ArgumentEntityType[];
+  @Input() argumentNameContext: {[key: string]: string} = {
+    label: 'calculated-fields.argument-name',
+    required: 'calculated-fields.hint.argument-name-required',
+    duplicate: 'calculated-fields.hint.argument-name-duplicate',
+    pattern: 'calculated-fields.hint.argument-name-pattern',
+    maxlength: 'calculated-fields.hint.argument-name-max-length',
+    forbidden: 'calculated-fields.hint.argument-name-forbidden'
+  };
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
@@ -106,6 +114,8 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   argumentTypes: ArgumentType[];
   entityFilter: EntityFilter;
   entityNameSubject = new BehaviorSubject<string>(null);
+
+  enableAutocomplete = false;
 
   readonly ArgumentEntityTypeTranslations = ArgumentEntityTypeTranslations;
   readonly ArgumentType = ArgumentType;
@@ -155,7 +165,9 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     this.toggleByEntityKeyType(this.argument.refEntityKey?.type);
     this.setInitialEntityKeyType();
     this.setInitialEntityType();
-    this.setWatchKeyChange();
+    if (this.watchKeyChange) {
+      this.setWatchKeyChange();
+    }
 
     if (this.defaultValueRequired) {
       this.argumentFormGroup.get('defaultValue').addValidators(Validators.required);
@@ -202,6 +214,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   private updatedArgumentType(): void {
     let argumentType = ArgumentEntityType.Current;
     if (this.argument.refDynamicSourceConfiguration?.type === ArgumentEntityType.Owner) {
+      this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE);
       argumentType = ArgumentEntityType.Owner;
     } else if (this.argument.refEntityId?.entityType) {
       argumentType = this.argument.refEntityId.entityType;
@@ -270,6 +283,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
       .pipe(distinctUntilChanged(), takeUntilDestroyed())
       .subscribe(type => {
         this.argumentFormGroup.get('refEntityId').setValue(null);
+        this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE) && type === ArgumentEntityType.Owner;
         this.updatedRefEntityIdState(type);
         if (!this.enableAttributeScopeSelection) {
           this.refEntityKeyFormGroup.get('scope').setValue(AttributeScope.SERVER_SCOPE);
@@ -299,15 +313,13 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
   }
 
   private setWatchKeyChange(): void {
-    if (this.isOutputKey) {
-      this.refEntityKeyFormGroup.get('key').valueChanges.pipe(
-        takeUntilDestroyed(this.destroyRef)
-      ).subscribe((key) => {
-        if (this.argumentFormGroup.get('argumentName').pristine) {
-          this.argumentFormGroup.get('argumentName').setValue(key);
-        }
-      });
-    }
+    this.refEntityKeyFormGroup.get('key').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe((key) => {
+      if (this.argumentFormGroup.get('argumentName').pristine) {
+        this.argumentFormGroup.get('argumentName').setValue(key);
+      }
+    });
   }
 
   private updatedRefEntityIdState(type: ArgumentEntityType, emitEvent = true): void {

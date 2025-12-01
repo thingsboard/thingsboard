@@ -14,19 +14,43 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { AuthService } from '@core/auth/auth.service';
+import { AppState } from '@core/core.state';
+import { Store } from '@ngrx/store';
+import { UrlTree } from '@angular/router';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
+import { UrlHolder } from '@shared/pipe/image.pipe';
 
 @Component({
   selector: 'tb-logo',
   templateUrl: './logo.component.html',
   styleUrls: ['./logo.component.scss']
 })
-export class LogoComponent {
+export class LogoComponent implements OnInit {
 
-  logo = 'assets/logo_title_white.svg';
+  @Input()
+  src: string | UrlHolder = 'assets/logo_title_white.svg';
 
-  gotoThingsboard(): void {
-    window.open('https://thingsboard.io', '_blank');
+  @Input()
+  link: string | UrlTree;
+
+  @Input()
+  target: string = null;
+
+  isExternal = false;
+
+  constructor(private authService: AuthService,
+              private store: Store<AppState>) {
   }
 
+  ngOnInit() {
+    if (!this.link) {
+      const authState = getCurrentAuthState(this.store);
+      this.link = this.authService.defaultUrl(true, authState);
+    }
+    if (typeof this.link === 'string' && this.link.startsWith('http')) {
+      this.isExternal = true;
+    }
+  }
 }
