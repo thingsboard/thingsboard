@@ -58,21 +58,23 @@
           </div>
         </div>
       }
-      <span [class.!hidden]="!!predicatesFormArray.length"
-            [class.disabled]="disabled"
-            class="no-data-found flex items-center justify-center" translate>
-        filter.no-filters
-      </span>
+      @if (!predicatesFormArray.length) {
+        <span class="no-data-found tb-prompt flex items-center justify-center" translate>
+          alarm-rule.no-filter
+        </span>
+        <tb-error noMargin [error]="'alarm-rule.filter-required' | translate" class="flex h-9 items-center pl-3"/>
+      }
     </div>
   </div>
   <div class="flex flex-row gap-2">
-    <button mat-button mat-raised-button color="primary"
+    <button mat-button mat-stroked-button color="primary"
             [class.!hidden]="disabled"
             (click)="addPredicate(false)"
             type="button">
       {{ 'action.add' | translate }}
     </button>
-    <button mat-button mat-raised-button color="primary"
+    <button mat-button
+            color="primary"
             [class.!hidden]="disabled"
             (click)="addPredicate(true)"
             type="button">

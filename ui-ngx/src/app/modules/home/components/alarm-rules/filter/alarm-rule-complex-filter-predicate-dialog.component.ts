@@ -21,15 +21,12 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import {
-  ComplexOperation,
-  complexOperationTranslationMap,
-  EntityKeyValueType
-} from '@shared/models/query/query.models';
+import { ComplexOperation, EntityKeyValueType } from '@shared/models/query/query.models';
 import {
   AlarmRuleFilterPredicate,
   AlarmRuleFilterPredicateType,
-  ComplexAlarmRuleFilterPredicate
+  ComplexAlarmRuleFilterPredicate,
+  filterOperationTranslationMap
 } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
@@ -58,9 +55,9 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
     }
   );
 
-  complexOperations = Object.keys(ComplexOperation);
+  EntityKeyValueType = EntityKeyValueType;
   complexOperationEnum = ComplexOperation;
-  complexOperationTranslations = complexOperationTranslationMap;
+  complexOperationTranslations = filterOperationTranslationMap;
 
   isAdd: boolean;
 

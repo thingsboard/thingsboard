@@ -60,7 +60,7 @@
         <div class="tb-form-row no-border no-padding flex-1">
           <button type="button" style="--mat-outlined-button-horizontal-padding: 3px 0px 12px;"
                   class="block w-full"
-                  mat-stroked-button color="primary"
+                  mat-stroked-button [color]="predicateValid ? 'primary' : 'warn'"
                   (click)="openComplexFilterDialog()">
             <div class="flex items-center gap-2">
               <span class="w-full text-start" translate>filter.complex-filter</span>

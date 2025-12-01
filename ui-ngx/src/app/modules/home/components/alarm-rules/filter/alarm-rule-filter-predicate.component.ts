@@ -98,6 +98,8 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
   booleanOperationEnum = AlarmRuleBooleanOperation;
   booleanOperationTranslations = alarmRuleBooleanOperationTranslationMap;
 
+  predicateValid: boolean = false;
+
   private propagateChange= (v: any) => { };
 
   constructor(private fb: FormBuilder,
@@ -108,6 +110,12 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     ).subscribe(() => {
       this.updateModel();
     });
+
+    this.filterPredicateFormGroup.get('predicates').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(predicates => {
+      this.predicateValid = this.isPredicateArgumentsValid(predicates);
+    })
   }
 
   registerOnChange(fn: any): void {
@@ -132,8 +140,36 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     }
   }
 
+  private isPredicateArgumentsValid(predicates: any): boolean {
+    const validSet = new Set(Object.keys(this.arguments));
+    function checkPredicates(predicates: any[]): boolean {
+      for (const p of predicates) {
+        if (p.value?.dynamicValueArgument) {
+          if (!validSet.has(p.value.dynamicValueArgument)) {
+            return false;
+          }
+        }
+        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
+          if (!checkPredicates(p.predicates)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    if (Array.isArray(predicates)) {
+      if (!checkPredicates(predicates)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   writeValue(predicate: AlarmRuleFilterPredicate): void {
     this.type = predicate.type;
+    if ((predicate as ComplexAlarmRuleFilterPredicate)?.predicates) {
+      this.predicateValid = this.isPredicateArgumentsValid((predicate as ComplexAlarmRuleFilterPredicate)?.predicates);
+    }
     if (predicate.type === AlarmRuleFilterPredicateType.NO_DATA) {
       this.type = AlarmRuleFilterPredicateType[this.valueType];
       this.filterPredicateFormGroup.patchValue({operation: 'NO_DATA', duration: predicate}, {emitEvent: false});

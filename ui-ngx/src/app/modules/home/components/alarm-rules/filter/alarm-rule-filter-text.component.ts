@@ -98,7 +98,7 @@ export class AlarmRuleFilterTextComponent {
 
   private updateFilterText(value: AlarmRuleExpression) {
     this.isRequired = false;
-    if (value && (value.expression || value.filters)) {
+    if (value && (value.expression || value.filters?.length)) {
       if (value.type === AlarmRuleExpressionType.SIMPLE) {
         this.filterText = this.keyFiltersToText(this.translate, this.datePipe, value.filters, value.operation);
       } else {

@@ -168,6 +168,13 @@ export interface AlarmRuleFilterConfig {
   entities?: Array<string>;
 }
 
+export const filterOperationTranslationMap = new Map<ComplexOperation, string>(
+  [
+    [ComplexOperation.AND, 'alarm-rule.filter-operation.and'],
+    [ComplexOperation.OR, 'alarm-rule.filter-operation.or'],
+  ]
+);
+
 export enum AlarmRuleFilterPredicateType {
   STRING = 'STRING',
   NUMERIC = 'NUMERIC',
