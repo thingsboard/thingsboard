@@ -14,20 +14,20 @@
 
 ## 🚀 Installation options
 
-* Install ThingsBoard [On-premise](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise)
-* Try [ThingsBoard Cloud](https://thingsboard.io/installations/)
-* or [Use our Live demo](https://demo.thingsboard.io/signup)
+- Install ThingsBoard [On-premise](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise)
+- Try [ThingsBoard Cloud](https://thingsboard.io/installations/)
+- or [Use our Live demo](https://demo.thingsboard.io/signup)
 
 ## 💡 Getting started with ThingsBoard
 
 Check out our [Getting Started guide](https://thingsboard.io/docs/getting-started-guides/helloworld/) or [watch the video](https://www.youtube.com/watch?v=80L0ubQLXsc) to learn the basics of ThingsBoard and create your first dashboard! You will learn to:
 
-* Connect devices to ThingsBoard
-* Push data from devices to ThingsBoard
-* Build real-time dashboards
-* Create a Customer and assign the dashboard with them.
-* Define thresholds and trigger alarms
-* Set up notifications via email, SMS, mobile apps, or integrate with third-party services.
+- Connect devices to ThingsBoard
+- Push data from devices to ThingsBoard
+- Build real-time dashboards
+- Create a Customer and assign the dashboard with them.
+- Define thresholds and trigger alarms
+- Set up notifications via email, SMS, mobile apps, or integrate with third-party services.
 
 ## ✨ Features
 
