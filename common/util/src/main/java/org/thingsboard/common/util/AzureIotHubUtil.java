@@ -88,31 +88,30 @@ public final class AzureIotHubUtil {
     }
 
     public static String getDefaultCaCert() {
-        byte[] fileBytes;
-        if (Files.exists(FULL_FILE_PATH)) {
-            try {
-                fileBytes = Files.readAllBytes(FULL_FILE_PATH);
-            } catch (IOException e) {
-                log.error("Failed to load Default CaCert file!!! [{}]", FULL_FILE_PATH, e);
-                throw new RuntimeException("Failed to load Default CaCert file!!!");
-            }
-        } else {
-            Path azureDirectory = FULL_FILE_PATH.getParent();
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(azureDirectory)) {
-                Iterator<Path> iterator = stream.iterator();
-                if (iterator.hasNext()) {
-                    Path firstFile = iterator.next();
-                    fileBytes = Files.readAllBytes(firstFile);
-                } else {
-                    log.error("Default CaCert file not found in the directory [{}]!!!", azureDirectory);
-                    throw new RuntimeException("Default CaCert file not found in the directory!!!");
-                }
-            } catch (IOException e) {
-                log.error("Failed to load Default CaCert file from the directory [{}]!!!", azureDirectory, e);
-                throw new RuntimeException("Failed to load Default CaCert file from the directory!!!");
-            }
+        try {
+            byte[] fileBytes = loadCaCertFileBytes();
+            return new String(fileBytes);
+        } catch (IOException e) {
+            log.error("Failed to load Default CaCert file", e);
+            throw new RuntimeException("Failed to load Default CaCert file", e);
         }
-        return new String(fileBytes);
+    }
+
+    private static byte[] loadCaCertFileBytes() throws IOException {
+        if (Files.exists(FULL_FILE_PATH)) {
+            return Files.readAllBytes(FULL_FILE_PATH);
+        }
+        return loadFirstFileFromDirectory(FULL_FILE_PATH.getParent());
+    }
+
+    private static byte[] loadFirstFileFromDirectory(Path directory) throws IOException {
+        try (DirectoryStream<Path> stream = Files.newDirectoryStream(directory)) {
+            Iterator<Path> iterator = stream.iterator();
+            if (!iterator.hasNext()) {
+                throw new IOException("No CaCert file found in directory: " + directory);
+            }
+            return Files.readAllBytes(iterator.next());
+        }
     }
 
 }
