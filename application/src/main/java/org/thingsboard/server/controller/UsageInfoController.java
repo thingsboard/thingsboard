@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -29,11 +28,10 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
-@Slf4j
+@RequiredArgsConstructor
 public class UsageInfoController extends BaseController {
 
-    @Autowired
-    private UsageInfoService usageInfoService;
+    private final UsageInfoService usageInfoService;
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/usage")

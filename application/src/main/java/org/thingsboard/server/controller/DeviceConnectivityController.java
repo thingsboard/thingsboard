@@ -27,10 +27,9 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -93,8 +92,7 @@ public class DeviceConnectivityController extends BaseController {
                     )
             })
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/device-connectivity/{deviceId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device-connectivity/{deviceId}")
     public JsonNode getDevicePublishTelemetryCommands(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
                                                       @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         checkParameter(DEVICE_ID, strDeviceId);
@@ -106,8 +104,7 @@ public class DeviceConnectivityController extends BaseController {
     }
 
     @ApiOperation(value = "Download server certificate using file path defined in device.connectivity properties (downloadServerCertificate)", notes = "Download server certificate.")
-    @RequestMapping(value = "/device-connectivity/{protocol}/certificate/download", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device-connectivity/{protocol}/certificate/download")
     public ResponseEntity<org.springframework.core.io.Resource> downloadServerCertificate(@Parameter(description = PROTOCOL_PARAM_DESCRIPTION)
                                                                                           @PathVariable(PROTOCOL) String protocol) throws ThingsboardException, IOException {
         checkParameter(PROTOCOL, protocol);
@@ -123,8 +120,7 @@ public class DeviceConnectivityController extends BaseController {
     }
 
     @ApiOperation(value = "Download generated docker-compose.yml file for gateway (downloadGatewayDockerCompose)", notes = "Download generated docker-compose.yml for gateway.")
-    @RequestMapping(value = "/device-connectivity/gateway-launch/{deviceId}/docker-compose/download", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/device-connectivity/gateway-launch/{deviceId}/docker-compose/download")
     public ResponseEntity<org.springframework.core.io.Resource> downloadGatewayDockerCompose(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
                                                                                              @PathVariable(DEVICE_ID) String strDeviceId, HttpServletRequest request) throws ThingsboardException, URISyntaxException, IOException {
         checkParameter(DEVICE_ID, strDeviceId);
@@ -150,4 +146,5 @@ public class DeviceConnectivityController extends BaseController {
         return device.getAdditionalInfo().has(DataConstants.GATEWAY_PARAMETER) &&
                 device.getAdditionalInfo().get(DataConstants.GATEWAY_PARAMETER).asBoolean();
     }
+
 }

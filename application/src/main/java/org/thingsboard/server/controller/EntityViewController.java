@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.NameConflictPolicy;
 import org.thingsboard.server.common.data.NameConflictStrategy;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.UniquifyStrategy;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
@@ -74,7 +75,6 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_
 import static org.thingsboard.server.controller.ControllerConstants.ENTITY_VIEW_TYPE;
 import static org.thingsboard.server.controller.ControllerConstants.MODEL_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.NAME_CONFLICT_POLICY_DESC;
-import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -82,6 +82,7 @@ import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_D
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_SEPARATOR_DESC;
 import static org.thingsboard.server.controller.ControllerConstants.UNIQUIFY_STRATEGY_DESC;
 import static org.thingsboard.server.controller.EdgeController.EDGE_ID;
 
@@ -238,7 +239,7 @@ public class EntityViewController extends BaseController {
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         checkCustomerId(customerId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerIdAndType(tenantId, customerId, pageLink, type));
         } else {
             return checkNotNull(entityViewService.findEntityViewsByTenantIdAndCustomerId(tenantId, customerId, pageLink));
@@ -270,7 +271,7 @@ public class EntityViewController extends BaseController {
         CustomerId customerId = new CustomerId(toUUID(strCustomerId));
         checkCustomerId(customerId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             return checkNotNull(entityViewService.findEntityViewInfosByTenantIdAndCustomerIdAndType(tenantId, customerId, type, pageLink));
         } else {
             return checkNotNull(entityViewService.findEntityViewInfosByTenantIdAndCustomerId(tenantId, customerId, pageLink));
@@ -298,7 +299,7 @@ public class EntityViewController extends BaseController {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
 
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             return checkNotNull(entityViewService.findEntityViewByTenantIdAndType(tenantId, pageLink, type));
         } else {
             return checkNotNull(entityViewService.findEntityViewByTenantId(tenantId, pageLink));
@@ -325,7 +326,7 @@ public class EntityViewController extends BaseController {
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             return checkNotNull(entityViewService.findEntityViewInfosByTenantIdAndType(tenantId, type, pageLink));
         } else {
             return checkNotNull(entityViewService.findEntityViewInfosByTenantId(tenantId, pageLink));
@@ -448,7 +449,7 @@ public class EntityViewController extends BaseController {
         checkEdgeId(edgeId, Operation.READ);
         TimePageLink pageLink = createTimePageLink(pageSize, page, textSearch, sortProperty, sortOrder, startTime, endTime);
         PageData<EntityView> nonFilteredResult;
-        if (type != null && !type.trim().isEmpty()) {
+        if (StringUtils.isNotBlank(type)) {
             nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId, edgeId, type, pageLink);
         } else {
             nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);

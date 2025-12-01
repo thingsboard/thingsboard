@@ -109,9 +109,7 @@ public class DefaultUpdateService implements UpdateService {
             if (data.length > 0) {
                 try {
                     result = UUID.fromString(new String(data));
-                } catch (IllegalArgumentException e) {
-                    //Do nothing
-                }
+                } catch (IllegalArgumentException ignored) {}
             }
         }
         if (result == null) {
@@ -168,4 +166,5 @@ public class DefaultUpdateService implements UpdateService {
     public UpdateMessage checkUpdates() {
         return updateMessage;
     }
+
 }

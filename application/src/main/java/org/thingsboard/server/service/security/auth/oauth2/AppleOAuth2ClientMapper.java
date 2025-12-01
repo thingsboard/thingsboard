@@ -24,8 +24,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
+import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -62,7 +62,7 @@ public class AppleOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
             JsonNode user = null;
             try {
                 user = JacksonUtil.toJsonNode(userValue);
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
             if (user != null) {
                 updated = new HashMap<>(attributes);
                 if (user.has(NAME)) {
@@ -92,12 +92,11 @@ public class AppleOAuth2ClientMapper extends AbstractOAuth2ClientMapper implemen
     private static MultiValueMap<String, String> toMultiMap(Map<String, String[]> map) {
         MultiValueMap<String, String> params = new LinkedMultiValueMap<>(map.size());
         map.forEach((key, values) -> {
-            if (values.length > 0) {
-                for (String value : values) {
-                    params.add(key, value);
-                }
+            for (String value : values) {
+                params.add(key, value);
             }
         });
         return params;
     }
+
 }

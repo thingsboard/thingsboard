@@ -211,7 +211,6 @@ public class TelemetryController extends BaseController {
                 (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, null, keys));
     }
 
-
     @ApiOperation(value = "Get attributes by scope (getAttributesByScope)",
             notes = "Returns all attributes of a specified scope that belong to specified entity." +
                     ENTITY_GET_ATTRIBUTE_SCOPES +
@@ -777,7 +776,7 @@ public class TelemetryController extends BaseController {
     }
 
     private FutureCallback<List<AttributeKvEntry>> getAttributeKeysToResponseCallback(final DeferredResult<ResponseEntity> response) {
-        return new FutureCallback<List<AttributeKvEntry>>() {
+        return new FutureCallback<>() {
 
             @Override
             public void onSuccess(List<AttributeKvEntry> attributes) {
