@@ -63,7 +63,7 @@ import java.util.regex.Matcher;
 @Slf4j
 public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extends ListenableFuture<V>, V> implements BufferedRateExecutor<T, F> {
 
-    public static final String CONCURRENCY_LEVEL = "currBuffer";
+    public static final String BUFFER_NAME_TAG = "buffer";
 
     private final long maxWaitTime;
     private final long pollMs;
@@ -102,8 +102,8 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         this.callbackExecutor = ThingsBoardExecutors.newWorkStealingPool(callbackThreads, "nosql-" + bufferName + "-callback");
         this.timeoutExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("nosql-" + bufferName + "-timeout");
         this.stats = new BufferedRateExecutorStats(statsFactory);
-        String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName() + "." + CONCURRENCY_LEVEL + bufferName; //metric name may change with buffer name suffix
-        this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0));
+        String concurrencyLevelKey = StatsType.RATE_EXECUTOR.getName();
+        this.concurrencyLevel = statsFactory.createGauge(concurrencyLevelKey, new AtomicInteger(0), BUFFER_NAME_TAG, bufferName);
 
         this.entityService = entityService;
         this.rateLimitService = rateLimitService;
@@ -311,7 +311,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
                 statsBuilder.append(counter.getName()).append(" = [").append(counter.get()).append("] ");
             });
             statsBuilder.append("totalRateLimitedTenants").append(" = [").append(rateLimitedTenantsCount).append("] ");
-            statsBuilder.append(CONCURRENCY_LEVEL).append(" = [").append(concurrencyLevel.get()).append("] ");
+            statsBuilder.append(BUFFER_NAME_TAG).append(" = [").append(concurrencyLevel.get()).append("] ");
 
             stats.getStatsCounters().forEach(StatsCounter::clear);
             log.info("[{}] Permits {}", bufferName, statsBuilder);
