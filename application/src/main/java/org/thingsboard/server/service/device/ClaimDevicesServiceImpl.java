@@ -83,14 +83,24 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     @Value("${security.claim.duration}")
     private long systemDurationMs;
 
+    /**
+    * Registers claiming information for a device and optionally stores it in cache or attributes.
+    *
+    * @param tenantId  tenant identifier
+    * @param deviceId  device identifier
+    * @param secretKey optional secret key required to claim the device
+    * @param durationMs custom claiming duration in milliseconds; if non-positive, system default is used
+    * @return future completed once claiming info is stored or failed if claiming is not allowed
+    */
+
     @Override
     public ListenableFuture<Void> registerClaimingInfo(TenantId tenantId, DeviceId deviceId, String secretKey, long durationMs) {
         Device device = deviceService.findDeviceById(tenantId, deviceId);
-        Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
+        Cache cache = getClaimDevicesCache();
         List<Object> key = constructCacheKey(device.getId());
         String deviceName = device.getName();
         if (isAllowedClaimingByDefault) {
-            if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+            if (isDeviceUnassigned(device)) { 
                 persistInCache(secretKey, durationMs, cache, key);
                 return Futures.immediateFuture(null);
             }
@@ -102,7 +112,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 if (list != null && !list.isEmpty()) {
                     Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
                     if (claimingAllowedOptional.isPresent() && claimingAllowedOptional.get()
-                            && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                            && isDeviceUnassigned(device)) {
                         persistInCache(secretKey, durationMs, cache, key);
                         return null;
                     }
@@ -117,36 +127,40 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         ClaimData claimDataFromCache = cache.get(key, ClaimData.class);
         if (claimDataFromCache != null) {
             return Futures.immediateFuture(new ClaimDataInfo(true, key, claimDataFromCache));
-        } else {
-            ListenableFuture<Optional<AttributeKvEntry>> claimDataAttrFuture = attributesService.find(device.getTenantId(), device.getId(),
+        }
+
+        ListenableFuture<Optional<AttributeKvEntry>> claimDataAttrFuture =
+            attributesService.find(device.getTenantId(), device.getId(),
                     AttributeScope.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
 
-            return Futures.transform(claimDataAttrFuture, claimDataAttr -> {
-                if (claimDataAttr.isPresent()) {
-                    ClaimData claimDataFromAttribute = JacksonUtil.fromString(claimDataAttr.get().getValueAsString(), ClaimData.class);
-                    return new ClaimDataInfo(false, key, claimDataFromAttribute);
-                }
-                return null;
-            }, MoreExecutors.directExecutor());
-        }
+        return Futures.transform(claimDataAttrFuture, claimDataAttr -> {
+            if (claimDataAttr.isPresent()) {
+                ClaimData claimDataFromAttribute = JacksonUtil.fromString(
+                    claimDataAttr.get().getValueAsString(), ClaimData.class);
+                return new ClaimDataInfo(false, key, claimDataFromAttribute);
+            }
+            // No claim data present
+            return null;
+        }, MoreExecutors.directExecutor());
     }
+
 
     @Override
     public ListenableFuture<ClaimResult> claimDevice(Device device, CustomerId customerId, String secretKey) {
-        Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
+        Cache cache = getClaimDevicesCache();
         ListenableFuture<ClaimDataInfo> claimDataFuture = getClaimData(cache, device);
 
         return Futures.transformAsync(claimDataFuture, claimData -> {
             if (claimData != null) {
                 long currTs = System.currentTimeMillis();
-                if (currTs > claimData.getData().getExpirationTime() || !secretKeyIsEmptyOrEqual(secretKey, claimData.getData().getSecretKey())) {
+                if (currTs > claimData.getData().getExpirationTime() || !isSecretKeyValid(secretKey, claimData.getData().getSecretKey())) {
                     log.warn("The claiming timeout occurred or wrong 'secretKey' provided for the device [{}]", device.getName());
                     if (claimData.isFromCache()) {
                         cache.evict(claimData.getKey());
                     }
                     return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
                 } else {
-                    if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                    if (isDeviceUnassigned(device)) {
                         device.setCustomerId(customerId);
                         Device savedDevice = deviceService.saveDevice(device);
                         return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
@@ -155,7 +169,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                 }
             } else {
                 log.warn("Failed to find the device's claiming message![{}]", device.getName());
-                if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+                if (isDeviceUnassigned(device)) {
                     return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.FAILURE));
                 } else {
                     return Futures.immediateFuture(new ClaimResult(null, ClaimResponse.CLAIMED));
@@ -164,13 +178,19 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         }, MoreExecutors.directExecutor());
     }
 
-    private boolean secretKeyIsEmptyOrEqual(String secretKeyA, String secretKeyB) {
-        return (StringUtils.isEmpty(secretKeyA) && StringUtils.isEmpty(secretKeyB)) || secretKeyA.equals(secretKeyB);
+    private boolean isSecretKeyValid(String providedSecretKey, String storedSecretKey) {
+        // Both empty or null → treat as valid
+        if (StringUtils.isEmpty(providedSecretKey) && StringUtils.isEmpty(storedSecretKey)) {
+            return true;
+        }
+        // Safe equality check
+        return java.util.Objects.equals(providedSecretKey, storedSecretKey);
     }
+
 
     @Override
     public ListenableFuture<ReclaimResult> reClaimDevice(TenantId tenantId, Device device) {
-        if (!device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
+        if (isDeviceUnassigned(device)) {
             cacheEviction(device.getId());
             Customer unassignedCustomer = customerService.findCustomerById(tenantId, device.getCustomerId());
             device.setCustomerId(null);
@@ -235,8 +255,21 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     }
 
     private void cacheEviction(DeviceId deviceId) {
-        Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
+        Cache cache = getClaimDevicesCache();
         cache.evict(constructCacheKey(deviceId));
+    }
+
+    private boolean isDeviceUnassigned(Device device) {
+        return device.getCustomerId() != null
+            && device.getCustomerId().getId().equals(ModelConstants.NULL_UUID);
+    }
+
+    private Cache getClaimDevicesCache() {
+        Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
+        if (cache == null) {
+            throw new IllegalStateException("Claim devices cache is not configured");
+        }
+        return cache;
     }
 
 }
