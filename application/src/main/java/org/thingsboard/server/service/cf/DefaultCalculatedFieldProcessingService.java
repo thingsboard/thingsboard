@@ -30,7 +30,6 @@ import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEn
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -69,7 +68,6 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 @Slf4j
 public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedFieldProcessingService implements CalculatedFieldProcessingService {
 
-    private final TbClusterService clusterService;
     private final PartitionService partitionService;
 
     public DefaultCalculatedFieldProcessingService(AttributesService attributesService,
@@ -80,8 +78,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
                                                    TbClusterService clusterService,
                                                    TelemetrySubscriptionService tsSubService,
                                                    PartitionService partitionService) {
-        super(attributesService, timeseriesService, tsSubService, apiLimitService, relationService, ownerService);
-        this.clusterService = clusterService;
+        super(attributesService, timeseriesService, tsSubService, apiLimitService, relationService, ownerService, clusterService);
         this.partitionService = partitionService;
     }
 
@@ -136,40 +133,40 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         return super.fetchMetricDuringInterval(tenantId, entityId, argKey, metric, interval);
     }
 
-    public void processResult(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    public void processResult(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof AlarmCalculatedFieldResult) {
-            sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+            sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));
             return;
         }
         TelemetryCalculatedFieldResult telemetryResult = result instanceof TelemetryCalculatedFieldResult telemetryRes
                 ? telemetryRes : ((PropagationCalculatedFieldResult) result).getResult();
         switch (telemetryResult.getOutputStrategy().getType()) {
-            case IMMEDIATE -> processImmediately(tenantId, entityId, result, cfIds, callback);
-            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, result, cfIds, callback);
+            case IMMEDIATE -> processImmediately(tenantId, entityId, cfName, result, cfIds, callback);
+            case RULE_CHAIN -> pushMsgToRuleEngine(tenantId, entityId, cfName, result, cfIds, callback);
         }
     }
 
-    private void processImmediately(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    private void processImmediately(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof TelemetryCalculatedFieldResult telemetryResult) {
-            saveTelemetryResult(tenantId, entityId, telemetryResult, cfIds, callback);
+            saveTelemetryResult(tenantId, entityId, cfName, telemetryResult, cfIds, callback);
             return;
         }
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
-                    (entity, res, cb) -> saveTelemetryResult(tenantId, entity, res, cfIds, cb));
+                    (entity, res, cb) -> saveTelemetryResult(tenantId, entity, cfName, res, cfIds, cb));
             return;
         }
         callback.onSuccess();
     }
 
-    private void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
+    private void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, String cfName, CalculatedFieldResult result, List<CalculatedFieldId> cfIds, TbCallback callback) {
         if (result instanceof PropagationCalculatedFieldResult propagationResult) {
             handlePropagationResults(propagationResult, callback,
-                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entity, cb, res.toTbMsg(entity, cfIds)));
+                    (entity, res, cb) -> sendMsgToRuleEngine(tenantId, entity, cb, res.toTbMsg(entity, cfName, cfIds)));
             return;
         }
 
-        sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfIds));
+        sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));
     }
 
     private void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,
@@ -187,26 +184,6 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         MultipleTbCallback multipleTbCallback = new MultipleTbCallback(propagationEntityIds.size(), callback);
         for (var propagationEntityId : propagationEntityIds) {
             telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), multipleTbCallback);
-        }
-    }
-
-    private void sendMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbCallback callback, TbMsg msg) {
-        try {
-            clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
-                @Override
-                public void onSuccess(TbQueueMsgMetadata metadata) {
-                    log.trace("[{}][{}] Pushed message to rule engine: {} ", tenantId, entityId, msg);
-                    callback.onSuccess();
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    callback.onFailure(t);
-                }
-            });
-        } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push message to rule engine: {}", tenantId, entityId, msg, e);
-            callback.onFailure(e);
         }
     }
 

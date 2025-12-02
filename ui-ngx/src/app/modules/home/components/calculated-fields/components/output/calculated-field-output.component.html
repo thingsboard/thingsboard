@@ -140,6 +140,13 @@
               </div>
             </mat-slide-toggle>
           </div>
+          <div class="tb-form-row flex-1">
+            <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.send-attributes-updated-notification' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.send-attributes-updated-notification</div>
+              </div>
+            </mat-slide-toggle>
+          </div>
         } @else {
           <div class="tb-form-row space-between column-xs">
             <mat-slide-toggle class="mat-slide" formControlName="useCustomTtl">

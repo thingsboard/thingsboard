@@ -79,6 +79,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -413,12 +414,10 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectResponsesAmount(1);
         edgeImitator.sendUplinkMsg(upLinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
-        DeviceInfo deviceInfo = doGet("/api/device/info/" + savedDevice.getUuidId(), DeviceInfo.class);
-        Assert.assertNotNull(deviceInfo);
-        List<DeviceInfo> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
-                new TypeReference<PageData<DeviceInfo>>() {
-                }, new PageLink(100)).getData();
-        Assert.assertFalse(edgeDevices.contains(deviceInfo));
+
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
+                doGet("/api/device/info/" + savedDevice.getUuidId(), DeviceInfo.class, status().isNotFound())
+        );
     }
 
     @Test
