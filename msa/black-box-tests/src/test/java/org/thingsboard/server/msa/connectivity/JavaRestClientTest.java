@@ -80,6 +80,7 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.query.AvailableEntityKeys;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.data.query.EntityDataSortOrder;
@@ -225,9 +226,9 @@ public class JavaRestClientTest extends AbstractContainerTest {
         var entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"));
 
         EntityDataQuery entityDataQuery = new EntityDataQuery(filter, pageLink, entityFields, null, null);
-        JsonNode result = restClient.findEntityTimeseriesAndAttributesKeysByQuery(entityDataQuery, true, true, null);
-        assertThat(result).isNotNull();
-        assertThat((ArrayNode)result.get("timeseries")).contains(new TextNode("temperature"), new TextNode("humidity"));
+        AvailableEntityKeys availableEntityKeys = restClient.findAvailableEntityKeysByQuery(entityDataQuery, true, true, null);
+        assertThat(availableEntityKeys).isNotNull();
+        assertThat(availableEntityKeys.timeseries()).contains("temperature", "humidity");
     }
 
     @Test
