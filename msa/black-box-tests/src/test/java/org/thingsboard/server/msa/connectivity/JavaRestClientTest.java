@@ -318,9 +318,8 @@ public class JavaRestClientTest extends AbstractContainerTest {
         Domain savedDomain = restClient.saveDomain(domain);
         assertThat(savedDomain.getName()).isEqualTo(domain.getName());
 
-        PageData<DomainInfo> tenantDomainInfos = restClient.getTenantDomainInfos(new PageLink(10));
-        List<DomainInfo> domainInfos = tenantDomainInfos.getData().stream().filter(domainInfo -> domainInfo.getName().startsWith(prefix)).toList();
-        assertThat(domainInfos).hasSize(1);
+        PageData<DomainInfo> domainInfos = restClient.getTenantDomainInfos(new PageLink(10, 0 , prefix));
+        assertThat(domainInfos.getData()).hasSize(1);
     }
 
     @Test
@@ -337,9 +336,8 @@ public class JavaRestClientTest extends AbstractContainerTest {
         MobileApp savedMobileApp = restClient.saveMobileApp(mobileApp);
         assertThat(savedMobileApp.getName()).isEqualTo(mobileApp.getName());
 
-        PageData<MobileApp> mobileApps = restClient.getTenantMobileApps(new PageLink(10));
-        List<MobileApp> retrieved = mobileApps.getData().stream().filter(app -> app.getPkgName().startsWith(prefix)).toList();
-        assertThat(retrieved).hasSize(1);
+        PageData<MobileApp> retrieved = restClient.getTenantMobileApps(new PageLink(10, 0, prefix));
+        assertThat(retrieved.getData()).hasSize(1);
 
         MobileAppBundle mobileAppBundle = new MobileAppBundle();
         String bundlePrefix = RandomStringUtils.randomAlphabetic(5).toLowerCase();
@@ -347,9 +345,8 @@ public class JavaRestClientTest extends AbstractContainerTest {
         mobileAppBundle.setAndroidAppId(savedMobileApp.getId());
 
         MobileAppBundle savedMobileAppBundle = restClient.saveMobileBundle(mobileAppBundle);
-        PageData<MobileAppBundleInfo> mobileBundleInfos = restClient.getTenantMobileBundleInfos(new PageLink(10));
-        List<MobileAppBundleInfo> bundleInfos = mobileBundleInfos.getData().stream().filter(mobileAppBundleInfo -> mobileAppBundleInfo.getTitle().startsWith(bundlePrefix)).toList();
-        assertThat(bundleInfos).hasSize(1);
+        PageData<MobileAppBundleInfo> bundleInfos = restClient.getTenantMobileBundleInfos(new PageLink(10, 0, bundlePrefix));
+        assertThat(bundleInfos.getData()).hasSize(1);
     }
 
     private NotificationTarget createNotificationTarget(UserId... usersIds) {
