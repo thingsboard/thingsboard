@@ -87,7 +87,8 @@ export class RelatedAggregationArgumentsTableComponent extends CalculatedFieldAr
       hiddenEntityTypes: true,
       defaultValueRequired: true,
       argumentEntityTypes: [ArgumentEntityType.Current],
-      hint: 'calculated-fields.hint.setting-arguments-aggregation'
+      hint: 'calculated-fields.hint.setting-arguments-aggregation',
+      watchKeyChange: true,
     };
 
     this.isScript = false;

@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
@@ -243,11 +244,12 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
 
     @Override
     public EntityId getProfileId(TenantId tenantId, EntityId entityId) {
-        return switch (entityId.getEntityType()) {
-            case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId).getId();
-            case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId).getId();
+        HasId<? extends EntityId> profile = switch (entityId.getEntityType()) {
+            case ASSET -> assetProfileCache.get(tenantId, (AssetId) entityId);
+            case DEVICE -> deviceProfileCache.get(tenantId, (DeviceId) entityId);
             default -> null;
         };
+        return profile != null ? profile.getId() : null;
     }
 
     @Override

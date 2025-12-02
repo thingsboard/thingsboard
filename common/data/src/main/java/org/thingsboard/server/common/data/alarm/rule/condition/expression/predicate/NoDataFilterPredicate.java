@@ -13,24 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.alarm.rule.condition.expression;
+package org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate;
 
-import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
+
+import java.util.concurrent.TimeUnit;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class TbelAlarmConditionExpression implements AlarmConditionExpression {
+public class NoDataFilterPredicate implements KeyFilterPredicate {
 
-    @NotBlank
-    private String expression;
+    @NotNull
+    private TimeUnit unit;
+    @Valid
+    @NotNull
+    private AlarmConditionValue<Long> duration;
 
     @Override
-    public AlarmConditionExpressionType getType() {
-        return AlarmConditionExpressionType.TBEL;
+    public FilterPredicateType getType() {
+        return FilterPredicateType.NO_DATA;
     }
 
 }

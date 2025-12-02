@@ -30,6 +30,7 @@ public class AlarmEvalResult {
     private final Status status;
     private final long leftDuration;
     private final long leftEvents;
+    private Cause cause;
 
     public AlarmEvalResult(Status status) {
         this(status, 0, 0);
@@ -39,8 +40,17 @@ public class AlarmEvalResult {
         return new AlarmEvalResult(Status.NOT_YET_TRUE, leftDuration, leftEvents);
     }
 
+    public AlarmEvalResult withCause(Cause cause) {
+        this.cause = cause;
+        return this;
+    }
+
     public enum Status {
         FALSE, NOT_YET_TRUE, TRUE;
+    }
+
+    public enum Cause {
+        NEW_EVENT, SCHEDULED_REEVALUATION;
     }
 
 }

@@ -20,6 +20,11 @@
     display: grid;
     grid-template-rows: min-content minmax(auto, 1fr) min-content;
   }
+
+  .spec-text {
+    font-size: 14px;
+    color: rgba(0, 0, 0, 0.54);
+  }
 }
 .tbel-script-lang-chip {
   line-height: 20px;

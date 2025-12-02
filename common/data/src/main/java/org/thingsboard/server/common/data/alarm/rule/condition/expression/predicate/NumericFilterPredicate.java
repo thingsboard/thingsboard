@@ -17,10 +17,14 @@ package org.thingsboard.server.common.data.alarm.rule.condition.expression.predi
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionValue;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class NumericFilterPredicate implements SimpleKeyFilterPredicate<Double> {
 
     @NotNull

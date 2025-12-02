@@ -28,6 +28,9 @@
       text-overflow: ellipsis;
       overflow: hidden;
     }
+    &.wrap {
+      white-space: pre-wrap !important;
+    }
   }
 }
 

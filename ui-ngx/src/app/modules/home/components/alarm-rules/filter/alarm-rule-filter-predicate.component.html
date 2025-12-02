@@ -27,9 +27,11 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-chip-listbox formControlName="ignoreCase" [hideSingleSelectionIndicator]="true">
-            <mat-chip-option color="primary" [value]="true">{{ 'alarm-rule.ignore-case' | translate }}</mat-chip-option>
-          </mat-chip-listbox>
+          @if (filterPredicateFormGroup.get('operation').value !== stringOperation.NO_DATA) {
+            <mat-chip-listbox formControlName="ignoreCase" [hideSingleSelectionIndicator]="true">
+              <mat-chip-option color="primary" [value]="true">{{ 'alarm-rule.ignore-case' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+          }
         </div>
       }
       @case (filterPredicateType.NUMERIC) {
@@ -58,7 +60,7 @@
         <div class="tb-form-row no-border no-padding flex-1">
           <button type="button" style="--mat-outlined-button-horizontal-padding: 3px 0px 12px;"
                   class="block w-full"
-                  mat-stroked-button color="primary"
+                  mat-stroked-button [color]="predicateValid ? 'primary' : 'warn'"
                   (click)="openComplexFilterDialog()">
             <div class="flex items-center gap-2">
               <span class="w-full text-start" translate>filter.complex-filter</span>
@@ -68,7 +70,14 @@
         </div>
       }
     }
-    @if (type !== filterPredicateType.COMPLEX) {
+    @if (filterPredicateFormGroup.get('operation').value === stringOperation.NO_DATA) {
+      <tb-alarm-rule-filter-predicate-no-data-value class="flex-full"
+                                                    [arguments]="arguments"
+                                                    [argumentInUse]="argumentInUse"
+                                                    [valueType]="valueType"
+                                                    formControlName="duration">
+      </tb-alarm-rule-filter-predicate-no-data-value>
+    } @else if (type !== filterPredicateType.COMPLEX) {
       <tb-alarm-rule-filter-predicate-value class="flex-full"
                                             [arguments]="arguments"
                                             [argumentInUse]="argumentInUse"
