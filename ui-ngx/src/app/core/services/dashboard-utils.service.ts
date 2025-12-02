@@ -50,8 +50,7 @@ import {
   WidgetConfigMode,
   WidgetSize,
   widgetType,
-  WidgetTypeDescriptor,
-  widgetTypeHasTimewindow
+  WidgetTypeDescriptor, widgetTypeHasTimewindow
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
@@ -64,7 +63,7 @@ import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
 import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
 import { maxGridsterCol, maxGridsterRow } from '@home/models/dashboard-component.models';
-import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
+import { findWidgetModelDefinition, widgetHasTimewindow } from '@shared/models/widget/widget-model.definition';
 
 @Injectable({
   providedIn: 'root'
@@ -296,7 +295,6 @@ export class DashboardUtilsService {
     }
     widgetConfig.datasources = this.validateAndUpdateDatasources(widgetConfig.datasources);
     if (type === widgetType.latest) {
-      // TODO: the following won't work for maps
       if (datasourcesHasAggregation(widgetConfig.datasources)) {
         const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
         widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true,
@@ -355,25 +353,16 @@ export class DashboardUtilsService {
   }
 
   private removeTimewindowConfigIfUnused(widget: Widget) {
-    const widgetHasTimewindow = this.widgetHasTimewindow(widget);
-    if (!widgetHasTimewindow || widget.config.useDashboardTimewindow) {
+    const hasTimewindow = widgetHasTimewindow(widget);
+    if (!hasTimewindow || widget.config.useDashboardTimewindow) {
       delete widget.config.displayTimewindow;
       delete widget.config.timewindow;
       delete widget.config.timewindowStyle;
 
-      if (!widgetHasTimewindow) {
+      if (!hasTimewindow) {
         delete widget.config.useDashboardTimewindow;
       }
     }
-  }
-
-  private widgetHasTimewindow(widget: Widget): boolean {
-    const widgetDefinition = findWidgetModelDefinition(widget);
-    if (widgetDefinition) {
-      return widgetDefinition.hasTimewindow(widget);
-    }
-    return widgetTypeHasTimewindow(widget.type)
-      || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
   }
 
   public prepareWidgetForSaving(widget: Widget): Widget {

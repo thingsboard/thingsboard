@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Datasource, Widget } from '@shared/models/widget.models';
+import {
+  Datasource,
+  datasourcesHasAggregation,
+  Widget,
+  widgetType,
+  widgetTypeHasTimewindow
+} from '@shared/models/widget.models';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { EntityAliases } from '@shared/models/alias.models';
 import { Filters } from '@shared/models/query/query.models';
@@ -37,3 +43,12 @@ const widgetModelRegistry: WidgetModelDefinition[] = [
 export const findWidgetModelDefinition = (widget: Widget): WidgetModelDefinition => {
   return widgetModelRegistry.find(def => def.testWidget(widget));
 }
+
+export const widgetHasTimewindow = (widget: Widget): boolean => {
+  const widgetDefinition = findWidgetModelDefinition(widget);
+  if (widgetDefinition) {
+    return widgetDefinition.hasTimewindow(widget);
+  }
+  return widgetTypeHasTimewindow(widget.type)
+    || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
+};
