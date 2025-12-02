@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.msa.connectivity;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.gson.JsonObject;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
@@ -67,7 +64,6 @@ import org.thingsboard.server.common.data.notification.settings.UserNotification
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.targets.platform.PlatformUsersNotificationTargetConfig;
 import org.thingsboard.server.common.data.notification.targets.platform.UserListFilter;
-import org.thingsboard.server.common.data.notification.targets.platform.UsersFilter;
 import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.HasSubject;
@@ -147,9 +143,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         tenant = restClient.saveTenant(tenant);
 
         String email = RandomStringUtils.randomAlphabetic(5) + "@gmail.com";
-
         user = restClient.saveUser(defaultTenantAdmin(tenant.getId(), email), false);
-
         restClient.activateUser(user.getId(), "password123", false);
         restClient.login(email, "password123");
     }
@@ -306,26 +300,8 @@ public class JavaRestClientTest extends AbstractContainerTest {
                 NotificationDeliveryMethod.EMAIL, false
         ));
 
-        var entitiesLimitNotificationPref = new UserNotificationSettings.NotificationPref();
-        entitiesLimitNotificationPref.setEnabled(true);
-        entitiesLimitNotificationPref.setEnabledDeliveryMethods(Map.of(
-                NotificationDeliveryMethod.SMS, true,
-                NotificationDeliveryMethod.WEB, false,
-                NotificationDeliveryMethod.EMAIL, false
-        ));
-
-        var apiUsageLimitNotificationPref = new UserNotificationSettings.NotificationPref();
-        apiUsageLimitNotificationPref.setEnabled(false);
-        apiUsageLimitNotificationPref.setEnabledDeliveryMethods(Map.of(
-                NotificationDeliveryMethod.WEB, true,
-                NotificationDeliveryMethod.SMS, false,
-                NotificationDeliveryMethod.EMAIL, false
-        ));
-
         UserNotificationSettings userNotificationSettings = new UserNotificationSettings(Map.of(
-                NotificationType.ENTITY_ACTION, entityActionNotificationPref,
-                NotificationType.ENTITIES_LIMIT, entitiesLimitNotificationPref,
-                NotificationType.API_USAGE_LIMIT, apiUsageLimitNotificationPref
+                NotificationType.ENTITY_ACTION, entityActionNotificationPref
         ));
         UserNotificationSettings saved = restClient.saveUserNotificationSettings(userNotificationSettings);
         UserNotificationSettings retrieved = restClient.getUserNotificationSettings().get();
@@ -376,22 +352,19 @@ public class JavaRestClientTest extends AbstractContainerTest {
         assertThat(bundleInfos).hasSize(1);
     }
 
-    protected NotificationTarget createNotificationTarget(UserId... usersIds) {
+    private NotificationTarget createNotificationTarget(UserId... usersIds) {
         UserListFilter filter = new UserListFilter();
         filter.setUsersIds(Arrays.stream(usersIds).map(UUIDBased::getId).toList());
-        return createNotificationTarget(filter);
-    }
 
-    protected NotificationTarget createNotificationTarget(UsersFilter usersFilter) {
         NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setName(usersFilter.toString() + org.apache.commons.lang3.RandomStringUtils.randomNumeric(5));
+        notificationTarget.setName(filter.toString() + org.apache.commons.lang3.RandomStringUtils.randomNumeric(5));
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
-        targetConfig.setUsersFilter(usersFilter);
+        targetConfig.setUsersFilter(filter);
         notificationTarget.setConfiguration(targetConfig);
         return restClient.createNotificationTarget(notificationTarget);
     }
 
-    protected NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
+    private NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
                                                               String text, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setName("Notification template: " + RandomStringUtils.randomAlphabetic(5));
@@ -430,7 +403,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         return restClient.createNotificationTemplate(notificationTemplate);
     }
 
-    protected NotificationRequest submitNotificationRequest(NotificationTargetId targetId, NotificationTemplateId notificationTemplateId) {
+    private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, NotificationTemplateId notificationTemplateId) {
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(0);
         NotificationRequest notificationRequest = NotificationRequest.builder()
