@@ -63,6 +63,8 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     private long checkInterval;
     private Map<String, AggMetric> metrics;
 
+    private boolean produceIntermediateResult;
+
     private EntityAggregationDebugArgumentsTracker debugTracker;
 
     private CalculatedFieldProcessingService cfProcessingService;
@@ -81,6 +83,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         checkInterval = TimeUnit.SECONDS.toMillis(ctx.getSystemContext().getCfCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
+        produceIntermediateResult = configuration.isProduceIntermediateResult();
     }
 
     @Override
@@ -113,7 +116,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
         getIntervals().forEach((intervalEntry, argIntervalStatuses) -> {
-            processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
+            processInterval(now, ctx, intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
         removeExpiredIntervals(expiredIntervals);
 
@@ -193,6 +196,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     private void processInterval(long now,
+                                 CalculatedFieldCtx ctx,
                                  AggIntervalEntry intervalEntry,
                                  Map<String, AggIntervalEntryStatus> args,
                                  List<AggIntervalEntry> expiredIntervals,
@@ -207,6 +211,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             handleActiveInterval(intervalEntry, args, results);
             if (watermarkDuration == 0) {
                 expiredIntervals.add(intervalEntry);
+            }
+        } else if (now - startTs < intervalEntry.getIntervalDuration()) {
+            if (produceIntermediateResult) {
+                handleCurrentInterval(ctx, intervalEntry, args, results);
             }
         }
     }
@@ -235,6 +243,25 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                     argEntryIntervalStatus.setLastArgsRefreshTs(-1);
                     processArgument(intervalEntry, argName, false, results);
                 } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    processArgument(intervalEntry, argName, true, results);
+                }
+            }
+        });
+    }
+
+    private void handleCurrentInterval(CalculatedFieldCtx ctx,
+                                       AggIntervalEntry intervalEntry,
+                                       Map<String, AggIntervalEntryStatus> args,
+                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
+        long realtimeAggregationInterval = ctx.getRealtimeAggregationIntervalMillis();
+        args.forEach((argName, argEntryIntervalStatus) -> {
+            if (argEntryIntervalStatus.intervalPassed(realtimeAggregationInterval)) {
+                if (argEntryIntervalStatus.argsUpdated()) {
+                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
+                    argEntryIntervalStatus.setLastArgsRefreshTs(-1);
+                    processArgument(intervalEntry, argName, false, results);
+                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {// TODO: should we return default value when the interval has not ended
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     processArgument(intervalEntry, argName, true, results);
                 }

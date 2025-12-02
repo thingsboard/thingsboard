@@ -166,9 +166,10 @@ public class TenantProfileController extends BaseController {
                     "      \"maxRelatedEntitiesToReturnPerCfArgument\": 100,\n" +
                     "      \"maxDataPointsPerRollingArg\": 1000,\n" +
                     "      \"maxStateSizeInKBytes\": 32,\n" +
-                    "      \"maxSingleValueArgumentSizeInKBytes\": 2" +
-                    "      \"minAllowedDeduplicationIntervalInSecForCF\": 60" +
-                    "      \"minAllowedAggregationIntervalInSecForCF\": 60" +
+                    "      \"maxSingleValueArgumentSizeInKBytes\": 2," +
+                    "      \"minAllowedDeduplicationIntervalInSecForCF\": 10," +
+                    "      \"minAllowedAggregationIntervalInSecForCF\": 60," +
+                    "      \"minAllowedRealtimeAggregationIntervalInSecForCF\": 300" +
                     "    }\n" +
                     "  },\n" +
                     "  \"default\": false\n" +

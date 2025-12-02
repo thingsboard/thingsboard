@@ -115,6 +115,7 @@ public class CalculatedFieldCtx implements Closeable {
 
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
+    private long realtimeAggregationIntervalMillis;
 
     private boolean relationQueryDynamicArguments;
     private List<String> mainEntityGeofencingArgumentNames;
@@ -210,6 +211,7 @@ public class CalculatedFieldCtx implements Closeable {
 
         this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
     }
 
     public boolean requiresScheduledReevaluation() {
@@ -222,6 +224,12 @@ public class CalculatedFieldCtx implements Closeable {
             if (lastReevaluationTs == 0) {
                 lastReevaluationTs = now;
                 return true;
+            }
+            if (entityAggregationConfig.isProduceIntermediateResult()) {
+                if (now - lastReevaluationTs >= realtimeAggregationIntervalMillis) {
+                    lastReevaluationTs = now;
+                    return true;
+                }
             }
             ZonedDateTime lastReevaluationTime = TimeUtils.toZonedDateTime(lastReevaluationTs, entityAggregationConfig.getInterval().getZoneId());
             long previousIntervalEndTs = entityAggregationConfig.getInterval().getDateTimeIntervalEndTs(lastReevaluationTime);
@@ -291,6 +299,7 @@ public class CalculatedFieldCtx implements Closeable {
     public void updateTenantProfileProperties() {
         this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
     }
 
     public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {

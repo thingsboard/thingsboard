@@ -541,7 +541,7 @@ actors:
     # Interval in seconds to check calculated fields for re-evaluation interval. 1 minute by default.
     check_interval: "${ACTORS_CALCULATED_FIELDS_CHECK_INTERVAL_SEC:60}"
   alarms:
-    # Interval in seconds to re-evaluate Alarm rules that have a time schedule. 2 minutes by default.
+    # Interval in seconds to re-evaluate Alarm rules that have a time schedule. 1 minute by default.
     reevaluation_interval: "${ACTORS_ALARMS_REEVALUATION_INTERVAL_SEC:60}"
 
 debug:
