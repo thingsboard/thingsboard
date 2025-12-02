@@ -89,7 +89,7 @@ export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' |
 export type ResourceInfo = TbResourceInfo<any>;
 
 export interface Resource extends ResourceInfo {
-  data?: string;
+  data?: any;
   name?: string;
 }
 
