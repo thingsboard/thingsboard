@@ -17,9 +17,11 @@
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormGroup,
+  ValidationErrors, Validator,
   Validators
 } from '@angular/forms';
 import {
@@ -32,6 +34,9 @@ import { merge } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { IAliasController } from '@app/core/public-api';
+import { Datasource } from '@app/shared/public-api';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 @Component({
   selector: 'tb-time-series-chart-axis-settings',
@@ -42,10 +47,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+      multi: true
     }
   ]
 })
-export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor {
+export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   @coerceBoolean()
@@ -60,6 +70,15 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   defaultXAxisTicksFormat = defaultXAxisTicksFormat;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   disabled: boolean;
@@ -147,6 +166,15 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   registerOnTouched(_fn: any): void {
   }
 
+  validate(): ValidationErrors | null {
+    return this.axisSettingsFormGroup.valid ? null : {
+      axisSettings: {
+        valid: false,
+        errors: this.getFormErrors()
+      }
+    };
+  }
+
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
@@ -220,6 +248,17 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
         this.axisSettingsFormGroup.get('max').enable({emitEvent: false});
       }
     }
+  }
+
+  private getFormErrors(): any {
+    const errors: any = {};
+    Object.keys(this.axisSettingsFormGroup.controls).forEach(key => {
+      const control = this.axisSettingsFormGroup.get(key);
+      if (control && control.errors) {
+        errors[key] = control.errors;
+      }
+    });
+    return errors;
   }
 
   private updateModel() {

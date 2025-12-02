@@ -47,6 +47,9 @@ import { mergeDeep } from '@core/utils';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { IAliasController } from '@app/core/public-api';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import { Datasource } from '@app/shared/public-api';
 
 @Component({
   selector: 'tb-time-series-chart-y-axes-panel',
@@ -67,6 +70,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
   encapsulation: ViewEncapsulation.None
 })
 export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor, OnInit, Validator {
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   disabled: boolean;

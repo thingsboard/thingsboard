@@ -26,6 +26,8 @@ import {
 import {
   LatestChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
+import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-polar-area-chart-widget-settings',
@@ -52,10 +54,37 @@ export class PolarAreaChartWidgetSettingsComponent extends LatestChartWidgetSett
 
   protected setupLatestChartControls(latestChartWidgetSettingsForm: UntypedFormGroup, settings: WidgetSettings) {
     latestChartWidgetSettingsForm.addControl('barSettings', this.fb.control(settings.barSettings, []));
-    latestChartWidgetSettingsForm.addControl('axisMin', this.fb.control(settings.axisMin, []));
-    latestChartWidgetSettingsForm.addControl('axisMax', this.fb.control(settings.axisMax, []));
+    latestChartWidgetSettingsForm.addControl('axisMin', this.fb.control(settings.axisMin));
+    latestChartWidgetSettingsForm.addControl('axisMax', this.fb.control(settings.axisMax));
     latestChartWidgetSettingsForm.addControl('axisTickLabelFont', this.fb.control(settings.axisTickLabelFont, []));
     latestChartWidgetSettingsForm.addControl('axisTickLabelColor', this.fb.control(settings.axisTickLabelColor, [Validators.min(0)]));
     latestChartWidgetSettingsForm.addControl('angleAxisStartAngle', this.fb.control(settings.angleAxisStartAngle, []));
+  }
+  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
+    settings.axisMin = this.normalizeAxisLimit(settings.axisMin);
+    settings.axisMax = this.normalizeAxisLimit(settings.axisMax);
+    return super.prepareInputSettings(settings);
+  }
+
+  private normalizeAxisLimit(limit: any): AxisLimitConfig {
+    if (limit && typeof limit === 'object' && 'type' in limit) {
+      return {
+        type: limit.type || ValueSourceType.constant,
+        value: limit.value ?? null,
+        entityAlias: limit.entityAlias ?? null
+      };
+    }
+    if (typeof limit === 'number') {
+      return {
+        type: ValueSourceType.constant,
+        value: limit,
+        entityAlias: null
+      };
+    }
+    return {
+      type: ValueSourceType.constant,
+      value: null,
+      entityAlias: null
+    };
   }
 }

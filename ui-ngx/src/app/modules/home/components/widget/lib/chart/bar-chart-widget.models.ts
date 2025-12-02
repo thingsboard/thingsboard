@@ -31,10 +31,11 @@ import {
   ChartBarSettings,
   chartColorScheme
 } from '@home/components/widget/lib/chart/chart.models';
+import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 export interface BarChartWidgetSettings extends LatestChartWidgetSettings {
-  axisMin?: number;
-  axisMax?: number;
+  axisMin?: number | string | AxisLimitConfig;
+  axisMax?: number | string | AxisLimitConfig;
   axisTickLabelFont: Font;
   axisTickLabelColor: string;
   barSettings: ChartBarSettings;
