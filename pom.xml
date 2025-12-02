@@ -110,7 +110,7 @@
         <jakarta.el.version>4.0.2</jakarta.el.version>
         <antisamy.version>1.7.5</antisamy.version>
         <snmp4j.version>3.8.0</snmp4j.version>
-        <langchain4j.version>1.1.0</langchain4j.version>
+        <langchain4j.version>1.8.0-TB</langchain4j.version>
         <error_prone_annotations.version>2.38.0</error_prone_annotations.version>
         <animal-sniffer-annotations.version>1.24</animal-sniffer-annotations.version>
         <auto-value-annotations.version>1.11.0</auto-value-annotations.version>
@@ -911,7 +911,7 @@
                 <scope>import</scope>
             </dependency>
             <dependency>
-                <groupId>dev.langchain4j</groupId>
+                <groupId>org.thingsboard.langchain4j</groupId>
                 <artifactId>langchain4j-bom</artifactId>
                 <version>${langchain4j.version}</version>
                 <type>pom</type>
@@ -1907,6 +1907,11 @@
         <repository>
             <id>central</id>
             <url>https://repo1.maven.org/maven2/</url>
+        </repository>
+        <repository>
+            <id>thingsboard-public</id>
+            <name>ThingsBoard Public Repository</name>
+            <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </repository>
         <repository>
             <id>spring-snapshots</id>
