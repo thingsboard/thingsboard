@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.util.concurrent.FluentFuture;
