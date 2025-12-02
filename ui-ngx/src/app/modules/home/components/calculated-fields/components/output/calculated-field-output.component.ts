@@ -38,6 +38,8 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityType } from '@shared/models/entity-type.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { merge } from 'rxjs';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-calculate-field-output',
@@ -102,6 +104,8 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       sendWsUpdate: [true],
       processCfs: [true],
       updateAttributesOnlyOnValueChange: [true],
+      sendAttributesUpdatedNotification: [false],
+      useCustomTtl: [false],
       ttl: [0]
     })
   });
@@ -116,7 +120,10 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
         this.updatedStrategy();
       });
 
-    this.outputForm.get('strategy.type').valueChanges
+    merge(
+      this.outputForm.get('strategy.type').valueChanges,
+      this.outputForm.get('strategy.useCustomTtl').valueChanges
+    )
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => {
         this.updatedStrategy();
@@ -151,6 +158,9 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
 
   writeValue(value: CalculatedFieldOutput | CalculatedFieldSimpleOutput): void {
     this.outputForm.patchValue(value, {emitEvent: false});
+    if (value.type === OutputType.Timeseries && value.strategy?.type === OutputStrategyType.IMMEDIATE && value.strategy?.ttl) {
+      this.outputForm.get('strategy.useCustomTtl').setValue(true, {emitEvent: false});
+    }
     this.outputForm.get('type').updateValueAndValidity({onlySelf: true});
   }
 
@@ -171,19 +181,16 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     }
   }
 
-  toggleChip(controlName: string) {
-    const control = this.outputForm.get('strategy').get(controlName);
-    if (control && control.enabled) {
-      control.setValue(!control.value);
-    }
-  }
-
   private updatedModel(value: CalculatedFieldOutput | CalculatedFieldSimpleOutput) {
     if (this.simpleMode && 'name' in value) {
       value.name = value.name?.trim() ?? '';
     }
     if (this.disableType) {
       value.type = this.outputForm.get('type').value;
+    }
+    if (value.type === OutputType.Timeseries && value.strategy.type === OutputStrategyType.IMMEDIATE) {
+      value = deepClone(value);
+      delete (value.strategy as any).useCustomTtl
     }
     this.propagateChange(value);
   }
@@ -224,10 +231,14 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       if (outputType === OutputType.Attribute) {
         this.outputForm.get('strategy.saveAttribute').enable({emitEvent: false});
         this.outputForm.get('strategy.updateAttributesOnlyOnValueChange').enable({emitEvent: false});
+        this.outputForm.get('strategy.sendAttributesUpdatedNotification').enable({emitEvent: false});
       } else {
         this.outputForm.get('strategy.saveTimeSeries').enable({emitEvent: false});
         this.outputForm.get('strategy.saveLatest').enable({emitEvent: false});
-        this.outputForm.get('strategy.ttl').enable({emitEvent: false});
+        this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: false});
+        if (this.outputForm.get('strategy.useCustomTtl').value) {
+          this.outputForm.get('strategy.ttl').enable({emitEvent: false});
+        }
       }
     }
   }

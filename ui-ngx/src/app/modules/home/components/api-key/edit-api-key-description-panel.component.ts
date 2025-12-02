@@ -16,7 +16,7 @@
 
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
-import { FormBuilder } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ApiKeyService } from '@core/http/api-key.service';
 
@@ -37,7 +37,7 @@ export class EditApiKeyDescriptionPanelComponent implements OnInit {
   @Output()
   descriptionApplied = new EventEmitter<string>();
 
-  descriptionFormControl = this.fb.control<string>(null);
+  descriptionFormControl = this.fb.control<string>(null, Validators.required);
 
   constructor(private fb: FormBuilder,
               private popover: TbPopoverComponent<EditApiKeyDescriptionPanelComponent>,

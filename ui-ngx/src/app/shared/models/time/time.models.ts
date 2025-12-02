@@ -315,8 +315,9 @@ const getTimewindowType = (timewindow: Timewindow): TimewindowType => {
 };
 
 export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalOnly: boolean,
-                                               historyOnly: boolean, timeService: TimeService, hasAggregation: boolean): Timewindow => {
-  const model = defaultTimewindow(timeService);
+                                               historyOnly: boolean, timeService: TimeService, hasAggregation: boolean,
+                                               isDashboard = false): Timewindow => {
+  const model = defaultTimewindow(timeService, isDashboard);
   if (value) {
     if (value.allowedAggTypes?.length) {
       model.allowedAggTypes = value.allowedAggTypes;

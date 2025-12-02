@@ -21,9 +21,11 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -76,5 +78,17 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
     }
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, Asset asset, AssetUpdateMsg assetUpdateMsg);
+
+    protected void deleteAsset(TenantId tenantId, AssetId assetId) {
+        deleteAsset(tenantId, null, assetId);
+    }
+
+    protected void deleteAsset(TenantId tenantId, Edge edge, AssetId assetId) {
+        Asset assetById = edgeCtx.getAssetService().findAssetById(tenantId, assetId);
+        if (assetById != null) {
+            edgeCtx.getAssetService().deleteAsset(tenantId, assetId);
+            pushEntityEventToRuleEngine(tenantId, edge, assetById, TbMsgType.ENTITY_DELETED);
+        }
+    }
 
 }

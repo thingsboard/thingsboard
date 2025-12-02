@@ -120,10 +120,10 @@
       <mat-row *matRowDef="let argument; columns: displayColumns"></mat-row>
     </table>
     <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
-         class="tb-prompt flex flex-1 items-end justify-center">
+         class="tb-prompt flex flex-1 items-end justify-center min-h-14">
       {{ 'calculated-fields.no-arguments' | translate }}
     </div>
-    @if (errorText) {
+    @if (errorText || (dataSource.isEmpty() | async)) {
       <tb-error noMargin [error]="errorText | translate" class="flex h-9 items-center pl-3"/>
     }
   </div>
@@ -134,7 +134,7 @@
       color="primary"
       #button
       (click)="manageArgument($event, button)"
-      [disabled]="maxArgumentsPerCF > 0 && argumentsFormArray.length >= maxArgumentsPerCF"
+      [disabled]="maxArgumentsPerCF > 0 && argumentsFormArray.length >= maxArgumentsPerCF || disabledAddButton"
     >
       {{ 'calculated-fields.add-argument' | translate }}
     </button>

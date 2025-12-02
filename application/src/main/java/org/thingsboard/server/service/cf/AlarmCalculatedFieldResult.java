@@ -37,7 +37,7 @@ public class AlarmCalculatedFieldResult implements CalculatedFieldResult {
     private final TbAlarmResult alarmResult;
 
     @Override
-    public TbMsg toTbMsg(EntityId entityId, List<CalculatedFieldId> cfIds) {
+    public TbMsg toTbMsg(EntityId entityId, String cfName, List<CalculatedFieldId> cfIds) {
         TbMsgType msgType;
         TbMsgMetaData metaData = new TbMsgMetaData();
         if (alarmResult.isCreated()) {
