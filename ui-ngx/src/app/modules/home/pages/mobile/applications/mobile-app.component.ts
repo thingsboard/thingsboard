@@ -176,7 +176,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
         context: ctx,
         showCloseButton: false,
         popoverContentStyle: {padding: '16px 24px'},
-        isModal: false
+        isModal: true
       });
       releaseNotesPanelPopover.tbComponentRef.instance.popover = releaseNotesPanelPopover;
       releaseNotesPanelPopover.tbComponentRef.instance.editorContentApplied.subscribe((releaseNotes) => {
