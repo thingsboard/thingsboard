@@ -1909,8 +1909,7 @@
             <url>https://repo1.maven.org/maven2/</url>
         </repository>
         <repository>
-            <id>thingsboard-public</id>
-            <name>ThingsBoard Public Repository</name>
+            <id>thingsboard-repo</id>
             <url>https://repo.thingsboard.io/artifactory/libs-release-public</url>
         </repository>
         <repository>
