@@ -64,6 +64,7 @@ export class EntityAggregationArgumentsTableComponent extends CalculatedFieldArg
       hint: 'calculated-fields.entity-aggregation.argument-setting-hint',
       hiddenDefaultValue: true,
       hiddenEntityKeyTypes: true,
+      watchKeyChange: true,
     };
 
     this.isScript = false;

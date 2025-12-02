@@ -28,6 +28,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { TimeUnit, timeUnitTranslations } from "@home/components/rule-node/rule-node-config.models";
 import { AlarmRuleFilterPredicateType, NoDataAlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+import { isDefinedAndNotNull } from "@core/utils";
 
 @Component({
   selector: 'tb-alarm-rule-filter-predicate-no-data-value',
@@ -149,8 +150,14 @@ export class AlarmRuleFilterPredicateNoDataValueComponent implements ControlValu
   }
 
   writeValue(predicateValue: NoDataAlarmRuleFilterPredicate): void {
+    if (isDefinedAndNotNull(predicateValue.duration.dynamicValueArgument)) {
+      const availableArgument = this.argumentsList.filter(arg => arg !== this.argumentInUse);
+      if (!availableArgument.includes(predicateValue.duration.dynamicValueArgument)) {
+        predicateValue.duration.dynamicValueArgument = '';
+      }
+      this.dynamicModeControl.patchValue(true, {emitEvent: false});
+    }
     this.filterPredicateValueNoDataFormGroup.patchValue(predicateValue, {emitEvent: false});
-    this.dynamicModeControl.patchValue(!!predicateValue?.duration?.dynamicValueArgument?.length, {emitEvent: false});
   }
 
   private updateModel() {

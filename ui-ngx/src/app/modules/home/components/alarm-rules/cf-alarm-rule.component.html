@@ -20,11 +20,11 @@
   </tb-cf-alarm-rule-condition>
   @if (!disabled || alarmRuleFormGroup.get('alarmDetails').value) {
     <div class="tb-form-row space-between column-xs">
-      <div class="min-w-40 xs:min-w-fit" translate>
+      <div class="min-w-40 xs:min-w-fit" tb-hint-tooltip-icon="{{'alarm-rule.alarm-rule-additional-info-icon-hint' | translate }}" translate>
         alarm-rule.alarm-rule-additional-info
       </div>
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-        <input matInput formControlName="alarmDetails" placeholder="{{ 'alarm-rule.alarm-rule-additional-info' | translate }}">
+        <input matInput formControlName="alarmDetails" placeholder="{{ 'action.set' | translate }}">
         <button type="button"
                 matSuffix mat-icon-button aria-label="Open in new"
                 (click)="openEditDetailsDialog($event)">
@@ -42,7 +42,7 @@
                                  subscriptSizing="dynamic"
                                  inlineField
                                  class="flex-1"
-                                 placeholder="{{ 'alarm-rule.alarm-rule-mobile-dashboard' | translate }}"
+                                 placeholder="{{ 'action.set' | translate }}"
                                  formControlName="dashboardId">
       </tb-dashboard-autocomplete>
     </div>

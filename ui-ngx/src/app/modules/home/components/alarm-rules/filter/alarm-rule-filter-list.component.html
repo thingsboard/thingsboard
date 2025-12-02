@@ -39,19 +39,26 @@
         </div>
         <div class="flex max-w-92% flex-full flex-col">
           <div class="flex flex-row items-center justify-start">
-            <div class="flex-1">{{ filterControl.value?.argument }}</div>
-            <div class="flex-1">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.valueType) | translate }}</div>
-            <button mat-icon-button color="primary"
+            <div class="flex-1 filters-text">{{ filterControl.value?.argument }}</div>
+            <div class="flex-1 filters-text">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.valueType) | translate }}</div>
+            <button mat-icon-button color="primary" class="tb-budge-button"
                     type="button"
                     (click)="editFilter(index)"
-                    matTooltip="{{  'filter.edit-key-filter' | translate }}"
+                    matTooltip="{{  'alarm-rule.edit-filter' | translate }}"
                     matTooltipPosition="above">
-              <mat-icon>{{'edit'}}</mat-icon>
+              <mat-icon
+                [matBadgeHidden]="areFilterAndPredicateArgumentsValid(filterControl.value)"
+                matBadgeColor="warn"
+                matBadgeSize="small"
+                matBadge="*"
+              >
+                edit
+              </mat-icon>
             </button>
             <button mat-icon-button color="primary"
                     type="button"
                     (click)="removeFilter(index)"
-                    matTooltip="{{ 'filter.remove-key-filter' | translate }}"
+                    matTooltip="{{ 'alarm-rule.remove-filter' | translate }}"
                     matTooltipPosition="above">
               <mat-icon>close</mat-icon>
             </button>
@@ -62,14 +69,15 @@
         }
       </div>
     }
-    <span [class.!hidden]="!!filtersFormArray.length"
-          class="no-data-found flex items-center justify-center"
-          translate>
-      filter.no-key-filters
-    </span>
+    @if (!filtersFormArray.length) {
+      <span class="no-data-found tb-prompt flex items-center justify-center" translate>
+        alarm-rule.no-filter
+      </span>
+      <tb-error noMargin [error]="'alarm-rule.filter-required' | translate" class="flex h-9 items-center pl-3"/>
+    }
   </div>
 </section>
-<button mat-button mat-raised-button color="primary"
+<button mat-button mat-stroked-button color="primary"
         (click)="addFilter()"
         type="button">
   {{ 'alarm-rule.add-filter' | translate }}

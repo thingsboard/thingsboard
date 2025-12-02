@@ -30,6 +30,10 @@
     &-divider {
       border-top: 1px solid rgba(0, 0, 0, 0.12);
     }
+
+    .filters-text {
+      font-size: 14px;
+    }
   }
   .filters-operation {
     display: flex;
@@ -39,12 +43,19 @@
       background-color: white;
     }
     &-label {
-      font-weight: 500;
+      font-size: 15px;
+      font-weight: 400;
       color: #00695C;
       padding: 0 8px;
       border-radius: 4px;
       border: 1px solid rgba(#00695C, 0.32);
       background-color: rgba(#00695C, 0.04);
     }
+  }
+
+  .tb-budge-button {
+    --mat-badge-legacy-small-size-container-size: 8px;
+    --mat-badge-small-size-container-overlap-offset: -5px;
+    --mat-badge-small-size-text-size: 0;
   }
 }

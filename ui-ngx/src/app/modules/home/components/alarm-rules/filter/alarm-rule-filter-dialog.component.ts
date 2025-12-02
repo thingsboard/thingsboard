@@ -21,18 +21,18 @@
  import { FormBuilder, FormGroup, Validators } from '@angular/forms';
  import { Router } from '@angular/router';
  import { DialogComponent } from '@app/shared/components/dialog.component';
- import {
-   ComplexOperation,
-   complexOperationTranslationMap,
-   EntityKeyValueType,
-   entityKeyValueTypesMap
- } from '@shared/models/query/query.models';
+ import { ComplexOperation, EntityKeyValueType, entityKeyValueTypesMap } from '@shared/models/query/query.models';
  import { DialogService } from '@core/services/dialog.service';
  import { TranslateService } from '@ngx-translate/core';
- import { AlarmRuleFilter, AlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+ import {
+   AlarmRuleFilter,
+   AlarmRuleFilterPredicate,
+   filterOperationTranslationMap
+ } from "@shared/models/alarm-rule.models";
  import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
  import { FormControlsFrom } from "@shared/models/tenant.model";
  import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+ import { isDefinedAndNotNull } from "@core/utils";
 
  export interface AlarmRuleFilterDialogData {
   filter: AlarmRuleFilter;
@@ -57,7 +57,9 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
   entityKeyValueTypes = entityKeyValueTypesMap;
 
-  complexOperationTranslationMap = complexOperationTranslationMap;
+  complexOperationTranslationMap = filterOperationTranslationMap;
+
+  predicatesValid: boolean = false;
 
   ComplexOperation = ComplexOperation;
 
@@ -84,6 +86,14 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
         operation: [this.data.filter.operation ?? ComplexOperation.AND]
       }
     );
+
+    this.predicatesValid = this.isPredicateArgumentsValid(this.data.filter.predicates);
+    this.filterFormGroup.get('predicates').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(predicates => {
+      this.predicatesValid = this.isPredicateArgumentsValid(predicates);
+    });
+
     this.filterFormGroup.get('valueType').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((valueType: EntityKeyValueType) => {
@@ -104,6 +114,31 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
         }
       }
     });
+  }
+
+  private isPredicateArgumentsValid(predicates: any): boolean {
+    const validSet = new Set(Object.keys(this.data.arguments));
+    function checkPredicates(predicates: any[]): boolean {
+      for (const p of predicates) {
+        if (isDefinedAndNotNull(p.value?.dynamicValueArgument)) {
+          if (!validSet.has(p.value.dynamicValueArgument)) {
+            return false;
+          }
+        }
+        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
+          if (!checkPredicates(p.predicates)) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    if (Array.isArray(predicates)) {
+      if (!checkPredicates(predicates)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   argumentInUse(argument: string): boolean {

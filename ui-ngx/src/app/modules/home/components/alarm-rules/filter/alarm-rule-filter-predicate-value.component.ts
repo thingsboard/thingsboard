@@ -31,6 +31,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { AlarmRuleValue } from "@shared/models/alarm-rule.models";
 import { FormControlsFrom } from "@shared/models/tenant.model";
+import { isDefinedAndNotNull } from "@core/utils";
 
 @Component({
   selector: 'tb-alarm-rule-filter-predicate-value',
@@ -165,8 +166,14 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
   }
 
   writeValue(predicateValue: AlarmRuleValue<string | number | boolean>): void {
+    if (isDefinedAndNotNull(predicateValue.dynamicValueArgument)) {
+      const availableArgument = this.argumentsList.filter(arg => arg !== this.argumentInUse);
+      if (!availableArgument.includes(predicateValue.dynamicValueArgument)) {
+        predicateValue.dynamicValueArgument = '';
+      }
+      this.dynamicModeControl.patchValue(true, {emitEvent: false});
+    }
     this.filterPredicateValueFormGroup.patchValue(predicateValue, {emitEvent: false});
-    this.dynamicModeControl.patchValue(!!predicateValue?.dynamicValueArgument?.length, {emitEvent: false});
   }
 
   private updateModel() {
