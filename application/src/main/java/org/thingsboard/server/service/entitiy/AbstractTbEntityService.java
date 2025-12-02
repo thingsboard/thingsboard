@@ -41,6 +41,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.data.util.ValidationUtils.checkNotNull;
+
 @Slf4j
 public abstract class AbstractTbEntityService {
 
@@ -68,29 +70,6 @@ public abstract class AbstractTbEntityService {
 
     protected boolean isTestProfile() {
         return Set.of(this.env.getActiveProfiles()).contains("test");
-    }
-
-    protected <T> T checkNotNull(T reference) throws ThingsboardException {
-        return checkNotNull(reference, "Requested item wasn't found!");
-    }
-
-    protected <T> T checkNotNull(T reference, String notFoundMessage) throws ThingsboardException {
-        if (reference == null) {
-            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
-        }
-        return reference;
-    }
-
-    protected <T> T checkNotNull(Optional<T> reference) throws ThingsboardException {
-        return checkNotNull(reference, "Requested item wasn't found!");
-    }
-
-    protected <T> T checkNotNull(Optional<T> reference, String notFoundMessage) throws ThingsboardException {
-        if (reference.isPresent()) {
-            return reference.get();
-        } else {
-            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
-        }
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {

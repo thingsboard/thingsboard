@@ -216,6 +216,7 @@ import java.util.zip.GZIPOutputStream;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
+import static org.thingsboard.server.common.data.util.ValidationUtils.checkNotNull;
 import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
@@ -488,29 +489,6 @@ public abstract class BaseController {
         String errorMessage = "Validation error: " + ConstraintValidator.getErrorMessage(constraintsViolations);
         ThingsboardException thingsboardException = new ThingsboardException(errorMessage, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         handleControllerException(thingsboardException, response);
-    }
-
-    <T> T checkNotNull(T reference) throws ThingsboardException {
-        return checkNotNull(reference, "Requested item wasn't found!");
-    }
-
-    <T> T checkNotNull(T reference, String notFoundMessage) throws ThingsboardException {
-        if (reference == null) {
-            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
-        }
-        return reference;
-    }
-
-    <T> T checkNotNull(Optional<T> reference) throws ThingsboardException {
-        return checkNotNull(reference, "Requested item wasn't found!");
-    }
-
-    <T> T checkNotNull(Optional<T> reference, String notFoundMessage) throws ThingsboardException {
-        if (reference.isPresent()) {
-            return reference.get();
-        } else {
-            throw new ThingsboardException(notFoundMessage, ThingsboardErrorCode.ITEM_NOT_FOUND);
-        }
     }
 
     static void checkParameter(String name, String param) throws ThingsboardException {
