@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.thingsboard.server.dao.ai;
 
 import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -42,12 +44,12 @@ import java.util.UUID;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, AiModel, AiModelCacheEvictEvent> implements AiModelService {
 
     private final DataValidator<AiModel> aiModelValidator;
-
     private final JpaExecutorService jpaExecutor;
     private final AiModelDao aiModelDao;
 
@@ -57,9 +59,12 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
         var cacheKey = event.cacheKey();
         if (event instanceof AiModelCacheEvictEvent.Saved savedEvent) {
             cache.put(cacheKey, savedEvent.savedModel());
+            log.debug("[{}][{}] Cache updated with saved AI Model", cacheKey.tenantId(), cacheKey.aiModelId());
         } else if (event instanceof AiModelCacheEvictEvent.Deleted) {
             cache.evict(cacheKey);
+            log.debug("[{}][{}] Cache evicted for deleted AI Model", cacheKey.tenantId(), cacheKey.aiModelId());
         } else {
+            log.warn("Unsupported event type received: {}", event.getClass().getSimpleName());
             throw new UnsupportedOperationException("Unsupported event type: " + event.getClass().getSimpleName());
         }
     }
@@ -74,6 +79,7 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     public AiModel save(AiModel aiModel, boolean doValidate) {
         AiModel oldAiModel = null;
         if (doValidate) {
+            log.debug("[{}] Validating AI Model: {}", aiModel.getTenantId(), aiModel.getName());
             oldAiModel = aiModelValidator.validate(aiModel, AiModel::getTenantId);
         } else if (aiModel.getId() != null) {
             oldAiModel = findAiModelById(aiModel.getTenantId(), aiModel.getId()).orElse(null);
@@ -81,10 +87,20 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
 
         AiModel savedModel;
         try {
+            log.info("[{}] Saving AI Model: name={}, id={}", aiModel.getTenantId(), aiModel.getName(), aiModel.getId());
             savedModel = aiModelDao.saveAndFlush(aiModel.getTenantId(), aiModel);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedModel.getTenantId()).entityId(savedModel.getId())
-                    .entity(savedModel).oldEntity(oldAiModel).created(oldAiModel == null).broadcastEvent(true).build());
+            log.info("[{}][{}] AI Model saved successfully", savedModel.getTenantId(), savedModel.getId());
+
+            eventPublisher.publishEvent(SaveEntityEvent.builder()
+                    .tenantId(savedModel.getTenantId())
+                    .entityId(savedModel.getId())
+                    .entity(savedModel)
+                    .oldEntity(oldAiModel)
+                    .created(oldAiModel == null)
+                    .broadcastEvent(true)
+                    .build());
         } catch (Exception e) {
+            log.error("[{}][{}] Failed to save AI Model: {}", aiModel.getTenantId(), aiModel.getId(), e.getMessage(), e);
             checkConstraintViolation(e,
                     "ai_model_name_unq_key", "AI model with such name already exist!",
                     "ai_model_external_id_unq_key", "AI model with such external ID already exists!");
@@ -99,12 +115,14 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
 
     @Override
     public Optional<AiModel> findAiModelById(TenantId tenantId, AiModelId modelId) {
+        log.debug("[{}] Fetching AI Model by Id: {}", tenantId, modelId);
         return Optional.ofNullable(aiModelDao.findById(tenantId, modelId.getId()));
     }
 
     @Override
     public PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink) {
         validatePageLink(pageLink, AiModelEntity.ALLOWED_SORT_PROPERTIES);
+        log.debug("[{}] Fetching AI Models page: {}", tenantId, pageLink);
         return aiModelDao.findAllByTenantId(tenantId, pageLink);
     }
 
@@ -133,13 +151,13 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return findAiModelByTenantIdAndId(tenantId, (AiModelId) entityId)
-                .map(model -> model); // necessary to cast to HasId<?>
+                .map(model -> model);
     }
 
     @Override
     public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
         return findAiModelByTenantIdAndIdAsync(tenantId, new AiModelId(entityId.getId()))
-                .transform(modelOpt -> modelOpt.map(model -> model), directExecutor());  // necessary to cast to HasId<?>
+                .transform(modelOpt -> modelOpt.map(model -> model), directExecutor());
     }
 
     @Override
@@ -156,13 +174,19 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     private boolean deleteByTenantIdAndIdInternal(TenantId tenantId, UUID modelId) {
         AiModel aiModel = findAiModelById(tenantId, new AiModelId(modelId)).orElse(null);
         if (aiModel == null) {
+            log.warn("[{}][{}] Attempted to delete AI Model but not found", tenantId, modelId);
             return false;
         }
 
         boolean deleted = aiModelDao.deleteByTenantIdAndId(tenantId, aiModel.getId());
         if (deleted) {
             publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, aiModel.getId())));
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(aiModel.getId()).entity(aiModel).build());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(aiModel.getId())
+                    .entity(aiModel)
+                    .build());
+            log.info("[{}][{}] Successfully deleted AI Model: {}", tenantId, modelId, aiModel.getName());
         }
 
         return deleted;
@@ -172,7 +196,10 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Transactional
     public void deleteByTenantId(TenantId tenantId) {
         Set<AiModelId> deleted = aiModelDao.deleteByTenantId(tenantId);
-        deleted.forEach(id -> publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, id))));
+        deleted.forEach(id -> {
+            publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, id)));
+            log.info("[{}][{}] Deleted AI Model as part of tenant cleanup", tenantId, id);
+        });
     }
 
     @Override
