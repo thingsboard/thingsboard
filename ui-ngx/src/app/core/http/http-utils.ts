@@ -38,7 +38,10 @@ export function createDefaultHttpOptions(queryParamsOrConfig?: QueryParams | Req
   if (hasRequestConfig(queryParamsOrConfig)) {
     return defaultHttpOptionsFromConfig(queryParamsOrConfig as RequestConfig);
   }
-  const queryParams = queryParamsOrConfig as QueryParams;
+  return defaultHttpOptionsFromParams(queryParamsOrConfig as QueryParams, config);
+}
+
+export function defaultHttpOptionsFromParams(queryParams?: QueryParams, config?: RequestConfig) {
   const finalConfig = {
     ...config,
     ...(queryParams && { queryParams }),
@@ -57,9 +60,11 @@ export function defaultHttpOptions(ignoreLoading: boolean = false,
                                    ignoreErrors: boolean = false,
                                    resendRequest: boolean = false,
                                    queryParams?: QueryParams) {
+  const cleanedParams = cleanQueryParams(queryParams);
+
   return {
     headers: new HttpHeaders({'Content-Type': 'application/json'}),
-    params: new InterceptorHttpParams(new InterceptorConfig(ignoreLoading, ignoreErrors, resendRequest), queryParams)
+    params: new InterceptorHttpParams(new InterceptorConfig(ignoreLoading, ignoreErrors, resendRequest), cleanedParams)
   };
 }
 
@@ -67,7 +72,27 @@ export function defaultHttpUploadOptions(ignoreLoading: boolean = false,
                                          ignoreErrors: boolean = false,
                                          resendRequest: boolean = false,
                                          queryParams?: QueryParams) {
+  const cleanedParams = cleanQueryParams(queryParams);
+
   return {
-    params: new InterceptorHttpParams(new InterceptorConfig(ignoreLoading, ignoreErrors, resendRequest), queryParams)
+    params: new InterceptorHttpParams(new InterceptorConfig(ignoreLoading, ignoreErrors, resendRequest), cleanedParams)
   };
+}
+
+function cleanQueryParams(params?: QueryParams): QueryParams | undefined {
+  if (!params) {
+    return undefined;
+  }
+
+  const entries = Object.entries(params);
+
+  const cleanedEntries = entries.filter(
+    ([_, value]) => value !== null && value !== undefined
+  );
+
+  if (!cleanedEntries.length) {
+    return undefined;
+  }
+
+  return Object.fromEntries(cleanedEntries);
 }

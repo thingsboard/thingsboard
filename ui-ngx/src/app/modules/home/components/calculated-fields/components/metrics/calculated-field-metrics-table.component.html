@@ -1,0 +1,125 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="flex flex-col gap-3">
+  <div class="tb-form-panel stroked no-padding no-gap arguments-table flex flex-col" [class.arguments-table-with-error]="errorText">
+    <table mat-table [dataSource]="dataSource" class="overflow-hidden bg-transparent" matSort
+           [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
+      <ng-container [matColumnDef]="'name'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="xs:!w-full sm:!w-1/2" [class]="{
+            '!w-1/5': !simpleMode,
+            '!w-1/2': simpleMode,
+        }">
+          <div tbTruncateWithTooltip>{{ 'calculated-fields.metrics.metric-name' | translate }}</div>
+        </mat-header-cell>
+        <mat-cell *matCellDef="let metric" class="argument-name-cell xs:w-full sm:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
+          <div class="flex items-center">
+            <div tbTruncateWithTooltip class="flex-1">{{ metric.name }}</div>
+            <tb-copy-button class="copy-argument-name"
+                            [copyText]="metric.name"
+                            tooltipText="{{ 'calculated-fields.metrics.copy-metric-name' | translate }}"
+                            tooltipPosition="above"
+                            icon="content_copy"/>
+          </div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'function'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="xs:hidden lt-md:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
+          {{ 'calculated-fields.metrics.aggregation' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let metric" class="xs:hidden lt-md:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
+          <div tbTruncateWithTooltip>{{ AggFunctionTranslations.get(metric.function) | translate }}</div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'filter'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 lt-md:hidden">
+          {{ 'calculated-fields.metrics.filtered' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let metric" class="w-1/5 lt-md:hidden">
+          <div>
+            <mat-icon class="ml-4 align-middle">{{ metric.filter ? 'check_box' : 'check_box_outline_blank' }}</mat-icon>
+          </div>
+        </mat-cell>
+      </ng-container>
+      <ng-container [matColumnDef]="'valueSource'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="w-2/5 lt-md:hidden">
+          {{ 'calculated-fields.metrics.value-source' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let metric" class="w-2/5 lt-md:hidden">
+          <div tbTruncateWithTooltip>{{ AggInputTypeTranslations.get(metric.input.type) | translate }}</div>
+        </mat-cell>
+      </ng-container>
+
+      <ng-container matColumnDef="actions" stickyEnd>
+        <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
+        <mat-cell *matCellDef="let metric;">
+          <div class="tb-form-table-row-cell-buttons min-w-20">
+            <button type="button"
+                    mat-icon-button
+                    #button
+                    (click)="manageMetrics($event, button, metric)"
+                    [matTooltip]="'action.edit' | translate"
+                    matTooltipPosition="above">
+              <mat-icon>edit</mat-icon>
+            </button>
+            <button type="button"
+                    mat-icon-button
+                    (click)="onDelete($event, metric)"
+                    [matTooltip]="'action.delete' | translate"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          </div>
+        </mat-cell>
+      </ng-container>
+      <mat-header-row class="mat-row-select" *matHeaderRowDef=displayColumns></mat-header-row>
+      <mat-row *matRowDef="let argument; columns: displayColumns"></mat-row>
+    </table>
+    <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
+         class="tb-prompt flex flex-1 items-end justify-center">
+      {{ 'calculated-fields.metrics.no-metrics-configured' | translate }}
+    </div>
+    @if (errorText) {
+      <tb-error noMargin [error]="errorText | translate" class="flex h-9 items-center pl-3"/>
+    }
+  </div>
+  <div class="flex h-9 justify-between">
+    <button type="button"
+            mat-stroked-button
+            color="primary"
+            #button
+            (click)="manageMetrics($event, button)"
+            [disabled]="maxArgumentsPerCF > 0 && metricsFormArray.length >= maxArgumentsPerCF">
+      {{ 'calculated-fields.metrics.add-metric' | translate }}
+    </button>
+    @if (maxArgumentsPerCF && metricsFormArray.length >= maxArgumentsPerCF) {
+      <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+        <mat-icon>warning</mat-icon>
+        <span>{{ 'calculated-fields.metrics.max-metrics' | translate }}</span>
+      </div>
+    }
+  </div>
+</div>

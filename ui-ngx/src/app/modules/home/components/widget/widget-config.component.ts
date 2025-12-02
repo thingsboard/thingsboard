@@ -40,6 +40,7 @@ import {
   Widget,
   widgetTypeCanHaveTimewindow,
   WidgetConfigMode,
+  widgetTitleAutocompleteValues,
   widgetType
 } from '@shared/models/widget.models';
 import {
@@ -178,6 +179,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   headerOptions: ToggleHeaderOption[] = [];
   selectedOption: string;
+  predefinedValues = widgetTitleAutocompleteValues;
 
   public dataSettings: UntypedFormGroup;
   public targetDeviceSettings: UntypedFormGroup;
@@ -934,15 +936,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           entityLabelColumnTitle
         } = this.modelValue.config.settings;
         const displayEntitiesArray = [];
-        if (isDefined(displayEntityName)) {
+        if (displayEntityName) {
           const displayName = entityNameColumnTitle ? entityNameColumnTitle : 'entityName';
           displayEntitiesArray.push({name: displayName, label: displayName});
         }
-        if (isDefined(displayEntityLabel)) {
+        if (displayEntityLabel) {
           const displayLabel = entityLabelColumnTitle ? entityLabelColumnTitle : 'entityLabel';
           displayEntitiesArray.push({name: displayLabel, label: displayLabel});
         }
-        if (isDefined(displayEntityType)) {
+        if (displayEntityType) {
           displayEntitiesArray.push({name: 'entityType', label: 'entityType'});
         }
         configuredColumns.push(...displayEntitiesArray, ...this.keysToCellClickColumns(this.modelValue.config.datasources[0].dataKeys));

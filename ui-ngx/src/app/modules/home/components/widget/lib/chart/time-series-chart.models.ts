@@ -1445,6 +1445,13 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
     }
   }
   seriesOption.data = item.data;
+  if (seriesOption.type === 'line') {
+    const settings: TimeSeriesChartKeySettings = item.dataKey.settings;
+    const lineSettings = settings.lineSettings;
+    if (!lineSettings.showPoints) {
+      seriesOption.showSymbol = item.data.length === 1;
+    }
+  }
   return seriesOption;
 };
 

@@ -1,0 +1,84 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section class="flex flex-col gap-4" [formGroup]="filterListFormGroup">
+  <div class="tb-form-panel no-padding no-gap stroked">
+    <div class="flex flex-row">
+      <div class="flex flex-full flex-row items-center justify-start gap-2">
+        <div class="flex flex-1 flex-row gap-4 pl-2">
+          <label translate class="filter-title max-w-30% flex-full">alarm-rule.operation</label>
+          <label translate class="filter-title max-w-20% flex-full xs:hidden">alarm-rule.value-source</label>
+          <label translate class="filter-title max-w-50% flex-full">alarm-rule.value</label>
+        </div>
+        <span [class.!hidden]="disabled" class="min-w-10">&nbsp;</span>
+      </div>
+    </div>
+    <mat-divider style="padding-bottom: 5px;"></mat-divider>
+    <div class="predicate-list">
+      @for (predicateControl of predicatesFormArray.controls; track predicateControl; let index = $index) {
+        <div class="flex flex-row items-stretch justify-start relative"
+             [class.key-filter-list-divider]="$index">
+          @if (index) {
+            <div class="filters-operation-container">
+              <span class="filters-operation-label">{{ complexOperationTranslations.get(operation) | translate }}</span>
+            </div>
+          }
+          <div class="flex flex-full flex-col">
+            <div class="flex flex-1 flex-row items-center justify-start">
+              <tb-alarm-rule-filter-predicate
+                class="flex-1"
+                [arguments]="arguments"
+                [argumentInUse]="argumentInUse"
+                [valueType]="valueType"
+                [formControl]="predicateControl">
+              </tb-alarm-rule-filter-predicate>
+              <button mat-icon-button color="primary"
+                      [disabled]="disabled"
+                      type="button"
+                      (click)="removePredicate($index)"
+                      matTooltip="{{ 'filter.remove-filter' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>close</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+      @if (!predicatesFormArray.length) {
+        <span class="no-data-found tb-prompt flex items-center justify-center" translate>
+          alarm-rule.no-filter
+        </span>
+        <tb-error noMargin [error]="'alarm-rule.filter-required' | translate" class="flex h-9 items-center pl-3"/>
+      }
+    </div>
+  </div>
+  <div class="flex flex-row gap-2">
+    <button mat-button mat-stroked-button color="primary"
+            [class.!hidden]="disabled"
+            (click)="addPredicate(false)"
+            type="button">
+      {{ 'action.add' | translate }}
+    </button>
+    <button mat-button
+            color="primary"
+            [class.!hidden]="disabled"
+            (click)="addPredicate(true)"
+            type="button">
+      {{ 'filter.add-complex' | translate }}
+    </button>
+  </div>
+</section>

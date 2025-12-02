@@ -26,6 +26,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -89,6 +90,8 @@ export class WindSpeedDirectionBasicConfigComponent extends BasicWidgetConfigCom
     const layout: WindSpeedDirectionLayout = this.windSpeedDirectionWidgetConfigForm.get('layout').value;
     return layout === WindSpeedDirectionLayout.advanced;
   }
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

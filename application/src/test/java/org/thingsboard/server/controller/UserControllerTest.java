@@ -116,7 +116,7 @@ public class UserControllerTest extends AbstractControllerTest {
         foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
         Assert.assertEquals(foundUser, savedUser);
 
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundUser, foundUser,
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(user.getTenantId(), foundUser, foundUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
                 ActionType.ADDED, 1, 1, 1);
         Mockito.reset(tbClusterService, auditLogService);
@@ -155,7 +155,7 @@ public class UserControllerTest extends AbstractControllerTest {
         doDelete("/api/user/" + savedUser.getId().getId().toString())
                 .andExpect(status().isOk());
 
-        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundUser, foundUser.getId(), foundUser.getId(),
+        testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(user.getTenantId(), foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
                 ActionType.DELETED, ActionType.DELETED, SYSTEM_TENANT.getId().toString());
     }
@@ -285,6 +285,26 @@ public class UserControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldNotDeleteLastTenantAdmin() throws Exception {
+        loginSysAdmin();
+
+        User tenantAdmin2 = new User();
+        tenantAdmin2.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin2.setTenantId(tenantId);
+        tenantAdmin2.setEmail("tenant2@thingsboard.io");
+        tenantAdmin2 = doPost("/api/user", tenantAdmin2, User.class);
+
+        // delete second tenant admin - ok
+        doDelete("/api/user/" + tenantAdmin2.getId().getId().toString())
+                .andExpect(status().isOk());
+
+        // delete last tenant admin - forbidden
+        doDelete("/api/user/" + tenantAdminUser.getId().getId().toString())
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("At least one tenant administrator must remain!")));
+    }
+
+    @Test
     public void testSaveUserWithInvalidEmail() throws Exception {
         loginSysAdmin();
 
@@ -394,7 +414,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
         User testManyUser = new User();
         testManyUser.setTenantId(tenantId);
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(tenantId, testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
                 ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
@@ -506,7 +526,7 @@ public class UserControllerTest extends AbstractControllerTest {
         }
         User testManyUser = new User();
         testManyUser.setTenantId(tenantId);
-        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(testManyUser, testManyUser,
+        testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(tenantId, testManyUser, testManyUser,
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
                 ActionType.DELETED, cntEntity, NUMBER_OF_USERS, cntEntity, "");
 

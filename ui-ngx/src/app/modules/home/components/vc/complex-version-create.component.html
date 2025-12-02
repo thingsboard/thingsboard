@@ -41,7 +41,7 @@
           </mat-error>
         </mat-form-field>
       </div>
-      <mat-form-field class="mat-block" style="margin-bottom: 24px;" appearance="outline">
+      <mat-form-field class="mat-block" style="margin-bottom: 24px;" appearance="outline" subscriptSizing="dynamic">
         <mat-label translate>version-control.default-sync-strategy</mat-label>
         <mat-select required formControlName="syncStrategy">
           @for (strategy of syncStrategies; track strategy) {

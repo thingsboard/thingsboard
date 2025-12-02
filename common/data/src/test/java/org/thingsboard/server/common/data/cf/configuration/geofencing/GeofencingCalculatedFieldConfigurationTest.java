@@ -24,16 +24,12 @@ import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 
-import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LATITUDE_ARGUMENT_KEY;
 import static org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates.ENTITY_ID_LONGITUDE_ARGUMENT_KEY;
 
@@ -47,28 +43,7 @@ public class GeofencingCalculatedFieldConfigurationTest {
     }
 
     @Test
-    void validateShouldThrowWhenEntityCoordinatesNull() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setEntityCoordinates(null);
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Geofencing calculated field entity coordinates must be specified!");
-    }
-
-    @Test
-    void validateShouldThrowWhenZoneGroupsNull() {
-        var cfg = new GeofencingCalculatedFieldConfiguration();
-        cfg.setEntityCoordinates(new EntityCoordinates(ENTITY_ID_LATITUDE_ARGUMENT_KEY, ENTITY_ID_LONGITUDE_ARGUMENT_KEY));
-        cfg.setZoneGroups(null);
-
-        assertThatThrownBy(cfg::validate)
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Geofencing calculated field must contain at least one geofencing zone group defined!");
-    }
-
-    @Test
-    void validateShouldCallValidateOnEntityCoordinatesAndZoneGroups() {
+    void validateShouldCallValidateOnZoneGroups() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         EntityCoordinates entityCoordinatesMock = mock(EntityCoordinates.class);
         cfg.setEntityCoordinates(entityCoordinatesMock);
@@ -76,13 +51,11 @@ public class GeofencingCalculatedFieldConfigurationTest {
         cfg.setZoneGroups(Map.of("someGroupName", zoneGroupConfiguration));
 
         cfg.validate();
-
-        verify(entityCoordinatesMock).validate();
         verify(zoneGroupConfiguration).validate("someGroupName");
     }
 
     @Test
-    void validateShouldCallValidateOnEntityCoordinatesAndZoneGroupsWithoutAnyExceptions() {
+    void validateShouldCallValidateOnZoneGroupsWithoutAnyExceptions() {
         var cfg = new GeofencingCalculatedFieldConfiguration();
         EntityCoordinates entityCoordinatesMock = mock(EntityCoordinates.class);
         cfg.setEntityCoordinates(entityCoordinatesMock);
@@ -96,7 +69,6 @@ public class GeofencingCalculatedFieldConfigurationTest {
 
         assertThatCode(cfg::validate).doesNotThrowAnyException();
 
-        verify(entityCoordinatesMock).validate();
         verify(zoneGroupConfigurationA).validate(zoneGroupAName);
         verify(zoneGroupConfigurationB).validate(zoneGroupBName);
     }

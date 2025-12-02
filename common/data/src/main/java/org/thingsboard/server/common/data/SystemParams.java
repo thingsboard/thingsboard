@@ -40,5 +40,7 @@ public class SystemParams {
     long maxDataPointsPerRollingArg;
     int minAllowedScheduledUpdateIntervalInSecForCF;
     int maxRelationLevelPerCfArgument;
+    long minAllowedDeduplicationIntervalInSecForCF;
+    long minAllowedAggregationIntervalInSecForCF;
     TrendzSettings trendzSettings;
 }

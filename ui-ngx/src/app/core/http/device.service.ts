@@ -16,7 +16,8 @@
 
 import { Injectable } from '@angular/core';
 import { createDefaultHttpOptions, defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
-import { Observable, ReplaySubject } from 'rxjs';
+import { catchError, Observable, of, ReplaySubject, throwError, timeout } from 'rxjs';
+import { map, switchMap } from "rxjs/operators";
 import { HttpClient } from '@angular/common/http';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
@@ -224,5 +225,72 @@ export class DeviceService {
 
   public downloadGatewayDockerComposeFile(deviceId: string): Observable<any> {
     return this.resourcesService.downloadResource(`/api/device-connectivity/gateway-launch/${deviceId}/docker-compose/download`);
+  }
+
+  public rebootDevice(deviceId: string, isBootstrapServer: boolean, config?: RequestConfig): Observable<{
+    result: string,
+    msg: string
+  }> {
+    const rebootName = isBootstrapServer ? 'Bootstrap-Request Trigger' : 'Registration Update Trigger';
+    return this.sendTwoWayRpcCommand(deviceId, {method: 'DiscoverAll'}, config).pipe(
+      timeout(10000),
+      switchMap((response: any) => {
+        if (response.result && response.result.toUpperCase() === 'CONTENT') {
+          const resourceId = isBootstrapServer ? 9 : 8;
+          const resourcePath = `/1/0/${resourceId}`;
+          return this.rebootTrigger(deviceId, resourcePath, config).pipe(
+            map((responseReboot: any) => {
+              if (responseReboot.result === 'CHANGED') {
+                return {
+                  result: 'SUCCESS',
+                  msg: `<b>"${rebootName}"</b> - Started Successfully.`
+                };
+              } else {
+                return {
+                  result: 'ERROR',
+                  msg: `<b>"${rebootName}"</b> failed:<pre>${JSON.stringify(responseReboot, null, 2)}</pre>`
+                }
+              }
+            }),
+            catchError(err =>
+              of({
+                result: 'ERROR',
+                msg: `<b>"${rebootName}"</b> failed.<br>Error: ${err.message || err}`
+              })
+            )
+          );
+        } else {
+          return of({
+            result: 'ERROR',
+            msg: `<b>"${rebootName}"</b> failed.<br>Bad registration device with id = ${deviceId}.<br><b>"DiscoverAll"</b> - RPC result is not "CONTENT"`
+          });
+        }
+      }),
+      catchError(err =>
+        of({
+          result: 'ERROR',
+          msg: `<b>"${rebootName}"</b> failed.<br>Bad registration device with id = ${deviceId}.<br>Error: ${err.message || err}`
+        })
+      )
+    );
+  }
+
+  private rebootTrigger(deviceId: string, resourcePath: string, config?: RequestConfig): Observable<{ result: string, msg?: string }> {
+    return this.sendTwoWayRpcCommand(deviceId, {method: 'Execute', params: {id: resourcePath}}, config).pipe(
+      timeout(10000),
+      map(res => {
+        if (res?.result?.toUpperCase() === 'CHANGED') {
+          return {result: 'CHANGED'};
+        } else {
+          return {
+            result: `${res?.result}`,
+            msg: `${res?.error}`
+          }
+        }
+      }),
+      catchError(err => {
+        return throwError(() => err);
+      })
+    );
   }
 }

@@ -26,14 +26,18 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
+import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,6 +47,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 import static org.thingsboard.server.utils.CalculatedFieldUtils.toProto;
 
 @ExtendWith(MockitoExtension.class)
@@ -85,17 +91,23 @@ class CalculatedFieldUtilsTest {
         geofencingArgumentEntry.setZoneStates(zoneStates);
 
         // Create cf state with the geofencing argument and add it to the state map
-        CalculatedFieldState state = new GeofencingCalculatedFieldState(List.of("geofencingArgumentTest"));
-        state.updateState(mock(CalculatedFieldCtx.class), Map.of("geofencingArgumentTest", geofencingArgumentEntry));
+        CalculatedFieldState state = new GeofencingCalculatedFieldState(DEVICE_ID);
 
-        // when
+        CalculatedFieldCtx cfCtxMock = mock(CalculatedFieldCtx.class);
+        when(cfCtxMock.getArgNames()).thenReturn(List.of("geofencingArgumentTest"));
+
+        state.setCtx(cfCtxMock, null);
+
+        Map<String, ArgumentEntry> updatedArguments = state.update(Map.of("geofencingArgumentTest", geofencingArgumentEntry), cfCtxMock);
+        assertThat(updatedArguments).hasSize(1);
+        assertThat(updatedArguments.get("geofencingArgumentTest")).isEqualTo(geofencingArgumentEntry);
+
         CalculatedFieldStateProto proto = toProto(stateId, state);
+        CalculatedFieldState fromProto = CalculatedFieldUtils.fromProto(stateId, proto);
 
-        // then
-        CalculatedFieldState fromProto = CalculatedFieldUtils.fromProto(proto);
         assertThat(fromProto)
                 .usingRecursiveComparison()
-                .ignoringFields("requiredArguments")
+                .ignoringFields("ctx", "requiredArguments", "readinessStatus", "latestTimestamp")
                 .isEqualTo(state);
 
         ArgumentEntry fromProtoArgument = fromProto.getArguments().get("geofencingArgumentTest");
@@ -104,6 +116,52 @@ class CalculatedFieldUtilsTest {
         assertThat(fromProtoGeoArgument.getZoneStates()).hasSize(2);
         assertThat(fromProtoGeoArgument.getZoneStates().get(z1).getLastPresence()).isEqualTo(GeofencingPresenceStatus.INSIDE);
         assertThat(fromProtoGeoArgument.getZoneStates().get(z2).getLastPresence()).isNull();
+    }
+
+    @Test
+    void toProtoAndFromProto_shouldCreatePropagationStateWithoutPropagationArgument() {
+        // given
+        CalculatedFieldEntityCtxId stateId = mock(CalculatedFieldEntityCtxId.class);
+        given(stateId.tenantId()).willReturn(TENANT_ID);
+        given(stateId.cfId()).willReturn(CF_ID);
+        given(stateId.entityId()).willReturn(DEVICE_ID);
+
+        AssetId propagationAssetId = new AssetId(UUID.fromString("17bbf99c-3b87-4d21-b07d-da7409bb2bb7"));
+        PropagationArgumentEntry propagationArgumentEntry = new PropagationArgumentEntry(List.of(propagationAssetId));
+
+        long lastUpdateTs = System.currentTimeMillis();
+        SingleValueArgumentEntry singleValueArgumentEntry = new SingleValueArgumentEntry(new BaseAttributeKvEntry(new StringDataEntry("state", "active"), lastUpdateTs, 1L));
+
+        CalculatedFieldCtx cfCtxMock = mock(CalculatedFieldCtx.class);
+        when(cfCtxMock.getArgNames()).thenReturn(List.of("state"));
+
+        CalculatedFieldState state = new PropagationCalculatedFieldState(DEVICE_ID);
+
+        state.setCtx(cfCtxMock, null);
+
+        Map<String, ArgumentEntry> updatedArguments = state.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry, "state", singleValueArgumentEntry), cfCtxMock);
+        assertThat(updatedArguments).hasSize(2);
+        assertThat(updatedArguments.get(PROPAGATION_CONFIG_ARGUMENT)).isEqualTo(propagationArgumentEntry);
+        assertThat(updatedArguments.get("state")).isEqualTo(singleValueArgumentEntry);
+
+        // when
+        CalculatedFieldStateProto proto = toProto(stateId, state);
+
+        // then
+        CalculatedFieldState restored = CalculatedFieldUtils.fromProto(stateId, proto);
+
+        // Propagation argument is not persisted -> should be absent after restore
+        assertThat(restored).isNotNull();
+        assertThat(restored).isInstanceOf(PropagationCalculatedFieldState.class);
+
+        PropagationCalculatedFieldState propagationState = (PropagationCalculatedFieldState) restored;
+
+        assertThat(propagationState.getEntityId()).isEqualTo(DEVICE_ID);
+        assertThat(propagationState.getArguments()).isNotNull();
+        assertThat(propagationState.getArguments().get(PROPAGATION_CONFIG_ARGUMENT)).isNull();
+        assertThat(propagationState.getArguments().get("state")).isNotNull().isEqualTo(singleValueArgumentEntry);
+        assertThat(propagationState.getRequiredArguments()).isNull();
+        assertThat(propagationState.getReadinessStatus()).isNull();
     }
 
 }

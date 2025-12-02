@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.resource;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import com.google.common.hash.Hashing;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -79,6 +80,7 @@ import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.UnaryOperator;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -89,7 +91,9 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Primary
 public class BaseResourceService extends AbstractCachedEntityService<ResourceInfoCacheKey, TbResourceInfo, ResourceInfoEvictEvent> implements ResourceService {
 
-    public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
+    protected static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
+    protected static final int MAX_ENTITIES_TO_FIND = 10;
+
     protected final TbResourceDao resourceDao;
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
@@ -98,7 +102,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final RuleChainDao ruleChainDao;
     private final Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap = new HashMap<>();
     private final Map<EntityType, ResourceContainerDao<?>> generalResourceContainerDaoMap = new HashMap<>();
-    protected static final int MAX_ENTITIES_TO_FIND = 10;
 
     @PostConstruct
     public void init() {
@@ -107,7 +110,8 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         generalResourceContainerDaoMap.put(EntityType.RULE_CHAIN, ruleChainDao);
     }
 
-    @Autowired @Lazy
+    @Autowired
+    @Lazy
     private ImageService imageService;
 
     private static final Map<String, String> DASHBOARD_RESOURCES_MAPPING = Map.of(
@@ -275,7 +279,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResource toResource(TenantId tenantId, ResourceExportData exportData) {
         if (exportData.getType() == ResourceType.IMAGE || exportData.getSubType() == ResourceSubType.IMAGE
-            || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
+                || exportData.getSubType() == ResourceSubType.SCADA_SYMBOL) {
             throw new IllegalArgumentException("Image import not supported");
         }
 
@@ -455,6 +459,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findResourceInfoById(tenantId, new TbResourceId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findResourceInfoByIdAsync(tenantId, new TbResourceId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

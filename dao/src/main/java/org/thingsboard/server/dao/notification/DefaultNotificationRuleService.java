@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.notification;
 
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
@@ -33,8 +34,9 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 @Service
 @RequiredArgsConstructor
@@ -56,9 +58,7 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
                     .created(notificationRule.getId() == null).build());
             return savedRule;
         } catch (Exception e) {
-            checkConstraintViolation(e, Map.of(
-                    "uq_notification_rule_name", "Notification rule with such name already exists"
-            ));
+            checkConstraintViolation(e, "uq_notification_rule_name", "Notification rule with such name already exists");
             throw e;
         }
     }
@@ -112,6 +112,12 @@ public class DefaultNotificationRuleService extends AbstractEntityService implem
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findNotificationRuleById(tenantId, new NotificationRuleId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(notificationRuleDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

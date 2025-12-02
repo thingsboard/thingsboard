@@ -15,67 +15,55 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.script.api.tbel.TbelCfArg;
-import org.thingsboard.script.api.tbel.TbelCfCtx;
-import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
+import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-@Data
 @Slf4j
-@NoArgsConstructor
 @EqualsAndHashCode(callSuper = true)
 public class ScriptCalculatedFieldState extends BaseCalculatedFieldState {
 
-    public ScriptCalculatedFieldState(List<String> requiredArguments) {
-        super(requiredArguments);
+    protected CalculatedFieldScriptEngine tbelExpression;
+
+    public ScriptCalculatedFieldState(EntityId entityId) {
+        super(entityId);
+    }
+
+    @Override
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        super.setCtx(ctx, actorCtx);
+        this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
+    }
+
+    @Override
+    public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
+        ListenableFuture<Object> resultFuture = ctx.evaluateTbelExpression(tbelExpression, this);
+        Output output = ctx.getOutput();
+        return Futures.transform(resultFuture,
+                result -> TelemetryCalculatedFieldResult.builder()
+                        .outputStrategy(output.getStrategy())
+                        .type(output.getType())
+                        .scope(output.getScope())
+                        .result(JacksonUtil.valueToTree(result))
+                        .build(),
+                MoreExecutors.directExecutor()
+        );
     }
 
     @Override
     public CalculatedFieldType getType() {
         return CalculatedFieldType.SCRIPT;
-    }
-
-    @Override
-    public ListenableFuture<CalculatedFieldResult> performCalculation(EntityId entityId, CalculatedFieldCtx ctx) {
-        Map<String, TbelCfArg> arguments = new LinkedHashMap<>();
-        List<Object> args = new ArrayList<>(ctx.getArgNames().size() + 1);
-        args.add(new Object()); // first element is a ctx, but we will set it later;
-        for (String argName : ctx.getArgNames()) {
-            var arg = toTbelArgument(argName);
-            arguments.put(argName, arg);
-            if (arg instanceof TbelCfSingleValueArg svArg) {
-                args.add(svArg.getValue());
-            } else {
-                args.add(arg);
-            }
-        }
-        args.set(0, new TbelCfCtx(arguments, getLatestTimestamp()));
-        ListenableFuture<JsonNode> resultFuture = ctx.getCalculatedFieldScriptEngine().executeJsonAsync(args.toArray());
-        Output output = ctx.getOutput();
-        return Futures.transform(resultFuture,
-                result -> new CalculatedFieldResult(output.getType(), output.getScope(), result),
-                MoreExecutors.directExecutor()
-        );
-    }
-
-    private TbelCfArg toTbelArgument(String key) {
-        return arguments.get(key).toTbelCfArg();
     }
 
 }

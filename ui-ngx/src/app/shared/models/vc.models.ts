@@ -265,4 +265,4 @@ export interface EntityDataInfo {
   hasCalculatedFields: boolean;
 }
 
-export const typesWithCalculatedFields = new Set<EntityType | AliasEntityType>([EntityType.DEVICE, EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE_PROFILE]);
+export const typesWithCalculatedFields = new Set<EntityType | AliasEntityType>([EntityType.DEVICE, EntityType.ASSET, EntityType.ASSET_PROFILE, EntityType.DEVICE_PROFILE, EntityType.CUSTOMER]);

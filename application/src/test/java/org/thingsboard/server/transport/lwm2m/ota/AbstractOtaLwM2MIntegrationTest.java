@@ -54,7 +54,6 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 @DaoSqlTest
 public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
-    private final  String[] RESOURCES_OTA = new String[]{"3.xml", "5.xml", "9.xml", "19.xml"};
     protected static final String CLIENT_ENDPOINT_WITHOUT_FW_INFO = "WithoutFirmwareInfoDevice";
     protected static final String CLIENT_ENDPOINT_OTA5 = "Ota5_Device";
     protected static final String CLIENT_ENDPOINT_OTA9 = "Ota9_Device";
@@ -185,10 +184,6 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
                     "    ],\n" +
                     "    \"attributeLwm2m\": {}\n" +
                     "  }";
-
-    public AbstractOtaLwM2MIntegrationTest() {
-        setResources(this.RESOURCES_OTA);
-    }
 
     protected OtaPackageInfo createFirmware(String version, DeviceProfileId deviceProfileId) throws Exception {
         String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";

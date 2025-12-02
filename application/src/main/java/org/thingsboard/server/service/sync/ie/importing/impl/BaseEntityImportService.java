@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -35,7 +36,9 @@ import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -322,10 +325,25 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                 .peek(calculatedField -> {
                     calculatedField.setTenantId(ctx.getTenantId());
                     calculatedField.setEntityId(savedEntity.getId());
-                    if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration configuration) {
-                        configuration.getArguments().values().forEach(argument -> {
-                            if (argument.getRefEntityId() != null) {
-                                argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), ctx.isFinalImportAttempt()));
+                    if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+                        if (argBasedConfig instanceof GeofencingCalculatedFieldConfiguration geofencingCfg) {
+                            geofencingCfg.getZoneGroups().values().forEach(zoneGroupConfiguration -> {
+                                if (zoneGroupConfiguration.getRefEntityId() != null) {
+                                    zoneGroupConfiguration.setRefEntityId(idProvider.getInternalId(zoneGroupConfiguration.getRefEntityId(), ctx.isFinalImportAttempt()));
+                                }
+                            });
+                        } else {
+                            argBasedConfig.getArguments().values().forEach(argument -> {
+                                if (argument.getRefEntityId() != null) {
+                                    argument.setRefEntityId(idProvider.getInternalId(argument.getRefEntityId(), ctx.isFinalImportAttempt()));
+                                }
+                            });
+                        }
+                    }
+                    if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration alarmCfConfig) {
+                        alarmCfConfig.getAllRules().map(Pair::getValue).forEach(rule -> {
+                            if (rule.getDashboardId() != null) {
+                                rule.setDashboardId(idProvider.getInternalId(rule.getDashboardId(), ctx.isFinalImportAttempt()));
                             }
                         });
                     }

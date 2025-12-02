@@ -168,9 +168,8 @@ export class DashboardUtilsService {
       dashboard.configuration.filters = {};
     }
 
-    if (isUndefined(dashboard.configuration.timewindow)) {
-      dashboard.configuration.timewindow = this.timeService.defaultTimewindow();
-    }
+    dashboard.configuration.timewindow = initModelFromDefaultTimewindow(dashboard.configuration.timewindow,
+      false, false, this.timeService, true, true);
     if (isUndefined(dashboard.configuration.settings)) {
       dashboard.configuration.settings = {};
       dashboard.configuration.settings.stateControllerId = 'entity';
