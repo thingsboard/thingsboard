@@ -39,10 +39,12 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rest.client.utils.RestJsonConverter;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.ClaimRequest;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -162,6 +164,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
 import org.thingsboard.server.common.data.query.AlarmData;
 import org.thingsboard.server.common.data.query.AlarmDataQuery;
+import org.thingsboard.server.common.data.query.AvailableEntityKeys;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -594,7 +597,7 @@ public class RestClient implements Closeable {
     }
 
     public PageData<AlarmInfo> getAllAlarmsV2(List<AlarmSearchStatus> statusList, List<AlarmSeverity> severityList,
-                                           List<String> typeList, String assignedId, TimePageLink pageLink) {
+                                              List<String> typeList, String assignedId, TimePageLink pageLink) {
         String urlSecondPart = "/api/v2/alarms?";
         Map<String, String> params = new HashMap<>();
         if (!CollectionUtils.isEmpty(statusList)) {
@@ -1826,24 +1829,15 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public JsonNode findEntityTimeseriesAndAttributesKeysByQuery(EntityDataQuery query, boolean isTimeseries, boolean isAttributes, String scope) {
-        Map<String, String> params = new HashMap<>();
-        params.put("timeseries", String.valueOf(isTimeseries));
-        params.put("attributes", String.valueOf(isAttributes));
-
-        StringBuilder urlBuilder = new StringBuilder(baseURL);
-        urlBuilder.append("/api/entitiesQuery/find/keys?timeseries={timeseries}&attributes={attributes}");
-
-        if (scope != null) {
-            urlBuilder.append("&scope={scope}");
-            params.put("scope", scope);
-        }
-        return restTemplate.exchange(
-                urlBuilder.toString(),
-                HttpMethod.POST, new HttpEntity<>(query),
-                new ParameterizedTypeReference<JsonNode>() {
-                },
-                params).getBody();
+    public AvailableEntityKeys findAvailableEntityKeysByQuery(EntityDataQuery query, boolean includeTimeseries, boolean includeAttributes, AttributeScope scope) {
+        var uri = UriComponentsBuilder.fromUriString(baseURL)
+                .path("/api/entitiesQuery/find/keys")
+                .queryParam("timeseries", includeTimeseries)
+                .queryParam("attributes", includeAttributes)
+                .queryParamIfPresent("scope", Optional.ofNullable(scope))
+                .build()
+                .toUri();
+        return restTemplate.exchange(uri, HttpMethod.POST, new HttpEntity<>(query), new ParameterizedTypeReference<AvailableEntityKeys>() {}).getBody();
     }
 
     public PageData<AlarmData> findAlarmDataByQuery(AlarmDataQuery query) {
