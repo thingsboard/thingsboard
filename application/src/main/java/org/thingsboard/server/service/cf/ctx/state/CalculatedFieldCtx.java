@@ -58,6 +58,7 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.relation.RelationService;
+import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.util.TimeUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
@@ -123,6 +124,8 @@ public class CalculatedFieldCtx implements Closeable {
     private List<String> relatedEntityArgumentNames;
 
     private long scheduledUpdateIntervalMillis;
+    private long cfCheckReevaluationInterval;
+    private long alarmReevaluationInterval;
 
     private Argument propagationArgument;
     private boolean applyExpressionForResolvedArguments;
@@ -209,9 +212,12 @@ public class CalculatedFieldCtx implements Closeable {
         this.alarmService = systemContext.getAlarmService();
         this.cfProcessingService = systemContext.getCalculatedFieldProcessingService();
 
-        this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
-        this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
+        ApiLimitService apiLimitService = systemContext.getApiLimitService();
+        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
+        this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
+        this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
     }
 
     public boolean requiresScheduledReevaluation() {
@@ -241,7 +247,7 @@ public class CalculatedFieldCtx implements Closeable {
         boolean requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration) {
             if (requiresScheduledReevaluation) {
-                long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getAlarmRulesReevaluationInterval());
+                long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(alarmReevaluationInterval);
                 if (now - lastReevaluationTs >= reevaluationIntervalMillis) {
                     lastReevaluationTs = now;
                     return true;
@@ -297,9 +303,12 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public void updateTenantProfileProperties() {
-        this.maxStateSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
-        this.maxSingleValueArgumentSize = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
+        ApiLimitService apiLimitService = systemContext.getApiLimitService();
+        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
+        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
+        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
+        this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
+        this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
     }
 
     public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {

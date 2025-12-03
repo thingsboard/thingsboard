@@ -60,7 +60,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
     private AggInterval interval;
     private long watermarkDuration;
-    private long checkInterval;
     private Map<String, AggMetric> metrics;
 
     private boolean produceIntermediateResult;
@@ -80,7 +79,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getSystemContext().getCfCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
         produceIntermediateResult = configuration.isProduceIntermediateResult();
@@ -208,7 +206,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             handleExpiredInterval(intervalEntry, args, results);
             expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
-            handleActiveInterval(intervalEntry, args, results);
+            handleActiveInterval(ctx, intervalEntry, args, results);
             if (watermarkDuration == 0) {
                 expiredIntervals.add(intervalEntry);
             }
@@ -233,11 +231,12 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         });
     }
 
-    private void handleActiveInterval(AggIntervalEntry intervalEntry,
+    private void handleActiveInterval(CalculatedFieldCtx ctx,
+                                      AggIntervalEntry intervalEntry,
                                       Map<String, AggIntervalEntryStatus> args,
                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         args.forEach((argName, argEntryIntervalStatus) -> {
-            if (argEntryIntervalStatus.intervalPassed(checkInterval)) {
+            if (argEntryIntervalStatus.intervalPassed(ctx.getCfCheckReevaluationInterval())) {
                 if (argEntryIntervalStatus.argsUpdated()) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     argEntryIntervalStatus.setLastArgsRefreshTs(-1);
@@ -261,7 +260,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     argEntryIntervalStatus.setLastArgsRefreshTs(-1);
                     processArgument(intervalEntry, argName, false, results);
-                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {// TODO: should we return default value when the interval has not ended
+                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     processArgument(intervalEntry, argName, true, results);
                 }

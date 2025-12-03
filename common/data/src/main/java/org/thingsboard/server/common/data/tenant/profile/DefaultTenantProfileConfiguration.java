@@ -196,6 +196,10 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long minAllowedAggregationIntervalInSecForCF = 60;
     @Schema(example = "300")
     private long minAllowedRealtimeAggregationIntervalInSecForCF = 300;
+    @Schema(example = "60")
+    private long cfReevaluationCheckInterval = 60;
+    @Schema(example = "60")
+    private long alarmsReevaluationInterval = 60;
 
     @Override
     public long getProfileThreshold(ApiUsageRecordKey key) {

@@ -48,6 +48,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationPathQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.CalculatedFieldStatePartitionRestoreMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldCacheInitMsg;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldEntityLifecycleMsg;
@@ -144,10 +145,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         calculatedFields.clear();
         entityIdCalculatedFields.clear();
         entityIdCalculatedFieldLinks.clear();
-        if (cfsReevaluationTask != null) {
-            cfsReevaluationTask.cancel(true);
-            cfsReevaluationTask = null;
-        }
+        cancelReevaluationTask();
         ctx.stop(ctx.getSelf());
     }
 
@@ -177,6 +175,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void scheduleCfsReevaluation() {
+        long cfCheckInterval = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         cfsReevaluationTask = systemContext.getScheduler().scheduleWithFixedDelay(() -> {
             try {
                 calculatedFields.values().forEach(cf -> {
@@ -190,7 +189,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             } catch (Exception e) {
                 log.warn("[{}] Failed to trigger CFs reevaluation", tenantId, e);
             }
-        }, systemContext.getCfCheckInterval(), systemContext.getCfCheckInterval(), TimeUnit.SECONDS);
+        }, cfCheckInterval, cfCheckInterval, TimeUnit.SECONDS);
     }
 
     public void onEntityLifecycleMsg(CalculatedFieldEntityLifecycleMsg msg) throws CalculatedFieldException {
@@ -257,6 +256,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onTenantProfileUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
+        cancelReevaluationTask();
+        scheduleCfsReevaluation();
         Stream.concat(
                 calculatedFields.values().stream(),
                 entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
@@ -872,6 +873,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         }
         if (isMyPartition(entityId, parentCallback)) {
             consumer.accept(List.of(entityId), parentCallback);
+        }
+    }
+
+    private void cancelReevaluationTask() {
+        if (cfsReevaluationTask != null) {
+            cfsReevaluationTask.cancel(true);
+            cfsReevaluationTask = null;
         }
     }
 

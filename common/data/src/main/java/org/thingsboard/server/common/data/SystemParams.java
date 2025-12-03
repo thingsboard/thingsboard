@@ -43,5 +43,7 @@ public class SystemParams {
     long minAllowedDeduplicationIntervalInSecForCF;
     long minAllowedAggregationIntervalInSecForCF;
     long minAllowedRealtimeAggregationIntervalInSecForCF;
+    long cfReevaluationCheckInterval;
+    long alarmsReevaluationInterval;
     TrendzSettings trendzSettings;
 }

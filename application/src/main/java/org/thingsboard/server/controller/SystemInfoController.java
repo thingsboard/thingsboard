@@ -167,6 +167,8 @@ public class SystemInfoController extends BaseController {
             systemParams.setMinAllowedDeduplicationIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedDeduplicationIntervalInSecForCF());
             systemParams.setMinAllowedAggregationIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedAggregationIntervalInSecForCF());
             systemParams.setMinAllowedRealtimeAggregationIntervalInSecForCF(tenantProfileConfiguration.getMinAllowedRealtimeAggregationIntervalInSecForCF());
+            systemParams.setCfReevaluationCheckInterval(tenantProfileConfiguration.getCfReevaluationCheckInterval());
+            systemParams.setAlarmsReevaluationInterval(tenantProfileConfiguration.getAlarmsReevaluationInterval());
             systemParams.setTrendzSettings(trendzSettingsService.findTrendzSettings(currentUser.getTenantId()));
         }
         systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
