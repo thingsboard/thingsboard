@@ -47,7 +47,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormControl, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
 import { deepClone, isDefined } from '@core/utils';
 import { OverlayRef } from '@angular/cdk/overlay';
@@ -70,6 +70,7 @@ export interface TimewindowPanelData {
   timezone: boolean;
   isEdit: boolean;
   panelMode: boolean;
+  showSaveAsDefault?: boolean;
 }
 
 export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelData');
@@ -111,6 +112,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   aggregationTypes = AggregationType;
 
   result: Timewindow;
+  saveTimewindow: boolean;
+  saveTimewindowControl: FormControl;
 
   timewindowTypeOptions: ToggleHeaderOption[] = [{
     name: this.translate.instant('timewindow.history'),
@@ -126,6 +129,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   historyTypeSelectionAvailable: boolean;
   historyIntervalSelectionAvailable: boolean;
   aggregationOptionsAvailable: boolean;
+  saveAsDefaultAvailable: boolean;
 
   realtimeDisableCustomInterval: boolean;
   realtimeDisableCustomGroupInterval: boolean;
@@ -220,6 +224,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
 
     this.aggregationOptionsAvailable = this.aggregation && (this.isEdit ||
       !(this.timewindow.hideAggregation && this.timewindow.hideAggInterval));
+
+    this.saveAsDefaultAvailable = this.data.showSaveAsDefault && (!this.timewindow.hideSaveAsDefault || this.isEdit);
   }
 
   ngOnInit(): void {
@@ -260,6 +266,10 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
           history.historyType = HistoryWindowType.FIXED;
         }
       }
+    }
+
+    if (this.saveAsDefaultAvailable) {
+      this.saveTimewindowControl = this.fb.control({value: this.isEdit, disabled: this.isEdit});
     }
 
     this.timewindowForm = this.fb.group({
@@ -409,6 +419,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
 
   update() {
     this.result = this.prepareTimewindowConfig();
+    this.saveTimewindow = this.saveAsDefaultAvailable && this.saveTimewindowControl.enabled && this.saveTimewindowControl.value;
     this.overlayRef?.dispose();
   }
 
@@ -564,7 +575,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         data: {
           quickIntervalOnly: this.quickIntervalOnly,
           aggregation: this.aggregation,
-          timewindow: this.prepareTimewindowConfig(false)
+          timewindow: this.prepareTimewindowConfig(false),
+          showSaveAsDefault: this.data.showSaveAsDefault
         }
       }).afterClosed()
       .subscribe((res) => {

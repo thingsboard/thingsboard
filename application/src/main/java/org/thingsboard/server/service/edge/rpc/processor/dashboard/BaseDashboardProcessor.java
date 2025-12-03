@@ -68,7 +68,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         return created;
     }
 
-    private void updateDashboardAssignments(TenantId tenantId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
+    private void updateDashboardAssignments(TenantId tenantId, CustomerId edgeCustomerId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
         Set<ShortCustomerInfo> currentAssignedCustomers = new HashSet<>();
         if (dashboardById != null) {
             if (dashboardById.getAssignedCustomers() != null) {
@@ -76,7 +76,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             }
         }
 
-        newAssignedCustomers = filterNonExistingCustomers(tenantId, currentAssignedCustomers, newAssignedCustomers);
+        newAssignedCustomers = filterNonExistingCustomers(tenantId, edgeCustomerId, currentAssignedCustomers, newAssignedCustomers);
 
         Set<CustomerId> addedCustomerIds = new HashSet<>();
         Set<CustomerId> removedCustomerIds = new HashSet<>();
@@ -112,6 +112,6 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         }
     }
 
-    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
+    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, CustomerId customerId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
 
 }
