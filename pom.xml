@@ -86,6 +86,7 @@
         org.apache.kafka.common.network.NetworkReceive class in the application module. It addresses the issue https://issues.apache.org/jira/browse/KAFKA-4090.
         Here is the source to track https://github.com/apache/kafka/tree/trunk/clients/src/main/java/org/apache/kafka/common/network -->
         <kafka.version>3.9.1</kafka.version>
+        <lz4.version>1.8.1</lz4.version> <!-- to fix CVE-2025-12183 introduced through kafka-clients 3.9.1 TODO: remove when kafka-clients is bumped -->
         <bucket4j.version>8.10.1</bucket4j.version>
         <antlr.version>3.5.3</antlr.version>
         <snakeyaml.version>2.2</snakeyaml.version>
@@ -1153,6 +1154,17 @@
                 <groupId>org.apache.kafka</groupId>
                 <artifactId>kafka-clients</artifactId>
                 <version>${kafka.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>org.lz4</groupId>
+                        <artifactId>lz4-java</artifactId>
+                    </exclusion>
+                </exclusions>
+            </dependency>
+            <dependency>
+                <groupId>org.lz4</groupId>
+                <artifactId>lz4-java</artifactId>
+                <version>${lz4.version}</version> <!-- to fix CVE introduced through kafka-clients 3.9.1 -->
             </dependency>
             <dependency>
                 <groupId>com.github.springtestdbunit</groupId>
