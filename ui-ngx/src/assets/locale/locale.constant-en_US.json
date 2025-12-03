@@ -6541,7 +6541,9 @@
         "default-agg-interval": "Default grouping interval",
         "edit-intervals-list-hint": "List of available interval options can be specified.",
         "edit-grouping-intervals-list-hint": "It is possible to configure the grouping intervals list and default grouping interval.",
-        "all": "All"
+        "all": "All",
+        "save-current-settings-as-default": "Save current settings as default time window",
+        "hide-option-from-end-users": "Hide option from end-users"
     },
     "tooltip": {
         "trigger": "Trigger",
