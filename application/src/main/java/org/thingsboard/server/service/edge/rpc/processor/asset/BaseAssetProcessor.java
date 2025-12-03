@@ -53,6 +53,7 @@ public abstract class BaseAssetProcessor extends BaseEdgeProcessor {
             }
             if (isSaveRequired(assetById, asset)) {
                 assetNameUpdated = updateAssetNameIfDuplicateExists(tenantId, assetId, asset);
+                setCustomerId(tenantId, created ? null : assetById.getCustomerId(), asset, assetUpdateMsg);
                 assetValidator.validate(asset, Asset::getTenantId);
                 if (created) {
                     asset.setId(assetId);
