@@ -212,12 +212,7 @@ public class CalculatedFieldCtx implements Closeable {
         this.alarmService = systemContext.getAlarmService();
         this.cfProcessingService = systemContext.getCalculatedFieldProcessingService();
 
-        ApiLimitService apiLimitService = systemContext.getApiLimitService();
-        this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
-        this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedIntermediateAggregationIntervalInSecForCF));
-        this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
-        this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
+        setTenantProfileProperties();
     }
 
     public boolean requiresScheduledReevaluation() {
@@ -302,11 +297,11 @@ public class CalculatedFieldCtx implements Closeable {
         }
     }
 
-    public void updateTenantProfileProperties() {
+    public void setTenantProfileProperties() {
         ApiLimitService apiLimitService = systemContext.getApiLimitService();
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedIntermediateAggregationIntervalInSecForCF));
+        this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getIntermediateAggregationIntervalInSecForCF));
         this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
     }

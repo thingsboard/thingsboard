@@ -195,7 +195,7 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     @Schema(example = "60")
     private long minAllowedAggregationIntervalInSecForCF = 60;
     @Schema(example = "300")
-    private long minAllowedIntermediateAggregationIntervalInSecForCF = 300;
+    private long intermediateAggregationIntervalInSecForCF = 300;
     @Schema(example = "60")
     private long cfReevaluationCheckInterval = 60;
     @Schema(example = "60")

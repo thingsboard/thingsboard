@@ -114,7 +114,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         Map<AggIntervalEntry, Map<String, ArgumentEntry>> results = new HashMap<>();
         List<AggIntervalEntry> expiredIntervals = new ArrayList<>();
         getIntervals().forEach((intervalEntry, argIntervalStatuses) -> {
-            processInterval(now, ctx, intervalEntry, argIntervalStatuses, expiredIntervals, results);
+            processInterval(now, intervalEntry, argIntervalStatuses, expiredIntervals, results);
         });
         removeExpiredIntervals(expiredIntervals);
 
@@ -194,7 +194,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     private void processInterval(long now,
-                                 CalculatedFieldCtx ctx,
                                  AggIntervalEntry intervalEntry,
                                  Map<String, AggIntervalEntryStatus> args,
                                  List<AggIntervalEntry> expiredIntervals,

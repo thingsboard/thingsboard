@@ -169,7 +169,7 @@ public class TenantProfileController extends BaseController {
                     "      \"maxSingleValueArgumentSizeInKBytes\": 2," +
                     "      \"minAllowedDeduplicationIntervalInSecForCF\": 10," +
                     "      \"minAllowedAggregationIntervalInSecForCF\": 60," +
-                    "      \"minAllowedIntermediateAggregationIntervalInSecForCF\": 300," +
+                    "      \"intermediateAggregationIntervalInSecForCF\": 300," +
                     "      \"cfReevaluationCheckInterval\": 60," +
                     "      \"alarmsReevaluationInterval\": 60" +
                     "    }\n" +

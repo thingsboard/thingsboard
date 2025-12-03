@@ -116,6 +116,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private final TbQueueCalculatedFieldSettings cfSettings;
     protected final TenantId tenantId;
 
+    private long cfCheckInterval;
+
     protected TbActorCtx ctx;
 
     CalculatedFieldManagerMessageProcessor(ActorSystemContext systemContext, TenantId tenantId) {
@@ -153,6 +155,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         log.debug("[{}] Processing CF actor init message.", msg.getTenantId().getId());
         initEntitiesCache();
         initCalculatedFields();
+        cfCheckInterval = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         scheduleCfsReevaluation();
         msg.getCallback().onSuccess();
     }
@@ -175,7 +178,6 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void scheduleCfsReevaluation() {
-        long cfCheckInterval = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         cfsReevaluationTask = systemContext.getScheduler().scheduleWithFixedDelay(() -> {
             try {
                 calculatedFields.values().forEach(cf -> {
@@ -256,12 +258,15 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onTenantProfileUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
-        cancelReevaluationTask();
-        scheduleCfsReevaluation();
+        long updatedCfCheckInterval = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
+        if (cfCheckInterval != updatedCfCheckInterval) {
+            cancelReevaluationTask();
+            scheduleCfsReevaluation();
+        }
         Stream.concat(
                 calculatedFields.values().stream(),
                 entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
-        ).forEach(CalculatedFieldCtx::updateTenantProfileProperties);
+        ).forEach(CalculatedFieldCtx::setTenantProfileProperties);
         callback.onSuccess();
     }
 

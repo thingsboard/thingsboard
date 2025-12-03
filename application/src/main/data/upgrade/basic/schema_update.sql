@@ -26,7 +26,7 @@ SET profile_data = jsonb_set(
         'maxRelatedEntitiesToReturnPerCfArgument', 100,
         'minAllowedDeduplicationIntervalInSecForCF', 10,
         'minAllowedAggregationIntervalInSecForCF', 60,
-        'minAllowedIntermediateAggregationIntervalInSecForCF', 300,
+        'intermediateAggregationIntervalInSecForCF', 300,
         'cfReevaluationCheckInterval', 60,
         'alarmsReevaluationInterval', 60
     )
@@ -40,7 +40,7 @@ WHERE NOT (
         'maxRelatedEntitiesToReturnPerCfArgument',
         'minAllowedDeduplicationIntervalInSecForCF',
         'minAllowedAggregationIntervalInSecForCF',
-        'minAllowedIntermediateAggregationIntervalInSecForCF',
+        'intermediateAggregationIntervalInSecForCF',
         'cfReevaluationCheckInterval',
         'alarmsReevaluationInterval'
     ]

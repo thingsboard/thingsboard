@@ -42,8 +42,6 @@ public class SystemParams {
     int maxRelationLevelPerCfArgument;
     long minAllowedDeduplicationIntervalInSecForCF;
     long minAllowedAggregationIntervalInSecForCF;
-    long minAllowedIntermediateAggregationIntervalInSecForCF;
-    long cfReevaluationCheckInterval;
-    long alarmsReevaluationInterval;
+    long intermediateAggregationIntervalInSecForCF;
     TrendzSettings trendzSettings;
 }
