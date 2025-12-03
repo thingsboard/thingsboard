@@ -19,7 +19,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
@@ -29,7 +28,6 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -59,10 +57,7 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor implements Da
                     saveOrUpdateDashboard(tenantId, dashboardId, dashboardUpdateMsg, edge);
                     return Futures.immediateFuture(null);
                 case ENTITY_DELETED_RPC_MESSAGE:
-                    Dashboard dashboardToDelete = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
-                    if (dashboardToDelete != null) {
-                        edgeCtx.getDashboardService().unassignDashboardFromEdge(tenantId, dashboardId, edge.getId());
-                    }
+                    deleteDashboard(tenantId, edge, dashboardId);
                     return Futures.immediateFuture(null);
                 case UNRECOGNIZED:
                 default:
@@ -90,14 +85,8 @@ public class DashboardEdgeProcessor extends BaseDashboardProcessor implements Da
     }
 
     private void pushDashboardCreatedEventToRuleEngine(TenantId tenantId, Edge edge, DashboardId dashboardId) {
-        try {
-            Dashboard dashboard = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
-            String dashboardAsString = JacksonUtil.toString(dashboard);
-            TbMsgMetaData msgMetaData = getEdgeActionTbMsgMetaData(edge, null);
-            pushEntityEventToRuleEngine(tenantId, dashboardId, null, TbMsgType.ENTITY_CREATED, dashboardAsString, msgMetaData);
-        } catch (Exception e) {
-            log.warn("[{}][{}] Failed to push dashboard action to rule engine: {}", tenantId, dashboardId, TbMsgType.ENTITY_CREATED.name(), e);
-        }
+        Dashboard dashboard = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
+        pushEntityEventToRuleEngine(tenantId, edge, dashboard, TbMsgType.ENTITY_CREATED);
     }
 
     @Override

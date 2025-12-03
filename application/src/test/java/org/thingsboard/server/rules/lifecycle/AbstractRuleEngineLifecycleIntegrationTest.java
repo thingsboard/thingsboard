@@ -118,7 +118,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
                 .pollInterval(10, MILLISECONDS)
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
-                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), EventType.LC_EVENT.getOldName(), 1000)
+                            List<EventInfo> debugEvents = getEvents(tenantId, ruleChainFinal.getFirstRuleNodeId(), EventType.LC_EVENT, 1000)
                                     .getData().stream().filter(e -> {
                                         var body = e.getBody();
                                         return body.has("event") && body.get("event").asText().equals("STARTED")

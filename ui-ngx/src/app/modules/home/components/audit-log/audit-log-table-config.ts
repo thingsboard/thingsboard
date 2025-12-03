@@ -25,7 +25,8 @@ import {
   ActionType,
   actionTypeTranslations,
   AuditLog,
-  AuditLogMode
+  AuditLogMode,
+  AuditLogFilter
 } from '@shared/models/audit-log.models';
 import {
   AliasEntityType,
@@ -48,6 +49,8 @@ import {
   AuditLogDetailsDialogComponent,
   AuditLogDetailsDialogData
 } from '@home/components/audit-log/audit-log-details-dialog.component';
+import { deepClone } from '@app/core/utils';
+import { AuditLogHeaderComponent } from '@home/components/audit-log/audit-log-header.component';
 
 export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLink> {
 
@@ -71,6 +74,7 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
     this.searchEnabled = true;
     this.addEnabled = false;
     this.entitiesDeleteEnabled = false;
+    this.headerComponent = AuditLogHeaderComponent;
     this.actionsColumnTitle = 'audit-log.details';
     this.entityTranslations = {
       noEntities: 'audit-log.no-audit-logs-prompt',
@@ -78,6 +82,10 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
     };
     this.entityResources = {
     } as EntityTypeResource<AuditLog>;
+
+    this.componentsData = {
+      auditLogFilter: []
+    };
 
     this.entitiesFetchFunction = pageLink => this.fetchAuditLogs(pageLink);
 
@@ -139,15 +147,16 @@ export class AuditLogTableConfig extends EntityTableConfig<AuditLog, TimePageLin
   }
 
   fetchAuditLogs(pageLink: TimePageLink): Observable<PageData<AuditLog>> {
+    const auditLogFilter: AuditLogFilter = deepClone(this.componentsData?.auditLogFilter) || {};
     switch (this.auditLogMode) {
       case AuditLogMode.TENANT:
-        return this.auditLogService.getAuditLogs(pageLink);
+        return this.auditLogService.getAuditLogs(pageLink, auditLogFilter);
       case AuditLogMode.ENTITY:
-        return this.auditLogService.getAuditLogsByEntityId(this.entityId, pageLink);
+        return this.auditLogService.getAuditLogsByEntityId(this.entityId, pageLink, auditLogFilter);
       case AuditLogMode.USER:
-        return this.auditLogService.getAuditLogsByUserId(this.userId.id, pageLink);
+        return this.auditLogService.getAuditLogsByUserId(this.userId.id, pageLink, auditLogFilter);
       case AuditLogMode.CUSTOMER:
-        return this.auditLogService.getAuditLogsByCustomerId(this.customerId.id, pageLink);
+        return this.auditLogService.getAuditLogsByCustomerId(this.customerId.id, pageLink, auditLogFilter);
     }
   }
 

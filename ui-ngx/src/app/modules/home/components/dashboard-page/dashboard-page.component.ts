@@ -38,7 +38,7 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, UrlTree } from '@angular/router';
 import { UtilsService } from '@core/services/utils.service';
 import {
   BreakpointId,
@@ -271,6 +271,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   mainLayoutSize: {width: string; height: string; maxWidth: string; minWidth: string} =
     {width: '100%', height: '100%', maxWidth: '100%', minWidth: '100%'};
   rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
+
+  dashboardLogoLink = this.getDashboardLogoLink();
 
   private dashboardLogoCache: SafeUrl;
   private defaultDashboardLogo = 'assets/logo_title_white.svg';
@@ -649,9 +651,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   private hideToolbarSetting(): boolean {
-    if (this.dashboard.configuration.settings &&
-      isDefined(this.dashboard.configuration.settings.hideToolbar)) {
-      return this.dashboard.configuration.settings.hideToolbar;
+    if (isDefined(this.dashboard.configuration?.settings?.hideToolbar)) {
+      const canApplyHideSetting = !this.forceFullscreen || this.isMobileApp;
+      return this.dashboard.configuration.settings.hideToolbar && canApplyHideSetting;
     } else {
       return false;
     }
@@ -1825,5 +1827,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       return breakpoint.maxWidth < 960;
     }
     return false;
+  }
+
+  private getDashboardLogoLink(): UrlTree {
+    return this.forceFullscreen ? null : this.router.createUrlTree([], {relativeTo: this.route});
   }
 }

@@ -15,27 +15,18 @@
  */
 package org.thingsboard.server.service.cf;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.TbMsg;
 
-@Data
-public final class CalculatedFieldResult {
+import java.util.List;
 
-    private final OutputType type;
-    private final AttributeScope scope;
-    private final JsonNode result;
+public interface CalculatedFieldResult {
 
-    public boolean isEmpty() {
-        return result == null || result.isMissingNode() || result.isNull() ||
-                (result.isObject() && result.isEmpty()) ||
-                (result.isArray() && result.isEmpty()) ||
-                (result.isTextual() && result.asText().isEmpty());
-    }
+    TbMsg toTbMsg(EntityId entityId, String cfName, List<CalculatedFieldId> cfIds);
 
-    public String toStringOrElseNull() {
-        return result == null ? null : result.toString();
-    }
+    String stringValue();
+
+    boolean isEmpty();
 
 }

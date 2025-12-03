@@ -24,7 +24,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog } from '@angular/material/dialog';
 import { PageLink } from '@shared/models/page/page-link';
-import { Observable, of } from 'rxjs';
+import { EMPTY, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { Store } from '@ngrx/store';
@@ -40,10 +40,12 @@ import {
   ArgumentType,
   CalculatedField,
   CalculatedFieldEventArguments,
+  CalculatedFieldScriptConfiguration,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
+  PropagationWithExpression,
 } from '@shared/models/calculated-field.models';
 import {
   CalculatedFieldDebugDialogComponent,
@@ -57,6 +59,8 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { isObject } from '@core/utils';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
+import { UtilsService } from "@core/services/utils.service";
+import { ActionNotificationShow } from "@core/notification/notification.actions";
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
@@ -75,8 +79,10 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private destroyRef: DestroyRef,
               private renderer: Renderer2,
               public entityName: string,
+              private ownerId: EntityId = null,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
+              private utilsService: UtilsService,
   ) {
     super();
     this.tableTitle = this.translate.instant('entity.type-calculated-fields');
@@ -109,7 +115,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
-    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '300px');
+    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '250px');
     expressionColumn.sortable = false;
     expressionColumn.cellContentFunction = entity => {
       const expressionLabel = this.getExpressionLabel(entity);
@@ -121,8 +127,9 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     };
 
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '70px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type))));
+    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', '33%',
+      entity => this.utilsService.customTranslation(entity.name, entity.name)));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '170px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
     this.columns.push(expressionColumn);
 
     this.cellActionDescriptors.push(
@@ -156,11 +163,13 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private getExpressionLabel(entity: CalculatedField): string {
-    if (entity.type === CalculatedFieldType.SCRIPT) {
+    if (entity.type === CalculatedFieldType.SCRIPT ||
+      entity.type === CalculatedFieldType.PROPAGATION && entity.configuration.applyExpressionToResolvedArguments === true) {
       return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
-    } else {
-      return entity.configuration?.expression ?? '';
+    } else if (entity.type === CalculatedFieldType.SIMPLE) {
+      return entity.configuration.expression ?? '';
     }
+    return '';
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
@@ -212,6 +221,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         entityId: this.entityId,
         tenantId: this.tenantId,
         entityName: this.entityName,
+        ownerId: this.ownerId,
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty,
@@ -247,6 +257,19 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.importExportService.openCalculatedFieldImportDialog()
       .pipe(
         filter(Boolean),
+        switchMap(calculatedField => {
+          if (calculatedField.type === CalculatedFieldType.ALARM) {
+            this.store.dispatch(new ActionNotificationShow({
+              message: this.translate.instant('calculated-fields.hint.import-invalid-calculated-field-type'),
+              type: 'error',
+              verticalPosition: 'top',
+              horizontalPosition: 'left',
+              duration: 5000
+            }));
+            return EMPTY;
+          }
+          return of(calculatedField);
+        }),
         switchMap(calculatedField => this.getCalculatedFieldDialog(this.updateImportedCalculatedField(calculatedField), 'action.add', true)),
         filter(Boolean),
         switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
@@ -286,33 +309,44 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
-    const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
-      const type = calculatedField.configuration.arguments[key].refEntityKey.type;
-      acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
-        ? { ...argumentsObj[key], type }
-        : type === ArgumentType.Rolling ? { values: [], type } : { value: '', type, ts: new Date().getTime() };
-      return acc;
-    }, {});
-    return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
-      {
-        disableClose: true,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
-        data: {
-          arguments: resultArguments,
-          expression: calculatedField.configuration.expression,
-          argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
-          argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
-          openCalculatedFieldEdit
-        }
-      }).afterClosed()
-      .pipe(
-        filter(Boolean),
-        tap(expression => {
-          if (openCalculatedFieldEdit) {
-            this.editCalculatedField({ entityId: this.entityId, ...calculatedField, configuration: {...calculatedField.configuration, expression } }, true)
+  private getTestScriptDialog(calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true, expression?: string): Observable<string> {
+    if (
+      calculatedField.type === CalculatedFieldType.SCRIPT ||
+      calculatedField.type === CalculatedFieldType.RELATED_ENTITIES_AGGREGATION ||
+      (calculatedField.type === CalculatedFieldType.PROPAGATION && calculatedField.configuration.applyExpressionToResolvedArguments === true)
+    ) {
+      const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
+        const type = calculatedField.configuration.arguments[key].refEntityKey.type;
+        acc[key] = isObject(argumentsObj) && argumentsObj.hasOwnProperty(key)
+          ? {...argumentsObj[key], type}
+          : type === ArgumentType.Rolling ? {values: [], type} : {value: '', type, ts: new Date().getTime()};
+        return acc;
+      }, {});
+      return this.dialog.open<CalculatedFieldScriptTestDialogComponent, CalculatedFieldTestScriptDialogData, string>(CalculatedFieldScriptTestDialogComponent,
+        {
+          disableClose: true,
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', 'tb-fullscreen-dialog-gt-xs'],
+          data: {
+            arguments: resultArguments,
+            expression: expression ?? (calculatedField.configuration as CalculatedFieldScriptConfiguration | PropagationWithExpression).expression,
+            argumentsEditorCompleter: getCalculatedFieldArgumentsEditorCompleter(calculatedField.configuration.arguments),
+            argumentsHighlightRules: getCalculatedFieldArgumentsHighlights(calculatedField.configuration.arguments),
+            openCalculatedFieldEdit
           }
-        }),
-      );
+        }).afterClosed()
+        .pipe(
+          filter(Boolean),
+          tap(expression => {
+            if (openCalculatedFieldEdit) {
+              this.editCalculatedField({
+                entityId: this.entityId, ...calculatedField,
+                configuration: {...calculatedField.configuration, expression} as any
+              }, true)
+            }
+          }),
+        );
+    } else {
+      return of(null);
+    }
   }
 }

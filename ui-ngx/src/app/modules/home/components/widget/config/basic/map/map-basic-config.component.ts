@@ -24,7 +24,7 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { isDefinedAndNotNull, isUndefined, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
-import { WidgetConfig } from '@shared/models/widget.models';
+import { WidgetConfig, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import {
   getTimewindowConfig,
   setTimewindowConfig
@@ -41,6 +41,8 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 
   trip = false;
 
+  predefinedValues = widgetTitleAutocompleteValues;
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private $injector: Injector,

@@ -38,6 +38,7 @@ import org.thingsboard.server.queue.common.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerManagerTask.DeleteQueueTask;
 import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask;
+import org.thingsboard.server.queue.common.consumer.TbQueueConsumerTask.ConsumerKey;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.service.queue.TbMsgPackCallback;
 import org.thingsboard.server.service.queue.TbMsgPackProcessingContext;
@@ -131,7 +132,7 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     @Override
     protected void processMsgs(List<TbProtoQueueMsg<ToRuleEngineMsg>> msgs,
                                TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> consumer,
-                               Object consumerKey,
+                               ConsumerKey consumerKey,
                                Queue queue) throws Exception {
         TbRuleEngineSubmitStrategy submitStrategy = getSubmitStrategy(queue);
         TbRuleEngineProcessingStrategy ackStrategy = getProcessingStrategy(queue);

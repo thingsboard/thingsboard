@@ -90,13 +90,16 @@
 
             <section class="tb-form-panel stroked" formArrayName="providers">
               <div class="tb-form-panel-title" translate>admin.2fa.available-providers</div>
+              @if (!atListOneProvider) {
+                <tb-error noMargin error="{{ 'admin.2fa.available-providers-required' | translate }}" class="flex h-4 items-center pl-3"/>
+              }
               <ng-container *ngFor="let provider of providersForm.controls; let i = index; trackBy: trackByElement">
                   <div class="tb-form-panel stroked tb-slide-toggle">
                     <mat-expansion-panel class="tb-settings" [formGroupName]="i">
                       <mat-expansion-panel-header>
                         <mat-panel-title>
                           <mat-slide-toggle class="mat-slide flex items-center justify-start"
-                            (mousedown)="toggleExtensionPanel($event, i, provider.get('enable').value)"
+                            (mousedown)="toggleExtensionPanel($event, i+1, provider.get('enable').value)"
                             formControlName="enable">
                             {{ twoFactorAuthProvidersData.get(provider.value.providerType).name | translate }}
                           </mat-slide-toggle>
@@ -243,7 +246,7 @@
           </div>
           <div class="flex flex-row items-center justify-end gap-2">
             <button mat-button mat-raised-button color="primary"
-                    [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"
+                    [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty || !atListOneProvider"
                     type="submit">
               {{'action.save' | translate}}
             </button>

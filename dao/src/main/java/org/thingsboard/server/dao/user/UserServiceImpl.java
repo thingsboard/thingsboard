@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.user;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +35,7 @@ import org.thingsboard.server.cache.user.UserCacheKey;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -63,6 +65,7 @@ import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.pat.ApiKeyService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.settings.SecuritySettingsService;
@@ -79,6 +82,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -92,8 +96,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
 
-    private static final int DEFAULT_TOKEN_LENGTH = 30;
+    public static final int DEFAULT_TOKEN_LENGTH = 30;
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
+    public static final String INCORRECT_USER_CREDENTIALS_ID = "Incorrect userCredentialsId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
 
     @Value("${security.user_login_case_sensitive:true}")
@@ -104,6 +109,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     private final UserAuthSettingsDao userAuthSettingsDao;
     private final UserSettingsService userSettingsService;
     private final UserSettingsDao userSettingsDao;
+    private final ApiKeyService apiKeyService;
     private final SecuritySettingsService securitySettingsService;
     private final TbTenantProfileCache tenantProfileCache;
     private final DataValidator<User> userValidator;
@@ -112,8 +118,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     private final EntityCountService countService;
     private final JpaExecutorService executor;
 
-    @TransactionalEventListener(classes = UserCacheEvictEvent.class)
     @Override
+    @TransactionalEventListener
     public void handleEvictEvent(UserCacheEvictEvent event) {
         List<UserCacheKey> keys = new ArrayList<>(2);
         keys.add(new UserCacheKey(event.tenantId(), event.newEmail()));
@@ -168,8 +174,23 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     @Transactional
     public User saveUser(TenantId tenantId, User user) {
+        return saveUser(tenantId, user, true);
+    }
+
+    @Override
+    @Transactional
+    public User saveUser(TenantId tenantId, User user, boolean doValidate) {
+        return saveEntity(user, () -> doSaveUser(tenantId, user, doValidate));
+    }
+
+    private User doSaveUser(TenantId tenantId, User user, boolean doValidate) {
         log.trace("Executing saveUser [{}]", user);
-        User oldUser = userValidator.validate(user, User::getTenantId);
+        User oldUser = null;
+        if (doValidate) {
+            oldUser = userValidator.validate(user, User::getTenantId);
+        } else if (user.getId() != null) {
+            oldUser = findUserById(user.getTenantId(), user.getId());
+        }
         if (!userLoginCaseSensitive) {
             user.setEmail(user.getEmail().toLowerCase());
         }
@@ -188,7 +209,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
                 userCredentialsDao.save(user.getTenantId(), userCredentials);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder()
-                    .tenantId(tenantId == null ? TenantId.SYS_TENANT_ID : tenantId)
+                    .tenantId(savedUser.getTenantId())
                     .entity(savedUser)
                     .oldEntity(oldUser)
                     .entityId(savedUser.getId())
@@ -224,8 +245,15 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
+        return saveUserCredentials(tenantId, userCredentials, true);
+    }
+
+    @Override
+    public UserCredentials saveUserCredentials(TenantId tenantId, UserCredentials userCredentials, boolean doValidate) {
         log.trace("Executing saveUserCredentials [{}]", userCredentials);
-        userCredentialsValidator.validate(userCredentials, data -> tenantId);
+        if (doValidate) {
+            userCredentialsValidator.validate(userCredentials, data -> tenantId);
+        }
         UserCredentials result = userCredentialsDao.save(tenantId, userCredentials);
         eventPublisher.publishEvent(ActionEntityEvent.builder()
                 .tenantId(tenantId)
@@ -303,7 +331,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public UserCredentials checkUserActivationToken(TenantId tenantId, UserCredentials userCredentials) {
-        if (userCredentials.getActivationTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
+        if (userCredentials.getActivationTokenTtl() < TimeUnit.MINUTES.toMillis(15)) { // renew a link if less than 15 minutes before expiration
             userCredentials = generateUserActivationToken(userCredentials);
             userCredentials = saveUserCredentials(tenantId, userCredentials);
             log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userCredentials.getUserId());
@@ -329,6 +357,15 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     @Override
+    public void deleteUserCredentials(TenantId tenantId, UserCredentials userCredentials) {
+        Objects.requireNonNull(userCredentials, "UserCredentials is null");
+        UserCredentialsId userCredentialsId = userCredentials.getId();
+        log.trace("[{}] Executing deleteUserCredentials [{}]", tenantId, userCredentialsId);
+        validateId(userCredentialsId, id -> INCORRECT_USER_CREDENTIALS_ID + id);
+        userCredentialsDao.removeById(tenantId, userCredentialsId.getId());
+    }
+
+    @Override
     @Transactional
     public void deleteUser(TenantId tenantId, User user) {
         deleteUser(tenantId, user, null);
@@ -341,13 +378,14 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         validateId(userId, id -> INCORRECT_USER_ID + id);
         userCredentialsDao.removeByUserId(tenantId, userId);
         userAuthSettingsDao.removeByUserId(userId);
+        apiKeyService.deleteByUserId(tenantId, userId);
         publishEvictEvent(new UserCacheEvictEvent(user.getTenantId(), user.getEmail(), null));
         userSettingsDao.removeByUserId(tenantId, userId);
         userDao.removeById(tenantId, userId.getId());
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(userId));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.USER);
         eventPublisher.publishEvent(DeleteEntityEvent.builder()
-                .tenantId(tenantId)
+                .tenantId(user.getTenantId())
                 .entityId(userId)
                 .entity(user)
                 .cause(cause)
@@ -492,6 +530,18 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
             ((ObjectNode) userSettings.getSettings().get("sessions")).remove(mobileToken);
             userSettingsService.saveUserSettings(tenantId, userSettings);
         }
+    }
+
+    @Override
+    public int countTenantAdmins(TenantId tenantId) {
+        return userDao.countTenantAdmins(tenantId.getId());
+    }
+
+    @Override
+    public UserAuthDetails findUserAuthDetailsByUserId(TenantId tenantId, UserId userId) {
+        log.trace("Executing findUserAuthDetailsByUserId [{}]", userId);
+        validateId(userId, id -> INCORRECT_USER_ID + id);
+        return userDao.findUserAuthDetailsByUserId(tenantId.getId(), userId.getId());
     }
 
     private Optional<UserMobileSessionInfo> findMobileSessionInfo(TenantId tenantId, UserId userId) {
@@ -644,6 +694,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findUserById(tenantId, new UserId(entityId.getId())));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(findUserByIdAsync(tenantId, new UserId(entityId.getId())))
+                .transform(Optional::ofNullable, directExecutor());
     }
 
     @Override

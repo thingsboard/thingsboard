@@ -157,7 +157,7 @@
             </mat-card-header>
             <mat-card-content>
               <div class="flex flex-col items-center justify-start">
-                <form [formGroup]="emailConfigForm" class="mb-8">
+                <form [formGroup]="emailConfigForm" class="mb-8 w-full">
                   <p class="mat-body step-description input" translate>login.email-description</p>
                   <mat-form-field class="mat-block input-container flex-1">
                     <input matInput formControlName="email"
@@ -262,9 +262,18 @@
                  inputmode="numeric" pattern="[0-9]*"
                  autocomplete="off"
                  placeholder="{{ 'login.verification-code' | translate }}">
-          <mat-error *ngIf="configForm.get('verificationCode').invalid">
-            {{ 'login.verification-code-invalid' | translate }}
-          </mat-error>
+          @if (configForm.get('verificationCode').getError('required') ||
+          configForm.get('verificationCode').getError('minlength') ||
+          configForm.get('verificationCode').getError('maxlength') ||
+          configForm.get('verificationCode').getError('pattern')) {
+            <mat-error>{{ 'login.verification-code-invalid' | translate }}</mat-error>
+          }
+          @if (configForm.get('verificationCode').getError('incorrectCode')) {
+            <mat-error>{{ 'login.verification-code-incorrect' | translate }}</mat-error>
+          }
+          @if (configForm.get('verificationCode').getError('tooManyRequest')) {
+            <mat-error>{{ 'login.verification-code-many-request' | translate }}</mat-error>
+          }
         </mat-form-field>
         <div class="flex flex-col items-center justify-start gap-2 w-full">
           <button type="button" mat-flat-button color="accent" [disabled]="(isLoading$ | async) || configForm.invalid || !configForm.dirty" class="navigation w-full" (click)="saveConfig(providerType)">

@@ -106,12 +106,14 @@ import { ComponentPortal } from '@angular/cdk/portal';
 import { FormBuilder } from '@angular/forms';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
 import { DateFormatSettings, ValueFormatProcessor } from '@shared/models/widget-settings.models';
+import { entityFields } from '@shared/models/entity.models';
 
 export interface TimeseriesTableWidgetSettings extends TableWidgetSettings {
   showTimestamp: boolean;
   showMilliseconds: boolean;
   hideEmptyLines: boolean;
   dateFormat: DateFormatSettings;
+  sortOrder: SortOrder;
 }
 
 interface TimeseriesWidgetLatestDataKeySettings extends TableWidgetDataKeySettings {
@@ -152,6 +154,7 @@ interface TimeseriesTableSource {
   timeseriesDatasource: TimeseriesDatasource;
   header: TimeseriesHeader[];
   rowDataTemplate: {[key: string]: any};
+  displayName: string;
 }
 
 @Component({
@@ -392,11 +395,38 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.updateDatasources();
   }
 
-  public getTabLabel(source: TimeseriesTableSource){
-    if (this.useEntityLabel) {
-      return source.datasource.entityLabel || source.datasource.entityName;
-    } else {
-      return source.datasource.entityName;
+  private getTabLabel(source: Datasource):string {
+    const value = this.useEntityLabel
+      ? (source.entityLabel || source.entityName)
+      : source.entityName;
+
+    return this.utils.customTranslation(value);
+  }
+
+  private sortDatasources(source: TimeseriesTableSource[]) {
+    const property = this.settings?.sortOrder?.property;
+    const direction = this.settings?.sortOrder?.direction;
+    const isAsc = direction === Direction.ASC;
+
+    if (property === entityFields.name.keyName) {
+      const collator = new Intl.Collator(undefined, {
+        sensitivity: "variant",
+        numeric: true,
+        ignorePunctuation: false
+      });
+
+      source.sort((a, b) => {
+        const valueA = a.displayName || '';
+        const valueB = b.displayName || '';
+
+        return isAsc
+          ? collator.compare(valueA, valueB)
+          : collator.compare(valueB, valueA);
+      });
+    } else if (property === entityFields.createdTime.keyName) {
+      if (isAsc) {
+        source.reverse();
+      }
     }
   }
 
@@ -424,6 +454,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         source.pageLink = new PageLink(pageSize, 0, null, sortOrder);
         source.rowDataTemplate = {};
         source.rowDataTemplate.Timestamp = null;
+        source.displayName = this.getTabLabel(datasource);
         if (this.showTimestamp) {
           source.displayedColumns.push('0');
         }
@@ -443,6 +474,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
       }
     }
     if (this.sources.length) {
+      this.sortDatasources(this.sources);
       this.sources.forEach((source, index) => {
         this.prepareDisplayedColumn(index);
         source.displayedColumns = this.displayedColumns[index].filter(value => value.display).map(value => value.def);

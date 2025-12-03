@@ -22,13 +22,13 @@
          required
          (focusin)="keyInputSubject.next()"
          [matAutocomplete]="keysAutocomplete">
-  @if (keyControl.value) {
+  @if (keyControl.value && keyControl.enabled) {
     <button type="button"
             matSuffix mat-icon-button aria-label="Clear"
             (click)="clear()">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
-  } @else if (keyControl.hasError('required') && keyControl.touched) {
+  } @else if (keyControl.hasError('required') && keyControl.touched && keyControl.enabled) {
     <mat-icon matSuffix
               matTooltipPosition="above"
               matTooltipClass="tb-error-tooltip"
@@ -43,7 +43,7 @@
     @for (key of filteredKeys$ | async; track key) {
       <mat-option [value]="key"><span [innerHTML]="key | highlight: searchText"></span></mat-option>
     } @empty {
-      @if (!this.keyControl.value) {
+      @if (!this.keyControl.value && enableAutocomplete) {
         <mat-option [value]="''">{{ 'entity.no-keys-found' | translate }}</mat-option>
       }
     }

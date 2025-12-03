@@ -18,11 +18,11 @@ package org.thingsboard.server.common.data.relation;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.ObjectType;
@@ -30,16 +30,19 @@ import org.thingsboard.server.common.data.edqs.EdqsObject;
 import org.thingsboard.server.common.data.edqs.EdqsObjectKey;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.validation.Length;
+import org.thingsboard.server.common.data.validation.NoNullChar;
 
+import java.io.Serial;
 import java.io.Serializable;
 import java.util.UUID;
 
-@Slf4j
+@Data
 @Schema
 @EqualsAndHashCode(exclude = "additionalInfoBytes")
 @ToString(exclude = {"additionalInfoBytes"})
 public class EntityRelation implements HasVersion, Serializable, EdqsObject {
 
+    @Serial
     private static final long serialVersionUID = 2807343040519543363L;
 
     public static final String EDGE_TYPE = "ManagedByEdge";
@@ -47,18 +50,26 @@ public class EntityRelation implements HasVersion, Serializable, EdqsObject {
     public static final String MANAGES_TYPE = "Manages";
     public static final String USES_TYPE = "Uses";
 
-    @Setter
+    @NotNull
+    @Schema(description = "JSON object with [from] Entity Id.", accessMode = Schema.AccessMode.READ_WRITE)
     private EntityId from;
-    @Setter
+
+    @NotNull
+    @Schema(description = "JSON object with [to] Entity Id.", accessMode = Schema.AccessMode.READ_WRITE)
     private EntityId to;
-    @Setter
-    @Length(fieldName = "type")
+
+    @NotBlank
+    @NoNullChar
+    @Length(max = 255, fieldName = "type")
+    @Schema(description = "String value of relation type.", example = "Contains")
     private String type;
-    @Setter
+
+    @NotNull
+    @Schema(description = "Represents the type group of the relation.", example = "COMMON")
     private RelationTypeGroup typeGroup;
-    @Getter
-    @Setter
+
     private Long version;
+
     private transient JsonNode additionalInfo;
     @JsonIgnore
     private byte[] additionalInfoBytes;
@@ -92,27 +103,7 @@ public class EntityRelation implements HasVersion, Serializable, EdqsObject {
         this.version = entityRelation.getVersion();
     }
 
-    @Schema(description = "JSON object with [from] Entity Id.", accessMode = Schema.AccessMode.READ_ONLY)
-    public EntityId getFrom() {
-        return from;
-    }
-
-    @Schema(description = "JSON object with [to] Entity Id.", accessMode = Schema.AccessMode.READ_ONLY)
-    public EntityId getTo() {
-        return to;
-    }
-
-    @Schema(description = "String value of relation type.", example = "Contains")
-    public String getType() {
-        return type;
-    }
-
-    @Schema(description = "Represents the type group of the relation.", example = "COMMON")
-    public RelationTypeGroup getTypeGroup() {
-        return typeGroup;
-    }
-
-    @Schema(description = "Additional parameters of the relation", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the relation", implementation = JsonNode.class)
     public JsonNode getAdditionalInfo() {
         return BaseDataWithAdditionalInfo.getJson(() -> additionalInfo, () -> additionalInfoBytes);
     }
