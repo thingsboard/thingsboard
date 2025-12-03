@@ -41,7 +41,7 @@ export class PolarAreaChartBasicConfigComponent extends LatestChartBasicConfigCo
   polarAreaChartConfigTemplate: TemplateRef<any>;
 
   predefinedValues = widgetTitleAutocompleteValues;
-
+  
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               protected fb: UntypedFormBuilder) {

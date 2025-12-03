@@ -381,8 +381,8 @@ export interface TimeSeriesChartYAxisSettings extends TimeSeriesChartAxisSetting
   decimals?: number;
   interval?: number;
   splitNumber?: number;
-  min?: string | ValueSourceConfig;
-  max?: string | ValueSourceConfig;
+  min?: number | string | ValueSourceConfig;
+  max?: number | string | ValueSourceConfig;
   ticksGenerator?: TimeSeriesChartTicksGenerator | string;
   ticksFormatter?: TimeSeriesChartTicksFormatter | string;
 }

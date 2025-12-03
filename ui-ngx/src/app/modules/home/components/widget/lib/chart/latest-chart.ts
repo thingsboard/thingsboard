@@ -142,7 +142,6 @@ export abstract class TbLatestChart<S extends LatestChartSettings> {
 
   public update(): void {
     for (const dsData of this.ctx.data) {
-      console.log("this.ctx.data",this.ctx.data)
       let value = 0;
       const tsValue = dsData.data[0];
       const dataItem = this.dataItems.find(item => item.dataKey === dsData.dataKey);
