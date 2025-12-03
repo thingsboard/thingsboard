@@ -63,7 +63,7 @@
         <curator.version>5.6.0</curator.version>
         <zookeeper.version>3.9.3</zookeeper.version>
         <protobuf.version>3.25.5</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
-        <grpc.version>1.68.1</grpc.version>
+        <grpc.version>1.76.0</grpc.version>
         <tbel.version>1.2.8</tbel.version>
         <lombok.version>1.18.38</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
