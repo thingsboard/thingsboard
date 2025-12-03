@@ -17,7 +17,6 @@
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   adjustTimeAxisExtentToData,
-  AxisLimitConfig,
   calculateThresholdsOffset,
   createTimeSeriesVisualMapOption,
   createTimeSeriesXAxis,
@@ -55,7 +54,7 @@ import {
   getFocusedSeriesIndex,
   measureAxisNameSize
 } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { DateFormatProcessor, ValueSourceType } from '@shared/models/widget-settings.models';
+import { DateFormatProcessor, ValueSourceConfig, ValueSourceType } from '@shared/models/widget-settings.models';
 import {
   formattedDataFormDatasourceData,
   formatValue,
@@ -289,15 +288,36 @@ export class TbTimeSeriesChart {
           }
         }
       }
-    }
-    if (this.updateAxisLimitsFromLatest()) {
-      update = true;
+
+      for (const yAxis of this.yAxisList) {
+        const minType = (yAxis.settings.min as ValueSourceConfig).type;
+        const maxType = (yAxis.settings.max as ValueSourceConfig).type;
+        if (minType === ValueSourceType.latestKey && yAxis.minLatestDataKey) {
+          const data = this.ctx.latestData.find(d => d.dataKey === yAxis.minLatestDataKey);
+          if (data?.data[0]) {
+            const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
+            if (yAxis.option.min !== value) {
+              yAxis.option.min = value;
+              update = true;
+            }
+          }
+        }
+
+        if (maxType === ValueSourceType.latestKey && yAxis.maxLatestDataKey) {
+          const data = this.ctx.latestData.find(d => d.dataKey === yAxis.maxLatestDataKey);
+          if (data?.data[0]) {
+            const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
+            if (yAxis.option.max !== value) {
+              yAxis.option.max = value;
+              update = true;
+            }
+          }
+        }
+      }
     }
     if (this.timeSeriesChart && update) {
       this.updateSeriesData();
-      if (this.updateAxisLimitsFromLatest()) {
-        this.updateAxisLimits();
-      }
+      this.updateAxisLimits();
     }
   }
 
@@ -574,20 +594,17 @@ export class TbTimeSeriesChart {
       }
       const yAxis = createTimeSeriesYAxis(unitSymbol, decimals, axisSettings, this.ctx.utilsService, this.darkMode, unitConvertor);
       if (isDefinedAndNotNull(axisSettings.min)) {
-        this.processAxisLimit(axisSettings.min, 'min', yAxis, axisLimitDatasources, unitConvertor);
+        this.processYAxisLimit(axisSettings.min, 'min', yAxis, axisLimitDatasources, unitConvertor);
       }
       if (isDefinedAndNotNull(axisSettings.max)) {
-        this.processAxisLimit(axisSettings.max, 'max', yAxis, axisLimitDatasources, unitConvertor);
-      }
-      if (yAxis.minLatestDataKey || yAxis.maxLatestDataKey) {
-        yAxis.unitConvertor = unitConvertor;
+        this.processYAxisLimit(axisSettings.max, 'max', yAxis, axisLimitDatasources, unitConvertor);
       }
       this.yAxisList.push(yAxis);
     }
     this.subscribeForAxisLimits(axisLimitDatasources);
   }
 
-  private processAxisLimit(
+  private processYAxisLimit(
     limit: any,
     limitType: 'min' | 'max',
     yAxis: TimeSeriesChartYAxis,
@@ -595,15 +612,15 @@ export class TbTimeSeriesChart {
     unitConvertor?: (value: number) => number
   ): void {
     if (limit && typeof limit === 'object' && 'type' in limit) {
-      const axisLimit = limit as AxisLimitConfig;
+      const axisLimit = limit as ValueSourceConfig;
       if (axisLimit.type === ValueSourceType.latestKey) {
         let latestDataKey: DataKey = null;
         if (this.ctx.datasources.length) {
           for (const datasource of this.ctx.datasources) {
             latestDataKey = datasource.latestDataKeys?.find(d =>
-              (d.type === DataKeyType.function && d.label === (axisLimit.value as DataKey).label) ||
-              (d.type !== DataKeyType.function && d.name === (axisLimit.value as DataKey).name &&
-                d.type === (axisLimit.value as DataKey).type));
+              (d.type === DataKeyType.function && d.label === axisLimit.latestKey) ||
+              (d.type !== DataKeyType.function && d.name === axisLimit.latestKey &&
+                d.type === axisLimit.latestKeyType));
             if (latestDataKey) {
               break;
             }
@@ -621,9 +638,9 @@ export class TbTimeSeriesChart {
         if (entityAliasId) {
           let datasource = axisLimitDatasources.find(d => d.entityAliasId === entityAliasId);
           const entityDataKey: DataKey = {
-            type: (axisLimit.value as DataKey).type,
-            name: (axisLimit.value as DataKey).name,
-            label: (axisLimit.value as DataKey).name,
+            type: limit.entityKeyType,
+            name: limit.entityKey,
+            label: limit.entityKey,
             settings: {
               yAxisId: yAxis.id,
               axisLimit: limitType
@@ -643,27 +660,14 @@ export class TbTimeSeriesChart {
           }
         }
       } else if (axisLimit.type === ValueSourceType.constant) {
-        const value = unitConvertor ? unitConvertor(axisLimit.value as number) : axisLimit.value as number;
+        const value = unitConvertor ? unitConvertor(axisLimit.value) : axisLimit.value;
         if (limitType === 'min') {
-          yAxis.dynamicMin = value;
           yAxis.option.min = value;
         } else {
-          yAxis.dynamicMax = value;
           yAxis.option.max = value;
         }
       }
-    } else if (typeof limit === 'number' || typeof limit === 'string') {
-      let value = limit;
-      if (typeof value === 'number' && unitConvertor) {
-        value = unitConvertor(value);
-      }
-      if (limitType === 'min') {
-        yAxis.dynamicMin = value;
-        yAxis.option.min = value;
-      } else {
-        yAxis.dynamicMax = value;
-        yAxis.option.max = value;
-      }
+      return;
     }
   }
 
@@ -738,25 +742,30 @@ export class TbTimeSeriesChart {
                     const limitType = data.dataKey.settings.axisLimit as ('min' | 'max');
                     if (data.data[0]) {
                       const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
+                      if (isDefinedAndNotNull(value)) {
                         if (limitType === 'min') {
-                          yAxis.dynamicMin = value;
-                          yAxis.option.min = value;
+                          if (yAxis.option.min !== value) {
+                            yAxis.option.min = value;
+                            update = true;
+                          }
                         } else {
-                          yAxis.dynamicMax = value;
-                          yAxis.option.max = value;
+                          if (yAxis.option.max !== value) {
+                            yAxis.option.max = value;
+                            update = true;
+                          }
                         }
-                        update = true;
                       }
                     }
                   }
                 }
               }
-              if (this.timeSeriesChart && update) {
-                this.updateAxisLimits();
-              }
+            }
+            if (this.timeSeriesChart && update) {
+              this.updateAxisLimits();
             }
           }
-        };
+        }
+      };
       this.ctx.subscriptionApi.createSubscription(axisLimitsSubscriptionOptions, true).subscribe();
     }
   }
@@ -851,40 +860,6 @@ export class TbTimeSeriesChart {
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
       this.updateAxes();
     }
-  }
-
-  private updateAxisLimitsFromLatest(): boolean {
-    let update = false;
-
-    if (this.ctx.latestData) {
-      for (const yAxis of this.yAxisList) {
-        if (yAxis.minLatestDataKey) {
-          const data = this.ctx.latestData.find(d => d.dataKey === yAxis.minLatestDataKey);
-          if (data?.data[0]) {
-            const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
-
-            if (yAxis.dynamicMin !== value) {
-              yAxis.dynamicMin = value;
-              yAxis.option.min = value;
-              update = true;
-            }
-          }
-        }
-
-        if (yAxis.maxLatestDataKey) {
-          const data = this.ctx.latestData.find(d => d.dataKey === yAxis.maxLatestDataKey);
-          if (data?.data[0]) {
-            const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
-            if (yAxis.dynamicMax !== value) {
-              yAxis.dynamicMax = value;
-              yAxis.option.max = value;
-              update = true;
-            }
-          }
-        }
-      }
-    }
-    return update;
   }
 
   private parseAxisLimitData = (data: any, unitConvertor?: (value: number) => number): number => {

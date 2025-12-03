@@ -25,7 +25,7 @@ import { ComponentStyle } from '@shared/models/widget-settings.models';
 import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
 import { BarDataItemOption, BarSeriesLabelOption } from 'echarts/types/src/chart/bar/BarSeries';
-import { isDefinedAndNotNull, isNumber, isString } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import {
   ChartFillType,
   ChartLabelPosition,
@@ -35,18 +35,8 @@ import {
 } from '@home/components/widget/lib/chart/chart.models';
 import { ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { RadiusAxisOption, YAXisOption } from 'echarts/types/dist/shared';
-import { DataKey, Datasource, DatasourceType, widgetType } from '@shared/models/widget.models';
-import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
-import { ValueSourceType } from '@shared/models/widget-settings.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 export class TbBarsChart extends TbLatestChart<BarsChartSettings> {
-
-  private dynamicAxisMin: number | string = null;
-  private dynamicAxisMax: number | string = null;
-  private minLatestDataKey: DataKey = null;
-  private maxLatestDataKey: DataKey = null;
 
   constructor(ctx: WidgetContext,
               inputSettings: DeepPartial<PieChartSettings>,
@@ -60,212 +50,6 @@ export class TbBarsChart extends TbLatestChart<BarsChartSettings> {
 
   protected defaultSettings(): BarsChartSettings {
     return barsChartDefaultSettings;
-  }
-
-  protected initSettings() {
-    super.initSettings();
-    this.setupAxisLimits();
-  }
-
-  private setupAxisLimits(): void {
-    const axisLimitDatasources: Datasource[] = [];
-
-    if (isDefinedAndNotNull(this.settings.axisMin)) {
-      this.processAxisLimit(this.settings.axisMin, 'min', axisLimitDatasources);
-    }
-    if (isDefinedAndNotNull(this.settings.axisMax)) {
-      this.processAxisLimit(this.settings.axisMax, 'max', axisLimitDatasources);
-    }
-
-    this.subscribeForAxisLimits(axisLimitDatasources);
-  }
-
-  private processAxisLimit(
-    limit: any,
-    limitType: 'min' | 'max',
-    axisLimitDatasources: Datasource[]
-  ): void {
-    if (limit && typeof limit === 'object' && 'type' in limit) {
-      const axisLimit = limit as AxisLimitConfig;
-
-      if (axisLimit.type === ValueSourceType.latestKey) {
-        let latestDataKey: DataKey = null;
-        if (this.ctx.datasources.length) {
-          for (const datasource of this.ctx.datasources) {
-            latestDataKey = datasource.latestDataKeys?.find(d =>
-              (d.type === DataKeyType.function && d.label === (axisLimit.value as DataKey).label) ||
-              (d.type !== DataKeyType.function && d.name === (axisLimit.value as DataKey).name &&
-                d.type === (axisLimit.value as DataKey).type));
-            if (latestDataKey) {
-              break;
-            }
-          }
-        }
-
-        if (latestDataKey) {
-          if (limitType === 'min') {
-            this.minLatestDataKey = latestDataKey;
-          } else {
-            this.maxLatestDataKey = latestDataKey;
-          }
-        }
-      } else if (axisLimit.type === ValueSourceType.entity) {
-        const entityAliasId = this.ctx.aliasController.getEntityAliasId(axisLimit.entityAlias);
-        if (entityAliasId) {
-          let datasource = axisLimitDatasources.find(d => d.entityAliasId === entityAliasId);
-          const entityDataKey: DataKey = {
-            type: (axisLimit.value as DataKey).type,
-            name: (axisLimit.value as DataKey).name,
-            label: (axisLimit.value as DataKey).name,
-            settings: {
-              axisLimit: limitType
-            }
-          };
-
-          if (datasource) {
-            datasource.dataKeys.push(entityDataKey);
-          } else {
-            datasource = {
-              type: DatasourceType.entity,
-              name: axisLimit.entityAlias,
-              aliasName: axisLimit.entityAlias,
-              entityAliasId,
-              dataKeys: [entityDataKey]
-            };
-            axisLimitDatasources.push(datasource);
-          }
-        }
-      } else if (axisLimit.type === ValueSourceType.constant) {
-        const value = axisLimit.value as number;
-        if (limitType === 'min') {
-          this.dynamicAxisMin = value;
-        } else {
-          this.dynamicAxisMax = value;
-        }
-      }
-    } else if (typeof limit === 'number' || typeof limit === 'string') {
-      if (limitType === 'min') {
-        this.dynamicAxisMin = limit;
-      } else {
-        this.dynamicAxisMax = limit;
-      }
-    }
-  }
-
-  private subscribeForAxisLimits(datasources: Datasource[]) {
-    if (datasources.length) {
-      const axisLimitsSubscriptionOptions: WidgetSubscriptionOptions = {
-        datasources,
-        useDashboardTimewindow: false,
-        type: widgetType.latest,
-        callbacks: {
-          onDataUpdated: (subscription) => {
-            let update = false;
-            if (subscription.data) {
-              for (const data of subscription.data) {
-                const limitType = data.dataKey.settings.axisLimit as ('min' | 'max');
-                if (data.data[0]) {
-                  const value = this.parseAxisLimitData(data.data[0][1]);
-                  if (limitType === 'min') {
-                    if (this.dynamicAxisMin !== value) {
-                      this.dynamicAxisMin = value;
-                      update = true;
-                    }
-                  } else {
-                    if (this.dynamicAxisMax !== value) {
-                      this.dynamicAxisMax = value;
-                      update = true;
-                    }
-                  }
-                }
-              }
-            }
-            if (this.latestChart && update) {
-              this.updateAxisLimits();
-            }
-          }
-        }
-      };
-      this.ctx.subscriptionApi.createSubscription(axisLimitsSubscriptionOptions, true).subscribe();
-    }
-  }
-
-  private parseAxisLimitData(data: any): number | null {
-    let value: number;
-    if (isDefinedAndNotNull(data)) {
-      if (isNumber(data)) {
-        value = data;
-      } else if (isString(data)) {
-        value = Number(data);
-      }
-    }
-    if (isDefinedAndNotNull(value) && !isNaN(value)) {
-      return value;
-    }
-    return null;
-  }
-
-  private updateAxisLimitsFromLatest(): boolean {
-    let update = false;
-
-    if (this.ctx.latestData) {
-      if (this.minLatestDataKey) {
-        const data = this.ctx.latestData.find(d => d.dataKey === this.minLatestDataKey);
-        if (data?.data[0]) {
-          const value = this.parseAxisLimitData(data.data[0][1]);
-          if (this.dynamicAxisMin !== value) {
-            this.dynamicAxisMin = value;
-            update = true;
-          }
-        }
-      }
-
-      if (this.maxLatestDataKey) {
-        const data = this.ctx.latestData.find(d => d.dataKey === this.maxLatestDataKey);
-        if (data?.data[0]) {
-          const value = this.parseAxisLimitData(data.data[0][1]);
-          if (this.dynamicAxisMax !== value) {
-            this.dynamicAxisMax = value;
-            update = true;
-          }
-        }
-      }
-    }
-    return update;
-  }
-
-  private updateAxisLimits(): void {
-    if (this.latestChart && !this.latestChart.isDisposed()) {
-      const axisTickLabelStyle = createChartTextStyle(this.settings.axisTickLabelFont,
-        this.settings.axisTickLabelColor, false, 'axis.tickLabel');
-      const valueAxis: ValueAxisBaseOption = {
-        type: 'value',
-        min: this.dynamicAxisMin,
-        max: this.dynamicAxisMax,
-        axisLabel: {
-          color: axisTickLabelStyle.color,
-          fontStyle: axisTickLabelStyle.fontStyle,
-          fontWeight: axisTickLabelStyle.fontWeight,
-          fontFamily: axisTickLabelStyle.fontFamily,
-          fontSize: axisTickLabelStyle.fontSize,
-          formatter: (value: any) => this.valueFormatter.format(value)
-        }
-      };
-
-      if (this.settings.polar) {
-        this.latestChartOption.radiusAxis = valueAxis as RadiusAxisOption;
-      } else {
-        this.latestChartOption.yAxis = valueAxis as YAXisOption;
-      }
-
-      this.latestChart.setOption(this.latestChartOption);
-    }
-  }
-
-  public latestUpdated() {
-    if (this.updateAxisLimitsFromLatest()) {
-      this.updateAxisLimits();
-    }
   }
 
   protected prepareLatestChartOption() {
@@ -305,12 +89,10 @@ export class TbBarsChart extends TbLatestChart<BarsChartSettings> {
 
     const axisTickLabelStyle = createChartTextStyle(this.settings.axisTickLabelFont,
       this.settings.axisTickLabelColor, false, 'axis.tickLabel');
-    const minValue = isDefinedAndNotNull(this.dynamicAxisMin) ? this.dynamicAxisMin : undefined;
-    const maxValue = isDefinedAndNotNull(this.dynamicAxisMax) ? this.dynamicAxisMax : undefined;
     const valueAxis: ValueAxisBaseOption = {
       type: 'value',
-      min: minValue,
-      max: maxValue,
+      min: this.settings.axisMin,
+      max: this.settings.axisMax,
       axisLabel: {
         color: axisTickLabelStyle.color,
         fontStyle: axisTickLabelStyle.fontStyle,
@@ -320,7 +102,6 @@ export class TbBarsChart extends TbLatestChart<BarsChartSettings> {
         formatter: (value: any) => this.valueFormatter.format(value)
       }
     };
-
     if (this.settings.polar) {
       this.latestChartOption.polar = {
         radius: '100%'

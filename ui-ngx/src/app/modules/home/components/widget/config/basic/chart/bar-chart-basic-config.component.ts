@@ -29,8 +29,6 @@ import {
 import {
   LatestChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/latest-chart-basic-config.component';
-import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-bar-chart-basic-config',
@@ -43,7 +41,7 @@ export class BarChartBasicConfigComponent extends LatestChartBasicConfigComponen
   barChartConfigTemplate: TemplateRef<any>;
 
   predefinedValues = widgetTitleAutocompleteValues;
-  
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               protected fb: UntypedFormBuilder) {
@@ -80,33 +78,5 @@ export class BarChartBasicConfigComponent extends LatestChartBasicConfigComponen
     this.widgetConfig.config.settings.axisMax = config.axisMax;
     this.widgetConfig.config.settings.axisTickLabelFont = config.axisTickLabelFont;
     this.widgetConfig.config.settings.axisTickLabelColor = config.axisTickLabelColor;
-  }
-
-  protected onConfigSet(configData: WidgetConfigComponentData) {
-    configData.config.settings.axisMin = this.normalizeAxisLimit(configData.config.settings.axisMin);
-    configData.config.settings.axisMax = this.normalizeAxisLimit(configData.config.settings.axisMax);
-    super.onConfigSet(configData);
-  }
-
-  private normalizeAxisLimit(limit: any): AxisLimitConfig {
-    if (limit && typeof limit === 'object' && 'type' in limit) {
-      return {
-        type: limit.type || ValueSourceType.constant,
-        value: limit.value ?? null,
-        entityAlias: limit.entityAlias ?? null
-      };
-    }
-    if (typeof limit === 'number') {
-      return {
-        type: ValueSourceType.constant,
-        value: limit,
-        entityAlias: null
-      };
-    }
-    return {
-      type: ValueSourceType.constant,
-      value: null,
-      entityAlias: null
-    };
   }
 }

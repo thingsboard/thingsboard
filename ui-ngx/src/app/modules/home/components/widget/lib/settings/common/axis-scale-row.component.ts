@@ -18,18 +18,22 @@ import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core'
 import {
   ControlValueAccessor, NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder,
+  UntypedFormBuilder, UntypedFormControl,
   UntypedFormGroup, ValidationErrors, Validator,
   Validators,
 } from '@angular/forms';
-import { ValueSourceType, ValueSourceTypes, ValueSourceTypeTranslation } from '@shared/models/widget-settings.models';
+import {
+  ValueSourceConfig,
+  ValueSourceType,
+  ValueSourceTypes,
+  ValueSourceTypeTranslation
+} from '@shared/models/widget-settings.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { Datasource, DatasourceType, } from '@shared/models/widget.models';
+import { DataKey, Datasource, DatasourceType, } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
-import { isEqual } from '@core/utils';
+import { merge } from 'rxjs';
 
 @Component({
   selector: 'tb-axis-scale-row',
@@ -77,9 +81,13 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
 
   limitForm: UntypedFormGroup;
 
+  latestKeyFormControl: UntypedFormControl;
+
+  entityKeyFormControl: UntypedFormControl;
+
   private propagateChanges: (value: any) => void = () => {};
 
-  private modelValue: AxisLimitConfig | null = null;
+  private modelValue: ValueSourceConfig | null = null;
 
   constructor(private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {
@@ -91,42 +99,44 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
       value: [null],
       entityAlias: [null]
     });
+    this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
+    this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
     this.subscribeToTypeChanges();
-
-    this.limitForm.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(value => {
+    merge(
+      this.latestKeyFormControl.valueChanges,
+      this.entityKeyFormControl.valueChanges,
+      this.limitForm.valueChanges
+    ).pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => {
         this.updateValidators();
-        this.updateView(value);
+        this.updateModel();
       });
   }
 
-  writeValue(value: AxisLimitConfig) {
+  writeValue(value: ValueSourceConfig) {
+    console.log("value", value);
     this.modelValue = value;
-
-    if (!this.limitForm) {
-      return;
-    }
-
-    if (value) {
-      this.limitForm.patchValue({
-          type: value.type ?? ValueSourceType.constant,
-          value: value.value ?? null,
-          entityAlias: value.entityAlias ?? null
-        },
-        { emitEvent: false }
-      );
-    } else {
-      this.limitForm.patchValue({
-          type: ValueSourceType.constant,
-          value: null,
-          entityAlias: null
-        },
-        { emitEvent: false }
-      );
+    this.limitForm.patchValue(
+      {
+        type: value.type || ValueSourceType.constant,
+        value: value.value,
+        entityAlias: value.entityAlias,
+      }, {emitEvent: false}
+    );
+    if (value.type === ValueSourceType.latestKey) {
+      this.latestKeyFormControl.patchValue({
+        type: value.latestKeyType,
+        name: value.latestKey
+      }, {emitEvent: false});
+    } else if (value.type === ValueSourceType.entity) {
+      this.entityKeyFormControl.patchValue({
+        type: value.entityKeyType,
+        name: value.entityKey
+      }, {emitEvent: false});
     }
 
     this.updateValidators();
+    this.limitForm.markAllAsTouched();
   }
 
   registerOnChange(fn: any) {
@@ -158,28 +168,22 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
 
   private updateValidators() {
     const axisTypeControl = this.limitForm.get('type');
-    const axisValueControl = this.limitForm.get('value');
-    const axisEntityAliasControl = this.limitForm.get('entityAlias');
-
-    if (axisTypeControl && axisValueControl && axisEntityAliasControl) {
+    if (axisTypeControl && this.entityKeyFormControl && this.latestKeyFormControl) {
       const type = axisTypeControl.value;
-      if (type === ValueSourceType.latestKey || type === ValueSourceType.entity) {
-        axisValueControl.setValidators([Validators.required]);
+      if (type === ValueSourceType.latestKey) {
+        this.latestKeyFormControl.setValidators([Validators.required]);
+        this.entityKeyFormControl.clearValidators();
+      } else if (type === ValueSourceType.entity) {
+        this.latestKeyFormControl.clearValidators();
+        this.entityKeyFormControl.setValidators([Validators.required]);
       } else {
-        axisValueControl.clearValidators();
+        this.latestKeyFormControl.clearValidators();
+        this.entityKeyFormControl.clearValidators();
       }
-
-      if (type === ValueSourceType.entity) {
-        axisEntityAliasControl.setValidators([Validators.required]);
-      } else {
-        axisEntityAliasControl.clearValidators();
-      }
-
-      axisValueControl.updateValueAndValidity({ emitEvent: false });
-      axisEntityAliasControl.updateValueAndValidity({ emitEvent: false });
+      this.latestKeyFormControl.updateValueAndValidity({ emitEvent: false });
+      this.entityKeyFormControl.updateValueAndValidity({ emitEvent: false });
     }
   }
-
   private subscribeToTypeChanges() {
     this.limitForm.controls.type.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -187,18 +191,31 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
         const axisValueControl = this.limitForm.get('value');
         const axisEntityAliasControl = this.limitForm.get('entityAlias');
         if (axisValueControl) {
-          axisValueControl.setValue(null, { emitEvent: true });
+          axisValueControl.setValue(null, { emitEvent: false });
         }
         if (axisEntityAliasControl) {
-          axisEntityAliasControl.setValue(null, { emitEvent: true });
+          axisEntityAliasControl.setValue(null, { emitEvent: false });
         }
+        this.latestKeyFormControl.setValue(null, { emitEvent: false });
+        this.entityKeyFormControl.setValue(null, { emitEvent: false });
+
       });
   }
 
-  private updateView(value: AxisLimitConfig) {
-    if (!isEqual(this.modelValue, value)) {
-      this.modelValue = value;
-      this.propagateChanges(value);
+  private updateModel() {
+    const value = this.limitForm.value;
+    this.modelValue.type = value.type ?? ValueSourceType.constant;
+    this.modelValue.value = value?.value;
+    this.modelValue.entityAlias = value?.entityAlias;
+    if (value.type === ValueSourceType.latestKey) {
+      const latestKey: DataKey = this.latestKeyFormControl.value;
+      this.modelValue.latestKey = latestKey?.name;
+      this.modelValue.latestKeyType = (latestKey?.type as any);
+    } else if (value.type === ValueSourceType.entity) {
+      const entityKey: DataKey = this.entityKeyFormControl.value;
+      this.modelValue.entityKey = entityKey?.name;
+      this.modelValue.entityKeyType = (entityKey?.type as any);
     }
+    this.propagateChanges(this.modelValue);
   }
 }

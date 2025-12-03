@@ -26,8 +26,6 @@ import {
 import {
   LatestChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
-import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-bar-chart-widget-settings',
@@ -58,33 +56,5 @@ export class BarChartWidgetSettingsComponent extends LatestChartWidgetSettingsCo
     latestChartWidgetSettingsForm.addControl('axisMax', this.fb.control(settings.axisMax, []));
     latestChartWidgetSettingsForm.addControl('axisTickLabelFont', this.fb.control(settings.axisTickLabelFont, []));
     latestChartWidgetSettingsForm.addControl('axisTickLabelColor', this.fb.control(settings.axisTickLabelColor, []));
-  }
-
-  protected prepareInputSettings(settings: WidgetSettings): WidgetSettings {
-    settings.axisMin = this.normalizeAxisLimit(settings.axisMin);
-    settings.axisMax = this.normalizeAxisLimit(settings.axisMax);
-    return super.prepareInputSettings(settings);
-  }
-
-  private normalizeAxisLimit(limit: any): AxisLimitConfig {
-    if (limit && typeof limit === 'object' && 'type' in limit) {
-      return {
-        type: limit.type || ValueSourceType.constant,
-        value: limit.value ?? null,
-        entityAlias: limit.entityAlias ?? null
-      };
-    }
-    if (typeof limit === 'number') {
-      return {
-        type: ValueSourceType.constant,
-        value: limit,
-        entityAlias: null
-      };
-    }
-    return {
-      type: ValueSourceType.constant,
-      value: null,
-      entityAlias: null
-    };
   }
 }

@@ -21,27 +21,27 @@
                               formControlName="timewindowConfig">
   </tb-timewindow-config-panel>
   <tb-datasources
-      [configMode]="basicMode"
-      hideDatasourceLabel
-      hideDataKeys
-      forceSingleDatasource
-      formControlName="datasources">
+    [configMode]="basicMode"
+    hideDatasourceLabel
+    hideDataKeys
+    forceSingleDatasource
+    formControlName="datasources">
   </tb-datasources>
   <tb-data-keys-panel
-      panelTitle="{{ 'widgets.chart.series' | translate }}"
-      addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
-      keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
-      removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
-      noKeysText="{{ 'widgets.chart.no-series' | translate }}"
-      requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
-      hideUnits
-      hideDecimals
-      hideDataKeyUnits
-      hideDataKeyDecimals
-      [datasourceType]="datasource?.type"
-      [deviceId]="datasource?.deviceId"
-      [entityAliasId]="datasource?.entityAliasId"
-      formControlName="series">
+    panelTitle="{{ 'widgets.chart.series' | translate }}"
+    addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+    keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+    removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+    noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+    requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+    hideUnits
+    hideDecimals
+    hideDataKeyUnits
+    hideDataKeyDecimals
+    [datasourceType]="datasource?.type"
+    [deviceId]="datasource?.deviceId"
+    [entityAliasId]="datasource?.entityAliasId"
+    formControlName="series">
   </tb-data-keys-panel>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
@@ -210,7 +210,7 @@
     </mat-expansion-panel>
   </div>
   <tb-chart-animation-settings
-      formControlName="animation">
+    formControlName="animation">
   </tb-chart-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
@@ -239,7 +239,7 @@
     </div>
   </div>
   <tb-widget-actions-panel
-      formControlName="actions">
+    formControlName="actions">
   </tb-widget-actions-panel>
 </ng-container>
 
@@ -346,15 +346,25 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
       <tb-chart-bar-settings
-          formControlName="barSettings"
-          [series]="false">
+        formControlName="barSettings"
+        [series]="false">
       </tb-chart-bar-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-axis</div>
       <div class="tb-form-row space-between column-xs">
-        <div translate>widgets.chart.chart-axis.scale-appearance</div>
+        <div translate>widgets.chart.chart-axis.scale</div>
         <div class="flex flex-row items-center justify-start gap-2">
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="axisMin"
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="axisMax"
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
           <tb-font-settings formControlName="axisTickLabelFont"
                             clearButton
                             disabledLineHeight
@@ -367,33 +377,6 @@
           </tb-color-input>
         </div>
       </div>
-      <div class="tb-form-row column align-start">
-        <div translate>widgets.chart.chart-axis.scale-limits</div>
-        <div class="tb-form-table w-full">
-          <div class="tb-form-table-header w-full">
-            <div class="tb-form-table-header-cell flex-grow flex-shrink basis-1/5" translate>widgets.chart.chart-axis.limit</div>
-            <div class="tb-form-table-header-cell flex-grow flex-shrink basis-40%" translate>widgets.chart.chart-axis.source</div>
-            <div class="tb-form-table-header-cell flex-grow flex-shrink basis-40%" translate>widgets.chart.chart-axis.key-value</div>
-          </div>
-          <div class="tb-form-table-body">
-            <tb-axis-scale-row
-              [datasource]="datasource"
-              [callbacks]="callbacks"
-              [aliasController]="aliasController"
-              formControlName="axisMin"
-              labelKey="widgets.chart.chart-axis.scale-min">
-            </tb-axis-scale-row>
-            <mat-divider class="mt-2 gt-sm:hidden"></mat-divider>
-            <tb-axis-scale-row
-              [datasource]="datasource"
-              [callbacks]="callbacks"
-              [aliasController]="aliasController"
-              formControlName="axisMax"
-              labelKey="widgets.chart.chart-axis.scale-max">
-            </tb-axis-scale-row>
-          </div>
-        </div>
-      </div>
     </div>
   </ng-container>
 </ng-template>
@@ -402,16 +385,26 @@
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-appearance</div>
       <tb-chart-bar-settings
-          formControlName="barSettings"
-          pieLabelPosition
-          [series]="false">
+        formControlName="barSettings"
+        pieLabelPosition
+        [series]="false">
       </tb-chart-bar-settings>
     </div>
     <div class="tb-form-panel">
       <div class="tb-form-panel-title" translate>widgets.polar-area-chart.polar-axis</div>
       <div class="tb-form-row space-between column-xs">
-        <div translate>widgets.chart.chart-axis.scale-appearance</div>
+        <div translate>widgets.chart.chart-axis.scale</div>
         <div class="flex flex-row items-center justify-start gap-2">
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="axisMin"
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="axisMax"
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
           <tb-font-settings formControlName="axisTickLabelFont"
                             clearButton
                             disabledLineHeight
@@ -429,33 +422,6 @@
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="angleAxisStartAngle" type="number" min="0" max="360" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-      </div>
-      <div class="tb-form-row column align-start">
-        <div translate>widgets.chart.chart-axis.scale-limits</div>
-        <div class="tb-form-table w-full">
-          <div class="tb-form-table-header w-full">
-            <div class="tb-form-table-header-cell flex-grow flex-shrink basis-1/5" translate>widgets.chart.chart-axis.limit</div>
-            <div class="tb-form-table-header-cell flex-grow flex-shrink basis-40%" translate>widgets.chart.chart-axis.source</div>
-            <div class="tb-form-table-header-cell flex-grow flex-shrink basis-40%" translate>widgets.chart.chart-axis.key-value</div>
-          </div>
-          <div class="tb-form-table-body">
-            <tb-axis-scale-row
-              [datasource]="datasource"
-              [callbacks]="callbacks"
-              [aliasController]="aliasController"
-              formControlName="axisMin"
-              labelKey="widgets.chart.chart-axis.scale-min">
-            </tb-axis-scale-row>
-            <mat-divider class="mt-2 gt-sm:hidden"></mat-divider>
-            <tb-axis-scale-row
-              [datasource]="datasource"
-              [callbacks]="callbacks"
-              [aliasController]="aliasController"
-              formControlName="axisMax"
-              labelKey="widgets.chart.chart-axis.scale-max">
-            </tb-axis-scale-row>
-          </div>
-        </div>
       </div>
     </div>
   </ng-container>
@@ -542,7 +508,7 @@
         </div>
       </div>
       <tb-chart-fill-settings
-          formControlName="fillAreaSettings">
+        formControlName="fillAreaSettings">
       </tb-chart-fill-settings>
     </div>
     <div class="tb-form-panel">

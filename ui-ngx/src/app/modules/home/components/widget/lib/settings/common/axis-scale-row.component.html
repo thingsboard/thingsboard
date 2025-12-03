@@ -53,7 +53,7 @@
       [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
       [callbacks]="callbacks"
       [editable]="false"
-      formControlName="value">
+      [formControl]="latestKeyFormControl">
     </tb-data-key-input>
     <tb-data-key-input
       required
@@ -65,7 +65,7 @@
       [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
       [callbacks]="callbacks"
       [editable]="false"
-      formControlName="value">
+      [formControl]="entityKeyFormControl">
     </tb-data-key-input>
   </div>
 </div>

@@ -22,7 +22,6 @@ import {
   LatestChartWidgetSettings
 } from '@home/components/widget/lib/chart/latest-chart.models';
 import {
-  Datasource,
   legendPositions,
   legendPositionTranslationMap,
   WidgetSettings,
@@ -102,15 +101,6 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
   get doughnutTotalEnabled(): boolean {
     const layout: DoughnutLayout = this.latestChartWidgetSettingsForm.get('layout').value;
     return layout === DoughnutLayout.with_total;
-  }
-
-  public get datasource(): Datasource {
-    const datasources: Datasource[] = this.widgetConfig.config.datasources;
-    if (datasources && datasources.length) {
-      return datasources[0];
-    } else {
-      return null;
-    }
   }
 
   constructor(protected store: Store<AppState>,

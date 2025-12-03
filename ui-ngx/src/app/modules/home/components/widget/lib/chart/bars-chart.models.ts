@@ -24,12 +24,11 @@ import {
   chartColorScheme
 } from '@home/components/widget/lib/chart/chart.models';
 import { Font } from '@shared/models/widget-settings.models';
-import { AxisLimitConfig } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 export interface BarsChartSettings extends LatestChartSettings {
   polar: boolean;
-  axisMin?: number | string | AxisLimitConfig;
-  axisMax?: number | string | AxisLimitConfig;
+  axisMin?: number | string;
+  axisMax?: number | string;
   axisTickLabelFont: Font;
   axisTickLabelColor: string;
   angleAxisStartAngle?: number;

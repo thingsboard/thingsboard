@@ -381,16 +381,10 @@ export interface TimeSeriesChartYAxisSettings extends TimeSeriesChartAxisSetting
   decimals?: number;
   interval?: number;
   splitNumber?: number;
-  min?: number | string | AxisLimitConfig;
-  max?: number | string | AxisLimitConfig;
+  min?: string | ValueSourceConfig;
+  max?: string | ValueSourceConfig;
   ticksGenerator?: TimeSeriesChartTicksGenerator | string;
   ticksFormatter?: TimeSeriesChartTicksFormatter | string;
-}
-
-export interface AxisLimitConfig {
-  entityAlias: string;
-  type: ValueSourceType;
-  value: number | DataKey;
 }
 
 export const timeSeriesChartYAxisValid = (axis: TimeSeriesChartYAxisSettings): boolean =>
@@ -873,8 +867,6 @@ export interface TimeSeriesChartAxis {
   id: string;
   settings: TimeSeriesChartAxisSettings;
   option: CartesianAxisOption;
-  dynamicMin?: string| number;
-  dynamicMax?: string| number;
   minLatestDataKey?: DataKey;
   maxLatestDataKey?: DataKey;
   unitConvertor?: (value: number) => number;
