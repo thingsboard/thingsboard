@@ -116,7 +116,7 @@ public class CalculatedFieldCtx implements Closeable {
 
     private long maxStateSize;
     private long maxSingleValueArgumentSize;
-    private long realtimeAggregationIntervalMillis;
+    private long intermediateAggregationIntervalMillis;
 
     private boolean relationQueryDynamicArguments;
     private List<String> mainEntityGeofencingArgumentNames;
@@ -215,7 +215,7 @@ public class CalculatedFieldCtx implements Closeable {
         ApiLimitService apiLimitService = systemContext.getApiLimitService();
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
+        this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedIntermediateAggregationIntervalInSecForCF));
         this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
     }
@@ -232,7 +232,7 @@ public class CalculatedFieldCtx implements Closeable {
                 return true;
             }
             if (entityAggregationConfig.isProduceIntermediateResult()) {
-                if (now - lastReevaluationTs >= realtimeAggregationIntervalMillis) {
+                if (now - lastReevaluationTs >= intermediateAggregationIntervalMillis) {
                     lastReevaluationTs = now;
                     return true;
                 }
@@ -306,7 +306,7 @@ public class CalculatedFieldCtx implements Closeable {
         ApiLimitService apiLimitService = systemContext.getApiLimitService();
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
-        this.realtimeAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedRealtimeAggregationIntervalInSecForCF));
+        this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMinAllowedIntermediateAggregationIntervalInSecForCF));
         this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
     }

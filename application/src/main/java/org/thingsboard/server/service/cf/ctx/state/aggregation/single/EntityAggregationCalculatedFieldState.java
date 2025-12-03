@@ -206,14 +206,12 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             handleExpiredInterval(intervalEntry, args, results);
             expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
-            handleActiveInterval(ctx, intervalEntry, args, results);
+            handleActiveInterval(ctx.getCfCheckReevaluationInterval(), intervalEntry, args, results);
             if (watermarkDuration == 0) {
                 expiredIntervals.add(intervalEntry);
             }
-        } else if (now - startTs < intervalEntry.getIntervalDuration()) {
-            if (produceIntermediateResult) {
-                handleCurrentInterval(ctx, intervalEntry, args, results);
-            }
+        } else if (produceIntermediateResult) {
+            handleActiveInterval(ctx.getIntermediateAggregationIntervalMillis(), intervalEntry, args, results);
         }
     }
 
@@ -231,31 +229,12 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         });
     }
 
-    private void handleActiveInterval(CalculatedFieldCtx ctx,
+    private void handleActiveInterval(long cfCheckInterval,
                                       AggIntervalEntry intervalEntry,
                                       Map<String, AggIntervalEntryStatus> args,
                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         args.forEach((argName, argEntryIntervalStatus) -> {
-            if (argEntryIntervalStatus.intervalPassed(ctx.getCfCheckReevaluationInterval())) {
-                if (argEntryIntervalStatus.argsUpdated()) {
-                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                    argEntryIntervalStatus.setLastArgsRefreshTs(-1);
-                    processArgument(intervalEntry, argName, false, results);
-                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
-                    argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                    processArgument(intervalEntry, argName, true, results);
-                }
-            }
-        });
-    }
-
-    private void handleCurrentInterval(CalculatedFieldCtx ctx,
-                                       AggIntervalEntry intervalEntry,
-                                       Map<String, AggIntervalEntryStatus> args,
-                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
-        long realtimeAggregationInterval = ctx.getRealtimeAggregationIntervalMillis();
-        args.forEach((argName, argEntryIntervalStatus) -> {
-            if (argEntryIntervalStatus.intervalPassed(realtimeAggregationInterval)) {
+            if (argEntryIntervalStatus.intervalPassed(cfCheckInterval)) {
                 if (argEntryIntervalStatus.argsUpdated()) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     argEntryIntervalStatus.setLastArgsRefreshTs(-1);
