@@ -28,6 +28,7 @@ import org.mvel2.ParserContext;
 import org.mvel2.SandboxedParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
+import org.mvel2.execution.ExecutionLinkedHashSet;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -39,14 +40,18 @@ import java.util.Base64;
 import java.util.Calendar;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 
 import static java.lang.Character.MAX_RADIX;
 import static java.lang.Character.MIN_RADIX;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @Slf4j
@@ -1150,6 +1155,13 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void roundResult() {
+        Assertions.assertEquals(1729.1729, TbUtils.roundResult(doubleVal, null));
+        Assertions.assertEquals(1729, TbUtils.roundResult(doubleVal, 0));
+        Assertions.assertEquals(1729.17, TbUtils.roundResult(doubleVal, 2));
+    }
+
+    @Test
     public void isNaN() {
         assertFalse(TbUtils.isNaN(doubleVal));
         assertTrue(TbUtils.isNaN(Double.NaN));
@@ -1184,10 +1196,11 @@ public class TbUtilsTest {
 
     @Test
     public void isList() throws ExecutionException, InterruptedException {
-        List<Integer> liat = List.of(0x35);
-        assertTrue(TbUtils.isList(liat));
-        assertFalse(TbUtils.isMap(liat));
-        assertFalse(TbUtils.isArray(liat));
+        List<Integer> list = List.of(0x35);
+        assertTrue(TbUtils.isList(list));
+        assertFalse(TbUtils.isMap(list));
+        assertFalse(TbUtils.isArray(list));
+        assertFalse(TbUtils.isSet(list));
     }
 
     @Test
@@ -1195,10 +1208,64 @@ public class TbUtilsTest {
         byte [] array = new byte[]{1, 2, 3};
         assertTrue(TbUtils.isArray(array));
         assertFalse(TbUtils.isList(array));
+        assertFalse(TbUtils.isSet(array));
+    }
+
+    @Test
+    public void isSet() throws ExecutionException, InterruptedException {
+        Set<Byte> set = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
+        assertTrue(TbUtils.isSet(set));
+        assertFalse(TbUtils.isList(set));
+        assertFalse(TbUtils.isArray(set));
+    }
+    @Test
+    public void setTest() throws ExecutionException, InterruptedException {
+        Set actual = TbUtils.newSet(ctx);
+        Set expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xCC});
+        actual.add((byte) 0xDD);
+        actual.add((byte) 0xCC);
+        actual.add((byte) 0xCC);
+        assertTrue(expected.containsAll(actual));
+        List list = toList(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xBB, (byte) 0xAA});
+        actual.addAll(list);
+        assertEquals(4, actual.size());
+        assertTrue(actual.containsAll(expected));
+        actual = TbUtils.toSet(ctx, list);
+        expected = toSet(new byte[]{(byte) 0xDD, (byte) 0xCC, (byte) 0xDA});
+        actual.add((byte) 0xDA);
+        actual.remove((byte) 0xBB);
+        actual.remove((byte) 0xAA);
+        assertTrue(expected.containsAll(actual));
+        assertEquals(actual.size(), 3);
+        actual.clear();
+        assertTrue(actual.isEmpty());
+        actual = TbUtils.toSet(ctx, list);
+        Set actualClone = TbUtils.toSet(ctx, list);
+        Set actualClone_asc = TbUtils.toSet(ctx, list);
+        Set actualClone_desc = TbUtils.toSet(ctx, list);
+        ((ExecutionLinkedHashSet<?>)actualClone).sort();
+        ((ExecutionLinkedHashSet<?>)actualClone_asc).sort(true);
+        ((ExecutionLinkedHashSet<?>)actualClone_desc).sort(false);
+        assertEquals(list.toString(), actual.toString());
+        assertNotEquals(list.toString(), actualClone.toString());
+        Collections.sort(list);
+        assertEquals(list.toString(), actualClone.toString());
+        assertEquals(list.toString(), actualClone_asc.toString());
+        Collections.sort(list, Collections.reverseOrder());
+        assertNotEquals(list.toString(), actualClone_asc.toString());
+        assertEquals(list.toString(), actualClone_desc.toString());
     }
 
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);
+        for (Byte b : data) {
+            result.add(b);
+        }
+        return result;
+    }
+
+    private static Set<Byte> toSet(byte[] data) {
+        Set<Byte> result = new LinkedHashSet<>();
         for (Byte b : data) {
             result.add(b);
         }

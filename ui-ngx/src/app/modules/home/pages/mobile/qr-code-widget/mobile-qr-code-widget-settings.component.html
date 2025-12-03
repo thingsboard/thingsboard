@@ -39,10 +39,10 @@
           <div class="fixed-title-width-230">{{ 'mobile.bundle' | translate }}</div>
           <tb-entity-autocomplete
             class="flex-1"
+            required
+            inlineField
             useFullEntityId
-            appearance="outline"
-            subscriptSizing="dynamic"
-            [additionalClasses]="['flex']"
+            placeholder="{{ 'mobile.bundle' | translate }}"
             [entityType]="entityType.MOBILE_APP_BUNDLE"
             formControlName="mobileAppBundleId">
           </tb-entity-autocomplete>

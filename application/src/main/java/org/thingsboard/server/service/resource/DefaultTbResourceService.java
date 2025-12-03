@@ -75,7 +75,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         ActionType actionType = resource.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = resource.getTenantId();
         try {
-            if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType())) {
+            if (ResourceType.LWM2M_MODEL.equals(resource.getResourceType()) && resource.getId() == null) {
                 toLwm2mResource(resource);
             } else if (resource.getResourceKey() == null) {
                 resource.setResourceKey(resource.getFileName());
@@ -102,7 +102,6 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
             if (result.isSuccess()) {
                 logEntityActionService.logEntityAction(tenantId, resourceId, tbResource, actionType, user, resourceId.toString());
             }
-
             return result;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),

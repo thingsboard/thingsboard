@@ -1,0 +1,135 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "../../../../../../../scss/constants";
+
+$enabled-color: #198038;
+$disabled-color: #D12730;
+$warning-color: #FAA405;
+
+.tb-no-notification-svg-color {
+  color: $tb-primary-color;
+}
+
+.tb-api-usage-panel {
+  > div:not(.tb-api-usage-overlay) {
+    z-index: 1;
+  }
+  .tb-api-usage-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    right: 12px;
+  }
+  .tb-api-usage-content {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .api-items-list {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+      .api-item {
+        &.enabled {
+          .api-item-statistic-status {
+            color: $enabled-color;
+          }
+          .mat-mdc-progress-bar {
+            --mdc-linear-progress-track-color: #{rgba($enabled-color, 0.06)};
+            --mdc-linear-progress-active-indicator-color: #{$enabled-color};
+          }
+        }
+        &.disabled {
+          .api-item-statistic-status {
+            color: $disabled-color;
+          }
+          .mat-mdc-progress-bar {
+            --mdc-linear-progress-track-color: #{rgba($disabled-color, 0.06)};
+            --mdc-linear-progress-active-indicator-color: #{$disabled-color};
+          }
+        }
+        &.warning {
+          .api-item-statistic-status {
+            color: $warning-color;
+          }
+          .mat-mdc-progress-bar {
+            --mdc-linear-progress-track-color: #{rgba($warning-color, 0.06)};
+            --mdc-linear-progress-active-indicator-color: #{$warning-color};
+          }
+        }
+
+        &:hover {
+          background-color: rgba(0, 0, 0, 0.06);
+        }
+        &.active {
+          background-color: rgba($tb-primary-color, 0.06);
+          .mat-divider {
+            --mat-divider-color: #{$tb-primary-color};
+          }
+          .api-item-content {
+            .api-item-title {
+              font-weight: 500;
+              color: $tb-primary-color;
+            }
+          }
+        }
+
+        .api-item-content {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          justify-content: space-between;
+          gap: 8px;
+          padding: 5px 16px;
+          .api-item-title {
+            display: flex;
+            flex: 1;
+            font-size: 14px;
+            line-height: 20px;
+            font-weight: 400;
+            color: rgba(0, 0, 0, 0.54);
+          }
+          .api-item-statistic {
+            display: flex;
+            flex: 1;
+            flex-direction: column;
+            &-count {
+              font-size: 14px;
+              color: rgba(0, 0, 0, 0.54);
+            }
+            &-status {
+              display: flex;
+              flex-direction: row;
+              justify-content: space-between;
+              align-items: center;
+              font-size: 14px;
+            }
+            &-progress {
+              --mdc-linear-progress-track-height: 8px;
+              --mdc-linear-progress-active-indicator-height: 8px;
+              padding: 4px 0;
+              .mat-mdc-progress-bar {
+                border-radius: 6px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

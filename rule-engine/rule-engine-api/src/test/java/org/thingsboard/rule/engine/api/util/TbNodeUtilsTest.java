@@ -26,6 +26,8 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.Map;
+
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
@@ -167,4 +169,160 @@ public class TbNodeUtilsTest {
         assertThat(TbNodeUtils.formatMetadataVarTemplate(null), is("${null}"));
         assertThat(TbNodeUtils.formatMetadataVarTemplate(null), is(String.format(METADATA_VARIABLE_TEMPLATE, (String) null)));
     }
+
+    @Test
+    public void testAllMetadataTemplateReplacement() {
+        // GIVEN
+        String pattern = "META ${*}";
+        var metadata = new TbMsgMetaData();
+        metadata.putValue("meta_key", "meta_value");
+
+        var msg = TbMsg.newMsg()
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .metaData(metadata)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "META {\"meta_key\":\"meta_value\"}";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testMultipleAllMetadataTemplatesReplacement() {
+        // GIVEN
+        String pattern = "${*} then again ${*}";
+        var metadata = new TbMsgMetaData();
+        metadata.putValue("meta_key", "meta_value");
+
+        var msg = TbMsg.newMsg()
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .metaData(metadata)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "{\"meta_key\":\"meta_value\"} then again {\"meta_key\":\"meta_value\"}";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testAllDataTemplateReplacement() {
+        // GIVEN
+        String pattern = "DATA $[*]";
+        var dataJson = JacksonUtil.newObjectNode().put("data_key", "data_value");
+
+        var msg = TbMsg.newMsg()
+                .data(JacksonUtil.toString(dataJson))
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "DATA {\"data_key\":\"data_value\"}";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testMultipleAllDataTemplatesReplacement() {
+        // GIVEN
+        String pattern = "$[*] then again $[*]";
+        var dataJson = JacksonUtil.newObjectNode().put("data_key", "data_value");
+
+        var msg = TbMsg.newMsg()
+                .data(JacksonUtil.toString(dataJson))
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "{\"data_key\":\"data_value\"} then again {\"data_key\":\"data_value\"}";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testAllDataAndAllMetadataTemplatesSimultaneously() {
+        // GIVEN
+        String pattern = "META ${*} DATA $[*]";
+
+        var metadata = new TbMsgMetaData(Map.of("meta_key", "meta_value"));
+        var dataJson = JacksonUtil.newObjectNode().put("data_key", "data_value");
+
+        var msg = TbMsg.newMsg()
+                .data(JacksonUtil.toString(dataJson))
+                .metaData(metadata)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "META {\"meta_key\":\"meta_value\"} DATA {\"data_key\":\"data_value\"}";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testAllDataAndAllMetadataTemplatesSimultaneouslyEmpty() {
+        // GIVEN
+        String pattern = "META ${*} DATA $[*]";
+
+        var msg = TbMsg.newMsg()
+                .data(TbMsg.EMPTY_JSON_OBJECT)
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "META {} DATA {}";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testAllDataTemplateArray() {
+        // GIVEN
+        String pattern = "DATA $[*]";
+
+        var msg = TbMsg.newMsg()
+                .data("[1, \"two\", true]")
+                .metaData(TbMsgMetaData.EMPTY)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "DATA [1,\"two\",true]";
+        assertThat(actual, is(expected));
+    }
+
+    @Test
+    public void testMixedAllDataMetadataAndNormalTemplates() {
+        // GIVEN
+        String pattern = "fullMeta=${*}, singleMeta=${meta_key}, fullData=$[*], singleData=$[data_key]";
+        var metadata = new TbMsgMetaData(Map.of("meta_key", "meta_value"));
+        var dataJson = JacksonUtil.newObjectNode().put("data_key", "data_value");
+
+        var msg = TbMsg.newMsg()
+                .data(JacksonUtil.toString(dataJson))
+                .metaData(metadata)
+                .build();
+
+        // WHEN
+        String actual = TbNodeUtils.processPattern(pattern, msg);
+
+        // THEN
+        String expected = "fullMeta={\"meta_key\":\"meta_value\"}, singleMeta=meta_value, fullData={\"data_key\":\"data_value\"}, singleData=data_value";
+        assertThat(actual, is(expected));
+    }
+
 }

@@ -26,8 +26,10 @@ import java.util.Base64;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -748,6 +750,284 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         expected.put("sum", 6);
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertEquals(expected, actual);
+    }
+
+
+    // Sets
+    @Test
+    public void setsCreateNewSetFromMap_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["B", "A", "C", "A"]}
+                """;
+        decoderStr = """
+                var originalMap = {};
+                var set1 = originalMap.entrySet();         // create new Set from map, Empty
+                var set2 = set1.clone();                   // clone new Set, Empty
+                var result1 = set1.addAll(msg.list);       // addAll list, no sort, size = 3 ("A" - duplicate)
+                return {set1: set1,
+                        set2: set2,
+                        result1: result1
+                       }
+                """;
+        Set expectedSet1 = new LinkedHashSet(List.of("B", "A", "C", "A"));
+        Set expectedSet2 = new LinkedHashSet();
+        Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("set1", expectedSet1);
+        expected.put("set2", expectedSet2);
+        expected.put("result1", true);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected.toString(), actual.toString());
+    }
+
+     @Test
+    public void setsCreateNewSetFromCreateSetTbMethod_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["B", "A", "C", "A"]}
+                """;
+        decoderStr = """
+                var set1 = toSet(msg.list);       // create new Set from toSet() with list, no sort, size = 3 ("A" - duplicate)
+                var set2 = newSet();               // create new Set from newSet(), Empty
+                return {set1: set1,
+                        set2: set2
+                       }
+                """;
+        Set expectedSet1 = new LinkedHashSet(List.of("B", "A", "C", "A"));
+        Set expectedSet2 = new LinkedHashSet();
+        Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("set1", expectedSet1);
+        expected.put("set2", expectedSet2);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected.toString(), actual.toString());
+    }
+
+     @Test
+    public void setsForeachForLoop_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["A", "B", "C"]}
+                """;
+        decoderStr = """
+                var set2 = toSet(msg.list);       // create new from list, size = 3
+                var set2_0 = set2.toArray()[0];         // return "A", value with index = 0 from Set 
+                var set2Size = set2.size();             // return size = 3
+                var smthForeach = "";
+                foreach (item : set2) {                 // foreach for Set
+                  smthForeach += item;                  // return "ABC"
+                }
+                var smthForLoop= "";
+                var set2Array = set2.toArray();         // for loop for Set (Set to array))
+                for (var i =0; i < set2.size; i++) {
+                    smthForLoop += set2Array[i];        // return "ABC"            
+                }
+                return {
+                        set2: set2,
+                        set2_0: set2_0,
+                        set2Size: set2Size,
+                        smthForeach: smthForeach,
+                        smthForLoop: smthForLoop
+                       }
+                """;
+        Set expectedSet2 = new LinkedHashSet(List.of("A", "B", "C"));
+        Map<String, Object> expected = new LinkedHashMap<>();
+        expected.put("set2", expectedSet2);
+        expected.put("set2_0", expectedSet2.toArray()[0]);
+        expected.put("set2Size", expectedSet2.size());
+        AtomicReference<String> smth = new AtomicReference<>("");
+        expectedSet2.forEach(s -> smth.updateAndGet(v -> v + s));
+        expected.put("smthForeach", smth.get());
+        expected.put("smthForLoop", smth.get());
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected.toString(), actual.toString());
+    }
+
+    /**
+     * add
+     * delete/remove
+     * setCreate, setCreatList
+     */
+    @Test
+    public void setsAddRemove_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["B", "C", "A", "B", "C", "hello", 34567]}
+                """;
+        decoderStr = """
+                // add
+                var setAdd = toSet(["thigsboard", 4, 67]);      // create new, size = 3
+                var setAdd1_value = setAdd.clone();                   // clone setAdd, size = 3
+                var setAdd2_result = setAdd.add(35);                  // add value = 35, result = true
+                var setAdd2_value = setAdd.clone();                   // clone setAdd (fixing the result add = 35), size = 4
+                var setAddList1 = toSet(msg.list);              // create new from list without duplicate value ("B" and "C" - only one), size = 5
+                var setAdd3_result = setAdd.addAll(setAddList1);      // add all without duplicate values, result = true
+                var setAdd3_value = setAdd.clone();                   // clone setAdd (with addAll), size = 9  
+                var setAdd4_result = setAdd.add(35);                  // add duplicate value = 35,  result = false  
+                var setAdd4_value = setAdd.clone();                   // clone setAdd (after add duplicate value = 35), size = 9  
+                var setAddList2 = toSet(msg.list);              // create new from list without duplicate value ("B" and "C" - only one), start: size = 5, finish: size = 7       
+                var setAdd5_result1 = setAddList2.add(72);            // add is not duplicate value = 72,  result = true   
+                var setAdd5_result2 = setAddList2.add(72);            // add duplicate value = 72,  result = false   
+                var setAdd5_result3 = setAddList2.add("hello25");     // add  is not duplicate value = "hello25",  result = true    
+                var setAdd5_value = setAddList2.clone();              // clone setAddList2, size = 7 
+                var setAdd6_result = setAdd.addAll(setAddList2);      // add all with duplicate values, result = true  
+                var setAdd6_value = setAdd.clone();                   // clone setAdd (after addAll setAddList2), before size = 9, after size = 11, added only is not duplicate values {"hello25", 72}  
+                
+                // remove
+                var setAdd7_value = setAdd6_value.clone();            // clone setAdd6_value, before size = 11, after remove value = 4 size = 10
+                var setAdd7_result = setAdd7_value.remove(4);         // remove value = 4, result = true   
+                var setAdd8_value = setAdd7_value.clone();            // clone setAdd7_value, before size = 10, after clear size = 0
+                setAdd8_value.clear();                                // setAdd8_value clear, result size = 0  
+                return {
+                   "setAdd1_value": setAdd1_value, 
+                   "setAdd2_result": setAdd2_result, 
+                   "setAdd2_value": setAdd2_value, 
+                   "setAddList1": setAddList1, 
+                   "setAdd3_result": setAdd3_result, 
+                   "setAdd3_value": setAdd3_value, 
+                   "setAdd4_result": setAdd4_result, 
+                   "setAdd4_value": setAdd4_value,                    
+                   "setAdd5_result1": setAdd5_result1, 
+                   "setAdd5_result2": setAdd5_result2,
+                   "setAdd5_result3": setAdd5_result3,
+                   "setAddList2": setAddList2,  
+                   "setAdd5_value": setAdd5_value, 
+                   "setAdd6_result": setAdd6_result, 
+                   "setAdd6_value": setAdd6_value, 
+                   "setAdd7_result": setAdd7_result, 
+                   "setAdd7_value": setAdd7_value, 
+                   "setAdd8_value": setAdd8_value 
+                };
+                """;
+        ArrayList<Object> list = new ArrayList<>(List.of("B", "C", "A", "B", "C", "hello", 34567));
+        ArrayList<Object> listAdd = new ArrayList<>(List.of("thigsboard", 4, 67));
+        Set<Object> setAdd = new LinkedHashSet<>(listAdd);
+        Set setAdd1_value = new LinkedHashSet<>(setAdd);
+        boolean setAdd2_result = setAdd.add(35);
+        Set<Object> setAdd2_value = new LinkedHashSet<>(setAdd);
+        Set<Object> setAddList1 = new LinkedHashSet<>(list);
+        boolean setAdd3_result = setAdd.addAll(setAddList1);
+        Set<Object> setAdd3_value = new LinkedHashSet<>(setAdd);
+        boolean setAdd4_result = setAdd.add(35);
+        Set<Object> setAdd4_value = new LinkedHashSet<>(setAdd);
+        Set<Object> setAddList2 = new LinkedHashSet<>(list);
+        boolean setAdd5_result1 = setAddList2.add(72);
+        boolean setAdd5_result2 = setAddList2.add(72);
+        boolean setAdd5_result3 = setAddList2.add("hello25");
+        Set<Object> setAdd5_value = new LinkedHashSet<>(setAddList2);
+        boolean setAdd6_result = setAdd.addAll(setAddList2);
+        Set<Object> setAdd6_value = new LinkedHashSet<>(setAdd);
+        // remove
+        Set<Object> setAdd7_value = new LinkedHashSet<>(setAdd6_value);
+        boolean setAdd7_result = setAdd7_value.remove(4);
+        Set<Object> setAdd8_value = new LinkedHashSet<>(setAdd7_value);
+        setAdd8_value.clear();
+
+        LinkedHashMap<String, Object> expected = new LinkedHashMap<>();
+        expected.put("setAdd1_value", setAdd1_value);
+        expected.put("setAdd2_result", setAdd2_result);
+        expected.put("setAdd2_value", setAdd2_value);
+        expected.put("setAddList1", setAddList1);
+        expected.put("setAdd3_result", setAdd3_result);
+        expected.put("setAdd3_value", setAdd3_value);
+        expected.put("setAdd4_result", setAdd4_result);
+        expected.put("setAdd4_value", setAdd4_value);
+        expected.put("setAdd5_result1", setAdd5_result1);
+        expected.put("setAdd5_result2", setAdd5_result2);
+        expected.put("setAdd5_result3", setAdd5_result3);
+        expected.put("setAddList2", setAddList2);
+        expected.put("setAdd5_value", setAdd5_value);
+        expected.put("setAdd6_result", setAdd6_result);
+        expected.put("setAdd6_value", setAdd6_value);
+        expected.put("setAdd7_result", setAdd7_result);
+        expected.put("setAdd7_value", setAdd7_value);
+        expected.put("setAdd8_value", setAdd8_value);
+
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expected.toString(), actual.toString());
+    }
+
+    @Test
+    public void setsSort_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
+                """;
+        decoderStr = """
+                var set1 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6 ("A" and "C" is duplicated)
+                var set2 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6 ("A" and "C" is duplicated)
+                var set1_asc = set1.clone();                    // clone set1, size = 6
+                var set1_desc = set1.clone();                   // clone set1, size = 6
+                set1.sort();                                    // sort set1 -> asc
+                set1_asc.sort(true);                            // sort set1_asc -> asc
+                set1_desc.sort(false);                          // sort set1_desc -> desc
+                var set3 = set2.toSorted();                     // toSorted set3 -> asc
+                var set3_asc = set2.toSorted(true);             // toSorted set3 -> asc
+                var set3_desc = set2.toSorted(false);           // toSorted set3 -> desc
+                return {
+                   "set1": set1,
+                   "set1_asc": set1_asc,
+                   "set1_desc": set1_desc,
+                   "set2": set2,
+                   "set3": set3,
+                   "set3_asc": set3_asc,
+                   "set3_desc": set3_desc,
+                }
+                """;
+        ArrayList<Object> list = new ArrayList<>(List.of("C", "B", "A", 34567, "hello", 34));
+        Set<Object> expected = new LinkedHashSet<>(list);
+        ArrayList<Object> listSortAsc = new ArrayList<>(List.of(34, 34567, "A", "B", "C", "hello"));
+        Set<Object> expectedAsc = new LinkedHashSet<>(listSortAsc);
+        ArrayList<Object> listSortDesc = new ArrayList<>(List.of("hello", "C", "B", "A", 34567, 34));
+        Set<Object> expectedDesc = new LinkedHashSet<>(listSortDesc);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set1").toString());
+        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set1_asc").toString());
+        assertEquals(expectedDesc.toString(), ((LinkedHashMap<?, ?>)actual).get("set1_desc").toString());
+        assertEquals(expected.toString(), ((LinkedHashMap<?, ?>)actual).get("set2").toString());
+        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set3").toString());
+        assertEquals(expectedAsc.toString(), ((LinkedHashMap<?, ?>)actual).get("set3_asc").toString());
+        assertEquals(expectedDesc.toString(), ((LinkedHashMap<?, ?>)actual).get("set3_desc").toString());
+    }
+
+    @Test
+    public void setsContains_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
+                """;
+        decoderStr = """
+                var set1 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6  ("A" and "C" is duplicated)
+                var result1 = set1.contains("A");               // return true
+                var result2 = set1.contains("H");               // return false
+                return {
+                   "set1": set1,
+                   "result1": result1,
+                   "result2": result2
+                }
+                """;
+        List<Object> listOrigin = new ArrayList<>(List.of("C", "B", "A", 34567, "B", "C", "hello", 34));
+        Set<Object> expectedSet = new LinkedHashSet<>(listOrigin);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(expectedSet.toString(), ((LinkedHashMap<?, ?>)actual).get("set1").toString());
+        assertEquals(true, ((LinkedHashMap<?, ?>)actual).get("result1"));
+        assertEquals(false, ((LinkedHashMap<?, ?>)actual).get("result2"));
+    }
+
+    @Test
+    public void setsToList_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
+                """;
+        decoderStr = """
+                var set1 = toSet(msg.list);               // create new from method toSet(List list) no sort, size = 6  ("A" and "C" is duplicated)
+                var tolist = set1.toList();                     // create new List from Set, size = 6
+                return {
+                   "list": msg.list,
+                   "set1": set1,
+                   "tolist": tolist
+                }
+                """;
+        List<Object> listOrigin = new ArrayList<>(List.of("C", "B", "A", 34567, "B", "C", "hello", 34));
+        Set<Object> expectedSet = new LinkedHashSet<>(listOrigin);
+        List<Object> expectedToList = new ArrayList<>(expectedSet);
+        Object actual = invokeScript(evalScript(decoderStr), msgStr);
+        assertEquals(listOrigin.toString(), ((LinkedHashMap<?, ?>)actual).get("list").toString());
+        assertEquals(expectedSet.toString(), ((LinkedHashMap<?, ?>)actual).get("set1").toString());
+        assertEquals(expectedToList.toString(), ((LinkedHashMap<?, ?>)actual).get("tolist").toString());
     }
 
     @Test
@@ -2399,25 +2679,19 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
                 list.add(0x35);
                 return isList(list);
                 """);
+    }
+
+    @Test
+    public void isSet_Test() throws ExecutionException, InterruptedException {
+        msgStr = """
+                {"list": ["C", "B", "A", 34567, "B", "C", "hello", 34]}
+                """;
+        decoderStr = """
+                    return isSet(toSet(msg.list));        // return true
+                """;
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertInstanceOf(Boolean.class, actual);
         assertTrue((Boolean) actual);
-        decoderStr = String.format("""
-                var list = [];
-                list.add(0x35);
-                return isMap(list);
-                """);
-        actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertInstanceOf(Boolean.class, actual);
-        assertFalse((Boolean) actual);
-        decoderStr = String.format("""
-                var list = [];
-                list.add(0x35);
-                return isArray(list);
-                """);
-        actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertInstanceOf(Boolean.class, actual);
-        assertFalse((Boolean) actual);
     }
 
     @Test
@@ -2435,23 +2709,13 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
         Object actual = invokeScript(evalScript(decoderStr), msgStr);
         assertInstanceOf(Boolean.class, actual);
         assertTrue((Boolean) actual);
-        decoderStr = """
-                var array = new int[3];
-                array[0] = 1;
-                array[1] = 2;
-                array[2] = 3;
-                return isList(array);
-                """;
-        actual = invokeScript(evalScript(decoderStr), msgStr);
-        assertInstanceOf(Boolean.class, actual);
-        assertFalse((Boolean) actual);
     }
 
     @Test
     public void isInsidePolygon_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
-                    String perimeter = "[[[37.7810,-122.4210],[37.7890,-122.3900],[37.7700,-122.3800],[37.7600,-122.4000],[37.7700,-122.4250],[37.7810,-122.4210]],[[37.7730,-122.4050],[37.7700,-122.3950],[37.7670,-122.3980],[37.7690,-122.4100],[37.7730,-122.4050]]]";
+                    var perimeter = "[[[37.7810,-122.4210],[37.7890,-122.3900],[37.7700,-122.3800],[37.7600,-122.4000],[37.7700,-122.4250],[37.7810,-122.4210]],[[37.7730,-122.4050],[37.7700,-122.3950],[37.7670,-122.3980],[37.7690,-122.4100],[37.7730,-122.4050]]]";
                     return{
                        outsidePolygon: isInsidePolygon(37.8000, -122.4300, perimeter),
                        insidePolygon: isInsidePolygon(37.7725, -122.4010, perimeter),
@@ -2470,7 +2734,7 @@ class TbelInvokeDocsIoTest extends AbstractTbelInvokeTest {
     public void isInsideCircle_Test() throws ExecutionException, InterruptedException {
         msgStr = "{}";
         decoderStr = """
-                    String perimeter = "{\\"latitude\\":37.7749,\\"longitude\\":-122.4194,\\"radius\\":3000,\\"radiusUnit\\":\\"METER\\"}";
+                    var perimeter = "{\\"latitude\\":37.7749,\\"longitude\\":-122.4194,\\"radius\\":3000,\\"radiusUnit\\":\\"METER\\"}";
                     return{
                        outsideCircle: isInsideCircle(37.8044, -122.2712, perimeter),
                        insideCircle: isInsideCircle(37.7599, -122.4148, perimeter)

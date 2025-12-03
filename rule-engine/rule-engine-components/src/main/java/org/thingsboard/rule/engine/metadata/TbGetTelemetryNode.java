@@ -21,7 +21,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
@@ -45,11 +44,8 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-/**
- * Created by mshvayka on 04.09.18.
- */
-@Slf4j
-@RuleNode(type = ComponentType.ENRICHMENT,
+@RuleNode(
+        type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
         version = 2,
@@ -58,7 +54,9 @@ import java.util.stream.Collectors;
                 "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
                 "Also, this node can be used for telemetry aggregation within configured fetch interval.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
+        configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/originator-telemetry/"
+)
 public class TbGetTelemetryNode implements TbNode {
 
     private TbGetTelemetryNodeConfiguration config;

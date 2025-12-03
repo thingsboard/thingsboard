@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -41,9 +42,6 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 
 import java.util.Collection;
 
-/**
- * Created by ashvayka on 02.04.18.
- */
 public interface RuleEngineAlarmService {
 
     /*
@@ -65,6 +63,8 @@ public interface RuleEngineAlarmService {
 
     AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
 
+    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent);
+
     AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long assignTs);
 
     AlarmApiCallResult unassignAlarm(TenantId tenantId, AlarmId alarmId, long assignTs);
@@ -77,6 +77,8 @@ public interface RuleEngineAlarmService {
     Alarm findAlarmById(TenantId tenantId, AlarmId alarmId);
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
 

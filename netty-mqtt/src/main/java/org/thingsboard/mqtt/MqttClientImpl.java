@@ -46,7 +46,9 @@ import io.netty.handler.timeout.IdleStateHandler;
 import io.netty.util.concurrent.DefaultPromise;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.Promise;
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ListeningExecutor;
 
@@ -67,18 +69,28 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 final class MqttClientImpl implements MqttClient {
 
+    @Getter(AccessLevel.PACKAGE)
     private final Set<String> serverSubscriptions = new HashSet<>();
+    @Getter(AccessLevel.PACKAGE)
     private final ConcurrentMap<Integer, MqttPendingUnsubscription> pendingServerUnsubscribes = new ConcurrentHashMap<>();
+    @Getter(AccessLevel.PACKAGE)
     private final ConcurrentMap<Integer, MqttIncomingQos2Publish> qos2PendingIncomingPublishes = new ConcurrentHashMap<>();
+    @Getter(AccessLevel.PACKAGE)
     private final ConcurrentMap<Integer, MqttPendingPublish> pendingPublishes = new ConcurrentHashMap<>();
+    @Getter(AccessLevel.PACKAGE)
     private final HashMultimap<String, MqttSubscription> subscriptions = HashMultimap.create();
+    @Getter(AccessLevel.PACKAGE)
     private final ConcurrentMap<Integer, MqttPendingSubscription> pendingSubscriptions = new ConcurrentHashMap<>();
+    @Getter(AccessLevel.PACKAGE)
     private final Set<String> pendingSubscribeTopics = new HashSet<>();
+    @Getter(AccessLevel.PACKAGE)
     private final HashMultimap<MqttHandler, MqttSubscription> handlerToSubscription = HashMultimap.create();
     private final AtomicInteger nextMessageId = new AtomicInteger(1);
 
+    @Getter
     private final MqttClientConfig clientConfig;
 
+    @Getter(AccessLevel.PACKAGE)
     private final MqttHandler defaultHandler;
 
     private final ReconnectStrategy reconnectStrategy;
@@ -88,12 +100,15 @@ final class MqttClientImpl implements MqttClient {
     private volatile Channel channel;
 
     private volatile boolean disconnected = false;
+    @Getter
     private volatile boolean reconnect = false;
     private String host;
     private int port;
     @Getter
+    @Setter
     private MqttClientCallback callback;
 
+    @Getter
     private final ListeningExecutor handlerExecutor;
 
     private final static int DISCONNECT_FALLBACK_DELAY_SECS = 1;
@@ -192,14 +207,14 @@ final class MqttClientImpl implements MqttClient {
     }
 
     private void scheduleConnectIfRequired(String host, int port, boolean reconnect) {
-        log.trace("[{}] Scheduling connect to server, isReconnect - {}", channel != null ? channel.id() : "UNKNOWN", reconnect);
+        log.trace("[{}][{}][{}] Scheduling connect to server, isReconnect - {}", host, port, channel != null ? channel.id() : "UNKNOWN", reconnect);
         if (clientConfig.isReconnect() && !disconnected) {
             if (reconnect) {
                 this.reconnect = true;
             }
 
             final long nextReconnectDelay = reconnectStrategy.getNextReconnectDelay();
-            log.info("[{}] Scheduling reconnect in [{}] sec", channel != null ? channel.id() : "UNKNOWN", nextReconnectDelay);
+            log.debug("[{}][{}][{}] Scheduling reconnect in [{}] sec", host, port, channel != null ? channel.id() : "UNKNOWN", nextReconnectDelay);
             eventLoop.schedule((Runnable) () -> connect(host, port, reconnect), nextReconnectDelay, TimeUnit.SECONDS);
         }
     }
@@ -238,11 +253,6 @@ final class MqttClientImpl implements MqttClient {
     @Override
     public void setEventLoop(EventLoopGroup eventLoop) {
         this.eventLoop = eventLoop;
-    }
-
-    @Override
-    public ListeningExecutor getHandlerExecutor() {
-        return this.handlerExecutor;
     }
 
     /**
@@ -446,58 +456,37 @@ final class MqttClientImpl implements MqttClient {
         return future;
     }
 
-    /**
-     * Retrieve the MqttClient configuration
-     *
-     * @return The {@link MqttClientConfig} instance we use
-     */
-    @Override
-    public MqttClientConfig getClientConfig() {
-        return clientConfig;
-    }
-
     @Override
     public void disconnect() {
         if (disconnected) {
             return;
         }
 
+        disconnected = true;
         log.trace("[{}] Disconnecting from server", channel != null ? channel.id() : "UNKNOWN");
         if (this.channel != null) {
             MqttMessage message = new MqttMessage(new MqttFixedHeader(MqttMessageType.DISCONNECT, false, MqttQoS.AT_MOST_ONCE, false, 0));
 
             sendAndFlushPacket(message).addListener((ChannelFutureListener) future -> {
                 future.channel().close();
-                disconnected = true;
             });
             eventLoop.schedule(() -> {
                 if (channel.isOpen()) {
                     log.trace("[{}] Channel still open after {} second; forcing close now", channel.id(), DISCONNECT_FALLBACK_DELAY_SECS);
                     this.channel.close();
-                    disconnected = true;
                 }
             }, DISCONNECT_FALLBACK_DELAY_SECS, TimeUnit.SECONDS);
         }
     }
 
-    @Override
-    public void setCallback(MqttClientCallback callback) {
-        this.callback = callback;
-    }
-
 
     ///////////////////////////////////////////// PRIVATE API /////////////////////////////////////////////
-
-    public boolean isReconnect() {
-        return reconnect;
-    }
 
     public void onSuccessfulReconnect() {
         if (callback != null) {
             callback.onSuccessfulReconnect();
         }
     }
-
 
     ChannelFuture sendAndFlushPacket(Object message) {
         if (this.channel == null) {
@@ -576,7 +565,7 @@ final class MqttClientImpl implements MqttClient {
     }
 
     private void checkSubscriptions(String topic, Promise<Void> promise) {
-        if (!(this.subscriptions.containsKey(topic) && this.subscriptions.get(topic).size() != 0) && this.serverSubscriptions.contains(topic)) {
+        if (!(this.subscriptions.containsKey(topic) && !this.subscriptions.get(topic).isEmpty()) && this.serverSubscriptions.contains(topic)) {
             MqttFixedHeader fixedHeader = new MqttFixedHeader(MqttMessageType.UNSUBSCRIBE, false, MqttQoS.AT_LEAST_ONCE, false, 0);
             MqttMessageIdVariableHeader variableHeader = getNewMessageId();
             MqttUnsubscribePayload payload = new MqttUnsubscribePayload(Collections.singletonList(topic));
@@ -614,38 +603,6 @@ final class MqttClientImpl implements MqttClient {
         }
     }
 
-    ConcurrentMap<Integer, MqttPendingSubscription> getPendingSubscriptions() {
-        return pendingSubscriptions;
-    }
-
-    HashMultimap<String, MqttSubscription> getSubscriptions() {
-        return subscriptions;
-    }
-
-    Set<String> getPendingSubscribeTopics() {
-        return pendingSubscribeTopics;
-    }
-
-    HashMultimap<MqttHandler, MqttSubscription> getHandlerToSubscription() {
-        return handlerToSubscription;
-    }
-
-    Set<String> getServerSubscriptions() {
-        return serverSubscriptions;
-    }
-
-    ConcurrentMap<Integer, MqttPendingUnsubscription> getPendingServerUnsubscribes() {
-        return pendingServerUnsubscribes;
-    }
-
-    ConcurrentMap<Integer, MqttPendingPublish> getPendingPublishes() {
-        return pendingPublishes;
-    }
-
-    ConcurrentMap<Integer, MqttIncomingQos2Publish> getQos2PendingIncomingPublishes() {
-        return qos2PendingIncomingPublishes;
-    }
-
     private class MqttChannelInitializer extends ChannelInitializer<SocketChannel> {
 
         private final Promise<MqttConnectResult> connectFuture;
@@ -673,10 +630,7 @@ final class MqttClientImpl implements MqttClient {
             ch.pipeline().addLast("mqttPingHandler", new MqttPingHandler(MqttClientImpl.this.clientConfig.getTimeoutSeconds()));
             ch.pipeline().addLast("mqttHandler", new MqttChannelHandler(MqttClientImpl.this, connectFuture));
         }
-    }
 
-    MqttHandler getDefaultHandler() {
-        return defaultHandler;
     }
 
 }

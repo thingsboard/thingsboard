@@ -100,6 +100,9 @@ server:
     rate_limits:
       # Limit that prohibits resetting the password for the user too often. The value of the rate limit. By default, no more than 5 requests per hour
       reset_password_per_user: "${RESET_PASSWORD_PER_USER_RATE_LIMIT_CONFIGURATION:5:3600}"
+    rule_engine:
+      # Default timeout for waiting response of REST API request to Rule Engine in milliseconds
+      response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
 
 # Application info parameters
 app:
@@ -148,6 +151,12 @@ security:
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}" # Base64 encoded
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
+  # API key parameters
+  api_key:
+    # Prefix for the auto-generated API key. For example, tb_Ood4dQMxWvMH-76z3E_Cv0mZaBWT0Clk3hRSO0P_jNQ
+    value_prefix: "${SECURITY_API_KEY_VALUE_PREFIX:tb_}"
+    # Length of the auto-generated API key. Max is 255
+    value_bytes_size: "${SECURITY_API_KEY_VALUE_PREFIX:64}"
   # Enable/disable case-sensitive username login
   user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
   claim:
@@ -208,7 +217,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.1}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.3}"
 
 # Database telemetry parameters
 database:
@@ -303,8 +312,11 @@ cassandra:
     default_fetch_size: "${CASSANDRA_DEFAULT_FETCH_SIZE:2000}"
     # Specify partitioning size for timestamp key-value storage. Example: MINUTES, HOURS, DAYS, MONTHS, INDEFINITE
     ts_key_value_partitioning: "${TS_KV_PARTITIONING:MONTHS}"
-    # Enable/Disable timestamp key-value partioning on read queries
+    # Enable/Disable timestamp key-value partitioning on read queries
     use_ts_key_value_partitioning_on_read: "${USE_TS_KV_PARTITIONING_ON_READ:true}"
+    # Safety trigger to fall back to use_ts_key_value_partitioning_on_read as true if estimated partitions count is greater than safety trigger value.
+    # It helps to prevent building huge partition list (OOM) for corner cases (like from 0 to infinity) and prefer fewer reads strategy from NoSQL database
+    use_ts_key_value_partitioning_on_read_max_estimated_partition_count: "${USE_TS_KV_PARTITIONING_ON_READ_MAX_ESTIMATED_PARTITION_COUNT:40}"
     # The number of partitions that are cached in memory of each service. It is useful to decrease the load of re-inserting the same partitions again
     ts_key_value_partitions_max_cache_size: "${TS_KV_PARTITIONS_MAX_CACHE_SIZE:100000}"
     # Timeseries Time To Live (in seconds) for Cassandra Record. 0 - record has never expired
@@ -424,6 +436,9 @@ sql:
       enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for notification center records
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+    api_keys:
+      enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
+      checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonably small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
@@ -464,6 +479,14 @@ actors:
     allow_system_sms_service: "${ACTORS_RULE_ALLOW_SYSTEM_SMS_SERVICE:true}"
     # Specify thread pool size for external call service
     external_call_thread_pool_size: "${ACTORS_RULE_EXTERNAL_CALL_THREAD_POOL_SIZE:50}"
+    # Configuration for the thread pool that executes HTTP calls to AI provider APIs
+    ai-requests-thread-pool:
+      # The base name for threads
+      pool-name: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_NAME:ai-requests}"
+      # The maximum number of concurrent HTTP requests
+      pool-size: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_SIZE:50}"
+      # The maximum time in seconds to wait for active tasks to complete during graceful shutdown
+      termination-timeout-seconds: "${ACTORS_RULE_AI_REQUESTS_THREAD_POOL_TERMINATION_TIMEOUT_SECONDS:60}"
     chain:
       # Errors for particular actors are persisted once per specified amount of milliseconds
       error_persist_frequency: "${ACTORS_RULE_CHAIN_ERROR_FREQUENCY:3000}"
@@ -515,6 +538,11 @@ actors:
       configuration: "${ACTORS_CALCULATED_FIELD_DEBUG_MODE_RATE_LIMITS_PER_TENANT_CONFIGURATION:50000:3600}"
     # Time in seconds to receive calculation result.
     calculation_timeout: "${ACTORS_CALCULATION_TIMEOUT_SEC:5}"
+    # Interval in seconds to check calculated fields for re-evaluation interval. 1 minute by default.
+    check_interval: "${ACTORS_CALCULATED_FIELDS_CHECK_INTERVAL_SEC:60}"
+  alarms:
+    # Interval in seconds to re-evaluate Alarm rules that have a time schedule. 2 minutes by default.
+    reevaluation_interval: "${ACTORS_ALARMS_REEVALUATION_INTERVAL_SEC:60}"
 
 debug:
   settings:
@@ -648,6 +676,12 @@ cache:
     trendzSettings:
       timeToLiveInMinutes: "${CACHE_SPECS_TRENDZ_SETTINGS_TTL:1440}" # Trendz settings cache TTL
       maxSize: "${CACHE_SPECS_TRENDZ_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    aiModel:
+      timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_TTL:1440}" # AI model cache TTL
+      maxSize: "${CACHE_SPECS_AI_MODEL_MAX_SIZE:10000}" # 0 means the cache is disabled
+    apiKeys:
+      timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
+      maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -665,6 +699,12 @@ cache:
       maxSize: "${CACHE_SPECS_IMAGE_ETAGS_MAX_SIZE:10000}" # 0 means the cache is disabled
     systemImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_SYSTEM_BROWSER_TTL:0}" # Browser cache TTL for system images in minutes. 0 means the cache is disabled
     tenantImagesBrowserTtlInMinutes: "${CACHE_SPECS_IMAGE_TENANT_BROWSER_TTL:0}" # Browser cache TTL for tenant images in minutes. 0 means the cache is disabled
+  tbResourceData:
+    timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_DATA_TTL:10080}" # TB resource data cache TTL
+    maxSize: "${CACHE_SPECS_RESOURCE_DATA_MAX_SIZE:100000}" # 0 means the cache is disabled
+  userAuthDetails:
+    timeToLiveInMinutes: "${CACHE_SPECS_USER_AUTH_DETAILS_TTL:120}" # User auth details cache TTL
+    maxSize: "${CACHE_SPECS_USER_AUTH_DETAILS_MAX_SIZE:200000}" # 0 means the cache is disabled
 
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
@@ -731,9 +771,9 @@ redis:
     # Minumum number of idle connections that can be maintained in the pool without being closed
     minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
     # Enable/Disable PING command sent when a connection is borrowed
-    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:false}"
     # The property is used to specify whether to test the connection before returning it to the connection pool.
-    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:false}"
     # The property is used in the context of connection pooling in Redis
     testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
     # Minimum time that an idle connection should be idle before it can be evicted from the connection pool. The value is set in milliseconds
@@ -847,22 +887,23 @@ audit-log:
   # Allowed values: OFF (disable), W (log write operations), RW (log read and write operations)
   logging-level:
     mask:
-      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
-      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels. Allowed values: OFF (disable), W (log write operations), RW (log read and write operation
+      "device": "${AUDIT_LOG_MASK_DEVICE:W}" # Device logging levels.
+      "asset": "${AUDIT_LOG_MASK_ASSET:W}" # Asset logging levels.
+      "dashboard": "${AUDIT_LOG_MASK_DASHBOARD:W}" # Dashboard logging levels.
+      "widget_type": "${AUDIT_LOG_MASK_WIDGET_TYPE:W}" # Widget type logging levels.
+      "widgets_bundle": "${AUDIT_LOG_MASK_WIDGETS_BUNDLE:W}" # Widget bundles logging levels.
+      "customer": "${AUDIT_LOG_MASK_CUSTOMER:W}" # Customer logging levels.
+      "user": "${AUDIT_LOG_MASK_USER:W}" # User logging levels.
+      "rule_chain": "${AUDIT_LOG_MASK_RULE_CHAIN:W}" # Rule chain logging levels.
+      "alarm": "${AUDIT_LOG_MASK_ALARM:W}" # Alarm logging levels.
+      "entity_view": "${AUDIT_LOG_MASK_ENTITY_VIEW:W}" # Entity view logging levels.
+      "device_profile": "${AUDIT_LOG_MASK_DEVICE_PROFILE:W}" # Device profile logging levels.
+      "asset_profile": "${AUDIT_LOG_MASK_ASSET_PROFILE:W}" # Asset profile logging levels.
+      "edge": "${AUDIT_LOG_MASK_EDGE:W}" # Edge logging levels.
+      "tb_resource": "${AUDIT_LOG_MASK_RESOURCE:W}" # TB resource logging levels.
+      "ota_package": "${AUDIT_LOG_MASK_OTA_PACKAGE:W}" # Ota package logging levels.
+      "calculated_field": "${AUDIT_LOG_MASK_CALCULATED_FIELD:W}" # Calculated field logging levels.
+      "ai_model": "${AUDIT_LOG_MASK_AI_MODEL:W}" # AI model logging levels.
   sink:
     # Type of external sink. possible options: none, elasticsearch
     type: "${AUDIT_LOG_SINK_TYPE:none}"
@@ -1133,7 +1174,7 @@ transport:
       # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
       # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
       # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1178,7 +1219,7 @@ transport:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
       # Default value in LwM2M client after start in mode Bootstrap for the object : name "LWM2M Security" field: "Short Server ID" (deviceProfile: Bootstrap.BOOTSTRAP SERVER.Short ID)
-      id: "${LWM2M_SERVER_ID_BS:111}"
+      id: "${LWM2M_SERVER_ID_BS:0}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       # LwM2M bootstrap server bind port
@@ -1277,6 +1318,8 @@ transport:
       ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
     # Thread pool size for scheduler that executes device querying tasks
     scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
+    # Maximum number of retry attempts for a single SNMP devices batch during bootstrap.
+    batch_retries: "${SNMP_BOOTSTRAP_RETRIES:8}"
   stats:
     # Enable/Disable the collection of transport statistics
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
@@ -1321,7 +1364,7 @@ coap:
     # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
     # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
     # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
@@ -1468,6 +1511,11 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+    # Time (in milliseconds) to subtract from the start timestamp when fetching edge events.
+    # This compensates for possible misordering between `created_time` (used for partitioning)
+    # and `seqId` (used for sorting). Without this, events with smaller seqId but larger created_time
+    # might be skipped, especially across partition boundaries.
+    misordering_compensation_millis: "${EDGES_MISORDERING_COMPENSATION_MILLIS:60000}"
   # Max number of high priority edge events per edge session. No persistence - stored in memory
   max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
@@ -1479,6 +1527,13 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
+  stats:
+    # Enable or disable reporting of edge communication stats (true or false)
+    enabled: "${EDGES_STATS_ENABLED:true}"
+    # Time-to-live in days for stored edge communication stats in timeseries
+    ttl: "${EDGES_STATS_TTL:30}"
+    # How often to report edge communication stats in milliseconds
+    report-interval-millis: "${EDGES_STATS_REPORT_INTERVAL_MS:600000}"
 
 # Spring doc common parameters
 springdoc:
@@ -1515,6 +1570,8 @@ swagger:
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
   group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
+  # Control the initial display state of API operations and tags (none or list)
+  doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
 # Queue configuration parameters
 queue:

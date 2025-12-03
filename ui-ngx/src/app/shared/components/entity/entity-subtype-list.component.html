@@ -22,6 +22,7 @@
   <mat-chip-grid #chipList formControlName="entitySubtypeList">
     <mat-chip-row
       *ngFor="let entitySubtype of entitySubtypeList"
+      class="tb-chip-row-ellipsis"
       [removable]="!disabled"
       (removed)="remove(entitySubtype)">
       {{customTranslate(entitySubtype)}}
@@ -46,7 +47,7 @@
                     (optionSelected)="selected($event)"
                     [displayWith]="displayEntitySubtypeFn">
     <mat-option *ngFor="let entitySubtype of filteredEntitySubtypeList | async" [value]="entitySubtype">
-      <span [innerHTML]="entitySubtype | highlight:searchText"></span>
+      <span [innerHTML]="entitySubtype | customTranslate | highlight:searchText"></span>
     </mat-option>
   </mat-autocomplete>
   <div matSuffix>

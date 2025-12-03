@@ -117,4 +117,16 @@ public class CassandraBaseTimeseriesDaoPartitioningMinutesAlwaysExistsTest {
                 ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-10-10T00:10:00Z").getTime()));
     }
 
+    @Test
+    public void testEstimatePartitionCount() throws ParseException {
+        assertThat(tsDao.estimatePartitionCount(0, Long.MAX_VALUE)).as("centuries").isEqualTo(153_722_867_280_914L);
+        assertThat(tsDao.estimatePartitionCount(0, 0)).as("single").isEqualTo(1L);
+        long startTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2019-12-12T00:00:00Z").getTime());
+        long endTs = tsDao.toPartitionTs(
+                ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2021-01-31T23:59:59Z").getTime());
+        assertThat(tsDao.estimatePartitionCount(startTs, endTs)).as("600,479 minutes + 2 spare periods").isEqualTo(600479 + 2);
+        assertThat(tsDao.estimatePartitionCount(endTs, startTs)).as("wrong period estimated as 1").isEqualTo(1L);
+    }
+
 }

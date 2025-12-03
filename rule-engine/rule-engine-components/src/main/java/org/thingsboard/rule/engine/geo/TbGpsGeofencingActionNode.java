@@ -20,7 +20,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
@@ -34,10 +33,10 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -47,10 +46,6 @@ import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.INSIDE;
 import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.LEFT;
 import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.OUTSIDE;
 
-/**
- * Created by ashvayka on 19.01.18.
- */
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "gps geofencing events",
@@ -66,12 +61,13 @@ import static org.thingsboard.rule.engine.util.GpsGeofencingEvents.OUTSIDE;
                 "If the presence monitoring strategy <b>\"On each message\"</b> is selected, sends messages via rule node connection type <code>Inside</code> or <code>Outside</code> every time the geofencing condition is satisfied. " +
                 "<br><br>" +
                 "Output connections: <code>Entered</code>, <code>Left</code>, <code>Inside</code>, <code>Outside</code>, <code>Success</code>",
-        configDirective = "tbActionNodeGpsGeofencingConfig"
+        configDirective = "tbActionNodeGpsGeofencingConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/gps-geofencing-events/"
 )
 public class TbGpsGeofencingActionNode extends AbstractGeofencingNode<TbGpsGeofencingActionNodeConfiguration> {
 
     private static final String REPORT_PRESENCE_STATUS_ON_EACH_MESSAGE = "reportPresenceStatusOnEachMessage";
-    private final Map<EntityId, EntityGeofencingState> entityStates = new HashMap<>();
+    private final ConcurrentMap<EntityId, EntityGeofencingState> entityStates = new ConcurrentHashMap<>();
     private final Gson gson = new Gson();
 
     @Override

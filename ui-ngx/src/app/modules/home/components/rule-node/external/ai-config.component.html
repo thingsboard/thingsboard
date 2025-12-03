@@ -1,0 +1,145 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<section [formGroup]="aiConfigForm" class="flex flex-col gap-4">
+  <section class="tb-form-panel stroked no-padding-bottom">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'rule-node-config.ai.ai-model-hint' | translate }}">
+      {{ 'rule-node-config.ai.ai-model' | translate }}
+    </div>
+    <section class="flex flex-col">
+      <tb-entity-autocomplete
+        allowCreateNew
+        useFullEntityId
+        required
+        appearance="outline"
+        labelText="rule-node-config.ai.model"
+        (entityChanged)="onEntityChange($event)"
+        [entityType]="entityType.AI_MODEL"
+        (createNew)="createModelAi($event, 'modelId')"
+        formControlName="modelId">
+      </tb-entity-autocomplete>
+    </section>
+  </section>
+
+  <div class="tb-form-panel stroked no-padding no-gap">
+    <mat-expansion-panel class="tb-settings" expanded>
+      <mat-expansion-panel-header style="padding: 16px">
+        <mat-panel-title>
+          {{'rule-node-config.ai.prompt-settings' | translate}}
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
+        <tb-example-hint
+          [hintText]="'rule-node-config.ai.prompt-settings-hint'"
+          [popupHelpLink]="'rulenode/ai_node_prompt_settings'">
+        </tb-example-hint>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>rule-node-config.ai.system-prompt</mat-label>
+          <textarea matInput rows="4" formControlName="systemPrompt"></textarea>
+          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('maxlength')">
+            {{ 'rule-node-config.ai.system-prompt-max-length' | translate }}
+          </mat-error>
+          <mat-error *ngIf="aiConfigForm.get('systemPrompt').hasError('pattern')">
+            {{ 'rule-node-config.ai.system-prompt-blank' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-label translate>rule-node-config.ai.user-prompt</mat-label>
+          <textarea required matInput rows="4" formControlName="userPrompt"></textarea>
+          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('required')">
+            {{ 'rule-node-config.ai.user-prompt-required' | translate }}
+          </mat-error>
+          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('maxlength')">
+            {{ 'rule-node-config.ai.user-prompt-max-length' | translate }}
+          </mat-error>
+          <mat-error *ngIf="aiConfigForm.get('userPrompt').hasError('pattern')">
+            {{ 'rule-node-config.ai.user-prompt-blank' | translate }}
+          </mat-error>
+        </mat-form-field>
+        <tb-entity-list
+          class="flex-1"
+          syncIdsWithDB
+          allowCreateNew
+          placeholderText="{{ 'rule-node-config.ai.ai-resources' | translate }}"
+          [inlineField]="true"
+          [entityType]="EntityType.TB_RESOURCE"
+          [subType]="ResourceType.GENERAL"
+          (createNew)="createAiResources($event, 'resourceIds')"
+          formControlName="resourceIds">
+        </tb-entity-list>
+      </div>
+    </mat-expansion-panel>
+  </div>
+
+  <div class="tb-form-panel stroked" formGroupName="responseFormat">
+    <div class="flex flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ getResponseFormatHint }}">
+        {{ 'rule-node-config.ai.response-format' | translate }}
+      </div>
+      <tb-toggle-select formControlName="type">
+        <tb-toggle-option [value]="responseFormat.TEXT">{{ 'rule-node-config.ai.response-text' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="responseFormat.JSON">{{ 'rule-node-config.ai.response-json' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="responseFormat.JSON_SCHEMA">{{ 'rule-node-config.ai.response-json-schema' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <tb-json-object-edit
+      jsonRequired
+      [class.!hidden]="aiConfigForm.get('responseFormat.type').value !== responseFormat.JSON_SCHEMA"
+      label="{{ 'rule-node-config.ai.response-json-schema' | translate }}"
+      formControlName="schema">
+      <button mat-icon-button class="tb-mat-32"
+              toolbarSuffixButton
+              matTooltip="{{ 'rule-node-config.ai.response-json-schema-hint' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon class="material-icons">info_outline</mat-icon>
+      </button>
+    </tb-json-object-edit>
+  </div>
+
+  <div class="tb-form-panel stroked no-padding no-gap">
+    <mat-expansion-panel class="tb-settings">
+      <mat-expansion-panel-header style="padding: 16px">
+        <mat-panel-title translate>rule-node-config.ai.advanced-settings</mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-panel no-border no-padding-top" style="margin-top: 0">
+          <div class="tb-form-row space-between flex-1 columns-xs">
+            <div tb-hint-tooltip-icon="{{'rule-node-config.ai.timeout-hint' | translate}}">{{ 'rule-node-config.ai.timeout' | translate }}</div>
+            <div class="flex flex-row items-center justify-start gap-2">
+              <tb-time-unit-input
+                required
+                inlineField
+                requiredText="{{ 'rule-node-config.ai.timeout-required' | translate }}"
+                minErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
+                maxErrorText="{{ 'rule-node-config.ai.timeout-validation' | translate }}"
+                [maxTime]="600"
+                [minTime]="1"
+                formControlName="timeoutSeconds">
+              </tb-time-unit-input>
+            </div>
+          </div>
+          <div tb-hint-tooltip-icon="{{ 'rule-node-config.ai.force-acknowledgement-hint' | translate }}"
+               class="tb-form-row same-padding">
+            <mat-slide-toggle class="mat-slide margin" formControlName="forceAck">
+              {{ 'rule-node-config.ai.force-acknowledgement' | translate }}
+            </mat-slide-toggle>
+          </div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</section>

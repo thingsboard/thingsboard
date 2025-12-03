@@ -38,6 +38,7 @@ import {
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
 import {
   Datasource,
+  datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   defaultLegendConfig,
@@ -49,7 +50,8 @@ import {
   WidgetConfigMode,
   WidgetSize,
   widgetType,
-  WidgetTypeDescriptor
+  WidgetTypeDescriptor,
+  widgetTypeHasTimewindow
 } from '@app/shared/models/widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AliasFilterType, EntityAlias, EntityAliasFilter } from '@app/shared/models/alias.models';
@@ -169,9 +171,8 @@ export class DashboardUtilsService {
       dashboard.configuration.filters = {};
     }
 
-    if (isUndefined(dashboard.configuration.timewindow)) {
-      dashboard.configuration.timewindow = this.timeService.defaultTimewindow();
-    }
+    dashboard.configuration.timewindow = initModelFromDefaultTimewindow(dashboard.configuration.timewindow,
+      false, false, this.timeService, true, true);
     if (isUndefined(dashboard.configuration.settings)) {
       dashboard.configuration.settings = {};
       dashboard.configuration.settings.stateControllerId = 'entity';
@@ -237,6 +238,7 @@ export class DashboardUtilsService {
   public validateAndUpdateWidget(widget: Widget): Widget {
     widget.config = this.validateAndUpdateWidgetConfig(widget.config, widget.type);
     widget = this.validateAndUpdateWidgetTypeFqn(widget);
+    this.removeTimewindowConfigIfUnused(widget);
     if (isDefined((widget as any).title)) {
       delete (widget as any).title;
     }
@@ -297,8 +299,11 @@ export class DashboardUtilsService {
     }
     widgetConfig.datasources = this.validateAndUpdateDatasources(widgetConfig.datasources);
     if (type === widgetType.latest) {
-      const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
-      widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true, onlyHistoryTimewindow, this.timeService);
+      if (datasourcesHasAggregation(widgetConfig.datasources)) {
+        const onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(widgetConfig.datasources);
+        widgetConfig.timewindow = initModelFromDefaultTimewindow(widgetConfig.timewindow, true,
+          onlyHistoryTimewindow, this.timeService, false);
+      }
     } else if (type === widgetType.rpc) {
       if (widgetConfig.targetDeviceAliasIds && widgetConfig.targetDeviceAliasIds.length) {
         widgetConfig.targetDevice = {
@@ -349,6 +354,33 @@ export class DashboardUtilsService {
       }
     }
     return widgetConfig;
+  }
+
+  private removeTimewindowConfigIfUnused(widget: Widget) {
+    const widgetHasTimewindow = this.widgetHasTimewindow(widget);
+    if (!widgetHasTimewindow || widget.config.useDashboardTimewindow) {
+      delete widget.config.displayTimewindow;
+      delete widget.config.timewindow;
+      delete widget.config.timewindowStyle;
+
+      if (!widgetHasTimewindow) {
+        delete widget.config.useDashboardTimewindow;
+      }
+    }
+  }
+
+  private widgetHasTimewindow(widget: Widget): boolean {
+    const widgetDefinition = findWidgetModelDefinition(widget);
+    if (widgetDefinition) {
+      return widgetDefinition.hasTimewindow(widget);
+    }
+    return widgetTypeHasTimewindow(widget.type)
+      || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
+  }
+
+  public prepareWidgetForSaving(widget: Widget): Widget {
+    this.removeTimewindowConfigIfUnused(widget);
+    return widget;
   }
 
   public prepareWidgetForScadaLayout(widget: Widget, isScada: boolean): Widget {

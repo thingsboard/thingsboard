@@ -41,9 +41,9 @@ $switchColorDisabled: var(--tb-single-switch-color-disabled, #D5D7E5);
   }
   > div.tb-single-switch-title-panel {
     position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
+    top: 0;
+    left: 0;
+    right: 0;
     z-index: 2;
   }
   .tb-single-switch-content {

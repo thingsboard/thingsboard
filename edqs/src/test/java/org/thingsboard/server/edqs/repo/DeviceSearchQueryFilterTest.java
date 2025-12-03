@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AliasEntityId;
 import org.thingsboard.server.common.data.query.DeviceSearchQueryFilter;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -135,7 +136,7 @@ public class DeviceSearchQueryFilterTest extends AbstractEDQTest {
     private PageData<QueryResult> findData(CustomerId customerId, EntityId rootId,
                                            EntitySearchDirection direction, String relationType, int maxLevel, boolean lastLevelOnly, List<String> deviceTypes) {
         DeviceSearchQueryFilter filter = new DeviceSearchQueryFilter();
-        filter.setRootEntity(rootId);
+        filter.setRootEntity(AliasEntityId.fromEntityId(rootId));
         filter.setDirection(direction);
         filter.setRelationType(relationType);
         filter.setDeviceTypes(deviceTypes);

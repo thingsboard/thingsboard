@@ -63,9 +63,10 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
 
   buildForm(entity: MobileApp): FormGroup {
     const form = this.fb.group({
-      pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required, Validators.maxLength(255),
+      pkgName: [entity?.pkgName ?? '', [Validators.required, Validators.maxLength(255),
         Validators.pattern(/^[a-zA-Z][a-zA-Z\d_]*(?:\.[a-zA-Z][a-zA-Z\d_]*)+$/)]],
-      platformType: [entity?.platformType ? entity.platformType : PlatformType.ANDROID],
+      title: [entity?.title ?? '', [Validators.maxLength(255)]],
+      platformType: [entity?.platformType ?? PlatformType.ANDROID],
       appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)), [Validators.required, this.base64Format]],
       status: [entity?.status ? entity.status : MobileAppStatus.DRAFT],
       versionInfo: this.fb.group({
@@ -175,7 +176,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
         context: ctx,
         showCloseButton: false,
         popoverContentStyle: {padding: '16px 24px'},
-        isModal: false
+        isModal: true
       });
       releaseNotesPanelPopover.tbComponentRef.instance.popover = releaseNotesPanelPopover;
       releaseNotesPanelPopover.tbComponentRef.instance.editorContentApplied.subscribe((releaseNotes) => {

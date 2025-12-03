@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -33,7 +32,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.concurrent.ExecutionException;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ENRICHMENT,
         name = "fetch device credentials",
@@ -45,7 +43,9 @@ import java.util.concurrent.ExecutionException;
                 "Useful when you need to fetch device credentials and use them for further message processing. " +
                 "For example, use device credentials to interact with external systems.<br><br>" +
                 "Output connections: <code>Success</code>, <code>Failure</code>.",
-        configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig")
+        configDirective = "tbEnrichmentNodeFetchDeviceCredentialsConfig",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/enrichment/fetch-device-credentials/"
+)
 public class TbFetchDeviceCredentialsNode extends TbAbstractNodeWithFetchTo<TbFetchDeviceCredentialsNodeConfiguration> {
 
     private static final String CREDENTIALS = "credentials";

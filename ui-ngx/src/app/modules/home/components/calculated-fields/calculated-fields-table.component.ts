@@ -35,6 +35,7 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
+import { UtilsService } from "@core/services/utils.service";
 
 @Component({
   selector: 'tb-calculated-fields-table',
@@ -50,6 +51,7 @@ export class CalculatedFieldsTableComponent {
   active = input<boolean>();
   entityId = input<EntityId>();
   entityName = input<string>();
+  ownerId = input<EntityId>();
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
@@ -62,6 +64,7 @@ export class CalculatedFieldsTableComponent {
               private renderer: Renderer2,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
+              private utilsService: UtilsService,
               private destroyRef: DestroyRef) {
 
     effect(() => {
@@ -76,8 +79,10 @@ export class CalculatedFieldsTableComponent {
           this.destroyRef,
           this.renderer,
           this.entityName(),
+          this.ownerId(),
           this.importExportService,
           this.entityDebugSettingsService,
+          this.utilsService,
         );
         this.cd.markForCheck();
       }

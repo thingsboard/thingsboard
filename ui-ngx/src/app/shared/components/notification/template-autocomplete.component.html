@@ -29,7 +29,7 @@
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
-  <button *ngIf="selectTemplateFormGroup.get('templateName').value && !disabled && allowEdit"
+  <button *ngIf="selectTemplateFormGroup.get('templateName').value?.id && !disabled && allowEdit"
           type="button"
           matSuffix mat-icon-button aria-label="Edit"
           matTooltip="{{ 'notification.edit-notification-template' | translate }}"
@@ -62,6 +62,9 @@
         </div>
         <ng-template #searchNotEmpty>
           <span>{{ 'notification.no-template-matching' | translate : {template: truncate.transform(searchText, true, 6, &apos;...&apos;)} }}</span>
+          <span *ngIf="allowCreate">
+            <a translate (click)="createTemplateByName($event, searchText)">notification.create-new-template</a>
+          </span>
         </ng-template>
       </div>
     </mat-option>

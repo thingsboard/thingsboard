@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div [formGroup]="entityFilterFormGroup" class="tb-entity-filter flex flex-col">
-  <mat-form-field class="mat-block">
+<div [formGroup]="entityFilterFormGroup" class="tb-entity-filter">
+  <mat-form-field class="mat-block" appearance="outline">
     <mat-label translate>alias.filter-type</mat-label>
     <mat-select required formControlName="type">
       <mat-option *ngFor="let type of aliasFilterTypes" [value]="type">
@@ -30,18 +30,22 @@
   <section class="flex flex-col" [formGroup]="filterFormGroup" [ngSwitch]="entityFilterFormGroup.get('type').value">
     <ng-template [ngSwitchCase]="aliasFilterType.singleEntity">
       <tb-entity-select required
+                        appearance="outline"
                         useAliasEntityTypes="true"
                         formControlName="singleEntity">
       </tb-entity-select>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityList">
       <tb-entity-type-select required
+                             appearance="outline"
                              showLabel
                              useAliasEntityTypes="true"
                              [allowedEntityTypes]="listEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
       <tb-entity-list required
+                      appearance="outline"
+                      syncIdsWithDB
                       labelText="{{'entity.entity-list' | translate}}"
                       [entityType]="filterFormGroup.get('entityType').value"
                       formControlName="entityList">
@@ -49,12 +53,13 @@
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityName">
       <tb-entity-type-select required
+                             appearance="outline"
                              showLabel
                              useAliasEntityTypes="true"
                              [allowedEntityTypes]="listEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>entity.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
                   matTooltip="{{'entity.help-text' | translate }}">help</mat-icon>
@@ -66,6 +71,7 @@
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityType">
       <tb-entity-type-select required
+                             appearance="outline"
                              showLabel
                              useAliasEntityTypes="true"
                              [allowedEntityTypes]="listEntityTypes"
@@ -73,14 +79,14 @@
       </tb-entity-type-select>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.stateEntity">
-      <mat-form-field floatLabel="always" class="mat-block">
+      <mat-form-field floatLabel="always" class="mat-block" appearance="outline">
         <mat-label translate>alias.state-entity-parameter-name</mat-label>
         <input matInput formControlName="stateEntityParamName"
                placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
       </mat-form-field>
-      <div class="flex flex-col">
-        <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
-        <tb-entity-select class="flex-1"
+      <div class="tb-form-panel stroked no-padding-bottom">
+        <div class="tb-form-panel-title tb-normal">{{ 'alias.default-state-entity' | translate }}</div>
+        <tb-entity-select appearance="outline"
                           useAliasEntityTypes="true"
                           formControlName="defaultStateEntity">
         </tb-entity-select>
@@ -88,10 +94,13 @@
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.assetType">
       <tb-entity-subtype-list required
+                              floatLabel="always"
+                              appearance="outline"
+                              label="{{ 'asset.asset-types' | translate }}"
                               [entityType]="entityType.ASSET"
                               formControlName="assetTypes">
       </tb-entity-subtype-list>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>asset.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
                   matTooltip="{{'asset.help-text' | translate }}">help</mat-icon>
@@ -100,10 +109,13 @@
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.deviceType">
       <tb-entity-subtype-list required
+                              floatLabel="always"
+                              appearance="outline"
+                              label="{{ 'device.device-types' | translate }}"
                               [entityType]="entityType.DEVICE"
                               formControlName="deviceTypes">
       </tb-entity-subtype-list>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>device.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
                   matTooltip="{{'device.help-text' | translate }}">help</mat-icon>
@@ -112,10 +124,13 @@
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.entityViewType">
       <tb-entity-subtype-list required
+                              floatLabel="always"
+                              appearance="outline"
+                              label="{{ 'entity-view.entity-view-types' | translate }}"
                               [entityType]="entityType.ENTITY_VIEW"
                               formControlName="entityViewTypes">
       </tb-entity-subtype-list>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>entity-view.name-starts-with</mat-label>
         <mat-icon class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
                   matTooltip="{{'entity-view.help-text' | translate }}">help</mat-icon>
@@ -124,36 +139,51 @@
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.edgeType">
       <tb-entity-subtype-list required
+                              floatLabel="always"
+                              appearance="outline"
+                              label="{{ 'edge.edge-types' | translate }}"
                               [entityType]="entityType.EDGE"
                               formControlName="edgeTypes">
       </tb-entity-subtype-list>
-      <mat-form-field class="mat-block">
+      <mat-form-field class="mat-block" appearance="outline">
         <mat-label translate>edge.name-starts-with</mat-label>
         <input matInput formControlName="edgeNameFilter">
       </mat-form-field>
     </ng-template>
     <ng-template [ngSwitchCase]="aliasFilterType.relationsQuery">
       <section class="tb-form-panel no-border no-padding">
-        <div class="tb-form-panel stroked no-gap">
+        <div class="tb-form-panel stroked" [class.no-padding-bottom]="!filterFormGroup.get('rootStateEntity').value">
           <div class="tb-form-panel-title" translate>alias.root-entity</div>
-          <mat-slide-toggle class="mat-slide margin" formControlName="rootStateEntity">
+          <mat-slide-toggle class="mat-slide" formControlName="rootStateEntity">
             {{ 'alias.root-state-entity' | translate }}
           </mat-slide-toggle>
-          <div *ngIf="filterFormGroup.get('rootStateEntity').value" class="tb-form-panel no-border no-padding no-gap">
-            <mat-form-field>
-              <mat-label translate>alias.state-entity-parameter-name</mat-label>
-              <input matInput formControlName="stateEntityParamName">
-            </mat-form-field>
-            <tb-entity-select useAliasEntityTypes="true" formControlName="defaultStateEntity">
+          @if (filterFormGroup.get('rootStateEntity').value) {
+            <div class="tb-form-panel no-border no-padding no-gap">
+              <mat-form-field floatLabel="always" class="mat-block" appearance="outline">
+                <mat-label translate>alias.state-entity-parameter-name</mat-label>
+                <input matInput formControlName="stateEntityParamName"
+                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
+              </mat-form-field>
+              <div class="tb-form-panel stroked no-padding-bottom">
+                <div class="tb-form-panel-title tb-normal">{{ 'alias.default-state-entity' | translate }}</div>
+                <tb-entity-select appearance="outline"
+                                  useAliasEntityTypes="true"
+                                  formControlName="defaultStateEntity">
+                </tb-entity-select>
+              </div>
+            </div>
+          } @else {
+            <tb-entity-select required
+                              appearance="outline"
+                              useAliasEntityTypes="true"
+                              formControlName="rootEntity">
             </tb-entity-select>
-          </div>
-          <tb-entity-select *ngIf="!filterFormGroup.get('rootStateEntity').value"
-                            required
-                            useAliasEntityTypes="true"
-                            formControlName="rootEntity">
-          </tb-entity-select>
-          <div class="tb-form-row no-border no-padding tb-standard-fields">
-            <mat-form-field class="flex">
+          }
+        </div>
+        <div class="tb-form-panel stroked">
+          <div class="tb-form-panel-title" translate>alias.query-options</div>
+          <div class="flex flex-row gap-4">
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <mat-label translate>relation.direction</mat-label>
               <mat-select required formControlName="direction">
                 <mat-option *ngFor="let type of directionTypes" [value]="type">
@@ -161,7 +191,7 @@
                 </mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field class="flex" floatLabel="always">
+            <mat-form-field class="flex-1" floatLabel="always" appearance="outline" subscriptSizing="dynamic">
               <mat-label translate>alias.max-relation-level</mat-label>
               <input matInput
                      type="number"
@@ -172,7 +202,7 @@
             </mat-form-field>
           </div>
           <mat-slide-toggle *ngIf="filterFormGroup.get('maxLevel').value > 1 || !filterFormGroup.get('maxLevel').value"
-            class="mat-slide" formControlName="fetchLastLevelOnly">
+                            class="mat-slide" formControlName="fetchLastLevelOnly">
             {{ 'alias.last-level-relation' | translate }}
           </mat-slide-toggle>
         </div>
@@ -191,98 +221,113 @@
                                  entityFilterFormGroup.get('type').value === aliasFilterType.edgeSearchQuery ||
                                  entityFilterFormGroup.get('type').value === aliasFilterType.entityViewSearchQuery ?
                                  entityFilterFormGroup.get('type').value : ''">
-      <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-      <section class="tb-root-state-entity-switch flex flex-row items-center justify-start" style="padding-left: 0;">
-        <mat-slide-toggle class="root-state-entity-switch"
-                          formControlName="rootStateEntity">
-        </mat-slide-toggle>
-        <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
-      </section>
-      <div class="flex flex-1 flex-row" *ngIf="!filterFormGroup.get('rootStateEntity').value">
-        <tb-entity-select class="flex-1"
-                          required
-                          useAliasEntityTypes="true"
-                          formControlName="rootEntity">
-        </tb-entity-select>
-      </div>
-      <div class="flex flex-1 flex-col gt-sm:flex-row" *ngIf="filterFormGroup.get('rootStateEntity').value">
-        <mat-form-field floatLabel="always" class="mat-block" style="margin-top: 24px; padding-right: 8px;">
-          <mat-label translate>alias.state-entity-parameter-name</mat-label>
-          <input matInput formControlName="stateEntityParamName"
-                 placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
-        </mat-form-field>
-        <div class="flex flex-1 flex-col">
-          <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
-          <tb-entity-select class="flex-1"
-                            useAliasEntityTypes="true"
-                            formControlName="defaultStateEntity">
-          </tb-entity-select>
-        </div>
-      </div>
-      <div class="flex flex-1 flex-row">
-        <section class="tb-root-state-entity-switch flex flex-row items-center justify-start" style="padding-left: 0;">
-          <mat-slide-toggle class="root-state-entity-switch"
-                            formControlName="fetchLastLevelOnly">
+      <section class="tb-form-panel no-border no-padding">
+        <div class="tb-form-panel stroked" [class.no-padding-bottom]="!filterFormGroup.get('rootStateEntity').value">
+          <div class="tb-form-panel-title" translate>alias.root-entity</div>
+          <mat-slide-toggle class="mat-slide" formControlName="rootStateEntity">
+            {{ 'alias.root-state-entity' | translate }}
           </mat-slide-toggle>
-          <label class="tb-small root-state-entity-label" translate>alias.last-level-relation</label>
-        </section>
-      </div>
-      <div class="flex flex-1 flex-row gap-2 xs:flex-col">
-        <mat-form-field class="mat-block" style="min-width: 100px;">
-          <mat-label translate>relation.direction</mat-label>
-          <mat-select required formControlName="direction">
-            <mat-option *ngFor="let type of directionTypes" [value]="type">
-              {{ directionTypeTranslations.get(directionTypeEnum[type]) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-        <mat-form-field floatLabel="always" class="mat-block flex-1">
-          <mat-label translate>alias.max-relation-level</mat-label>
-          <input matInput
-                 type="number"
-                 min="1"
-                 step="1"
-                 placeholder="{{ 'alias.unlimited-level' | translate }}"
-                 formControlName="maxLevel">
-        </mat-form-field>
-      </div>
-      <div class="mat-caption" style="color: rgba(0,0,0,0.57);" translate>relation.relation-type</div>
-      <tb-relation-type-autocomplete
-        class="flex-1"
-        formControlName="relationType">
-      </tb-relation-type-autocomplete>
+          @if (filterFormGroup.get('rootStateEntity').value) {
+            <div class="tb-form-panel no-border no-padding no-gap">
+              <mat-form-field floatLabel="always" class="mat-block" appearance="outline">
+                <mat-label translate>alias.state-entity-parameter-name</mat-label>
+                <input matInput formControlName="stateEntityParamName"
+                       placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
+              </mat-form-field>
+              <div class="tb-form-panel stroked no-padding-bottom">
+                <div class="tb-form-panel-title tb-normal">{{ 'alias.default-state-entity' | translate }}</div>
+                <tb-entity-select appearance="outline"
+                                  useAliasEntityTypes="true"
+                                  formControlName="defaultStateEntity">
+                </tb-entity-select>
+              </div>
+            </div>
+          } @else {
+            <tb-entity-select required
+                              appearance="outline"
+                              useAliasEntityTypes="true"
+                              formControlName="rootEntity">
+            </tb-entity-select>
+          }
+        </div>
+        <div class="tb-form-panel stroked">
+          <div class="tb-form-panel-title" translate>alias.query-options</div>
+          <div class="flex flex-row gap-4">
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <mat-label translate>relation.direction</mat-label>
+              <mat-select required formControlName="direction">
+                <mat-option *ngFor="let type of directionTypes" [value]="type">
+                  {{ directionTypeTranslations.get(directionTypeEnum[type]) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+            <mat-form-field class="flex-1" floatLabel="always" appearance="outline" subscriptSizing="dynamic">
+              <mat-label translate>alias.max-relation-level</mat-label>
+              <input matInput
+                     type="number"
+                     min="1"
+                     step="1"
+                     placeholder="{{ 'alias.unlimited-level' | translate }}"
+                     formControlName="maxLevel">
+            </mat-form-field>
+          </div>
+          <mat-slide-toggle *ngIf="filterFormGroup.get('maxLevel').value > 1 || !filterFormGroup.get('maxLevel').value"
+                            class="mat-slide" formControlName="fetchLastLevelOnly">
+            {{ 'alias.last-level-relation' | translate }}
+          </mat-slide-toggle>
+        </div>
+        <div class="tb-form-panel stroked no-padding-bottom">
+          <div class="tb-form-panel-title" translate>relation.relation-filter</div>
+          <tb-relation-type-autocomplete
+            appearance="outline"
+            subscriptSizing="dynamic"
+            formControlName="relationType">
+          </tb-relation-type-autocomplete>
+          <ng-container [ngSwitch]="entityFilterFormGroup.get('type').value">
+            <ng-template [ngSwitchCase]="aliasFilterType.assetSearchQuery">
+              <tb-entity-subtype-list
+                required
+                floatLabel="always"
+                appearance="outline"
+                label="{{ 'asset.asset-types' | translate }}"
+                [entityType]="entityType.ASSET"
+                formControlName="assetTypes">
+              </tb-entity-subtype-list>
+            </ng-template>
+            <ng-template [ngSwitchCase]="aliasFilterType.deviceSearchQuery">
+              <tb-entity-subtype-list
+                required
+                floatLabel="always"
+                appearance="outline"
+                label="{{ 'device.device-types' | translate }}"
+                [entityType]="entityType.DEVICE"
+                formControlName="deviceTypes">
+              </tb-entity-subtype-list>
+            </ng-template>
+            <ng-template [ngSwitchCase]="aliasFilterType.edgeSearchQuery">
+              <tb-entity-subtype-list
+                required
+                floatLabel="always"
+                appearance="outline"
+                label="{{ 'edge.edge-types' | translate }}"
+                [entityType]="entityType.EDGE"
+                formControlName="edgeTypes">
+              </tb-entity-subtype-list>
+            </ng-template>
+            <ng-template [ngSwitchCase]="aliasFilterType.entityViewSearchQuery">
+              <tb-entity-subtype-list
+                required
+                floatLabel="always"
+                appearance="outline"
+                label="{{ 'entity-view.entity-view-types' | translate }}"
+                [entityType]="entityType.ENTITY_VIEW"
+                formControlName="entityViewTypes">
+              </tb-entity-subtype-list>
+            </ng-template>
+          </ng-container>
+        </div>
+      </section>
     </ng-template>
-    <ng-template [ngSwitchCase]="aliasFilterType.assetSearchQuery">
-      <div class="mat-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>asset.asset-types</div>
-      <tb-entity-subtype-list
-        required
-        [entityType]="entityType.ASSET"
-        formControlName="assetTypes">
-      </tb-entity-subtype-list>
-    </ng-template>
-    <ng-template [ngSwitchCase]="aliasFilterType.deviceSearchQuery">
-      <div class="mat-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>device.device-types</div>
-      <tb-entity-subtype-list
-        required
-        [entityType]="entityType.DEVICE"
-        formControlName="deviceTypes">
-      </tb-entity-subtype-list>
-    </ng-template>
-    <ng-template [ngSwitchCase]="aliasFilterType.edgeSearchQuery">
-      <div class="mat-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>edge.edge-types</div>
-      <tb-entity-subtype-list
-        required
-        [entityType]="entityType.EDGE"
-        formControlName="edgeTypes">
-      </tb-entity-subtype-list>
-    </ng-template>
-    <ng-template [ngSwitchCase]="aliasFilterType.entityViewSearchQuery">
-      <div class="mat-caption tb-required" style="color: rgba(0,0,0,0.57);" translate>entity-view.entity-view-types</div>
-      <tb-entity-subtype-list
-        required
-        [entityType]="entityType.ENTITY_VIEW"
-        formControlName="entityViewTypes">
-      </tb-entity-subtype-list>
-    </ng-template>
+
   </section>
 </div>

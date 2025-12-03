@@ -17,14 +17,22 @@ package org.thingsboard.server.dao.settings;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.FluentFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AdminSettingsId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
+
+import java.util.Optional;
+
+import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 
 @Service
 @Slf4j
@@ -87,8 +95,29 @@ public class AdminSettingsServiceImpl implements AdminSettingsService {
     }
 
     @Override
-    public void deleteAdminSettingsByTenantId(TenantId tenantId) {
+    public void deleteByTenantId(TenantId tenantId) {
         adminSettingsDao.removeByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        adminSettingsDao.removeById(tenantId, id.getId());
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(adminSettingsDao.findById(tenantId, entityId.getId()));
+    }
+
+    @Override
+    public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
+        return FluentFuture.from(adminSettingsDao.findByIdAsync(tenantId, entityId.getId()))
+                .transform(Optional::ofNullable, directExecutor());
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.ADMIN_SETTINGS;
     }
 
     private void dropTokenIfProviderInfoChanged(JsonNode newJsonValue, JsonNode oldJsonValue) {

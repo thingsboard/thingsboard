@@ -14,24 +14,63 @@
 -- limitations under the License.
 --
 
--- UPDATE OTA PACKAGE EXTERNAL ID START
+-- UPDATE TENANT PROFILE CONFIGURATION START
 
-ALTER TABLE ota_package
-    ADD COLUMN IF NOT EXISTS external_id uuid;
-ALTER TABLE ota_package
-    ADD CONSTRAINT ota_package_external_id_unq_key UNIQUE (tenant_id, external_id);
+UPDATE tenant_profile
+SET profile_data = jsonb_set(
+    profile_data,
+    '{configuration}',
+    jsonb_build_object(
+        'minAllowedScheduledUpdateIntervalInSecForCF', 60,
+        'maxRelationLevelPerCfArgument', 10,
+        'maxRelatedEntitiesToReturnPerCfArgument', 100,
+        'minAllowedDeduplicationIntervalInSecForCF', 60,
+        'minAllowedAggregationIntervalInSecForCF', 60
+    )
+    ||
+    jsonb_strip_nulls(profile_data -> 'configuration')
+)
+WHERE NOT (
+    jsonb_strip_nulls(profile_data -> 'configuration') ?& ARRAY[
+        'minAllowedScheduledUpdateIntervalInSecForCF',
+        'maxRelationLevelPerCfArgument',
+        'maxRelatedEntitiesToReturnPerCfArgument',
+        'minAllowedDeduplicationIntervalInSecForCF',
+        'minAllowedAggregationIntervalInSecForCF'
+    ]
+);
 
--- UPDATE OTA PACKAGE EXTERNAL ID END
+-- UPDATE TENANT PROFILE CONFIGURATION END
 
--- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT START
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE START
 
-DROP INDEX IF EXISTS idx_device_external_id;
-DROP INDEX IF EXISTS idx_device_profile_external_id;
-DROP INDEX IF EXISTS idx_asset_external_id;
-DROP INDEX IF EXISTS idx_entity_view_external_id;
-DROP INDEX IF EXISTS idx_rule_chain_external_id;
-DROP INDEX IF EXISTS idx_dashboard_external_id;
-DROP INDEX IF EXISTS idx_customer_external_id;
-DROP INDEX IF EXISTS idx_widgets_bundle_external_id;
+ALTER TABLE calculated_field DROP CONSTRAINT IF EXISTS calculated_field_unq_key;
+ALTER TABLE calculated_field ADD CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name);
 
--- DROP INDEXES THAT DUPLICATE UNIQUE CONSTRAINT END
+-- CALCULATED FIELD UNIQUE CONSTRAINT UPDATE END
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE START
+
+UPDATE calculated_field
+SET configuration = jsonb_set(
+        configuration::jsonb,
+        '{output}',
+        (configuration::jsonb -> 'output')
+            || jsonb_build_object(
+                'strategy',
+                jsonb_build_object(
+                        'type', 'RULE_CHAIN'
+                )
+               ),
+        false
+                    )
+WHERE (configuration::jsonb -> 'output' -> 'strategy') IS NULL;
+
+-- CALCULATED FIELD OUTPUT STRATEGY UPDATE END
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE START
+
+DROP TABLE IF EXISTS calculated_field_link;
+ANALYZE calculated_field;
+
+-- REMOVAL OF CALCULATED FIELD LINKS PERSISTENCE END

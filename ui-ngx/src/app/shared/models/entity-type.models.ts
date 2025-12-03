@@ -51,6 +51,8 @@ export enum EntityType {
   MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
   MOBILE_APP = 'MOBILE_APP',
   CALCULATED_FIELD = 'CALCULATED_FIELD',
+  AI_MODEL = 'AI_MODEL',
+  API_KEY = 'API_KEY',
 }
 
 export enum AliasEntityType {
@@ -493,7 +495,31 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         search: 'action.search',
         selectedEntities: 'calculated-fields.selected-fields'
       }
-    ]
+    ],
+    [
+      EntityType.AI_MODEL,
+      {
+        type: 'entity.type-ai-model',
+        typePlural: 'entity.type-ai-models',
+        list: 'ai-models.list',
+        add: 'ai-models.add',
+        noEntities: 'ai-models.no-found',
+        search: 'action.search',
+        selectedEntities: 'ai-models.selected-fields'
+      }
+    ],
+    [
+      EntityType.API_KEY,
+      {
+        type: 'entity.type-api-key',
+        typePlural: 'entity.type-api-keys',
+        list: 'api-key.list',
+        add: 'api-key.generate',
+        noEntities: 'api-key.no-found',
+        search: 'api-key.search',
+        selectedEntities: 'api-key.selected-api-keys'
+      }
+    ],
   ]
 );
 
@@ -625,7 +651,19 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       {
         helpLinkId: 'mobileBundle'
       }
-    ]
+    ],
+    [
+      EntityType.AI_MODEL,
+      {
+        helpLinkId: 'aiModels'
+      }
+    ],
+    [
+      EntityType.API_KEY,
+      {
+        helpLinkId: 'apiKeys'
+      }
+    ],
   ]
 );
 

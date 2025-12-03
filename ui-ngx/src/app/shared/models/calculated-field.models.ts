@@ -14,11 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  HasEntityDebugSettings,
-  HasTenantId,
-  HasVersion
-} from '@shared/models/entity.models';
+import { HasEntityDebugSettings, HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { CalculatedFieldId } from '@shared/models/id/calculated-field-id';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -33,38 +29,248 @@ import {
   dotOperatorHighlightRule,
   endGroupHighlightRule
 } from '@shared/models/ace/ace.models';
+import { EntitySearchDirection } from '@shared/models/relation.models';
+import { AbstractControl, FormControl, ValidationErrors, ValidatorFn } from '@angular/forms';
+import { AlarmRule } from "@shared/models/alarm-rule.models";
+import { AlarmSeverity } from "@shared/models/alarm.models";
 
-export interface CalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
-  configuration: CalculatedFieldConfiguration;
-  type: CalculatedFieldType;
+export const FORBIDDEN_NAMES = ['ctx', 'e', 'pi'];
+
+interface BaseCalculatedField extends Omit<BaseData<CalculatedFieldId>, 'label'>, HasVersion, HasEntityDebugSettings, HasTenantId, ExportableEntity<CalculatedFieldId> {
   entityId: EntityId;
 }
+
+export interface CalculatedFieldSimple extends BaseCalculatedField {
+  type: CalculatedFieldType.SIMPLE;
+  configuration: CalculatedFieldSimpleConfiguration;
+}
+
+export interface CalculatedFieldScript extends BaseCalculatedField {
+  type: CalculatedFieldType.SCRIPT;
+  configuration: CalculatedFieldScriptConfiguration;
+}
+
+export interface CalculatedFieldGeofencing extends BaseCalculatedField {
+  type: CalculatedFieldType.GEOFENCING;
+  configuration: CalculatedFieldGeofencingConfiguration;
+}
+
+export interface CalculatedFieldPropagation extends BaseCalculatedField {
+  type: CalculatedFieldType.PROPAGATION;
+  configuration: CalculatedFieldPropagationConfiguration;
+}
+
+export interface CalculatedFieldAlarmRule extends BaseCalculatedField {
+  type: CalculatedFieldType.ALARM;
+  configuration: CalculatedFieldAlarmRuleConfiguration;
+}
+
+export interface CalculatedFieldRelatedEntityAggregation extends BaseCalculatedField {
+  type: CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
+  configuration: CalculatedFieldRelatedAggregationConfiguration;
+}
+
+
+export type CalculatedField =
+  | CalculatedFieldSimple
+  | CalculatedFieldScript
+  | CalculatedFieldGeofencing
+  | CalculatedFieldPropagation
+  | CalculatedFieldRelatedEntityAggregation
+  | CalculatedFieldAlarmRule;
 
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
   SCRIPT = 'SCRIPT',
+  GEOFENCING = 'GEOFENCING',
+  PROPAGATION = 'PROPAGATION',
+  RELATED_ENTITIES_AGGREGATION = 'RELATED_ENTITIES_AGGREGATION',
+  ENTITY_AGGREGATION = 'ENTITY_AGGREGATION',
+  ALARM = 'ALARM',
 }
 
-export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, string>(
+interface CalculatedFieldTypeTranslate {
+  name: string;
+  hint?: string;
+}
+
+export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, CalculatedFieldTypeTranslate>(
   [
-    [CalculatedFieldType.SIMPLE, 'calculated-fields.type.simple'],
-    [CalculatedFieldType.SCRIPT, 'calculated-fields.type.script'],
+    [CalculatedFieldType.SIMPLE, {
+      name: 'calculated-fields.type.simple'
+    }],
+    [CalculatedFieldType.SCRIPT, {
+      name: 'calculated-fields.type.script'
+    }],
+    [CalculatedFieldType.GEOFENCING, {
+      name: 'calculated-fields.type.geofencing'
+    }],
+    [CalculatedFieldType.PROPAGATION, {
+      name: 'calculated-fields.type.propagation'
+    }],
+    [CalculatedFieldType.RELATED_ENTITIES_AGGREGATION, {
+      name: 'calculated-fields.type.related-entities-aggregation',
+      hint: 'calculated-fields.type.related-entities-aggregation-hint'
+    }],
+    [CalculatedFieldType.ENTITY_AGGREGATION, {
+      name: 'calculated-fields.type.time-series-data-aggregation',
+      hint: 'calculated-fields.type.time-series-data-aggregation-hint',
+    }],
   ]
 )
 
-export interface CalculatedFieldConfiguration {
-  type: CalculatedFieldType;
+export type CalculatedFieldConfiguration =
+  | CalculatedFieldSimpleConfiguration
+  | CalculatedFieldScriptConfiguration
+  | CalculatedFieldGeofencingConfiguration
+  | CalculatedFieldPropagationConfiguration
+  | CalculatedFieldRelatedAggregationConfiguration
+  | CalculatedFieldEntityAggregationConfiguration
+  | CalculatedFieldAlarmRuleConfiguration;
+
+export interface CalculatedFieldSimpleConfiguration {
+  type: CalculatedFieldType.SIMPLE;
+  expression: string;
+  arguments: Record<string, CalculatedFieldArgument>;
+  useLatestTs: boolean;
+  output: CalculatedFieldSimpleOutput;
+}
+
+export interface CalculatedFieldScriptConfiguration {
+  type: CalculatedFieldType.SCRIPT;
   expression: string;
   arguments: Record<string, CalculatedFieldArgument>;
   output: CalculatedFieldOutput;
 }
 
-export interface CalculatedFieldOutput {
-  type: OutputType;
+export interface CalculatedFieldGeofencingConfiguration {
+  type: CalculatedFieldType.GEOFENCING;
+  zoneGroups: Record<string, CalculatedFieldGeofencing>;
+  scheduledUpdateEnabled: boolean;
+  scheduledUpdateInterval?: number;
+  output: CalculatedFieldOutput;
+}
+
+export interface CalculatedFieldRelatedAggregationConfiguration {
+  type: CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
+  relation: RelationPathLevel;
+  arguments: Record<string, CalculatedFieldArgument>;
+  metrics: Record<string, CalculatedFieldAggMetric>;
+  deduplicationIntervalInSec: number;
+  scheduledUpdateInterval?: number;
+  useLatestTs: boolean;
+  output: CalculatedFieldOutput & { decimalsByDefault?: number; };
+}
+
+export interface CalculatedFieldEntityAggregationConfiguration {
+  type: CalculatedFieldType.ENTITY_AGGREGATION;
+  arguments: Record<string, CalculatedFieldArgument>;
+  metrics: Record<string, CalculatedFieldAggMetric>;
+  interval: AggInterval;
+  watermark?: WatermarkConfig;
+  output: CalculatedFieldOutput & { decimalsByDefault?: number; };
+}
+
+export interface WatermarkConfig {
+  duration: number;
+}
+
+interface BasePropagationConfiguration {
+  type: CalculatedFieldType.PROPAGATION;
+  relation: RelationPathLevel;
+  arguments: Record<string, CalculatedFieldArgument>;
+  output: CalculatedFieldOutput;
+}
+
+interface CalculatedFieldAlarmRuleConfiguration {
+  type: CalculatedFieldType.ALARM;
+  arguments: Record<string, CalculatedFieldArgument>;
+  createRules: Record<AlarmSeverity, AlarmRule>;
+  clearRule?: AlarmRule;
+  propagate: boolean;
+  propagateToOwner: boolean;
+  propagateToTenant: boolean;
+  propagateRelationTypes?: Array<string>;
+}
+
+export interface PropagationWithNoExpression extends BasePropagationConfiguration {
+  applyExpressionToResolvedArguments: false;
+}
+
+export interface PropagationWithExpression extends BasePropagationConfiguration {
+  applyExpressionToResolvedArguments: true;
+  expression: string;
+}
+
+export type CalculatedFieldPropagationConfiguration =
+  | PropagationWithNoExpression
+  | PropagationWithExpression;
+
+export type CalculatedFieldOutput =
+  | CalculatedFieldOutputAttribute
+  | CalculatedFieldOutputTimeSeries;
+
+export interface CalculatedFieldOutputAttribute {
+  type: OutputType.Attribute,
+  scope: AttributeScope;
+  strategy: AttributeOutputStrategy;
+}
+
+export interface CalculatedFieldOutputTimeSeries {
+  type: OutputType.Timeseries;
+  strategy: TimeSeriesOutputStrategy;
+}
+
+export type CalculatedFieldSimpleOutput = CalculatedFieldOutput & {
   name: string;
-  scope?: AttributeScope;
   decimalsByDefault?: number;
 }
+
+export type AttributeOutputStrategy =
+  | AttributeImmediateOutputStrategy
+  | AttributeRuleChainOutputStrategy;
+
+export interface AttributeImmediateOutputStrategy {
+  type: OutputStrategyType.IMMEDIATE;
+  updateAttributesOnlyOnValueChange: boolean;
+  sendAttributesUpdatedNotification: boolean;
+  saveAttribute: boolean;
+  sendWsUpdate: boolean;
+  processCfs: boolean;
+}
+
+export interface AttributeRuleChainOutputStrategy {
+  type: OutputStrategyType.RULE_CHAIN;
+}
+
+export type TimeSeriesOutputStrategy =
+  | TimeSeriesRuleChainOutputStrategy
+  | TimeSeriesImmediateOutputStrategy;
+
+export interface TimeSeriesRuleChainOutputStrategy {
+  type: OutputStrategyType.IMMEDIATE;
+  ttl: number;
+  saveTimeSeries: boolean;
+  saveLatest: boolean;
+  sendWsUpdate: boolean;
+  processCfs: boolean;
+}
+
+export interface TimeSeriesImmediateOutputStrategy {
+  type: OutputStrategyType.RULE_CHAIN;
+}
+
+export enum  OutputStrategyType {
+  IMMEDIATE = 'IMMEDIATE',
+  RULE_CHAIN = 'RULE_CHAIN'
+}
+
+export const OutputStrategyTypeTranslations = new Map<OutputStrategyType, string>(
+  [
+    [OutputStrategyType.IMMEDIATE, 'calculated-fields.output-strategy.process-right-away'],
+    [OutputStrategyType.RULE_CHAIN, 'calculated-fields.output-strategy.process-rule-chains'],
+  ]
+)
 
 export enum ArgumentEntityType {
   Current = 'CURRENT',
@@ -72,6 +278,8 @@ export enum ArgumentEntityType {
   Asset = 'ASSET',
   Customer = 'CUSTOMER',
   Tenant = 'TENANT',
+  Owner = 'CURRENT_OWNER',
+  RelationQuery = 'RELATION_PATH_QUERY',
 }
 
 export const ArgumentEntityTypeTranslations = new Map<ArgumentEntityType, string>(
@@ -81,6 +289,43 @@ export const ArgumentEntityTypeTranslations = new Map<ArgumentEntityType, string
     [ArgumentEntityType.Asset, 'calculated-fields.argument-asset'],
     [ArgumentEntityType.Customer, 'calculated-fields.argument-customer'],
     [ArgumentEntityType.Tenant, 'calculated-fields.argument-tenant'],
+    [ArgumentEntityType.Owner, 'calculated-fields.argument-owner'],
+    [ArgumentEntityType.RelationQuery, 'calculated-fields.argument-relation-query'],
+  ]
+)
+
+export enum GeofencingReportStrategy {
+  REPORT_TRANSITION_EVENTS_ONLY = 'REPORT_TRANSITION_EVENTS_ONLY',
+  REPORT_PRESENCE_STATUS_ONLY = 'REPORT_PRESENCE_STATUS_ONLY',
+  REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS = 'REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS'
+}
+
+export const GeofencingReportStrategyTranslations = new Map<GeofencingReportStrategy, string>(
+  [
+    [GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, 'calculated-fields.report-transition-event-and-presence'],
+    [GeofencingReportStrategy.REPORT_TRANSITION_EVENTS_ONLY, 'calculated-fields.report-transition-event-only'],
+    [GeofencingReportStrategy.REPORT_PRESENCE_STATUS_ONLY, 'calculated-fields.report-presence-status-only']
+  ]
+)
+
+export const GeofencingDirectionTranslations = new Map<EntitySearchDirection, string>(
+  [
+    [EntitySearchDirection.FROM, 'calculated-fields.direction-from'],
+    [EntitySearchDirection.TO, 'calculated-fields.direction-to'],
+  ]
+)
+
+export const GeofencingDirectionLevelTranslations = new Map<EntitySearchDirection, string>(
+  [
+    [EntitySearchDirection.FROM, 'calculated-fields.direction-down'],
+    [EntitySearchDirection.TO, 'calculated-fields.direction-up'],
+  ]
+)
+
+export const PropagationDirectionTranslations = new Map<EntitySearchDirection, string>(
+  [
+    [EntitySearchDirection.FROM, 'calculated-fields.direction-down-child'],
+    [EntitySearchDirection.TO, 'calculated-fields.direction-up-parent'],
   ]
 )
 
@@ -127,8 +372,113 @@ export interface CalculatedFieldArgument {
   refEntityKey: RefEntityKey;
   defaultValue?: string;
   refEntityId?: RefEntityId;
+  refDynamicSourceConfiguration?: RefDynamicSourceConfiguration;
   limit?: number;
   timeWindow?: number;
+}
+
+export interface RefDynamicSourceConfiguration {
+  type: ArgumentEntityType.Owner;
+}
+
+export enum AggFunction {
+  AVG='AVG',
+  MIN='MIN',
+  MAX='MAX',
+  SUM='SUM',
+  COUNT='COUNT',
+  COUNT_UNIQUE='COUNT_UNIQUE'
+}
+
+export const AggFunctionTranslations = new Map<AggFunction, string>([
+  [AggFunction.AVG, 'calculated-fields.metrics.aggregation-type.avg'],
+  [AggFunction.MIN, 'calculated-fields.metrics.aggregation-type.min'],
+  [AggFunction.MAX, 'calculated-fields.metrics.aggregation-type.max'],
+  [AggFunction.SUM, 'calculated-fields.metrics.aggregation-type.sum'],
+  [AggFunction.COUNT, 'calculated-fields.metrics.aggregation-type.count'],
+  [AggFunction.COUNT_UNIQUE, 'calculated-fields.metrics.aggregation-type.count-unique'],
+])
+
+export enum AggIntervalType {
+  HOUR = 'HOUR',
+  DAY = 'DAY',
+  WEEK = 'WEEK',
+  WEEK_SUN_SAT = 'WEEK_SUN_SAT',
+  MONTH = 'MONTH',
+  QUARTER = 'QUARTER',
+  YEAR = 'YEAR',
+  CUSTOM = 'CUSTOM'
+}
+
+export const AggIntervalTypeTranslations = new Map<AggIntervalType, string>(
+  [
+    [AggIntervalType.HOUR, 'calculated-fields.aggregate-period.hour'],
+    [AggIntervalType.DAY, 'calculated-fields.aggregate-period.day'],
+    [AggIntervalType.WEEK, 'calculated-fields.aggregate-period.week'],
+    [AggIntervalType.WEEK_SUN_SAT, 'calculated-fields.aggregate-period.week-sun-sat'],
+    [AggIntervalType.MONTH, 'calculated-fields.aggregate-period.month'],
+    [AggIntervalType.QUARTER, 'calculated-fields.aggregate-period.quarter'],
+    [AggIntervalType.YEAR, 'calculated-fields.aggregate-period.year'],
+    [AggIntervalType.CUSTOM, 'calculated-fields.aggregate-period.custom']
+  ]
+);
+
+export interface AggInterval {
+  type: AggIntervalType;
+  tz: string;
+  offsetSec?: number
+  durationSec?: number
+}
+
+export interface CalculatedFieldAggMetric {
+  function: AggFunction;
+  filter?: string;
+  input: AggKeyInput | AggFunctionInput;
+  defaultValue?: number;
+}
+
+export interface CalculatedFieldAggMetricValue extends CalculatedFieldAggMetric {
+  name: string;
+}
+
+export enum AggInputType {
+  key = 'key',
+  function = 'function'
+}
+
+export const AggInputTypeTranslations = new Map<AggInputType, string>([
+  [AggInputType.key, 'calculated-fields.metrics.value-source-type.key'],
+  [AggInputType.function, 'calculated-fields.metrics.value-source-type.function'],
+])
+
+export interface AggKeyInput {
+  type: AggInputType.key;
+  key: string;
+}
+
+export interface AggFunctionInput {
+  type: AggInputType.function;
+  function: string;
+}
+
+export interface CalculatedFieldGeofencing {
+  perimeterKeyName: string;
+  reportStrategy: GeofencingReportStrategy;
+  refEntityId?: RefEntityId;
+  refDynamicSourceConfiguration: RefDynamicSourceGeofencingConfiguration;
+  createRelationsWithMatchedZones: boolean;
+  relationType: string;
+  direction: EntitySearchDirection;
+}
+
+export interface RefDynamicSourceGeofencingConfiguration {
+  type: ArgumentEntityType.RelationQuery | ArgumentEntityType.Owner;
+  levels?: Array<RelationPathLevel>;
+}
+
+export interface CalculatedFieldGeofencingValue extends CalculatedFieldGeofencing {
+  name: string;
+  entityName?: string;
 }
 
 export interface RefEntityKey {
@@ -147,7 +497,7 @@ export interface CalculatedFieldArgumentValue extends CalculatedFieldArgument {
   entityName?: string;
 }
 
-export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+export type CalculatedFieldTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean, expression?: string) => Observable<string>;
 
 export interface CalculatedFieldTestScriptInputParams {
   arguments: CalculatedFieldEventArguments;
@@ -190,6 +540,11 @@ export interface CalculatedFieldArgumentValueBase {
   type: ArgumentType;
 }
 
+export interface RelationPathLevel {
+  direction: EntitySearchDirection;
+  relationType: string;
+}
+
 export interface CalculatedFieldAttributeArgumentValue<ValueType = unknown> extends CalculatedFieldArgumentValueBase {
   ts: number;
   value: ValueType;
@@ -210,6 +565,23 @@ export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = Calculated
 export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> | CalculatedFieldLatestTelemetryArgumentValue<ValueType> | CalculatedFieldRollingTelemetryArgumentValue<ValueType>;
 
 export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
+
+export const defaultCalculatedFieldOutput: CalculatedFieldOutputTimeSeries = {
+  type: OutputType.Timeseries,
+  strategy: {
+    type: OutputStrategyType.IMMEDIATE,
+    ttl: 0,
+    saveTimeSeries: true,
+    saveLatest: true,
+    sendWsUpdate: true,
+    processCfs: true
+  }
+}
+
+export const defaultSimpleCalculatedFieldOutput: CalculatedFieldSimpleOutput = {
+  name: '',
+  ...defaultCalculatedFieldOutput
+}
 
 export const CalculatedFieldCtxLatestTelemetryArgumentAutocomplete = {
   meta: 'object',
@@ -654,3 +1026,43 @@ export const calculatedFieldDefaultScript =
   'return {\n' +
   '    "temperatureC": (temperatureF - 32) / 1.8\n' +
   '};'
+
+export function notEmptyObjectValidator(): ValidatorFn {
+  return (control: AbstractControl): ValidationErrors | null => {
+    const value = control.value;
+    if (typeof value === 'object' && value !== null && Object.keys(value).length === 0) {
+      return {emptyObject: true};
+    }
+    return null;
+  };
+}
+
+export function forbiddenNamesValidator(forbiddenNames: string[]): ValidatorFn {
+  const forbiddenNameSet = new Set(forbiddenNames);
+
+  return (control: FormControl) => {
+    const trimmedValue = (control.value || '').trim();
+    return forbiddenNameSet.has(trimmedValue) ? { forbiddenName: true } : null;
+  };
+}
+
+export function uniqueNameValidator(existingNames: string[]): ValidatorFn {
+  const namesSet = new Set((existingNames || []).map(name => name.toLowerCase()));
+
+  return (control: FormControl) => {
+    const newName = (control.value || '').trim().toLowerCase();
+
+    if (!newName) {
+      return null;
+    }
+
+    return namesSet.has(newName) ? { duplicateName: true } : null;
+  };
+}
+
+export interface CalculatedFieldsQuery {
+  type: CalculatedFieldType;
+  entityType?: EntityType;
+  entities?: Array<string>;
+  name?: string;
+}

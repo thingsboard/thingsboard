@@ -157,6 +157,11 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
+    public ListenableFuture<List<String>> findAllKeysByEntityIdsAsync(TenantId tenantId, List<EntityId> entityIds) {
+        return timeseriesLatestDao.findAllKeysByEntityIdsAsync(tenantId, entityIds);
+    }
+
+    @Override
     public void cleanup(long systemTtl) {
         timeseriesDao.cleanup(systemTtl);
     }
@@ -196,7 +201,8 @@ public class BaseTimeseriesService implements TimeseriesService {
             if (saveLatest) {
                 latestFutures.add(Futures.transform(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry), version -> {
                     if (version != null) {
-                        edqsService.onUpdate(tenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, tsKvEntry, version));
+                        TenantId edqsTenantId = entityId.getEntityType() == EntityType.TENANT ? (TenantId) entityId : tenantId;
+                        edqsService.onUpdate(edqsTenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, tsKvEntry, version));
                     }
                     return version;
                 }, MoreExecutors.directExecutor()));
@@ -276,7 +282,8 @@ public class BaseTimeseriesService implements TimeseriesService {
         return Futures.transform(timeseriesLatestDao.removeLatest(tenantId, entityId, query), result -> {
             if (result.isRemoved()) {
                 Long version = result.getVersion();
-                edqsService.onDelete(tenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, query.getKey(), version));
+                TenantId edqsTenantId = entityId.getEntityType() == EntityType.TENANT ? (TenantId) entityId : tenantId;
+                edqsService.onDelete(edqsTenantId, ObjectType.LATEST_TS_KV, new LatestTsKv(entityId, query.getKey(), version));
             }
             return result;
         }, MoreExecutors.directExecutor());
@@ -298,13 +305,13 @@ public class BaseTimeseriesService implements TimeseriesService {
             long interval = query.getInterval();
             if (interval < 1) {
                 throw new IncorrectParameterException("Invalid TsKvQuery: 'interval' must be greater than 0, but got " + interval +
-                                                      ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
+                        ". Please check your query parameters and ensure 'endTs' is greater than 'startTs' or increase 'interval'.");
             }
             long step = Math.max(interval, 1000);
             long intervalCounts = (query.getEndTs() - query.getStartTs()) / step;
             if (intervalCounts > maxTsIntervals || intervalCounts < 0) {
                 throw new IncorrectParameterException("Incorrect TsKvQuery. Number of intervals is to high - " + intervalCounts + ". " +
-                                                      "Please increase 'interval' parameter for your query or reduce the time range of the query.");
+                        "Please increase 'interval' parameter for your query or reduce the time range of the query.");
             }
         }
     }

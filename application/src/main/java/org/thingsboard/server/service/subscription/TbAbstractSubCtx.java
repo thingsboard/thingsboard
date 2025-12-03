@@ -107,6 +107,11 @@ public abstract class TbAbstractSubCtx {
         return sessionRef.getSecurityCtx().getId();
     }
 
+    public EntityId getOwnerId() {
+        var customerId = getCustomerId();
+        return customerId != null && !customerId.isNullUid() ? customerId : getTenantId();
+    }
+
     public void sendWsMsg(CmdUpdate update) {
         wsLock.lock();
         try {

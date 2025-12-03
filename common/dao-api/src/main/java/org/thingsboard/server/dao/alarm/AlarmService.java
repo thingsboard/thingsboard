@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.FluentFuture;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.alarm.Alarm;
@@ -50,10 +51,6 @@ import java.util.UUID;
 
 public interface AlarmService extends EntityDaoService {
 
-    /*
-     *  New API, since 3.5.
-     */
-
     /**
      * Designed for atomic operations over active alarms.
      * Only one active alarm may exist for the pair {originatorId, alarmType}
@@ -73,7 +70,7 @@ public interface AlarmService extends EntityDaoService {
 
     AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs);
 
-    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details);
+    AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent);
 
     AlarmApiCallResult assignAlarm(TenantId tenantId, AlarmId alarmId, UserId assigneeId, long ts);
 
@@ -104,6 +101,8 @@ public interface AlarmService extends EntityDaoService {
                                            AlarmStatus alarmStatus, String assigneeId);
 
     Alarm findLatestActiveByOriginatorAndType(TenantId tenantId, EntityId originator, String type);
+
+    FluentFuture<Alarm> findLatestActiveByOriginatorAndTypeAsync(TenantId tenantId, EntityId originator, String type);
 
     PageData<AlarmData> findAlarmDataByQueryForEntities(TenantId tenantId,
                                                         AlarmDataQuery query, Collection<EntityId> orderedEntityIds);

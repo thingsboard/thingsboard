@@ -14,12 +14,10 @@
 # limitations under the License.
 #
 
-version: '3.0'
-
 services:
   kafka:
     restart: always
-    image: "bitnami/kafka:4.0"
+    image: "bitnamilegacy/kafka:4.0"
     ports:
       - "9092:9092"
     env_file:

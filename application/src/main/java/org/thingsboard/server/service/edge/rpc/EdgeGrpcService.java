@@ -59,8 +59,7 @@ import org.thingsboard.server.gen.edge.v1.RequestMsg;
 import org.thingsboard.server.gen.edge.v1.ResponseMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
+import org.thingsboard.server.queue.kafka.KafkaAdmin;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -70,6 +69,7 @@ import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -83,6 +83,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.ACTIVITY_STATE;
 import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAST_CONNECT_TIME;
@@ -94,14 +95,14 @@ import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAS
 @TbCoreComponent
 public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
-    private static final int DESTROY_SESSION_MAX_ATTEMPTS = 10;
-
     private final ConcurrentMap<EdgeId, EdgeGrpcSession> sessions = new ConcurrentHashMap<>();
+    private final ConcurrentMap<UUID, EdgeGrpcSession> sessionsById = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Lock> sessionNewEventsLocks = new ConcurrentHashMap<>();
     private final Map<EdgeId, Boolean> sessionNewEvents = new HashMap<>();
     private final ConcurrentMap<EdgeId, ScheduledFuture<?>> sessionEdgeEventChecks = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, Consumer<FromEdgeSyncResponse>> localSyncEdgeRequests = new ConcurrentHashMap<>();
     private final ConcurrentMap<EdgeId, Boolean> edgeEventsMigrationProcessed = new ConcurrentHashMap<>();
+    private final List<EdgeGrpcSession> zombieSessions = new ArrayList<>();
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -153,10 +154,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private TbCoreQueueFactory tbCoreQueueFactory;
 
     @Autowired
-    private Optional<TbKafkaSettings> kafkaSettings;
-
-    @Autowired
-    private Optional<TbKafkaTopicConfigs> kafkaTopicConfigs;
+    private Optional<KafkaAdmin> kafkaAdmin;
 
     private Server server;
 
@@ -197,7 +195,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         this.edgeEventProcessingExecutorService = ThingsBoardExecutors.newScheduledThreadPool(schedulerPoolSize, "edge-event-check-scheduler");
         this.sendDownlinkExecutorService = ThingsBoardExecutors.newScheduledThreadPool(sendSchedulerPoolSize, "edge-send-scheduler");
         this.executorService = ThingsBoardExecutors.newSingleThreadScheduledExecutor("edge-service");
-        this.executorService.scheduleAtFixedRate(this::destroyKafkaSessionIfDisconnectedAndConsumerActive, 60, 60, TimeUnit.SECONDS);
+        this.executorService.scheduleAtFixedRate(this::cleanupZombieSessions, 60, 60, TimeUnit.SECONDS);
         log.info("Edge RPC service initialized!");
     }
 
@@ -232,8 +230,8 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     }
 
     private EdgeGrpcSession createEdgeGrpcSession(StreamObserver<ResponseMsg> outputStream) {
-        return kafkaSettings.isPresent() && kafkaTopicConfigs.isPresent()
-                ? new KafkaEdgeGrpcSession(ctx, topicService, tbCoreQueueFactory, kafkaSettings.get(), kafkaTopicConfigs.get(), outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
+        return kafkaAdmin.isPresent()
+                ? new KafkaEdgeGrpcSession(ctx, topicService, tbCoreQueueFactory, kafkaAdmin.get(), outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
                 sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession)
                 : new PostgresEdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect,
                 sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
@@ -288,6 +286,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             destroySession(session);
             session.cleanUp();
             sessions.remove(edgeId);
+            sessionsById.remove(session.getSessionId());
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
             newEventLock.lock();
             try {
@@ -337,9 +336,15 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         TenantId tenantId = edge.getTenantId();
         log.info("[{}][{}] edge [{}] connected successfully.", tenantId, edgeGrpcSession.getSessionId(), edgeId);
         if (sessions.containsKey(edgeId)) {
-            destroySession(sessions.get(edgeId));
+            EdgeGrpcSession existing = sessions.get(edgeId);
+            if (existing != null) {
+                log.info("[{}][{}] Replacing existing session [{}] for edge [{}]", tenantId, edgeGrpcSession.getSessionId(), existing.getSessionId(), edgeId);
+                destroySession(existing);
+                sessionsById.remove(existing.getSessionId());
+            }
         }
         sessions.put(edgeId, edgeGrpcSession);
+        sessionsById.put(edgeGrpcSession.getSessionId(), edgeGrpcSession);
         final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
         newEventLock.lock();
         try {
@@ -497,9 +502,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void onEdgeDisconnect(Edge edge, UUID sessionId) {
         EdgeId edgeId = edge.getId();
         log.info("[{}][{}] edge disconnected!", edgeId, sessionId);
-        EdgeGrpcSession toRemove = sessions.get(edgeId);
-        if (toRemove.getSessionId().equals(sessionId)) {
-            toRemove = sessions.remove(edgeId);
+        EdgeGrpcSession current = sessions.get(edgeId);
+        if (current != null && current.getSessionId().equals(sessionId)) {
+            EdgeGrpcSession toRemove = sessions.remove(edgeId);
             final Lock newEventLock = sessionNewEventsLocks.computeIfAbsent(edgeId, id -> new ReentrantLock());
             newEventLock.lock();
             try {
@@ -508,6 +513,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 newEventLock.unlock();
             }
             destroySession(toRemove);
+            sessionsById.remove(sessionId);
             TenantId tenantId = toRemove.getEdge().getTenantId();
             save(tenantId, edgeId, ACTIVITY_STATE, false);
             long lastDisconnectTs = System.currentTimeMillis();
@@ -515,22 +521,32 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             pushRuleEngineMessage(toRemove.getEdge().getTenantId(), edge, lastDisconnectTs, TbMsgType.DISCONNECT_EVENT);
             cancelScheduleEdgeEventsCheck(edgeId);
         } else {
-            log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
+            log.info("[{}] edge session [{}] is not current anymore. Attempting to destroy it by sessionId.", edgeId, sessionId);
+            EdgeGrpcSession stale = sessionsById.remove(sessionId);
+            if (stale != null) {
+                try {
+                    destroySession(stale);
+                    log.info("[{}][{}] Successfully destroyed stale session for edge [{}]", stale.getTenantId(), sessionId, edgeId);
+                } catch (Exception e) {
+                    log.warn("[{}][{}] Failed to destroy stale session for edge [{}]", stale.getTenantId(), sessionId, edgeId, e);
+                }
+            } else {
+                log.debug("[{}] No session found by sessionId [{}] to destroy", edgeId, sessionId);
+            }
         }
         edgeIdServiceIdCache.evict(edgeId);
     }
 
     private void destroySession(EdgeGrpcSession session) {
         try (session) {
-            for (int i = 0; i < DESTROY_SESSION_MAX_ATTEMPTS; i++) {
-                if (session.destroy()) {
-                    break;
-                } else {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ignored) {}
-                }
+            if (!session.destroy()) {
+                log.warn("[{}][{}] Session destroy failed for edge [{}] with session id [{}]. Adding to zombie queue for later cleanup.",
+                        session.getTenantId(), session.getEdge().getId(), session.getEdge().getName(), session.getSessionId());
+                zombieSessions.add(session);
             }
+        } catch (Exception e) {
+            log.warn("[{}][{}] Exception during session destroy for edge [{}] with session id [{}]",
+                    session.getTenantId(), session.getEdge().getId(), session.getEdge().getName(), session.getSessionId(), e);
         }
     }
 
@@ -638,29 +654,58 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         }
     }
 
-    private void destroyKafkaSessionIfDisconnectedAndConsumerActive() {
+    private void cleanupZombieSessions() {
         try {
-            List<EdgeId> toRemove = new ArrayList<>();
-            for (EdgeGrpcSession session : sessions.values()) {
-                if (session instanceof KafkaEdgeGrpcSession kafkaSession &&
-                        !kafkaSession.isConnected() &&
-                        kafkaSession.getConsumer() != null &&
-                        kafkaSession.getConsumer().getConsumer() != null &&
-                        !kafkaSession.getConsumer().getConsumer().isStopped()) {
-                    toRemove.add(kafkaSession.getEdge().getId());
+            tryToDestroyZombieSessions(getZombieSessions(sessions.values()), s -> sessions.remove(s.getEdge().getId()));
+            tryToDestroyZombieSessions(getZombieSessions(sessionsById.values()), s -> sessionsById.remove(s.getSessionId()));
+
+            zombieSessions.removeIf(zombie -> {
+                if (zombie.destroy()) {
+                    log.info("[{}][{}] Successfully cleaned up zombie session [{}] for edge [{}].",
+                            zombie.getTenantId(), zombie.getEdge().getId(), zombie.getSessionId(), zombie.getEdge().getName());
+                    return true;
+                } else {
+                    log.warn("[{}][{}] Failed to remove zombie session [{}] for edge [{}].",
+                            zombie.getTenantId(), zombie.getEdge().getId(), zombie.getSessionId(), zombie.getEdge().getName());
+                    return false;
                 }
-            }
-            for (EdgeId edgeId : toRemove) {
-                log.info("[{}] Destroying session for edge because edge is not connected", edgeId);
-                EdgeGrpcSession removed = sessions.get(edgeId);
-                if (removed instanceof KafkaEdgeGrpcSession kafkaSession) {
-                    if (kafkaSession.destroy()) {
-                        sessions.remove(edgeId);
-                    }
-                }
-            }
+            });
         } catch (Exception e) {
             log.warn("Failed to cleanup kafka sessions", e);
         }
     }
+
+    private List<EdgeGrpcSession> getZombieSessions(Collection<EdgeGrpcSession> sessions) {
+        List<EdgeGrpcSession> result = new ArrayList<>();
+        for (EdgeGrpcSession session : sessions) {
+            if (isKafkaSessionAndZombie(session)) {
+                result.add(session);
+            }
+        }
+        return result;
+    }
+
+    private void tryToDestroyZombieSessions(List<EdgeGrpcSession> sessionsToRemove, Function<EdgeGrpcSession, EdgeGrpcSession> removeFunc) {
+        for (EdgeGrpcSession toRemove : sessionsToRemove) {
+            log.info("[{}] Destroying session for edge because edge is not connected", toRemove.getEdge().getId());
+            if (toRemove.destroy()) {
+                removeFunc.apply(toRemove);
+            }
+        }
+    }
+
+    private boolean isKafkaSessionAndZombie(EdgeGrpcSession session) {
+        if (session instanceof KafkaEdgeGrpcSession kafkaSession) {
+            log.debug("[{}] kafkaSession.isConnected() = {}, kafkaSession.getConsumer().getConsumer().isStopped() = {}",
+                    kafkaSession.getEdge().getId(),
+                    kafkaSession.isConnected(),
+                    kafkaSession.getConsumer() != null ? kafkaSession.getConsumer().getConsumer() != null ? kafkaSession.getConsumer().getConsumer().isStopped() : null : null);
+            return !kafkaSession.isConnected() &&
+                    kafkaSession.getConsumer() != null &&
+                    kafkaSession.getConsumer().getConsumer() != null &&
+                    !kafkaSession.getConsumer().getConsumer().isStopped();
+        }
+        return false;
+    }
+
 }

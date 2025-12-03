@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.action;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -32,7 +31,6 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "assign to customer",
@@ -42,7 +40,8 @@ import org.thingsboard.server.common.msg.TbMsg;
                 "Rule node will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.",
         configDirective = "tbActionNodeAssignToCustomerConfig",
         icon = "add_circle",
-        version = 1
+        version = 1,
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/assign-to-customer/"
 )
 public class TbAssignToCustomerNode extends TbAbstractCustomerActionNode<TbAssignToCustomerNodeConfiguration> {
 

@@ -143,7 +143,7 @@ export interface TimeSeriesChartDataItem {
   xAxisIndex: number;
   yAxisId: TimeSeriesChartYAxisId;
   yAxisIndex: number;
-  option?: LineSeriesOption | CustomSeriesOption;
+  option?: LineSeriesOption;
   barRenderContext?: BarRenderContext;
   unitConvertor?: TbUnitConverter;
 }
@@ -762,6 +762,7 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   },
   tooltipDateColor: 'rgba(0, 0, 0, 0.76)',
   tooltipDateInterval: true,
+  tooltipStackedShowTotal: false,
   tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
   tooltipBackgroundBlur: 4,
   comparisonEnabled: false,
@@ -1410,6 +1411,13 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
     }
   }
   seriesOption.data = item.data;
+  if (seriesOption.type === 'line') {
+    const settings: TimeSeriesChartKeySettings = item.dataKey.settings;
+    const lineSettings = settings.lineSettings;
+    if (!lineSettings.showPoints) {
+      seriesOption.showSymbol = item.data.length === 1;
+    }
+  }
   return seriesOption;
 };
 

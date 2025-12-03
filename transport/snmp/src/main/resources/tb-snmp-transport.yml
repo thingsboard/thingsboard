@@ -114,9 +114,9 @@ redis:
     # Minumum number of idle connections that can be maintained in the pool without being closed
     minIdle: "${REDIS_POOL_CONFIG_MIN_IDLE:16}"
     # Enable/Disable PING command send when a connection is borrowed
-    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:true}"
+    testOnBorrow: "${REDIS_POOL_CONFIG_TEST_ON_BORROW:false}"
     # The property is used to specify whether to test the connection before returning it to the connection pool.
-    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:true}"
+    testOnReturn: "${REDIS_POOL_CONFIG_TEST_ON_RETURN:false}"
     # The property is used in the context of connection pooling in Redis
     testWhileIdle: "${REDIS_POOL_CONFIG_TEST_WHILE_IDLE:true}"
     # Minimum amount of time that an idle connection should be idle before it can be evicted from the connection pool. Value set in milliseconds
@@ -151,6 +151,8 @@ transport:
       ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
     # Thread pool size for scheduler that executes device querying tasks
     scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
+    # Maximum number of retry attempts for a single SNMP devices batch during bootstrap.
+    batch_retries: "${SNMP_BOOTSTRAP_RETRIES:8}"
   sessions:
     # Session inactivity timeout is a global configuration parameter that defines how long the device transport session will be opened after the last message arrives from the device.
     # The parameter value is in milliseconds.

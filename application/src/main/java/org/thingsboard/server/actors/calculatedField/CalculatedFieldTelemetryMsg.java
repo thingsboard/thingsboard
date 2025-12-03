@@ -31,9 +31,9 @@ public class CalculatedFieldTelemetryMsg implements ToCalculatedFieldSystemMsg {
     private final CalculatedFieldTelemetryMsgProto proto;
     private final TbCallback callback;
 
-
     @Override
     public MsgType getMsgType() {
         return MsgType.CF_TELEMETRY_MSG;
     }
+
 }

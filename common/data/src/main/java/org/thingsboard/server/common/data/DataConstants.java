@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data;
 
-/**
- * @author Andrew Shvayka
- */
 public class DataConstants {
 
     public static final String TENANT = "TENANT";
@@ -44,6 +41,7 @@ public class DataConstants {
     public static final String EDGE_ID = "edgeId";
     public static final String DEVICE_ID = "deviceId";
     public static final String GATEWAY_PARAMETER = "gateway";
+    public static final String CF_NAME_METADATA_KEY = "calculatedFieldName";
 
     public static final String OVERWRITE_ACTIVITY_TIME_PARAMETER = "overwriteActivityTime";
     public static final String COAP_TRANSPORT_NAME = "COAP";
@@ -107,6 +105,8 @@ public class DataConstants {
     public static final String RPC_EXPIRED = "RPC_EXPIRED";
     public static final String RPC_FAILED = "RPC_FAILED";
     public static final String RPC_DELETED = "RPC_DELETED";
+
+    public static final String REEVALUATION_MSG = "REEVALUATION_MSG";
 
     public static final String DEFAULT_SECRET_KEY = "";
     public static final String SECRET_KEY_FIELD_NAME = "secretKey";

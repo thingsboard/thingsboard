@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section class="tb-datasource-section" [formGroup]="datasourceFormGroup">
-  <mat-form-field *ngIf="!basicMode" class="tb-datasource-type" hideRequiredMarker>
+<section class="tb-datasource-section tb-form-panel outlined" [formGroup]="datasourceFormGroup">
+  <mat-form-field *ngIf="!basicMode" class="tb-datasource-type" hideRequiredMarker appearance="outline">
     <mat-label translate>widget-config.datasource-type</mat-label>
     <mat-select formControlName="type">
       <mat-option *ngFor="let datasourceType of datasourceTypes" [value]="datasourceType">
@@ -37,25 +37,26 @@
                                  datasourceFormGroup.get('type').value === datasourceType.entityCount ||
                                  datasourceFormGroup.get('type').value === datasourceType.alarmCount ? datasourceFormGroup.get('type').value : ''">
       <tb-alarm-filter-config *ngIf="datasourceFormGroup.get('type').value === datasourceType.alarmCount && !hideAlarmFilter"
-                              propagatedFilter="false"
                               [initialAlarmFilterConfig]="{ statusList: [alarmSearchStatus.ACTIVE] }"
                               style="height: 56px; margin-bottom: 22px;"
                               formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"
                               [required]="!datasourcesOptional"
                               [entityType]="entityType.DEVICE"
+                              appearance="outline"
                               formControlName="deviceId">
       </tb-entity-autocomplete>
       <tb-entity-alias-select
         *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device"
         [showLabel]="true"
+        appearance="outline"
         [tbRequired]="!entityAliasOptional"
         [aliasController]="aliasController"
         formControlName="entityAliasId"
         [callbacks]="entityAliasSelectCallbacks">
       </tb-entity-alias-select>
       <mat-form-field *ngIf="!hideDatasourceLabel && [datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
-                      class="flex-1">
+                      class="flex-1" appearance="outline">
         <input matInput
                placeholder="{{ 'datasource.label' | translate }}"
                formControlName="name">
@@ -64,6 +65,7 @@
   </section>
   <section *ngIf="!hideDataKeys" class="flex flex-1 flex-col items-stretch justify-start">
     <tb-data-keys class="tb-data-keys flex-1"
+                  appearance="outline"
                   [widgetType]="widgetType"
                   [datasourceType]="datasourceFormGroup.get('type').value"
                   [hideDataKeyLabel]="hideDataKeyLabel"
@@ -86,6 +88,7 @@
                   formControlName="dataKeys">
     </tb-data-keys>
     <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys flex-1"
+                  appearance="outline"
                   [widgetType]="widgetTypes.latest"
                   [datasourceType]="datasourceFormGroup.get('type').value"
                   [hideDataKeyLabel]="hideDataKeyLabel"
@@ -109,6 +112,7 @@
   </section>
   <tb-filter-select
     *ngIf="(!basicMode || displayDatasourceFilterForBasicMode) && ![datasourceType.function].includes(datasourceFormGroup.get('type').value)"
+    appearance="outline"
     [showLabel]="true"
     [aliasController]="aliasController"
     formControlName="filterId"

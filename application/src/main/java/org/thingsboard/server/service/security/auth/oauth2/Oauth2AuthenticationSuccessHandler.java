@@ -121,7 +121,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
                 errorPrefix = "/login?loginError=";
             }
             getRedirectStrategy().sendRedirect(request, response, baseUrl + errorPrefix +
-                    URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8.toString()));
+                    URLEncoder.encode(e.getMessage(), StandardCharsets.UTF_8));
         }
     }
 
@@ -138,4 +138,5 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         }
         return baseUrl + "accessToken=" + tokenPair.getToken() + "&refreshToken=" + tokenPair.getRefreshToken();
     }
+
 }

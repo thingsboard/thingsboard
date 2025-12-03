@@ -30,11 +30,17 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
+import java.io.Serial;
+
 @Schema
 @Data
 @Builder
 @AllArgsConstructor
 public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
+
+    @Serial
+    private static final long serialVersionUID = -5454905526404017592L;
+
     @Schema(description = "JSON object with Alarm id.", accessMode = Schema.AccessMode.READ_ONLY)
     private AlarmId alarmId;
     @Schema(description = "JSON object with User id.", accessMode = Schema.AccessMode.READ_ONLY)
@@ -85,4 +91,5 @@ public class AlarmComment extends BaseData<AlarmCommentId> implements HasName {
         this.comment = alarmComment.getComment();
         this.userId = alarmComment.getUserId();
     }
+
 }

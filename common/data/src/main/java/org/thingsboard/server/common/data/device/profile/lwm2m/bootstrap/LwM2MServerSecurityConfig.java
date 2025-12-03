@@ -26,7 +26,7 @@ public class LwM2MServerSecurityConfig implements Serializable {
 
     @Schema(description = "Server short Id. Used as link to associate server Object Instance. This identifier uniquely identifies each LwM2M Server configured for the LwM2M Client. " +
             "This Resource MUST be set when the Bootstrap-Server Resource has a value of 'false'. " +
-            "The values ID:1 and ID:65534 values MUST NOT be used for identifying the LwM2M Server.", example = "123", accessMode = Schema.AccessMode.READ_ONLY)
+            "The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.", example = "123", accessMode = Schema.AccessMode.READ_ONLY)
     protected Integer shortServerId = 123;
     /** Security -> ObjectId = 0 'LWM2M Security' */
     @Schema(description = "Is Bootstrap Server or Lwm2m Server. " +

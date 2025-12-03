@@ -15,9 +15,11 @@
     limitations under the License.
 
 -->
-<div [formGroup]="entitySelectFormGroup">
+<div [formGroup]="entitySelectFormGroup" class="flex flex-row gap-4 xs:flex-col xs:gap-0">
   <tb-entity-type-select
     *ngIf="displayEntityTypeSelect"
+    class="flex-1"
+    [appearance]="appearance"
     [showLabel]="true"
     [required]="required"
     [useAliasEntityTypes]="useAliasEntityTypes"
@@ -27,8 +29,11 @@
   </tb-entity-type-select>
   <tb-entity-autocomplete
     *ngIf="modelValue.entityType && !entityTypeNullUUID.has(modelValue.entityType)"
+    class="flex-1"
+    [appearance]="appearance"
     [required]="required"
     [entityType]="modelValue.entityType"
+    [useEntityDisplayName]="useEntityDisplayName"
     formControlName="entityId">
   </tb-entity-autocomplete>
 </div>

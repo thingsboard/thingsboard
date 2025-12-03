@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.rest;
 
-import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -28,7 +27,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 
 import java.util.UUID;
 
-@Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "rest call reply",
@@ -36,7 +34,8 @@ import java.util.UUID;
         nodeDescription = "Sends reply to REST API call to rule engine",
         nodeDetails = "Expects messages with any message type. Forwards incoming message as a reply to REST API call sent to rule engine.",
         configDirective = "tbActionNodeSendRestApiCallReplyConfig",
-        icon = "call_merge"
+        icon = "call_merge",
+        docUrl = "https://thingsboard.io/docs/user-guide/rule-engine-2-0/nodes/action/rest-call-reply/"
 )
 public class TbSendRestApiCallReplyNode implements TbNode {
 
@@ -44,7 +43,7 @@ public class TbSendRestApiCallReplyNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = TbNodeUtils.convert(configuration, TbSendRestApiCallReplyNodeConfiguration.class);
+        config = TbNodeUtils.convert(configuration, TbSendRestApiCallReplyNodeConfiguration.class);
     }
 
     @Override
@@ -62,4 +61,5 @@ public class TbSendRestApiCallReplyNode implements TbNode {
             ctx.tellSuccess(msg);
         }
     }
+
 }

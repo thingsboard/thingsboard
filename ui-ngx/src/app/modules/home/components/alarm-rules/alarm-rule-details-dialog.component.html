@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form style="width: 800px">
+  <mat-toolbar class="justify-between" color="primary">
+    <h2>{{ 'alarm-rule.edit-alarm-rule-additional-info' | translate }}</h2>
+    <button mat-icon-button (click)="cancel()" type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="flex flex-1 flex-col">
+      <mat-form-field class="mat-block" appearance="outline">
+        <textarea matInput [formControl]="alarmDetailsControl" rows="5"
+          placeholder="{{ 'alarm-rule.alarm-rule-additional-info-placeholder' | translate }}"></textarea>
+      </mat-form-field>
+      <div class="tb-form-hint tb-primary-fill flex items-center gap-2">
+        <span [innerHTML]="'alarm-rule.alarm-rule-additional-info-hint' | translate | safe: 'html'"></span>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions class="justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()" cdkFocusInitial>
+      {{ 'action.cancel' | translate }}
+    </button>
+    @if (!data.readonly) {
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="save()"
+              [disabled]="alarmDetailsControl.invalid || !alarmDetailsControl.dirty">
+        {{ 'action.save' | translate }}
+      </button>
+    }
+  </div>
+</form>

@@ -99,6 +99,8 @@ import { ResourceService } from '@core/http/resource.service';
 import { OAuth2Service } from '@core/http/oauth2.service';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { PlatformType } from '@shared/models/oauth2.models';
+import { AiModelService } from '@core/http/ai-model.service';
+import { ResourceType } from "@shared/models/resource.models";
 
 @Injectable({
   providedIn: 'root'
@@ -131,6 +133,7 @@ export class EntityService {
     private resourceService: ResourceService,
     private oauth2Service: OAuth2Service,
     private mobileAppService: MobileAppService,
+    private aiModelService: AiModelService,
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -182,6 +185,15 @@ export class EntityService {
         break;
       case EntityType.MOBILE_APP_BUNDLE:
         observable = this.mobileAppService.getMobileAppBundleInfoById(entityId, config);
+        break;
+      case EntityType.AI_MODEL:
+        observable = this.aiModelService.getAiModelById(entityId, config);
+        break;
+      case EntityType.DEVICE_PROFILE:
+        observable = this.deviceProfileService.getDeviceProfile(entityId, config);
+        break;
+      case EntityType.ASSET_PROFILE:
+        observable = this.assetProfileService.getAssetProfile(entityId, config);
         break;
     }
     return observable;
@@ -291,6 +303,9 @@ export class EntityService {
         observable = this.getEntitiesByIdsObservable(
           (id) => this.ruleChainService.getRuleChain(id, config),
           entityIds);
+        break;
+      case EntityType.TB_RESOURCE:
+        observable = this.resourceService.getResourcesByIds(entityIds, config);
         break;
     }
     return observable;
@@ -467,7 +482,7 @@ export class EntityService {
         break;
       case EntityType.TB_RESOURCE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.resourceService.getTenantResources(pageLink, config);
+        entitiesObservable = this.resourceService.getResources(pageLink, subType as ResourceType, null, config);
         break;
       case EntityType.QUEUE_STATS:
         pageLink.sortOrder.property = 'createdTime';
@@ -484,6 +499,10 @@ export class EntityService {
       case EntityType.MOBILE_APP_BUNDLE:
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.mobileAppService.getTenantMobileAppBundleInfos(pageLink, config);
+        break;
+      case EntityType.AI_MODEL:
+        pageLink.sortOrder.property = 'name';
+        entitiesObservable = this.aiModelService.getAiModels(pageLink, config);
         break;
     }
     return entitiesObservable;
@@ -804,6 +823,7 @@ export class EntityService {
     switch (entityType) {
       case EntityType.USER:
         entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.displayName.keyName);
         entityFieldKeys.push(entityFields.email.keyName);
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
@@ -833,6 +853,7 @@ export class EntityService {
       case EntityType.EDGE:
       case EntityType.ASSET:
         entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.displayName.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
         entityFieldKeys.push(entityFields.label.keyName);
         entityFieldKeys.push(entityFields.ownerName.keyName);
@@ -1022,11 +1043,7 @@ export class EntityService {
     const stateEntityId = stateEntityInfo.entityId;
     switch (filter.type) {
       case AliasFilterType.singleEntity:
-        const aliasEntityId = this.resolveAliasEntityId(filter.singleEntity.entityType, filter.singleEntity.id);
-        result.entityFilter = {
-          type: AliasFilterType.singleEntity,
-          singleEntity: aliasEntityId
-        };
+        result.entityFilter = deepClone(filter);
         return of(result);
       case AliasFilterType.entityList:
         result.entityFilter = deepClone(filter);
@@ -1077,9 +1094,8 @@ export class EntityService {
           rootEntityId = filter.rootEntity.id;
         }
         if (rootEntityType && rootEntityId) {
-          const queryRootEntityId = this.resolveAliasEntityId(rootEntityType, rootEntityId);
           result.entityFilter = deepClone(filter);
-          result.entityFilter.rootEntity = queryRootEntityId;
+          result.entityFilter.rootEntity = {entityType: rootEntityType, id: rootEntityId};
           return of(result);
         } else {
           return of(result);
@@ -1378,42 +1394,7 @@ export class EntityService {
     if (!entityId) {
       entityId = filter.defaultStateEntity;
     }
-    if (entityId) {
-      entityId = this.resolveAliasEntityId(entityId.entityType, entityId.id);
-    }
     return {entityId};
-  }
-
-  private resolveAliasEntityId(entityType: EntityType | AliasEntityType, id: string): EntityId {
-    const entityId: EntityId = {
-      entityType,
-      id
-    };
-    if (entityType === AliasEntityType.CURRENT_CUSTOMER) {
-      const authUser = getCurrentAuthUser(this.store);
-      entityId.entityType = EntityType.CUSTOMER;
-      if (authUser.authority === Authority.CUSTOMER_USER) {
-        entityId.id = authUser.customerId;
-      }
-    } else if (entityType === AliasEntityType.CURRENT_TENANT){
-      const authUser =  getCurrentAuthUser(this.store);
-      entityId.entityType = EntityType.TENANT;
-      entityId.id = authUser.tenantId;
-    } else if (entityType === AliasEntityType.CURRENT_USER){
-      const authUser =  getCurrentAuthUser(this.store);
-      entityId.entityType = EntityType.USER;
-      entityId.id = authUser.userId;
-    } else if (entityType === AliasEntityType.CURRENT_USER_OWNER){
-      const authUser =  getCurrentAuthUser(this.store);
-      if (authUser.authority === Authority.TENANT_ADMIN) {
-        entityId.entityType = EntityType.TENANT;
-        entityId.id = authUser.tenantId;
-      } else if (authUser.authority === Authority.CUSTOMER_USER) {
-        entityId.entityType = EntityType.CUSTOMER;
-        entityId.id = authUser.customerId;
-      }
-    }
-    return entityId;
   }
 
   private createDatasourceFromSubscriptionInfo(subscriptionInfo: SubscriptionInfo): Datasource {

@@ -18,31 +18,26 @@ import { Component, DestroyRef, Inject, ViewEncapsulation } from '@angular/core'
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@shared/components/dialog.component';
 import {
   CalculatedField,
   CalculatedFieldConfiguration,
-  calculatedFieldDefaultScript,
   CalculatedFieldTestScriptFn,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
-  getCalculatedFieldArgumentsEditorCompleter,
-  getCalculatedFieldArgumentsHighlights,
-  OutputType,
-  OutputTypeTranslations
+  OutputStrategyType
 } from '@shared/models/calculated-field.models';
-import { digitsRegex, oneSpaceInsideRegex } from '@shared/models/regex.constants';
-import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
+import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { EntityType } from '@shared/models/entity-type.models';
-import { map, startWith, switchMap } from 'rxjs/operators';
+import { pairwise, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ScriptLanguage } from '@shared/models/rule-node.models';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { Observable } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
+import { deepTrim, isDefined } from '@core/utils';
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -50,6 +45,7 @@ export interface CalculatedFieldDialogData {
   entityId: EntityId;
   tenantId: string;
   entityName?: string;
+  ownerId: EntityId;
   additionalDebugActionConfig: AdditionalDebugActionConfig<(calculatedField: CalculatedField) => void>;
   getTestScriptDialogFn: CalculatedFieldTestScriptFn;
   isDirty?: boolean;
@@ -67,51 +63,17 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
     type: [CalculatedFieldType.SIMPLE],
     debugSettings: [],
-    configuration: this.fb.group({
-      arguments: this.fb.control({}),
-      expressionSIMPLE: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-      expressionSCRIPT: [calculatedFieldDefaultScript],
-      output: this.fb.group({
-        name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-        scope: [{ value: AttributeScope.SERVER_SCOPE, disabled: true }],
-        type: [OutputType.Timeseries],
-        decimalsByDefault: [null as number, [Validators.min(0), Validators.max(15), Validators.pattern(digitsRegex)]],
-      }),
-      useLatestTs: [false]
-    }),
+    configuration: this.fb.control<CalculatedFieldConfiguration>({} as CalculatedFieldConfiguration),
   });
-
-  functionArgs$ = this.configFormGroup.get('arguments').valueChanges
-    .pipe(
-      startWith(this.data.value?.configuration?.arguments ?? {}),
-      map(argumentsObj => ['ctx', ...Object.keys(argumentsObj)])
-    );
-
-  argumentsEditorCompleter$ = this.configFormGroup.get('arguments').valueChanges
-    .pipe(
-      startWith(this.data.value?.configuration?.arguments ?? {}),
-      map(argumentsObj => getCalculatedFieldArgumentsEditorCompleter(argumentsObj))
-    );
-
-  argumentsHighlightRules$ = this.configFormGroup.get('arguments').valueChanges
-    .pipe(
-      startWith(this.data.value?.configuration?.arguments ?? {}),
-      map(argumentsObj => getCalculatedFieldArgumentsHighlights(argumentsObj))
-    );
 
   additionalDebugActionConfig = this.data.value?.id ? {
     ...this.data.additionalDebugActionConfig,
     action: () => this.data.additionalDebugActionConfig.action({ id: this.data.value.id, ...this.fromGroupValue }),
   } : null;
 
-  readonly OutputTypeTranslations = OutputTypeTranslations;
-  readonly OutputType = OutputType;
-  readonly AttributeScope = AttributeScope;
   readonly EntityType = EntityType;
   readonly CalculatedFieldType = CalculatedFieldType;
-  readonly ScriptLanguage = ScriptLanguage;
-  readonly fieldTypes = Object.values(CalculatedFieldType) as CalculatedFieldType[];
-  readonly outputTypes = Object.values(OutputType) as OutputType[];
+  readonly fieldTypes = Object.values(CalculatedFieldType).filter(type => type !== CalculatedFieldType.ALARM) as CalculatedFieldType[];
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
 
   constructor(protected store: Store<AppState>,
@@ -123,31 +85,12 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               private fb: FormBuilder) {
     super(store, router, dialogRef);
     this.observeIsLoading();
+    this.observeType();
     this.applyDialogData();
-    this.observeTypeChanges();
-  }
-
-  get configFormGroup(): FormGroup {
-    return this.fieldFormGroup.get('configuration') as FormGroup;
-  }
-
-  get outputFormGroup(): FormGroup {
-    return this.fieldFormGroup.get('configuration').get('output') as FormGroup;
   }
 
   get fromGroupValue(): CalculatedField {
-    const { configuration, type, name, ...rest } = this.fieldFormGroup.value;
-    const { expressionSIMPLE, expressionSCRIPT, output, ...restConfig } = configuration;
-    return {
-      configuration: {
-        ...restConfig,
-        type, expression: configuration['expression'+type].trim(),
-        output: { ...output, name: output.name?.trim() ?? '' }
-      },
-      name: name.trim(),
-      type,
-      ...rest,
-    } as CalculatedField;
+    return deepTrim(this.fieldFormGroup.value as CalculatedField);
   }
 
   cancel(): void {
@@ -162,81 +105,30 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     }
   }
 
-  onTestScript(): void {
+  onTestScript(expression?: string): Observable<string> {
     const calculatedFieldId = this.data.value?.id?.id;
-    let testScriptDialogResult$: Observable<string>;
-
     if (calculatedFieldId) {
-      testScriptDialogResult$ = this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId)
+      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
         .pipe(
           switchMap(event => {
             const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.data.getTestScriptDialogFn(this.fromGroupValue, args, false);
+            return this.data.getTestScriptDialogFn(this.fromGroupValue, args, false, expression);
           }),
           takeUntilDestroyed(this.destroyRef)
         )
-    } else {
-      testScriptDialogResult$ = this.data.getTestScriptDialogFn(this.fromGroupValue, null, false);
     }
-
-    testScriptDialogResult$.subscribe(expression => {
-      this.configFormGroup.get('expressionSCRIPT').setValue(expression);
-      this.configFormGroup.get('expressionSCRIPT').markAsDirty();
-    });
+    return this.data.getTestScriptDialogFn(this.fromGroupValue, null, false, expression);
   }
 
   private applyDialogData(): void {
-    const { configuration = {}, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
-    const { expression, ...restConfig } = configuration as CalculatedFieldConfiguration;
-    const updatedConfig = { ...restConfig , ['expression'+type]: expression };
-    this.fieldFormGroup.patchValue({ configuration: updatedConfig, type, debugSettings, ...value }, {emitEvent: false});
-  }
-
-  private observeTypeChanges(): void {
-    this.toggleKeyByCalculatedFieldType(this.fieldFormGroup.get('type').value);
-    this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
-
-    this.outputFormGroup.get('type').valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(type => this.toggleScopeByOutputType(type));
-    this.fieldFormGroup.get('type').valueChanges
-      .pipe(takeUntilDestroyed())
-      .subscribe(type => this.toggleKeyByCalculatedFieldType(type));
-  }
-
-  private toggleScopeByOutputType(type: OutputType): void {
-    if (type === OutputType.Attribute) {
-      this.outputFormGroup.get('scope').enable({emitEvent: false});
-    } else {
-      this.outputFormGroup.get('scope').disable({emitEvent: false});
-    }
-    if (this.fieldFormGroup.get('type').value === CalculatedFieldType.SIMPLE) {
-      if (type === OutputType.Attribute) {
-        this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
-      } else {
-        this.configFormGroup.get('useLatestTs').enable({emitEvent: false});
+    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, ...value } = this.data.value ?? {};
+    if (configuration.type !== CalculatedFieldType.ALARM) {
+      if (isDefined(configuration?.output) && !configuration?.output?.strategy) {
+          configuration.output.strategy = {type: OutputStrategyType.RULE_CHAIN};
       }
-    } else {
-      this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
     }
-  }
-
-  private toggleKeyByCalculatedFieldType(type: CalculatedFieldType): void {
-    if (type === CalculatedFieldType.SIMPLE) {
-      this.outputFormGroup.get('name').enable({emitEvent: false});
-      this.configFormGroup.get('expressionSIMPLE').enable({emitEvent: false});
-      this.configFormGroup.get('expressionSCRIPT').disable({emitEvent: false});
-      if (this.outputFormGroup.get('type').value === OutputType.Attribute) {
-        this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
-      } else {
-        this.configFormGroup.get('useLatestTs').enable({emitEvent: false});
-      }
-    } else {
-      this.outputFormGroup.get('name').disable({emitEvent: false});
-      this.configFormGroup.get('useLatestTs').disable({emitEvent: false});
-      this.configFormGroup.get('expressionSIMPLE').disable({emitEvent: false});
-      this.configFormGroup.get('expressionSCRIPT').enable({emitEvent: false});
-    }
+    this.fieldFormGroup.patchValue({ configuration, type, debugSettings, ...value }, {emitEvent: false});
+    setTimeout(() => this.fieldFormGroup.get('type').updateValueAndValidity({onlySelf: true}));
   }
 
   private observeIsLoading(): void {
@@ -245,11 +137,21 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
         this.fieldFormGroup.disable({emitEvent: false});
       } else {
         this.fieldFormGroup.enable({emitEvent: false});
-        this.toggleScopeByOutputType(this.outputFormGroup.get('type').value);
-        this.toggleKeyByCalculatedFieldType(this.fieldFormGroup.get('type').value);
         if (this.data.isDirty) {
           this.fieldFormGroup.markAsDirty();
         }
+      }
+    });
+  }
+
+  private observeType(): void {
+    this.fieldFormGroup.get('type').valueChanges.pipe(
+      pairwise(),
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(([prevType, nextType]) => {
+      if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
+          ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
+        this.fieldFormGroup.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
       }
     });
   }

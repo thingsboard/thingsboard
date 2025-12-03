@@ -77,6 +77,9 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   label: string;
 
   @Input()
+  panelWidth: string = 'fit-content';
+
+  @Input()
   tooltipClass = 'tb-error-tooltip';
 
   @Input()
@@ -103,7 +106,11 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    this.selectionFormControl = this.fb.control('', this.required ? [Validators.required] : []);
+    const validators = [Validators.pattern(/.*\S.*/)];
+    if (this.required) {
+      validators.push(Validators.required);
+    }
+    this.selectionFormControl = this.fb.control('', validators);
     this.filteredOptions$ = this.selectionFormControl.valueChanges
       .pipe(
         tap(value => this.updateView(value)),
@@ -149,7 +156,7 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   updateView(value: string) {
     this.searchText = value ? value : '';
     if (this.modelValue !== value) {
-      this.modelValue = value;
+      this.modelValue = value?.trim();
       this.propagateChange(this.modelValue);
     }
   }

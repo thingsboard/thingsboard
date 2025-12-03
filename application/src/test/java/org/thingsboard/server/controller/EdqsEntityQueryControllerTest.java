@@ -19,18 +19,19 @@ import org.assertj.core.api.ThrowingConsumer;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.edqs.EdqsState;
 import org.thingsboard.server.common.data.edqs.EdqsState.EdqsApiMode;
 import org.thingsboard.server.common.data.edqs.ToCoreEdqsRequest;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.query.AlarmCountQuery;
+import org.thingsboard.server.common.data.query.AlarmData;
+import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
 import org.thingsboard.server.common.data.query.EntityData;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
 import org.thingsboard.server.common.msg.edqs.EdqsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.edqs.util.EdqsRocksDb;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
 
 import java.util.concurrent.TimeUnit;
@@ -56,9 +57,6 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     @Autowired
     private DiscoveryService discoveryService;
 
-    @MockBean // so that we don't do backup for tests
-    private EdqsRocksDb edqsRocksDb;
-
     @Before
     public void before() {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> edqsService.getState().isApiEnabled());
@@ -71,8 +69,20 @@ public class EdqsEntityQueryControllerTest extends EntityQueryControllerTest {
     }
 
     @Override
+    protected PageData<AlarmData> findAlarmsByQueryAndCheck(AlarmDataQuery query, int expectedResultSize) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findAlarmsByQuery(query),
+                result -> result.getTotalElements() == expectedResultSize);
+    }
+
+    @Override
     protected Long countByQueryAndCheck(EntityCountQuery query, long expectedResult) {
         return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countByQuery(query),
+                result -> result == expectedResult);
+    }
+
+    @Override
+    protected Long countAlarmsByQueryAndCheck(AlarmCountQuery query, long expectedResult) {
+        return await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> countAlarmsByQuery(query),
                 result -> result == expectedResult);
     }
 

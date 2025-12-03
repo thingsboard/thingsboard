@@ -33,6 +33,10 @@ const emptyUserAuthState: AuthPayload = {
   mobileQrEnabled: false,
   maxResourceSize: 0,
   maxArgumentsPerCF: 0,
+  minAllowedDeduplicationIntervalInSecForCF: 0,
+  minAllowedAggregationIntervalInSecForCF: 0,
+  minAllowedScheduledUpdateIntervalInSecForCF: 0,
+  maxRelationLevelPerCfArgument: 0,
   maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
   userSettings: initialUserSettings,
@@ -98,6 +102,9 @@ export const authReducer = (
       userSettings = {...state.userSettings};
       action.payload.forEach(path => unset(userSettings, path));
       return { ...state, ...{ userSettings }};
+
+    case AuthActionTypes.UPDATE_TRENDZ_SETTINGS:
+      return { ...state, trendzSettings: action.payload };
 
     default:
       return state;

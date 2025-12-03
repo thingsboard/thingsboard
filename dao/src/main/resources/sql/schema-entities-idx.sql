@@ -20,7 +20,7 @@ CREATE INDEX IF NOT EXISTS idx_alarm_originator_created_time ON alarm(originator
 
 CREATE INDEX IF NOT EXISTS idx_alarm_tenant_created_time ON alarm(tenant_id, created_time DESC);
 
--- Drop index by 'status' column and replace with new indexes that has only active alarms;
+-- Drop index by 'status' column and replace with new indexes that have only active alarms;
 CREATE INDEX IF NOT EXISTS idx_alarm_originator_alarm_type_active
     ON alarm USING btree (originator_id, type) WHERE cleared = false;
 
@@ -108,10 +108,12 @@ CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_unread 
 
 CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
 
-CREATE INDEX IF NOT EXISTS idx_resource_etag ON resource(tenant_id, etag);
-
 CREATE INDEX IF NOT EXISTS idx_resource_type_public_resource_key ON resource(resource_type, public_resource_key);
 
 CREATE INDEX IF NOT EXISTS mobile_app_bundle_tenant_id ON mobile_app_bundle(tenant_id);
 
 CREATE INDEX IF NOT EXISTS idx_job_tenant_id ON job(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_ai_model_tenant_id ON ai_model(tenant_id);
+
+CREATE INDEX IF NOT EXISTS idx_api_key_user_id ON api_key(user_id);

@@ -54,20 +54,24 @@ public class RelatedEdgesSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(ActionEntityEvent<?> event) {
-        executorService.submit(() -> {
-            log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
-            try {
-                switch (event.getActionType()) {
-                    case ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE ->
-                            relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
-                }
-            } catch (Exception e) {
-                log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
+        switch (event.getActionType()) {
+            case ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE -> {
+                executorService.submit(() -> {
+                    log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
+                    try {
+                        relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
+                    } catch (Exception e) {
+                        log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
+                    }
+                });
             }
-        });
+        }
     }
 
-    @TransactionalEventListener(fallbackExecution = true)
+    @TransactionalEventListener(
+            fallbackExecution = true,
+            condition = "#event.entityId.getEntityType() != T(org.thingsboard.server.common.data.EntityType).AI_MODEL"
+    )
     public void handleEvent(DeleteEntityEvent<?> event) {
         executorService.submit(() -> {
             log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);

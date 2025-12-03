@@ -23,6 +23,7 @@ import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
 import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
+import org.mvel2.execution.ExecutionLinkedHashSet;
 import org.mvel2.util.MethodStub;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.geo.Coordinates;
@@ -46,6 +47,7 @@ import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -262,6 +264,8 @@ public class TbUtils {
                 float.class, int.class)));
         parserConfig.addImport("toInt", new MethodStub(TbUtils.class.getMethod("toInt",
                 double.class)));
+        parserConfig.addImport("roundResult", new MethodStub(TbUtils.class.getMethod("roundResult",
+                double.class, Integer.class)));
         parserConfig.addImport("isNaN", new MethodStub(TbUtils.class.getMethod("isNaN",
                 double.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
@@ -385,6 +389,12 @@ public class TbUtils {
         parserConfig.addImport("isList", new MethodStub(TbUtils.class.getMethod("isList",
                 Object.class)));
         parserConfig.addImport("isArray", new MethodStub(TbUtils.class.getMethod("isArray",
+                Object.class)));
+        parserConfig.addImport("newSet", new MethodStub(TbUtils.class.getMethod("newSet",
+                ExecutionContext.class)));
+        parserConfig.addImport("toSet", new MethodStub(TbUtils.class.getMethod("toSet",
+                ExecutionContext.class, List.class)));
+        parserConfig.addImport("isSet", new MethodStub(TbUtils.class.getMethod("isSet",
                 Object.class)));
     }
 
@@ -1178,6 +1188,16 @@ public class TbUtils {
         return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
     }
 
+    public static Object roundResult(double value, Integer precision) {
+        if (precision == null) {
+            return value;
+        }
+        if (precision.equals(0)) {
+            return toInt(value);
+        }
+        return toFixed(value, precision);
+    }
+
     public static boolean isNaN(double value) {
         return Double.isNaN(value);
     }
@@ -1479,6 +1499,19 @@ public class TbUtils {
 
     public static boolean isArray(Object obj) {
         return obj != null && obj.getClass().isArray();
+    }
+
+    public static <E> Set<E> newSet(ExecutionContext ctx) {
+        return new ExecutionLinkedHashSet<>(ctx);
+    }
+
+    public static <E> Set<E> toSet(ExecutionContext ctx, List<E> list) {
+        Set<E> newSet = new LinkedHashSet<>(list);
+        return new ExecutionLinkedHashSet<>(newSet, ctx);
+    }
+
+    public static boolean isSet(Object obj) {
+        return obj instanceof Set;
     }
 
     private static byte isValidIntegerToByte(Integer val) {

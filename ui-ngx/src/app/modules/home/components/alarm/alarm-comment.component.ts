@@ -27,7 +27,13 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MAX_SAFE_PAGE_SIZE, PageLink } from '@shared/models/page/page-link';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { map } from 'rxjs/operators';
-import { AlarmComment, AlarmCommentType, getUserDisplayName } from '@shared/models/alarm.models';
+import {
+  AlarmComment,
+  AlarmCommentInfo,
+  AlarmCommentType,
+  AlarmMessage,
+  getUserDisplayName
+} from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DatePipe } from '@angular/common';
@@ -121,7 +127,7 @@ export class AlarmCommentComponent implements OnInit {
           const displayDataElement = {} as AlarmCommentsDisplayData;
           displayDataElement.createdTime = this.datePipe.transform(alarmComment.createdTime, 'yyyy-MM-dd HH:mm:ss');
           displayDataElement.createdDateAgo = this.dateAgoPipe.transform(alarmComment.createdTime);
-          displayDataElement.commentText = alarmComment.comment.text;
+          displayDataElement.commentText = this.parseSystemComment(alarmComment);
           displayDataElement.isSystemComment = alarmComment.type === AlarmCommentType.SYSTEM;
           if (alarmComment.type === AlarmCommentType.OTHER) {
             displayDataElement.commentId = alarmComment.id.id;
@@ -142,6 +148,15 @@ export class AlarmCommentComponent implements OnInit {
         }
       }
     );
+  }
+
+  private parseSystemComment(alarm: AlarmCommentInfo): string {
+    const subTypeKey = alarm.comment?.subtype;
+    if (subTypeKey && AlarmMessage[subTypeKey]) {
+      const translationKey = AlarmMessage[subTypeKey];
+      return this.translate.instant(translationKey, alarm.comment);
+    }
+    return alarm.comment.text;
   }
 
   changeSortDirection() {

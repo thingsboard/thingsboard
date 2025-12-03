@@ -626,6 +626,7 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     created_time bigint NOT NULL,
     tenant_id uuid,
     pkg_name varchar(255),
+    title varchar(255),
     app_secret varchar(2048),
     platform_type varchar(32),
     status varchar(32),
@@ -706,6 +707,18 @@ CREATE TABLE IF NOT EXISTS api_usage_state (
     alarm_exec varchar(32),
     version BIGINT DEFAULT 1,
     CONSTRAINT api_usage_state_unq_key UNIQUE (tenant_id, entity_id)
+);
+
+CREATE TABLE IF NOT EXISTS api_key (
+    id uuid NOT NULL CONSTRAINT api_key_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid,
+    user_id uuid,
+    value varchar(512),
+    enabled boolean NOT NULL DEFAULT TRUE,
+    expiration_time bigint DEFAULT 0,
+    description varchar(255),
+    CONSTRAINT api_key_value_unq_key UNIQUE (value)
 );
 
 CREATE TABLE IF NOT EXISTS resource (
@@ -922,17 +935,7 @@ CREATE TABLE IF NOT EXISTS calculated_field (
     configuration varchar(1000000),
     version BIGINT DEFAULT 1,
     debug_settings varchar(1024),
-    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name)
-);
-
-CREATE TABLE IF NOT EXISTS calculated_field_link (
-    id uuid NOT NULL CONSTRAINT calculated_field_link_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    tenant_id uuid NOT NULL,
-    entity_type VARCHAR(32),
-    entity_id uuid NOT NULL,
-    calculated_field_id uuid NOT NULL,
-    CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
+    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, type, name)
 );
 
 CREATE TABLE IF NOT EXISTS cf_debug_event (
@@ -962,4 +965,16 @@ CREATE TABLE IF NOT EXISTS job (
     status varchar NOT NULL,
     configuration varchar NOT NULL,
     result varchar
+);
+
+CREATE TABLE IF NOT EXISTS ai_model (
+    id              UUID          NOT NULL PRIMARY KEY,
+    external_id     UUID,
+    created_time    BIGINT        NOT NULL,
+    tenant_id       UUID          NOT NULL,
+    version         BIGINT        NOT NULL DEFAULT 1,
+    name            VARCHAR(255)  NOT NULL,
+    configuration   JSONB         NOT NULL,
+    CONSTRAINT ai_model_name_unq_key        UNIQUE (tenant_id, name),
+    CONSTRAINT ai_model_external_id_unq_key UNIQUE (tenant_id, external_id)
 );

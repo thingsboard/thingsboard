@@ -17,6 +17,7 @@ package org.thingsboard.server.service.sync.ie.importing.csv;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
 import jakarta.annotation.Nullable;
@@ -67,7 +68,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -184,10 +184,16 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                     data.entrySet().stream()
                             .filter(dataEntry -> dataEntry.getKey().getType() == kvType &&
                                     StringUtils.isNotEmpty(dataEntry.getKey().getKey()))
-                            .forEach(dataEntry -> kvs.add(dataEntry.getKey().getKey(), dataEntry.getValue().toJsonPrimitive()));
+                            .forEach(dataEntry -> {
+                                ParsedValue value = dataEntry.getValue();
+                                JsonElement kvValue = (value.getDataType() == DataType.JSON)
+                                        ? (JsonElement) value.getValue()
+                                        : value.toJsonPrimitive();
+                                kvs.add(dataEntry.getKey().getKey(), kvValue);
+                            });
                     return Map.entry(kvType, kvs);
                 })
-                .filter(kvsEntry -> kvsEntry.getValue().entrySet().size() > 0)
+                .filter(kvsEntry -> !kvsEntry.getValue().entrySet().isEmpty())
                 .forEach(kvsEntry -> {
                     BulkImportColumnType kvType = kvsEntry.getKey();
                     if (kvType == BulkImportColumnType.SHARED_ATTRIBUTE || kvType == BulkImportColumnType.SERVER_ATTRIBUTE) {
@@ -235,7 +241,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
     @SneakyThrows
     private void saveAttributes(SecurityUser user, E entity, Map.Entry<BulkImportColumnType, JsonObject> kvsEntry, BulkImportColumnType kvType) {
         String scope = kvType.getKey();
-        List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
+        List<AttributeKvEntry> attributes = JsonConverter.convertToAttributes(kvsEntry.getValue());
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
             tsSubscriptionService.saveAttributes(AttributesSaveRequest.builder()
