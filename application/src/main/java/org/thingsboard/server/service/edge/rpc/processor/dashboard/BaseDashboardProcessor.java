@@ -57,16 +57,14 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setId(dashboardId);
             dashboard.setAssignedCustomers(dashboardById.getAssignedCustomers());
         }
-
-        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
-        if (created) {
-            dashboard.setId(dashboardId);
+        if (isSaveRequired(dashboardById, dashboard)) {
+            dashboardValidator.validate(dashboard, Dashboard::getTenantId);
+            if (created) {
+                dashboard.setId(dashboardId);
+            }
+            Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
+            updateDashboardAssignments(tenantId, dashboardById, savedDashboard, newAssignedCustomers);
         }
-
-        Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
-
-        updateDashboardAssignments(tenantId, dashboardById, savedDashboard, newAssignedCustomers);
-
         return created;
     }
 
