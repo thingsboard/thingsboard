@@ -53,7 +53,7 @@ public class TbAlarmStatusSubscription extends TbSubscription<AlarmSubscriptionU
     }
 
     public boolean matches(AlarmInfo alarm) {
-        return !alarm.isCleared() && (this.typeList == null || this.typeList.contains(alarm.getType())) &&
+        return alarm.getOriginator().equals(getEntityId()) && !alarm.isCleared() && (this.typeList == null || this.typeList.contains(alarm.getType())) &&
                 (this.severityList == null || this.severityList.contains(alarm.getSeverity()));
     }
 
