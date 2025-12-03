@@ -81,6 +81,12 @@ $warning-color: #FAA405;
           .mat-divider {
             --mat-divider-color: #{$tb-primary-color};
           }
+          .api-item-content {
+            .api-item-title {
+              font-weight: 500;
+              color: $tb-primary-color;
+            }
+          }
         }
 
         .api-item-content {
@@ -94,8 +100,9 @@ $warning-color: #FAA405;
             display: flex;
             flex: 1;
             font-size: 14px;
-            font-weight: 500;
-            color: $tb-primary-color;
+            line-height: 20px;
+            font-weight: 400;
+            color: rgba(0, 0, 0, 0.54);
           }
           .api-item-statistic {
             display: flex;
