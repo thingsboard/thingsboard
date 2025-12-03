@@ -20,7 +20,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.annotation.DirtiesContext;
-import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -54,9 +53,6 @@ import static org.thingsboard.server.cf.CalculatedFieldIntegrationTest.POLL_INTE
 
 @DaoSqlTest
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_EACH_TEST_METHOD)
-@TestPropertySource(properties = {
-        "actors.calculated_fields.check_interval=1"
-})
 public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest {
 
     private Tenant savedTenant;
@@ -68,6 +64,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         updateDefaultTenantProfileConfig(tenantProfileConfig -> {
             tenantProfileConfig.setMinAllowedDeduplicationIntervalInSecForCF(1);
             tenantProfileConfig.setMinAllowedAggregationIntervalInSecForCF(1);
+            tenantProfileConfig.setCfReevaluationCheckInterval(1);
         });
 
         Tenant tenant = new Tenant();
