@@ -20,6 +20,7 @@ import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.FilterPredicateType;
 
 import java.util.List;
 
@@ -36,6 +37,11 @@ public class SimpleAlarmConditionExpression implements AlarmConditionExpression 
     @Override
     public AlarmConditionExpressionType getType() {
         return AlarmConditionExpressionType.SIMPLE;
+    }
+
+    @Override
+    public boolean requiresScheduledReevaluation() {
+        return filters.stream().anyMatch(filter -> filter.hasPredicate(FilterPredicateType.NO_DATA));
     }
 
 }

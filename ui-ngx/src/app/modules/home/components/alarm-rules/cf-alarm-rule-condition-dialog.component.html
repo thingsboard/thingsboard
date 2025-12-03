@@ -90,15 +90,47 @@
           </div>
         }
       </div>
+
+      @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
+        <div class="tb-form-panel no-gap">
+          <mat-expansion-panel class="tb-settings" [expanded]="true">
+            <mat-expansion-panel-header>
+              {{ 'alarm-rule.filter-preview' | translate }}
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <div>
+                @if (specText) {
+                  <span class="spec-text">{{ specText }}</span>
+                }
+                @if (conditionFormGroup.get('expression.filters').value?.length) {
+                  <tb-alarm-rule-filter-text [alarmRuleExpression]="conditionFormGroup.get('expression').value"
+                                             [arguments]="arguments"
+                                             class="flex-1"
+                                             [nowrap]="false"
+                                             required>
+                  </tb-alarm-rule-filter-text>
+                } @else {
+                  <span class="tb-prompt justify-center">{{ 'alarm-rule.no-filter-preview' | translate }}</span>
+                }
+              </div>
+            </ng-template>
+          </mat-expansion-panel>
+        </div>
+      }
+
       <section class="tb-form-panel">
         <div class="tb-form-panel-title">{{ 'alarm-rule.condition-settings' | translate }}</div>
         <mat-form-field class="mat-block" hideRequiredMarker appearance="outline" subscriptSizing="dynamic">
           <mat-label translate>alarm-rule.condition-type</mat-label>
           <mat-select formControlName="type" required>
-            <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
+            <mat-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType"
+                        [disabled]="isNoData ? alarmConditionType === AlarmConditionType.REPEATING || alarmConditionType === AlarmConditionType.DURATION : false">
               {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
             </mat-option>
           </mat-select>
+          @if (isNoData) {
+            <mat-hint translate>alarm-rule.condition-type-hint</mat-hint>
+          }
         </mat-form-field>
         @if (conditionFormGroup.get('type').value == AlarmConditionType.DURATION) {
           <div class="tb-form-panel stroked no-padding-bottom">
@@ -146,7 +178,7 @@
                 <ng-container *ngTemplateOutlet="staticValueTemplate; context:{type: AlarmConditionType.REPEATING, groupName: 'count'}"></ng-container>
               </div>
               <div class="flex-1" [class.!hidden]="!repeatingDynamicModeControl.value">
-                <ng-container *ngTemplateOutlet="dynamicValueTemplate; context:{groupName: 'count'}"></ng-container>
+                <ng-container *ngTemplateOutlet="dynamicValueTemplate; context:{type: AlarmConditionType.REPEATING, groupName: 'count'}"></ng-container>
               </div>
             </div>
           </div>
@@ -162,9 +194,8 @@
     </button>
     @if (!readonly) {
       <button mat-raised-button color="primary"
-              *ngIf="!readonly"
               type="submit"
-              [disabled]="conditionFormGroup.invalid || !conditionFormGroup.dirty">
+              [disabled]="conditionFormGroup.invalid || !conditionFormGroup.dirty || !filtersValid">
         {{ 'action.save' | translate }}
       </button>
     }
@@ -186,6 +217,9 @@
         } @else if (conditionFormGroup.get(groupName).get('staticValue').hasError('pattern')) {
           <mat-error>{{ defaultValuePatternError | translate }}</mat-error>
         }
+        @if (type === AlarmConditionType.REPEATING) {
+          <mat-hint translate>alarm-rule.condition-repeating-value-hint</mat-hint>
+        }
       </mat-form-field>
     </div>
   </ng-template>
@@ -198,9 +232,14 @@
             <mat-option [value]="argument">{{ argument }}</mat-option>
           }
         </mat-select>
-        <mat-error *ngIf="conditionFormGroup.get(groupName).get('dynamicValueArgument').hasError('required')">
-          {{ 'calculated-fields.hint.argument-name-required' | translate }}
-        </mat-error>
+        @if (conditionFormGroup.get(groupName).get('dynamicValueArgument').hasError('required')) {
+          <mat-error>
+            {{ 'calculated-fields.hint.argument-name-required' | translate }}
+          </mat-error>
+        }
+        @if (type === AlarmConditionType.REPEATING) {
+          <mat-hint translate>alarm-rule.condition-repeating-value-hint</mat-hint>
+        }
       </mat-form-field>
     </ng-container>
   </ng-template>

@@ -285,14 +285,14 @@ export const defaultTimewindow = (timeService: TimeService, isDashboard = false)
     selectedTab: TimewindowType.REALTIME,
     realtime: {
       realtimeType: RealtimeWindowType.LAST_INTERVAL,
-      interval: SECOND,
-      timewindowMs: isDashboard ? HOUR : MINUTE,
+      interval: MINUTE,
+      timewindowMs: HOUR,
       quickInterval: QuickTimeInterval.CURRENT_DAY,
     },
     history: {
       historyType: HistoryWindowType.LAST_INTERVAL,
-      interval: SECOND,
-      timewindowMs: MINUTE,
+      interval: MINUTE,
+      timewindowMs: HOUR,
       fixedTimewindow: {
         startTimeMs: currentTime - DAY,
         endTimeMs: currentTime

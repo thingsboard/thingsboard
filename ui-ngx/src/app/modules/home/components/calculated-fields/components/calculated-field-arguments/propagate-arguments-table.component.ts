@@ -123,7 +123,7 @@ export class PropagateArgumentsTableComponent extends CalculatedFieldArgumentsTa
       this.errorText = 'calculated-fields.hint.arguments-entity-not-found';
     } else if (!this.argumentsFormArray.controls.length) {
       this.errorText = 'calculated-fields.hint.arguments-empty';
-    } if (this.isScript && !this.argumentsFormArray.controls.some(control => isUndefinedOrNull(control.value?.refEntityId) && isUndefinedOrNull(control.value.refDynamicSourceConfiguration))) {
+    } else if (this.isScript && !this.argumentsFormArray.controls.some(control => isUndefinedOrNull(control.value?.refEntityId) && isUndefinedOrNull(control.value.refDynamicSourceConfiguration))) {
       this.errorText = 'calculated-fields.hint.arguments-propagate-argument-must-current-entity';
     } else {
       this.errorText = '';

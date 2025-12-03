@@ -223,7 +223,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
 
         Awaitility.await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE.name());
+            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE);
             assertThat(keys).containsOnly("key1", "key2");
         });
     }

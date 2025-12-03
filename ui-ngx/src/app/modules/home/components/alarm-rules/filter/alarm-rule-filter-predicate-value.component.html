@@ -67,6 +67,15 @@
             warning
           </mat-icon>
         }
+        @if (filterPredicateValueFormGroup.get('dynamicValueArgument').hasError('argumentInUse')) {
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'alarm-rule.argument-in-use' | translate"
+                    class="tb-error !block">
+            warning
+          </mat-icon>
+        }
       </mat-form-field>
     }
   </div>

@@ -21,7 +21,7 @@
     <button [disabled]="disabled"
             type="button"
             class="tb-alarm-rule-condition-button"
-            mat-stroked-button [color]="conditionSet() ? 'primary' : 'warn'"
+            mat-stroked-button [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'"
             (click)="openFilterDialog($event)">
       <div class="flex items-center gap-2 justify-between">
         <tb-alarm-rule-filter-text [alarmRuleExpression]="alarmRuleConditionFormGroup.get('expression').value"
@@ -32,20 +32,23 @@
                                    required
                                    addFilterPrompt="{{ (isClearCondition ? 'alarm-rule.enter-alarm-rule-clear-condition-prompt' :'alarm-rule.enter-alarm-rule-condition-prompt') | translate }}">
         </tb-alarm-rule-filter-text>
-        <mat-icon [color]="conditionSet() ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">{{ conditionSet() ? 'edit' : 'add' }}</mat-icon>
+        <mat-icon [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
+          {{ conditionSet() ? 'edit' : 'add' }}
+        </mat-icon>
       </div>
     </button>
   </div>
   <div class="tb-form-row column-xs">
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.schedule-title' | translate }}</div>
     <button [disabled]="disabled"
+            [color]="schedulerArgumentsValid ? 'primary' : 'warn'"
             type="button"
             class="tb-alarm-rule-condition-button"
-            mat-stroked-button color="primary"
+            mat-stroked-button
             (click)="openScheduleDialog($event)">
       <div class="flex items-center gap-2">
         <span class="tb-alarm-rule-condition-label" tbTruncateWithTooltip [innerHTML]="scheduleText"></span>
-        <mat-icon class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">edit</mat-icon>
+        <mat-icon [color]="schedulerArgumentsValid ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">edit</mat-icon>
       </div>
     </button>
   </div>

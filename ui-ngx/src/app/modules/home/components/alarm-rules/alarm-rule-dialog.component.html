@@ -130,30 +130,32 @@
               {{ 'alarm-rule.advanced-settings' | translate }}
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
-              <div class="tb-form-row">
-                <mat-slide-toggle class="mat-slide margin" formControlName="propagate">
-                  {{ 'alarm-rule.propagate-alarm' | translate }}
-                </mat-slide-toggle>
+              <div class="tb-form-panel stroked no-padding no-gap">
+                <div class="tb-form-row no-border">
+                  <mat-slide-toggle class="mat-slide margin" formControlName="propagate">
+                    {{ 'alarm-rule.propagate-alarm' | translate }}
+                  </mat-slide-toggle>
+                </div>
+                @if (configFormGroup.get('propagate').value) {
+                  <mat-form-field floatLabel="always" class="mat-block p-4" appearance="outline" subscriptSizing="dynamic">
+                    <mat-label translate>alarm-rule.alarm-rule-relation-types-list</mat-label>
+                    <mat-chip-grid #relationTypesChipList>
+                      <mat-chip-row
+                        *ngFor="let key of configFormGroup.get('propagateRelationTypes').value;"
+                        (removed)="removeRelationType(key)">
+                        {{key}}
+                        <mat-icon matChipRemove>close</mat-icon>
+                      </mat-chip-row>
+                      <input matInput type="text" placeholder="{{'alarm-rule.alarm-rule-relation-types-list' | translate}}"
+                             [matChipInputFor]="relationTypesChipList"
+                             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
+                             matChipInputAddOnBlur
+                             (matChipInputTokenEnd)="addRelationType($event)">
+                    </mat-chip-grid>
+                    <mat-hint innerHTML="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
+                  </mat-form-field>
+                }
               </div>
-              @if (configFormGroup.get('propagate').value) {
-                <mat-form-field floatLabel="always" class="mat-block" appearance="outline" subscriptSizing="dynamic">
-                  <mat-label translate>alarm-rule.alarm-rule-relation-types-list</mat-label>
-                  <mat-chip-grid #relationTypesChipList>
-                    <mat-chip-row
-                      *ngFor="let key of configFormGroup.get('propagateRelationTypes').value;"
-                      (removed)="removeRelationType(key)">
-                      {{key}}
-                      <mat-icon matChipRemove>close</mat-icon>
-                    </mat-chip-row>
-                    <input matInput type="text" placeholder="{{'alarm-rule.alarm-rule-relation-types-list' | translate}}"
-                           [matChipInputFor]="relationTypesChipList"
-                           [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                           matChipInputAddOnBlur
-                           (matChipInputTokenEnd)="addRelationType($event)">
-                  </mat-chip-grid>
-                  <mat-hint innerHTML="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
-                </mat-form-field>
-              }
               <div class="tb-form-row">
                 <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwner">
                   {{ 'alarm-rule.propagate-alarm-to-owner' | translate }}

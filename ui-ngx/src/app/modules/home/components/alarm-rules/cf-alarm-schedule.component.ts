@@ -171,7 +171,7 @@ export class CfAlarmScheduleComponent implements ControlValueAccessor, Validator
     if (value) {
       this.modelValue = value;
       if (this.modelValue.dynamicValueArgument) {
-        this.alarmScheduleForm.get('dynamicValueArgument').patchValue(this.modelValue.dynamicValueArgument, {emitEvent: false});
+        this.alarmScheduleForm.get('dynamicValueArgument').patchValue(Object.keys(this.arguments).includes(this.modelValue.dynamicValueArgument) ? this.modelValue.dynamicValueArgument : null, {emitEvent: false});
       } else {
         switch (this.modelValue.staticValue.type) {
           case AlarmRuleScheduleType.SPECIFIC_TIME:

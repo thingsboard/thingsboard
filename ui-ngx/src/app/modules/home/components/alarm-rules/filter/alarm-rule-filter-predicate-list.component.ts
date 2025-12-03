@@ -28,14 +28,10 @@ import {
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import {
-  BooleanOperation,
   ComplexOperation,
   complexOperationTranslationMap,
   EntityKeyValueType,
-  entityKeyValueTypeToFilterPredicateType,
-  FilterPredicateType,
-  NumericOperation,
-  StringOperation
+  entityKeyValueTypeToFilterPredicateType
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { map } from 'rxjs/operators';
@@ -44,8 +40,12 @@ import {
   AlarmRuleComplexFilterPredicateDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-complex-filter-predicate-dialog.component";
 import {
+  AlarmRuleBooleanOperation,
   AlarmRuleFilterPredicate,
+  AlarmRuleFilterPredicateType,
+  AlarmRuleNumericOperation,
   AlarmRulePredicateInfo,
+  AlarmRuleStringOperation,
   ComplexAlarmRuleFilterPredicate
 } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
@@ -157,29 +157,29 @@ export class AlarmRuleFilterPredicateListComponent implements ControlValueAccess
 
   private createDefaultFilterPredicate(valueType: EntityKeyValueType, complex: boolean): AlarmRuleFilterPredicate {
     const predicate = {
-      type: complex ? FilterPredicateType.COMPLEX : entityKeyValueTypeToFilterPredicateType(valueType)
+      type: complex ? AlarmRuleFilterPredicateType.COMPLEX : entityKeyValueTypeToFilterPredicateType(valueType)
     } as AlarmRuleFilterPredicate;
     switch (predicate.type) {
-      case FilterPredicateType.STRING:
-        predicate.operation = StringOperation.STARTS_WITH;
+      case AlarmRuleFilterPredicateType.STRING:
+        predicate.operation = AlarmRuleStringOperation.STARTS_WITH;
         predicate.value = {
           staticValue: ''
         };
         predicate.ignoreCase = false;
         break;
-      case FilterPredicateType.NUMERIC:
-        predicate.operation = NumericOperation.EQUAL;
+      case AlarmRuleFilterPredicateType.NUMERIC:
+        predicate.operation = AlarmRuleNumericOperation.EQUAL;
         predicate.value = {
           staticValue: valueType === EntityKeyValueType.DATE_TIME ? Date.now() : 0
         };
         break;
-      case FilterPredicateType.BOOLEAN:
-        predicate.operation = BooleanOperation.EQUAL;
+      case AlarmRuleFilterPredicateType.BOOLEAN:
+        predicate.operation = AlarmRuleBooleanOperation.EQUAL;
         predicate.value = {
           staticValue: false
         };
         break;
-      case FilterPredicateType.COMPLEX:
+      case AlarmRuleFilterPredicateType.COMPLEX:
         predicate.operation = ComplexOperation.AND;
         predicate.predicates = [];
         break;

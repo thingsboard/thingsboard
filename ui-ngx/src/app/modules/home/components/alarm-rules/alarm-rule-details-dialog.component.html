@@ -27,8 +27,10 @@
       <mat-form-field class="mat-block" appearance="outline">
         <textarea matInput [formControl]="alarmDetailsControl" rows="5"
           placeholder="{{ 'alarm-rule.alarm-rule-additional-info-placeholder' | translate }}"></textarea>
-        <mat-hint [innerHTML]="'alarm-rule.alarm-rule-additional-info-hint' | translate | safe: 'html'"></mat-hint>
       </mat-form-field>
+      <div class="tb-form-hint tb-primary-fill flex items-center gap-2">
+        <span [innerHTML]="'alarm-rule.alarm-rule-additional-info-hint' | translate | safe: 'html'"></span>
+      </div>
     </div>
   </div>
   <div mat-dialog-actions class="justify-end">
