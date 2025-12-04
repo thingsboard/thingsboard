@@ -378,7 +378,7 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
             }
         } else {
             log.warn("Device profile not found! The device profile ID is null.");
-            result = null;
+            result = new Lwm2mDeviceProfileTransportConfiguration();
         }
         return result;
     }
