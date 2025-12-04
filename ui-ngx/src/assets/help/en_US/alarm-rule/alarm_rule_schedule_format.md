@@ -1,6 +1,6 @@
-#### Active all time schedule format
+#### Active-all-the-time schedule format
 
-An attribute with a dynamic value for an active all-time schedule format must contain an empty JSON object or JSON in the following format:
+For a schedule that is always active, the argument can be an empty JSON object or a JSON object in the following format:
 
 ```javascript
 {
@@ -10,7 +10,7 @@ An attribute with a dynamic value for an active all-time schedule format must co
 
 #### Specific time schedule format
 
-An attribute with a dynamic value for a specific schedule format must have JSON in the following format:
+The argument value for a specific time schedule must be a JSON object in the following format (the `type` field is optional):
 
 ```javascript
 {
@@ -27,23 +27,25 @@ An attribute with a dynamic value for a specific schedule format must have JSON 
 
 <ul>
 <li>
-<b>timezone:</b> this value is used to designate the timezone you are using.
+<b>timezone:</b> the name of the timezone.
 </li>
 <li>
-<b>daysOfWeek:</b> this value is used to designate the days in numerical representation (Monday - 1, Tuesday 2, etc.) on which the schedule will be active.
+<b>daysOfWeek:</b> days of the week (Monday = 1, Tuesday = 2, ..., Sunday = 7) when the schedule should be active.
 </li>
 <li>
-<b>startsOn:</b> this value is used to designate the timestamp in milliseconds, from which the schedule will be active for the designated days.
+<b>startsOn:</b> time of day in milliseconds from the start of the day (00:00) when the schedule becomes active on the selected days.
 </li>
 <li>
-<b>endsOn:</b> this value is used to designate the timestamp in milliseconds until which the schedule will be active for the specified days.
+<b>endsOn:</b> time of day in milliseconds from the start of the day (00:00) when the schedule stops being active on the selected days.
+If this value is not provided or equals 0, it defaults to the full day (24 hours in milliseconds).
 </li>
 </ul>
-When <b>startsOn</b> and <b>endsOn</b> equals 0 it's means that the schedule will be active the whole day.
+
+If both <b>startsOn</b> and <b>endsOn</b> are 0, the schedule is active for the entire day.
 
 #### Custom time schedule format
 
-An attribute with a dynamic value for a custom schedule format must have JSON in the following format:
+The argument value for a specific time schedule must be a JSON object in the following format (the `type` field is optional):
 
 ```javascript
 {
@@ -98,26 +100,28 @@ An attribute with a dynamic value for a custom schedule format must have JSON in
 
 <ul>
 <li>
-<b>timezone:</b> this value is used to designate the timezone you are using.
+<b>timezone:</b> the name of the timezone.
 </li>
 <li>
-<b>items:</b> the array of values representing the days on which the schedule will be active.
+<b>items:</b> a list of day-specific schedule entries.
 </li>
 </ul>
 
-One array item contains such fields:
+Each item represents one day of the week and contains:
 <ul>
 <li>
-<b>dayOfWeek:</b> this value is used to designate the specified day in numerical representation (Monday - 1, Tuesday 2, etc.) on which the schedule will be active.
+<b>dayOfWeek:</b> the day number (Monday = 1, Tuesday = 2, ..., Sunday = 7)
 </li>
 <li>
-<b>enabled:</b> this <code>boolean</code> value, used to designate that the specified day in the schedule will be enabled.
+<b>enabled:</b> a <code>boolean</code> value that defines whether this day is active in the schedule.
 </li>
 <li>
-<b>startsOn:</b> this value is used to designate the timestamp in milliseconds, from which the schedule will be active for the designated day.
+<b>startsOn:</b> time of day in milliseconds from the start of the day (00:00) when the schedule becomes active for that day.
 </li>
 <li>
-<b>endsOn:</b> this value is used to designate the timestamp in milliseconds until which the schedule will be active for the specified day.
+<b>endsOn:</b> time of day in milliseconds from the start of the day (00:00) when the schedule stops being active for that day.
+If this value is not provided or equals 0, it defaults to the full day (24 hours in milliseconds).
 </li>
 </ul>
-When <b>startsOn</b> and <b>endsOn</b> equals 0 it's means that the schedule will be active the whole day.
+
+If both <b>startsOn</b> and <b>endsOn</b> are 0, the schedule is active for the entire day.
