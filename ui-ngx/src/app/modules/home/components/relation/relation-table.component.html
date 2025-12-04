@@ -135,9 +135,13 @@
         <ng-container *ngIf="direction === directions.TO" matColumnDef="fromName">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.from-entity-name' | translate }} </mat-header-cell>
           <mat-cell *matCellDef="let relation">
-            <a class="link" [routerLink]="relation.entityURL">
+            @if(relation.entityURL){
+              <a class="link" [routerLink]="relation.entityURL">
+                {{ relation.fromName | customTranslate }}
+              </a>
+            } @else {
               {{ relation.fromName | customTranslate }}
-            </a>
+            }
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
