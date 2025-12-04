@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.springframework.lang.Nullable;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
@@ -34,10 +33,13 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
+
+    public static final Long DEFAULT_VERSION = -1L;
 
     @Nullable
     protected EntityId entityId;
@@ -48,7 +50,10 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     protected boolean forceResetPrevious;
 
-    public static final Long DEFAULT_VERSION = -1L;
+    public SingleValueArgumentEntry() {
+        this.ts = DEFAULT_LAST_UPDATE_TS;
+        this.version = DEFAULT_VERSION;
+    }
 
     public SingleValueArgumentEntry(EntityId entityId, ArgumentEntry entry) {
         this(entry);

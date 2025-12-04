@@ -41,6 +41,8 @@ import java.util.stream.Collectors;
 @Getter
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
 
+    protected static final long DEFAULT_LAST_UPDATE_TS = -1L;
+
     protected final EntityId entityId;
     protected CalculatedFieldCtx ctx;
     protected TbActorRef actorCtx;
@@ -48,7 +50,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
-    protected long latestTimestamp = -1;
+    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     protected ReadinessStatus readinessStatus;
 
     @Setter
@@ -119,7 +121,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         requiredArguments = null;
         arguments.clear();
         sizeExceedsLimit = false;
-        latestTimestamp = -1;
+        latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     }
 
     @Override
@@ -147,7 +149,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             return valuesNode;
         }
         long latestTs = getLatestTimestamp();
-        if (latestTs == -1) {
+        if (latestTs == DEFAULT_LAST_UPDATE_TS) {
             return valuesNode;
         }
         ObjectNode resultNode = JacksonUtil.newObjectNode();
@@ -165,12 +167,12 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
         } else if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
             newTs = relatedEntitiesArgumentEntry.getEntityInputs().values().stream()
-                    .mapToLong(e -> (e instanceof SingleValueArgumentEntry s) ? s.getTs() : 0L)
+                    .mapToLong(e -> (e instanceof SingleValueArgumentEntry s) ? s.getTs() : DEFAULT_LAST_UPDATE_TS)
                     .max()
-                    .orElse(0L);
+                    .orElse(DEFAULT_LAST_UPDATE_TS);
         } else if (entry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
             newTs = geofencingArgumentEntry.getZoneStates().values().stream()
-                    .mapToLong(GeofencingZoneState::getTs).max().orElse(0L);
+                    .mapToLong(GeofencingZoneState::getTs).max().orElse(DEFAULT_LAST_UPDATE_TS);
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
     }
