@@ -164,7 +164,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
             newTs = singleValueArgumentEntry.getTs();
         } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
             Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().lastEntry();
-            newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
+            newTs = (lastEntry != null) ? lastEntry.getKey() : DEFAULT_LAST_UPDATE_TS;
         } else if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
             newTs = relatedEntitiesArgumentEntry.getEntityInputs().values().stream()
                     .mapToLong(e -> (e instanceof SingleValueArgumentEntry s) ? s.getTs() : DEFAULT_LAST_UPDATE_TS)
