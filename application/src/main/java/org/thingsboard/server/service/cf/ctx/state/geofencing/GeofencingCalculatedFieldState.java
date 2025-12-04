@@ -58,7 +58,7 @@ import static org.thingsboard.server.common.data.cf.configuration.geofencing.Geo
 @EqualsAndHashCode(callSuper = true)
 public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
 
-    private long lastDynamicArgumentsRefreshTs = -1;
+    private long lastDynamicArgumentsRefreshTs = DEFAULT_LAST_UPDATE_TS;
 
     public GeofencingCalculatedFieldState(EntityId entityId) {
         super(entityId);
@@ -147,7 +147,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState {
     @Override
     public void reset() {
         super.reset();
-        lastDynamicArgumentsRefreshTs = -1;
+        lastDynamicArgumentsRefreshTs = DEFAULT_LAST_UPDATE_TS;
     }
 
     public void updateLastDynamicArgumentsRefreshTs() {

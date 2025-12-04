@@ -138,16 +138,16 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('name', 'alarm-rule.alarm-type', this.pageMode ? '30%' :'33%',
       entity => this.utilsService.customTranslation(entity.name, entity.name)));
     if (this.pageMode) {
-      this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('entityType', 'alarm-rule.entity-type', '15%',
+      this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('entityType', 'alarm-rule.target-entity-type', '15%',
         entity => this.translate.instant(entityTypeTranslations.get(entity.entityId.entityType).type)));
-      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'alarm-rule.entity-name', '30%',
+      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'alarm-rule.target-entity', '30%',
         entity => this.utilsService.customTranslation(entity['entityName'], entity['entityName']),
         entity => getEntityDetailsPageURL(entity.entityId?.id, entity.entityId?.entityType as EntityType), false));
     }
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('createRule', 'alarm-rule.severities', this.pageMode ? '15%' :'67%',
       entity => Object.keys(entity.configuration.createRules).map((severity) => this.translate.instant(alarmSeverityTranslations.get(severity as AlarmSeverity))).join(', '),
       () => ({}), false));
-    this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('clearRule', 'alarm-rule.cleared', '70px',
+    this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('clearRule', 'alarm-rule.cleared', '90px',
       entity => checkBoxCell(!!entity.configuration.clearRule), ()=> { return {padding: 0, textAlign: 'center'}}, false));
 
     this.cellActionDescriptors.push(

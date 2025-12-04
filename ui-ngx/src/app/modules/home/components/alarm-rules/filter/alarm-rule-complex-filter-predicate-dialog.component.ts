@@ -21,13 +21,13 @@ import { AppState } from '@core/core.state';
 import { FormBuilder, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
+import { ComplexOperation, EntityKeyValueType } from '@shared/models/query/query.models';
 import {
-  ComplexOperation,
-  complexOperationTranslationMap,
-  EntityKeyValueType,
-  FilterPredicateType
-} from '@shared/models/query/query.models';
-import { AlarmRuleFilterPredicate, ComplexAlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+  AlarmRuleFilterPredicate,
+  AlarmRuleFilterPredicateType,
+  ComplexAlarmRuleFilterPredicate,
+  filterOperationTranslationMap
+} from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 export interface AlarmRuleComplexFilterPredicateDialogData {
@@ -55,9 +55,9 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
     }
   );
 
-  complexOperations = Object.keys(ComplexOperation);
+  EntityKeyValueType = EntityKeyValueType;
   complexOperationEnum = ComplexOperation;
-  complexOperationTranslations = complexOperationTranslationMap;
+  complexOperationTranslations = filterOperationTranslationMap;
 
   isAdd: boolean;
 
@@ -81,7 +81,7 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
 
   save(): void {
     const predicate = this.complexFilterFormGroup.value as ComplexAlarmRuleFilterPredicate;
-    predicate.type = FilterPredicateType.COMPLEX;
+    predicate.type = AlarmRuleFilterPredicateType.COMPLEX;
     this.dialogRef.close(predicate);
   }
 }

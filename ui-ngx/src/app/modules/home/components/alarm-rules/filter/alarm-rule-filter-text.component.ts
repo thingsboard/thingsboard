@@ -16,25 +16,27 @@
 
 import { Component, Input } from '@angular/core';
 import {
-  booleanOperationTranslationMap,
   ComplexOperation,
   complexOperationTranslationMap,
-  EntityKeyValueType,
-  FilterPredicateType,
-  numericOperationTranslationMap,
-  stringOperationTranslationMap
+  EntityKeyValueType
 } from '@shared/models/query/query.models';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import {
+  alarmRuleBooleanOperationTranslationMap,
   AlarmRuleExpression,
   AlarmRuleExpressionType,
   AlarmRuleFilter,
   AlarmRuleFilterPredicate,
+  AlarmRuleFilterPredicateType,
+  alarmRuleNumericOperationTranslationMap,
+  AlarmRuleStringOperation,
+  alarmRuleStringOperationTranslationMap,
   ComplexAlarmRuleFilterPredicate
 } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { coerceBoolean } from "@shared/decorators/coercion";
+import { timeUnitTranslationMap } from "@shared/models/time/time.models";
 
 @Component({
   selector: 'tb-alarm-rule-filter-text',
@@ -96,7 +98,7 @@ export class AlarmRuleFilterTextComponent {
 
   private updateFilterText(value: AlarmRuleExpression) {
     this.isRequired = false;
-    if (value && (value.expression || value.filters)) {
+    if (value && (value.expression || value.filters?.length)) {
       if (value.type === AlarmRuleExpressionType.SIMPLE) {
         this.filterText = this.keyFiltersToText(this.translate, this.datePipe, value.filters, value.operation);
       } else {
@@ -137,21 +139,21 @@ export class AlarmRuleFilterTextComponent {
     const filterOperation: ComplexOperation = complexOperation ? complexOperation : (keyFilter.operation ?? ComplexOperation.AND);
 
     const predicates = keyFilterPredicates.map((keyFilterPredicate: AlarmRuleFilterPredicate) => {
-      if (keyFilterPredicate.type === FilterPredicateType.COMPLEX) {
+      if (keyFilterPredicate.type === AlarmRuleFilterPredicateType.COMPLEX) {
         const complexPredicate = keyFilterPredicate as ComplexAlarmRuleFilterPredicate;
         const complexOperation = complexPredicate.operation ?? ComplexOperation.AND;
         return this.filterPredicateToText(translate, datePipe, keyFilter, complexPredicate.predicates, complexOperation);
       } else {
         let operation: string;
         let value: string;
-        const val = keyFilterPredicate.value;
+        const val = keyFilterPredicate.type === AlarmRuleFilterPredicateType.NO_DATA ? keyFilterPredicate.duration : keyFilterPredicate.value;
         const dynamicValue = val?.dynamicValueArgument?.length;
         if (dynamicValue) {
           value = '<span class="tb-filter-dynamic-value"><span class="tb-filter-value">' + val?.dynamicValueArgument + '</span></span>';
         }
         switch (keyFilterPredicate.type) {
-          case FilterPredicateType.STRING:
-            operation = translate.instant(stringOperationTranslationMap.get(keyFilterPredicate.operation));
+          case AlarmRuleFilterPredicateType.STRING:
+            operation = translate.instant(alarmRuleStringOperationTranslationMap.get(keyFilterPredicate.operation));
             if (keyFilterPredicate.ignoreCase) {
               operation += ' ' + translate.instant('filter.ignore-case');
             }
@@ -159,8 +161,8 @@ export class AlarmRuleFilterTextComponent {
               value = `'${keyFilterPredicate.value.staticValue}'`;
             }
             break;
-          case FilterPredicateType.NUMERIC:
-            operation = translate.instant(numericOperationTranslationMap.get(keyFilterPredicate.operation));
+          case AlarmRuleFilterPredicateType.NUMERIC:
+            operation = translate.instant(alarmRuleNumericOperationTranslationMap.get(keyFilterPredicate.operation));
             if (!dynamicValue) {
               if (keyFilter.valueType === EntityKeyValueType.DATE_TIME) {
                 value = datePipe.transform(keyFilterPredicate.value.staticValue, 'yyyy-MM-dd HH:mm');
@@ -169,10 +171,16 @@ export class AlarmRuleFilterTextComponent {
               }
             }
             break;
-          case FilterPredicateType.BOOLEAN:
-            operation = translate.instant(booleanOperationTranslationMap.get(keyFilterPredicate.operation));
+          case AlarmRuleFilterPredicateType.BOOLEAN:
+            operation = translate.instant(alarmRuleBooleanOperationTranslationMap.get(keyFilterPredicate.operation));
             if (!dynamicValue) {
               value = translate.instant(keyFilterPredicate.value.staticValue ? 'value.true' : 'value.false');
+            }
+            break;
+          case AlarmRuleFilterPredicateType.NO_DATA:
+            operation = translate.instant(alarmRuleStringOperationTranslationMap.get(AlarmRuleStringOperation.NO_DATA));
+            if (!dynamicValue) {
+              value = keyFilterPredicate.duration.staticValue + ' ' + translate.instant(timeUnitTranslationMap.get(keyFilterPredicate.unit)).toLowerCase();
             }
             break;
         }

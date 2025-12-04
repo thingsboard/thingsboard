@@ -97,6 +97,10 @@
             <artifactId>kafka-clients</artifactId>
         </dependency>
         <dependency>
+            <groupId>org.lz4</groupId>
+            <artifactId>lz4-java</artifactId>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk-sns</artifactId>
         </dependency>
@@ -154,7 +158,7 @@
             <artifactId>json-path</artifactId>
         </dependency>
         <dependency>
-            <groupId>dev.langchain4j</groupId>
+            <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j</artifactId>
         </dependency>
     </dependencies>

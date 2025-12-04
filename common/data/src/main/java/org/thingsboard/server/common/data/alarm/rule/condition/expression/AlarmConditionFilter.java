@@ -17,8 +17,11 @@ package org.thingsboard.server.common.data.alarm.rule.condition.expression;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.ComplexFilterPredicate;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.FilterPredicateType;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.KeyFilterPredicate;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 
@@ -34,7 +37,21 @@ public class AlarmConditionFilter implements Serializable {
     private EntityKeyValueType valueType;
     private ComplexOperation operation;
     @Valid
-    @NotNull
+    @NotEmpty
     private List<KeyFilterPredicate> predicates;
+
+    public boolean hasPredicate(FilterPredicateType type) {
+        return containsPredicate(predicates, type);
+    }
+
+    private boolean containsPredicate(List<KeyFilterPredicate> predicates, FilterPredicateType type) {
+        return predicates.stream().anyMatch(predicate -> {
+            if (predicate instanceof ComplexFilterPredicate complexPredicate) {
+                return containsPredicate(complexPredicate.getPredicates(), type);
+            } else {
+                return predicate.getType() == type;
+            }
+        });
+    }
 
 }

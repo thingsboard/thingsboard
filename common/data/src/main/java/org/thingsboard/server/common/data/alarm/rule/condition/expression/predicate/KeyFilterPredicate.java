@@ -27,7 +27,9 @@ import java.io.Serializable;
         @Type(value = StringFilterPredicate.class, name = "STRING"),
         @Type(value = NumericFilterPredicate.class, name = "NUMERIC"),
         @Type(value = BooleanFilterPredicate.class, name = "BOOLEAN"),
-        @Type(value = ComplexFilterPredicate.class, name = "COMPLEX")})
+        @Type(value = NoDataFilterPredicate.class, name = "NO_DATA"),
+        @Type(value = ComplexFilterPredicate.class, name = "COMPLEX")
+})
 public interface KeyFilterPredicate extends Serializable {
 
     @JsonIgnore
