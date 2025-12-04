@@ -31,11 +31,13 @@ import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArg
 @AllArgsConstructor
 public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
+    static final long DEFAULT_LAST_UPDATE_TS = -1L;
+
     protected List<String> requiredArguments;
     protected Map<String, ArgumentEntry> arguments;
     protected boolean sizeExceedsLimit;
 
-    protected long latestTimestamp = -1;
+    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
 
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
@@ -43,7 +45,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+        this(new ArrayList<>(), new HashMap<>(), false, DEFAULT_LAST_UPDATE_TS);
     }
 
     @Override
@@ -115,7 +117,7 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             newTs = singleValueArgumentEntry.getTs();
         } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
             Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().lastEntry();
-            newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
+            newTs = (lastEntry != null) ? lastEntry.getKey() : DEFAULT_LAST_UPDATE_TS;
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
     }
