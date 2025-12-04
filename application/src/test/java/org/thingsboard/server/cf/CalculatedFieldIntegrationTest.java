@@ -1146,6 +1146,22 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
                     assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(25);
                 });
+
+        Asset asset3 = createAsset("Propagated Asset 3", null);
+        EntityRelation rel3 = new EntityRelation(asset3.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        doPost("/api/relation", rel3).andExpect(status().isOk());
+
+        // --- Assert propagated calculation (arguments-only mode after update) ---
+        await().alias("propagation args-only to new entity after relation creation")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode telemetry = getLatestTelemetry(asset3.getId(), "temperatureComputed");
+                    assertThat(telemetry).isNotNull();
+                    assertThat(telemetry.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
+                    assertThat(telemetry.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(25);
+                });
+
     }
 
     @Test

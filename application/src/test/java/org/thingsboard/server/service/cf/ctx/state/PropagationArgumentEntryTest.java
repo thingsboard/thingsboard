@@ -124,4 +124,32 @@ public class PropagationArgumentEntryTest {
         assertThat((List<EntityId>) tbelCfPropagationArg.getValue()).isEmpty();
     }
 
+    @Test
+    void testAddNewPropagationEntityIdToEmptyArgument() {
+        PropagationArgumentEntry empty = new PropagationArgumentEntry(List.of());
+        assertThat(empty.addPropagationEntityId(ENTITY_1_ID)).isTrue();
+        assertThat(empty.getPropagationEntityIds()).containsExactly(ENTITY_1_ID);
+    }
+
+    @Test
+    void testAddNewPropagationEntityIdThatAlreadyExists() {
+        PropagationArgumentEntry hasEntity = new PropagationArgumentEntry(List.of(ENTITY_1_ID));
+        assertThat(hasEntity.addPropagationEntityId(ENTITY_1_ID)).isFalse();
+        assertThat(hasEntity.getPropagationEntityIds()).containsExactly(ENTITY_1_ID);
+    }
+
+    @Test
+    void testAddNewPropagationEntityId() {
+        PropagationArgumentEntry hasEntity = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID));
+        assertThat(hasEntity.addPropagationEntityId(ENTITY_3_ID)).isTrue();
+        assertThat(hasEntity.getPropagationEntityIds()).contains(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
+    }
+
+    @Test
+    void testRemovePropagationEntityId() {
+        PropagationArgumentEntry hasEntity = new PropagationArgumentEntry(List.of(ENTITY_1_ID));
+        hasEntity.removePropagationEntityId(ENTITY_1_ID);
+        assertThat(hasEntity.isEmpty()).isTrue();
+    }
+
 }

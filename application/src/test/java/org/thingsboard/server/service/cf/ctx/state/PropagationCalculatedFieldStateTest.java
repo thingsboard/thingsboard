@@ -221,6 +221,28 @@ public class PropagationCalculatedFieldStateTest {
         assertThat(result.getResult()).isEqualTo(expectedNode);
     }
 
+    @Test
+    void testPropagationWithUpdatedPropagationArgument() throws ExecutionException, InterruptedException {
+        initCtxAndState(false);
+        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry);
+        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
+
+        PropagationArgumentEntry propagationArgument = state.getPropagationArgument();
+        assertThat(propagationArgument).isNotNull().isEqualTo(propagationArgEntry);
+
+        AssetId newEntityId = new AssetId(UUID.fromString("83e2c962-eeae-4708-984e-e6a24760f9c3"));
+        boolean added = propagationArgument.addPropagationEntityId(newEntityId);
+        assertThat(added).isTrue();
+
+        ArgumentEntry argumentEntry = state.getArguments().get(PROPAGATION_CONFIG_ARGUMENT);
+        assertThat(argumentEntry).isNotNull().isInstanceOf(PropagationArgumentEntry.class);
+        assertThat(((PropagationArgumentEntry) argumentEntry).getPropagationEntityIds()).containsExactly(ASSET_ID_2, ASSET_ID_1, newEntityId);
+
+        PropagationCalculatedFieldResult propagationCalculatedFieldResult = performCalculation(Map.of(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(List.of(newEntityId))));
+        assertThat(propagationCalculatedFieldResult).isNotNull();
+        assertThat(propagationCalculatedFieldResult.getPropagationEntityIds()).isNotNull().containsExactly(newEntityId);
+    }
+
     private CalculatedField getCalculatedField(boolean applyExpressionToResolvedArguments) {
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setTenantId(TENANT_ID);
@@ -254,6 +276,10 @@ public class PropagationCalculatedFieldStateTest {
     }
 
     private PropagationCalculatedFieldResult performCalculation() throws ExecutionException, InterruptedException {
-        return (PropagationCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
+        return performCalculation(Collections.emptyMap());
+    }
+
+    private PropagationCalculatedFieldResult performCalculation(Map<String, ArgumentEntry> updatedArgs) throws ExecutionException, InterruptedException {
+        return (PropagationCalculatedFieldResult) state.performCalculation(updatedArgs, ctx).get();
     }
 }
