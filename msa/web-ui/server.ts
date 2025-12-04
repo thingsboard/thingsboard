@@ -81,12 +81,12 @@ let connections: Socket[] = [];
                     }
                 }
             });
-            app.all('/api/*', (req, res) => {
+            app.all('/api/*splat', (req, res) => {
               logger.debug(req.method + ' ' + req.originalUrl);
               apiProxy.web(req, res);
             });
 
-            app.all('/static/rulenode/*', (req, res) => {
+            app.all('/static/rulenode/*splat', (req, res) => {
               apiProxy.web(req, res);
             });
 
