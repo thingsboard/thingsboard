@@ -27,13 +27,18 @@ import {
   NG_VALUE_ACCESSOR,
   FormControl,
   Validators,
-  FormBuilder
+  FormBuilder,
+  ValidatorFn
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { tap, map, switchMap, take } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+
+export interface ErrorMessageConfig {
+  [errorKey: string]: string;
+}
 
 @Component({
   selector: 'tb-string-autocomplete',
@@ -86,7 +91,10 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   errorText: string;
 
   @Input()
-  requiredErrorText: string;
+  controlValidators: ValidatorFn[] = [];
+
+  @Input()
+  errorMessages: ErrorMessageConfig;
 
   @Input()
   @coerceBoolean()
@@ -109,8 +117,9 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    const validators = [Validators.pattern(/.*\S.*/)];
-    if (this.required) {
+    const validators = [Validators.pattern(/.*\S.*/), ...this.controlValidators];
+    const parentHasRequired = this.controlValidators?.some(v => v === Validators.required);
+    if (this.required && !parentHasRequired) {
       validators.push(Validators.required);
     }
     this.selectionFormControl = this.fb.control('', validators);
@@ -188,7 +197,17 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
     }, 0);
   }
 
-  get getErrorMessage() {
-    return this.selectionFormControl.hasError('required') && this.requiredErrorText ? this.requiredErrorText : this.errorText;
+  get getErrorMessage(): string {
+    if (!this.selectionFormControl.errors) {
+      return '';
+    }
+    if (this.errorMessages && !this.errorText) {
+      for (const errorKey in this.selectionFormControl.errors) {
+        if (this.errorMessages[errorKey]) {
+          return this.errorMessages[errorKey];
+        }
+      }
+    }
+    return this.errorText;
   }
 }

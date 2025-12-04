@@ -22,7 +22,7 @@
          [placeholder]="placeholderText"
          (focusin)="onFocus()"
          [matAutocomplete]="optionsAutocomplete">
-  <button *ngIf="selectionFormControl.value && !disabled"
+  <button *ngIf="selectionFormControl?.value && !disabled"
           type="button"
           class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"

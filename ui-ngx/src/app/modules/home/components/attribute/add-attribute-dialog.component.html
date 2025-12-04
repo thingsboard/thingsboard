@@ -36,8 +36,8 @@
         subscriptSizing="dynamic"
         appearance="outline"
         [fetchOptionsFn]="isTelemetry && fetchOptions.bind(this)"
-        [requiredErrorText]="this.isTelemetry ? 'attribute.telemetry-key-required' : 'attribute.key-required' | translate"
-        [errorText]="'attribute.key-max-length' | translate"
+        [errorMessages]="attributeErrorMessages"
+        [controlValidators]="keyValidators"
         formControlName="key">
       </tb-string-autocomplete>
       <tb-value-input
