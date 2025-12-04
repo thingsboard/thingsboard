@@ -260,6 +260,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     private void onTenantProfileUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
         long updatedCfCheckInterval = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         if (cfCheckInterval != updatedCfCheckInterval) {
+            cfCheckInterval = updatedCfCheckInterval;
             cancelReevaluationTask();
             scheduleCfsReevaluation();
         }

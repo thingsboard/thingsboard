@@ -94,9 +94,8 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         Device device = createDevice("Device", "1234567890111");
 
         CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
-        long intervalEndTs = customInterval.getCurrentIntervalEndTs();
+        createConsumptionCF(device.getId(), customInterval, null);
 
-        CalculatedField consumptionCF = createConsumptionCF(device.getId(), customInterval, null);
         long interval = customInterval.getCurrentIntervalDurationMillis();
 
         await().alias("create CF and no telemetry during interval -> save metric with default value")
@@ -115,8 +114,9 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         Device device = createDevice("Device", "1234567890111");
 
         CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
+        createConsumptionCF(device.getId(), customInterval, null);
+
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
-        long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
         long tsBeforeInterval = currentIntervalStartTs - 1000;
         long tsInInterval_1 = currentIntervalStartTs + 1000;
@@ -128,7 +128,6 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
         long interval = customInterval.getCurrentIntervalDurationMillis();
-        CalculatedField consumptionCF = createConsumptionCF(device.getId(), customInterval, null);
 
         await().alias("create CF -> perform aggregation after interval end")
                 .atMost(2 * interval, TimeUnit.MILLISECONDS)
@@ -158,8 +157,10 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         Device device = createDevice("Device", "1234567890111");
 
         CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
+        Watermark watermark = new Watermark(10);
+        createConsumptionCF(device.getId(), customInterval, watermark);
+
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
-        long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
         long tsBeforeInterval = currentIntervalStartTs - 1000L;
         long tsInInterval_1 = currentIntervalStartTs + 1000L;
@@ -171,8 +172,6 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
 
         long interval = customInterval.getCurrentIntervalDurationMillis();
-        Watermark watermark = new Watermark(10);
-        CalculatedField consumptionCF = createConsumptionCF(device.getId(), customInterval, watermark);
 
         await().alias("create CF -> perform aggregation after interval end")
                 .atMost(2 * interval, TimeUnit.MILLISECONDS)
@@ -232,26 +231,20 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         Device device = createDevice("Device", "1234567890111");
 
         CustomInterval customInterval = new CustomInterval("Europe/Kyiv", 0L, 5L);
+        createCFWith2Args(device.getId(), customInterval, null);
+
         long currentIntervalStartTs = customInterval.getCurrentIntervalStartTs();
-        long currentIntervalEndTs = customInterval.getCurrentIntervalEndTs();
 
         long tsBeforeInterval = currentIntervalStartTs - 1000;
         long tsInInterval_1 = currentIntervalStartTs + 1000;
         long tsInInterval_2 = currentIntervalStartTs + 500;
         long tsInInterval_3 = currentIntervalStartTs + 200;
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsBeforeInterval));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":100}}", tsInInterval_1));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180}}", tsInInterval_2));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120}}", tsInInterval_3));
-
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"temperature\":43}}", tsBeforeInterval));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"temperature\":39}}", tsInInterval_1));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"temperature\":27}}", tsInInterval_2));
-        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"temperature\":50}}", tsInInterval_3));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120, \"temperature\":43}}", tsBeforeInterval));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":100, \"temperature\":39}}", tsInInterval_1));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":180, \"temperature\":27}}", tsInInterval_2));
+        postTelemetry(device.getId(), String.format("{\"ts\": \"%s\", \"values\": {\"energy\":120, \"temperature\":50}}", tsInInterval_3));
 
         long interval = customInterval.getCurrentIntervalDurationMillis();
-
-        CalculatedField consumptionCF = createCFWith2Args(device.getId(), customInterval, null);
 
         await().alias("create CF -> perform aggregation after interval end")
                 .atMost(2 * interval, TimeUnit.MILLISECONDS)
