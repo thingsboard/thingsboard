@@ -1,4 +1,4 @@
-Here is the list of commands, that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
+Here is the list of commands that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
 #### Step 1. Install Java 17 (OpenJDK)
 ThingsBoard service is running on Java 17. To install OpenJDK 17, follow these instructions:
@@ -25,19 +25,16 @@ java -version
 The expected result is:
 
 ```text
-openjdk version "17.x.xx" 
+openjdk version "17.x.xx"
 OpenJDK Runtime Environment (...)
-OpenJDK 64-Bit Server VM (...)
+OpenJDK 64-Bit Server VM (build ...)
 ```
 
 #### Step 2. Configure ThingsBoard Edge Database
 
-ThingsBoard Edge supports SQL and hybrid database approaches.
-In this guide we will use SQL only.
-For hybrid details please follow official installation instructions from the ThingsBoard documentation site.
-
-### Configure PostgreSQL
-ThingsBoard Edge uses PostgreSQL database as a local storage.
+ThingsBoard Edge supports **SQL** and **hybrid** database configurations.
+In this guide, we’ll use an **SQL** database.
+For more details about the hybrid setup, please refer to the official installation instructions on the <a href="https://thingsboard.io/docs/user-guide/install/edge/deb-installation/#step-2-configure-the-thingsboard-edge-database" target="_blank">ThingsBoard documentation site</a>.
 
 To install the PostgreSQL database, run these commands:
 
@@ -71,18 +68,8 @@ echo "CREATE DATABASE tb_edge;" | psql -U postgres -d postgres -h 127.0.0.1 -W
 {:copy-code}
 ```
 
-#### Step 3. Choose Queue Service
-
-ThingsBoard Edge supports only Kafka or in-memory queue (since v4.0) for message storage and communication between ThingsBoard services. Choose the appropriate queue implementation based on your specific business needs:
-
-In Memory: The built-in and default queue implementation. It is useful for development or proof-of-concept (PoC) environments, but is not recommended for production or any type of clustered deployments due to limited scalability.
-
-Kafka: Recommended for production deployments. This queue is used in the most of ThingsBoard production environments now.
-
-In Memory queue is built in and enabled by default. No additional configuration is required.
-
-#### Step 4. ThingsBoard Edge Service Installation
-Download installation package:
+#### Step 3. ThingsBoard Edge Service Installation
+Download the installation package:
 
 ```bash
 wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.deb
@@ -96,8 +83,8 @@ sudo dpkg -i tb-edge-${TB_EDGE_TAG}.deb
 {:copy-code}
 ```
 
-#### Step 5. Configure ThingsBoard Edge
-To configure ThingsBoard Edge, you  can use the following command to automatically update the configuration file with specific values:
+#### Step 4. Configure ThingsBoard Edge
+To configure ThingsBoard Edge, you can use the following command to automatically update the configuration file with specific values:
 
 ```bash
 sudo sh -c 'cat <<EOL >> /etc/tb-edge/conf/tb-edge.conf
@@ -110,7 +97,7 @@ EOL'
 {:copy-code}
 ```
 
-##### [Optional] Configure PostgreSQL
+##### [Optional] Configure PostgreSQL Connection
 If you changed PostgreSQL default datasource settings, use the following command:
 
 ```bash
@@ -122,10 +109,10 @@ EOL'
 {:copy-code}
 ```
 
-PUT_YOUR_POSTGRESQL_PASSWORD_HERE: Replace with your actual PostgreSQL user password.
+* **PUT_YOUR_POSTGRESQL_PASSWORD_HERE**: Replace with your actual **PostgreSQL user password**.
 
-##### [Optional] Update bind ports
-If ThingsBoard Edge is going to be running on the same machine where ThingsBoard server (cloud) is running, you'll need to update configuration parameters to avoid port collision between ThingsBoard server and ThingsBoard Edge.
+##### [Optional] Update Bind Ports
+If ThingsBoard Edge runs on the same machine as the ThingsBoard Server, you need to update the port configuration to avoid conflicts between the two services.
 
 Please execute the following command to update ThingsBoard Edge configuration file (**/etc/tb-edge/conf/tb-edge.conf**):
 
@@ -140,29 +127,26 @@ EOL'
 {:copy-code}
 ```
 
-Make sure that ports above (18080, 11883, 15683) are not used by any other application.
+Make sure that ports **18080**, **11883**, and **15683–15688** are not being used by any other applications.
 
-#### Step 6. Run installation Script
+#### Step 5. Run Installation Script
 
-Once ThingsBoard Edge is installed and configured please execute the following install script:
+Once ThingsBoard Edge is installed and configured, please execute the following installation script:
 
 ```bash
 sudo /usr/share/tb-edge/bin/install/install.sh
 {:copy-code}
 ```
 
-#### Step 7. Restart ThingsBoard Edge Service
+#### Step 6. Start ThingsBoard Edge Service
 
 ```bash
-sudo service tb-edge restart
+sudo service tb-edge start
 {:copy-code}
 ```
 
-#### Step 8. Open ThingsBoard Edge UI
+#### Step 7. Open ThingsBoard Edge UI
 
-Once started, you will be able to open **ThingsBoard Edge UI** using the following link http://localhost:8080.
+Once the Edge service has started, open the Edge web interface at http://localhost:8080, or http://localhost:18080 if you modified the HTTP bind port configuration in the previous step.
 
-###### NOTE: Edge HTTP bind port update
-
-Use next **ThingsBoard Edge UI** link **http://localhost:18080** if you updated HTTP 8080 bind port to **18080**.
-
+Log in using your **tenant credentials** from either your local ThingsBoard Server or the **ThingsBoard Live Demo**.
