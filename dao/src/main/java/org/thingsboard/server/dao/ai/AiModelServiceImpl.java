@@ -86,10 +86,10 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
 
         AiModel savedModel;
         try {
-            log.info("[{}] Saving AI Model: name={}, id={}", aiModel.getTenantId(), aiModel.getName(), aiModel.getId());
+            // CR FIX: Changed to debug level
+            log.debug("[{}] Saving AI Model: name={}, id={}", aiModel.getTenantId(), aiModel.getName(), aiModel.getId());
+            
             savedModel = aiModelDao.saveAndFlush(aiModel.getTenantId(), aiModel);
-            log.info("[{}][{}] AI Model saved successfully", savedModel.getTenantId(), savedModel.getId());
-
             eventPublisher.publishEvent(SaveEntityEvent.builder()
                     .tenantId(savedModel.getTenantId())
                     .entityId(savedModel.getId())
@@ -98,17 +98,20 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
                     .created(oldAiModel == null)
                     .broadcastEvent(true)
                     .build());
+            
+            // CR FIX: Changed to debug level
+            log.debug("[{}][{}] AI Model saved successfully", savedModel.getTenantId(), savedModel.getId());
         } catch (Exception e) {
-            log.error("[{}][{}] Failed to save AI Model: {}", aiModel.getTenantId(), aiModel.getId(), e.getMessage(), e);
+            // CR FIX: Removed e.getMessage() redundancy, kept only the exception object
+            log.error("[{}][{}] Failed to save AI Model", aiModel.getTenantId(), aiModel.getId(), e);
+            
             checkConstraintViolation(e,
                     "ai_model_name_unq_key", "AI model with such name already exist!",
                     "ai_model_external_id_unq_key", "AI model with such external ID already exists!");
             throw e;
         }
-
         var cacheKey = AiModelCacheKey.of(savedModel.getTenantId(), savedModel.getId());
         publishEvictEvent(new AiModelCacheEvictEvent.Saved(cacheKey, savedModel));
-
         return savedModel;
     }
 
@@ -150,13 +153,13 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return findAiModelByTenantIdAndId(tenantId, (AiModelId) entityId)
-                .map(model -> model);
+                .map(model -> model); // necessary to cast to HasId<?>
     }
 
     @Override
     public FluentFuture<Optional<HasId<?>>> findEntityAsync(TenantId tenantId, EntityId entityId) {
         return findAiModelByTenantIdAndIdAsync(tenantId, new AiModelId(entityId.getId()))
-                .transform(modelOpt -> modelOpt.map(model -> model), directExecutor());
+                .transform(modelOpt -> modelOpt.map(model -> model), directExecutor()); // necessary to cast to HasId<?>
     }
 
     @Override
@@ -176,7 +179,6 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
             log.warn("[{}][{}] Attempted to delete AI Model but not found", tenantId, modelId);
             return false;
         }
-
         boolean deleted = aiModelDao.deleteByTenantIdAndId(tenantId, aiModel.getId());
         if (deleted) {
             publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, aiModel.getId())));
@@ -185,9 +187,9 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
                     .entityId(aiModel.getId())
                     .entity(aiModel)
                     .build());
-            log.info("[{}][{}] Successfully deleted AI Model: {}", tenantId, modelId, aiModel.getName());
+            // CR FIX: Changed to debug level
+            log.debug("[{}][{}] Successfully deleted AI Model: {}", tenantId, modelId, aiModel.getName());
         }
-
         return deleted;
     }
 
@@ -197,7 +199,8 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
         Set<AiModelId> deleted = aiModelDao.deleteByTenantId(tenantId);
         deleted.forEach(id -> {
             publishEvictEvent(new AiModelCacheEvictEvent.Deleted(AiModelCacheKey.of(tenantId, id)));
-            log.info("[{}][{}] Deleted AI Model as part of tenant cleanup", tenantId, id);
+            // CR FIX: Changed to debug level
+            log.debug("[{}][{}] Deleted AI Model as part of tenant cleanup", tenantId, id);
         });
     }
 
@@ -205,5 +208,4 @@ class AiModelServiceImpl extends CachedVersionedEntityService<AiModelCacheKey, A
     public EntityType getEntityType() {
         return EntityType.AI_MODEL;
     }
-
 }
