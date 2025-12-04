@@ -95,6 +95,9 @@ public class TbAlarmStatusSubCtx extends TbAbstractSubCtx {
     private void handleAlarmStatusSubscriptionUpdate(TbSubscription<AlarmSubscriptionUpdate> sub, AlarmSubscriptionUpdate subscriptionUpdate) {
         try {
             AlarmInfo alarm = subscriptionUpdate.getAlarm();
+            if (!alarm.getOriginator().equals(subscription.getEntityId())) {
+                return;
+            }
             Set<UUID> alarmsIds = subscription.getAlarmIds();
             if (alarmsIds.contains(alarm.getId().getId())) {
                 if (!subscription.matches(alarm) || subscriptionUpdate.isAlarmDeleted()) {
