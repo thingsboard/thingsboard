@@ -112,7 +112,7 @@ public class TenantController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Tenant (deleteTenant)",
-            notes = "Deletes the tenant, it's customers, rule chains, devices and all other related entities. Referencing non-existing tenant Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
+            notes = "Deletes the tenant, it's customers, rule chains, devices and all other related entities. Referencing non-existing tenant Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(value = "/tenant/{tenantId}")
     @ResponseStatus(value = HttpStatus.OK)
