@@ -276,7 +276,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       selectedTab: [isDefined(this.timewindow.selectedTab) ? this.timewindow.selectedTab : TimewindowType.REALTIME],
       realtime: this.fb.group({
         realtimeType: [{
-          value: isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL,
+          value: this.quickIntervalOnly
+            ? RealtimeWindowType.INTERVAL
+            : (isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL),
           disabled: realtime?.hideInterval
         }],
         timewindowMs: [{
