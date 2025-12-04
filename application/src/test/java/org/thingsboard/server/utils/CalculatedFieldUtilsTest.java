@@ -119,7 +119,7 @@ class CalculatedFieldUtilsTest {
     }
 
     @Test
-    void toProtoAndFromProto_shouldCreatePropagationStateWithoutPropagationArgument() {
+    void toProtoAndFromProto_shouldCreatePropagationStateWithPropagationArgument() {
         // given
         CalculatedFieldEntityCtxId stateId = mock(CalculatedFieldEntityCtxId.class);
         given(stateId.tenantId()).willReturn(TENANT_ID);
@@ -158,7 +158,7 @@ class CalculatedFieldUtilsTest {
 
         assertThat(propagationState.getEntityId()).isEqualTo(DEVICE_ID);
         assertThat(propagationState.getArguments()).isNotNull();
-        assertThat(propagationState.getArguments().get(PROPAGATION_CONFIG_ARGUMENT)).isNull();
+        assertThat(propagationState.getArguments().get(PROPAGATION_CONFIG_ARGUMENT)).isEqualTo(propagationArgumentEntry);
         assertThat(propagationState.getArguments().get("state")).isNotNull().isEqualTo(singleValueArgumentEntry);
         assertThat(propagationState.getRequiredArguments()).isNull();
         assertThat(propagationState.getReadinessStatus()).isNull();

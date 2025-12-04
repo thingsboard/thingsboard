@@ -77,8 +77,8 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         return propagationEntityIds.add(propagationEntityId);
     }
 
-    public void removePropagationEntityId(EntityId relatedEntityId) {
-        propagationEntityIds.remove(relatedEntityId);
+    public boolean removePropagationEntityId(EntityId relatedEntityId) {
+        return propagationEntityIds.remove(relatedEntityId);
     }
 
 }

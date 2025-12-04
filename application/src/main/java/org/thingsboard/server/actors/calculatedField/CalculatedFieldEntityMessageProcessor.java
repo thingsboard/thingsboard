@@ -241,6 +241,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 PropagationArgumentEntry propagationArgument = propagationState.getPropagationArgument();
                 boolean added = propagationArgument.addPropagationEntityId(msg.getRelatedEntityId());
                 if (added) {
+                    propagationState.resetReadinessStatus();
                     updatedArgs = Map.of(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(List.of(msg.getRelatedEntityId())));
                 }
             }
@@ -286,7 +287,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         }
         if (state instanceof PropagationCalculatedFieldState propagationState) {
             PropagationArgumentEntry propagationArgument = propagationState.getPropagationArgument();
-            propagationArgument.removePropagationEntityId(msg.getRelatedEntityId());
+            boolean removed = propagationArgument.removePropagationEntityId(msg.getRelatedEntityId());
+            if (removed) {
+                propagationState.resetReadinessStatus();
+            }
         }
         msg.getCallback().onSuccess();
     }

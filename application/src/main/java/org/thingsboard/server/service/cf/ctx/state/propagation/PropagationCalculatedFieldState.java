@@ -117,4 +117,8 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         return (PropagationArgumentEntry) arguments.get(PROPAGATION_CONFIG_ARGUMENT);
     }
 
+    public void resetReadinessStatus() {
+        readinessStatus = checkReadiness(requiredArguments, arguments);
+    }
+
 }
