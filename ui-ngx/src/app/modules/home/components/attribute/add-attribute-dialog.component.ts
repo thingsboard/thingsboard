@@ -26,10 +26,13 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { AttributeData, AttributeScope, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Observable } from 'rxjs';
+import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
+import { map } from 'rxjs/operators';
 
 export interface AddAttributeDialogData {
   entityId: EntityId;
   attributeScope: TelemetryType;
+  datasource?: AttributeDatasource;
 }
 
 @Component({
@@ -59,7 +62,7 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
 
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
-      key: ['', [Validators.required, Validators.maxLength(255)]],
+      key: ['', [Validators.maxLength(255)]],
       value: [null, [Validators.required]]
     });
     this.isTelemetry = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY;
@@ -96,5 +99,12 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
         this.data.attributeScope as AttributeScope, [attribute]);
     }
     task.subscribe(() => this.dialogRef.close(true));
+  }
+
+  fetchOptions(searchText: string): Observable<Array<string>> {
+    const search = searchText ? searchText?.toLowerCase() : '';
+    return this.data.datasource?.getAllAttributes(this.data.entityId,this.data.attributeScope).pipe(
+      map(attributes => attributes?.filter(attribute => attribute.key.toLowerCase().includes(search)).map(a => a.key)),
+    )
   }
 }

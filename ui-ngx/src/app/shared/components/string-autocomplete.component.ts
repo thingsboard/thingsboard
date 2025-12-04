@@ -86,6 +86,9 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   errorText: string;
 
   @Input()
+  requiredErrorText: string;
+
+  @Input()
   @coerceBoolean()
   showInlineError = false;
 
@@ -183,5 +186,9 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
       this.nameInput.nativeElement.blur();
       this.nameInput.nativeElement.focus();
     }, 0);
+  }
+
+  get getErrorMessage() {
+    return this.selectionFormControl.hasError('required') && this.requiredErrorText ? this.requiredErrorText : this.errorText;
   }
 }

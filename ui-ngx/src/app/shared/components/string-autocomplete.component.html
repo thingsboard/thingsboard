@@ -31,14 +31,14 @@
   </button>
   <mat-icon *ngIf="selectionFormControl.errors && selectionFormControl.touched && !showInlineError"
             matIconSuffix
-            [matTooltip]="errorText"
+            [matTooltip]="getErrorMessage"
             matTooltipPosition="above"
             [matTooltipClass]="tooltipClass"
             class="material-icons tb-suffix-show-always tb-error">
     warning
   </mat-icon>
   <mat-error *ngIf="selectionFormControl.errors && showInlineError">
-    {{errorText}}
+    {{getErrorMessage}}
   </mat-error>
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
