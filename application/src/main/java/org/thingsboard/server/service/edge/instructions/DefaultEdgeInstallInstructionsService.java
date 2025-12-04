@@ -65,9 +65,7 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
             dockerInstallInstructions = dockerInstallInstructions.replace("${EXTRA_HOSTS}", "");
             dockerInstallInstructions = dockerInstallInstructions.replace("${BASE_URL}", baseUrl);
         }
-        String edgeVersion = appVersion + "EDGE";
-        edgeVersion = edgeVersion.replace("-SNAPSHOT", "");
-        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
+        dockerInstallInstructions = dockerInstallInstructions.replace("${TB_EDGE_VERSION}", platformEdgeVersion + "EDGE");
         dockerInstallInstructions = replacePlaceholders(dockerInstallInstructions, edge);
         return new EdgeInstructions(dockerInstallInstructions);
     }
@@ -76,9 +74,8 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
         String ubuntuInstallInstructions = readFile(resolveFile(os, "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
-        String edgeVersion = appVersion.replace("-SNAPSHOT", "");
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", platformEdgeVersion);
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(platformEdgeVersion));
         return new EdgeInstructions(ubuntuInstallInstructions);
     }
 

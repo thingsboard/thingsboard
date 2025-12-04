@@ -136,10 +136,23 @@ public class EdgeGrpcClient implements EdgeRpcClient {
                 .setConnectRequestMsg(ConnectRequestMsg.newBuilder()
                         .setEdgeRoutingKey(edgeKey)
                         .setEdgeSecret(edgeSecret)
-                        .setEdgeVersion(EdgeVersion.V_4_3_0)
+                        .setEdgeVersion(getNewestEdgeVersion())
                         .setMaxInboundMessageSize(maxInboundMessageSize)
                         .build())
                 .build());
+    }
+
+    public static EdgeVersion getNewestEdgeVersion() {
+        EdgeVersion newest = null;
+        for (EdgeVersion v : EdgeVersion.values()) {
+            if (v == EdgeVersion.V_LATEST || v == EdgeVersion.UNRECOGNIZED) {
+                continue;
+            }
+            if (newest == null || v.getNumber() > newest.getNumber()) {
+                newest = v;
+            }
+        }
+        return newest;
     }
 
     private StreamObserver<ResponseMsg> initOutputStream(String edgeKey,
