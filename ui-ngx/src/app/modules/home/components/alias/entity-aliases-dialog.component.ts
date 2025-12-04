@@ -37,7 +37,7 @@ import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
-import { deepClean, deepClone, isUndefined } from '@core/utils';
+import { deepClone, isUndefined } from '@core/utils';
 import { EntityAliasDialogComponent, EntityAliasDialogData } from './entity-alias-dialog.component';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -263,7 +263,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
       }
     }
     if (valid) {
-      this.dialogRef.close(deepClean(entityAliases));
+      this.dialogRef.close(entityAliases);
     } else {
       this.store.dispatch(new ActionNotificationShow(
         {
