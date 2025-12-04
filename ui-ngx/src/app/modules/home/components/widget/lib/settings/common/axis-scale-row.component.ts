@@ -114,7 +114,6 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   writeValue(value: ValueSourceConfig) {
-    console.log("value", value);
     this.modelValue = value;
     this.limitForm.patchValue(
       {
@@ -147,13 +146,35 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
   }
 
   validate(): ValidationErrors | null {
-    return this.limitForm.valid ? null : {
-      axisLimitForm: {
-        valid: false,
-        errors: this.getFormErrors()
+    const type = this.limitForm.get('type')?.value;
+    const errors: any = {};
+
+    if (this.limitForm.invalid) {
+      errors.form = this.getFormErrors();
+    }
+
+    if (type === ValueSourceType.latestKey) {
+      if (!this.latestKeyFormControl.value || this.latestKeyFormControl.invalid) {
+        errors.latestKey = {
+          valid: false
+        };
       }
-    };
+    } else if (type === ValueSourceType.entity) {
+      if (!this.limitForm.get('entityAlias')?.value) {
+        errors.entityAlias = {
+          valid: false
+        };
+      }
+      if (!this.entityKeyFormControl.value || this.entityKeyFormControl.invalid) {
+        errors.entityKey = {
+          valid: false
+        };
+      }
+    }
+
+    return Object.keys(errors).length ? { axisLimitForm: errors } : null;
   }
+
 
   private getFormErrors(): any {
     const errors: any = {};
@@ -175,6 +196,7 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
         this.entityKeyFormControl.clearValidators();
       } else if (type === ValueSourceType.entity) {
         this.latestKeyFormControl.clearValidators();
+        this.limitForm.get('entityAlias').setValidators([Validators.required]);
         this.entityKeyFormControl.setValidators([Validators.required]);
       } else {
         this.latestKeyFormControl.clearValidators();
@@ -184,6 +206,7 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
       this.entityKeyFormControl.updateValueAndValidity({ emitEvent: false });
     }
   }
+
   private subscribeToTypeChanges() {
     this.limitForm.controls.type.valueChanges
       .pipe(takeUntilDestroyed(this.destroyRef))
