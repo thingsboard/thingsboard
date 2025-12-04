@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,6 +27,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -62,8 +66,33 @@ public class LwM2MTransportBootstrapConfig implements LwM2MSecureServerConfig {
     @Qualifier("lwm2mBootstrapCredentials")
     private SslCredentialsConfig credentialsConfig;
 
+    private final List<Runnable> serverReloadCallbacks = new ArrayList<>();
+
+    @PostConstruct
+    public void init() {
+        credentialsConfig.registerReloadCallback(() -> {
+            log.info("LwM2M Bootstrap DTLS certificates reloaded. Triggering bootstrap server reload...");
+            notifyServerReload();
+        });
+    }
+
+    public void registerServerReloadCallback(Runnable callback) {
+        serverReloadCallbacks.add(callback);
+    }
+
+    private void notifyServerReload() {
+        for (Runnable callback : serverReloadCallbacks) {
+            try {
+                callback.run();
+            } catch (Exception e) {
+                log.error("Error executing LwM2M bootstrap server reload callback", e);
+            }
+        }
+    }
+
     @Override
     public SslCredentials getSslCredentials() {
         return this.credentialsConfig.getCredentials();
     }
+
 }

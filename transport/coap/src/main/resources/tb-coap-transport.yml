@@ -168,6 +168,15 @@ transport:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     # Interval of transport statistics logging
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+  ssl:
+    # SSL/TLS settings for the transport layer
+    certificate:
+      # X.509 certificate configuration to auto-detect and reload certificate used by transport protocols in real-time (MQTT, CoAP, LwM2M, etc.)
+      reload:
+        # Enable/disable automatic SSL certificates reload
+        enabled: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_ENABLED:true}"
+        # Check an interval in seconds for certificates reload
+        check_interval: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_CHECK_INTERVAL:60}"
 
 # CoAP server parameters
 coap:

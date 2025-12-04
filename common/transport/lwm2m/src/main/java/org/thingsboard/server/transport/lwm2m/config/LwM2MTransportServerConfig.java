@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.config;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -134,6 +136,35 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Qualifier("lwm2mTrustCredentials")
     private SslCredentialsConfig trustCredentialsConfig;
 
+    private final List<Runnable> serverReloadCallbacks = new ArrayList<>();
+
+    @PostConstruct
+    public void init() {
+        credentialsConfig.registerReloadCallback(() -> {
+            log.info("LwM2M Server DTLS certificates reloaded. Triggering server reload...");
+            notifyServerReload();
+        });
+
+        trustCredentialsConfig.registerReloadCallback(() -> {
+            log.info("LwM2M Trust certificates reloaded. Triggering server reload...");
+            notifyServerReload();
+        });
+    }
+
+    public void registerServerReloadCallback(Runnable callback) {
+        serverReloadCallbacks.add(callback);
+    }
+
+    private void notifyServerReload() {
+        for (Runnable callback : serverReloadCallbacks) {
+            try {
+                callback.run();
+            } catch (Exception e) {
+                log.error("Error executing LwM2M server reload callback", e);
+            }
+        }
+    }
+
     @Override
     public SslCredentials getSslCredentials() {
         return this.credentialsConfig.getCredentials();
@@ -142,4 +173,5 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     public SslCredentials getTrustSslCredentials() {
         return this.trustCredentialsConfig.getCredentials();
     }
+
 }

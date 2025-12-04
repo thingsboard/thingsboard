@@ -19,6 +19,9 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Slf4j
 @Data
 public class SslCredentialsConfig {
@@ -32,6 +35,8 @@ public class SslCredentialsConfig {
 
     private final String name;
     private final boolean trustsOnly;
+
+    private final List<Runnable> reloadCallbacks = new ArrayList<>();
 
     public SslCredentialsConfig(String name, boolean trustsOnly) {
         this.name = name;
@@ -60,6 +65,28 @@ public class SslCredentialsConfig {
         } else {
             log.info("{}: Skipping initialization of disabled SSL credentials.", name);
         }
+    }
+
+    public void onCertificateFileChanged() {
+        try {
+            log.info("{}: Certificate file changed. Reloading SSL credentials...", name);
+            this.credentials.reload(this.trustsOnly);
+            log.info("{}: SSL credentials reloaded successfully.", name);
+
+            for (Runnable callback : reloadCallbacks) {
+                try {
+                    callback.run();
+                } catch (Exception e) {
+                    log.error("{}: Error executing reload callback", name, e);
+                }
+            }
+        } catch (Exception e) {
+            log.error("{}: Failed to reload SSL credentials", name, e);
+        }
+    }
+
+    public void registerReloadCallback(Runnable callback) {
+        this.reloadCallbacks.add(callback);
     }
 
 }

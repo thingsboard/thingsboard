@@ -91,6 +91,11 @@ public abstract class AbstractSslCredentials implements SslCredentials {
     }
 
     @Override
+    public void reload(boolean trustsOnly) throws IOException, GeneralSecurityException {
+        init(trustsOnly);
+    }
+
+    @Override
     public KeyStore getKeyStore() {
         return this.keyStore;
     }
@@ -133,7 +138,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
     public String getValueFromSubjectNameByKey(String subjectName, String key) {
         String[] dns = subjectName.split(",");
         Optional<String> cn = (Arrays.stream(dns).filter(dn -> dn.contains(key + "="))).findFirst();
-        String value = cn.isPresent() ? cn.get().replace(key + "=", "") : null;
+        String value = cn.map(s -> s.replace(key + "=", "")).orElse(null);
         return StringUtils.isNotEmpty(value) ? value : null;
     }
 
@@ -189,7 +194,7 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                     if (cert instanceof X509Certificate) {
                         if (trustsOnly) {
                             // is CA certificate
-                            if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                            if (((X509Certificate) cert).getBasicConstraints() >= 0) {
                                 set.add((X509Certificate) cert);
                             }
                         } else {
@@ -203,12 +208,12 @@ public abstract class AbstractSslCredentials implements SslCredentials {
                         if (trustsOnly) {
                             for (Certificate cert : certs) {
                                 // is CA certificate
-                                if (((X509Certificate) cert).getBasicConstraints()>=0) {
+                                if (((X509Certificate) cert).getBasicConstraints() >= 0) {
                                     set.add((X509Certificate) cert);
                                 }
                             }
                         } else {
-                            set.add((X509Certificate)certs[0]);
+                            set.add((X509Certificate) certs[0]);
                         }
                     }
                 }
@@ -216,4 +221,5 @@ public abstract class AbstractSslCredentials implements SslCredentials {
         } catch (KeyStoreException ignored) {}
         return Collections.unmodifiableSet(set);
     }
+
 }
