@@ -85,7 +85,7 @@ import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldSta
 @Slf4j
 public class CalculatedFieldCtx implements Closeable {
 
-    private static final long SCHEDULED_UPDATE_DISABLED_VALUE = -1L;
+    public static final long DISABLED_INTERVAL_VALUE = -1L;
 
     private CalculatedField calculatedField;
 
@@ -201,7 +201,7 @@ public class CalculatedFieldCtx implements Closeable {
             }
         }
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
-            this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : SCHEDULED_UPDATE_DISABLED_VALUE;
+            this.scheduledUpdateIntervalMillis = scheduledConfig.isScheduledUpdateEnabled() ? TimeUnit.SECONDS.toMillis(scheduledConfig.getScheduledUpdateInterval()) : DISABLED_INTERVAL_VALUE;
         }
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfig) {
             this.useLatestTs = aggConfig.isUseLatestTs();
@@ -720,7 +720,7 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     private boolean isScheduledUpdateDisabled() {
-        return scheduledUpdateIntervalMillis == SCHEDULED_UPDATE_DISABLED_VALUE;
+        return scheduledUpdateIntervalMillis == DISABLED_INTERVAL_VALUE;
     }
 
     public boolean shouldFetchRelationQueryDynamicArgumentsFromDb(CalculatedFieldState state) {

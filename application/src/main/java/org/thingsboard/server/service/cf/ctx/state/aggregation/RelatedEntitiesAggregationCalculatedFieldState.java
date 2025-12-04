@@ -51,6 +51,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx.DISABLED_INTERVAL_VALUE;
 
 @Slf4j
 @Getter
@@ -62,7 +63,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     private long lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
     @Setter
     private long lastRelatedEntitiesRefreshTs = DEFAULT_LAST_UPDATE_TS;
-    private long deduplicationIntervalMs = DEFAULT_LAST_UPDATE_TS;
+    private long deduplicationIntervalMs = DISABLED_INTERVAL_VALUE;
     private Map<String, AggMetric> metrics;
 
     private ScheduledFuture<?> reevaluationFuture;
