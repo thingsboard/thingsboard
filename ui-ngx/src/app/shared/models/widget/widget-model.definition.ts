@@ -33,6 +33,8 @@ export interface WidgetModelDefinition<T = any> {
   updateFromExportInfo(widget: Widget, entityAliases: EntityAliases, filters: Filters, info: T): void;
   datasources(widget: Widget): Datasource[];
   hasTimewindow(widget: Widget): boolean;
+  datasourcesHasAggregation(widget: Widget): boolean;
+  datasourcesHasOnlyComparisonAggregation(widget: Widget): boolean;
 }
 
 const widgetModelRegistry: WidgetModelDefinition[] = [

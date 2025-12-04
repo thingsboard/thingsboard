@@ -43,6 +43,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
+import { widgetHasTimewindow } from '@shared/models/widget/widget-model.definition';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -616,14 +617,11 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     this.dropShadow = isDefined(this.widget.config.dropShadow) ? this.widget.config.dropShadow : true;
     this.enableFullscreen = isDefined(this.widget.config.enableFullscreen) ? this.widget.config.enableFullscreen : true;
 
-    let canHaveTimewindow = false;
+    const canHaveTimewindow = widgetHasTimewindow(this.widget);
     let onlyQuickInterval = false;
     let onlyHistoryTimewindow = false;
-    if (this.widget.type === widgetType.timeseries || this.widget.type === widgetType.alarm) {
-      canHaveTimewindow = true;
-    } else if (this.widget.type === widgetType.latest) {
-      canHaveTimewindow = datasourcesHasAggregation(this.widget.config.datasources);
-      onlyQuickInterval = canHaveTimewindow;
+    if (this.widget.type === widgetType.latest) {
+      onlyQuickInterval = datasourcesHasAggregation(this.widget.config.datasources);
       if (canHaveTimewindow) {
         onlyHistoryTimewindow = datasourcesHasOnlyComparisonAggregation(this.widget.config.datasources);
       }
