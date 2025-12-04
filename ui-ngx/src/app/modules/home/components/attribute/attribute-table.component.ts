@@ -541,7 +541,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
         type: dataKeyType,
         color: this.utils.getMaterialColor(i),
         settings: {},
-        _hash: Math.random()
       };
       this.widgetDatasource.dataKeys.push(dataKey);
     }

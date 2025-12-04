@@ -401,7 +401,6 @@ export interface DataKey extends KeyInfo {
   inLegend?: boolean;
   isAdditional?: boolean;
   origDataKeyIndex?: number;
-  _hash?: number;
 }
 
 export type CellClickColumnInfo = Pick<DataKey, 'name' | 'label'>;
