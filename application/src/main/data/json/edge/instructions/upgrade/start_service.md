@@ -1,4 +1,4 @@
-Start the service
+#### Start the Service
 
 ```bash
 sudo systemctl tb-edge start
