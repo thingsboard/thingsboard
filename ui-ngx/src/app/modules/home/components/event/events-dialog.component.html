@@ -27,8 +27,8 @@
   </mat-toolbar>
   <div mat-dialog-content class="tb-form-panel stroked debug-dialog-content xs:flex-1">
     <tb-event-table
-      [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
-      [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
+      [debugEventTypes]="[data.debugEventType]"
+      [defaultEventType]="data.debugEventType"
       [active]="true"
       [tenantId]="data.tenantId.id"
       [entityId]="data.entityId"
