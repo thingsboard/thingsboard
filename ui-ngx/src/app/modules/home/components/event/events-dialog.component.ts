@@ -26,32 +26,29 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
 
 export interface RuleNodeDebugDialogData {
-  isActive: boolean;
+  title: string;
   tenantId: TenantId;
-  ruleNodeId: EntityId;
-  ruleNodeTestButtonLabel: string;
+  entityId: EntityId;
+  functionTestButtonLabel: string;
   onDebugEventSelected: ()=> void;
 }
 
 @Component({
-  selector: 'tb-rule-node-debug-dialog',
-  templateUrl: './rule-node-debug-dialog.component.html',
-  styleUrl: './rule-node-debug-dialog.component.scss'
+  selector: 'tb-debug-dialog',
+  templateUrl: './events-dialog.component.html',
+  styleUrl: './events-dialog.component.scss'
 })
-export class RuleNodeDebugDialogComponent extends DialogComponent<RuleNodeDebugDialogComponent, string> implements AfterViewInit{
+export class EventsDialogComponent extends DialogComponent<EventsDialogComponent, string> implements AfterViewInit{
 
   @ViewChild(EventTableComponent, {static: true}) eventsTable: EventTableComponent;
 
-  readonly DebugEventType = DebugEventType;
   readonly debugEventTypes = DebugEventType;
   readonly EventType = EventType;
-
-  dialogTitle: string;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: RuleNodeDebugDialogData,
-              protected dialogRef: MatDialogRef<RuleNodeDebugDialogComponent, string>) {
+              protected dialogRef: MatDialogRef<EventsDialogComponent, string>) {
     super(store, router, dialogRef);
   }
 

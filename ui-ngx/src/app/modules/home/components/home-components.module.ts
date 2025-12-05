@@ -204,6 +204,7 @@ import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/ed
 import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key-generated-dialog.component';
 import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
+import { EventsDialogComponent } from '@home/components/event/events-dialog.component';
 
 @NgModule({
   declarations:
@@ -361,7 +362,8 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
       EditApiKeyDescriptionPanelComponent,
       ApiKeyGeneratedDialogComponent,
       AuditLogHeaderComponent,
-      AuditLogFilterComponent
+      AuditLogFilterComponent,
+      EventsDialogComponent
     ],
   imports: [
     CommonModule,
@@ -510,6 +512,7 @@ import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-fi
     ResourcesLibraryComponent,
     ApiKeysTableComponent,
     ApiKeysTableDialogComponent,
+    EventsDialogComponent
   ],
   providers: [
     WidgetComponentService,

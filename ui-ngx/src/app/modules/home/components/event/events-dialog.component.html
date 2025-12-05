@@ -17,7 +17,7 @@
 -->
 <div class="debug-dialog-container flex flex-col xs:h-full">
   <mat-toolbar color="primary">
-    <h2>{{ 'rulenode.events' | translate}}</h2>
+    <h2>{{ data.title | translate}}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -29,10 +29,10 @@
     <tb-event-table
       [debugEventTypes]="[debugEventTypes.DEBUG_RULE_NODE]"
       [defaultEventType]="debugEventTypes.DEBUG_RULE_NODE"
-      [active]="data.isActive"
+      [active]="true"
       [tenantId]="data.tenantId.id"
-      [entityId]="data.ruleNodeId"
-      [functionTestButtonLabel]="data.ruleNodeTestButtonLabel"
+      [entityId]="data.entityId"
+      [functionTestButtonLabel]="data.functionTestButtonLabel"
       (debugEventSelected)="data.onDebugEventSelected"
     />
   </div>
