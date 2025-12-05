@@ -358,7 +358,6 @@ export class DashboardUtilsService {
     if (!widgetHasTimewindow || widget.config.useDashboardTimewindow) {
       delete widget.config.displayTimewindow;
       delete widget.config.timewindow;
-      delete widget.config.timewindowStyle;
 
       if (!widgetHasTimewindow) {
         delete widget.config.useDashboardTimewindow;
