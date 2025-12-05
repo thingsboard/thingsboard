@@ -599,7 +599,7 @@ public class UserController extends BaseController {
 
     @ApiOperation(value = "Get Users By Ids (getUsersByIds)",
             notes = "Requested users must be owned by tenant or assigned to customer which user is performing the request. ")
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/users", params = {"userIds"})
     public List<User> getUsersByIds(
             @Parameter(description = "A list of user ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)

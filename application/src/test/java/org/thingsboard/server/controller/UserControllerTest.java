@@ -269,7 +269,7 @@ public class UserControllerTest extends AbstractControllerTest {
 
     @Test
     public void testFindUsersByIds() throws Exception {
-        loginSysAdmin();
+        loginTenantAdmin();
         List<User> savedUsers = new ArrayList<>();
         for (int i = 0; i < 10; i++) {
             User user = createTenantAdminUser();
