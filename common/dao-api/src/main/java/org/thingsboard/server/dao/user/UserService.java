@@ -110,4 +110,7 @@ public interface UserService extends EntityDaoService {
     void removeMobileSession(TenantId tenantId, String mobileToken);
 
     int countTenantAdmins(TenantId tenantId);
+
+    ListenableFuture<List<User>> findUsersByTenantIdAndIdsAsync(TenantId tenantId, List<UserId> userIds);
+
 }

@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -71,6 +72,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
+import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -90,6 +92,7 @@ import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIG
 import static org.thingsboard.server.controller.ControllerConstants.EDGE_UNASSIGN_RECEIVE_STEP_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_END;
 import static org.thingsboard.server.controller.ControllerConstants.MARKDOWN_CODE_BLOCK_START;
+import static org.thingsboard.server.controller.ControllerConstants.NEW_LINE;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
@@ -577,6 +580,24 @@ public class RuleChainController extends BaseController {
             result.add(ruleChain);
         }
         return checkNotNull(result);
+    }
+
+    @ApiOperation(value = "Get Rule Chains By Ids (getRuleChainsByIds)",
+            notes = "Requested rule chains must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/ruleChains", params = {"ruleChainIds"})
+    public List<RuleChain> getRuleChainsByIds(
+            @Parameter(description = "A list of rule chain ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("ruleChainIds") String[] strRuleChainIds) throws Exception {
+        checkArrayParameter("ruleChainIds", strRuleChainIds);
+        SecurityUser user = getCurrentUser();
+        TenantId tenantId = user.getTenantId();
+        List<RuleChainId> ruleChainIds = new ArrayList<>();
+        for (String strRuleChainId : strRuleChainIds) {
+            ruleChainIds.add(new RuleChainId(toUUID(strRuleChainId)));
+        }
+        return ruleChainService.findRuleChainsByIdsAsync(tenantId, ruleChainIds).get();
     }
 
 }

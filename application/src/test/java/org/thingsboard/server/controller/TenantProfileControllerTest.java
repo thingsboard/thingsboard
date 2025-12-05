@@ -42,8 +42,12 @@ import org.thingsboard.server.queue.TbQueueCallback;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
@@ -119,6 +123,43 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedTenantProfile.getId(), foundTenantProfileInfo.getId());
         Assert.assertEquals(savedTenantProfile.getName(), foundTenantProfileInfo.getName());
     }
+
+    @Test
+    public void testFindTenantProfilesByIds() throws Exception {
+        loginSysAdmin();
+        List<TenantProfile> tenantProfiles = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile " + i);
+            tenantProfiles.add(doPost("/api/tenantProfile", tenantProfile, TenantProfile.class));
+        }
+
+        List<TenantProfile> expected = tenantProfiles.subList(2, 7);
+
+        String idsParam = expected.stream()
+                .map(tp -> tp.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        TenantProfile[] result = doGet(
+                "/api/tenantProfiles?ids=" + idsParam,
+                TenantProfile[].class
+        );
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expected.size(), result.length);
+
+        Map<UUID, TenantProfile> tpById = Arrays.stream(result)
+                .collect(Collectors.toMap(tp -> tp.getId().getId(), Function.identity()));
+
+        for (TenantProfile tp : expected) {
+            UUID id = tp.getId().getId();
+            TenantProfile found = tpById.get(id);
+            Assert.assertNotNull("TenantProfile not found for id " + id, found);
+
+            Assert.assertEquals(tp.getId(), found.getId());
+            Assert.assertEquals(tp.getName(), found.getName());
+        }
+    }
+
 
     @Test
     public void testFindDefaultTenantProfileInfo() throws Exception {

@@ -56,9 +56,13 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -212,6 +216,42 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedDeviceProfile.getId(), foundDeviceProfileInfo.getId());
         Assert.assertEquals(savedDeviceProfile.getName(), foundDeviceProfileInfo.getName());
         Assert.assertEquals(savedDeviceProfile.getType(), foundDeviceProfileInfo.getType());
+    }
+
+    @Test
+    public void testFindDeviceProfileInfosByIds() throws Exception {
+        List<DeviceProfile> deviceProfiles = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile " + i);
+            deviceProfiles.add(saveDeviceProfile(deviceProfile));
+        }
+
+        List<DeviceProfile> expected = deviceProfiles.subList(5, 15);
+
+        String idsParam = expected.stream()
+                .map(dp -> dp.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        DeviceProfileInfo[] result = doGet(
+                "/api/deviceProfileInfos?deviceProfileIds=" + idsParam,
+                DeviceProfileInfo[].class
+        );
+
+        Assert.assertNotNull(result);
+        Assert.assertEquals(expected.size(), result.length);
+
+        Map<UUID, DeviceProfileInfo> infoById = Arrays.stream(result)
+                .collect(Collectors.toMap(info -> info.getId().getId(), Function.identity()));
+
+        for (DeviceProfile dp : expected) {
+            UUID id = dp.getId().getId();
+            DeviceProfileInfo info = infoById.get(id);
+            Assert.assertNotNull("DeviceProfileInfo not found for id " + id, info);
+
+            Assert.assertEquals(dp.getId(), info.getId());
+            Assert.assertEquals(dp.getName(), info.getName());
+            Assert.assertEquals(dp.getType(), info.getType());
+        }
     }
 
     @Test

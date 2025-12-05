@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.asset;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Limit;
 import org.springframework.data.domain.PageRequest;
@@ -103,6 +104,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
         return activeOnly ?
                 assetProfileRepository.findActiveTenantAssetProfileNames(tenantId) :
                 assetProfileRepository.findAllTenantAssetProfileNames(tenantId);
+    }
+
+    @Override
+    public ListenableFuture<List<AssetProfileInfo>> findAssetProfilesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> assetProfileIds) {
+        return service.submit(() -> assetProfileRepository.findAssetProfileInfosByTenantIdAndIdIn(tenantId, assetProfileIds));
     }
 
     @Override

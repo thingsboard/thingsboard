@@ -62,7 +62,9 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -253,6 +255,14 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
         validatePageLink(pageLink);
         return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(),
                 customerId.getId(), pageLink);
+    }
+
+    @Override
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndIdsAsync(TenantId tenantId, List<EntityViewId> entityViewIds) {
+        log.trace("Executing findEntityViewsByTenantIdAndIdsAsync, tenantId [{}], entityViewIds [{}]", tenantId, entityViewIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(entityViewIds, ids -> "Incorrect entityViewIds " + ids);
+        return entityViewDao.findEntityViewsByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(entityViewIds));
     }
 
     @Override

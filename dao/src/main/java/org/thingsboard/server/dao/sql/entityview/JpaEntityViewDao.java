@@ -188,6 +188,11 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
     }
 
     @Override
+    public ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndIdsAsync(UUID tenantId, List<UUID> entityViewIds) {
+        return service.submit(() -> DaoUtil.convertDataList(entityViewRepository.findEntityViewsByTenantIdAndIdIn(tenantId, entityViewIds)));
+    }
+
+    @Override
     public PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}], edgeId [{}], type [{}] and pageLink [{}]", tenantId, edgeId, type, pageLink);
         return DaoUtil.toPageData(entityViewRepository

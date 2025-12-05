@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.dashboard;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -22,6 +23,7 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ImageContainerDao;
 import org.thingsboard.server.dao.ResourceContainerDao;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -80,5 +82,7 @@ public interface DashboardInfoDao extends Dao<DashboardInfo>, ImageContainerDao<
     DashboardInfo findFirstByTenantIdAndName(UUID tenantId, String name);
 
     String findTitleById(UUID tenantId, UUID dashboardId);
+
+    ListenableFuture<List<DashboardInfo>> findDashboardsByIdsAsync(UUID tenantId, List<UUID> dashboardIds);
 
 }

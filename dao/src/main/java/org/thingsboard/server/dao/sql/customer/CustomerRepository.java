@@ -62,4 +62,6 @@ public interface CustomerRepository extends JpaRepository<CustomerEntity, UUID>,
             "c.title, c.version, c.additionalInfo, c.country, c.state, c.city, c.address, c.address2, c.zip, c.phone, c.email) " +
             "FROM CustomerEntity c WHERE c.id > :id ORDER BY c.id")
     List<CustomerFields> findNextBatch(@Param("id") UUID id, Limit limit);
+
+    List<CustomerEntity> findCustomersByTenantIdAndIdIn(UUID tenantId, List<UUID> customerIds);
 }

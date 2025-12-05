@@ -80,4 +80,7 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     List<UserFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
     int countByTenantIdAndAuthority(UUID tenantId, Authority authority);
+
+    List<UserEntity> findUsersByTenantIdAndIdIn(UUID tenantId, List<UUID> userIds);
+
 }
