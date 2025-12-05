@@ -226,7 +226,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
 
     private void handleRelationUpdate(CalculatedFieldRelationActionMsg msg) throws CalculatedFieldException {
         CalculatedFieldCtx ctx = msg.getCalculatedField();
-        var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
         var state = states.get(ctx.getCfId());
         try {
             Map<String, ArgumentEntry> updatedArgs = null;
@@ -246,10 +245,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                     msg.getCallback().onSuccess();
                     return;
                 }
+                state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
             }
-            state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
             if (state.isSizeOk()) {
-                processStateIfReady(state, updatedArgs, ctx, Collections.singletonList(ctx.getCfId()), null, null, callback);
+                processStateIfReady(state, updatedArgs, ctx, Collections.singletonList(ctx.getCfId()), null, null, msg.getCallback());
             } else {
                 throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
             }

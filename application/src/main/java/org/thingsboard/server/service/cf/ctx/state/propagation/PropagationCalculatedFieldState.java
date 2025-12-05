@@ -36,7 +36,6 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
@@ -74,10 +73,10 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
             entityIds = List.of(propagationArgumentEntry.getAdded());
             propagationArgumentEntry.setAdded(null);
         } else {
-            entityIds = List.copyOf(propagationArgumentEntry.getEntityIds());
-            if (entityIds.isEmpty()) {
+            if (propagationArgumentEntry.getEntityIds().isEmpty()) {
                 return Futures.immediateFuture(PropagationCalculatedFieldResult.builder().build());
             }
+            entityIds = List.copyOf(propagationArgumentEntry.getEntityIds());
         }
         if (ctx.isApplyExpressionForResolvedArguments()) {
             return Futures.transform(super.performCalculation(updatedArgs, ctx), telemetryCfResult ->
