@@ -23,7 +23,12 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { EntityId } from '@shared/models/id/entity-id';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData, AttributeScope, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
+import {
+  AttributeData,
+  AttributeScope,
+  LatestTelemetry,
+  TelemetryType
+} from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Observable } from 'rxjs';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
@@ -119,6 +124,4 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
       maxlength: this.translate.instant('attribute.key-max-length')
     }
   }
-
-  protected readonly Validators = Validators;
 }

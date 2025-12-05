@@ -22,7 +22,7 @@
          [placeholder]="placeholderText"
          (focusin)="onFocus()"
          [matAutocomplete]="optionsAutocomplete">
-  <button *ngIf="selectionFormControl?.value && !disabled"
+  <button *ngIf="selectionFormControl.value && !disabled"
           type="button"
           class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"
@@ -38,7 +38,7 @@
     warning
   </mat-icon>
   <mat-error *ngIf="selectionFormControl.errors && showInlineError">
-    {{getErrorMessage}}
+    {{ getErrorMessage }}
   </mat-error>
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
