@@ -21,7 +21,7 @@ import { EventTableComponent } from '@home/components/event/event-table.componen
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { DebugEventType, EventType } from '@shared/models/event.models';
+import { DebugEventType } from '@shared/models/event.models';
 import { TenantId } from '@shared/models/id/tenant-id';
 import { EntityId } from '@shared/models/id/entity-id';
 
@@ -29,6 +29,7 @@ export interface RuleNodeDebugDialogData {
   title: string;
   tenantId: TenantId;
   entityId: EntityId;
+  debugEventType: DebugEventType;
   functionTestButtonLabel: string;
   onDebugEventSelected: ()=> void;
 }
@@ -41,9 +42,6 @@ export interface RuleNodeDebugDialogData {
 export class EventsDialogComponent extends DialogComponent<EventsDialogComponent, string> implements AfterViewInit{
 
   @ViewChild(EventTableComponent, {static: true}) eventsTable: EventTableComponent;
-
-  readonly debugEventTypes = DebugEventType;
-  readonly EventType = EventType;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
