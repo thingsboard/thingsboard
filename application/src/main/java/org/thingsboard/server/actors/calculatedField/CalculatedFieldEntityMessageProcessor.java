@@ -229,26 +229,23 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         var callback = new MultipleTbCallback(CALLBACKS_PER_CF, msg.getCallback());
         var state = states.get(ctx.getCfId());
         try {
+            Map<String, ArgumentEntry> updatedArgs = null;
             if (state == null) {
                 state = createState(ctx);
-            }
-            Map<String, ArgumentEntry> updatedArgs = null;
-            if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
-                Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, msg.getRelatedEntityId(), ctx.getArguments());
-                updatedArgs = relatedEntitiesAggState.updateEntityData(setEntityIdToSingleEntityArguments(msg.getRelatedEntityId(), fetchedArgs));
-            }
-            if (state instanceof PropagationCalculatedFieldState propagationState) {
-                PropagationArgumentEntry propagationArgument = propagationState.getPropagationArgument();
-                boolean added = propagationArgument.addPropagationEntityId(msg.getRelatedEntityId());
-                if (added) {
-                    propagationState.resetReadinessStatus();
-                    updatedArgs = Map.of(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(List.of(msg.getRelatedEntityId())));
+            } else {
+                if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState) {
+                    Map<String, ArgumentEntry> fetchedArgs = cfService.fetchArgsFromDb(tenantId, msg.getRelatedEntityId(), ctx.getArguments());
+                    updatedArgs = relatedEntitiesAggState.updateEntityData(setEntityIdToSingleEntityArguments(msg.getRelatedEntityId(), fetchedArgs));
                 }
-            }
-
-            if (CollectionsUtil.isEmpty(updatedArgs)) {
-                msg.getCallback().onSuccess();
-                return;
+                if (state instanceof PropagationCalculatedFieldState propagationState) {
+                    PropagationArgumentEntry entry = new PropagationArgumentEntry();
+                    entry.setAdded(msg.getRelatedEntityId());
+                    updatedArgs = propagationState.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, entry), ctx);
+                }
+                if (CollectionsUtil.isEmpty(updatedArgs)) {
+                    msg.getCallback().onSuccess();
+                    return;
+                }
             }
             state.checkStateSize(new CalculatedFieldEntityCtxId(tenantId, ctx.getCfId(), entityId), ctx.getMaxStateSize());
             if (state.isSizeOk()) {
@@ -286,11 +283,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             return;
         }
         if (state instanceof PropagationCalculatedFieldState propagationState) {
-            PropagationArgumentEntry propagationArgument = propagationState.getPropagationArgument();
-            boolean removed = propagationArgument.removePropagationEntityId(msg.getRelatedEntityId());
-            if (removed) {
-                propagationState.resetReadinessStatus();
-            }
+            PropagationArgumentEntry entry = new PropagationArgumentEntry();
+            entry.setRemoved(msg.getRelatedEntityId());
+            propagationState.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, entry), ctx);
         }
         msg.getCallback().onSuccess();
     }

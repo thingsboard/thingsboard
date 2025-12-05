@@ -33,7 +33,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ArgumentIntervalProt
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldEntityCtxIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldStateProto;
-import org.thingsboard.server.gen.transport.TransportProtos.EntityIdProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingArgumentProto;
 import org.thingsboard.server.gen.transport.TransportProtos.GeofencingZoneProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SingleValueArgumentProto;
@@ -62,7 +61,6 @@ import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgume
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -110,7 +108,6 @@ public class CalculatedFieldUtils {
                 case SINGLE_VALUE -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) argEntry));
                 case TS_ROLLING -> builder.addRollingValueArguments(toRollingArgumentProto(argName, (TsRollingArgumentEntry) argEntry));
                 case GEOFENCING -> builder.addGeofencingArguments(toGeofencingArgumentProto(argName, (GeofencingArgumentEntry) argEntry));
-                case PROPAGATION -> builder.addAllPropagationEntityIds(toPropagationEntityIdsProto((PropagationArgumentEntry) argEntry));
                 case RELATED_ENTITIES -> {
                     RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
                     relatedEntitiesArgumentEntry.getEntityInputs()
@@ -137,10 +134,6 @@ public class CalculatedFieldUtils {
             builder.setLastMetricsEvalTs(aggState.getLastMetricsEvalTs());
         }
         return builder.build();
-    }
-
-    private static List<EntityIdProto> toPropagationEntityIdsProto(PropagationArgumentEntry argEntry) {
-        return argEntry.getPropagationEntityIds().stream().map(ProtoUtils::toProto).collect(Collectors.toList());
     }
 
     private static AlarmRuleStateProto toAlarmRuleStateProto(AlarmRuleState ruleState) {
@@ -271,18 +264,11 @@ public class CalculatedFieldUtils {
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
         switch (type) {
-            case SCRIPT -> {
-                proto.getRollingValueArgumentsList().forEach(argProto ->
-                        state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
-            }
-            case GEOFENCING -> {
-                proto.getGeofencingArgumentsList().forEach(argProto ->
-                        state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
-            }
-            case PROPAGATION -> {
-                List<EntityId> propagationEntityIds = proto.getPropagationEntityIdsList().stream().map(ProtoUtils::fromProto).toList();
-                state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(propagationEntityIds));
-            }
+            case SCRIPT -> proto.getRollingValueArgumentsList().forEach(argProto ->
+                    state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
+            case GEOFENCING -> proto.getGeofencingArgumentsList().forEach(argProto ->
+                    state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
+            case PROPAGATION -> state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry());
             case ALARM -> {
                 AlarmCalculatedFieldState alarmState = (AlarmCalculatedFieldState) state;
                 AlarmStateProto alarmStateProto = proto.getAlarmState();

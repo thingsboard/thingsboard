@@ -935,7 +935,6 @@ message CalculatedFieldStateProto {
   int64 lastArgsUpdateTs = 7;
   int64 lastMetricsEvalTs = 8;
   repeated ArgumentIntervalProto aggregationArguments = 9;
-  repeated EntityIdProto propagationEntityIds = 10;
 }
 
 //Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
