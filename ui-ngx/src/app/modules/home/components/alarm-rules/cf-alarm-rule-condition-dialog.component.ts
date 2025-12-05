@@ -41,6 +41,7 @@ import {
   alarmRuleDefaultScript,
   AlarmRuleExpressionType,
   AlarmRuleFilter,
+  areFiltersAndPredicateArgumentsValid,
   filterOperationTranslationMap
 } from "@shared/models/alarm-rule.models";
 
@@ -137,7 +138,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
       type: this.condition?.type ?? AlarmRuleConditionType.SIMPLE,
       unit: this.condition?.unit ?? TimeUnit.SECONDS,
       value: {
-        staticValue: this.condition?.value?.staticValue,
+        staticValue: this.condition?.value?.staticValue ?? null,
         dynamicValueArgument: Object.keys(this.data.arguments).includes(this.condition?.value?.dynamicValueArgument) ? this.condition?.value?.dynamicValueArgument : null,
       },
       count: {
@@ -150,7 +151,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.durationDynamicModeControl.patchValue(!!this.condition?.value?.dynamicValueArgument, {emitEvent: false});
     this.repeatingDynamicModeControl.patchValue(!!this.condition?.count?.dynamicValueArgument, {emitEvent: false});
 
-    this.filtersValid = this.areFilterAndPredicateArgumentsValid(this.condition?.expression?.filters, this.argumentsList);
+    this.filtersValid = areFiltersAndPredicateArgumentsValid(this.condition?.expression?.filters, this.data.arguments);
     this.checkIsNoData(this.condition?.expression?.filters);
 
     this.conditionFormGroup.get('type').valueChanges.pipe(
@@ -168,7 +169,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.conditionFormGroup.get('expression.filters').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((filters) => {
-      this.filtersValid = this.areFilterAndPredicateArgumentsValid(filters, this.argumentsList);
+      this.filtersValid = areFiltersAndPredicateArgumentsValid(filters, this.data.arguments);
       this.checkIsNoData(filters);
     });
 
@@ -204,39 +205,6 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
       control.get('staticValue').enable({emitEvent: false});
       control.get('dynamicValueArgument').disable({emitEvent: false});
     }
-  }
-
-  private areFilterAndPredicateArgumentsValid(obj: any, validArguments: string[]): boolean {
-    const validSet = new Set(validArguments);
-    const filters = obj || [];
-    for (const filter of filters) {
-      if (filter.argument && !validSet.has(filter.argument)) {
-        return false;
-      }
-    }
-    function checkPredicates(predicates: any[]): boolean {
-      for (const p of predicates) {
-        if (p.value?.dynamicValueArgument) {
-          if (!validSet.has(p.value.dynamicValueArgument)) {
-            return false;
-          }
-        }
-        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
-          if (!checkPredicates(p.predicates)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    for (const filter of filters) {
-      if (Array.isArray(filter.predicates)) {
-        if (!checkPredicates(filter.predicates)) {
-          return false;
-        }
-      }
-    }
-    return true;
   }
 
   updateExpressionTypeValidator(type: 'SIMPLE' | 'TBEL') {
@@ -324,7 +292,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
         if (value.dynamicValueArgument) {
           this.specText = this.translate.instant('alarm-rule.condition-during-dynamic', {
             attribute: `${value.dynamicValueArgument}`
-          });
+          }) + ' ' + this.translate.instant(this.timeUnitTranslations.get(this.conditionFormGroup.get('unit').value)).toLowerCase();
         } else {
           this.specText = this.translate.instant('alarm-rule.condition-during', {
             during: duringText
@@ -355,7 +323,8 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.dialogRef.close(this.conditionFormGroup.value as AlarmRuleCondition);
   }
 
-  onTestScript() {
+  onTestScript($event: Event) {
+    $event?.preventDefault();
     this.data.testScript(this.conditionFormGroup.get('expression.expression').value).subscribe(
       (expression) => {
         this.conditionFormGroup.get('expression.expression').setValue(expression);
