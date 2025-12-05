@@ -19,22 +19,30 @@ import lombok.Data;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfPropagationArg;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Data
 public class PropagationArgumentEntry implements ArgumentEntry {
 
-    private List<EntityId> propagationEntityIds;
+    private Set<EntityId> entityIds;
+    private transient EntityId added;
+    private transient EntityId removed;
 
     private boolean forceResetPrevious;
 
-    public PropagationArgumentEntry(List<EntityId> propagationEntityIds) {
-        this.propagationEntityIds = new ArrayList<>(propagationEntityIds);
+    public PropagationArgumentEntry() {
+        this.entityIds = new HashSet<>();
+        this.added = null;
+        this.removed = null;
+    }
+
+    public PropagationArgumentEntry(List<EntityId> entityIds) {
+        this.entityIds = new HashSet<>(entityIds);
     }
 
     @Override
@@ -44,7 +52,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
 
     @Override
     public Object getValue() {
-        return propagationEntityIds;
+        return entityIds;
     }
 
     @Override
@@ -52,22 +60,32 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         if (!(entry instanceof PropagationArgumentEntry propagationArgumentEntry)) {
             throw new IllegalArgumentException("Unsupported argument entry type for propagation argument entry: " + entry.getType());
         }
-        if (propagationArgumentEntry.isEmpty()) {
-            propagationEntityIds.clear();
-        } else {
-            propagationEntityIds = propagationArgumentEntry.getPropagationEntityIds();
+        if (propagationArgumentEntry.getAdded() != null) {
+            boolean updated = entityIds.add(propagationArgumentEntry.getAdded());
+            if (updated) {
+                added = propagationArgumentEntry.getAdded();
+            }
+            return updated;
         }
+        if (propagationArgumentEntry.getRemoved() != null) {
+            return entityIds.remove(propagationArgumentEntry.getRemoved());
+        }
+        if (propagationArgumentEntry.isEmpty()) {
+            entityIds.clear();
+            return true;
+        }
+        entityIds = propagationArgumentEntry.getEntityIds();
         return true;
     }
 
     @Override
     public boolean isEmpty() {
-        return CollectionsUtil.isEmpty(propagationEntityIds);
+        return entityIds.isEmpty();
     }
 
     @Override
     public TbelCfArg toTbelCfArg() {
-        return new TbelCfPropagationArg(propagationEntityIds);
+        return new TbelCfPropagationArg(entityIds);
     }
 
 }

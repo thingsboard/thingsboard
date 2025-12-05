@@ -171,7 +171,7 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
 
     private void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,
                                           TriConsumer<EntityId, TelemetryCalculatedFieldResult, TbCallback> telemetryResultHandler) {
-        List<EntityId> propagationEntityIds = propagationResult.getPropagationEntityIds();
+        List<EntityId> propagationEntityIds = propagationResult.getEntityIds();
         if (propagationEntityIds.isEmpty()) {
             callback.onSuccess();
             return;
