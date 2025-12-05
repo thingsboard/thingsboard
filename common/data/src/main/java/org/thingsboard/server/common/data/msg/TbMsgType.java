@@ -71,6 +71,9 @@ public enum TbMsgType {
     PROVISION_FAILURE,
     SEND_EMAIL,
     REST_API_REQUEST("REST API request"),
+    OTA_ATTRIBUTES_UPDATED("OTA Attributes Updated"),
+    OTA_ATTRIBUTES_DELETED("OTA Attributes Deleted"),
+    OTA_TIMESERIES_UPDATED("OTA Timeseries Updated"),
 
     // tellSelfOnly types
     GENERATOR_NODE_SELF_MSG(null, true),
