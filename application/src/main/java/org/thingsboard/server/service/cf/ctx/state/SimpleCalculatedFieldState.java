@@ -99,10 +99,9 @@ public class SimpleCalculatedFieldState extends BaseCalculatedFieldState {
             valuesNode.set(outputName, JacksonUtil.valueToTree(result));
         }
 
-        long latestTs = getLatestTimestamp();
-        if (useLatestTs && latestTs != DEFAULT_LAST_UPDATE_TS) {
+        if (useLatestTs) {
             ObjectNode resultNode = JacksonUtil.newObjectNode();
-            resultNode.put("ts", latestTs);
+            resultNode.put("ts", getLatestTimestamp());
             resultNode.set("values", valuesNode);
             return resultNode;
         } else {

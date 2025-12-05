@@ -48,6 +48,11 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
         this(new ArrayList<>(), new HashMap<>(), false, DEFAULT_LAST_UPDATE_TS);
     }
 
+
+    public long getLatestTimestamp() {
+        return latestTimestamp == DEFAULT_LAST_UPDATE_TS ? System.currentTimeMillis() : latestTimestamp;
+    }
+
     @Override
     public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
         if (arguments == null) {
