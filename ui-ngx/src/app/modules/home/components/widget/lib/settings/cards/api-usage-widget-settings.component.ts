@@ -193,6 +193,7 @@ export class ApiUsageWidgetSettingsComponent extends WidgetSettingsComponent {
           hideDataKeyColor: true,
           hideDataKeyDecimals: true,
           hideDataKeyUnits: true,
+          hideDataKeyAggregation: true,
           widget: this.widget,
           dashboard: null,
           dataKeySettingsForm: null,

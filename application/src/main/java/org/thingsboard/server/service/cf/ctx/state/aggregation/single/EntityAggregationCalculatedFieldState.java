@@ -218,7 +218,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                 processArgument(intervalEntry, argName, false, results);
-            } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+            } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == DEFAULT_LAST_UPDATE_TS) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                 processArgument(intervalEntry, argName, true, results);
             }
@@ -232,9 +232,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             if (argEntryIntervalStatus.intervalPassed(checkInterval)) {
                 if (argEntryIntervalStatus.argsUpdated()) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                    argEntryIntervalStatus.setLastArgsRefreshTs(-1);
+                    argEntryIntervalStatus.setLastArgsRefreshTs(DEFAULT_LAST_UPDATE_TS);
                     processArgument(intervalEntry, argName, false, results);
-                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == DEFAULT_LAST_UPDATE_TS) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     processArgument(intervalEntry, argName, true, results);
                 }

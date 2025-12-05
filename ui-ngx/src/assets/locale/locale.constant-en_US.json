@@ -6475,13 +6475,13 @@
     "timewindow": {
         "timewindow": "Time window",
         "timewindow-settings": "Time window settings",
-        "years": "{ years, plural, =1 { year } other {# years } }",
+        "years": "{ years, plural, =1 {1 year } other {# years } }",
         "years-short": "{{ years }}y",
-        "months": "{ months, plural, =1 { month } other {# months } }",
+        "months": "{ months, plural, =1 {1 month } other {# months } }",
         "months-short": "{{ months }}M",
-        "weeks": "{ weeks, plural, =1 { week } other {# weeks } }",
+        "weeks": "{ weeks, plural, =1 {1 week } other {# weeks } }",
         "weeks-short": "{{ weeks }}w",
-        "days": "{ days, plural, =1 { day } other {# days } }",
+        "days": "{ days, plural, =1 {1 day } other {# days } }",
         "days-short": "{{ days }}d",
         "hours": "{ hours, plural, =0 { hour } =1 {1 hour } other {# hours } }",
         "hr": "{{ hr }} hr",
@@ -6541,7 +6541,9 @@
         "default-agg-interval": "Default grouping interval",
         "edit-intervals-list-hint": "List of available interval options can be specified.",
         "edit-grouping-intervals-list-hint": "It is possible to configure the grouping intervals list and default grouping interval.",
-        "all": "All"
+        "all": "All",
+        "save-current-settings-as-default": "Save current settings as default time window",
+        "hide-option-from-end-users": "Hide option from end-users"
     },
     "tooltip": {
         "trigger": "Trigger",

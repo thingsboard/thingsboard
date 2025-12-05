@@ -76,7 +76,6 @@ import { AliasController } from '@core/api/alias-controller';
 import { EntityAlias, EntityAliases } from '@shared/models/alias.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetService } from '@core/http/widget.service';
 import { toWidgetInfo } from '../../models/widget-component.models';
 import { EntityService } from '@core/http/entity.service';
@@ -89,6 +88,8 @@ import { Filters } from '@shared/models/query/query.models';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
 import { FormBuilder } from '@angular/forms';
+import { AggregationType, defaultTimewindow } from '@shared/models/time/time.models';
+import { TimeService } from '@core/services/time.service';
 
 
 @Component({
@@ -201,7 +202,8 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
               private zone: NgZone,
               private cd: ChangeDetectorRef,
               private elementRef: ElementRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private timeService: TimeService) {
     super(store);
     this.dirtyValue = !this.activeValue;
     const sortOrder: SortOrder = { property: 'key', direction: Direction.ASC };
@@ -541,7 +543,6 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
         type: dataKeyType,
         color: this.utils.getMaterialColor(i),
         settings: {},
-        _hash: Math.random()
       };
       this.widgetDatasource.dataKeys.push(dataKey);
     }
@@ -568,7 +569,7 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
         this.widgetsLoaded = false;
         this.widgetService.getBundleWidgetTypes(widgetsBundle.id.id).subscribe(
           (widgetTypes) => {
-            widgetTypes = widgetTypes.sort((a, b) => {
+            widgetTypes = widgetTypes.filter(widget => !widget.deprecated).sort((a, b) => {
               let result = widgetType[b.descriptor.type].localeCompare(widgetType[a.descriptor.type]);
               if (result === 0) {
                 result = b.createdTime - a.createdTime;
@@ -592,6 +593,11 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
                 };
                 widget.config.title = widgetInfo.widgetName;
                 widget.config.datasources = [this.widgetDatasource];
+                if (widget.type === widgetType.timeseries && widget.config.useDashboardTimewindow) {
+                  widget.config.useDashboardTimewindow = false;
+                  widget.config.timewindow = defaultTimewindow(this.timeService);
+                  widget.config.timewindow.aggregation.type = AggregationType.NONE;
+                }
                 if ((this.attributeScope === LatestTelemetry.LATEST_TELEMETRY && widgetInfo.type !== widgetType.rpc) ||
                       widgetInfo.type === widgetType.latest) {
                   const length = this.widgetsListCache.push([widget]);

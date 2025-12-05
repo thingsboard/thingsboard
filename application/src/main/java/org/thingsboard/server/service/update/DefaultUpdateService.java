@@ -150,10 +150,10 @@ public class DefaultUpdateService implements UpdateService {
                         .build());
             }
             ObjectNode edgeRequest = JacksonUtil.newObjectNode().put(VERSION_PARAM, version);
-            String edgeInstallVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
-            if (edgeInstallVersion != null) {
-                edgeInstallInstructionsService.setAppVersion(edgeInstallVersion);
-                edgeUpgradeInstructionsService.setAppVersion(edgeInstallVersion);
+            String edgePlatformVersion = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/installMapping", new HttpEntity<>(edgeRequest.toString(), headers), String.class);
+            if (edgePlatformVersion != null) {
+                edgeInstallInstructionsService.setPlatformEdgeVersion(edgePlatformVersion);
+                edgeUpgradeInstructionsService.setPlatformEdgeVersion(edgePlatformVersion);
             }
             EdgeUpgradeMessage edgeUpgradeMessage = restClient.postForObject(UPDATE_SERVER_BASE_URL + "/api/v1/edge/upgradeMapping", new HttpEntity<>(edgeRequest.toString(), headers), EdgeUpgradeMessage.class);
             if (edgeUpgradeMessage != null) {
