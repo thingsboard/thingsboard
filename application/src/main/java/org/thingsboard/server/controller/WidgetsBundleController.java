@@ -253,23 +253,11 @@ public class WidgetsBundleController extends BaseController {
         for (String strWidgetsBundleId : strWidgetsBundleIds) {
             widgetsBundleIds.add(new WidgetsBundleId(toUUID(strWidgetsBundleId)));
         }
-        List<WidgetsBundle> result;
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            result = checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByIdsAsync(getTenantId(), widgetsBundleIds).get());
+            return widgetsBundleService.findSystemWidgetsBundlesByIdsAsync(getTenantId(), widgetsBundleIds).get();
         } else {
-            result = checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByIdsAsync(getTenantId(), widgetsBundleIds).get());
+            return widgetsBundleService.findAllTenantWidgetsBundlesByIdsAsync(getTenantId(), widgetsBundleIds).get();
         }
-
-        return Objects.requireNonNull(result)
-                .stream()
-                .filter(e -> {
-                    try {
-                        return accessControlService.hasPermission(getCurrentUser(), Resource.WIDGETS_BUNDLE, Operation.READ, e.getId(), e);
-                    } catch (ThingsboardException ex) {
-                        return false;
-                    }
-                })
-                .toList();
     }
 
 }

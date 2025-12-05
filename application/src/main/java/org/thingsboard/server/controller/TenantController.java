@@ -174,7 +174,7 @@ public class TenantController extends BaseController {
         return checkNotNull(tenantService.findTenantInfos(pageLink));
     }
 
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/tenants", params = {"tenantIds"})
     public List<Tenant> getTenantsByIds(
             @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
@@ -186,16 +186,7 @@ public class TenantController extends BaseController {
         for (String strTenantId : strTenantIds) {
             tenantIds.add(new TenantId(toUUID(strTenantId)));
         }
-        return Objects.requireNonNull(checkNotNull(tenantService.findTenantsByIdsAsync(tenantId, tenantIds).get()))
-                .stream()
-                .filter(e -> {
-                    try {
-                        return accessControlService.hasPermission(user, Resource.TENANT, Operation.READ, e.getId(), e);
-                    } catch (ThingsboardException ex) {
-                        return false;
-                    }
-                })
-                .toList();
+        return tenantService.findTenantsByIdsAsync(tenantId, tenantIds).get();
     }
 
 }

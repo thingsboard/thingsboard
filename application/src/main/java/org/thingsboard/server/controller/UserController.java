@@ -611,16 +611,18 @@ public class UserController extends BaseController {
         for (String strUserId : strUserIds) {
             userIds.add(new UserId(toUUID(strUserId)));
         }
-        return Objects.requireNonNull(checkNotNull(userService.findUsersByTenantIdAndIdsAsync(tenantId, userIds).get()))
-                .stream()
-                .filter(e -> {
-                    try {
-                        return accessControlService.hasPermission(user, Resource.USER, Operation.READ, e.getId(), e);
-                    } catch (ThingsboardException ex) {
-                        return false;
-                    }
-                })
-                .toList();
+        List<User> users = checkNotNull(userService.findUsersByTenantIdAndIdsAsync(tenantId, userIds).get());
+        return filterUsersByReadPermission(users);
+    }
+
+    private List<User> filterUsersByReadPermission(List<User> users) {
+        return users.stream().filter(user -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.USER, Operation.READ, user.getId(), user);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
     private void checkNotReserved(String strType, UserSettingsType type) throws ThingsboardException {

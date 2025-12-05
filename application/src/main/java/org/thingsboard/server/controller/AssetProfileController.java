@@ -237,16 +237,13 @@ public class AssetProfileController extends BaseController {
             @RequestParam("assetProfileIds") String[] strAssetProfileIds) throws ThingsboardException, ExecutionException, InterruptedException {
         checkArrayParameter("assetProfileIds", strAssetProfileIds);
         SecurityUser user = getCurrentUser();
-        if (!accessControlService.hasPermission(user, Resource.ASSET_PROFILE, Operation.READ)) {
-            return Collections.emptyList();
-        }
         TenantId tenantId = user.getTenantId();
         List<AssetProfileId> assetProfileIds = new ArrayList<>();
         for (String strAssetProfileId : strAssetProfileIds) {
             assetProfileIds.add(new AssetProfileId(toUUID(strAssetProfileId)));
         }
 
-        return checkNotNull(assetProfileService.findAssetProfilesByIdsAsync(tenantId, assetProfileIds).get());
+        return assetProfileService.findAssetProfilesByIdsAsync(tenantId, assetProfileIds).get();
     }
 
 }

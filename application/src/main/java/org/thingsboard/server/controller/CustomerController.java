@@ -194,7 +194,7 @@ public class CustomerController extends BaseController {
     @ApiOperation(value = "Get customers by Customer Ids (getCustomersByIds)",
             notes = "Returns a list of Customer objects based on the provided ids." +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/customers", params = {"customerIds"})
     public List<Customer> getCustomersByIds(
             @Parameter(description = "A list of customer ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
@@ -206,16 +206,7 @@ public class CustomerController extends BaseController {
         for (String strCustomerId : strCustomerIds) {
             customerIds.add(new CustomerId(toUUID(strCustomerId)));
         }
-        return Objects.requireNonNull(checkNotNull(customerService.findCustomersByTenantIdAndIdsAsync(tenantId, customerIds).get()))
-                .stream()
-                .filter(e -> {
-                    try {
-                        return accessControlService.hasPermission(user, Resource.CUSTOMER, Operation.READ, e.getId(), e);
-                    } catch (ThingsboardException ex) {
-                        return false;
-                    }
-                })
-                .toList();
+        return customerService.findCustomersByTenantIdAndIdsAsync(tenantId, customerIds).get();
     }
 
 }

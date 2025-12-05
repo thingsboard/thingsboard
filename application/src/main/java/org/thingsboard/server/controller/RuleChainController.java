@@ -79,7 +79,6 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentMap;
@@ -598,16 +597,7 @@ public class RuleChainController extends BaseController {
         for (String strRuleChainId : strRuleChainIds) {
             ruleChainIds.add(new RuleChainId(toUUID(strRuleChainId)));
         }
-        return Objects.requireNonNull(checkNotNull(ruleChainService.findRuleChainsByIdsAsync(tenantId, ruleChainIds).get()))
-                .stream()
-                .filter(e -> {
-                    try {
-                        return accessControlService.hasPermission(user, Resource.RULE_CHAIN, Operation.READ, e.getId(), e);
-                    } catch (ThingsboardException ex) {
-                        return false;
-                    }
-                })
-                .toList();
+        return ruleChainService.findRuleChainsByIdsAsync(tenantId, ruleChainIds).get();
     }
 
 }
