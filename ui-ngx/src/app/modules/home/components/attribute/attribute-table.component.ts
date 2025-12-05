@@ -317,13 +317,19 @@ export class AttributeTableComponent extends PageComponent implements AfterViewI
     if ($event) {
       $event.stopPropagation();
     }
+    const data: AddAttributeDialogData = {
+      entityId: this.entityIdValue,
+      attributeScope: this.attributeScope,
+    };
+
+    if(this.attributeScope === LatestTelemetry.LATEST_TELEMETRY) {
+      data.datasource = this.dataSource;
+    }
+
     this.dialog.open<AddAttributeDialogComponent, AddAttributeDialogData, boolean>(AddAttributeDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        entityId: this.entityIdValue,
-        attributeScope: this.attributeScope
-      }
+      data
     }).afterClosed().subscribe(
       (res) => {
         if (res) {

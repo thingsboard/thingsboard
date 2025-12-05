@@ -30,16 +30,18 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" class="flex flex-col gap-2">
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="mat-block tb-inline-field">
-        <mat-label translate>attribute.key</mat-label>
-        <input matInput formControlName="key" required>
-        <mat-error *ngIf="attributeFormGroup.get('key').hasError('required')">
-          {{ (isTelemetry ? 'attribute.telemetry-key-required' : 'attribute.key-required') | translate }}
-        </mat-error>
-        <mat-error *ngIf="attributeFormGroup.get('key').hasError('maxlength')">
-          {{ 'attribute.key-max-length' | translate }}
-        </mat-error>
-      </mat-form-field>
+      <tb-string-autocomplete
+        panelWidth=""
+        additionalClass="mat-block tb-inline-field tb-suffix-absolute tb-suffix-show-on-hover"
+        required
+        [label]="'attribute.key' | translate"
+        subscriptSizing="dynamic"
+        appearance="outline"
+        [fetchOptionsFn]="isTelemetry && fetchOptions.bind(this)"
+        [errorMessages]="attributeErrorMessages"
+        [controlValidators]="keyValidators"
+        formControlName="key">
+      </tb-string-autocomplete>
       <tb-value-input
         formControlName="value"
         [requiredText]="isTelemetry ? 'attribute.telemetry-value-required' : 'attribute.value-required'">
