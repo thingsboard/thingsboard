@@ -49,7 +49,7 @@ The argument value for a specific time schedule must be a JSON object in the fol
 
 ```javascript
 {
-  "type": "CUSTOM"
+  "type": "CUSTOM",
   "timezone": "Europe/Kiev",
   "items": [
     {

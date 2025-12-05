@@ -38,7 +38,11 @@ import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
-import { AlarmRuleFilter, FilterPredicateTypeTranslationMap } from "@shared/models/alarm-rule.models";
+import {
+  AlarmRuleFilter,
+  areFilterAndPredicateArgumentsValid,
+  FilterPredicateTypeTranslationMap
+} from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
@@ -71,6 +75,10 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     filters: this.fb.array([])
   });
 
+  disabled = false;
+
+  areFilterAndPredicateArgumentsValid = areFilterAndPredicateArgumentsValid;
+
   complexOperationTranslationMap = complexOperationTranslationMap;
   FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
 
@@ -102,37 +110,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     };
   }
 
-
-  public areFilterAndPredicateArgumentsValid(obj: any): boolean {
-    const validSet = new Set(Object.keys(this.arguments));
-    const filter = obj || [];
-    if (filter.argument && !validSet.has(filter.argument)) {
-      return false;
-    }
-    function checkPredicates(predicates: any[]): boolean {
-      for (const p of predicates) {
-        if (p.value?.dynamicValueArgument) {
-          if (!validSet.has(p.value.dynamicValueArgument)) {
-            return false;
-          }
-        }
-        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
-          if (!checkPredicates(p.predicates)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    if (Array.isArray(filter.predicates)) {
-      if (!checkPredicates(filter.predicates)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.filterListFormGroup.disable({emitEvent: false});
     } else {
@@ -206,5 +185,4 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     const filters = this.filterListFormGroup.value.filters as Array<AlarmRuleFilter>;
     this.propagateChange(filters);
   }
-
 }

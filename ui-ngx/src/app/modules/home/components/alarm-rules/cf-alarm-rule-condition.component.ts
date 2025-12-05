@@ -32,7 +32,7 @@ import {
   getAlarmScheduleRangeText,
   utcTimestampToTimeOfDay
 } from '@shared/models/device.models';
-import { TimeUnit } from '@shared/models/time/time.models';
+import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.models';
 import {
   CfAlarmRuleConditionDialogComponent,
   CfAlarmRuleConditionDialogData
@@ -42,7 +42,8 @@ import {
   AlarmRuleConditionType,
   AlarmRuleExpressionType,
   AlarmRuleSchedule,
-  AlarmRuleScheduleType
+  AlarmRuleScheduleType,
+  checkPredicates
 } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import {
@@ -154,32 +155,17 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
     return !arg || validArguments.includes(arg);
   }
 
-  private areFilterAndPredicateArgumentsValid(obj: any, validArguments: string[]): boolean {
-    const validSet = new Set(validArguments);
+  private areFilterAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+    const validSet = new Set(Object.keys(args));
     const filters = obj?.expression?.filters || obj?.filters || [];
     for (const filter of filters) {
       if (filter.argument && !validSet.has(filter.argument)) {
         return false;
       }
     }
-    function checkPredicates(predicates: any[]): boolean {
-      for (const p of predicates) {
-        if (p.value?.dynamicValueArgument) {
-          if (!validSet.has(p.value.dynamicValueArgument)) {
-            return false;
-          }
-        }
-        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
-          if (!checkPredicates(p.predicates)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
     for (const filter of filters) {
       if (Array.isArray(filter.predicates)) {
-        if (!checkPredicates(filter.predicates)) {
+        if (!checkPredicates(filter.predicates, validSet)) {
           return false;
         }
       }
@@ -192,7 +178,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   public validate(control: AbstractControl): ValidationErrors | null {
-    this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, Object.keys(this.arguments));
+    this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
     this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
     this.onValidatorChange = () => {
       control.updateValueAndValidity({ emitEvent: true });
@@ -265,7 +251,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
           if (this.modelValue.value.dynamicValueArgument) {
             this.specText = this.translate.instant('alarm-rule.condition-during-dynamic', {
               attribute: `${this.modelValue.value.dynamicValueArgument}`
-            });
+            }) + ' ' + this.translate.instant(timeUnitTranslationMap.get(this.modelValue.unit)).toLowerCase();
           } else {
             this.specText = this.translate.instant('alarm-rule.condition-during', {
               during: duringText

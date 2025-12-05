@@ -63,6 +63,10 @@ export class AlarmRuleFilterTextComponent {
   @Input()
   arguments: Record<string, CalculatedFieldArgument>;
 
+  @Input()
+  @coerceBoolean()
+  disabled = false;
+
   private alarmRuleExpressionValue: AlarmRuleExpression;
   get alarmRuleExpression(): AlarmRuleExpression {
     return this.alarmRuleExpressionValue;

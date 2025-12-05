@@ -104,8 +104,20 @@
         </ng-container>
         <ng-container matColumnDef="type">
           <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 33%"> {{ 'relation.type' | translate }} </mat-header-cell>
-          <mat-cell *matCellDef="let relation">
-            {{ relation.type }}
+          <mat-cell *matCellDef="let relation" class="type">
+            <div class="flex flex-row" style="align-items: center">
+              <span class="ellipsis">{{ relation.type }}</span>
+              <tb-copy-button
+                class="type-copy"
+                [disabled]="isLoading$ | async"
+                [copyText]="relation.type"
+                tooltipText="{{ 'relation.copy-type' | translate }}"
+                tooltipPosition="above"
+                icon="content_copy"
+                [style]="{padding: '4px', 'font-size': '16px', color: 'rgba(0,0,0,.87)'}"
+              >
+              </tb-copy-button>
+            </div>
           </mat-cell>
         </ng-container>
         <ng-container *ngIf="direction === directions.FROM" matColumnDef="toEntityTypeName">

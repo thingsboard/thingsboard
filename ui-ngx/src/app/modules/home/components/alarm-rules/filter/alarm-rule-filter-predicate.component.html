@@ -70,20 +70,17 @@
         </div>
       }
     }
-    @if (filterPredicateFormGroup.get('operation').value === stringOperation.NO_DATA) {
-      <tb-alarm-rule-filter-predicate-no-data-value class="flex-full"
-                                                    [arguments]="arguments"
-                                                    [argumentInUse]="argumentInUse"
-                                                    [valueType]="valueType"
-                                                    formControlName="duration">
-      </tb-alarm-rule-filter-predicate-no-data-value>
-    } @else if (type !== filterPredicateType.COMPLEX) {
-      <tb-alarm-rule-filter-predicate-value class="flex-full"
-                                            [arguments]="arguments"
-                                            [argumentInUse]="argumentInUse"
-                                            [valueType]="valueType"
-                                            formControlName="value">
-      </tb-alarm-rule-filter-predicate-value>
-    }
+    <tb-alarm-rule-filter-predicate-no-data-value class="flex-full" [class.!hidden]="!(filterPredicateFormGroup.get('operation').value === stringOperation.NO_DATA)"
+                                                  [arguments]="arguments"
+                                                  [argumentInUse]="argumentInUse"
+                                                  [valueType]="valueType"
+                                                  formControlName="duration">
+    </tb-alarm-rule-filter-predicate-no-data-value>
+    <tb-alarm-rule-filter-predicate-value class="flex-full" [class.!hidden]="!(filterPredicateFormGroup.get('operation').value !== stringOperation.NO_DATA && type !== filterPredicateType.COMPLEX)"
+                                          [arguments]="arguments"
+                                          [argumentInUse]="argumentInUse"
+                                          [valueType]="valueType"
+                                          formControlName="value">
+    </tb-alarm-rule-filter-predicate-value>
   </div>
 </div>
