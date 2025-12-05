@@ -42,10 +42,10 @@
   </mat-error>
   <mat-autocomplete
     #optionsAutocomplete="matAutocomplete"
-    class="tb-autocomplete tb-options-input-autocomplete"
+    class="tb-autocomplete"
     [panelWidth]="panelWidth">
     <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
-      <span class="tb-option-name flex-1" [innerHTML]="option | highlight:searchText:true:'ig'"></span>
+      <span [innerHTML]="option | highlight:searchText:true:'ig'"></span>
     </mat-option>
   </mat-autocomplete>
 </mat-form-field>
