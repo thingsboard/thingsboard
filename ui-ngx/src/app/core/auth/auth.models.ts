@@ -37,6 +37,7 @@ export interface SysParamsState {
   maxRelationLevelPerCfArgument: number;
   ruleChainDebugPerTenantLimitsConfiguration?: string;
   calculatedFieldDebugPerTenantLimitsConfiguration?: string;
+  intermediateAggregationIntervalInSecForCF: number;
   trendzSettings: TrendzSettings;
 }
 

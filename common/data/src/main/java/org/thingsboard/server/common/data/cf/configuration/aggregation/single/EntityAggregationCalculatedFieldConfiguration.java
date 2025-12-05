@@ -43,6 +43,7 @@ public class EntityAggregationCalculatedFieldConfiguration implements ArgumentsB
     private AggInterval interval;
     @Valid
     private Watermark watermark;
+    private boolean produceIntermediateResult;
     @Valid
     @NotNull
     private Output output;

@@ -1316,7 +1316,9 @@
             "duration": "Duration",
             "duration-required": "Duration is required",
             "duration-min": "Duration should be at least 1 minute",
-            "duration-hint": "How long to wait for delayed data after the interval ends"
+            "duration-hint": "How long to wait for delayed data after the interval ends",
+            "produce-intermediate-result": "Produce intermediate result",
+            "produce-intermediate-result-hint": "Calculates metrics during the current interval to produce an intermediate result. Updates occur no more often than once every {{ time }}."
         },
         "hint": {
             "arguments-simple-with-rolling": "Simple type calculated field should not contain keys with time series rolling type.",
@@ -6275,6 +6277,15 @@
         "min-allowed-deduplication-interval": "Min allowed deduplication interval (seconds)",
         "min-allowed-deduplication-interval-range": "Min allowed deduplication interval value can't be negative",
         "min-allowed-deduplication-interval-required": "Min allowed deduplication interval is required",
+        "intermediate-aggregation-interval": "Intermediate aggregation interval (seconds)",
+        "intermediate-aggregation-interval-range": "Intermediate aggregation interval value can't be less than '1'",
+        "intermediate-aggregation-interval-required": "Intermediate aggregation interval is required",
+        "reevaluation-check-interval": "Reevaluation check interval (seconds)",
+        "reevaluation-check-interval-range": "Reevaluation check interval value can't be less than '1'",
+        "reevaluation-check-interval-required": "Reevaluation check interval is required",
+        "alarms-reevaluation-interval": "Alarms reevaluation interval (seconds)",
+        "alarms-reevaluation-interval-range": "Alarms reevaluation interval value can't be less than '1'",
+        "alarms-reevaluation-interval-required": "Alarms reevaluation interval is required",
         "min-allowed-aggregation-interval": "Min allowed aggregation interval (seconds)",
         "min-allowed-aggregation-interval-range": "Min allowed aggregation interval value can't be negative",
         "min-allowed-aggregation-interval-required": "Min allowed aggregation interval is required",

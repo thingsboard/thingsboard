@@ -37,7 +37,7 @@ import {
 } from '@shared/models/calculated-field.models';
 import { filter, map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AVG_MONTH, AVG_QUARTER, DAY, HOUR, MINUTE, SECOND, YEAR } from '@shared/models/time/time.models';
+import { AVG_MONTH, AVG_QUARTER, DAY, HOUR, MINUTE, SECOND, WEEK, YEAR } from '@shared/models/time/time.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { Store } from '@ngrx/store';
@@ -88,6 +88,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
   @Input() testScript: (expression?: string) => Observable<string>;
 
   readonly minAllowedAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedAggregationIntervalInSecForCF;
+  readonly intermediateAggregationIntervalInSecForCF = getCurrentAuthState(this.store).intermediateAggregationIntervalInSecForCF;
   readonly DayInSec = DAY / SECOND;
 
   entityAggregationConfiguration = this.fb.group({
@@ -104,6 +105,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     watermark: this.fb.group({
       duration: [HOUR/SECOND, Validators.required],
     }),
+    produceIntermediateResult: [false],
     output: this.fb.control<CalculatedFieldOutput>(defaultCalculatedFieldOutput),
   });
 
@@ -153,6 +155,15 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
       this.updatedOffsetHint();
     });
 
+    merge(
+      this.entityAggregationConfiguration.get('interval.type').valueChanges,
+      this.entityAggregationConfiguration.get('interval.durationSec').valueChanges
+    ).pipe(
+      takeUntilDestroyed()
+    ).subscribe(() => {
+      this.checkProduceIntermediate();
+    });
+
     this.entityAggregationConfiguration.valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((value: CalculatedFieldEntityAggregationConfigurationValue) => {
@@ -174,6 +185,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
     this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
     this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
+    this.checkProduceIntermediate();
     this.updatedOffsetHint();
     setTimeout(() => {
       this.entityAggregationConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
@@ -194,6 +206,7 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
       this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
       this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
       this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
+      this.checkProduceIntermediate();
     }
   }
 
@@ -255,16 +268,49 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
     }
   }
 
+  private checkProduceIntermediate() {
+    const intervalType = this.entityAggregationConfiguration.get('interval.type').value as AggIntervalType;
+    let durationSec = 0;
+    switch (intervalType) {
+      case AggIntervalType.CUSTOM:
+        durationSec = this.entityAggregationConfiguration.get('interval.durationSec').value;
+        break
+      case AggIntervalType.HOUR:
+        durationSec = HOUR / SECOND;
+        break
+      case AggIntervalType.DAY:
+        durationSec = DAY / SECOND;
+        break
+      case AggIntervalType.WEEK:
+      case AggIntervalType.WEEK_SUN_SAT:
+        durationSec = WEEK / SECOND;
+        break
+      case AggIntervalType.MONTH:
+        durationSec = AVG_MONTH / SECOND;
+        break
+      case AggIntervalType.QUARTER:
+        durationSec = AVG_QUARTER / SECOND;
+        break
+      case AggIntervalType.YEAR:
+        durationSec = YEAR / SECOND;
+        break
+    }
+    if (durationSec > this.intermediateAggregationIntervalInSecForCF) {
+      this.entityAggregationConfiguration.get('produceIntermediateResult').enable({emitEvent: false});
+    } else {
+      this.entityAggregationConfiguration.get('produceIntermediateResult').disable({emitEvent: false});
+    }
+  }
+
   private updatedOffsetHint(): void {
     const offset = this.entityAggregationConfiguration.get('interval.offsetSec').value;
     const intervalType = this.entityAggregationConfiguration.get('interval.type').value as AggIntervalType;
     const durationSec = this.entityAggregationConfiguration.get('interval.durationSec').value;
     const offsetCategory = this.getTimeCategory(offset);
     const now = _moment.utc();
-    let interval: string = '';
+    let interval: string;
     if (intervalType === AggIntervalType.CUSTOM) {
-      const durationSecCategory = this.getTimeCategory(durationSec);
-      const formatString = this.getCustomFormatString(offsetCategory, durationSecCategory);
+      const formatString = this.getCustomFormatString(offsetCategory, this.getTimeCategory(durationSec));
       const intervals: string[] = [];
       let allInterval = durationSec >= HOUR*6/SECOND && durationSec < DAY/SECOND;
       now.startOf('year').add(offset, 'seconds');

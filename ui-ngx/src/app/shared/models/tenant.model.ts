@@ -111,6 +111,10 @@ export interface DefaultTenantProfileConfiguration {
   minAllowedAggregationIntervalInSecForCF: number;
   maxRelatedEntitiesToReturnPerCfArgument: number;
   minAllowedScheduledUpdateIntervalInSecForCF: number;
+  intermediateAggregationIntervalInSecForCF: number;
+  cfReevaluationCheckInterval: number;
+  alarmsReevaluationInterval: number;
+
   maxDataPointsPerRollingArg: number;
   maxStateSizeInKBytes: number;
   maxSingleValueArgumentSizeInKBytes: number;
@@ -176,10 +180,13 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxArgumentsPerCF: 10,
           maxDataPointsPerRollingArg: 1000,
           maxRelationLevelPerCfArgument: 10,
-          minAllowedDeduplicationIntervalInSecForCF: 60,
+          minAllowedDeduplicationIntervalInSecForCF: 10,
           minAllowedAggregationIntervalInSecForCF: 60,
           maxRelatedEntitiesToReturnPerCfArgument: 100,
           minAllowedScheduledUpdateIntervalInSecForCF: 0,
+          intermediateAggregationIntervalInSecForCF: 300,
+          cfReevaluationCheckInterval: 60,
+          alarmsReevaluationInterval: 60,
           maxStateSizeInKBytes: 32,
           maxSingleValueArgumentSizeInKBytes: 2,
           calculatedFieldDebugEventsRateLimit: ''

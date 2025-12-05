@@ -21,7 +21,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbAlarmResult;
@@ -86,10 +85,6 @@ import static org.testcontainers.shaded.org.awaitility.Awaitility.await;
 
 @Slf4j
 @DaoSqlTest
-@TestPropertySource(properties = {
-        "actors.calculated_fields.check_interval=1",
-        "actors.alarms.reevaluation_interval=1"
-})
 public class AlarmRulesTest extends AbstractControllerTest {
 
     @MockitoSpyBean
@@ -105,6 +100,13 @@ public class AlarmRulesTest extends AbstractControllerTest {
 
     @Before
     public void beforeEach() throws Exception {
+        loginSysAdmin();
+
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setCfReevaluationCheckInterval(1);
+            tenantProfileConfig.setAlarmsReevaluationInterval(1);
+        });
+
         loginTenantAdmin();
         device = createDevice("Device A", "aaa");
         deviceId = device.getId();
