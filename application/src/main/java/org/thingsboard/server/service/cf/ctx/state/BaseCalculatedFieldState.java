@@ -87,16 +87,15 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
                 validateNewEntry(key, newEntry);
-                if (existingEntry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
-                    relatedEntitiesArgumentEntry.updateEntry(newEntry);
-                } else if (existingEntry instanceof EntityAggregationArgumentEntry entityAggArgumentEntry) {
-                    entityAggArgumentEntry.updateEntry(newEntry);
+                if (existingEntry instanceof RelatedEntitiesArgumentEntry ||
+                    existingEntry instanceof EntityAggregationArgumentEntry) {
+                    updateEntry(existingEntry, newEntry);
                 } else {
                     arguments.put(key, newEntry);
                 }
                 entryUpdated = true;
             } else {
-                entryUpdated = existingEntry.updateEntry(newEntry);
+                entryUpdated = updateEntry(existingEntry, newEntry);
             }
 
             if (entryUpdated) {
@@ -114,6 +113,10 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         }
         readinessStatus = checkReadiness(requiredArguments, arguments);
         return updatedArguments;
+    }
+
+    protected boolean updateEntry(ArgumentEntry existingEntry, ArgumentEntry newEntry) {
+        return existingEntry.updateEntry(newEntry);
     }
 
     @Override
