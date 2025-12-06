@@ -42,6 +42,7 @@ import {
 import { deepClone } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TimeSeriesChartYAxesPanelComponent } from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axes-panel.component';
 
 @Component({
   selector: 'tb-time-series-chart-y-axis-row',
@@ -85,6 +86,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
               private popoverService: TbPopoverService,
+              private timeSeriesChartYAxesPanel: TimeSeriesChartYAxesPanelComponent,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
@@ -165,7 +167,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
           axisType: 'yAxis',
           panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
           axisSettings: deepClone(this.modelValue),
-          advanced: this.advanced
+          advanced: this.advanced,
+          aliasController: this.timeSeriesChartYAxesPanel.aliasController,
+          dataKeyCallbacks: this.timeSeriesChartYAxesPanel.dataKeyCallbacks,
+          datasource: this.timeSeriesChartYAxesPanel.datasource
         },
         isModal: true
       });
