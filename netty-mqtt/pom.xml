@@ -124,20 +124,25 @@
                 <inherited>false</inherited>
                 <executions>
                     <execution>
-                        <id>default</id>
-                        <phase>none</phase>
-                    </execution>
-                    <execution>
                         <id>protoc-java</id>
-                        <phase>none</phase>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile</goal>
+                        </goals>
                     </execution>
                     <execution>
-                        <id>protoc-test</id>
-                        <phase>none</phase>
+                        <id>default</id>
+                        <phase>generate-sources</phase>
+                        <goals>
+                            <goal>compile-custom</goal>
+                        </goals>
                     </execution>
                 </executions>
                 <configuration>
+                    <checkStaleness>false</checkStaleness>
+                    <clearOutputDirectory>false</clearOutputDirectory>
                     <protoSourceRoot>${shared-proto-deps.dir}</protoSourceRoot>
+                    <temporaryProtoFileDirectory>${project.build.directory}/protoc-temp</temporaryProtoFileDirectory>
                 </configuration>
             </plugin>
             <plugin>

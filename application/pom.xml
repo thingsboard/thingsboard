@@ -503,7 +503,7 @@
                 <executions>
                     <execution>
                         <id>protoc-java</id>
-                        <phase>none</phase>
+                        <phase>generate-sources</phase>
                         <goals>
                             <goal>compile</goal>
                         </goals>
@@ -520,6 +520,7 @@
                     <checkStaleness>false</checkStaleness>
                     <clearOutputDirectory>false</clearOutputDirectory>
                     <protoSourceRoot>${shared-proto-deps.dir}</protoSourceRoot>
+                    <temporaryProtoFileDirectory>${project.build.directory}/protoc-temp</temporaryProtoFileDirectory>
                 </configuration>
             </plugin>
             <plugin>

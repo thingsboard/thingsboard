@@ -1,7 +1,4 @@
 {
-<<<<<<< Updated upstream
     "java.configuration.updateBuildConfiguration": "interactive",
-=======
->>>>>>> Stashed changes
     "java.compile.nullAnalysis.mode": "automatic"
 }

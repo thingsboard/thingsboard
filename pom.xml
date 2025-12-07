@@ -31,7 +31,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
-        <shared-proto-deps.dir>/Users/briiitelord/Desktop/demo_repos/thingsboard/shared-proto-deps</shared-proto-deps.dir>
+        <shared-proto-deps.dir>${basedir}/shared-proto-deps</shared-proto-deps.dir>
         <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>

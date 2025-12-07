@@ -31,6 +31,7 @@ import org.awaitility.core.ConditionTimeoutException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.testcontainers.hivemq.HiveMQContainer;
 import org.testcontainers.junit.jupiter.Container;
@@ -52,13 +53,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 // Timestamp: 2025-10-01T23:45:00Z
 // *****
 @Slf4j
-// @Testcontainers
+@Testcontainers
+@Disabled("Integration tests require Docker to be running. Enable Docker or skip with -DskipITs")
 class MqttClientTest {
 
     final int randomPort = 0;
 
-    // @Container
-    // HiveMQContainer broker = new HiveMQContainer(DockerImageName.parse("hivemq/hivemq-ce").withTag("2025.2"));
+    @Container
+    HiveMQContainer broker = new HiveMQContainer(DockerImageName.parse("hivemq/hivemq-ce").withTag("2025.2"));
 
     MqttTestProxy proxy;
 
@@ -96,135 +98,139 @@ class MqttClientTest {
         handlerExecutor = null;
     }
 
-    // @Test
-    // void testConnectToBroker() {
-    //     // GIVEN
-    //     var clientConfig = new MqttClientConfig();
-    //     clientConfig.setOwnerId("Test[ConnectToBroker]");
-    //     clientConfig.setClientId("connect");
-    //
-    //     client = MqttClient.create(clientConfig, null, handlerExecutor);
-    //
-    //     // WHEN
-    //     Promise<MqttConnectResult> connectFuture = client.connect(broker.getHost(), broker.getMqttPort());
-    //
-    //     // THEN
-    //     assertThat(connectFuture).isNotNull();
-    //
-    //     Awaitility.await("waiting for client to connect")
-    //             .atMost(Duration.ofSeconds(10L))
-    //             .until(connectFuture::isDone);
-    //
-    //     assertThat(connectFuture.isSuccess()).isTrue();
-    //
-    //     MqttConnectResult actualConnectResult = connectFuture.getNow();
-    //     assertThat(actualConnectResult).isNotNull();
-    //     assertThat(actualConnectResult.isSuccess()).isTrue();
-    //     assertThat(actualConnectResult.getReturnCode()).isEqualTo(MqttConnectReturnCode.CONNECTION_ACCEPTED);
-    //
-    //     assertThat(client.isConnected()).isTrue();
-    // }
+    @Test
+    @Disabled("Requires Docker and HiveMQ container. Enable Docker or skip with -DskipITs")
+    void testConnectToBroker() {
+        // GIVEN
+        var clientConfig = new MqttClientConfig();
+        clientConfig.setOwnerId("Test[ConnectToBroker]");
+        clientConfig.setClientId("connect");
 
-    // @Test
-    // void testDisconnectFromBroker() {
-    //     // GIVEN
-    //     var clientConfig = new MqttClientConfig();
-    //     clientConfig.setOwnerId("Test[Disconnect]");
-    //     clientConfig.setClientId("disconnect");
-    //
-    //     client = MqttClient.create(clientConfig, null, handlerExecutor);
-    //
-    //     connect(broker.getHost(), broker.getMqttPort());
-    //
-    //     // WHEN
-    //     client.disconnect();
-    //
-    //     // THEN
-    //     Awaitility.await("waiting for client to disconnect")
-    //             .atMost(Duration.ofSeconds(5))
-    //             .untilAsserted(() -> assertThat(client.isConnected()).isFalse());
-    // }
+        client = MqttClient.create(clientConfig, null, handlerExecutor);
 
-    // @Test
-    // void testDisconnectDueToKeepAliveIfNoActivity() {
-    //     // GIVEN
-    //     proxy = MqttTestProxy.builder()
-    //             .localPort(randomPort)
-    //             .brokerHost(broker.getHost())
-    //             .brokerPort(broker.getMqttPort())
-    //             .brokerToClientInterceptor(msg -> msg.fixedHeader().messageType() != MqttMessageType.PINGRESP) // drop all ping responses to simulate broker down
-    //             .build();
-    //
-    //     int idleTimeoutSeconds = 2;
-    //
-    //     var clientConfig = new MqttClientConfig();
-    //     clientConfig.setOwnerId("Test[KeepAliveDisconnect]");
-    //     clientConfig.setClientId("no-activity-disconnect");
-    //     clientConfig.setTimeoutSeconds(idleTimeoutSeconds);
-    //     clientConfig.setReconnect(false); // disable auto reconnect
-    //     client = MqttClient.create(clientConfig, null, handlerExecutor);
-    //
-    //     // WHEN-THEN
-    //     connect(broker.getHost(), proxy.getPort());
-    //
-    //     // no activity...
-    //
-    //     Awaitility.await("waiting for client to disconnect")
-    //             .pollDelay(Duration.ofSeconds(idleTimeoutSeconds * 2)) // 2 seconds to wait for the first idle event and then 2 seconds for scheduled disconnect to fire
-    //             .atMost(Duration.ofSeconds(10))
-    //             .untilAsserted(() -> assertThat(client.isConnected()).isFalse());
-    // }
+        // WHEN
+        Promise<MqttConnectResult> connectFuture = client.connect(broker.getHost(), broker.getMqttPort());
 
-    // @Test
-    // void testRetransmission() {
-    //     // GIVEN
-    //     proxy = MqttTestProxy.builder()
-    //             .localPort(randomPort)
-    //             .brokerHost(broker.getHost())
-    //             .brokerPort(broker.getMqttPort())
-    //             .brokerToClientInterceptor(msg -> msg.fixedHeader().messageType() != MqttMessageType.PUBACK) // drop all pubacks to allow retransmission to happen
-    //             .build();
-    //
-    //     // create client
-    //     var clientConfig = new MqttClientConfig();
-    //     clientConfig.setOwnerId("Test[Retransmission]");
-    //     clientConfig.setClientId("retransmission");
-    //     clientConfig.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(1, 1000L, 0d));
-    //     client = MqttClient.create(clientConfig, null, handlerExecutor);
-    //
-    //     // connect to a broker
-    //     connect(broker.getHost(), proxy.getPort());
-    //
-    //     // subscribe to a topic
-    //     String topic = "test-topic";
-    //     List<ByteBuf> receivedMessages = Collections.synchronizedList(new ArrayList<>(2));
-    //     Future<Void> subscribeFuture = client.on(topic, (__, payload) -> {
-    //         receivedMessages.add(payload);
-    //         return Futures.immediateVoidFuture();
-    //     });
-    //     Awaitility.await("waiting for client to subscribe to a topic")
-    //             .atMost(Duration.ofSeconds(10L))
-    //             .until(subscribeFuture::isDone);
-    //
-    //     // WHEN
-    //     // publish a message
-    //     ByteBuf message = PooledByteBufAllocator.DEFAULT.buffer().writeBytes("test message".getBytes(StandardCharsets.UTF_8));
-    //     client.publish(topic, message, MqttQoS.AT_LEAST_ONCE);
-    //
-    //     // THEN
-    //     // wait enough time so that retransmission happens and stops
-    //     // if retransmission works incorrectly waiting 10 seconds allows for additional retransmissions to happen
-    //     try {
-    //         Awaitility.await("wait up to 10s, stop early if too many messages")
-    //                 .atMost(Duration.ofSeconds(10L))
-    //                 .pollInterval(Duration.ofMillis(100))
-    //                 .until(() -> receivedMessages.size() > 2);
-    //     } catch (ConditionTimeoutException __) {
-    //         // didn't exceed 2 messages
-    //     }
-    //
-    //     assertThat(receivedMessages).size().describedAs("incorrect number of messages received, expected 2 (original plus one retransmitted)").isEqualTo(2);
-    // }
+        // THEN
+        assertThat(connectFuture).isNotNull();
+
+        Awaitility.await("waiting for client to connect")
+                .atMost(Duration.ofSeconds(10L))
+                .until(connectFuture::isDone);
+
+        assertThat(connectFuture.isSuccess()).isTrue();
+
+        MqttConnectResult actualConnectResult = connectFuture.getNow();
+        assertThat(actualConnectResult).isNotNull();
+        assertThat(actualConnectResult.isSuccess()).isTrue();
+        assertThat(actualConnectResult.getReturnCode()).isEqualTo(MqttConnectReturnCode.CONNECTION_ACCEPTED);
+
+        assertThat(client.isConnected()).isTrue();
+    }
+
+    @Test
+    @Disabled("Requires Docker and HiveMQ container. Enable Docker or skip with -DskipITs")
+    void testDisconnectFromBroker() {
+        // GIVEN
+        var clientConfig = new MqttClientConfig();
+        clientConfig.setOwnerId("Test[Disconnect]");
+        clientConfig.setClientId("disconnect");
+
+        client = MqttClient.create(clientConfig, null, handlerExecutor);
+
+        connect(broker.getHost(), broker.getMqttPort());
+
+        // WHEN
+        client.disconnect();
+
+        // THEN
+        Awaitility.await("waiting for client to disconnect")
+                .atMost(Duration.ofSeconds(5))
+                .untilAsserted(() -> assertThat(client.isConnected()).isFalse());
+    }
+
+    @Test
+    @Disabled("Requires Docker and HiveMQ container. Enable Docker or skip with -DskipITs")
+    void testDisconnectDueToKeepAliveIfNoActivity() {
+        // GIVEN
+        proxy = MqttTestProxy.builder()
+                .localPort(randomPort)
+                .brokerHost(broker.getHost())
+                .brokerPort(broker.getMqttPort())
+                .brokerToClientInterceptor(msg -> msg.fixedHeader().messageType() != MqttMessageType.PINGRESP) // drop all ping responses to simulate broker down
+                .build();
+
+        int idleTimeoutSeconds = 2;
+
+        var clientConfig = new MqttClientConfig();
+        clientConfig.setOwnerId("Test[KeepAliveDisconnect]");
+        clientConfig.setClientId("no-activity-disconnect");
+        clientConfig.setTimeoutSeconds(idleTimeoutSeconds);
+        clientConfig.setReconnect(false); // disable auto reconnect
+        client = MqttClient.create(clientConfig, null, handlerExecutor);
+
+        // WHEN-THEN
+        connect(broker.getHost(), proxy.getPort());
+
+        // no activity...
+
+        Awaitility.await("waiting for client to disconnect")
+                .pollDelay(Duration.ofSeconds(idleTimeoutSeconds * 2)) // 2 seconds to wait for the first idle event and then 2 seconds for scheduled disconnect to fire
+                .atMost(Duration.ofSeconds(10))
+                .untilAsserted(() -> assertThat(client.isConnected()).isFalse());
+    }
+
+    @Test
+    @Disabled("Requires Docker and HiveMQ container. Enable Docker or skip with -DskipITs")
+    void testRetransmission() {
+        // GIVEN
+        proxy = MqttTestProxy.builder()
+                .localPort(randomPort)
+                .brokerHost(broker.getHost())
+                .brokerPort(broker.getMqttPort())
+                .brokerToClientInterceptor(msg -> msg.fixedHeader().messageType() != MqttMessageType.PUBACK) // drop all pubacks to allow retransmission to happen
+                .build();
+
+        // create client
+        var clientConfig = new MqttClientConfig();
+        clientConfig.setOwnerId("Test[Retransmission]");
+        clientConfig.setClientId("retransmission");
+        clientConfig.setRetransmissionConfig(new MqttClientConfig.RetransmissionConfig(1, 1000L, 0d));
+        client = MqttClient.create(clientConfig, null, handlerExecutor);
+
+        // connect to a broker
+        connect(broker.getHost(), proxy.getPort());
+
+        // subscribe to a topic
+        String topic = "test-topic";
+        List<ByteBuf> receivedMessages = Collections.synchronizedList(new ArrayList<>(2));
+        Future<Void> subscribeFuture = client.on(topic, (__, payload) -> {
+            receivedMessages.add(payload);
+            return Futures.immediateVoidFuture();
+        });
+        Awaitility.await("waiting for client to subscribe to a topic")
+                .atMost(Duration.ofSeconds(10L))
+                .until(subscribeFuture::isDone);
+
+        // WHEN
+        // publish a message
+        ByteBuf message = PooledByteBufAllocator.DEFAULT.buffer().writeBytes("test message".getBytes(StandardCharsets.UTF_8));
+        client.publish(topic, message, MqttQoS.AT_LEAST_ONCE);
+
+        // THEN
+        // wait enough time so that retransmission happens and stops
+        // if retransmission works incorrectly waiting 10 seconds allows for additional retransmissions to happen
+        try {
+            Awaitility.await("wait up to 10s, stop early if too many messages")
+                    .atMost(Duration.ofSeconds(10L))
+                    .pollInterval(Duration.ofMillis(100))
+                    .until(() -> receivedMessages.size() > 2);
+        } catch (ConditionTimeoutException __) {
+            // didn't exceed 2 messages
+        }
+
+        assertThat(receivedMessages).size().describedAs("incorrect number of messages received, expected 2 (original plus one retransmitted)").isEqualTo(2);
+    }
 
     private void connect(String host, int port) {
         Promise<MqttConnectResult> connectFuture = client.connect(host, port);

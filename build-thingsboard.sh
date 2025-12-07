@@ -16,6 +16,26 @@ cleanup_protobuf_temp() {
     echo "✅ Protobuf cleanup completed"
 }
 
+# Function to aggressively clean target directories (for file lock issues)
+cleanup_target_dirs() {
+    echo "🧹 Cleaning up target directories..."
+    # Clean MQTT-related target directories first
+    for dir in common/transport/mqtt/target netty-mqtt/target transport/mqtt/target; do
+        if [ -d "$dir" ]; then
+            echo "   Removing $dir..."
+            rm -rf "$dir" 2>/dev/null || true
+        fi
+    done
+    # Clean protobuf-related target directories
+    for dir in common/proto/target common/message/target common/edge-api/target; do
+        if [ -d "$dir" ]; then
+            echo "   Removing $dir..."
+            rm -rf "$dir" 2>/dev/null || true
+        fi
+    done
+    echo "✅ Target directory cleanup completed"
+}
+
 # Function to handle build with retry logic
 build_with_retry() {
     local max_attempts=3
@@ -29,7 +49,9 @@ build_with_retry() {
             return 0
         else
             echo "❌ Build failed on attempt $attempt"
+            # Enhanced cleanup on failure
             cleanup_protobuf_temp
+            cleanup_target_dirs
             attempt=$((attempt + 1))
             if [ $attempt -le $max_attempts ]; then
                 echo "⏳ Waiting 5 seconds before retry..."
@@ -53,6 +75,7 @@ echo ""
 
 # Initial cleanup
 cleanup_protobuf_temp
+cleanup_target_dirs
 
 # Execute build with retry logic
 if build_with_retry; then
