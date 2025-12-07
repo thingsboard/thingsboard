@@ -103,7 +103,7 @@
                         </goals>
                     </execution>
                     <execution>
-                        <id>protoc-custom</id>
+                        <id>default</id>
                         <phase>none</phase>
                         <goals>
                             <goal>compile-custom</goal>
@@ -113,82 +113,28 @@
                 <configuration>
                     <checkStaleness>false</checkStaleness>
                     <clearOutputDirectory>false</clearOutputDirectory>
-                    <protoSourceRoot>src/main/proto</protoSourceRoot>
-                    <includeDirectories>
-                        <include>../../shared-proto-deps</include>
-                    </includeDirectories>
+                    <protoSourceRoot>${shared-proto-deps.dir}</protoSourceRoot>
                 </configuration>
-            </plugin>            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <inherited>false</inherited>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
                 <executions>
                     <execution>
-                        <id>protoc-java</id>
+                        <id>add-source</id>
                         <phase>generate-sources</phase>
                         <goals>
-                            <goal>compile</goal>
+                            <goal>add-source</goal>
                         </goals>
-                    </execution>
-                    <execution>
-                        <id>protoc-test</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>test-compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>protoc-custom</id>
-                        <phase>none</phase>
-                        <goals>
-                            <goal>compile-custom</goal>
-                        </goals>
+                        <configuration>
+                            <sources>
+                                <source>${project.build.directory}/generated-sources/protobuf/grpc-java</source>
+                            </sources>
+                        </configuration>
                     </execution>
                 </executions>
-                <configuration>
-                    <checkStaleness>false</checkStaleness>
-                    <clearOutputDirectory>false</clearOutputDirectory>
-                    <protoSourceRoot>src/main/proto</protoSourceRoot>
-                    <includeDirectories>
-                        <include>../../shared-proto-deps</include>
-                    </includeDirectories>
-                </configuration>
-            </plugin>            <plugin>
-                <groupId>org.xolstice.maven.plugins</groupId>
-                <artifactId>protobuf-maven-plugin</artifactId>
-                <inherited>false</inherited>
-                <executions>
-                    <execution>
-                        <id>protoc-java</id>
-                        <phase>generate-sources</phase>
-                        <goals>
-                            <goal>compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>protoc-test</id>
-                        <phase>generate-test-sources</phase>
-                        <goals>
-                            <goal>test-compile</goal>
-                        </goals>
-                    </execution>
-                    <execution>
-                        <id>protoc-custom</id>
-                        <phase>none</phase>
-                        <goals>
-                            <goal>compile-custom</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <checkStaleness>false</checkStaleness>
-                    <clearOutputDirectory>false</clearOutputDirectory>
-                    <protoSourceRoot>src/main/proto</protoSourceRoot>
-                    <includeDirectories>
-                        <include>../../shared-proto-deps</include>
-                    </includeDirectories>
-                </configuration>
-            </plugin>        </plugins>
+            </plugin>
+        </plugins>
     </build>
 
 </project>

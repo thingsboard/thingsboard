@@ -119,6 +119,28 @@
         </extensions>
         <plugins>
             <plugin>
+                <groupId>org.xolstice.maven.plugins</groupId>
+                <artifactId>protobuf-maven-plugin</artifactId>
+                <inherited>false</inherited>
+                <executions>
+                    <execution>
+                        <id>default</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>protoc-java</id>
+                        <phase>none</phase>
+                    </execution>
+                    <execution>
+                        <id>protoc-test</id>
+                        <phase>none</phase>
+                    </execution>
+                </executions>
+                <configuration>
+                    <protoSourceRoot>${shared-proto-deps.dir}</protoSourceRoot>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
             </plugin>

@@ -18,6 +18,206 @@
 * Try [ThingsBoard Cloud](https://thingsboard.io/installations/)
 * or [Use our Live demo](https://demo.thingsboard.io/signup)
 
+## 🛠 Building ThingsBoard from Source
+
+### Prerequisites
+
+- **Java 17** or higher
+- **Maven 3.6+**
+- **Docker** (for integration tests)
+- **Git**
+
+### Quick Start (Recommended)
+
+Use our automated build script for the most reliable build experience:
+
+```bash
+# Make the script executable (first time only)
+chmod +x build-thingsboard.sh
+
+# Run the build script
+./build-thingsboard.sh
+```
+
+The build script automatically handles:
+- ✅ Protobuf cleanup and retry logic
+- ✅ Sequential building to prevent race conditions
+- ✅ License header validation skipping
+- ✅ Test skipping for faster builds
+- ✅ Progress reporting and error handling
+- ✅ Automatic retry on transient failures
+
+### Manual Build Options
+
+#### Option 1: Full Build with All Optimizations
+```bash
+mvn clean install -Dlicense.skip=true -DskipTests -Duse.shared-proto-deps=true -Dbuild.sequential=true
+```
+
+#### Option 2: Quick Build (Skip Tests)
+```bash
+mvn clean install -Dlicense.skip=true -DskipTests -Duse.shared-proto-deps=true
+```
+
+#### Option 3: Development Build (With Tests)
+```bash
+mvn clean install -Dlicense.skip=true -Duse.shared-proto-deps=true
+```
+
+### Build Flags Explained
+
+| Flag | Purpose | When to Use |
+|------|---------|-------------|
+| `-Dlicense.skip=true` | Skips license header validation | Always recommended for faster builds |
+| `-DskipTests` | Skips all tests | Quick builds, CI/CD pipelines |
+| `-Duse.shared-proto-deps=true` | Uses centralized protobuf directory | Prevents circular dependency issues |
+| `-Dbuild.sequential=true` | Forces single-threaded builds | Resolves file lock conflicts |
+
+### Troubleshooting Common Issues
+
+#### 🔧 Protobuf Cleanup Issues
+If you encounter "Unable to clean up temporary proto file directory" errors:
+
+```bash
+# Clean all protobuf temp directories
+find . -name "protoc-dependencies" -type d -exec rm -rf {} + 2>/dev/null || true
+find . -name "protoc-temp" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Then retry build
+./build-thingsboard.sh
+```
+
+#### 🔧 File Lock Issues
+If you get "Failed to delete target directory" errors:
+
+```bash
+# Clean all target directories
+find . -name "target" -type d -exec rm -rf {} + 2>/dev/null || true
+
+# Then retry build
+./build-thingsboard.sh
+```
+
+#### 🔧 Docker Issues (Integration Tests)
+If integration tests fail due to Docker:
+
+```bash
+# Start Docker Desktop, then:
+docker ps  # Verify Docker is running
+
+# Or skip integration tests:
+mvn clean install -Dlicense.skip=true -DskipTests -Duse.shared-proto-deps=true
+```
+
+### Build Architecture
+
+#### 🏗️ Module Structure
+ThingsBoard consists of 59 buildable modules organized in dependency order:
+
+1. **Core Modules** (build first):
+   - `common/data` - Core data structures
+   - `common/util` - Utility classes
+   - `common/message` - Message handling
+   - `common/proto` - Protobuf definitions
+
+2. **Transport Modules**:
+   - `netty-mqtt` - MQTT transport
+   - `common/transport/mqtt` - MQTT common
+   - `common/transport/coap` - CoAP transport
+
+3. **Service Modules**:
+   - `dao` - Data access layer
+   - `application` - Main application
+   - `ui-ngx` - Angular frontend
+
+#### 🔄 Build Order Optimization
+The build system automatically handles dependencies through:
+- **Sequential building** to prevent race conditions
+- **Shared protobuf directory** to resolve circular dependencies
+- **Enhanced cleanup settings** to prevent file locks
+- **Retry logic** for transient failures
+
+### Performance Tips
+
+#### ⚡ Faster Builds
+- Use `-DskipTests` for development builds
+- Use `-Dbuild.sequential=true` to prevent file conflicts
+- Use `-Dlicense.skip=true` to skip license validation
+
+#### 🎯 Selective Building
+Build specific modules only:
+```bash
+# Build only core modules
+mvn clean install -Dlicense.skip=true -DskipTests -Duse.shared-proto-deps=true -pl common/data,common/util,common/message,common/proto
+
+# Build only transport modules
+mvn clean install -Dlicense.skip=true -DskipTests -Duse.shared-proto-deps=true -pl netty-mqtt,common/transport/mqtt,common/transport/coap
+```
+
+### CI/CD Integration
+
+#### GitHub Actions Example
+```yaml
+- name: Build ThingsBoard
+  run: |
+    chmod +x build-thingsboard.sh
+    ./build-thingsboard.sh
+```
+
+#### Jenkins Pipeline Example
+```groovy
+stage('Build') {
+    steps {
+        sh 'chmod +x build-thingsboard.sh'
+        sh './build-thingsboard.sh'
+    }
+}
+```
+
+### Build Output
+
+Successful builds generate:
+- **40+ JAR files** in various `target/` directories
+- **Protobuf-generated classes** in `target/generated-sources/`
+- **gRPC service stubs** for inter-service communication
+- **Web assets** for the UI components
+
+### Long-Term Solutions Implemented
+
+#### 🎯 Enhanced Protobuf Plugin Configuration
+The build system now includes robust protobuf handling:
+- **`checkStaleness=false`**: Prevents unnecessary recompilation
+- **`clearOutputDirectory=false`**: Avoids aggressive cleanup that causes file locks
+- **`temporaryProtoFileDirectory`**: Isolates temporary files to prevent conflicts
+- **`useSystemProtoc=false`**: Uses bundled protoc for consistency across environments
+
+#### 🏗️ Sequential Build Profile
+A new Maven profile prevents race conditions:
+- **`-Dbuild.sequential=true`**: Forces single-threaded builds
+- **Eliminates file lock conflicts** from concurrent protobuf compilations
+- **Prevents race conditions** between parallel module builds
+
+#### 🛠️ Automated Build Script
+The `build-thingsboard.sh` script provides:
+- **Automatic cleanup** of problematic directories
+- **Retry logic** with 3 attempts for transient failures
+- **Progress reporting** and comprehensive error handling
+- **Self-healing** build process that recovers from common issues
+
+#### 🔄 Shared Protobuf Directory
+Centralized protobuf management:
+- **`-Duse.shared-proto-deps=true`**: Uses centralized protobuf directory
+- **Resolves circular dependencies** between modules
+- **Consistent protobuf compilation** across all modules
+- **Eliminates import path conflicts**
+
+### Support
+
+If you encounter build issues:
+1. Check the [troubleshooting section](#troubleshooting-common-issues) above
+2. Review the [build failure diagnostic reports](#-build-failure-diagnostic-report) below
+3. Open an issue on [GitHub](https://github.com/thingsboard/thingsboard/issues)
+
 ## 💡 Getting started with ThingsBoard
 
 Check out our [Getting Started guide](https://thingsboard.io/docs/getting-started-guides/helloworld/) or [watch the video](https://www.youtube.com/watch?v=80L0ubQLXsc) to learn the basics of ThingsBoard and create your first dashboard! You will learn to:
