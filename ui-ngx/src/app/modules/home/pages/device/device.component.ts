@@ -37,6 +37,9 @@ import { Subject } from 'rxjs';
 import { OtaUpdateType } from '@shared/models/ota-package.models';
 import { distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { DeviceService, DevicePingResponse } from '@core/http/device.service';
+import { MatDialog } from '@angular/material/dialog';
+import { ConfirmDialogComponent } from '@shared/components/dialog/confirm-dialog.component';
 
 @Component({
   selector: 'tb-device',
@@ -59,7 +62,9 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<DeviceInfo>,
               public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef,
-              private destroyRef: DestroyRef) {
+              private destroyRef: DestroyRef,
+              private deviceService: DeviceService,
+              private dialog: MatDialog) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -129,7 +134,6 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
     });
   }
 
-
   onDeviceIdCopied($event) {
     this.store.dispatch(new ActionNotificationShow(
       {
@@ -173,5 +177,91 @@ export class DeviceComponent extends EntityComponent<DeviceInfo> {
         }
       }
     }
+  }
+
+  /**
+   * Handle entity actions including ping device
+   */
+  onEntityAction($event: Event, action: string) {
+    if (action === 'pingDevice') {
+      this.pingDevice($event);
+    } else {
+      // Handle other actions if needed
+      super.onEntityAction?.($event, action);
+    }
+  }
+
+  /**
+   * Ping device to check reachability
+   */
+  private pingDevice($event: Event): void {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    
+    if (!this.entity || !this.entity.id) {
+      return;
+    }
+    
+    const deviceId = this.entity.id.id;
+    
+    this.deviceService.pingDevice(deviceId).subscribe({
+      next: (response: DevicePingResponse) => {
+        const statusIcon = response.reachable ? '🟢' : '🔴';
+        const statusText = response.reachable ? 'Reachable' : 'Not Reachable';
+        
+        let message = `<div style="padding: 16px; text-align: left;">`;
+        message += `<p style="margin: 8px 0;"><strong>Device ID:</strong><br/><code style="background: #f5f5f5; padding: 4px; border-radius: 3px;">${response.deviceId}</code></p>`;
+        message += `<p style="margin: 8px 0;"><strong>Status:</strong> ${statusIcon} <span style="font-weight: 600;">${statusText}</span></p>`;
+        
+        if (response.lastSeen) {
+          const lastSeenDate = new Date(response.lastSeen);
+          const formattedDate = lastSeenDate.toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            second: '2-digit'
+          });
+          message += `<p style="margin: 8px 0;"><strong>Last Seen:</strong><br/>${formattedDate}</p>`;
+        } else {
+          message += `<p style="margin: 8px 0;"><strong>Last Seen:</strong> <span style="color: #999;">Never</span></p>`;
+        }
+        
+        message += `</div>`;
+        
+        // Show success notification
+        this.store.dispatch(new ActionNotificationShow({
+          message: 'Device ping completed successfully',
+          type: 'success',
+          duration: 2000,
+          verticalPosition: 'top',
+          horizontalPosition: 'right'
+        }));
+        
+        // Show detailed result in dialog
+        this.dialog.open(ConfirmDialogComponent, {
+          disableClose: false,
+          data: {
+            title: 'Device Ping Result',
+            message: message,
+            cancel: null,
+            ok: 'Close'
+          }
+        });
+      },
+      error: (error) => {
+        const errorMessage = error?.error?.message || error?.message || 'Unknown error occurred';
+        
+        this.store.dispatch(new ActionNotificationShow({
+          message: `Failed to ping device: ${errorMessage}`,
+          type: 'error',
+          duration: 3000,
+          verticalPosition: 'top',
+          horizontalPosition: 'right'
+        }));
+      }
+    });
   }
 }

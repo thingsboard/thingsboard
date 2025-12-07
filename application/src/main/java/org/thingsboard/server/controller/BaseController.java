@@ -432,6 +432,7 @@ public abstract class BaseController {
      * }
      * */
     @Deprecated
+    protected
     ThingsboardException handleException(Exception exception) {
         return handleException(exception, true);
     }
