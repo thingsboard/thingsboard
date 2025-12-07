@@ -21,15 +21,15 @@
  import { FormBuilder, FormGroup, Validators } from '@angular/forms';
  import { Router } from '@angular/router';
  import { DialogComponent } from '@app/shared/components/dialog.component';
- import {
-   ComplexOperation,
-   complexOperationTranslationMap,
-   EntityKeyValueType,
-   entityKeyValueTypesMap
- } from '@shared/models/query/query.models';
+ import { ComplexOperation, EntityKeyValueType, entityKeyValueTypesMap } from '@shared/models/query/query.models';
  import { DialogService } from '@core/services/dialog.service';
  import { TranslateService } from '@ngx-translate/core';
- import { AlarmRuleFilter, AlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+ import {
+   AlarmRuleFilter,
+   AlarmRuleFilterPredicate,
+   filterOperationTranslationMap,
+   isPredicateArgumentsValid
+ } from "@shared/models/alarm-rule.models";
  import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
  import { FormControlsFrom } from "@shared/models/tenant.model";
  import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
@@ -57,7 +57,9 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
   entityKeyValueTypes = entityKeyValueTypesMap;
 
-  complexOperationTranslationMap = complexOperationTranslationMap;
+  complexOperationTranslationMap = filterOperationTranslationMap;
+
+  predicatesValid: boolean = false;
 
   ComplexOperation = ComplexOperation;
 
@@ -78,12 +80,20 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
 
     this.filterFormGroup = this.fb.group(
       {
-        argument: [this.data.filter.argument, [Validators.required]],
+        argument: [this.argumentsList.includes(this.data.filter.argument) ? this.data.filter.argument : '' , [Validators.required]],
         valueType: [this.data.filter.valueType ?? EntityKeyValueType.STRING, [Validators.required]],
         predicates: [this.data.filter.predicates, [Validators.required]],
         operation: [this.data.filter.operation ?? ComplexOperation.AND]
       }
     );
+
+    this.predicatesValid = isPredicateArgumentsValid(this.data.filter.predicates, this.arguments);
+    this.filterFormGroup.get('predicates').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(predicates => {
+      this.predicatesValid = isPredicateArgumentsValid(predicates, this.arguments);
+    });
+
     this.filterFormGroup.get('valueType').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe((valueType: EntityKeyValueType) => {

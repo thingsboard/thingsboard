@@ -22,6 +22,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -337,6 +339,13 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
                                 }
                             });
                         }
+                    }
+                    if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration alarmCfConfig) {
+                        alarmCfConfig.getAllRules().map(Pair::getValue).forEach(rule -> {
+                            if (rule.getDashboardId() != null) {
+                                rule.setDashboardId(idProvider.getInternalId(rule.getDashboardId(), ctx.isFinalImportAttempt()));
+                            }
+                        });
                     }
                 }).toList();
 

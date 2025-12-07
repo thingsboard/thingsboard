@@ -51,18 +51,19 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx.DISABLED_INTERVAL_VALUE;
 
 @Slf4j
 @Getter
 public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculatedFieldState {
 
     @Setter
-    private long lastArgsRefreshTs = -1;
+    private long lastArgsRefreshTs = DEFAULT_LAST_UPDATE_TS;
     @Setter
-    private long lastMetricsEvalTs = -1;
+    private long lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
     @Setter
-    private long lastRelatedEntitiesRefreshTs = -1;
-    private long deduplicationIntervalMs = -1;
+    private long lastRelatedEntitiesRefreshTs = DEFAULT_LAST_UPDATE_TS;
+    private long deduplicationIntervalMs = DISABLED_INTERVAL_VALUE;
     private Map<String, AggMetric> metrics;
 
     private ScheduledFuture<?> reevaluationFuture;
@@ -102,9 +103,9 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     @Override
     public void reset() { // must reset everything dependent on arguments
         super.reset();
-        lastArgsRefreshTs = -1;
-        lastMetricsEvalTs = -1;
-        lastRelatedEntitiesRefreshTs = -1;
+        lastArgsRefreshTs = DEFAULT_LAST_UPDATE_TS;
+        lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
+        lastRelatedEntitiesRefreshTs = DEFAULT_LAST_UPDATE_TS;
         metrics = null;
     }
 
@@ -153,7 +154,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     public Map<String, ArgumentEntry> updateEntityData(Map<String, ArgumentEntry> fetchedArgs) {
-        lastMetricsEvalTs = -1;
+        lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
         return update(fetchedArgs, ctx);
     }
 
@@ -162,7 +163,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
             RelatedEntitiesArgumentEntry aggEntry = (RelatedEntitiesArgumentEntry) argEntry;
             aggEntry.getEntityInputs().remove(relatedEntityId);
         });
-        lastMetricsEvalTs = -1;
+        lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
         lastArgsRefreshTs = System.currentTimeMillis();
     }
 

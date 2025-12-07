@@ -475,4 +475,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   get showEntityLink(): boolean {
     return this.selectEntityFormGroup.get('entity').value && this.disabled && this.entityURL !== '';
   }
+
+  markAsTouched(): void {
+    this.selectEntityFormGroup.get('entity').markAsTouched();
+  }
 }

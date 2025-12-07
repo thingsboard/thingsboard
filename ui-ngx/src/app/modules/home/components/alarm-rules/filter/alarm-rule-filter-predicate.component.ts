@@ -23,18 +23,20 @@ import {
   ValidationErrors,
   Validator
 } from '@angular/forms';
-import {
-  BooleanOperation,
-  booleanOperationTranslationMap,
-  EntityKeyValueType,
-  FilterPredicateType,
-  NumericOperation,
-  numericOperationTranslationMap,
-  StringOperation,
-  stringOperationTranslationMap
-} from '@shared/models/query/query.models';
+import { EntityKeyValueType } from '@shared/models/query/query.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AlarmRuleFilterPredicate, ComplexAlarmRuleFilterPredicate } from "@shared/models/alarm-rule.models";
+import {
+  AlarmRuleBooleanOperation,
+  alarmRuleBooleanOperationTranslationMap,
+  AlarmRuleFilterPredicate,
+  AlarmRuleFilterPredicateType,
+  AlarmRuleNumericOperation,
+  alarmRuleNumericOperationTranslationMap,
+  AlarmRuleStringOperation,
+  alarmRuleStringOperationTranslationMap,
+  checkPredicates,
+  ComplexAlarmRuleFilterPredicate
+} from "@shared/models/alarm-rule.models";
 import { MatDialog } from "@angular/material/dialog";
 import {
   AlarmRuleComplexFilterPredicateDialogComponent,
@@ -77,24 +79,27 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     operation: [],
     ignoreCase: false,
     predicates: [],
-    value: []
+    value: [],
+    duration: []
   });
 
-  type: FilterPredicateType;
+  type: AlarmRuleFilterPredicateType;
 
-  filterPredicateType = FilterPredicateType;
+  filterPredicateType = AlarmRuleFilterPredicateType;
 
-  stringOperations = Object.keys(StringOperation);
-  stringOperation = StringOperation;
-  stringOperationTranslationMap = stringOperationTranslationMap;
+  stringOperations = Object.keys(AlarmRuleStringOperation);
+  stringOperation = AlarmRuleStringOperation;
+  stringOperationTranslationMap = alarmRuleStringOperationTranslationMap;
 
-  numericOperations = Object.keys(NumericOperation);
-  numericOperationEnum = NumericOperation;
-  numericOperationTranslations = numericOperationTranslationMap;
+  numericOperations = Object.keys(AlarmRuleNumericOperation);
+  numericOperationEnum = AlarmRuleNumericOperation;
+  numericOperationTranslations = alarmRuleNumericOperationTranslationMap;
 
-  booleanOperations = Object.keys(BooleanOperation);
-  booleanOperationEnum = BooleanOperation;
-  booleanOperationTranslations = booleanOperationTranslationMap;
+  booleanOperations = Object.keys(AlarmRuleBooleanOperation);
+  booleanOperationEnum = AlarmRuleBooleanOperation;
+  booleanOperationTranslations = alarmRuleBooleanOperationTranslationMap;
+
+  predicateValid: boolean = false;
 
   private propagateChange= (v: any) => { };
 
@@ -106,6 +111,24 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     ).subscribe(() => {
       this.updateModel();
     });
+
+    this.filterPredicateFormGroup.get('operation').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(value => {
+      if (value === 'NO_DATA') {
+        this.filterPredicateFormGroup.get('duration').enable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').disable({emitEvent: false});
+      } else {
+        this.filterPredicateFormGroup.get('duration').disable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').enable({emitEvent: false});
+      }
+    })
+
+    this.filterPredicateFormGroup.get('predicates').valueChanges.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(predicates => {
+      this.predicateValid = this.isPredicateArgumentsValid(predicates);
+    })
   }
 
   registerOnChange(fn: any): void {
@@ -130,13 +153,40 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     }
   }
 
+  private isPredicateArgumentsValid(predicates: AlarmRuleFilterPredicate[]): boolean {
+    const validSet = new Set(Object.keys(this.arguments));
+    if (Array.isArray(predicates)) {
+      if (!checkPredicates(predicates, validSet)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   writeValue(predicate: AlarmRuleFilterPredicate): void {
     this.type = predicate.type;
-    this.filterPredicateFormGroup.patchValue(predicate, {emitEvent: false});
+    if ((predicate as ComplexAlarmRuleFilterPredicate)?.predicates) {
+      this.predicateValid = this.isPredicateArgumentsValid((predicate as ComplexAlarmRuleFilterPredicate)?.predicates);
+    }
+    if (predicate.type === AlarmRuleFilterPredicateType.NO_DATA) {
+      this.type = AlarmRuleFilterPredicateType[this.valueType];
+      this.filterPredicateFormGroup.get('duration').enable({emitEvent: false});
+      this.filterPredicateFormGroup.get('value').disable({emitEvent: false});
+      this.filterPredicateFormGroup.patchValue({operation: 'NO_DATA', duration: predicate}, {emitEvent: false});
+    } else {
+      this.filterPredicateFormGroup.get('duration').disable({emitEvent: false});
+      this.filterPredicateFormGroup.get('value').enable({emitEvent: false});
+      this.filterPredicateFormGroup.patchValue(predicate, {emitEvent: false});
+    }
   }
 
   private updateModel() {
-    this.propagateChange({type: this.type, ...this.filterPredicateFormGroup.value});
+    const predicate = this.filterPredicateFormGroup.value;
+    if (predicate.operation === 'NO_DATA') {
+      this.propagateChange(predicate.duration);
+    } else {
+      this.propagateChange({type: this.type, ...predicate});
+    }
   }
 
   public openComplexFilterDialog() {

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -56,9 +55,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -293,23 +290,6 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
                 device.getId().toString(), new SortOrder("", SortOrder.Direction.DESC)));
         assertThat(names.getTotalElements()).isEqualTo(1);
         assertThat(names.getData()).containsOnly(deviceCalculatedField.getName());
-    }
-
-    private PageData<String> getCalculatedFieldNames(CalculatedFieldType type, PageLink pageLink) throws Exception {
-        return doGetTypedWithPageLink("/api/calculatedFields/names?type=" + type + "&",
-                new TypeReference<PageData<String>>() {}, pageLink);
-    }
-
-    private List<CalculatedFieldInfo> getCalculatedFields(CalculatedFieldType type,
-                                                          EntityType entityType,
-                                                          List<UUID> entities,
-                                                          List<String> names) throws Exception {
-        return doGetTypedWithPageLink("/api/calculatedFields?type=" + type + "&" +
-                                      (entityType != null ? "entityType=" + entityType + "&" : "") +
-                                      (entities != null ? "entities=" + String.join(",",
-                                              entities.stream().map(UUID::toString).toList()) + "&" : "") +
-                                      (names != null ? names.stream().map(name -> "name=" + name + "&").collect(Collectors.joining("")) : ""),
-                new TypeReference<PageData<CalculatedFieldInfo>>() {}, new PageLink(10)).getData();
     }
 
     @Test

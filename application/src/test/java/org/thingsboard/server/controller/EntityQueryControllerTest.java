@@ -23,6 +23,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -71,6 +72,7 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.edqs.util.EdqsRocksDb;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -101,6 +103,9 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
     @Autowired
     private QueueStatsService queueStatsService;
+
+    @MockitoBean
+    private EdqsRocksDb edqsRocksDb;
 
     @Before
     public void beforeTest() throws Exception {
@@ -436,7 +441,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityTypeFilter assetTypeFilter = new EntityTypeFilter();
         assetTypeFilter.setEntityType(EntityType.ASSET);
-        AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
+        AlarmDataQuery assetAlarmQuery = new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, alarmFields);
 
         PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
         List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(AlarmData::getType).toList();
@@ -446,8 +451,8 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
-        AlarmDataQuery filteredAssetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, keyFilters, alarmFields);
-        PageData<AlarmData>  filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
+        AlarmDataQuery filteredAssetAlarmQuery = new AlarmDataQuery(assetTypeFilter, pageLink, null, null, keyFilters, alarmFields);
+        PageData<AlarmData> filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
         });
         Assert.assertEquals(1, filteredAssetAlamData.getTotalElements());
     }
@@ -509,16 +514,16 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityTypeFilter assetTypeFilter = new EntityTypeFilter();
         assetTypeFilter.setEntityType(EntityType.ASSET);
-        AlarmDataQuery assetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, Collections.emptyList());
+        AlarmDataQuery assetAlarmQuery = new AlarmDataQuery(assetTypeFilter, pageLink, null, null, null, Collections.emptyList());
 
-        PageData<AlarmData>  alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
+        PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(assetAlarmQuery, 10);
         List<String> retrievedAlarmTypes = alarmPageData.getData().stream().map(Alarm::getType).toList();
         assertThat(retrievedAlarmTypes).containsExactlyInAnyOrderElementsOf(assetAlarmTypes);
 
         KeyFilter nameFilter = buildStringKeyFilter(EntityKeyType.ENTITY_FIELD, "name", StringFilterPredicate.StringOperation.STARTS_WITH, "Asset1");
         List<KeyFilter> keyFilters = Collections.singletonList(nameFilter);
-        AlarmDataQuery filteredAssetAlarmQuery =  new AlarmDataQuery(assetTypeFilter, pageLink, null, null, keyFilters, Collections.emptyList());
-        PageData<AlarmData>  filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
+        AlarmDataQuery filteredAssetAlarmQuery = new AlarmDataQuery(assetTypeFilter, pageLink, null, null, keyFilters, Collections.emptyList());
+        PageData<AlarmData> filteredAssetAlamData = doPostWithTypedResponse("/api/alarmsQuery/find", filteredAssetAlarmQuery, new TypeReference<>() {
         });
         Assert.assertEquals(1, filteredAssetAlamData.getTotalElements());
     }
@@ -574,7 +579,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         EntityTypeFilter deviceTypeFilter = new EntityTypeFilter();
         deviceTypeFilter.setEntityType(EntityType.DEVICE);
-        AlarmDataQuery deviceAlarmQuery =  new AlarmDataQuery(deviceTypeFilter, pageLink, entityFields, latestValues, null, alarmFields);
+        AlarmDataQuery deviceAlarmQuery = new AlarmDataQuery(deviceTypeFilter, pageLink, entityFields, latestValues, null, alarmFields);
 
         PageData<AlarmData> alarmPageData = findAlarmsByQueryAndCheck(deviceAlarmQuery, 10);
         List<String> retrievedAlarmTemps = alarmPageData.getData().stream().map(alarmData -> alarmData.getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue()).toList();
@@ -1291,7 +1296,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         findByQueryAndCheck(query, 0);
     }
 
-    private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, BiConsumer<Integer,EntityData> checkFunction) throws Exception {
+    private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, BiConsumer<Integer, EntityData> checkFunction) throws Exception {
         await()
                 .alias("data by query")
                 .atMost(30, TimeUnit.SECONDS)

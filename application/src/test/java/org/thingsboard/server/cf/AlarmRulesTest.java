@@ -42,6 +42,7 @@ import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmC
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.ComplexOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.SimpleAlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NoDataFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.NumericFilterPredicate.NumericOperation;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.predicate.StringFilterPredicate;
@@ -186,6 +187,30 @@ public class AlarmRulesTest extends AbstractControllerTest {
                 arguments, createRules, null);
 
         postTelemetry(deviceId, "{\"temperature\":100}");
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_eventBeforeDefaultTs() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return temperature >= 50;", null, null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High Temperature Alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"values\": {\"temperature\": 50}, \"ts\": " + (System.currentTimeMillis() - TimeUnit.DAYS.toMillis(30) + "}"));
         checkAlarmResult(calculatedField, alarmResult -> {
             assertThat(alarmResult.isCreated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
@@ -350,6 +375,32 @@ public class AlarmRulesTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testCreateAlarm_durationCondition_defaultValue() {
+        Argument powerConsumptionArgument = new Argument();
+        powerConsumptionArgument.setRefEntityKey(new ReferencedEntityKey("powerConsumption", ArgumentType.TS_LATEST, null));
+        powerConsumptionArgument.setDefaultValue("3500");
+        Map<String, Argument> arguments = Map.of(
+                "powerConsumption", powerConsumptionArgument
+        );
+
+        long createDurationMs = 2000L;
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.CRITICAL, new Condition("return powerConsumption >= 3000;", null, null,
+                        new AlarmConditionValue<Long>(2000L, null), null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "High power consumption during 2 seconds",
+                arguments, createRules, null);
+
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+            assertThat(alarmResult.getConditionDuration()).isBetween(createDurationMs, createDurationMs + 2000);
+        });
+    }
+
+    @Test
     public void testCreateAlarm_currentOwnerArgument() throws Exception {
         Argument temperatureArgument = new Argument();
         temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
@@ -470,6 +521,61 @@ public class AlarmRulesTest extends AbstractControllerTest {
             assertThat(debugEvent).isNotNull();
             TbAlarmResult alarmResult = JacksonUtil.fromString(debugEvent.getResult(), TbAlarmResult.class);
             assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+    }
+
+    @Test
+    public void testCreateAlarm_noDataPredicate() throws Exception {
+        Argument temperatureArgument = new Argument();
+        temperatureArgument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        temperatureArgument.setDefaultValue("0");
+        Map<String, Argument> arguments = Map.of(
+                "temperature", temperatureArgument
+        );
+
+        long majorNoDataDuration = 3L;
+        long criticalNoDataDuration = 10L;
+
+        SimpleAlarmConditionExpression majorExpression = new SimpleAlarmConditionExpression();
+        AlarmConditionFilter majorFilter = new AlarmConditionFilter();
+        majorFilter.setArgument("temperature");
+        majorFilter.setValueType(EntityKeyValueType.NUMERIC);
+        majorFilter.setPredicates(List.of(
+                new NumericFilterPredicate(NumericOperation.GREATER, new AlarmConditionValue<>(25.0, null)),
+                new NoDataFilterPredicate(TimeUnit.SECONDS, new AlarmConditionValue<Long>(majorNoDataDuration, null))
+        ));
+        majorExpression.setFilters(List.of(majorFilter));
+
+        SimpleAlarmConditionExpression criticalExpression = new SimpleAlarmConditionExpression();
+        AlarmConditionFilter criticalFilter = new AlarmConditionFilter();
+        criticalFilter.setArgument("temperature");
+        criticalFilter.setValueType(EntityKeyValueType.NUMERIC);
+        criticalFilter.setPredicates(List.of(
+                new NumericFilterPredicate(NumericOperation.GREATER, new AlarmConditionValue<>(25.0, null)),
+                new NoDataFilterPredicate(TimeUnit.SECONDS, new AlarmConditionValue<Long>(criticalNoDataDuration, null))
+        ));
+        criticalExpression.setFilters(List.of(criticalFilter));
+
+        Map<AlarmSeverity, Condition> createRules = Map.of(
+                AlarmSeverity.MAJOR, new Condition(majorExpression, null, null),
+                AlarmSeverity.CRITICAL, new Condition(criticalExpression, null, null)
+        );
+
+        CalculatedField calculatedField = createAlarmCf(deviceId, "No Temperature Alarm",
+                arguments, createRules, null);
+
+        postTelemetry(deviceId, "{\"temperature\":50}");
+
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isCreated()).isTrue();
+            assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.MAJOR);
+            assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
+        });
+
+        checkAlarmResult(calculatedField, alarmResult -> {
+            assertThat(alarmResult.isSeverityUpdated()).isTrue();
             assertThat(alarmResult.getAlarm().getSeverity()).isEqualTo(AlarmSeverity.CRITICAL);
             assertThat(alarmResult.getAlarm().getStatus()).isEqualTo(AlarmStatus.ACTIVE_UNACK);
         });

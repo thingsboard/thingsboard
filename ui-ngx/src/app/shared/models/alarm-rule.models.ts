@@ -18,17 +18,10 @@
 import { CustomTimeSchedulerItem } from "@shared/models/device.models";
 import { DashboardId } from "@shared/models/id/dashboard-id";
 import { TimeUnit } from "@shared/models/time/time.models";
-import {
-  BooleanOperation,
-  ComplexOperation,
-  EntityKeyValueType,
-  FilterPredicateType,
-  NumericOperation,
-  StringOperation
-} from "@shared/models/query/query.models";
+import { ComplexOperation, EntityKeyValueType, FilterPredicateType } from "@shared/models/query/query.models";
 import { EntityType } from "@shared/models/entity-type.models";
 import { Observable } from "rxjs";
-import { CalculatedField } from "@shared/models/calculated-field.models";
+import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 export enum AlarmRuleScheduleType {
   ANY_TIME = 'ANY_TIME',
@@ -120,7 +113,8 @@ export interface AlarmRulePredicateInfo {
 export type AlarmRuleFilterPredicate = StringAlarmRuleFilterPredicate |
   NumericAlarmRuleFilterPredicate |
   BooleanAlarmRuleFilterPredicate |
-  ComplexAlarmRuleFilterPredicate;
+  ComplexAlarmRuleFilterPredicate |
+  NoDataAlarmRuleFilterPredicate;
 
 export interface AlarmRuleValue<T> {
   dynamicValueArgument?: string;
@@ -128,26 +122,33 @@ export interface AlarmRuleValue<T> {
 }
 
 export interface StringAlarmRuleFilterPredicate {
-  type: FilterPredicateType.STRING;
-  operation: StringOperation;
+  type: AlarmRuleFilterPredicateType.STRING;
+  operation: AlarmRuleStringOperation;
   value: AlarmRuleValue<string>;
   ignoreCase: boolean;
 }
 
 export interface NumericAlarmRuleFilterPredicate {
-  type: FilterPredicateType.NUMERIC;
-  operation: NumericOperation;
+  type: AlarmRuleFilterPredicateType.NUMERIC;
+  operation: AlarmRuleNumericOperation;
   value: AlarmRuleValue<number>;
 }
 
 export interface BooleanAlarmRuleFilterPredicate {
-  type: FilterPredicateType.BOOLEAN;
-  operation: BooleanOperation;
+  type: AlarmRuleFilterPredicateType.BOOLEAN;
+  operation: AlarmRuleBooleanOperation;
   value: AlarmRuleValue<boolean>;
 }
 
+export interface NoDataAlarmRuleFilterPredicate {
+  type: AlarmRuleFilterPredicateType.NO_DATA;
+  unit: TimeUnit,
+  operation: AlarmRuleStringOperation.NO_DATA | AlarmRuleNumericOperation.NO_DATA | AlarmRuleBooleanOperation.NO_DATA;
+  duration: AlarmRuleValue<number>;
+}
+
 export interface BaseComplexFilterPredicate<T extends AlarmRuleFilterPredicate> {
-  type: FilterPredicateType.COMPLEX;
+  type: AlarmRuleFilterPredicateType.COMPLEX;
   operation: ComplexOperation;
   predicates: Array<T>;
 }
@@ -160,8 +161,144 @@ export interface AlarmRuleFilterConfig {
   entities?: Array<string>;
 }
 
+export const filterOperationTranslationMap = new Map<ComplexOperation, string>(
+  [
+    [ComplexOperation.AND, 'alarm-rule.filter-operation.and'],
+    [ComplexOperation.OR, 'alarm-rule.filter-operation.or'],
+  ]
+);
+
+export enum AlarmRuleFilterPredicateType {
+  STRING = 'STRING',
+  NUMERIC = 'NUMERIC',
+  BOOLEAN = 'BOOLEAN',
+  COMPLEX = 'COMPLEX',
+  NO_DATA = 'NO_DATA'
+}
+
+export enum AlarmRuleStringOperation {
+  EQUAL = 'EQUAL',
+  NOT_EQUAL = 'NOT_EQUAL',
+  NO_DATA = 'NO_DATA',
+  STARTS_WITH = 'STARTS_WITH',
+  ENDS_WITH = 'ENDS_WITH',
+  CONTAINS = 'CONTAINS',
+  NOT_CONTAINS = 'NOT_CONTAINS',
+  IN = 'IN',
+  NOT_IN = 'NOT_IN',
+}
+
+export const alarmRuleStringOperationTranslationMap = new Map<AlarmRuleStringOperation, string>(
+  [
+    [AlarmRuleStringOperation.EQUAL, 'filter.operation.equal'],
+    [AlarmRuleStringOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [AlarmRuleStringOperation.STARTS_WITH, 'filter.operation.starts-with'],
+    [AlarmRuleStringOperation.ENDS_WITH, 'filter.operation.ends-with'],
+    [AlarmRuleStringOperation.CONTAINS, 'filter.operation.contains'],
+    [AlarmRuleStringOperation.NOT_CONTAINS, 'filter.operation.not-contains'],
+    [AlarmRuleStringOperation.IN, 'filter.operation.in'],
+    [AlarmRuleStringOperation.NOT_IN, 'filter.operation.not-in'],
+    [AlarmRuleStringOperation.NO_DATA, 'alarm-rule.missing-for']
+  ]
+);
+
+export enum AlarmRuleNumericOperation {
+  EQUAL = 'EQUAL',
+  NOT_EQUAL = 'NOT_EQUAL',
+  NO_DATA = 'NO_DATA',
+  GREATER = 'GREATER',
+  LESS = 'LESS',
+  GREATER_OR_EQUAL = 'GREATER_OR_EQUAL',
+  LESS_OR_EQUAL = 'LESS_OR_EQUAL'
+}
+
+export const alarmRuleNumericOperationTranslationMap = new Map<AlarmRuleNumericOperation, string>(
+  [
+    [AlarmRuleNumericOperation.EQUAL, 'filter.operation.equal'],
+    [AlarmRuleNumericOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [AlarmRuleNumericOperation.GREATER, 'filter.operation.greater'],
+    [AlarmRuleNumericOperation.LESS, 'filter.operation.less'],
+    [AlarmRuleNumericOperation.GREATER_OR_EQUAL, 'filter.operation.greater-or-equal'],
+    [AlarmRuleNumericOperation.LESS_OR_EQUAL, 'filter.operation.less-or-equal'],
+    [AlarmRuleNumericOperation.NO_DATA, 'alarm-rule.missing-for']
+  ]
+);
+
+export enum AlarmRuleBooleanOperation {
+  EQUAL = 'EQUAL',
+  NOT_EQUAL = 'NOT_EQUAL',
+  NO_DATA = 'NO_DATA',
+}
+
+export const alarmRuleBooleanOperationTranslationMap = new Map<AlarmRuleBooleanOperation, string>(
+  [
+    [AlarmRuleBooleanOperation.EQUAL, 'filter.operation.equal'],
+    [AlarmRuleBooleanOperation.NOT_EQUAL, 'filter.operation.not-equal'],
+    [AlarmRuleBooleanOperation.NO_DATA, 'alarm-rule.missing-for']
+  ]
+);
+
 export const alarmRuleDefaultScript =
   '// Sample expression for an alarm rule: triggers when temperature is above 20 degree\n' +
   'return temperature > 20;'
 
 export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, expression: string, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+
+export function checkPredicates(predicates: any[], validSet: Set<string>): boolean {
+  for (const predicate of predicates) {
+    if (!predicate) continue;
+    if (predicate?.value?.dynamicValueArgument) {
+      if (!validSet.has(predicate.value.dynamicValueArgument)) {
+        return false;
+      }
+    }
+    if (predicate.type === 'COMPLEX' && Array.isArray(predicate.predicates)) {
+      if (!checkPredicates(predicate.predicates, validSet)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function areFilterAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  const filter = obj || [];
+  if (filter.argument && !validSet.has(filter.argument)) {
+    return false;
+  }
+  if (Array.isArray(filter.predicates)) {
+    if (!checkPredicates(filter.predicates, validSet)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function areFiltersAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  const filters = obj || [];
+    for (const filter of filters) {
+      if (filter.argument && !validSet.has(filter.argument)) {
+        return false;
+      }
+    }
+  for (const filter of filters) {
+    if (Array.isArray(filter.predicates)) {
+      if (!checkPredicates(filter.predicates, validSet)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function isPredicateArgumentsValid(predicates: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  if (Array.isArray(predicates)) {
+    if (!checkPredicates(predicates, validSet)) {
+      return false;
+    }
+  }
+  return true;
+}

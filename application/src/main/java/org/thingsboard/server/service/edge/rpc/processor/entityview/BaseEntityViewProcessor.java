@@ -21,7 +21,9 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -50,23 +52,26 @@ public abstract class BaseEntityViewProcessor extends BaseEdgeProcessor {
         } else {
             entityView.setId(entityViewId);
         }
-        String entityViewName = entityView.getName();
-        EntityView entityViewByName = edgeCtx.getEntityViewService().findEntityViewByTenantIdAndName(tenantId, entityViewName);
-        if (entityViewByName != null && !entityViewByName.getId().equals(entityViewId)) {
-            entityViewName = entityViewName + "_" + StringUtils.randomAlphanumeric(15);
-            log.warn("[{}] Entity view with name {} already exists. Renaming entity view name to {}",
-                    tenantId, entityView.getName(), entityViewName);
-            entityViewNameUpdated = true;
-        }
-        entityView.setName(entityViewName);
-        setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg);
+        if (isSaveRequired(entityViewById, entityView)) {
+            entityViewNameUpdated = updateEntityViewNameIfDuplicateExists(tenantId, entityViewId, entityView);
+            setCustomerId(tenantId, created ? null : entityViewById.getCustomerId(), entityView, entityViewUpdateMsg);
 
-        entityViewValidator.validate(entityView, EntityView::getTenantId);
-        if (created) {
-            entityView.setId(entityViewId);
+            entityViewValidator.validate(entityView, EntityView::getTenantId);
+            if (created) {
+                entityView.setId(entityViewId);
+            }
+            edgeCtx.getEntityViewService().saveEntityView(entityView, false);
         }
-        edgeCtx.getEntityViewService().saveEntityView(entityView, false);
         return Pair.of(created, entityViewNameUpdated);
+    }
+
+    private boolean updateEntityViewNameIfDuplicateExists(TenantId tenantId, EntityViewId entityViewId, EntityView entityView) {
+        EntityView entityViewByName = edgeCtx.getEntityViewService().findEntityViewByTenantIdAndName(tenantId, entityView.getName());
+
+        return generateUniqueNameIfDuplicateExists(tenantId, entityViewId, entityView, entityViewByName).map(uniqueName -> {
+            entityView.setName(uniqueName);
+            return true;
+        }).orElse(false);
     }
 
     protected abstract void setCustomerId(TenantId tenantId, CustomerId customerId, EntityView entityView, EntityViewUpdateMsg entityViewUpdateMsg);

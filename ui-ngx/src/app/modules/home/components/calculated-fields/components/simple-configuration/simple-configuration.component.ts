@@ -145,7 +145,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     const formValue: any = deepClone(value);
     if (this.isScript) {
       formValue.expressionSCRIPT = formValue.expression ?? calculatedFieldDefaultScript;
-    } else {
+    } else if (value.type === CalculatedFieldType.SIMPLE) {
       formValue.expressionSIMPLE = formValue.expression;
     }
     this.simpleConfiguration.patchValue(formValue, {emitEvent: false});

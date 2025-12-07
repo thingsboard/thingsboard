@@ -19,5 +19,6 @@ public enum FilterPredicateType {
     STRING,
     NUMERIC,
     BOOLEAN,
+    NO_DATA,
     COMPLEX
 }
