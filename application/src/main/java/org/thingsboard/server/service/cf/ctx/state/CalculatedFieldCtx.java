@@ -673,7 +673,8 @@ public class CalculatedFieldCtx implements Closeable {
             && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
             boolean metricsChanged = !Objects.equals(thisConfig.getMetrics(), otherConfig.getMetrics());
             boolean watermarkChanged = !Objects.equals(thisConfig.getWatermark(), otherConfig.getWatermark());
-            return metricsChanged || watermarkChanged;
+            boolean produceIntermediateResultChanged = thisConfig.isProduceIntermediateResult() != otherConfig.isProduceIntermediateResult();
+            return metricsChanged || watermarkChanged || produceIntermediateResultChanged;
         }
         return false;
     }
