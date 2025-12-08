@@ -19,8 +19,8 @@ import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Data
@@ -36,7 +36,7 @@ public class SslCredentialsConfig {
     private final String name;
     private final boolean trustsOnly;
 
-    private final List<Runnable> reloadCallbacks = new ArrayList<>();
+    private final List<Runnable> reloadCallbacks = new CopyOnWriteArrayList<>();
 
     public SslCredentialsConfig(String name, boolean trustsOnly) {
         this.name = name;

@@ -306,7 +306,7 @@ transport:
       reload:
         # Enable/disable automatic SSL certificates reload
         enabled: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_ENABLED:true}"
-        # Check an interval in seconds for certificates reload
+        # Check interval in seconds for certificates reload
         check_interval: "${TB_TRANSPORT_SSL_CERTIFICATE_RELOAD_CHECK_INTERVAL:60}"
 
 # Queue configuration properties

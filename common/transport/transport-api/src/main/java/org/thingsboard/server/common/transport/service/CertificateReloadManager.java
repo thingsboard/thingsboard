@@ -65,7 +65,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
         watchers.forEach((name, watcher) -> {
             try {
                 if (watcher.hasChanged()) {
-                    log.info("Certificate changed detected for: {}. Triggering reload...", name);
+                    log.info("Certificate change detected for: {}. Triggering reload...", name);
                     watcher.reload();
                 }
             } catch (Exception e) {

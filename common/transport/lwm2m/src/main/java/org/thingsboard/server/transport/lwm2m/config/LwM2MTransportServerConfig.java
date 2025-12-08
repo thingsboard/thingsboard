@@ -31,8 +31,8 @@ import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentials;
 import org.thingsboard.server.common.transport.config.ssl.SslCredentialsConfig;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 @Slf4j
 @Component
@@ -136,7 +136,7 @@ public class LwM2MTransportServerConfig implements LwM2MSecureServerConfig {
     @Qualifier("lwm2mTrustCredentials")
     private SslCredentialsConfig trustCredentialsConfig;
 
-    private final List<Runnable> serverReloadCallbacks = new ArrayList<>();
+    private final List<Runnable> serverReloadCallbacks = new CopyOnWriteArrayList<>();
 
     @PostConstruct
     public void init() {

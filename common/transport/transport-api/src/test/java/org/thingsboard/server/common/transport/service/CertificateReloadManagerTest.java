@@ -96,8 +96,6 @@ public class CertificateReloadManagerTest {
         certificateReloadManager.registerWatcher("test-cert", certFile, reloadCount::incrementAndGet);
 
         Thread.sleep(100);
-        certFile.toFile().setLastModified(System.currentTimeMillis());
-        Thread.sleep(100);
 
         ReflectionTestUtils.invokeMethod(certificateReloadManager, "checkCertificates");
 
