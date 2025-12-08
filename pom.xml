@@ -102,7 +102,7 @@
 
         <passay.version>1.6.4</passay.version>
         <ua-parser.version>1.6.1</ua-parser.version>
-        <commons-beanutils.version>1.9.4</commons-beanutils.version>
+        <commons-beanutils.version>1.11.0</commons-beanutils.version>
         <commons-collections.version>4.4</commons-collections.version>
         <protobuf-dynamic.version>1.0.4TB</protobuf-dynamic.version>
         <wire-schema.version>3.7.1</wire-schema.version>
