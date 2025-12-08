@@ -639,26 +639,34 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public boolean hasRefreshContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state recalculation
-        var thisConfig = calculatedField.getConfiguration();
-        var otherConfig = other.getCalculatedField().getConfiguration();
-
-        var thisOutputStrategy = thisConfig.getOutput().getStrategy();
-        var otherOutputStrategy = otherConfig.getOutput().getStrategy();
+        var thisOutputStrategy = calculatedField.getConfiguration().getOutput().getStrategy();
+        var otherOutputStrategy = other.getCalculatedField().getConfiguration().getOutput().getStrategy();
 
         if (!thisOutputStrategy.getType().equals(otherOutputStrategy.getType())) {
             return true;
         }
 
-        if (thisOutputStrategy instanceof TimeSeriesImmediateOutputStrategy thisTimeSeriesImmediateOutputStrategy
-                && otherOutputStrategy instanceof TimeSeriesImmediateOutputStrategy otherTimeSeriesImmediateOutputStrategy) {
-            return thisTimeSeriesImmediateOutputStrategy.getTtl() != otherTimeSeriesImmediateOutputStrategy.getTtl();
+        if (thisOutputStrategy instanceof TimeSeriesImmediateOutputStrategy thisTsOutputStrategy
+                && otherOutputStrategy instanceof TimeSeriesImmediateOutputStrategy otherTsOutputStrategy) {
+            if (thisTsOutputStrategy.getTtl() != otherTsOutputStrategy.getTtl()) {
+                return true;
+            }
         }
 
-        if (thisOutputStrategy instanceof AttributesImmediateOutputStrategy thisAttributesImmediateOutputStrategy
-                && otherOutputStrategy instanceof AttributesImmediateOutputStrategy otherAttributesImmediateOutputStrategy) {
-            boolean updateAttributesOnlyOnValueChangeChanged = thisAttributesImmediateOutputStrategy.isUpdateAttributesOnlyOnValueChange() != otherAttributesImmediateOutputStrategy.isUpdateAttributesOnlyOnValueChange();
-            boolean sendAttributesUpdatedNotificationUpdated = thisAttributesImmediateOutputStrategy.isSendAttributesUpdatedNotification() != otherAttributesImmediateOutputStrategy.isSendAttributesUpdatedNotification();
-            return updateAttributesOnlyOnValueChangeChanged || sendAttributesUpdatedNotificationUpdated;
+        if (thisOutputStrategy instanceof AttributesImmediateOutputStrategy thisAttrOutputStrategy
+                && otherOutputStrategy instanceof AttributesImmediateOutputStrategy otherAttrOutputStrategy) {
+            boolean updateAttrOnValueChangedChanged = thisAttrOutputStrategy.isUpdateAttributesOnlyOnValueChange() != otherAttrOutputStrategy.isUpdateAttributesOnlyOnValueChange();
+            boolean sendAttrUpdatedNotificationChanged = thisAttrOutputStrategy.isSendAttributesUpdatedNotification() != otherAttrOutputStrategy.isSendAttributesUpdatedNotification();
+            if (updateAttrOnValueChangedChanged || sendAttrUpdatedNotificationChanged) {
+                return true;
+            }
+        }
+
+        if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
+                && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
+            if (thisConfig.isProduceIntermediateResult() != otherConfig.isProduceIntermediateResult()) {
+                return true;
+            }
         }
 
         return false;
@@ -705,8 +713,9 @@ public class CalculatedFieldCtx implements Closeable {
                 && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
             boolean metricsChanged = !Objects.equals(thisConfig.getMetrics(), otherConfig.getMetrics());
             boolean watermarkChanged = !Objects.equals(thisConfig.getWatermark(), otherConfig.getWatermark());
-            boolean produceIntermediateResultChanged = thisConfig.isProduceIntermediateResult() != otherConfig.isProduceIntermediateResult();
-            return metricsChanged || watermarkChanged || produceIntermediateResultChanged;
+            if (metricsChanged || watermarkChanged) {
+                return true;
+            }
         }
         return false;
     }
@@ -741,7 +750,7 @@ public class CalculatedFieldCtx implements Closeable {
         if (!output.getType().equals(otherOutput.getType())) {
             return true;
         }
-        if (!output.getName().equals(otherOutput.getName())) {
+        if (!Objects.equals(output.getName(), otherOutput.getName())) {
             return true;
         }
         if (output.getScope() != (otherOutput.getScope())) {
