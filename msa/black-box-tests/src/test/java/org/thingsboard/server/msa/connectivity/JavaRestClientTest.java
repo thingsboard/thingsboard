@@ -358,7 +358,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         targetConfig.setUsersFilter(filter);
         notificationTarget.setConfiguration(targetConfig);
-        return restClient.createNotificationTarget(notificationTarget);
+        return restClient.saveNotificationTarget(notificationTarget);
     }
 
     private NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
@@ -397,7 +397,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
             config.getDeliveryMethodsTemplates().put(deliveryMethod, deliveryMethodNotificationTemplate);
         }
         notificationTemplate.setConfiguration(config);
-        return restClient.createNotificationTemplate(notificationTemplate);
+        return restClient.saveNotificationTemplate(notificationTemplate);
     }
 
     private NotificationRequest submitNotificationRequest(NotificationTargetId targetId, NotificationTemplateId notificationTemplateId) {
@@ -408,6 +408,6 @@ public class JavaRestClientTest extends AbstractContainerTest {
                 .templateId(notificationTemplateId)
                 .additionalConfig(config)
                 .build();
-        return restClient.createNotificationRequest(notificationRequest);
+        return restClient.saveNotificationRequest(notificationRequest);
     }
 }
