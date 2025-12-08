@@ -526,6 +526,7 @@ export enum NotificationType {
   ALARM_ASSIGNMENT = 'ALARM_ASSIGNMENT',
   RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT = 'RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT',
   ENTITIES_LIMIT = 'ENTITIES_LIMIT',
+  ENTITIES_LIMIT_INCREASE_REQUEST = 'ENTITIES_LIMIT_INCREASE_REQUEST',
   API_USAGE_LIMIT = 'API_USAGE_LIMIT',
   NEW_PLATFORM_VERSION = 'NEW_PLATFORM_VERSION',
   RULE_NODE = 'RULE_NODE',
@@ -544,6 +545,7 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.ALARM_ASSIGNMENT, 'assignment_turned_in'],
   [NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT, 'settings_ethernet'],
   [NotificationType.ENTITIES_LIMIT, 'data_thresholding'],
+  [NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST, 'mdi:file-cog'],
   [NotificationType.API_USAGE_LIMIT, 'insert_chart'],
   [NotificationType.TASK_PROCESSING_FAILURE, 'warning'],
   [NotificationType.RESOURCES_SHORTAGE, 'warning']
@@ -621,6 +623,12 @@ export const NotificationTemplateTypeTranslateMap = new Map<NotificationType, No
     {
       name: 'notification.template-type.entities-limit',
       helpId: 'notification/entities_limit'
+    }
+  ],
+  [NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST,
+    {
+      name: 'notification.template-type.entities-limit-increase-request',
+      helpId: 'notification/entities_limit_increase_request'
     }
   ],
   [NotificationType.API_USAGE_LIMIT,

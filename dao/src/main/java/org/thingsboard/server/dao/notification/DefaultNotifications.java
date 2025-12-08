@@ -52,12 +52,15 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.RateL
 import org.thingsboard.server.common.data.notification.rule.trigger.config.ResourcesShortageNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.TaskProcessingFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.template.DeliveryMethodNotificationTemplate;
+import org.thingsboard.server.common.data.notification.template.EmailDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -102,7 +105,17 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when count of entities of some type reached 80% threshold of the limit")
                     .build())
             .build();
-
+    public static final DefaultNotification entitiesLimitIncreaseRequest = DefaultNotification.builder()
+            .name("Entities limit increase request for sysadmin")
+            .type(NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST)
+            .subject("${entityType} limit increase request")
+            .text("${userEmail} has reached the maximum number of ${entityType:lowerCase}s allowed and is requesting an increase to the ${entityType:lowerCase} limit.")
+            .button("${increaseLimitActionLabel}").link("${increaseLimitLink}")
+            .emailTemplate(DefaultEmailTemplate.builder()
+                    .subject("${entityType} limit increase request")
+                    .body("${userEmail} has reached the maximum number of ${entityType:lowerCase}s allowed and is requesting an increase to the ${entityType:lowerCase} limit.<br/><a href=\"${baseUrl}${increaseLimitLink}\">${increaseLimitActionLabel}</a>")
+                    .build())
+            .build();
     public static final DefaultNotification apiFeatureWarningForSysadmin = DefaultNotification.builder()
             .name("API feature warning notification for sysadmin")
             .type(NotificationType.API_USAGE_LIMIT)
@@ -415,6 +428,8 @@ public class DefaultNotifications {
         private final String button;
         private final String link;
 
+        private final DefaultEmailTemplate emailTemplate;
+
         private final DefaultRule rule;
 
         public NotificationTemplate toTemplate() {
@@ -448,9 +463,17 @@ public class DefaultNotifications {
             }
             webTemplate.setAdditionalConfig(additionalConfig);
             webTemplate.setEnabled(true);
-            templateConfig.setDeliveryMethodsTemplates(Map.of(
-                    NotificationDeliveryMethod.WEB, webTemplate
-            ));
+
+            Map<NotificationDeliveryMethod, DeliveryMethodNotificationTemplate> deliveryMethodsTemplates = new HashMap<>();
+            deliveryMethodsTemplates.put(NotificationDeliveryMethod.WEB, webTemplate);
+            if (this.emailTemplate != null) {
+                EmailDeliveryMethodNotificationTemplate emailTemplate = new EmailDeliveryMethodNotificationTemplate();
+                emailTemplate.setSubject(this.emailTemplate.getSubject());
+                emailTemplate.setBody(this.emailTemplate.getBody());
+                emailTemplate.setEnabled(true);
+                deliveryMethodsTemplates.put(NotificationDeliveryMethod.EMAIL, emailTemplate);
+            }
+            templateConfig.setDeliveryMethodsTemplates(deliveryMethodsTemplates);
             template.setConfiguration(templateConfig);
             return template;
         }
@@ -480,6 +503,13 @@ public class DefaultNotifications {
             return rule;
         }
 
+    }
+
+    @Data
+    @Builder(toBuilder = true)
+    public static class DefaultEmailTemplate {
+        private final String subject;
+        private final String body;
     }
 
     @Data
