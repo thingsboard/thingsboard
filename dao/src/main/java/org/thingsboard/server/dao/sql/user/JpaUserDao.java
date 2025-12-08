@@ -141,7 +141,7 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     @Override
     public UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId) {
         TbPair<UserEntity, Boolean> result = userRepository.findUserAuthDetailsByUserId(userId);
-        return new UserAuthDetails(result.getFirst().toData(), result.getSecond());
+        return result != null ? new UserAuthDetails(result.getFirst().toData(), result.getSecond()) : null;
     }
 
     @Override
