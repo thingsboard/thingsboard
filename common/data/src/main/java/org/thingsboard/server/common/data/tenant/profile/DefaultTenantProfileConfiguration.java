@@ -194,11 +194,13 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
     private long minAllowedDeduplicationIntervalInSecForCF = 10;
     @Schema(example = "60")
     private long minAllowedAggregationIntervalInSecForCF = 60;
+    @Builder.Default
     @Schema(example = "300")
     private long intermediateAggregationIntervalInSecForCF = 300;
     @Builder.Default
     @Schema(example = "60")
     private long cfReevaluationCheckInterval = 60;
+    @Builder.Default
     @Schema(example = "60")
     private long alarmsReevaluationInterval = 60;
 
@@ -258,6 +260,14 @@ public class DefaultTenantProfileConfiguration implements TenantProfileConfigura
 
     public long getCfReevaluationCheckInterval() {
         return cfReevaluationCheckInterval <= 0 ? 60 : cfReevaluationCheckInterval;
+    }
+
+    public long getAlarmsReevaluationInterval() {
+        return alarmsReevaluationInterval <= 0 ? 60 : alarmsReevaluationInterval;
+    }
+
+    public long getIntermediateAggregationIntervalInSecForCF() {
+        return intermediateAggregationIntervalInSecForCF <= 0 ? 300 : intermediateAggregationIntervalInSecForCF;
     }
 
 }
