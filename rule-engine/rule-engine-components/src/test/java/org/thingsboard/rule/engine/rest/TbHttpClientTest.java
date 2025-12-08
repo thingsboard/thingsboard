@@ -238,7 +238,7 @@ public class TbHttpClientTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    public void testQueryParamsEncoding(String endpointUrl, Map<String, String> queryParams, String expectedEncodedUrl) {
+    public void testUrlEncoding(String endpointUrl, Map<String, String> queryParams, String expectedEncodedUrl) {
         // GIVEN
         Mockito.when(client.buildEncodedUri(any(), any())).thenCallRealMethod();
 
@@ -249,7 +249,7 @@ public class TbHttpClientTest {
         Assertions.assertEquals(expectedEncodedUrl, uri.toASCIIString());
     }
 
-    private static Stream<Arguments> testQueryParamsEncoding() {
+    private static Stream<Arguments> testUrlEncoding() {
         return Stream.of(
                 Arguments.of(
                         Named.named("ISO 8601 date-time in value", "http://somecompany/api/data/fetch"),
@@ -544,6 +544,32 @@ public class TbHttpClientTest {
                         Named.named("curly braces in both key and value", "http://url/api"),
                         Map.of("{param}", "{data}"),
                         "http://url/api?%7Bparam%7D=%7Bdata%7D"
+                ),
+                // No double-encoding tests: already-encoded URLs should NOT be re-encoded
+                Arguments.of(
+                        Named.named("already encoded path - no double encoding", "http://url/my%20path/to%7Bfile%7D"),
+                        Map.of("key", "value"),
+                        "http://url/my%20path/to%7Bfile%7D?key=value"  // %20 stays %20, not %2520
+                ),
+                Arguments.of(
+                        Named.named("already encoded query param in URL - no double encoding", "http://url/api?existing=hello%20world"),
+                        Map.of("new", "value"),
+                        "http://url/api?existing=hello%20world&new=value"  // %20 stays %20
+                ),
+                Arguments.of(
+                        Named.named("encoded URL with new params needing encoding", "http://url/path%20here"),
+                        Map.of("email", "user+test@example.com"),
+                        "http://url/path%20here?email=user%2Btest%40example.com"  // path preserved, new param encoded
+                ),
+                Arguments.of(
+                        Named.named("multiple encoded segments in path - no double encoding", "http://url/a%2Fb/c%3Dd"),
+                        Map.of("q", "test"),
+                        "http://url/a%2Fb/c%3Dd?q=test"  // %2F (/) and %3D (=) stay encoded
+                ),
+                Arguments.of(
+                        Named.named("encoded fragment - no double encoding", "http://url/api#section%20one"),
+                        Map.of("key", "value"),
+                        "http://url/api?key=value#section%20one"  // fragment stays encoded
                 )
         );
     }
