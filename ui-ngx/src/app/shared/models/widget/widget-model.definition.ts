@@ -17,6 +17,7 @@
 import {
   Datasource,
   datasourcesHasAggregation,
+  datasourcesHasOnlyComparisonAggregation,
   Widget,
   widgetType,
   widgetTypeHasTimewindow
@@ -53,4 +54,20 @@ export const widgetHasTimewindow = (widget: Widget): boolean => {
   }
   return widgetTypeHasTimewindow(widget.type)
     || (widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources));
+};
+
+export const widgetDatasourcesHasAggregation = (widget: Widget): boolean => {
+  const widgetDefinition = findWidgetModelDefinition(widget);
+  if (widgetDefinition) {
+    return widgetDefinition.datasourcesHasAggregation(widget);
+  }
+  return widget.type === widgetType.latest && datasourcesHasAggregation(widget.config.datasources);
+};
+
+export const widgetDatasourcesHasOnlyComparisonAggregation = (widget: Widget): boolean => {
+  const widgetDefinition = findWidgetModelDefinition(widget);
+  if (widgetDefinition) {
+    return widgetDefinition.datasourcesHasOnlyComparisonAggregation(widget);
+  }
+  return widget.type === widgetType.latest && datasourcesHasOnlyComparisonAggregation(widget.config.datasources);
 };

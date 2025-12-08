@@ -741,7 +741,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     } else if (this.widgetType === widgetType.latest) {
       const widgetDefinition = findWidgetModelDefinition(this.widget);
       if (widgetDefinition) {
-        return widgetDefinition.hasTimewindow(this.widget);
+        return widgetDefinition.datasourcesHasAggregation(this.widget);
       } else {
         const datasources = this.dataSettings.get('datasources').value;
         return datasourcesHasAggregation(datasources);
@@ -768,8 +768,13 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   public onlyHistoryTimewindow(): boolean {
     if (this.widgetType === widgetType.latest) {
-      const datasources = this.dataSettings.get('datasources').value;
-      return datasourcesHasOnlyComparisonAggregation(datasources);
+      const widgetDefinition = findWidgetModelDefinition(this.widget);
+      if (widgetDefinition) {
+        return widgetDefinition.datasourcesHasOnlyComparisonAggregation(this.widget);
+      } else {
+        const datasources = this.dataSettings.get('datasources').value;
+        return datasourcesHasOnlyComparisonAggregation(datasources);
+      }
     } else {
       return false;
     }
