@@ -778,7 +778,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   public generateDataKey(chip: any, type: DataKeyType, dataKeySettingsForm: FormProperty[],
                          isLatestDataKey: boolean, dataKeySettingsFunction: DataKeySettingsFunction): DataKey {
     if (isObject(chip)) {
-      (chip as DataKey)._hash = Math.random();
       return chip;
     } else {
       let label: string = chip;
@@ -796,7 +795,6 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         label,
         color: this.genNextColor(),
         settings: {},
-        _hash: Math.random()
       };
       if (type === DataKeyType.function) {
         result.name = 'f(x)';

@@ -195,8 +195,6 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   private updateErrorText(): void {
     if (this.zoneGroupsFormArray.controls.some(control => control.value.refEntityId?.id === NULL_UUID)) {
       this.errorText = 'calculated-fields.hint.geofencing-entity-not-found';
-    } else if (!this.zoneGroupsFormArray.controls.length) {
-      this.errorText = 'calculated-fields.hint.geofencing-empty';
     } else {
       this.errorText = '';
     }

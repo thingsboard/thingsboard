@@ -25,13 +25,16 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.HasLatestTs;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
 @Slf4j
-public class GeofencingArgumentEntry implements ArgumentEntry {
+public class GeofencingArgumentEntry implements ArgumentEntry, HasLatestTs {
 
     private Map<EntityId, GeofencingZoneState> zoneStates;
 
@@ -56,6 +59,12 @@ public class GeofencingArgumentEntry implements ArgumentEntry {
     @Override
     public Object getValue() {
         return zoneStates;
+    }
+
+    @Override
+    public long getLatestTs() {
+        return zoneStates.values().stream()
+                .mapToLong(GeofencingZoneState::getTs).max().orElse(DEFAULT_LAST_UPDATE_TS);
     }
 
     @Override

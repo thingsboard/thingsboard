@@ -16,7 +16,9 @@
 
 -->
 <div class="flex flex-col gap-3">
-  <div class="tb-form-panel stroked no-padding no-gap arguments-table flex flex-col" [class.arguments-table-with-error]="errorText">
+  <div class="tb-form-panel stroked no-padding no-gap arguments-table flex flex-col"
+       [class.arguments-table-with-error]="errorText"
+       [class.!hidden]="!(dataSource.isEmpty() | async) === false">
     <table mat-table [dataSource]="dataSource" class="overflow-hidden bg-transparent" matSort
            [matSortActive]="sortOrder.property" [matSortDirection]="sortOrder.direction" matSortDisableClear>
       <ng-container [matColumnDef]="'name'">
@@ -121,13 +123,13 @@
                       *matHeaderRowDef="['name', 'entityType', 'target', 'key', 'reportStrategy', 'actions']"></mat-header-row>
       <mat-row *matRowDef="let argument; columns: ['name', 'entityType', 'target', 'key', 'reportStrategy', 'actions']"></mat-row>
     </table>
-    <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
-         class="tb-prompt flex flex-1 items-end justify-center">
-      {{ 'calculated-fields.no-zone-configured' | translate }}
-    </div>
     @if (errorText) {
       <tb-error noMargin [error]="errorText | translate" class="flex h-9 items-center pl-3"/>
     }
+  </div>
+  <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
+       class="tb-prompt flex flex-1 items-end justify-center tb-prompt required">
+    {{ 'calculated-fields.no-zone-configured' | translate }}
   </div>
   <div class="flex h-9 justify-between">
     <button type="button"
