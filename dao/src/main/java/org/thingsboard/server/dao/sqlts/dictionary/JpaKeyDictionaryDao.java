@@ -50,6 +50,15 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
         if (cached != null) {
             return cached;
         }
+        var compositeKey = new KeyDictionaryCompositeKey(strKey);
+        Optional<KeyDictionaryEntry> entryOpt = keyDictionaryRepository.findById(compositeKey);
+        if (entryOpt.isPresent()) {
+            Integer keyId = entryOpt.get().getKeyId();
+            if (keyId != null) {
+                keyDictionaryMap.put(strKey, keyId);
+                return keyId;
+            }
+        }
         creationLock.lock();
         try {
             Integer keyId = keyDictionaryMap.get(strKey);
@@ -59,8 +68,7 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
             keyId = keyDictionaryRepository.upsertAndGetKeyId(strKey);
             if (keyId == null || keyId == 0) {
                 log.warn("upsertAndGetKeyId returned: [{}] for key: [{}], falling back to findById", keyId, strKey);
-                KeyDictionaryCompositeKey id = new KeyDictionaryCompositeKey(strKey);
-                Optional<KeyDictionaryEntry> entryOpt = keyDictionaryRepository.findById(id);
+                entryOpt = keyDictionaryRepository.findById(compositeKey);
                 if (entryOpt.isEmpty() ||
                     entryOpt.get().getKeyId() == null ||
                     entryOpt.get().getKeyId() == 0) {
