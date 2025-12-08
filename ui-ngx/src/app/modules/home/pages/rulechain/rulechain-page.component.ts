@@ -1679,8 +1679,8 @@ export class RuleChainPageComponent extends PageComponent
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         title: 'rulenode.events',
-        debugEventTypes: [DebugEventType.DEBUG_RULE_CHAIN],
-        defaultEventType: DebugEventType.DEBUG_RULE_CHAIN,
+        debugEventTypes: [DebugEventType.DEBUG_RULE_NODE],
+        defaultEventType: DebugEventType.DEBUG_RULE_NODE,
         tenantId: this.ruleChain.tenantId.id,
         value: this.editingRuleNode.ruleNodeId,
         functionTestButtonLabel: this.ruleNodeTestButtonLabel,

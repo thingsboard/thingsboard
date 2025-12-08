@@ -249,7 +249,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        title: 'alarm-rule.debugging',
+        title: 'calculated-fields.debugging',
         tenantId: this.tenantId,
         value: calculatedField.id,
         debugEventTypes:[DebugEventType.DEBUG_CALCULATED_FIELD],
