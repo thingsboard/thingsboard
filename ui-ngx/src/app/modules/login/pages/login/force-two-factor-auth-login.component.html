@@ -15,8 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-row items-center justify-center"
+<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-col items-center justify-center"
      style="width: 100%;">
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" class="progress-bar" mode="indeterminate"></mat-progress-bar>
+  }
   @switch (state()) {
     @case (ForceTwoFAState.SETUP) {
       <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
@@ -59,7 +62,7 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="flex flex-col items-center justify-start">
+              <div tb-toast class="flex flex-col items-center justify-start">
                 <p class="mat-body qr-code-description mb-4" translate>login.scan-qr-code</p>
                 <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
                 <p class="mat-body qr-code-description" translate>login.enter-key-manually</p>
@@ -109,7 +112,7 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="flex flex-col items-center justify-start">
+              <div tb-toast class="flex flex-col items-center justify-start">
                 <form [formGroup]="smsConfigForm" class="mb-12">
                   <p class="mat-body step-description input" translate>login.sms-description</p>
                   <div class="flex flex-row items-center justify-between gap-3.75">
@@ -156,7 +159,7 @@
               </mat-card-title>
             </mat-card-header>
             <mat-card-content>
-              <div class="flex flex-col items-center justify-start">
+              <div tb-toast class="flex flex-col items-center justify-start">
                 <form [formGroup]="emailConfigForm" class="mb-8 w-full">
                   <p class="mat-body step-description input" translate>login.email-description</p>
                   <mat-form-field class="mat-block input-container flex-1">
