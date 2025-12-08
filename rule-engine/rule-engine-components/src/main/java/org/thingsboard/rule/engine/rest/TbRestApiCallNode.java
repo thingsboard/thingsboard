@@ -26,8 +26,11 @@ import org.thingsboard.rule.engine.external.TbAbstractExternalNode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.List;
+
+import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -57,7 +60,15 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
-        TbRestApiCallNodeConfiguration config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
+
+        var config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
+        String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
+        try {
+            validateFields(config, errorPrefix);
+        } catch (DataValidationException e) {
+            throw new TbNodeException(e, true);
+        }
+
         httpClient = new TbHttpClient(config, ctx.getSharedEventLoop());
     }
 

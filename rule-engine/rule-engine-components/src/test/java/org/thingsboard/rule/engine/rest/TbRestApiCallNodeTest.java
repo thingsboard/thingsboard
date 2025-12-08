@@ -25,6 +25,7 @@ import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.provider.Arguments;
@@ -43,23 +44,33 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
+
+    private RuleNode ruleNode;
 
     @Spy
     private TbRestApiCallNode restNode;
@@ -94,11 +105,114 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         }
     }
 
+    @BeforeEach
+    public void setup() {
+        ruleNode = new RuleNode();
+        ruleNode.setId(ruleNodeId);
+        ruleNode.setName("Test REST API call node");
+        lenient().when(ctx.getSelf()).thenReturn(ruleNode);
+    }
+
     @AfterEach
     public void teardown() {
         if (server != null) {
             server.stop();
         }
+    }
+
+    @Test
+    public void shouldNotAllowNullQueryParamValues() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setUseNewEncoding(true);
+        var params = new HashMap<String, String>();
+        params.put("key", null);
+        config.setQueryParams(params);
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .matches(e -> ((TbNodeException) e).isUnrecoverable())
+                .rootCause()
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("query parameter values must be non-null");
+    }
+
+    @Test
+    public void shouldAllowOnlyNullQueryParamsIfOldEncodingIsUsed() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setUseNewEncoding(false);
+        config.setQueryParams(Map.of("key", "value"));
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasRootCauseInstanceOf(DataValidationException.class)
+                .hasRootCauseMessage("'" + ruleNode.getName() + "' node configuration is invalid: query parameters must be null if old encoding is used")
+                .matches(e -> ((TbNodeException) e).isUnrecoverable());
+    }
+
+    @Test
+    public void shouldNotAllowNullQueryParamsIfNewEncodingIsUsed() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setUseNewEncoding(true);
+        config.setQueryParams(null);
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasRootCauseInstanceOf(DataValidationException.class)
+                .hasRootCauseMessage("'" + ruleNode.getName() + "' node configuration is invalid: query parameters must be non-null if new encoding is used")
+                .matches(e -> ((TbNodeException) e).isUnrecoverable());
+    }
+
+    @Test
+    public void shouldUseNewEncodingForNewNodesByDefault() {
+        // GIVEN-WHEN
+        var defaultConfig = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+
+        // THEN
+        assertTrue(defaultConfig.isUseNewEncoding());
+        assertEquals(Collections.emptyMap(), defaultConfig.getQueryParams());
+    }
+
+    @Test
+    public void shouldDefaultToOldEncodingForLegacyConfigs() {
+        // GIVEN
+        String configJson = """
+                {
+                    "restEndpointUrlPattern": "http://url?param=value",
+                    "requestMethod": "GET",
+                    "useSimpleClientHttpFactory": false,
+                    "parseToPlainText": false,
+                    "ignoreRequestBody": false,
+                    "enableProxy": false,
+                    "useSystemProxyProperties": false,
+                    "proxyScheme": null,
+                    "proxyHost": null,
+                    "proxyPort": 0,
+                    "proxyUser": null,
+                    "proxyPassword": null,
+                    "readTimeoutMs": 0,
+                    "maxParallelRequestsCount": 0,
+                    "headers": {
+                        "Content-Type": "application/json",
+                        "X-Authorization": "Bearer eyJhbGciOi...."
+                    },
+                    "credentials": {
+                        "type": "anonymous"
+                    },
+                    "maxInMemoryBufferSizeInKb": 256
+                }""";
+
+        // WHEN
+        var config = JacksonUtil.fromString(configJson, TbRestApiCallNodeConfiguration.class);
+
+        // THEN
+        assertFalse(config.isUseNewEncoding());
+        assertNull(config.getQueryParams());
     }
 
     @Test
