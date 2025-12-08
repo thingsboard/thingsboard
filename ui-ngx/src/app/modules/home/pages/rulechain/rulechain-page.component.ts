@@ -1682,7 +1682,7 @@ export class RuleChainPageComponent extends PageComponent
         debugEventTypes: [DebugEventType.DEBUG_RULE_NODE],
         defaultEventType: DebugEventType.DEBUG_RULE_NODE,
         tenantId: this.ruleChain.tenantId.id,
-        value: this.editingRuleNode.ruleNodeId,
+        entityId: this.editingRuleNode.ruleNodeId,
         functionTestButtonLabel: this.ruleNodeTestButtonLabel,
         onDebugEventSelected: this.onDebugEventSelected.bind(this)
       }

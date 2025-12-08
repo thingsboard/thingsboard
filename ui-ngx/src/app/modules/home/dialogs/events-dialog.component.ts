@@ -28,13 +28,13 @@ import { BaseData, HasId } from '@shared/models/base-data';
 export interface EventsDialogData {
   title: string;
   tenantId: string;
-  value: EntityId;
+  entityId: EntityId;
   debugEventTypes: Array<DebugEventType>;
   defaultEventType: DebugEventType;
   disabledEventTypes?: Array<EventType | DebugEventType>;
   functionTestButtonLabel?: string;
   onDebugEventSelected?: (event: any, dialogRef: MatDialogRef<EventsDialogComponent, string>) => void;
-  customCellActionEnabledFn?: (event: BaseData<HasId>) => boolean;
+  debugActionEnabledFn?: (event: BaseData<HasId>) => boolean;
 }
 
 @Component({
@@ -54,8 +54,8 @@ export class EventsDialogComponent extends DialogComponent<EventsDialogComponent
   }
 
  ngAfterViewInit() {
-   if (this.data.customCellActionEnabledFn && this.eventsTable.entitiesTable.cellActionDescriptors?.length > 0) {
-     this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = this.data.customCellActionEnabledFn;
+   if (this.data.debugActionEnabledFn && this.eventsTable.entitiesTable.cellActionDescriptors?.length > 0) {
+     this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = this.data.debugActionEnabledFn;
    }
    this.eventsTable.entitiesTable.updateData();
  }
