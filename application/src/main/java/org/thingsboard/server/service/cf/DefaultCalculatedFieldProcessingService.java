@@ -74,7 +74,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
-import static org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry.DEFAULT_TS;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultAttributeEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createDefaultTsKvEntry;
 import static org.thingsboard.server.utils.CalculatedFieldArgumentUtils.createStateByType;
@@ -239,11 +238,11 @@ public class DefaultCalculatedFieldProcessingService implements CalculatedFieldP
             case TS_ROLLING -> fetchTsRolling(tenantId, entityId, argument);
             case ATTRIBUTE -> Futures.transform(
                     attributesService.find(tenantId, entityId, argument.getRefEntityKey().getScope(), argument.getRefEntityKey().getKey()),
-                    result -> transformSingleValueArgument(result.orElseGet(() -> createDefaultAttributeEntry(argument, DEFAULT_TS))),
+                    result -> transformSingleValueArgument(result.orElseGet(() -> createDefaultAttributeEntry(argument, System.currentTimeMillis()))),
                     calculatedFieldCallbackExecutor);
             case TS_LATEST -> Futures.transform(
                     timeseriesService.findLatest(tenantId, entityId, argument.getRefEntityKey().getKey()),
-                    result -> transformSingleValueArgument(result.orElseGet(() -> createDefaultTsKvEntry(argument, DEFAULT_TS))),
+                    result -> transformSingleValueArgument(result.orElseGet(() -> createDefaultTsKvEntry(argument, System.currentTimeMillis()))),
                     calculatedFieldCallbackExecutor);
         };
     }

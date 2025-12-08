@@ -40,6 +40,8 @@ public interface ArgumentEntry {
 
     Object getValue();
 
+    long getLatestTs();
+
     boolean updateEntry(ArgumentEntry entry);
 
     boolean isEmpty();

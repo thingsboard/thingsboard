@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
 public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTest {
@@ -571,6 +572,9 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     public void testScriptCalculatedFieldWhenUsedLatestTsInScript() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
 
+        long ts = System.currentTimeMillis() - 300000L;
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
+
         CalculatedField calculatedField = new CalculatedField();
         calculatedField.setEntityId(testDevice.getId());
         calculatedField.setType(CalculatedFieldType.SCRIPT);
@@ -583,7 +587,6 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         Argument argument = new Argument();
         ReferencedEntityKey refEntityKey = new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null);
         argument.setRefEntityKey(refEntityKey);
-        argument.setDefaultValue("20");
         config.setArguments(Map.of("T", argument));
         config.setExpression("return {\"ts\": ctx.latestTs, \"values\": {\"fahrenheitTemp\": (T * 1.8) + 32}};");
 
@@ -595,25 +598,98 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
 
-        await().alias("create CF -> perform initial calculation with default value").atMost(TIMEOUT, TimeUnit.SECONDS)
-                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
-                .untilAsserted(() -> {
-                    ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
-                    assertThat(fahrenheitTemp).isNotNull();
-                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("ts").asText()).isNotEqualTo("-1");
-                    assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("68.0");
-                });
-
-        long ts = System.currentTimeMillis() - 10L;
-        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("{\"ts\": %s, \"values\": {\"temperature\":30}}", ts)));
-
-        await().alias("update telemetry -> perform calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ObjectNode fahrenheitTemp = getLatestTelemetry(testDevice.getId(), "fahrenheitTemp");
                     assertThat(fahrenheitTemp).isNotNull();
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
                     assertThat(fahrenheitTemp.get("fahrenheitTemp").get(0).get("value").asText()).isEqualTo("86.0");
+                });
+    }
+
+    @Test
+    public void testSimpleCalculatedFieldWhenUseLatestTsIsTrueAndDefaultArguments() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SIMPLE);
+        calculatedField.setName("a + b + c");
+        calculatedField.setDebugSettings(DebugSettings.all());
+        calculatedField.setConfigurationVersion(1);
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        Argument argument1 = new Argument();
+        ReferencedEntityKey refEntityKey1 = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        argument1.setRefEntityKey(refEntityKey1);
+        argument1.setDefaultValue("100");
+        Argument argument2 = new Argument();
+        ReferencedEntityKey refEntityKey2 = new ReferencedEntityKey("b", ArgumentType.TS_LATEST, null);
+        argument2.setRefEntityKey(refEntityKey2);
+        argument2.setDefaultValue("200");
+        Argument argument3 = new Argument();
+        ReferencedEntityKey refEntityKey3 = new ReferencedEntityKey("c", ArgumentType.TS_LATEST, null);
+        argument3.setRefEntityKey(refEntityKey3);
+        argument3.setDefaultValue("300");
+        config.setArguments(Map.of("a", argument1, "b", argument2, "c", argument3));
+        config.setExpression("a + b + c");
+
+        Output output = new Output();
+        output.setName("d");
+        output.setType(OutputType.TIME_SERIES);
+        output.setDecimalsByDefault(0);
+        config.setOutput(output);
+
+        config.setUseLatestTs(true);
+
+        calculatedField.setConfiguration(config);
+
+        CalculatedField savedCalculatedField = doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation with default arguments").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode d = getLatestTelemetry(testDevice.getId(), "d");
+                    assertThat(d).isNotNull();
+                    assertThat(d.get("d").get(0).get("value").asText()).isEqualTo("600");
+                });
+
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":10}"));
+
+        await().alias("update telemetry -> save result with ts of 'a' argument").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d", "a");
+                    assertThat(keys).isNotNull();
+                    String aTs = keys.get("a").get(0).get("ts").asText();
+                    assertThat(keys.get("d").get(0).get("ts").asText()).isEqualTo(aTs);
+                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("510");
+                });
+
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"b\":20}"));
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"c\":30}"));
+
+        await().alias("update telemetry -> save result with latest ts of updated arguments").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d");
+                    assertThat(keys).isNotNull();
+                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("60");
+                });
+
+        String latestTs = getLatestTelemetry(testDevice.getId(), "d").get("d").get(0).get("ts").asText();
+
+        doDelete("/api/plugins/telemetry/DEVICE/" + testDevice.getId() + "/timeseries/delete?keys=b&deleteAllDataForKeys=true").andExpect(status().isOk());
+
+        await().alias("delete telemetry -> save result with previous latest ts and default argument").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode keys = getLatestTelemetry(testDevice.getId(), "d");
+                    assertThat(keys).isNotNull();
+                    assertThat(keys.get("d").get(0).get("ts").asText()).isEqualTo(latestTs);
+                    assertThat(keys.get("d").get(0).get("value").asText()).isEqualTo("240");
                 });
     }
 

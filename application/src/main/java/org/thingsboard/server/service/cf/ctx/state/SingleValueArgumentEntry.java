@@ -31,12 +31,13 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
 @AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
     public static final Long DEFAULT_VERSION = -1L;
-    public static final Long DEFAULT_TS = -1L;
 
     private long ts;
     private BasicKvEntry kvEntryValue;
@@ -45,7 +46,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     private boolean forceResetPrevious;
 
     public SingleValueArgumentEntry() {
-        this.ts = DEFAULT_TS;
+        this.ts = DEFAULT_LAST_UPDATE_TS;
         this.version = DEFAULT_VERSION;
     }
 
@@ -98,6 +99,11 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     }
 
     @Override
+    public long getLatestTs() {
+        return !isDefaultValue() ? ts : DEFAULT_LAST_UPDATE_TS;
+    }
+
+    @Override
     public TbelCfArg toTbelCfArg() {
         Object value = kvEntryValue.getValue();
         if (kvEntryValue instanceof JsonDataEntry) {
@@ -118,7 +124,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
-            if (singleValueEntry.getTs() <= this.ts) {
+            if (singleValueEntry.getTs() < this.ts) {
                 return false;
             }
 
@@ -134,4 +140,9 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         }
         return false;
     }
+
+    public boolean isDefaultValue() {
+        return DEFAULT_VERSION.equals(this.version);
+    }
+
 }
