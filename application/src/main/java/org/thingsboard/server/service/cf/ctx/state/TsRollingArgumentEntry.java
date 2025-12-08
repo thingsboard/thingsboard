@@ -85,7 +85,6 @@ public class TsRollingArgumentEntry implements ArgumentEntry {
         return tsRecords;
     }
 
-    @Override
     public long getLatestTs() {
         var lastEntry = tsRecords.lastEntry();
         return (lastEntry != null) ? lastEntry.getKey() : DEFAULT_LAST_UPDATE_TS;

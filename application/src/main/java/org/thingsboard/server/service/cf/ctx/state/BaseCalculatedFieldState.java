@@ -37,15 +37,13 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected Map<String, ArgumentEntry> arguments;
     protected boolean sizeExceedsLimit;
 
-    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
-
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
         this.arguments = new HashMap<>();
     }
 
     public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, DEFAULT_LAST_UPDATE_TS);
+        this(new ArrayList<>(), new HashMap<>(), false);
     }
 
     @Override
@@ -111,12 +109,28 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected abstract void validateNewEntry(ArgumentEntry newEntry);
 
     public long getLatestTimestamp() {
-        long currentLatestTs = arguments.values().stream()
-                .mapToLong(ArgumentEntry::getLatestTs)
-                .max()
-                .orElse(DEFAULT_LAST_UPDATE_TS);
-        latestTimestamp = Math.max(currentLatestTs, latestTimestamp);
-        return latestTimestamp;
+        long latestTs = DEFAULT_LAST_UPDATE_TS;
+
+        boolean allDefault = arguments.values().stream().allMatch(entry -> {
+            if (entry instanceof SingleValueArgumentEntry single) {
+                return single.isDefaultValue();
+            }
+            return false;
+        });
+
+        for (ArgumentEntry entry : arguments.values()) {
+            if (entry instanceof SingleValueArgumentEntry single) {
+                if (allDefault) {
+                    latestTs = Math.max(latestTs, single.getTs());
+                } else if (!single.isDefaultValue()) {
+                    latestTs = Math.max(latestTs, single.getTs());
+                }
+            } else if (entry instanceof TsRollingArgumentEntry rolling) {
+                latestTs = Math.max(latestTs, rolling.getLatestTs());
+            }
+        }
+
+        return latestTs;
     }
 
 }

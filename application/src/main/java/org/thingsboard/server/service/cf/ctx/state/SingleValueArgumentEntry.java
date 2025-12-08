@@ -99,11 +99,6 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     }
 
     @Override
-    public long getLatestTs() {
-        return !isDefaultValue() ? ts : DEFAULT_LAST_UPDATE_TS;
-    }
-
-    @Override
     public TbelCfArg toTbelCfArg() {
         Object value = kvEntryValue.getValue();
         if (kvEntryValue instanceof JsonDataEntry) {
