@@ -192,9 +192,6 @@ import { AIModelDialogComponent } from '@home/components/ai-model/ai-model-dialo
 import { ResourcesDialogComponent } from "@home/components/resources/resources-dialog.component";
 import { ResourcesLibraryComponent } from "@home/components/resources/resources-library.component";
 import { CalculatedFieldsTableComponent } from '@home/components/calculated-fields/calculated-fields-table.component';
-import {
-  CalculatedFieldDebugDialogComponent
-} from '@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component';
 import { CalculatedFieldsModule } from '@home/components/calculated-fields/calculated-field.module';
 import { AlarmRuleModule } from "@home/components/alarm-rules/alarm-rule.module";
 import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
@@ -204,7 +201,7 @@ import { EditApiKeyDescriptionPanelComponent } from '@home/components/api-key/ed
 import { ApiKeyGeneratedDialogComponent } from '@home/components/api-key/api-key-generated-dialog.component';
 import { ApiKeysTableDialogComponent } from '@home/components/api-key/api-keys-table-dialog.component';
 import { AuditLogFilterComponent } from "@home/components/audit-log/audit-log-filter.component";
-import { EventsDialogComponent } from '@home/components/event/events-dialog.component';
+import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
 
 @NgModule({
   declarations:
@@ -218,7 +215,6 @@ import { EventsDialogComponent } from '@home/components/event/events-dialog.comp
       AuditLogTableComponent,
       AuditLogDetailsDialogComponent,
       CalculatedFieldsTableComponent,
-      CalculatedFieldDebugDialogComponent,
       AlarmRulesTableComponent,
       EventContentDialogComponent,
       EventTableHeaderComponent,

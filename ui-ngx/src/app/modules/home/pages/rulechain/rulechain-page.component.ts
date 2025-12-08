@@ -100,7 +100,7 @@ import { EntityDebugSettings } from '@shared/models/entity.models';
 import Timeout = NodeJS.Timeout;
 import { DomSanitizer } from '@angular/platform-browser';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
-import { EventsDialogComponent } from '@home/components/event/events-dialog.component';
+import { EventsDialogComponent } from '@home/dialogs/events-dialog.component';
 
 @Component({
   selector: 'tb-rulechain-page',
@@ -1679,11 +1679,12 @@ export class RuleChainPageComponent extends PageComponent
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         title: 'rulenode.events',
-        debugEventType: DebugEventType.DEBUG_RULE_CHAIN,
-        tenantId: this.ruleChain.tenantId,
-        entityId: this.editingRuleNode.ruleNodeId,
+        debugEventTypes: [DebugEventType.DEBUG_RULE_CHAIN],
+        defaultEventType: DebugEventType.DEBUG_RULE_CHAIN,
+        tenantId: this.ruleChain.tenantId.id,
+        value: this.editingRuleNode.ruleNodeId,
         functionTestButtonLabel: this.ruleNodeTestButtonLabel,
-        debugEventSelected: this.onDebugEventSelected.bind(this)
+        onDebugEventSelected: this.onDebugEventSelected.bind(this)
       }
     })
       .afterClosed()

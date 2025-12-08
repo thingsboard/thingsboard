@@ -17,7 +17,7 @@
 -->
 <div class="debug-dialog-container flex flex-col xs:h-full">
   <mat-toolbar color="primary">
-    <h2>{{ dialogTitle | translate}}</h2>
+    <h2>{{ data.title | translate}}</h2>
     <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -27,13 +27,14 @@
   </mat-toolbar>
   <div mat-dialog-content class="tb-form-panel stroked debug-dialog-content xs:flex-1">
     <tb-event-table
-      [tenantId]="data.tenantId"
-      [debugEventTypes]="[debugEventTypes.DEBUG_CALCULATED_FIELD]"
-      [disabledEventTypes]="[EventType.LC_EVENT, EventType.ERROR, EventType.STATS]"
-      [defaultEventType]="DebugEventType.DEBUG_CALCULATED_FIELD"
+      [debugEventTypes]="data.debugEventTypes"
+      [defaultEventType]="data.defaultEventType"
+      [disabledEventTypes]="data.disabledEventTypes ?? []"
       [active]="true"
-      [entityId]="data.value.id"
-      (debugEventSelected)="onDebugEventSelected($event)"
+      [tenantId]="data.tenantId"
+      [entityId]="data.value"
+      [functionTestButtonLabel]="data.functionTestButtonLabel ?? ''"
+      (debugEventSelected)="this.onDebugEventSelected($event)"
     />
   </div>
   <div mat-dialog-actions class="justify-end">

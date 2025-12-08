@@ -21,17 +21,20 @@ import { EventTableComponent } from '@home/components/event/event-table.componen
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
-import { DebugEventType } from '@shared/models/event.models';
-import { TenantId } from '@shared/models/id/tenant-id';
+import { DebugEventType, EventType } from '@shared/models/event.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { BaseData, HasId } from '@shared/models/base-data';
 
-export interface RuleNodeDebugDialogData {
+export interface EventsDialogData {
   title: string;
-  tenantId: TenantId;
-  entityId: EntityId;
-  debugEventType: DebugEventType;
-  functionTestButtonLabel: string;
-  onDebugEventSelected: ()=> void;
+  tenantId: string;
+  value: EntityId;
+  debugEventTypes: Array<DebugEventType>;
+  defaultEventType: DebugEventType;
+  disabledEventTypes?: Array<EventType | DebugEventType>;
+  functionTestButtonLabel?: string;
+  onDebugEventSelected?: (event: any, dialogRef: MatDialogRef<EventsDialogComponent, string>) => void;
+  customCellActionEnabledFn?: (event: BaseData<HasId>) => boolean;
 }
 
 @Component({
@@ -45,16 +48,25 @@ export class EventsDialogComponent extends DialogComponent<EventsDialogComponent
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
-              @Inject(MAT_DIALOG_DATA) public data: RuleNodeDebugDialogData,
+              @Inject(MAT_DIALOG_DATA) public data: EventsDialogData,
               protected dialogRef: MatDialogRef<EventsDialogComponent, string>) {
     super(store, router, dialogRef);
   }
 
  ngAfterViewInit() {
+   if (this.data.customCellActionEnabledFn && this.eventsTable.entitiesTable.cellActionDescriptors?.length > 0) {
+     this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = this.data.customCellActionEnabledFn;
+   }
    this.eventsTable.entitiesTable.updateData();
  }
 
   cancel(): void {
     this.dialogRef.close(null);
+  }
+
+  onDebugEventSelected(event: any): void {
+    if(this.data.onDebugEventSelected) {
+      this.data.onDebugEventSelected(event, this.dialogRef);
+    }
   }
 }

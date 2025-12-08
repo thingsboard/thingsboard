@@ -22,7 +22,7 @@ import {
 import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Direction } from '@shared/models/page/sort-order';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { PageLink } from '@shared/models/page/page-link';
 import { EMPTY, Observable, of } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
@@ -48,8 +48,6 @@ import {
   PropagationWithExpression,
 } from '@shared/models/calculated-field.models';
 import {
-  CalculatedFieldDebugDialogComponent,
-  CalculatedFieldDebugDialogData,
   CalculatedFieldDialogComponent,
   CalculatedFieldDialogData,
   CalculatedFieldScriptTestDialogComponent,
@@ -61,6 +59,8 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
 import { DatePipe } from '@angular/common';
 import { UtilsService } from "@core/services/utils.service";
 import { ActionNotificationShow } from "@core/notification/notification.actions";
+import { CalculatedFieldEventBody, DebugEventType, Event as DebugEvent, EventType } from '@shared/models/event.models';
+import { EventsDialogComponent, EventsDialogData } from '@home/dialogs/events-dialog.component';
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedField> {
 
@@ -233,13 +233,30 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   }
 
   private openDebugEventsDialog(calculatedField: CalculatedField): void {
-    this.dialog.open<CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData, null>(CalculatedFieldDebugDialogComponent, {
+    const customCellActionEnabledFn = (event: DebugEvent) => {
+      return (calculatedField.type === CalculatedFieldType.SCRIPT ||
+        (calculatedField.type === CalculatedFieldType.PROPAGATION &&
+          calculatedField.configuration.applyExpressionToResolvedArguments)
+      ) && !!(event as DebugEvent).body.arguments;
+    };
+
+    const onDebugEventSelected = (event: CalculatedFieldEventBody, dialogRef: MatDialogRef<EventsDialogComponent, string>) => {
+      this.getTestScriptDialog(calculatedField, JSON.parse(event.arguments))
+        .subscribe(expression => dialogRef.close(expression));
+    };
+
+    this.dialog.open<EventsDialogComponent, EventsDialogData, null>(EventsDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
+        title: 'alarm-rule.debugging',
         tenantId: this.tenantId,
-        value: calculatedField,
-        getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
+        value: calculatedField.id,
+        debugEventTypes:[DebugEventType.DEBUG_CALCULATED_FIELD],
+        disabledEventTypes:[EventType.LC_EVENT, EventType.ERROR, EventType.STATS],
+        defaultEventType: DebugEventType.DEBUG_CALCULATED_FIELD,
+        onDebugEventSelected: onDebugEventSelected,
+        customCellActionEnabledFn: customCellActionEnabledFn
       }
     })
       .afterClosed()
