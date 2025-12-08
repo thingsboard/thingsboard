@@ -23,14 +23,17 @@ import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.HasLatestTs;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
 @AllArgsConstructor
-public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
+public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs {
 
     private final Map<EntityId, ArgumentEntry> entityInputs;
 
@@ -44,6 +47,19 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry {
     @Override
     public Object getValue() {
         return entityInputs;
+    }
+
+    @Override
+    public long getLatestTs() {
+        long latestTs = DEFAULT_LAST_UPDATE_TS;
+        for (ArgumentEntry entry : entityInputs.values()) {
+            if (entry instanceof SingleValueArgumentEntry single) {
+                if (!single.isDefaultValue()) {
+                    latestTs = Math.max(latestTs, single.getTs());
+                }
+            }
+        }
+        return latestTs;
     }
 
     @Override
