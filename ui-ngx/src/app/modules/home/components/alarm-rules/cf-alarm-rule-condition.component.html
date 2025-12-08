@@ -26,13 +26,15 @@
       <div class="flex items-center gap-2 justify-between">
         <tb-alarm-rule-filter-text [alarmRuleExpression]="alarmRuleConditionFormGroup.get('expression').value"
                                    [arguments]="arguments"
+                                   [disabled]="disabled"
                                    class="flex-1"
                                    [nowrap]="true"
                                    [specText]="specText"
                                    required
                                    addFilterPrompt="{{ (isClearCondition ? 'alarm-rule.enter-alarm-rule-clear-condition-prompt' :'alarm-rule.enter-alarm-rule-condition-prompt') | translate }}">
         </tb-alarm-rule-filter-text>
-        <mat-icon [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
+        <mat-icon [color]="disabled ? '' : (conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn')"
+                  class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
           {{ conditionSet() ? 'edit' : 'add' }}
         </mat-icon>
       </div>
@@ -48,7 +50,10 @@
             (click)="openScheduleDialog($event)">
       <div class="flex items-center gap-2">
         <span class="tb-alarm-rule-condition-label" tbTruncateWithTooltip [innerHTML]="scheduleText"></span>
-        <mat-icon [color]="schedulerArgumentsValid ? 'primary' : 'warn'" class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">edit</mat-icon>
+        <mat-icon [color]="disabled ? '' : (schedulerArgumentsValid ? 'primary' : 'warn')"
+                  class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
+          edit
+        </mat-icon>
       </div>
     </button>
   </div>

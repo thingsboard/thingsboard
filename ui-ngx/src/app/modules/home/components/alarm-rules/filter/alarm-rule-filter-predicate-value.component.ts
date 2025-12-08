@@ -166,7 +166,7 @@ export class AlarmRuleFilterPredicateValueComponent implements ControlValueAcces
   }
 
   writeValue(predicateValue: AlarmRuleValue<string | number | boolean>): void {
-    if (isDefinedAndNotNull(predicateValue.dynamicValueArgument)) {
+    if (isDefinedAndNotNull(predicateValue?.dynamicValueArgument)) {
       const availableArgument = this.argumentsList.filter(arg => arg !== this.argumentInUse);
       if (!availableArgument.includes(predicateValue.dynamicValueArgument)) {
         predicateValue.dynamicValueArgument = '';

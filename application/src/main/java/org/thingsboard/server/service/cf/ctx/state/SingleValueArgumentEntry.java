@@ -162,9 +162,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
             if (singleValueEntry.getTs() < this.ts) {
-                if (!isDefaultValue()) {
-                    return false;
-                }
+                return false;
             }
 
             Long newVersion = singleValueEntry.getVersion();
