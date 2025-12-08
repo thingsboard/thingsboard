@@ -48,11 +48,7 @@
 
 
     <logger name="org.thingsboard.server.service" level="DEBUG"/>
-    <logger name="org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager" level="TRACE"/>
-    <logger name="org.thingsboard.server.service.queue.DefaultTbClusterService" level="TRACE"/>
     <logger name="org.thingsboard.server.service.subscription" level="TRACE"/>
-    <logger name="org.thingsboard.server.actors.calculatedField.CalculatedFieldEntityMessageProcessor" level="TRACE"/>
-    <logger name="org.thingsboard.server.actors.calculatedField.CalculatedFieldManagerMessageProcessor" level="TRACE"/>
 
     <root level="INFO">
         <appender-ref ref="fileLogAppender"/>
