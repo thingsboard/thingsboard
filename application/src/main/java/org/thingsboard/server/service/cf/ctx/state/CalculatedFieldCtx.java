@@ -37,14 +37,12 @@ import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldC
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.AttributesImmediateOutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.ExpressionBasedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.ScheduledUpdateSupportedCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
-import org.thingsboard.server.common.data.cf.configuration.TimeSeriesImmediateOutputStrategy;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunctionInput;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.single.EntityAggregationCalculatedFieldConfiguration;
@@ -641,25 +639,8 @@ public class CalculatedFieldCtx implements Closeable {
     public boolean hasRefreshContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state recalculation
         var thisOutputStrategy = calculatedField.getConfiguration().getOutput().getStrategy();
         var otherOutputStrategy = other.getCalculatedField().getConfiguration().getOutput().getStrategy();
-
-        if (!thisOutputStrategy.getType().equals(otherOutputStrategy.getType())) {
+        if (thisOutputStrategy.hasRefreshContextOnlyChanges(otherOutputStrategy)) {
             return true;
-        }
-
-        if (thisOutputStrategy instanceof TimeSeriesImmediateOutputStrategy thisTsOutputStrategy
-                && otherOutputStrategy instanceof TimeSeriesImmediateOutputStrategy otherTsOutputStrategy) {
-            if (thisTsOutputStrategy.getTtl() != otherTsOutputStrategy.getTtl()) {
-                return true;
-            }
-        }
-
-        if (thisOutputStrategy instanceof AttributesImmediateOutputStrategy thisAttrOutputStrategy
-                && otherOutputStrategy instanceof AttributesImmediateOutputStrategy otherAttrOutputStrategy) {
-            boolean updateAttrOnValueChangedChanged = thisAttrOutputStrategy.isUpdateAttributesOnlyOnValueChange() != otherAttrOutputStrategy.isUpdateAttributesOnlyOnValueChange();
-            boolean sendAttrUpdatedNotificationChanged = thisAttrOutputStrategy.isSendAttributesUpdatedNotification() != otherAttrOutputStrategy.isSendAttributesUpdatedNotification();
-            if (updateAttrOnValueChangedChanged || sendAttrUpdatedNotificationChanged) {
-                return true;
-            }
         }
 
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
@@ -759,28 +740,9 @@ public class CalculatedFieldCtx implements Closeable {
         if (!Objects.equals(output.getDecimalsByDefault(), otherOutput.getDecimalsByDefault())) {
             return true;
         }
-
-        var thisOutputStrategy = output.getStrategy();
-        var otherOutputStrategy = otherOutput.getStrategy();
-
-        if (thisOutputStrategy instanceof TimeSeriesImmediateOutputStrategy thisTimeSeriesImmediateOutputStrategy
-                && otherOutputStrategy instanceof TimeSeriesImmediateOutputStrategy otherTimeSeriesImmediateOutputStrategy) {
-            boolean saveTimeSeriesUpdated = thisTimeSeriesImmediateOutputStrategy.isSaveTimeSeries() != otherTimeSeriesImmediateOutputStrategy.isSaveTimeSeries();
-            boolean saveLatestUpdated = thisTimeSeriesImmediateOutputStrategy.isSaveLatest() != otherTimeSeriesImmediateOutputStrategy.isSaveLatest();
-            boolean sendWsUpdateUpdated = thisTimeSeriesImmediateOutputStrategy.isSendWsUpdate() != otherTimeSeriesImmediateOutputStrategy.isSendWsUpdate();
-            boolean processCfsUpdated = thisTimeSeriesImmediateOutputStrategy.isProcessCfs() != otherTimeSeriesImmediateOutputStrategy.isProcessCfs();
-            return saveTimeSeriesUpdated || saveLatestUpdated || sendWsUpdateUpdated || processCfsUpdated;
+        if (output.getStrategy().hasContextOnlyChanges(otherOutput.getStrategy())) {
+            return true;
         }
-
-        if (thisOutputStrategy instanceof AttributesImmediateOutputStrategy thisAttributesImmediateOutputStrategy
-                && otherOutputStrategy instanceof AttributesImmediateOutputStrategy otherAttributesImmediateOutputStrategy) {
-
-            boolean saveTimeSeriesUpdated = thisAttributesImmediateOutputStrategy.isSaveAttribute() != otherAttributesImmediateOutputStrategy.isSaveAttribute();
-            boolean sendWsUpdateUpdated = thisAttributesImmediateOutputStrategy.isSendWsUpdate() != otherAttributesImmediateOutputStrategy.isSendWsUpdate();
-            boolean processCfsUpdated = thisAttributesImmediateOutputStrategy.isProcessCfs() != otherAttributesImmediateOutputStrategy.isProcessCfs();
-            return saveTimeSeriesUpdated || sendWsUpdateUpdated || processCfsUpdated;
-        }
-
         return false;
     }
 
