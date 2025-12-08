@@ -21,13 +21,15 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.function.ThrowingRunnable;
+import org.mockito.MockedStatic;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.SystemUtil;
 import org.thingsboard.server.cache.limits.RateLimitService;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityType;
@@ -39,17 +41,19 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.alarm.AlarmStatus;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.SimpleAlarmCondition;
+import org.thingsboard.server.common.data.alarm.rule.condition.expression.TbelAlarmConditionExpression;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.Argument;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
+import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
-import org.thingsboard.server.common.data.device.profile.AlarmCondition;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilter;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionFilterKey;
-import org.thingsboard.server.common.data.device.profile.AlarmConditionKeyType;
-import org.thingsboard.server.common.data.device.profile.AlarmRule;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
-import org.thingsboard.server.common.data.device.profile.SimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -87,9 +91,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.SystemAd
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
-import org.thingsboard.server.common.data.query.EntityKeyValueType;
-import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
@@ -106,12 +107,11 @@ import org.thingsboard.server.service.system.DefaultSystemInfoService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.lang.reflect.Method;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 import java.util.concurrent.TimeUnit;
@@ -123,6 +123,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.offset;
 import static org.assertj.core.api.InstanceOfAssertFactories.type;
 import static org.awaitility.Awaitility.await;
+import static org.mockito.Mockito.mockStatic;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig.Action.ASSIGNED;
 import static org.thingsboard.server.common.data.notification.rule.trigger.config.AlarmAssignmentNotificationRuleTriggerConfig.Action.UNASSIGNED;
@@ -137,7 +138,7 @@ import static org.thingsboard.server.common.data.notification.rule.trigger.confi
 })
 public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private AlarmSubscriptionService alarmSubscriptionService;
     @Autowired
     private DefaultSystemInfoService systemInfoService;
@@ -193,7 +194,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationRuleProcessing_alarmTrigger() throws Exception {
         String notificationSubject = "Alarm type: ${alarmType}, status: ${alarmStatus}, " +
-                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}";
+                "severity: ${alarmSeverity}, deviceId: ${alarmOriginatorId}, details: ${details.data}.";
         String notificationText = "Status: ${alarmStatus}, severity: ${alarmSeverity}";
         NotificationTemplate notificationTemplate = createNotificationTemplate(NotificationType.ALARM, notificationSubject, notificationText, NotificationDeliveryMethod.WEB);
 
@@ -221,12 +222,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             clients.put(delay, userAndClient.getSecond());
         }
         notificationRule.setRecipientsConfig(recipientsConfig);
-        notificationRule = saveNotificationRule(notificationRule);
+        saveNotificationRule(notificationRule);
 
 
         String alarmType = "myBoolIsTrue";
         DeviceProfile deviceProfile = createDeviceProfileWithAlarmRules(alarmType);
-        Device device = createDevice("Device 1", deviceProfile.getName(), "1234");
+        Device device = createDevice("Device 1", deviceProfile.getName(), "label", "1234");
 
         clients.values().forEach(wsClient -> {
             wsClient.subscribeForUnreadNotifications(10).waitForReply(true);
@@ -234,8 +235,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         JsonNode attr = JacksonUtil.newObjectNode()
-                .set("bool", BooleanNode.TRUE);
-        doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
+                .set("createAlarm", BooleanNode.TRUE);
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, attr.toString());
 
         await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
@@ -250,7 +251,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             assertThat(actualDelay).isCloseTo(expectedDelay, offset(2.0));
 
             assertThat(notification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + AlarmStatus.ACTIVE_UNACK + ", " +
-                    "severity: " + AlarmSeverity.CRITICAL.toString().toLowerCase() + ", deviceId: " + device.getId());
+                    "severity: " + AlarmSeverity.CRITICAL.toString().toLowerCase() + ", deviceId: " + device.getId() + ", details: attribute is true.");
             assertThat(notification.getText()).isEqualTo("Status: " + AlarmStatus.ACTIVE_UNACK + ", severity: " + AlarmSeverity.CRITICAL.toString().toLowerCase());
 
             assertThat(notification.getType()).isEqualTo(NotificationType.ALARM);
@@ -270,7 +271,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             wsClient.waitForUpdate(true);
             Notification updatedNotification = wsClient.getLastDataUpdate().getUpdate();
             assertThat(updatedNotification.getSubject()).isEqualTo("Alarm type: " + alarmType + ", status: " + expectedStatus + ", " +
-                    "severity: " + expectedSeverity.toString().toLowerCase() + ", deviceId: " + device.getId());
+                    "severity: " + expectedSeverity.toString().toLowerCase() + ", deviceId: " + device.getId() + ", details: attribute is true.");
             assertThat(updatedNotification.getText()).isEqualTo("Status: " + expectedStatus + ", severity: " + expectedSeverity.toString().toLowerCase());
 
             wsClient.close();
@@ -341,8 +342,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         getWsClient().subscribeForUnreadNotifications(10).waitForReply(true);
         getWsClient().registerWaitForUpdate();
         JsonNode attr = JacksonUtil.newObjectNode()
-                .set("bool", BooleanNode.TRUE);
-        doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
+                .set("createAlarm", BooleanNode.TRUE);
+        postAttributes(device.getId(), AttributeScope.SERVER_SCOPE, attr.toString());
 
         await().atMost(10, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
@@ -516,10 +517,10 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .notifyOn(Set.of(ASSIGNED, UNASSIGNED))
                 .build();
         NotificationTarget target = createNotificationTarget(tenantAdminUserId);
-        String template = "${userEmail} ${action} alarm on ${alarmOriginatorEntityType} '${alarmOriginatorName}'. Assignee: ${assigneeEmail}";
+        String template = "${userEmail} ${action} alarm on ${alarmOriginatorEntityType} '${alarmOriginatorName}' with label '${alarmOriginatorLabel}'. Assignee: ${assigneeEmail}";
         createNotificationRule(triggerConfig, "Test", template, target.getId());
 
-        Device device = createDevice("Device A", "123");
+        Device device = createDevice("Device A", "default", "test", "123");
         Alarm alarm = Alarm.builder()
                 .tenantId(tenantId)
                 .originator(device.getId())
@@ -536,7 +537,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             doPost("/api/alarm/" + alarmId + "/assign/" + tenantAdminUserId).andExpect(status().isOk());
         }, notification -> {
             assertThat(notification.getText()).isEqualTo(
-                    TENANT_ADMIN_EMAIL + " assigned alarm on Device 'Device A'. Assignee: " + TENANT_ADMIN_EMAIL
+                    TENANT_ADMIN_EMAIL + " assigned alarm on Device 'Device A' with label 'test'. Assignee: " + TENANT_ADMIN_EMAIL
             );
         });
 
@@ -544,7 +545,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
             doDelete("/api/alarm/" + alarmId + "/assign").andExpect(status().isOk());
         }, notification -> {
             assertThat(notification.getText()).isEqualTo(
-                    TENANT_ADMIN_EMAIL + " unassigned alarm on Device 'Device A'. Assignee: "
+                    TENANT_ADMIN_EMAIL + " unassigned alarm on Device 'Device A' with label 'test'. Assignee: "
             );
         });
     }
@@ -799,9 +800,14 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
-        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
-        method.setAccessible(true);
-        method.invoke(systemInfoService);
+        // Mock SystemUtil to return 15% memory usage (exceeds 1% threshold)
+        try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
+            mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(15));
+
+            Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+            method.setAccessible(true);
+            method.invoke(systemInfoService);
+        }
 
         await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
@@ -849,16 +855,24 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
         loginSysAdmin();
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
-                .ramThreshold(1f)
-                .cpuThreshold(1f)
-                .storageThreshold(1f)
+                .ramThreshold(0.99f)
+                .cpuThreshold(0.99f)
+                .storageThreshold(0.99f)
                 .build();
         NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
         loginTenantAdmin();
 
-        Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
-        method.setAccessible(true);
-        method.invoke(systemInfoService);
+        // Mock SystemUtil to return 15% usages (not exceeds 99% threshold)
+        Method method;
+        try (MockedStatic<SystemUtil> mockedSystemUtil = mockStatic(SystemUtil.class)) {
+            mockedSystemUtil.when(SystemUtil::getMemoryUsage).thenReturn(Optional.of(15));
+            mockedSystemUtil.when(SystemUtil::getCpuUsage).thenReturn(Optional.of(15));
+            mockedSystemUtil.when(SystemUtil::getDiscSpaceUsage).thenReturn(Optional.of(15));
+
+            method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
+            method.setAccessible(true);
+            method.invoke(systemInfoService);
+        }
 
         TimeUnit.SECONDS.sleep(5);
         assertThat(getMyNotifications(false, 100)).size().isZero();
@@ -944,35 +958,28 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private DeviceProfile createDeviceProfileWithAlarmRules(String alarmType) {
         DeviceProfile deviceProfile = createDeviceProfile("For notification rule test");
         deviceProfile.setTenantId(tenantId);
-
-        List<DeviceProfileAlarm> alarms = new ArrayList<>();
-        DeviceProfileAlarm alarm = new DeviceProfileAlarm();
-        alarm.setAlarmType(alarmType);
-        alarm.setId(alarmType);
-        AlarmRule alarmRule = new AlarmRule();
-        alarmRule.setAlarmDetails("Details");
-        AlarmCondition alarmCondition = new AlarmCondition();
-        alarmCondition.setSpec(new SimpleAlarmConditionSpec());
-        List<AlarmConditionFilter> condition = new ArrayList<>();
-
-        AlarmConditionFilter alarmConditionFilter = new AlarmConditionFilter();
-        alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "bool"));
-        BooleanFilterPredicate predicate = new BooleanFilterPredicate();
-        predicate.setOperation(BooleanFilterPredicate.BooleanOperation.EQUAL);
-        predicate.setValue(new FilterPredicateValue<>(true));
-
-        alarmConditionFilter.setPredicate(predicate);
-        alarmConditionFilter.setValueType(EntityKeyValueType.BOOLEAN);
-        condition.add(alarmConditionFilter);
-        alarmCondition.setCondition(condition);
-        alarmRule.setCondition(alarmCondition);
-        TreeMap<AlarmSeverity, AlarmRule> createRules = new TreeMap<>();
-        createRules.put(AlarmSeverity.CRITICAL, alarmRule);
-        alarm.setCreateRules(createRules);
-        alarms.add(alarm);
-
-        deviceProfile.getProfileData().setAlarms(alarms);
         deviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        CalculatedField alarmCf = new CalculatedField();
+        alarmCf.setType(CalculatedFieldType.ALARM);
+        alarmCf.setEntityId(deviceProfile.getId());
+        alarmCf.setName(alarmType);
+        AlarmCalculatedFieldConfiguration configuration = new AlarmCalculatedFieldConfiguration();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("createAlarm", ArgumentType.ATTRIBUTE, AttributeScope.SERVER_SCOPE));
+        configuration.setArguments(Map.of("createAlarm", argument));
+        AlarmRule alarmRule = new AlarmRule();
+        alarmRule.setAlarmDetails("attribute is ${createAlarm}");
+        SimpleAlarmCondition condition = new SimpleAlarmCondition();
+        TbelAlarmConditionExpression expression = new TbelAlarmConditionExpression();
+        expression.setExpression("return createAlarm == true;");
+        condition.setExpression(expression);
+        alarmRule.setCondition(condition);
+        configuration.setCreateRules(Map.of(
+                AlarmSeverity.CRITICAL, alarmRule
+        ));
+        alarmCf.setConfiguration(configuration);
+        saveCalculatedField(alarmCf);
         return deviceProfile;
     }
 

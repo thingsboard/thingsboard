@@ -120,9 +120,16 @@
           {{ 'widgets.button.label' | translate }}
         </mat-slide-toggle>
         <div class="flex flex-1 flex-row items-center justify-start gap-2">
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
+          <tb-string-pattern-autocomplete class="flex-1"
+                                          appearance="outline"
+                                          brackets="curly"
+                                          subscriptSizing="dynamic"
+                                          [predefinedValuesButton]="true"
+                                          [predefinedValues]="predefinedValues"
+                                          [disabled]="!segmentedButtonWidgetConfigForm.get('leftAppearance').get('showLabel').value"
+                                          placeholderText="{{ 'widget-config.set' | translate }}"
+                                          formControlName="label"
+          ></tb-string-pattern-autocomplete>
           <tb-font-settings formControlName="labelFont"
                             [previewText]="segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.label').value">
           </tb-font-settings>
@@ -151,9 +158,16 @@
           {{ 'widgets.button.label' | translate }}
         </mat-slide-toggle>
         <div class="flex flex-1 flex-row items-center justify-start gap-2">
-          <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-            <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
-          </mat-form-field>
+          <tb-string-pattern-autocomplete class="flex-1"
+                                          appearance="outline"
+                                          brackets="curly"
+                                          subscriptSizing="dynamic"
+                                          [predefinedValuesButton]="true"
+                                          [predefinedValues]="predefinedValues"
+                                          [disabled]="!segmentedButtonWidgetConfigForm.get('rightAppearance').get('showLabel').value"
+                                          placeholderText="{{ 'widget-config.set' | translate }}"
+                                          formControlName="label"
+          ></tb-string-pattern-autocomplete>
           <tb-font-settings formControlName="labelFont"
                             [previewText]="segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.label').value">
           </tb-font-settings>

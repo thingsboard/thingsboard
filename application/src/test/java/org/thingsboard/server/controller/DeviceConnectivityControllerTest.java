@@ -321,9 +321,10 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
                 "\n" +
                 "    # Environment variables\n" +
                 "    environment:\n" +
-                "      - host=host.docker.internal\n" +
-                "      - port=1883\n" +
-                "      - accessToken=" + credentials.getCredentialsId() + "\n" +
+                "      - TB_GW_HOST=host.docker.internal\n" +
+                "      - TB_GW_PORT=1883\n" +
+                "      - TB_GW_SECURITY_TYPE=accessToken\n" +
+                "      - TB_GW_ACCESS_TOKEN=" + credentials.getCredentialsId() + "\n" +
                 "\n" +
                 "    # Volumes bind\n" +
                 "    volumes:\n" +

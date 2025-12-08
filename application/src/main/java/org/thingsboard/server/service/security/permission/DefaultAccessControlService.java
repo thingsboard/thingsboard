@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.security.permission;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -33,18 +32,18 @@ import java.util.Optional;
 @Slf4j
 public class DefaultAccessControlService implements AccessControlService {
 
-    private static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION = "You don't have permission to perform this operation!";
 
     private final Map<Authority, Permissions> authorityPermissions = new HashMap<>();
 
-    public DefaultAccessControlService(
-            @Qualifier("sysAdminPermissions") Permissions sysAdminPermissions,
-            @Qualifier("tenantAdminPermissions") Permissions tenantAdminPermissions,
-            @Qualifier("customerUserPermissions") Permissions customerUserPermissions) {
+    public DefaultAccessControlService(SysAdminPermissions sysAdminPermissions,
+                                       TenantAdminPermissions tenantAdminPermissions,
+                                       CustomerUserPermissions customerUserPermissions,
+                                       MfaConfigurationPermissions mfaConfigurationPermissions) {
         authorityPermissions.put(Authority.SYS_ADMIN, sysAdminPermissions);
         authorityPermissions.put(Authority.TENANT_ADMIN, tenantAdminPermissions);
         authorityPermissions.put(Authority.CUSTOMER_USER, customerUserPermissions);
+        authorityPermissions.put(Authority.MFA_CONFIGURATION_TOKEN, mfaConfigurationPermissions);
     }
 
     @Override
@@ -65,7 +64,7 @@ public class DefaultAccessControlService implements AccessControlService {
     @Override
     @SuppressWarnings("unchecked")
     public <I extends EntityId, T extends HasTenantId> void checkPermission(SecurityUser user, Resource resource,
-                                                                                            Operation operation, I entityId, T entity) throws ThingsboardException {
+                                                                            Operation operation, I entityId, T entity) throws ThingsboardException {
         PermissionChecker permissionChecker = getPermissionChecker(user.getAuthority(), resource);
         if (!permissionChecker.hasPermission(user, operation, entityId, entity)) {
             permissionDenied();
@@ -85,7 +84,7 @@ public class DefaultAccessControlService implements AccessControlService {
             permissionDenied();
         }
         Optional<PermissionChecker> permissionChecker = permissions.getPermissionChecker(resource);
-        if (!permissionChecker.isPresent()) {
+        if (permissionChecker.isEmpty()) {
             permissionDenied();
         }
         return permissionChecker.get();

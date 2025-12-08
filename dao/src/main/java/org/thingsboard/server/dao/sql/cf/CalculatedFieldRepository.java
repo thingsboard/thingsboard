@@ -29,7 +29,7 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
 
     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
-    CalculatedFieldEntity findByEntityIdAndName(UUID entityId, String name);
+    CalculatedFieldEntity findByEntityIdAndTypeAndName(UUID entityId, String type, String name);
 
     List<CalculatedFieldId> findCalculatedFieldIdsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
@@ -38,14 +38,28 @@ public interface CalculatedFieldRepository extends JpaRepository<CalculatedField
     Page<CalculatedFieldEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
     @Query("SELECT cf FROM CalculatedFieldEntity cf WHERE cf.tenantId = :tenantId " +
-            "AND cf.entityId = :entityId " +
-            "AND (:textSearch IS NULL OR ilike(cf.name, CONCAT('%', :textSearch, '%')) = true)")
-    Page<CalculatedFieldEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId, String textSearch, Pageable pageable);
+           "AND cf.entityId = :entityId AND cf.type IN :types " +
+           "AND (:textSearch IS NULL OR ilike(cf.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<CalculatedFieldEntity> findByTenantIdAndEntityIdAndTypes(UUID tenantId, UUID entityId, List<String> types, String textSearch, Pageable pageable);
+
+    @Query("SELECT cf FROM CalculatedFieldEntity cf WHERE cf.tenantId = :tenantId " +
+           "AND cf.type = :type " +
+           "AND cf.entityType IN :entityTypes " +
+           "AND (:entityIds IS NULL OR cf.entityId IN :entityIds) " +
+           "AND (:names IS NULL OR cf.name IN :names) " +
+           "AND (:textSearch IS NULL OR ilike(cf.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<CalculatedFieldEntity> findByTenantIdAndFilter(UUID tenantId, String type, List<String> entityTypes,
+                                                        List<UUID> entityIds, List<String> names, String textSearch, Pageable pageable);
+
+    @Query("SELECT DISTINCT cf.name FROM CalculatedFieldEntity cf " +
+           "WHERE cf.tenantId = :tenantId AND cf.type = :type AND " +
+           "(:textSearch IS NULL OR ilike(cf.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<String> findNamesByTenantIdAndType(UUID tenantId, String type,String textSearch, Pageable pageable);
 
     List<CalculatedFieldEntity> findAllByTenantId(UUID tenantId);
 
     List<CalculatedFieldEntity> removeAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
-    long countByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+    long countByTenantIdAndEntityIdAndTypeNot(UUID tenantId, UUID entityId, String type);
 
 }

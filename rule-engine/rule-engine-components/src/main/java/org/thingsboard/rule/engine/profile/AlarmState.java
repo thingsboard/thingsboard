@@ -48,6 +48,7 @@ import java.util.function.BiFunction;
 
 @Data
 @Slf4j
+@Deprecated
 class AlarmState {
 
     public static final String ERROR_MSG = "Failed to process alarm rule for Device [%s]: %s";

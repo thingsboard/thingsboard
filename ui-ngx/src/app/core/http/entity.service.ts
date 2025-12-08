@@ -189,6 +189,12 @@ export class EntityService {
       case EntityType.AI_MODEL:
         observable = this.aiModelService.getAiModelById(entityId, config);
         break;
+      case EntityType.DEVICE_PROFILE:
+        observable = this.deviceProfileService.getDeviceProfile(entityId, config);
+        break;
+      case EntityType.ASSET_PROFILE:
+        observable = this.assetProfileService.getAssetProfile(entityId, config);
+        break;
     }
     return observable;
   }
@@ -817,6 +823,7 @@ export class EntityService {
     switch (entityType) {
       case EntityType.USER:
         entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.displayName.keyName);
         entityFieldKeys.push(entityFields.email.keyName);
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
@@ -846,6 +853,7 @@ export class EntityService {
       case EntityType.EDGE:
       case EntityType.ASSET:
         entityFieldKeys.push(entityFields.name.keyName);
+        entityFieldKeys.push(entityFields.displayName.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
         entityFieldKeys.push(entityFields.label.keyName);
         entityFieldKeys.push(entityFields.ownerName.keyName);

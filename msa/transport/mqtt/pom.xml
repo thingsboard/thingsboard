@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard.msa</groupId>
-        <version>4.2.1-RC</version>
+        <version>4.3.0-SNAPSHOT</version>
         <artifactId>transport</artifactId>
     </parent>
     <groupId>org.thingsboard.msa.transport</groupId>

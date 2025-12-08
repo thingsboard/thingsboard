@@ -22,12 +22,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -83,8 +84,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Get Widget Bundle (getWidgetsBundleById)",
             notes = "Get the Widget Bundle based on the provided Widget Bundle Id. " + WIDGET_BUNDLE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetsBundle/{widgetsBundleId}")
     public WidgetsBundle getWidgetsBundleById(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetsBundleId") String strWidgetsBundleId,
@@ -110,8 +110,7 @@ public class WidgetsBundleController extends BaseController {
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Widgets Bundle entity." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/widgetsBundle")
     public WidgetsBundle saveWidgetsBundle(
             @Parameter(description = "A JSON value representing the Widget Bundle.", required = true)
             @RequestBody WidgetsBundle widgetsBundle) throws Exception {
@@ -130,7 +129,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Update widgets bundle widgets types list (updateWidgetsBundleWidgetTypes)",
             notes = "Updates widgets bundle widgets list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes", method = RequestMethod.POST)
+    @PostMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypes")
     @ResponseStatus(value = HttpStatus.OK)
     public void updateWidgetsBundleWidgetTypes(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
@@ -156,7 +155,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Update widgets bundle widgets list from widget type FQNs list (updateWidgetsBundleWidgetFqns)",
             notes = "Updates widgets bundle widgets list from widget type FQNs list." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns", method = RequestMethod.POST)
+    @PostMapping(value = "/widgetsBundle/{widgetsBundleId}/widgetTypeFqns")
     @ResponseStatus(value = HttpStatus.OK)
     public void updateWidgetsBundleWidgetFqns(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
@@ -173,7 +172,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Delete widgets bundle (deleteWidgetsBundle)",
             notes = "Deletes the widget bundle. Referencing non-existing Widget Bundle Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetsBundle/{widgetsBundleId}", method = RequestMethod.DELETE)
+    @DeleteMapping(value = "/widgetsBundle/{widgetsBundleId}")
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteWidgetsBundle(
             @Parameter(description = WIDGET_BUNDLE_ID_PARAM_DESCRIPTION, required = true)
@@ -188,8 +187,7 @@ public class WidgetsBundleController extends BaseController {
             notes = "Returns a page of Widget Bundle objects available for current user. " + WIDGET_BUNDLE_DESCRIPTION + " " +
                     PAGE_DATA_PARAMETERS + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetsBundles", params = {"pageSize", "page"})
     public PageData<WidgetsBundle> getWidgetsBundles(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -227,8 +225,7 @@ public class WidgetsBundleController extends BaseController {
     @ApiOperation(value = "Get all Widget Bundles (getWidgetsBundles)",
             notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetsBundles")
     public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));

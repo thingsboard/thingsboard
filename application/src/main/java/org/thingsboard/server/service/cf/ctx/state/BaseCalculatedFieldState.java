@@ -15,44 +15,66 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import lombok.Getter;
+import lombok.Setter;
+import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.aggregation.single.EntityAggregationArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
 import org.thingsboard.server.utils.CalculatedFieldUtils;
 
+import java.io.Closeable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
-import static org.thingsboard.server.utils.CalculatedFieldUtils.toSingleValueArgumentProto;
+@Getter
+public abstract class BaseCalculatedFieldState implements CalculatedFieldState, Closeable {
 
-@Data
-@AllArgsConstructor
-public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
+    protected static final long DEFAULT_LAST_UPDATE_TS = -1L;
 
+    protected final EntityId entityId;
+    protected CalculatedFieldCtx ctx;
+    protected TbActorRef actorCtx;
     protected List<String> requiredArguments;
-    protected Map<String, ArgumentEntry> arguments;
+
+    protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
+    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
+    protected ReadinessStatus readinessStatus;
 
-    protected long latestTimestamp = -1;
+    @Setter
+    private TopicPartitionInfo partition;
 
-    public BaseCalculatedFieldState(List<String> requiredArguments) {
-        this.requiredArguments = requiredArguments;
-        this.arguments = new HashMap<>();
-    }
-
-    public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, -1);
+    public BaseCalculatedFieldState(EntityId entityId) {
+        this.entityId = entityId;
     }
 
     @Override
-    public boolean updateState(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> argumentValues) {
-        if (arguments == null) {
-            arguments = new HashMap<>();
-        }
+    public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
+        this.ctx = ctx;
+        this.actorCtx = actorCtx;
+        this.requiredArguments = ctx.getArgNames();
+        this.readinessStatus = checkReadiness(requiredArguments, arguments);
+    }
 
-        boolean stateUpdated = false;
+    @Override
+    public void init(boolean restored) {
+    }
+
+    @Override
+    public Map<String, ArgumentEntry> update(Map<String, ArgumentEntry> argumentValues, CalculatedFieldCtx ctx) {
+        Map<String, ArgumentEntry> updatedArguments = null;
 
         for (Map.Entry<String, ArgumentEntry> entry : argumentValues.entrySet()) {
             String key = entry.getKey();
@@ -64,27 +86,50 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             boolean entryUpdated;
 
             if (existingEntry == null || newEntry.isForceResetPrevious()) {
-                validateNewEntry(newEntry);
-                arguments.put(key, newEntry);
+                validateNewEntry(key, newEntry);
+                if (existingEntry instanceof RelatedEntitiesArgumentEntry ||
+                    existingEntry instanceof EntityAggregationArgumentEntry) {
+                    updateEntry(existingEntry, newEntry);
+                } else {
+                    arguments.put(key, newEntry);
+                }
                 entryUpdated = true;
             } else {
-                entryUpdated = existingEntry.updateEntry(newEntry);
+                entryUpdated = updateEntry(existingEntry, newEntry);
             }
 
             if (entryUpdated) {
-                stateUpdated = true;
+                if (updatedArguments == null) {
+                    updatedArguments = new HashMap<>(argumentValues.size());
+                }
+                updatedArguments.put(key, newEntry);
                 updateLastUpdateTimestamp(newEntry);
             }
 
         }
 
-        return stateUpdated;
+        if (updatedArguments == null) {
+            return Collections.emptyMap();
+        }
+        readinessStatus = checkReadiness(requiredArguments, arguments);
+        return updatedArguments;
+    }
+
+    protected boolean updateEntry(ArgumentEntry existingEntry, ArgumentEntry newEntry) {
+        return existingEntry.updateEntry(newEntry);
+    }
+
+    @Override
+    public void reset() { // must reset everything dependent on arguments
+        requiredArguments = null;
+        arguments.clear();
+        sizeExceedsLimit = false;
+        latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     }
 
     @Override
     public boolean isReady() {
-        return arguments.keySet().containsAll(requiredArguments) &&
-                arguments.values().stream().noneMatch(ArgumentEntry::isEmpty);
+        return readinessStatus.ready();
     }
 
     @Override
@@ -96,18 +141,25 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     }
 
     @Override
-    public void checkArgumentSize(String name, ArgumentEntry entry, CalculatedFieldCtx ctx) {
-        if (entry instanceof TsRollingArgumentEntry) {
-            return;
-        }
-        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            if (ctx.getMaxSingleValueArgumentSize() > 0 && toSingleValueArgumentProto(name, singleValueArgumentEntry).getSerializedSize() > ctx.getMaxSingleValueArgumentSize()) {
-                throw new IllegalArgumentException("Single value size exceeds the maximum allowed limit. The argument will not be used for calculation.");
-            }
-        }
+    public void close() {
     }
 
-    protected abstract void validateNewEntry(ArgumentEntry newEntry);
+    protected void validateNewEntry(String key, ArgumentEntry newEntry) {
+    }
+
+    protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
+        if (!useLatestTs) {
+            return valuesNode;
+        }
+        long latestTs = getLatestTimestamp();
+        if (latestTs == DEFAULT_LAST_UPDATE_TS) {
+            return valuesNode;
+        }
+        ObjectNode resultNode = JacksonUtil.newObjectNode();
+        resultNode.put("ts", latestTs);
+        resultNode.set("values", valuesNode);
+        return resultNode;
+    }
 
     private void updateLastUpdateTimestamp(ArgumentEntry entry) {
         long newTs = this.latestTimestamp;
@@ -115,9 +167,40 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
             newTs = singleValueArgumentEntry.getTs();
         } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
             Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().lastEntry();
-            newTs = (lastEntry != null) ? lastEntry.getKey() : System.currentTimeMillis();
+            newTs = (lastEntry != null) ? lastEntry.getKey() : DEFAULT_LAST_UPDATE_TS;
+        } else if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+            newTs = relatedEntitiesArgumentEntry.getEntityInputs().values().stream()
+                    .mapToLong(e -> (e instanceof SingleValueArgumentEntry s) ? s.getTs() : DEFAULT_LAST_UPDATE_TS)
+                    .max()
+                    .orElse(DEFAULT_LAST_UPDATE_TS);
+        } else if (entry instanceof GeofencingArgumentEntry geofencingArgumentEntry) {
+            newTs = geofencingArgumentEntry.getZoneStates().values().stream()
+                    .mapToLong(GeofencingZoneState::getTs).max().orElse(DEFAULT_LAST_UPDATE_TS);
         }
         this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
+    }
+
+    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        if (currentArguments == null) {
+            return ReadinessStatus.from(requiredArguments);
+        }
+        List<String> emptyArguments = null;
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                if (emptyArguments == null) {
+                    emptyArguments = new ArrayList<>();
+                }
+                emptyArguments.add(requiredArgumentKey);
+            }
+        }
+        return ReadinessStatus.from(emptyArguments);
+    }
+
+    @Override
+    public JsonNode getArgumentsJson() {
+        return JacksonUtil.valueToTree(arguments.entrySet().stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue())));
     }
 
 }

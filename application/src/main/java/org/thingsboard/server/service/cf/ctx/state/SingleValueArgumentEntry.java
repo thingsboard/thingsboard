@@ -19,10 +19,11 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
+import org.springframework.lang.Nullable;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
@@ -32,16 +33,46 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 
+import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState.DEFAULT_LAST_UPDATE_TS;
+
 @Data
-@NoArgsConstructor
 @AllArgsConstructor
 public class SingleValueArgumentEntry implements ArgumentEntry {
 
-    private long ts;
-    private BasicKvEntry kvEntryValue;
-    private Long version;
+    public static final Long DEFAULT_VERSION = -1L;
 
-    private boolean forceResetPrevious;
+    @Nullable
+    protected EntityId entityId;
+
+    protected long ts;
+    protected BasicKvEntry kvEntryValue;
+    protected Long version;
+
+    protected boolean forceResetPrevious;
+
+    public SingleValueArgumentEntry() {
+        this.ts = DEFAULT_LAST_UPDATE_TS;
+        this.version = DEFAULT_VERSION;
+    }
+
+    public SingleValueArgumentEntry(EntityId entityId, ArgumentEntry entry) {
+        this(entry);
+        this.entityId = entityId;
+    }
+
+    public SingleValueArgumentEntry(ArgumentEntry entry) {
+        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
+            this.ts = singleValueArgumentEntry.ts;
+            this.kvEntryValue = singleValueArgumentEntry.kvEntryValue;
+            this.version = singleValueArgumentEntry.version;
+            this.forceResetPrevious = singleValueArgumentEntry.forceResetPrevious;
+        }
+    }
+
+    public SingleValueArgumentEntry(EntityId entityId, TsKvProto entry) {
+        this(entry);
+        this.entityId = entityId;
+    }
 
     public SingleValueArgumentEntry(TsKvProto entry) {
         this.ts = entry.getTs();
@@ -51,12 +82,22 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         this.kvEntryValue = ProtoUtils.fromProto(entry.getKv());
     }
 
+    public SingleValueArgumentEntry(EntityId entityId, AttributeValueProto entry) {
+        this(entry);
+        this.entityId = entityId;
+    }
+
     public SingleValueArgumentEntry(AttributeValueProto entry) {
         this.ts = entry.getLastUpdateTs();
         if (entry.hasVersion()) {
             this.version = entry.getVersion();
         }
         this.kvEntryValue = ProtoUtils.basicKvEntryFromProto(entry);
+    }
+
+    public SingleValueArgumentEntry(EntityId entityId, KvEntry entry) {
+        this(entry);
+        this.entityId = entityId;
     }
 
     public SingleValueArgumentEntry(KvEntry entry) {
@@ -68,6 +109,11 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
             this.version = attributeKvEntry.getVersion();
         }
         this.kvEntryValue = ProtoUtils.basicKvEntryFromKvEntry(entry);
+    }
+
+    public SingleValueArgumentEntry(EntityId entityId, long ts, BasicKvEntry kvEntryValue, Long version) {
+        this(ts, kvEntryValue, version);
+        this.entityId = entityId;
     }
 
     public SingleValueArgumentEntry(long ts, BasicKvEntry kvEntryValue, Long version) {
@@ -93,6 +139,9 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
 
     @Override
     public TbelCfArg toTbelCfArg() {
+        if (isEmpty()) {
+            return new TbelCfSingleValueArg(ts, null);
+        }
         Object value = kvEntryValue.getValue();
         if (kvEntryValue instanceof JsonDataEntry) {
             try {
@@ -112,7 +161,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
-            if (singleValueEntry.getTs() <= this.ts) {
+            if (singleValueEntry.getTs() < this.ts) {
                 return false;
             }
 
@@ -128,4 +177,9 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         }
         return false;
     }
+
+    public boolean isDefaultValue() {
+        return DEFAULT_VERSION.equals(this.version);
+    }
+
 }

@@ -692,7 +692,7 @@ pre.tb-highlight {
   mat-toolbar.mat-mdc-table-toolbar:not(.mat-primary), .mat-mdc-cell, .mat-expansion-panel-header, mat-card-header.mat-mdc-card-header {
     button.mat-mdc-icon-button {
       .mat-icon {
-        color: rgba(0, 0, 0, .54);
+        color:var(--mat-icon-color, rgba(0, 0, 0, .54));
       }
       &[disabled][disabled] {
         .mat-icon {
@@ -760,11 +760,11 @@ pre.tb-highlight {
       transition: background-color .2s;
 
       &:hover:not(.tb-current-entity) {
-        background-color: #f4f4f4;
+        background-color: var(--tb-hover-color, #f4f4f4);
       }
 
       &.tb-current-entity {
-        background-color: #e9e9e9;
+        background-color: var(--tb-current-entity-color, #e9e9e9);
       }
 
       &.tb-pointer {
@@ -816,7 +816,7 @@ pre.tb-highlight {
     vertical-align: middle;
     border-width: 0;
     border-bottom-width: 1px;
-    border-bottom-color: rgba(0, 0, 0, 0.12);
+    border-bottom-color: var(--mat-table-row-item-outline-color,rgba(0, 0, 0, 0.12));
     border-style: solid;
     text-overflow: ellipsis;
     touch-action: auto !important;
@@ -896,14 +896,11 @@ pre.tb-highlight {
   }
 
   .mat-icon {
-    svg {
+    svg, img {
       vertical-align: inherit;
     }
     &.tb-mat-12 {
       @include tb-mat-icon-size(12);
-    }
-    &.tb-mat-14 {
-      @include tb-mat-icon-size(14);
     }
     &.tb-mat-16 {
       @include tb-mat-icon-size(16);

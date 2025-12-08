@@ -1,7 +1,7 @@
 {
   "name": "thingsboard-js-executor",
   "private": true,
-  "version": "4.2.1",
+  "version": "4.3.0",
   "description": "ThingsBoard JavaScript Executor Microservice",
   "main": "server.ts",
   "bin": "server.js",
@@ -15,7 +15,7 @@
   "dependencies": {
     "config": "^4.1.1",
     "express": "^5.1.0",
-    "js-yaml": "^4.1.0",
+    "js-yaml": "^4.1.1",
     "kafkajs": "^2.2.4",
     "long": "^5.3.2",
     "uuid-parse": "^1.1.0",

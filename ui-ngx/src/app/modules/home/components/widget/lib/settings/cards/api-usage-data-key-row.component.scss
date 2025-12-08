@@ -1,0 +1,56 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../../../../scss/constants';
+
+.tb-form-table-row.tb-api-usage-data-key-row {
+
+  .tb-source-field {
+    flex: 1 1 25%;
+    display: flex;
+    gap: 12px;
+    .tb-label-field {
+      flex: 1;
+    }
+  }
+
+  .tb-data-key-fields {
+    display: flex;
+    gap: 12px;
+    min-width: 0;
+    flex: 1 1 50%;
+  }
+
+  .tb-data-key-field {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .tb-remove-button {
+    width: 40px;
+    min-width: 40px;
+  }
+
+  @media #{$mat-lt-lg} {
+    .tb-source-field {
+      flex-direction: column;
+      flex: 1 1 50%;
+    }
+    .tb-data-key-fields{
+      flex-direction: column;
+      flex: 1 1 50%;
+    }
+  }
+}

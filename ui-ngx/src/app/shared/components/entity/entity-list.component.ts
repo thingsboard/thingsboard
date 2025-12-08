@@ -39,7 +39,7 @@ import { Observable } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, getEntityDisplayName } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
@@ -125,6 +125,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   @coerceBoolean()
   allowCreateNew: boolean;
 
+  @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
+
   @Output()
   createNew = new EventEmitter<string>();
 
@@ -209,16 +213,18 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
     this.searchText = '';
     if (value != null && value.length > 0) {
       this.modelValue = [...value];
-      this.entityService.getEntities(this.entityType, value).subscribe(
-        (entities) => {
-          this.entities = entities;
+      this.entityService.getEntities(this.entityType, value)
+        .subscribe(resolvedEntities => {
+          this.entities = resolvedEntities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
-          if (this.syncIdsWithDB && this.modelValue.length !== entities.length) {
-            this.modelValue = entities.map(entity => entity.id.id);
+          if (this.syncIdsWithDB && this.modelValue.length !== this.entities.length) {
+            this.modelValue = this.entities.map(entity => entity.id.id);
+            if (!this.modelValue.length) {
+              this.modelValue = null;
+            }
             this.propagateChange(this.modelValue);
           }
-        }
-      );
+        });
     } else {
       this.entities = [];
       this.entityListFormGroup.get('entities').setValue(this.entities);
@@ -277,7 +283,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   public displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
+    return entity ? (this.useEntityDisplayName ? getEntityDisplayName(entity) : entity.name) : undefined;
   }
 
   private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {

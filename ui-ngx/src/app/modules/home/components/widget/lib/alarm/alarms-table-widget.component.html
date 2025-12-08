@@ -45,14 +45,14 @@
                 </span>
         <span class="flex-1"></span>
         <button *ngIf="allowAcknowledgment"
-                mat-icon-button [disabled]="isLoading$ | async"
+                mat-icon-button
                 matTooltip="{{ 'alarm.acknowledge' | translate }}"
                 matTooltipPosition="above"
                 (click)="ackAlarms($event)">
           <mat-icon>done</mat-icon>
         </button>
-        <button *ngIf="ctx.settings.allowClear" mat-icon-button
-                [disabled]="isLoading$ | async"
+        <button *ngIf="ctx.settings.allowClear"
+                mat-icon-button
                 matTooltip="{{ 'alarm.clear' | translate }}"
                 matTooltipPosition="above"
                 (click)="clearAlarms($event)">
@@ -107,7 +107,7 @@
                   </span>
                 </ng-template>
                 <button *ngIf="allowAssign"
-                        mat-icon-button [disabled]="isLoading$ | async"
+                        mat-icon-button
                         matTooltip="{{ 'alarm.assign' | translate }}"
                         matTooltipPosition="above"
                         (click)="openAlarmAssigneePanel($event, alarm)">

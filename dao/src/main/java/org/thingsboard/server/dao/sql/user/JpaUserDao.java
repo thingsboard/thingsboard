@@ -21,6 +21,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.edqs.fields.UserFields;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -28,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -134,6 +136,12 @@ public class JpaUserDao extends JpaAbstractDao<UserEntity, User> implements User
     public PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink) {
         return DaoUtil.toPageData(userRepository.findByAuthorityAndTenantProfilesIds(authority, DaoUtil.toUUIDs(tenantProfilesIds),
                 DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId) {
+        TbPair<UserEntity, Boolean> result = userRepository.findUserAuthDetailsByUserId(userId);
+        return new UserAuthDetails(result.getFirst().toData(), result.getSecond());
     }
 
     @Override

@@ -77,9 +77,9 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                     for (TbProtoQueueMsg<CalculatedFieldStateProto> msg : msgs) {
                         try {
                             if (msg.getValue() != null) {
-                                processRestoredState(msg.getValue());
+                                processRestoredState(msg.getValue(), consumerKey.partition());
                             } else {
-                                processRestoredState(getStateId(msg.getHeaders()), null);
+                                processRestoredState(getStateId(msg.getHeaders()), null, consumerKey.partition());
                             }
                         } catch (Throwable t) {
                             log.error("Failed to process state message: {}", msg, t);

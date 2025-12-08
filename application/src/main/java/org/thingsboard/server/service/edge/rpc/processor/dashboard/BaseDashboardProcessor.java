@@ -20,9 +20,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -56,19 +58,18 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             dashboard.setAssignedCustomers(dashboardById.getAssignedCustomers());
         }
 
-        dashboardValidator.validate(dashboard, Dashboard::getTenantId);
-        if (created) {
-            dashboard.setId(dashboardId);
+        if (isSaveRequired(dashboardById, dashboard)) {
+            dashboardValidator.validate(dashboard, Dashboard::getTenantId);
+            if (created) {
+                dashboard.setId(dashboardId);
+            }
+            dashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
         }
-
-        Dashboard savedDashboard = edgeCtx.getDashboardService().saveDashboard(dashboard, false);
-
-        updateDashboardAssignments(tenantId, dashboardById, savedDashboard, newAssignedCustomers);
-
+        updateDashboardAssignments(tenantId, customerId, dashboardById, dashboard, newAssignedCustomers);
         return created;
     }
 
-    private void updateDashboardAssignments(TenantId tenantId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
+    private void updateDashboardAssignments(TenantId tenantId, CustomerId edgeCustomerId, Dashboard dashboardById, Dashboard savedDashboard, Set<ShortCustomerInfo> newAssignedCustomers) {
         Set<ShortCustomerInfo> currentAssignedCustomers = new HashSet<>();
         if (dashboardById != null) {
             if (dashboardById.getAssignedCustomers() != null) {
@@ -76,7 +77,7 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
             }
         }
 
-        newAssignedCustomers = filterNonExistingCustomers(tenantId, currentAssignedCustomers, newAssignedCustomers);
+        newAssignedCustomers = filterNonExistingCustomers(tenantId, edgeCustomerId, currentAssignedCustomers, newAssignedCustomers);
 
         Set<CustomerId> addedCustomerIds = new HashSet<>();
         Set<CustomerId> removedCustomerIds = new HashSet<>();
@@ -100,6 +101,18 @@ public abstract class BaseDashboardProcessor extends BaseEdgeProcessor {
         }
     }
 
-    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
+    protected void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
+        deleteDashboard(tenantId, null, dashboardId);
+    }
+
+    protected void deleteDashboard(TenantId tenantId, Edge edge, DashboardId dashboardId) {
+        Dashboard dashboardById = edgeCtx.getDashboardService().findDashboardById(tenantId, dashboardId);
+        if (dashboardById != null) {
+            edgeCtx.getDashboardService().deleteDashboard(tenantId, dashboardId);
+            pushEntityEventToRuleEngine(tenantId, edge, dashboardById, TbMsgType.ENTITY_DELETED);
+        }
+    }
+
+    protected abstract Set<ShortCustomerInfo> filterNonExistingCustomers(TenantId tenantId, CustomerId customerId, Set<ShortCustomerInfo> currentAssignedCustomers, Set<ShortCustomerInfo> newAssignedCustomers);
 
 }
