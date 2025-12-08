@@ -37,15 +37,13 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
     protected Map<String, ArgumentEntry> arguments;
     protected boolean sizeExceedsLimit;
 
-    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
-
     public BaseCalculatedFieldState(List<String> requiredArguments) {
         this.requiredArguments = requiredArguments;
         this.arguments = new HashMap<>();
     }
 
     public BaseCalculatedFieldState() {
-        this(new ArrayList<>(), new HashMap<>(), false, DEFAULT_LAST_UPDATE_TS);
+        this(new ArrayList<>(), new HashMap<>(), false);
     }
 
     @Override
@@ -75,7 +73,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
             if (entryUpdated) {
                 stateUpdated = true;
-                updateLastUpdateTimestamp(newEntry);
             }
 
         }
@@ -111,15 +108,29 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState {
 
     protected abstract void validateNewEntry(ArgumentEntry newEntry);
 
-    private void updateLastUpdateTimestamp(ArgumentEntry entry) {
-        long newTs = this.latestTimestamp;
-        if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
-            newTs = singleValueArgumentEntry.getTs();
-        } else if (entry instanceof TsRollingArgumentEntry tsRollingArgumentEntry) {
-            Map.Entry<Long, Double> lastEntry = tsRollingArgumentEntry.getTsRecords().lastEntry();
-            newTs = (lastEntry != null) ? lastEntry.getKey() : DEFAULT_LAST_UPDATE_TS;
+    public long getLatestTimestamp() {
+        long latestTs = DEFAULT_LAST_UPDATE_TS;
+
+        boolean allDefault = arguments.values().stream().allMatch(entry -> {
+            if (entry instanceof SingleValueArgumentEntry single) {
+                return single.isDefaultValue();
+            }
+            return false;
+        });
+
+        for (ArgumentEntry entry : arguments.values()) {
+            if (entry instanceof SingleValueArgumentEntry single) {
+                if (allDefault) {
+                    latestTs = Math.max(latestTs, single.getTs());
+                } else if (!single.isDefaultValue()) {
+                    latestTs = Math.max(latestTs, single.getTs());
+                }
+            } else if (entry instanceof TsRollingArgumentEntry rolling) {
+                latestTs = Math.max(latestTs, rolling.getLatestTs());
+            }
         }
-        this.latestTimestamp = Math.max(this.latestTimestamp, newTs);
+
+        return latestTs;
     }
 
 }
