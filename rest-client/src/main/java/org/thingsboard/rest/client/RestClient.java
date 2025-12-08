@@ -105,6 +105,7 @@ import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -154,6 +155,8 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -286,6 +289,10 @@ public class RestClient implements Closeable {
             }
             return execution.execute(wrapper, bytes);
         });
+    }
+
+    public static RestClient withApiKey(String baseURL, String token) {
+        return withApiKey(new RestTemplate(), baseURL, token);
     }
 
     public static RestClient withApiKey(RestTemplate rt, String baseURL, String token) {
@@ -3036,6 +3043,44 @@ public class RestClient implements Closeable {
                 null,
                 userId.getId(),
                 userCredentialsEnabled);
+    }
+
+    public ApiKey saveApiKey(ApiKeyInfo apiKeyInfo) {
+        return restTemplate.postForEntity(baseURL + "/api/apiKey", apiKeyInfo, ApiKey.class).getBody();
+    }
+
+    public PageData<ApiKeyInfo> getUserApiKeys(UserId userId, PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        params.put("userId", userId.getId().toString());
+        addPageLinkToParam(params, pageLink);
+        return restTemplate.exchange(
+                baseURL + "/api/apiKeys/{userId}?" + getUrlParams(pageLink),
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<PageData<ApiKeyInfo>>() {}, params).getBody();
+    }
+
+    public ApiKeyInfo updateApiKeyDescription(ApiKeyId apiKeyId, Optional<String> description) {
+        return restTemplate.exchange(
+                baseURL + "/api/apiKey/{id}/description",
+                HttpMethod.PUT,
+                new HttpEntity<>(description),
+                ApiKeyInfo.class,
+                apiKeyId.getId()).getBody();
+    }
+
+    public ApiKeyInfo enableApiKey(ApiKeyId apiKeyId, boolean enabled) {
+        return restTemplate.exchange(
+                baseURL + "/api/apiKey/{id}/enabled/{enabledValue}",
+                HttpMethod.PUT,
+                HttpEntity.EMPTY,
+                ApiKeyInfo.class,
+                apiKeyId.getId(),
+                enabled).getBody();
+    }
+
+    public void deleteApiKey(ApiKeyId apiKeyId) {
+        restTemplate.delete(baseURL + "/api/apiKey/{id}", apiKeyId.getId());
     }
 
     public Optional<WidgetsBundle> getWidgetsBundleById(WidgetsBundleId widgetsBundleId) {
