@@ -75,14 +75,14 @@
                       matTooltipPosition="above"
                       class="tb-mat-32"
                       [disabled]="!argumentsList.length"
-                      (click)="onTestScript()">
+                      (click)="onTestScript($event)">
                 <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
               </button>
             </tb-js-func>
             <div>
               <button mat-button mat-raised-button color="primary"
                       type="button"
-                      (click)="onTestScript()"
+                      (click)="onTestScript($event)"
                       [disabled]="!argumentsList.length">
                 {{ 'calculated-fields.test-script-function' | translate }}
               </button>

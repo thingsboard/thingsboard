@@ -13,17 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  mat-form-field {
-    display: flex;
-    flex: 1;
-    max-width: 100%;
-    box-sizing: border-box;
+package org.thingsboard.server.service.cf.ctx.state;
 
-    &.tb-inline-field {
-      .mdc-icon-button {
-        margin-right: 8px;
-      }
-    }
-  }
+public interface HasLatestTs {
+
+    long getLatestTs();
+
 }

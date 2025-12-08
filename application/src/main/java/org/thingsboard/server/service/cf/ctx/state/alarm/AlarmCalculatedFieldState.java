@@ -225,6 +225,20 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 .build());
     }
 
+    @Override
+    protected boolean updateEntry(ArgumentEntry existingArgumentEntry, ArgumentEntry newArgumentEntry) {
+        if (!(existingArgumentEntry instanceof SingleValueArgumentEntry existingEntry) ||
+            !(newArgumentEntry instanceof SingleValueArgumentEntry newEntry)) {
+            return super.updateEntry(existingArgumentEntry, newArgumentEntry);
+        }
+        if (newEntry.getTs() < existingEntry.getTs()) {
+            if (existingEntry.isDefaultValue()) {
+                existingEntry.setTs(newEntry.getTs());
+            }
+        }
+        return super.updateEntry(existingEntry, newEntry);
+    }
+
     public void processAlarmAction(Alarm alarm, ActionType action) {
         switch (action) {
             case ALARM_ACK -> processAlarmAck(alarm);

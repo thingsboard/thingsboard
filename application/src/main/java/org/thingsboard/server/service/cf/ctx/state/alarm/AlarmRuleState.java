@@ -157,7 +157,7 @@ public class AlarmRuleState {
     private AlarmEvalResult evalDuration(CalculatedFieldCtx ctx) {
         if (eval(condition.getExpression(), ctx)) {
             long ts = System.currentTimeMillis();
-            if (firstEventTs == 0) {
+            if (firstEventTs <= 0) {
                 firstEventTs = state.getLatestTimestamp();
             }
             lastCheckTs = ts;
