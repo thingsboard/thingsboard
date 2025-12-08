@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.user;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -104,6 +103,6 @@ public interface UserDao extends Dao<User>, TenantEntityDao<User> {
 
     int countTenantAdmins(UUID tenantId);
 
-    ListenableFuture<List<User>> findUsersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> userIds);
+    List<User> findUsersByTenantIdAndIds(UUID tenantId, List<UUID> userIds);
 
 }

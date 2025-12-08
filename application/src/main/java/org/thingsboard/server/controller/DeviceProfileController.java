@@ -51,10 +51,9 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ExecutionException;
 
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_DATA;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_PROFILE_ID;
@@ -283,26 +282,20 @@ public class DeviceProfileController extends BaseController {
         return checkNotNull(deviceProfileService.findDeviceProfileNamesByTenantId(tenantId, activeOnly));
     }
 
-    @ApiOperation(value = "Get Device Profiles By Ids (getDeviceProfilesByIds)",
+    @ApiOperation(value = "Get Device Profile Infos By Ids (getDeviceProfilesByIds)",
             notes = "Requested device profiles must be owned by tenant which is performing the request. " +
                     NEW_LINE)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
     @GetMapping(value = "/deviceProfileInfos", params = {"deviceProfileIds"})
-    public List<DeviceProfileInfo> getDeviceProfilesByIds(
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(
             @Parameter(description = "A list of device profile ids, separated by comma ','",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("deviceProfileIds") String[] strDeviceProfileIds) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkArrayParameter("deviceProfileIds", strDeviceProfileIds);
-        SecurityUser user = getCurrentUser();
-        if (!accessControlService.hasPermission(user, Resource.DEVICE_PROFILE, Operation.READ)) {
-            return Collections.emptyList();
-        }
-        TenantId tenantId = user.getTenantId();
+            @RequestParam("deviceProfileIds") Set<UUID> deviceProfileUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
         List<DeviceProfileId> deviceProfileIds = new ArrayList<>();
-        for (String strDeviceProfileId : strDeviceProfileIds) {
-            deviceProfileIds.add(new DeviceProfileId(toUUID(strDeviceProfileId)));
+        for (UUID deviceProfileUUID : deviceProfileUUIDs) {
+            deviceProfileIds.add(new DeviceProfileId(deviceProfileUUID));
         }
-
-        return checkNotNull(deviceProfileService.findDeviceProfilesByIdsAsync(tenantId, deviceProfileIds).get());
+        return deviceProfileService.findDeviceProfilesByIds(tenantId, deviceProfileIds);
     }
 
 }

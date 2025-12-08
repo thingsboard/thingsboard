@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
 import org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
@@ -147,15 +146,10 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
             "w.alias, w.version) FROM WidgetsBundleEntity w WHERE w.id > :id ORDER BY w.id")
     List<WidgetsBundleFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
-    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId = :systemTenantId " +
-            "AND wb.id IN :widgetsBundleIds")
-    List<WidgetsBundleEntity> findSystemWidgetsBundlesByIdIn(@Param("systemTenantId") UUID systemTenantId,
-                                                             @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
-
-    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE wb.tenantId IN (:tenantId, :nullTenantId) " +
-            "AND wb.id IN :widgetsBundleIds")
-    List<WidgetsBundleEntity> findAllTenantWidgetsBundlesByTenantIdAndIdIn(@Param("tenantId") UUID tenantId,
-                                                                           @Param("nullTenantId") UUID nullTenantId,
-                                                                           @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
+    @Query("SELECT wb FROM WidgetsBundleEntity wb WHERE " +
+            "wb.id IN (:widgetsBundleIds) AND (wb.tenantId = :tenantId OR wb.tenantId = :systemTenantId)")
+    List<WidgetsBundleEntity> findSystemOrTenantWidgetsBundlesByIdIn(@Param("tenantId") UUID tenantId,
+                                                                     @Param("systemTenantId") UUID systemTenantId,
+                                                                     @Param("widgetsBundleIds") List<UUID> widgetsBundleIds);
 
 }

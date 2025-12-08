@@ -871,11 +871,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     }
 
     @Override
-    public ListenableFuture<List<RuleChain>> findRuleChainsByIdsAsync(TenantId tenantId, List<RuleChainId> ruleChainIds) {
-        log.trace("Executing findRuleChainsByIdsAsync, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        validateIds(ruleChainIds, ids -> "Incorrect ruleChainIds " + ids);
-        return ruleChainDao.findRuleChainsByTenantIdAndIdsAsync(tenantId.getId(), toUUIDs(ruleChainIds));
+    public List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds) {
+        log.trace("Executing findRuleChainsByIds, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
+        return ruleChainDao.findRuleChainsByTenantIdAndIds(tenantId.getId(), toUUIDs(ruleChainIds));
     }
 
 

@@ -72,7 +72,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.rule.TbRuleChainService;
 import org.thingsboard.server.service.script.RuleNodeJsScriptEngine;
 import org.thingsboard.server.service.script.RuleNodeTbelScriptEngine;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
@@ -81,6 +80,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
@@ -589,15 +589,13 @@ public class RuleChainController extends BaseController {
     @GetMapping(value = "/ruleChains", params = {"ruleChainIds"})
     public List<RuleChain> getRuleChainsByIds(
             @Parameter(description = "A list of rule chain ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("ruleChainIds") String[] strRuleChainIds) throws Exception {
-        checkArrayParameter("ruleChainIds", strRuleChainIds);
-        SecurityUser user = getCurrentUser();
-        TenantId tenantId = user.getTenantId();
+            @RequestParam("ruleChainIds") Set<UUID> ruleChainUUIDs) throws Exception {
+        TenantId tenantId = getCurrentUser().getTenantId();
         List<RuleChainId> ruleChainIds = new ArrayList<>();
-        for (String strRuleChainId : strRuleChainIds) {
-            ruleChainIds.add(new RuleChainId(toUUID(strRuleChainId)));
+        for (UUID ruleChainUUID : ruleChainUUIDs) {
+            ruleChainIds.add(new RuleChainId(ruleChainUUID));
         }
-        return ruleChainService.findRuleChainsByIdsAsync(tenantId, ruleChainIds).get();
+        return ruleChainService.findRuleChainsByIds(tenantId, ruleChainIds);
     }
 
 }

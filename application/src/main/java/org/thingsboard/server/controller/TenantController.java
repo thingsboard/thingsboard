@@ -41,14 +41,13 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -178,15 +177,13 @@ public class TenantController extends BaseController {
     @GetMapping(value = "/tenants", params = {"tenantIds"})
     public List<Tenant> getTenantsByIds(
             @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam("tenantIds") String[] strTenantIds) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkArrayParameter("tenantIds", strTenantIds);
-        SecurityUser user = getCurrentUser();
-        TenantId tenantId = user.getTenantId();
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
         List<TenantId> tenantIds = new ArrayList<>();
-        for (String strTenantId : strTenantIds) {
-            tenantIds.add(new TenantId(toUUID(strTenantId)));
+        for (UUID tenantIdUUID : tenantUUIDs) {
+            tenantIds.add(TenantId.fromUUID(tenantIdUUID));
         }
-        return tenantService.findTenantsByIdsAsync(tenantId, tenantIds).get();
+        return tenantService.findTenantsByIds(tenantId, tenantIds);
     }
 
 }

@@ -48,6 +48,6 @@ public interface CustomerService extends EntityDaoService {
 
     void deleteCustomersByTenantId(TenantId tenantId);
 
-    ListenableFuture<List<Customer>> findCustomersByTenantIdAndIdsAsync(TenantId tenantId, List<CustomerId> customerIds);
+    List<Customer> findCustomersByTenantIdAndIds(TenantId tenantId, List<CustomerId> customerIds);
 
 }

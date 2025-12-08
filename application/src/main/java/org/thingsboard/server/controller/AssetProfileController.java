@@ -48,9 +48,9 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID_PARAM_DESCRIPTION;
@@ -234,16 +234,13 @@ public class AssetProfileController extends BaseController {
     @GetMapping(value = "/assetProfileInfos", params = {"assetProfileIds"})
     public List<AssetProfileInfo> getAssetProfilesByIds(
             @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("assetProfileIds") String[] strAssetProfileIds) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkArrayParameter("assetProfileIds", strAssetProfileIds);
-        SecurityUser user = getCurrentUser();
-        TenantId tenantId = user.getTenantId();
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
         List<AssetProfileId> assetProfileIds = new ArrayList<>();
-        for (String strAssetProfileId : strAssetProfileIds) {
-            assetProfileIds.add(new AssetProfileId(toUUID(strAssetProfileId)));
+        for (UUID assetProfileUUID : assetProfileUUIDs) {
+            assetProfileIds.add(new AssetProfileId(assetProfileUUID));
         }
-
-        return assetProfileService.findAssetProfilesByIdsAsync(tenantId, assetProfileIds).get();
+        return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
     }
 
 }

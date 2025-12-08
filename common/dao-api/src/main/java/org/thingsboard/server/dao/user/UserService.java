@@ -111,6 +111,6 @@ public interface UserService extends EntityDaoService {
 
     int countTenantAdmins(TenantId tenantId);
 
-    ListenableFuture<List<User>> findUsersByTenantIdAndIdsAsync(TenantId tenantId, List<UserId> userIds);
+    List<User> findUsersByTenantIdAndIds(TenantId tenantId, List<UserId> userIds);
 
 }

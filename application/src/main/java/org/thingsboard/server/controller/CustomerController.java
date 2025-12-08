@@ -42,14 +42,13 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.customer.TbCustomerService;
-import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.ExecutionException;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID;
 import static org.thingsboard.server.controller.ControllerConstants.CUSTOMER_ID_PARAM_DESCRIPTION;
@@ -198,15 +197,13 @@ public class CustomerController extends BaseController {
     @GetMapping(value = "/customers", params = {"customerIds"})
     public List<Customer> getCustomersByIds(
             @Parameter(description = "A list of customer ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("customerIds") String[] strCustomerIds) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkArrayParameter("customerIds", strCustomerIds);
-        SecurityUser user = getCurrentUser();
-        TenantId tenantId = user.getTenantId();
+            @RequestParam("customerIds") Set<UUID> customerUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
         List<CustomerId> customerIds = new ArrayList<>();
-        for (String strCustomerId : strCustomerIds) {
-            customerIds.add(new CustomerId(toUUID(strCustomerId)));
+        for (UUID customerUUID : customerUUIDs) {
+            customerIds.add(new CustomerId(customerUUID));
         }
-        return customerService.findCustomersByTenantIdAndIdsAsync(tenantId, customerIds).get();
+        return customerService.findCustomersByTenantIdAndIds(tenantId, customerIds);
     }
 
 }

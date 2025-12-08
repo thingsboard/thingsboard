@@ -169,7 +169,7 @@ public interface EntityViewDao extends Dao<EntityView>, ExportableEntityDao<Enti
                                                             UUID edgeId,
                                                             PageLink pageLink);
 
-    ListenableFuture<List<EntityView>> findEntityViewsByTenantIdAndIdsAsync(UUID tenantId, List<UUID> entityViewIds);
+    List<EntityView> findEntityViewsByTenantIdAndIds(UUID tenantId, List<UUID> entityViewIds);
 
     /**
      * Find entity views by tenantId, edgeId, type and page link.

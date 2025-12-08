@@ -57,6 +57,8 @@ import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -468,15 +470,13 @@ public class EntityViewController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/entityViews", params = {"entityViewIds"})
     public List<EntityView> getEntityViewsByIds(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("entityViewIds") String[] strEntityViewIds) throws ThingsboardException, ExecutionException, InterruptedException {
-        checkArrayParameter("entityViewIds", strEntityViewIds);
-        SecurityUser user = getCurrentUser();
-        TenantId tenantId = user.getTenantId();
+            @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
         List<EntityViewId> entityViewIds = new ArrayList<>();
-        for (String strEntityViewId : strEntityViewIds) {
-            entityViewIds.add(new EntityViewId(toUUID(strEntityViewId)));
+        for (UUID entityViewUUID : entityViewUUIDs) {
+            entityViewIds.add(new EntityViewId(entityViewUUID));
         }
-        List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByTenantIdAndIdsAsync(tenantId, entityViewIds).get());
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndIds(tenantId, entityViewIds);
         return filterEntityViewsByReadPermission(entityViews);
     }
 

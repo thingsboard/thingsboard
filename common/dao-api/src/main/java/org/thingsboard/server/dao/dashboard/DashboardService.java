@@ -80,6 +80,6 @@ public interface DashboardService extends EntityDaoService {
 
     PageData<DashboardId> findAllDashboardsIds(PageLink pageLink);
 
-    ListenableFuture<List<DashboardInfo>> findDashboardInfoByIdsAsync(TenantId tenantId, List<DashboardId> dashboardIds);
+    List<DashboardInfo> findDashboardInfoByIds(TenantId tenantId, List<DashboardId> dashboardIds);
 
 }

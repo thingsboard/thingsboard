@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.device;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.EntityInfo;
@@ -54,6 +53,6 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly);
 
-    ListenableFuture<List<DeviceProfileInfo>> findDeviceProfilesByTenantIdAndIdsAsync(UUID tenantId, List<UUID> deviceProfileIds);
+    List<DeviceProfileInfo> findDeviceProfilesByTenantIdAndIds(UUID tenantId, List<UUID> deviceProfileIds);
 
 }

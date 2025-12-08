@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.customer;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -80,6 +79,6 @@ public interface CustomerDao extends Dao<Customer>, TenantEntityDao<Customer>, E
      */
     PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink);
 
-    ListenableFuture<List<Customer>> findCustomersByTenantIdAndIdsAsync(UUID tenantId, List<UUID> customerIds);
+    List<Customer> findCustomersByTenantIdAndIds(UUID tenantId, List<UUID> customerIds);
 
 }
