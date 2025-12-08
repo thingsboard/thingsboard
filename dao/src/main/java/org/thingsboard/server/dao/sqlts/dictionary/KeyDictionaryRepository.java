@@ -19,6 +19,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
 
@@ -30,5 +31,8 @@ public interface KeyDictionaryRepository extends JpaRepository<KeyDictionaryEntr
 
     @Query("SELECT e FROM KeyDictionaryEntry e ORDER BY e.keyId ASC")
     Page<KeyDictionaryEntry> findAll(Pageable pageable);
+
+    @Query(value = "INSERT INTO key_dictionary (key) VALUES (:key) ON CONFLICT (key) DO UPDATE SET key = EXCLUDED.key RETURNING key_id", nativeQuery = true)
+    Integer upsertAndGetKeyId(@Param("key") String key);
 
 }
