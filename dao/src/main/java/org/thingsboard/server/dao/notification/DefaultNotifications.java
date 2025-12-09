@@ -106,7 +106,7 @@ public class DefaultNotifications {
                     .build())
             .build();
     public static final DefaultNotification entitiesLimitIncreaseRequest = DefaultNotification.builder()
-            .name("Entities limit increase request for sysadmin")
+            .name("Entities limit increase request")
             .type(NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST)
             .subject("${entityType} limit increase request")
             .text("${userEmail} has reached the maximum number of ${entityType:lowerCase}s allowed and is requesting an increase to the ${entityType:lowerCase} limit.")
