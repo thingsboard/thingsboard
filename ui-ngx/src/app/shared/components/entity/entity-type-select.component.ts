@@ -173,4 +173,8 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
       return '';
     }
   }
+
+  markAsTouched(): void {
+    this.entityTypeFormGroup.get('entityType').markAsTouched();
+  }
 }

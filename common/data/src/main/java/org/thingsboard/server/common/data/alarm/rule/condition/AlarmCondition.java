@@ -21,9 +21,10 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonSubTypes.Type;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.jetbrains.annotations.NotNull;
 import org.thingsboard.server.common.data.alarm.rule.condition.expression.AlarmConditionExpression;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AlarmSchedule;
 import org.thingsboard.server.common.data.alarm.rule.condition.schedule.AnyTimeSchedule;
@@ -48,6 +49,20 @@ public abstract class AlarmCondition {
     @JsonIgnore
     public boolean hasSchedule() {
         return schedule != null && !(schedule.getStaticValue() instanceof AnyTimeSchedule);
+    }
+
+    @JsonIgnore
+    public boolean requiresScheduledReevaluation() {
+        return hasSchedule() || expression.requiresScheduledReevaluation();
+    }
+
+    @JsonIgnore
+    @AssertTrue(message = "Expressions requiring scheduled reevaluation can only be used with simple alarm conditions")
+    public boolean isValid() {
+        if (getType() != AlarmConditionType.SIMPLE && expression.requiresScheduledReevaluation()) {
+            return false;
+        }
+        return true;
     }
 
     @JsonIgnore

@@ -25,21 +25,25 @@ import { TimeUnit, timeUnitTranslationMap } from '@shared/models/time/time.model
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from "@shared/models/rule-node.models";
 import {
-  AlarmRuleCondition,
-  AlarmRuleConditionType,
-  AlarmRuleConditionTypeTranslationMap,
-  alarmRuleDefaultScript,
-  AlarmRuleExpressionType
-} from "@shared/models/alarm-rule.models";
-import {
   CalculatedFieldArgument,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights
 } from "@shared/models/calculated-field.models";
 import { TbEditorCompleter } from "@shared/models/ace/completion.models";
 import { AceHighlightRules } from "@shared/models/ace/ace.models";
-import { ComplexOperation, complexOperationTranslationMap } from "@shared/models/query/query.models";
+import { ComplexOperation } from "@shared/models/query/query.models";
 import { Observable } from "rxjs";
+import { TranslateService } from "@ngx-translate/core";
+import {
+  AlarmRuleCondition,
+  AlarmRuleConditionType,
+  AlarmRuleConditionTypeTranslationMap,
+  alarmRuleDefaultScript,
+  AlarmRuleExpressionType,
+  AlarmRuleFilter,
+  areFiltersAndPredicateArgumentsValid,
+  filterOperationTranslationMap
+} from "@shared/models/alarm-rule.models";
 
 export interface CfAlarmRuleConditionDialogData {
   readonly: boolean;
@@ -96,7 +100,11 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   repeatingDynamicModeControl = this.fb.control<boolean>(false);
 
   ComplexOperation = ComplexOperation;
-  complexOperationTranslationMap = complexOperationTranslationMap;
+  complexOperationTranslationMap = filterOperationTranslationMap;
+
+  specText = '';
+
+  filtersValid: boolean = false;
 
   functionArgs: Array<string>;
   argumentsEditorCompleter: TbEditorCompleter;
@@ -105,11 +113,14 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
   arguments = this.data.arguments;
   argumentsList: Array<string>;
 
+  isNoData: boolean = false;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: CfAlarmRuleConditionDialogData,
               public dialogRef: MatDialogRef<CfAlarmRuleConditionDialogComponent, AlarmRuleCondition>,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private translate: TranslateService) {
     super(store, router, dialogRef);
 
     this.functionArgs = ['ctx', ...Object.keys(this.data.arguments)];
@@ -127,22 +138,39 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
       type: this.condition?.type ?? AlarmRuleConditionType.SIMPLE,
       unit: this.condition?.unit ?? TimeUnit.SECONDS,
       value: {
-        staticValue: this.condition?.value?.staticValue,
-        dynamicValueArgument: this.condition?.value?.dynamicValueArgument,
+        staticValue: this.condition?.value?.staticValue ?? null,
+        dynamicValueArgument: Object.keys(this.data.arguments).includes(this.condition?.value?.dynamicValueArgument) ? this.condition?.value?.dynamicValueArgument : null,
       },
       count: {
         staticValue: this.condition?.count?.staticValue ?? null,
-        dynamicValueArgument: this.condition?.count?.dynamicValueArgument
+        dynamicValueArgument: Object.keys(this.data.arguments).includes(this.condition?.count?.dynamicValueArgument) ? this.condition?.count?.dynamicValueArgument : null
       }
     }, {emitEvent: false});
+
 
     this.durationDynamicModeControl.patchValue(!!this.condition?.value?.dynamicValueArgument, {emitEvent: false});
     this.repeatingDynamicModeControl.patchValue(!!this.condition?.count?.dynamicValueArgument, {emitEvent: false});
 
+    this.filtersValid = areFiltersAndPredicateArgumentsValid(this.condition?.expression?.filters, this.data.arguments);
+    this.checkIsNoData(this.condition?.expression?.filters);
+
     this.conditionFormGroup.get('type').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((type) => {
-      this.updateValidators(type, true);
+      this.updateValidators(type);
+    });
+
+    this.conditionFormGroup.valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((value) => {
+      this.updateSpecText(value.type);
+    })
+
+    this.conditionFormGroup.get('expression.filters').valueChanges.pipe(
+      takeUntilDestroyed()
+    ).subscribe((filters) => {
+      this.filtersValid = areFiltersAndPredicateArgumentsValid(filters, this.data.arguments);
+      this.checkIsNoData(filters);
     });
 
     this.conditionFormGroup.get('expression.type').valueChanges.pipe(
@@ -164,6 +192,7 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     });
 
     this.updateValidators(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
+    this.updateSpecText(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     this.updateExpressionTypeValidator(this.condition?.expression?.type ?? 'SIMPLE');
   }
 
@@ -188,7 +217,26 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     }
   }
 
-  private updateValidators(type: AlarmRuleConditionType, emitEvent = false) {
+  private checkIsNoData(filters: Array<AlarmRuleFilter>) {
+    this.isNoData = this.hasNoData(filters);
+    if (this.isNoData && this.conditionFormGroup.get('type').value !== AlarmRuleConditionType.SIMPLE) {
+      this.conditionFormGroup.get('type').patchValue(AlarmRuleConditionType.SIMPLE);
+    }
+  }
+
+  private hasNoData(data: Array<AlarmRuleFilter>) {
+    const search = (filter) => {
+      if (!filter) return false;
+      if (Array.isArray(filter)) return filter.some(search);
+      if (typeof filter !== 'object') return false;
+      if (filter.type === 'NO_DATA') return true;
+      if (filter.predicates?.length) return filter.predicates.some(search);
+      return false;
+    };
+    return search(data);
+  };
+
+  private updateValidators(type: AlarmRuleConditionType) {
     switch (type) {
       case AlarmRuleConditionType.DURATION:
         this.conditionFormGroup.get('unit').enable({emitEvent: false});
@@ -218,6 +266,55 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     }
   }
 
+  private updateSpecText(type: AlarmRuleConditionType) {
+    this.specText = '';
+    const value = this.conditionFormGroup.get('value').value;
+    const count = this.conditionFormGroup.get('count').value;
+    switch (type) {
+      case AlarmRuleConditionType.SIMPLE:
+        break;
+      case AlarmRuleConditionType.DURATION:
+        let duringText = '';
+        switch (this.conditionFormGroup.get('unit').value) {
+          case TimeUnit.SECONDS:
+            duringText = this.translate.instant('timewindow.seconds', {seconds: value.staticValue});
+            break;
+          case TimeUnit.MINUTES:
+            duringText = this.translate.instant('timewindow.minutes', {minutes: value.staticValue});
+            break;
+          case TimeUnit.HOURS:
+            duringText = this.translate.instant('timewindow.hours', {hours: value.staticValue});
+            break;
+          case TimeUnit.DAYS:
+            duringText = this.translate.instant('timewindow.days', {days: value.staticValue});
+            break;
+        }
+        if (value.dynamicValueArgument) {
+          this.specText = this.translate.instant('alarm-rule.condition-during-dynamic', {
+            attribute: `${value.dynamicValueArgument}`
+          }) + ' ' + this.translate.instant(this.timeUnitTranslations.get(this.conditionFormGroup.get('unit').value)).toLowerCase();
+        } else {
+          this.specText = this.translate.instant('alarm-rule.condition-during', {
+            during: duringText
+          });
+        }
+        break;
+      case AlarmRuleConditionType.REPEATING:
+        if (count.dynamicValueArgument) {
+          this.specText = this.translate.instant('alarm-rule.condition-repeat-times-dynamic', {
+            attribute: `${count.dynamicValueArgument}`
+          });
+        } else {
+          this.specText = this.translate.instant('alarm-rule.condition-repeat-times',
+            {count: count.staticValue});
+        }
+        break;
+    }
+    if (this.specText.length > 0) {
+      this.specText = this.specText + ':';
+    }
+  }
+
   cancel(): void {
     this.dialogRef.close(null);
   }
@@ -226,7 +323,8 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.dialogRef.close(this.conditionFormGroup.value as AlarmRuleCondition);
   }
 
-  onTestScript() {
+  onTestScript($event: Event) {
+    $event?.preventDefault();
     this.data.testScript(this.conditionFormGroup.get('expression.expression').value).subscribe(
       (expression) => {
         this.conditionFormGroup.get('expression.expression').setValue(expression);

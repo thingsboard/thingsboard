@@ -43,7 +43,6 @@ import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
 import org.thingsboard.server.service.cf.AbstractCalculatedFieldStateService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
 
-import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.queue.common.AbstractTbQueueTemplate.bytesToString;
@@ -103,11 +102,6 @@ public class KafkaCalculatedFieldStateService extends AbstractCalculatedFieldSta
                 .stateConsumer(stateConsumer)
                 .build();
         this.stateProducer = (TbKafkaProducerTemplate<TbProtoQueueMsg<CalculatedFieldStateProto>>) queueFactory.createCalculatedFieldStateProducer();
-    }
-
-    @Override
-    public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
-        stateService.update(queueKey, partitions, null);
     }
 
     @Override

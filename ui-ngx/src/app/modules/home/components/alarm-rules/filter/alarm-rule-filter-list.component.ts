@@ -38,7 +38,11 @@ import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
-import { AlarmRuleFilter, FilterPredicateTypeTranslationMap } from "@shared/models/alarm-rule.models";
+import {
+  AlarmRuleFilter,
+  areFilterAndPredicateArgumentsValid,
+  FilterPredicateTypeTranslationMap
+} from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
@@ -70,6 +74,10 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   filterListFormGroup = this.fb.group({
     filters: this.fb.array([])
   });
+
+  disabled = false;
+
+  areFilterAndPredicateArgumentsValid = areFilterAndPredicateArgumentsValid;
 
   complexOperationTranslationMap = complexOperationTranslationMap;
   FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
@@ -103,6 +111,7 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.filterListFormGroup.disable({emitEvent: false});
     } else {
@@ -176,5 +185,4 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     const filters = this.filterListFormGroup.value.filters as Array<AlarmRuleFilter>;
     this.propagateChange(filters);
   }
-
 }

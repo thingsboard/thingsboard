@@ -60,8 +60,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
 
     private AggInterval interval;
     private long watermarkDuration;
-    private long checkInterval;
     private Map<String, AggMetric> metrics;
+
+    private boolean produceIntermediateResult;
 
     private EntityAggregationDebugArgumentsTracker debugTracker;
 
@@ -78,9 +79,9 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
         Watermark watermark = configuration.getWatermark();
         watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-        checkInterval = TimeUnit.SECONDS.toMillis(ctx.getSystemContext().getCfCheckInterval());
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
+        produceIntermediateResult = configuration.isProduceIntermediateResult();
     }
 
     @Override
@@ -204,10 +205,12 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             handleExpiredInterval(intervalEntry, args, results);
             expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
-            handleActiveInterval(intervalEntry, args, results);
+            handleActiveInterval(ctx.getCfCheckReevaluationInterval(), intervalEntry, args, results);
             if (watermarkDuration == 0) {
                 expiredIntervals.add(intervalEntry);
             }
+        } else if (produceIntermediateResult) {
+            handleActiveInterval(ctx.getIntermediateAggregationIntervalMillis(), intervalEntry, args, results);
         }
     }
 
@@ -218,23 +221,24 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             if (argEntryIntervalStatus.getLastArgsRefreshTs() > argEntryIntervalStatus.getLastMetricsEvalTs()) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                 processArgument(intervalEntry, argName, false, results);
-            } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+            } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == DEFAULT_LAST_UPDATE_TS) {
                 argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                 processArgument(intervalEntry, argName, true, results);
             }
         });
     }
 
-    private void handleActiveInterval(AggIntervalEntry intervalEntry,
+    private void handleActiveInterval(long cfCheckInterval,
+                                      AggIntervalEntry intervalEntry,
                                       Map<String, AggIntervalEntryStatus> args,
                                       Map<AggIntervalEntry, Map<String, ArgumentEntry>> results) {
         args.forEach((argName, argEntryIntervalStatus) -> {
-            if (argEntryIntervalStatus.intervalPassed(checkInterval)) {
+            if (argEntryIntervalStatus.intervalPassed(cfCheckInterval)) {
                 if (argEntryIntervalStatus.argsUpdated()) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
-                    argEntryIntervalStatus.setLastArgsRefreshTs(-1);
+                    argEntryIntervalStatus.setLastArgsRefreshTs(DEFAULT_LAST_UPDATE_TS);
                     processArgument(intervalEntry, argName, false, results);
-                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == -1) {
+                } else if (argEntryIntervalStatus.getLastMetricsEvalTs() == DEFAULT_LAST_UPDATE_TS) {
                     argEntryIntervalStatus.setLastMetricsEvalTs(System.currentTimeMillis());
                     processArgument(intervalEntry, argName, true, results);
                 }

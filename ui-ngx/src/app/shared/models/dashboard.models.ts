@@ -186,8 +186,8 @@ export interface DashboardConfiguration {
   settings?: DashboardSettings;
   widgets?: {[id: string]: Widget } | Widget[];
   states?: {[id: string]: DashboardState };
-  entityAliases?: EntityAliases;
-  filters?: Filters;
+  entityAliases: EntityAliases;
+  filters: Filters;
   [key: string]: any;
 }
 

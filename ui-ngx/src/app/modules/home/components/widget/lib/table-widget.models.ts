@@ -484,8 +484,8 @@ export function constructTableCssString(widgetConfig: WidgetConfig): string {
   return cssString;
 }
 
-export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings, utils: UtilsService) {
-  if (isDefined(keySettings.customTitle) && isNotEmptyStr(keySettings.customTitle)) {
+export function getHeaderTitle(dataKey: DataKey, keySettings: TableWidgetDataKeySettings | undefined, utils: UtilsService) {
+  if (isNotEmptyStr(keySettings?.customTitle)) {
     return utils.customTranslation(keySettings.customTitle, keySettings.customTitle);
   }
   return dataKey.label;

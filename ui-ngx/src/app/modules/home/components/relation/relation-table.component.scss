@@ -59,6 +59,17 @@
         overflow: hidden;
         text-overflow: ellipsis;
       }
+
+      .type-copy {
+        visibility: hidden;
+        transition: visibility 0.1s;
+      }
+
+      .type:hover {
+        .type-copy {
+          visibility: visible;
+        }
+      }
     }
   }
 

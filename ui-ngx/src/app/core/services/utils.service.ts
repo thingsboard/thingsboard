@@ -97,7 +97,6 @@ export class UtilsService {
     color: this.getMaterialColor(0),
     funcBody: this.getPredefinedFunctionBody('Sin'),
     settings: {},
-    _hash: Math.random()
   };
 
   defaultDatasource: Datasource = {
@@ -153,8 +152,7 @@ export class UtilsService {
         type: DataKeyType.alarm,
         label: this.translate.instant(alarmFields[name].name),
         color: this.getMaterialColor(i),
-        settings: {},
-        _hash: Math.random()
+        settings: {}
       };
       this.defaultAlarmDataKeys.push(dataKey);
     }
@@ -267,8 +265,7 @@ export class UtilsService {
       type,
       label,
       funcBody: keyInfo.funcBody,
-      settings: {},
-      _hash: Math.random()
+      settings: {}
     };
     if (keyInfo.units) {
       dataKey.units = keyInfo.units;

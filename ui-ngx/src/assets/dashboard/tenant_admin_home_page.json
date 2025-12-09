@@ -12,30 +12,6 @@
         "sizeY": 3.5,
         "config": {
           "datasources": [],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "#fff",
           "color": "rgba(0, 0, 0, 0.87)",
@@ -59,7 +35,6 @@
             "fontWeight": 400
           },
           "showLegend": false,
-          "useDashboardTimewindow": true,
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
@@ -75,11 +50,6 @@
         "sizeY": 3,
         "config": {
           "datasources": [],
-          "timewindow": {
-            "realtime": {
-              "timewindowMs": 60000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "rgb(255, 255, 255)",
           "color": "rgba(0, 0, 0, 0.87)",
@@ -196,7 +166,6 @@
                   "label": "totalDevices",
                   "color": "#2196f3",
                   "settings": {},
-                  "_hash": 0.8491768696709192,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -218,7 +187,6 @@
                   "label": "activeDevices",
                   "color": "#4caf50",
                   "settings": {},
-                  "_hash": 0.1262449138010293,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -240,7 +208,6 @@
                   "label": "inactiveDevices",
                   "color": "#f44336",
                   "settings": {},
-                  "_hash": 0.39119172615806797,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -251,30 +218,6 @@
               ]
             }
           ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "#fff",
           "color": "rgba(0, 0, 0, 0.87)",
@@ -298,7 +241,6 @@
             "fontWeight": 400
           },
           "showLegend": false,
-          "useDashboardTimewindow": true,
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
@@ -326,7 +268,6 @@
                   "label": "totalAlarms",
                   "color": "#ffc107",
                   "settings": {},
-                  "_hash": 0.8743321483507485,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -353,7 +294,6 @@
                   "label": "assignedToMeAlarms",
                   "color": "#ffc107",
                   "settings": {},
-                  "_hash": 0.6392390736755882,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -381,7 +321,6 @@
                   "label": "criticalAlarms",
                   "color": "#ffc107",
                   "settings": {},
-                  "_hash": 0.8329478098552843,
                   "aggregationType": null,
                   "units": null,
                   "decimals": null,
@@ -400,37 +339,13 @@
               }
             }
           ],
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1680168340431,
-                "endTimeMs": 1680254740431
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "AVG",
-              "limit": 25000
-            }
-          },
           "showTitle": false,
           "backgroundColor": "#fff",
           "color": "rgba(0, 0, 0, 0.87)",
           "padding": "16px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/alarms\">{{ 'alarm.alarms' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-critical\" routerLink=\"/alarms\" [queryParams]=\"{severityList: ['CRITICAL']}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.critical</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${criticalAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-assigned\" routerLink=\"/alarms\" [queryParams]=\"{assignedToMe: true}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.assigned-to-me</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${assignedToMeAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-total md:!hidden\" routerLink=\"/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalAlarms:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
+            "markdownTextPattern": "<div class=\"tb-card-content\">\n    <div class=\"tb-content-container\">\n        <div class=\"tb-card-header\">\n            <div class=\"tb-card-title\">\n                <a class=\"tb-home-widget-title tb-home-widget-link\" routerLink=\"/alarms/alarms\">{{ 'alarm.alarms' | translate }}</a>\n            </div>\n        </div>\n        <div class=\"tb-item-cards\">\n            <a class=\"tb-item-card tb-critical\" routerLink=\"/alarms/alarms\" [queryParams]=\"{severityList: ['CRITICAL']}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.critical</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${criticalAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-assigned\" routerLink=\"/alarms/alarms\" [queryParams]=\"{assignedToMe: true}\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.assigned-to-me</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${assignedToMeAlarms:0}</div>\n                </div>\n            </a>\n            <a class=\"tb-item-card tb-total md:!hidden\" routerLink=\"/alarms/alarms\">\n                <div class=\"tb-item-title-container\">\n                    <div class=\"tb-item-title tb-home-widget-link\" translate>widgets.alarms.total</div>\n                </div>    \n                <div class=\"tb-count-container\">\n                    <div class=\"tb-count\">${totalAlarms:0}</div>\n                </div>\n            </a>\n        </div>\n    </div>\n</div>",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".tb-card-content {\n    width: 100%;\n    height: 100%;\n    display: flex;\n    flex-direction: row;\n}\n\n.tb-content-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    justify-content: flex-start;\n    gap: 12px;\n}\n\n.tb-card-header {\n    height: 36px;\n    display: flex;\n    flex-direction: row;\n    justify-content: space-between;\n}\n\n.tb-item-cards {\n    flex: 1;\n    display: flex;\n    flex-direction: row;\n    gap: 12px;\n    overflow: hidden;\n}\n\na.tb-item-card {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    padding: 8px 12px;\n    border: 1px solid;\n    border-radius: 10px;\n    margin-bottom: 12px;\n    overflow: hidden;\n    justify-content: space-evenly;\n}\n\na.tb-item-card.tb-critical {\n    background: rgba(209, 39, 48, 0.04);\n    border-color: rgba(209, 39, 48, 0.06);\n}\n\na.tb-item-card.tb-assigned {\n    background: rgba(48, 86, 128, 0.04);\n    border-color: rgba(48, 86, 128, 0.12);\n}\n\na.tb-item-card.tb-total {\n    background: rgba(0, 0, 0, 0.01);\n    border-color: rgba(0, 0, 0, 0.05);\n}\n\n.tb-item-title-container {\n    display: grid;\n}\n\n.tb-item-title {\n    font-weight: 400;\n    font-size: 14px;\n    line-height: 20px;\n    letter-spacing: 0.2px;\n    white-space: nowrap;\n    overflow: hidden;\n    text-overflow: ellipsis;    \n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-item-title.tb-home-widget-link:after {\n    position: absolute;\n    right: 0;\n}\n\na.tb-item-card:hover .tb-item-title.tb-home-widget-link:after { \n    color: rgba(0, 0, 0, 0.38);\n}\n\na.tb-item-card:hover {\n    box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);\n}\n\n.tb-count-container {\n    flex: 1;\n    display: flex;\n    flex-direction: column;\n    align-items: flex-start;\n    justify-content: center;\n}\n\n.tb-count {\n    font-style: normal;\n    font-weight: 500;\n    font-size: 24px;\n    line-height: 36px;\n    white-space: nowrap;\n    color: rgba(0, 0, 0, 0.87);\n}\n\na.tb-item-card.tb-critical .tb-count:after {\n    content: \"warning\";\n    display: inline-block;\n    position: relative;\n    font-family: 'Material Icons Round';\n    color: #D12730;\n    vertical-align: bottom;\n    margin-left: 6px;\n}\n\n@media screen and (max-width: 959px) {\n    .tb-item-cards {\n        flex-direction: column;\n    }\n    a.tb-item-card {\n        margin-bottom: 0;\n    }\n}\n\n@media screen and (max-width: 1279px) {\n    a.tb-item-card {\n        flex-direction: row;\n        align-items: center;\n    }\n    .tb-item-title.tb-home-widget-link:after {\n        position: relative;\n    }\n    .tb-count-container {\n        align-items: flex-end;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-item-title {\n        font-size: 11px;\n        line-height: 16px;\n    }\n    .tb-count {\n        font-size: 16px;\n        line-height: 24px;\n    }\n    a.tb-item-card {\n        padding: 4px 8px;\n        margin-bottom: 6px;\n    }\n    a.tb-item-card:hover {\n        box-shadow: 0px 2px 5px rgba(23, 33, 90, 0.08);\n    }\n    a.tb-item-card.tb-critical .tb-count:after {\n        margin-left: 2px;\n    }\n}\n"
           },
@@ -447,7 +362,6 @@
             "fontWeight": 400
           },
           "showLegend": false,
-          "useDashboardTimewindow": true,
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": ""
@@ -533,7 +447,6 @@
                       }
                     }
                   },
-                  "_hash": 0.39181957822569946,
                   "decimals": 0
                 }
               ],
@@ -859,7 +772,6 @@
                       }
                     }
                   },
-                  "_hash": 0.39181957822569946,
                   "decimals": 0,
                   "aggregationType": null,
                   "funcBody": null,
@@ -1146,7 +1058,8 @@
             "fontWeight": 400
           },
           "widgetCss": "",
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "datasources": []
         },
         "row": 0,
         "col": 0,
@@ -1169,7 +1082,8 @@
           "enableFullscreen": false,
           "widgetStyle": {},
           "widgetCss": "",
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "datasources": []
         },
         "row": 0,
         "col": 0,
@@ -1212,7 +1126,8 @@
           "showTitleIcon": false,
           "titleTooltip": "",
           "titleStyle": null,
-          "borderRadius": "12px"
+          "borderRadius": "12px",
+          "datasources": []
         },
         "row": 0,
         "col": 0,
@@ -1298,7 +1213,8 @@
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
               "mobileRowHeight": 20,
-              "outerMargin": true
+              "outerMargin": true,
+              "layoutType": "default"
             }
           }
         }
@@ -1325,7 +1241,8 @@
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
               "mobileRowHeight": 70,
-              "outerMargin": true
+              "outerMargin": true,
+              "layoutType": "default"
             }
           }
         }
@@ -1352,7 +1269,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
-              "mobileRowHeight": 70
+              "mobileRowHeight": 70,
+              "layoutType": "default"
             }
           }
         }
@@ -1386,7 +1304,8 @@
               "autoFillHeight": true,
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": false,
-              "mobileRowHeight": 20
+              "mobileRowHeight": 20,
+              "layoutType": "default"
             }
           }
         }
@@ -1478,33 +1397,14 @@
       }
     },
     "timewindow": {
-      "displayValue": "",
-      "hideInterval": false,
-      "hideLastInterval": false,
-      "hideQuickInterval": false,
-      "hideAggregation": false,
-      "hideAggInterval": false,
-      "hideTimezone": false,
       "selectedTab": 0,
       "realtime": {
         "realtimeType": 0,
         "interval": 1000,
-        "timewindowMs": 60000,
-        "quickInterval": "CURRENT_DAY"
-      },
-      "history": {
-        "historyType": 0,
-        "interval": 1000,
-        "timewindowMs": 60000,
-        "fixedTimewindow": {
-          "startTimeMs": 1680168326072,
-          "endTimeMs": 1680254726072
-        },
-        "quickInterval": "CURRENT_DAY"
+        "timewindowMs": 60000
       },
       "aggregation": {
-        "type": "AVG",
-        "limit": 25000
+        "type": "AVG"
       }
     },
     "settings": {
