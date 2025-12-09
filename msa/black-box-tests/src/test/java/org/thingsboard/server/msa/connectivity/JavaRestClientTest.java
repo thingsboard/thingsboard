@@ -76,6 +76,8 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.query.AvailableEntityKeys;
 import org.thingsboard.server.common.data.query.EntityDataPageLink;
 import org.thingsboard.server.common.data.query.EntityDataQuery;
@@ -92,6 +94,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -318,7 +321,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         Domain savedDomain = restClient.saveDomain(domain);
         assertThat(savedDomain.getName()).isEqualTo(domain.getName());
 
-        PageData<DomainInfo> domainInfos = restClient.getTenantDomainInfos(new PageLink(10, 0 , prefix));
+        PageData<DomainInfo> domainInfos = restClient.getTenantDomainInfos(new PageLink(10, 0, prefix));
         assertThat(domainInfos.getData()).hasSize(1);
     }
 
@@ -362,7 +365,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
     }
 
     private NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
-                                                              String text, NotificationDeliveryMethod... deliveryMethods) {
+                                                            String text, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
         notificationTemplate.setName("Notification template: " + RandomStringUtils.randomAlphabetic(5));
         notificationTemplate.setNotificationType(notificationType);
@@ -410,4 +413,53 @@ public class JavaRestClientTest extends AbstractContainerTest {
                 .build();
         return restClient.saveNotificationRequest(notificationRequest);
     }
+
+    @Test
+    public void testApiKeyOperations() {
+        // Create an API key
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setDescription("Test API Key " + RandomStringUtils.randomAlphabetic(5));
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setUserId(user.getId());
+        apiKeyInfo.setExpirationTime(0);
+
+        ApiKey savedApiKey = restClient.saveApiKey(apiKeyInfo);
+        assertThat(savedApiKey).isNotNull();
+        assertThat(savedApiKey.getId()).isNotNull();
+        assertThat(savedApiKey.getDescription()).isEqualTo(apiKeyInfo.getDescription());
+        assertThat(savedApiKey.isEnabled()).isTrue();
+        assertThat(savedApiKey.getUserId()).isEqualTo(user.getId());
+        assertThat(savedApiKey.getTenantId()).isEqualTo(tenant.getId());
+        assertThat(savedApiKey.getValue()).isNotNull();
+
+        // Get user API keys
+        PageData<ApiKeyInfo> apiKeys = restClient.getUserApiKeys(user.getId(), new PageLink(10));
+        assertThat(apiKeys).isNotNull();
+        assertThat(apiKeys.getData()).hasSize(1);
+        assertThat(apiKeys.getData().get(0).getId()).isEqualTo(savedApiKey.getId());
+
+        // Update API key description
+        String updatedDescription = "Updated description " + RandomStringUtils.randomAlphabetic(5);
+        ApiKeyInfo updatedApiKeyInfo = restClient.updateApiKeyDescription(savedApiKey.getId(), Optional.of(updatedDescription));
+        assertThat(updatedApiKeyInfo).isNotNull();
+        assertThat(updatedApiKeyInfo.getDescription()).isEqualTo(updatedDescription);
+
+        // Disable the API key
+        ApiKeyInfo disabledApiKey = restClient.enableApiKey(savedApiKey.getId(), false);
+        assertThat(disabledApiKey).isNotNull();
+        assertThat(disabledApiKey.isEnabled()).isFalse();
+
+        // Enable the API key
+        ApiKeyInfo enabledApiKey = restClient.enableApiKey(savedApiKey.getId(), true);
+        assertThat(enabledApiKey).isNotNull();
+        assertThat(enabledApiKey.isEnabled()).isTrue();
+
+        // Delete the API key
+        restClient.deleteApiKey(savedApiKey.getId());
+
+        // Verify the API key is deleted
+        PageData<ApiKeyInfo> apiKeysAfterDelete = restClient.getUserApiKeys(user.getId(), new PageLink(10));
+        assertThat(apiKeysAfterDelete.getData()).isEmpty();
+    }
+
 }
