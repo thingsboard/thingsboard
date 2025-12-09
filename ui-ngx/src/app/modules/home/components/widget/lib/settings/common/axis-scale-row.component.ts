@@ -38,7 +38,6 @@ import { merge } from 'rxjs';
 @Component({
   selector: 'tb-axis-scale-row',
   templateUrl: './axis-scale-row.component.html',
-  styleUrl: './axis-scale-row.component.scss',
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -101,7 +100,6 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
     });
     this.latestKeyFormControl = this.fb.control(null, [Validators.required]);
     this.entityKeyFormControl = this.fb.control(null, [Validators.required]);
-    this.subscribeToTypeChanges();
     merge(
       this.latestKeyFormControl.valueChanges,
       this.entityKeyFormControl.valueChanges,
@@ -150,41 +148,23 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
     const errors: any = {};
 
     if (this.limitForm.invalid) {
-      errors.form = this.getFormErrors();
+      errors.form = false;
     }
 
     if (type === ValueSourceType.latestKey) {
       if (!this.latestKeyFormControl.value || this.latestKeyFormControl.invalid) {
-        errors.latestKey = {
-          valid: false
-        };
+        errors.latestKey = false;
       }
     } else if (type === ValueSourceType.entity) {
       if (!this.limitForm.get('entityAlias')?.value) {
-        errors.entityAlias = {
-          valid: false
-        };
+        errors.entityAlias = false;
       }
       if (!this.entityKeyFormControl.value || this.entityKeyFormControl.invalid) {
-        errors.entityKey = {
-          valid: false
-        };
+        errors.entityKey = false;
       }
     }
 
     return Object.keys(errors).length ? { axisLimitForm: errors } : null;
-  }
-
-
-  private getFormErrors(): any {
-    const errors: any = {};
-    Object.keys(this.limitForm.controls).forEach(key => {
-      const control = this.limitForm.get(key);
-      if (control && control.errors) {
-        errors[key] = control.errors;
-      }
-    });
-    return errors;
   }
 
   private updateValidators() {
@@ -207,38 +187,23 @@ export class AxisScaleRowComponent implements ControlValueAccessor, OnInit, Vali
     }
   }
 
-  private subscribeToTypeChanges() {
-    this.limitForm.controls.type.valueChanges
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => {
-        const axisValueControl = this.limitForm.get('value');
-        const axisEntityAliasControl = this.limitForm.get('entityAlias');
-        if (axisValueControl) {
-          axisValueControl.setValue(null, { emitEvent: false });
-        }
-        if (axisEntityAliasControl) {
-          axisEntityAliasControl.setValue(null, { emitEvent: false });
-        }
-        this.latestKeyFormControl.setValue(null, { emitEvent: false });
-        this.entityKeyFormControl.setValue(null, { emitEvent: false });
-
-      });
-  }
-
   private updateModel() {
     const value = this.limitForm.value;
-    this.modelValue.type = value.type ?? ValueSourceType.constant;
-    this.modelValue.value = value?.value;
-    this.modelValue.entityAlias = value?.entityAlias;
-    if (value.type === ValueSourceType.latestKey) {
+    const type = value.type;
+    let updates: Partial<ValueSourceConfig> = { type };
+    if (type === ValueSourceType.latestKey) {
       const latestKey: DataKey = this.latestKeyFormControl.value;
-      this.modelValue.latestKey = latestKey?.name;
-      this.modelValue.latestKeyType = (latestKey?.type as any);
-    } else if (value.type === ValueSourceType.entity) {
+      updates.latestKey = latestKey?.name;
+      updates.latestKeyType = latestKey?.type as any;
+    } else if (type === ValueSourceType.entity) {
       const entityKey: DataKey = this.entityKeyFormControl.value;
-      this.modelValue.entityKey = entityKey?.name;
-      this.modelValue.entityKeyType = (entityKey?.type as any);
+      updates.entityKey = entityKey?.name;
+      updates.entityKeyType = entityKey?.type as any;
+      updates.entityAlias = value?.entityAlias;
+    } else {
+      updates.value = value?.value;
     }
+    this.modelValue = updates as ValueSourceConfig;
     this.propagateChanges(this.modelValue);
   }
 }

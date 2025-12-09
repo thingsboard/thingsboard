@@ -43,6 +43,7 @@ import { deepClone } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { TimeSeriesChartYAxesPanelComponent } from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axes-panel.component';
+import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-time-series-chart-y-axis-row',
@@ -99,8 +100,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       position: [null, []],
       units: [null, []],
       decimals: [null, []],
-      min: [null, []],
-      max: [null, []],
+      min: this.createLimitFormGroup(),
+      max: this.createLimitFormGroup(),
       show: [null, []]
     });
     this.axisFormGroup.valueChanges.pipe(
@@ -195,6 +196,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     }
   }
 
+  checkIsConstantLimit(limit: 'min' | 'max') {
+    return this.axisFormGroup.get(`${limit}.type`)?.value === ValueSourceType.constant;
+  }
+
   private updateValidators() {
     const show: boolean = this.axisFormGroup.get('show').value;
     if (show) {
@@ -208,6 +213,13 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       this.axisFormGroup.get('units').disable({emitEvent: false});
       this.axisFormGroup.get('decimals').disable({emitEvent: false});
     }
+    if(!this.checkIsConstantLimit('min')){
+      this.axisFormGroup.get('min').disable({emitEvent: false});
+    }
+    if(!this.checkIsConstantLimit('max')){
+      this.axisFormGroup.get('max').disable({emitEvent: false});
+    }
+
   }
 
   private updateModel() {
@@ -220,5 +232,13 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     this.modelValue.max = value.max;
     this.modelValue.show = value.show;
     this.propagateChange(this.modelValue);
+  }
+
+  private createLimitFormGroup() {
+    return this.fb.group({
+      type: [ValueSourceType.constant, []],
+      value: [null, []],
+      entityAlias: [null, []]
+    })
   }
 }

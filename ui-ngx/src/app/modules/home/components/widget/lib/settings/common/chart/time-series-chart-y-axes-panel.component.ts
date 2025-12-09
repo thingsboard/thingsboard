@@ -196,6 +196,8 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
     const axes: TimeSeriesChartYAxisSettings[] = this.yAxesFormGroup.get('axes').value;
     axis.id = getNextTimeSeriesYAxisId(axes);
     axis.order = axes.length;
+    axis.min = this.normalizeAxisLimit(axis.min);
+    axis.max = this.normalizeAxisLimit(axis.max);
     const axesArray = this.yAxesFormGroup.get('axes') as UntypedFormArray;
     const axisControl = this.fb.control(axis, [timeSeriesChartYAxisValidator]);
     axesArray.push(axisControl);
@@ -204,8 +206,6 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
   private prepareAxesFormArray(axes: TimeSeriesChartYAxisSettings[]): UntypedFormArray {
     const axesControls: Array<AbstractControl> = [];
     axes.forEach((axis) => {
-      axis.min = this.normalizeAxisLimit(axis.min);
-      axis.max = this.normalizeAxisLimit(axis.max);
       axesControls.push(this.fb.control(axis, [timeSeriesChartYAxisValidator]));
     });
     return this.fb.array(axesControls);
@@ -216,17 +216,20 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
     const result: TimeSeriesChartYAxes = {};
 
     for (const [id, axis] of Object.entries(yAxes)) {
+      axis.min = this.normalizeAxisLimit(axis.min);
+      axis.max = this.normalizeAxisLimit(axis.max);
+      const minCfg = axis.min;
+      const maxCfg = axis.max;
 
-      const minCfg = axis.min as unknown as ValueSourceConfig;
-      const maxCfg = axis.max as unknown as ValueSourceConfig;
+      const minValid = !!minCfg && (
+        minCfg.type !== ValueSourceType.latestKey ||
+        latestKeys.some(k => this.isYAxisKey(k, minCfg))
+      );
 
-      const minValid =
-        minCfg?.type !== ValueSourceType.latestKey ||
-        latestKeys.some(k => this.isYAxisKey(k, minCfg));
-
-      const maxValid =
-        maxCfg?.type !== ValueSourceType.latestKey ||
-        latestKeys.some(k => this.isYAxisKey(k, maxCfg));
+      const maxValid = !!maxCfg && (
+        maxCfg.type !== ValueSourceType.latestKey ||
+        latestKeys.some(k => this.isYAxisKey(k, maxCfg))
+      );
 
       if (minValid && maxValid) {
         result[id] = axis;
@@ -288,17 +291,17 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
         d.type === limit.latestKeyType);
   }
 
-  private normalizeAxisLimit(limit: any): ValueSourceConfig {
+  private normalizeAxisLimit(limit: string | number | ValueSourceConfig): ValueSourceConfig {
     if (!limit) {
       return {
         type: ValueSourceType.constant,
         value: null,
         entityAlias: null
       };
-    } else if (typeof limit === 'number') {
+    } else if (typeof limit === 'number' || typeof limit === 'string') {
       return {
         type: ValueSourceType.constant,
-        value: limit,
+        value: Number(limit),
         entityAlias: null
       };
     }

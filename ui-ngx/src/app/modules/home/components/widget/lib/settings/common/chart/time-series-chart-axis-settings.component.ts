@@ -168,10 +168,7 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
 
   validate(): ValidationErrors | null {
     return this.axisSettingsFormGroup.valid ? null : {
-      axisSettings: {
-        valid: false,
-        errors: this.getFormErrors()
-      }
+      axisSettings: false
     };
   }
 
@@ -248,17 +245,6 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
         this.axisSettingsFormGroup.get('max').enable({emitEvent: false});
       }
     }
-  }
-
-  private getFormErrors(): any {
-    const errors: any = {};
-    Object.keys(this.axisSettingsFormGroup.controls).forEach(key => {
-      const control = this.axisSettingsFormGroup.get(key);
-      if (control && control.errors) {
-        errors[key] = control.errors;
-      }
-    });
-    return errors;
   }
 
   private updateModel() {

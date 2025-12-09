@@ -594,10 +594,10 @@ export class TbTimeSeriesChart {
       }
       const yAxis = createTimeSeriesYAxis(unitSymbol, decimals, axisSettings, this.ctx.utilsService, this.darkMode, unitConvertor);
       if (isDefinedAndNotNull(axisSettings.min)) {
-        this.processYAxisLimit(axisSettings.min, 'min', yAxis, axisLimitDatasources, unitConvertor);
+        this.processYAxisLimit(axisSettings.min as ValueSourceConfig, 'min', yAxis, axisLimitDatasources, unitConvertor);
       }
       if (isDefinedAndNotNull(axisSettings.max)) {
-        this.processYAxisLimit(axisSettings.max, 'max', yAxis, axisLimitDatasources, unitConvertor);
+        this.processYAxisLimit(axisSettings.max as ValueSourceConfig, 'max', yAxis, axisLimitDatasources, unitConvertor);
       }
       this.yAxisList.push(yAxis);
     }
@@ -605,22 +605,21 @@ export class TbTimeSeriesChart {
   }
 
   private processYAxisLimit(
-    limit: any,
+    limit: ValueSourceConfig,
     limitType: 'min' | 'max',
     yAxis: TimeSeriesChartYAxis,
     axisLimitDatasources: Datasource[],
     unitConvertor?: (value: number) => number
   ): void {
     if (limit && typeof limit === 'object' && 'type' in limit) {
-      const axisLimit = limit as ValueSourceConfig;
-      if (axisLimit.type === ValueSourceType.latestKey) {
+      if (limit.type === ValueSourceType.latestKey) {
         let latestDataKey: DataKey = null;
         if (this.ctx.datasources.length) {
           for (const datasource of this.ctx.datasources) {
             latestDataKey = datasource.latestDataKeys?.find(d =>
-              (d.type === DataKeyType.function && d.label === axisLimit.latestKey) ||
-              (d.type !== DataKeyType.function && d.name === axisLimit.latestKey &&
-                d.type === axisLimit.latestKeyType));
+              (d.type === DataKeyType.function && d.label === limit.latestKey) ||
+              (d.type !== DataKeyType.function && d.name === limit.latestKey &&
+                d.type === limit.latestKeyType));
             if (latestDataKey) {
               break;
             }
@@ -633,8 +632,8 @@ export class TbTimeSeriesChart {
             yAxis.maxLatestDataKey = latestDataKey;
           }
         }
-      } else if (axisLimit.type === ValueSourceType.entity) {
-        const entityAliasId = this.ctx.aliasController.getEntityAliasId(axisLimit.entityAlias);
+      } else if (limit.type === ValueSourceType.entity) {
+        const entityAliasId = this.ctx.aliasController.getEntityAliasId(limit.entityAlias);
         if (entityAliasId) {
           let datasource = axisLimitDatasources.find(d => d.entityAliasId === entityAliasId);
           const entityDataKey: DataKey = {
@@ -651,16 +650,16 @@ export class TbTimeSeriesChart {
           } else {
             datasource = {
               type: DatasourceType.entity,
-              name: axisLimit.entityAlias,
-              aliasName: axisLimit.entityAlias,
+              name: limit.entityAlias,
+              aliasName: limit.entityAlias,
               entityAliasId,
               dataKeys: [entityDataKey]
             };
             axisLimitDatasources.push(datasource);
           }
         }
-      } else if (axisLimit.type === ValueSourceType.constant) {
-        const value = unitConvertor ? unitConvertor(axisLimit.value) : axisLimit.value;
+      } else if (limit.type === ValueSourceType.constant) {
+        const value = unitConvertor ? unitConvertor(limit.value) : limit.value;
         if (limitType === 'min') {
           yAxis.option.min = value;
         } else {
