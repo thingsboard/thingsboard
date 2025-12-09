@@ -250,6 +250,8 @@ export class TimeSeriesChartYAxesPanelComponent implements ControlValueAccessor,
       const foundYAxisKeys: DataKey[] = [];
 
       for(const yAxis of yAxes) {
+        console.log("yAxis",yAxis)
+
         const min = yAxis.min as ValueSourceConfig;
         const max = yAxis.max as ValueSourceConfig;
         if (min.type === ValueSourceType.latestKey) {

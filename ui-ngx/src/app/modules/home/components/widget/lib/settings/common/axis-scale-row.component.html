@@ -35,7 +35,7 @@
       formControlName="entityAlias">
     </tb-entity-alias-input>
   </div>
-  <div class="flex-grow flex-shrink" [class]="isPanelView ? 'basis-1/2' : 'basis-40%'">
+  <div class="flex-grow flex-shrink max-w-5/12" [class]="isPanelView ? 'basis-1/2' : 'basis-40%'">
     <mat-form-field *ngIf="limitForm.get('type').value === ValueSourceType.constant"
                     appearance="outline" class="tb-inline-field !w-full number" subscriptSizing="dynamic"
                     [class.tb-suffix-absolute]="!limitForm.get('value').value">

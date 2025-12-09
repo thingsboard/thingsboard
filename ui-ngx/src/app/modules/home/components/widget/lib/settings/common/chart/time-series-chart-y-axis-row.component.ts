@@ -135,17 +135,19 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   writeValue(value: TimeSeriesChartYAxisSettings): void {
     this.modelValue = value;
-    this.axisFormGroup.patchValue(
-      {
-        label: value.label,
-        position: value.position,
-        units: value.units,
-        decimals: value.decimals,
-        min: value.min,
-        max: value.max,
-        show: value.show,
-      }, {emitEvent: false}
-    );
+    const min = this.normalizeLimit(value.min);
+    const max = this.normalizeLimit(value.max);
+
+    this.axisFormGroup.patchValue({
+      label: value.label,
+      position: value.position,
+      units: value.units,
+      decimals: value.decimals,
+      min,
+      max,
+      show: value.show,
+    }, { emitEvent: false });
+
     this.updateValidators();
     this.cd.markForCheck();
   }
@@ -223,7 +225,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   }
 
   private updateModel() {
-    const value = this.axisFormGroup.value;
+    const value = this.axisFormGroup.getRawValue();
+    console.log("value", value);
     this.modelValue.label = value.label;
     this.modelValue.position = value.position;
     this.modelValue.units = value.units;
@@ -238,7 +241,36 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     return this.fb.group({
       type: [ValueSourceType.constant, []],
       value: [null, []],
-      entityAlias: [null, []]
-    })
+      latestKey: [null, []],
+      latestKeyType: [null, []],
+      entityAlias: [null, []],
+      entityKey: [null, []],
+      entityKeyType: [null, []]
+    });
   }
+
+  private normalizeLimit(limit: any) {
+    const base = {
+      type: ValueSourceType.constant,
+      value: null,
+      latestKey: null,
+      latestKeyType: null,
+      entityAlias: null,
+      entityKey: null,
+      entityKeyType: null
+    };
+
+    if (limit == null) return base;
+
+    if (typeof limit === 'number' || typeof limit === 'string') {
+      return { ...base, type: ValueSourceType.constant, value: Number(limit) };
+    }
+
+    return {
+      ...base,
+      ...limit,
+    };
+  }
+
+
 }
