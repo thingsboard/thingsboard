@@ -3065,7 +3065,7 @@ public class RestClient implements Closeable {
                 new ParameterizedTypeReference<PageData<ApiKeyInfo>>() {}, params).getBody();
     }
 
-    public ApiKeyInfo updateApiKeyDescription(ApiKeyId apiKeyId, Optional<String> description) {
+    public ApiKeyInfo updateApiKeyDescription(ApiKeyId apiKeyId, String description) {
         return restTemplate.exchange(
                 baseURL + "/api/apiKey/{id}/description",
                 HttpMethod.PUT,

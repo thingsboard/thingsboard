@@ -94,8 +94,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.notification.NotificationDeliveryMethod.EMAIL;
@@ -357,7 +357,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         filter.setUsersIds(Arrays.stream(usersIds).map(UUIDBased::getId).toList());
 
         NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setName(filter.toString() + org.apache.commons.lang3.RandomStringUtils.randomNumeric(5));
+        notificationTarget.setName(filter + RandomStringUtils.randomNumeric(5));
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         targetConfig.setUsersFilter(filter);
         notificationTarget.setConfiguration(targetConfig);
@@ -407,7 +407,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         NotificationRequestConfig config = new NotificationRequestConfig();
         config.setSendingDelayInSec(0);
         NotificationRequest notificationRequest = NotificationRequest.builder()
-                .targets(List.of(targetId).stream().map(UUIDBased::getId).collect(Collectors.toList()))
+                .targets(Stream.of(targetId).map(UUIDBased::getId).collect(Collectors.toList()))
                 .templateId(notificationTemplateId)
                 .additionalConfig(config)
                 .build();
@@ -440,7 +440,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
         // Update API key description
         String updatedDescription = "Updated description " + RandomStringUtils.randomAlphabetic(5);
-        ApiKeyInfo updatedApiKeyInfo = restClient.updateApiKeyDescription(savedApiKey.getId(), Optional.of(updatedDescription));
+        ApiKeyInfo updatedApiKeyInfo = restClient.updateApiKeyDescription(savedApiKey.getId(), updatedDescription);
         assertThat(updatedApiKeyInfo).isNotNull();
         assertThat(updatedApiKeyInfo.getDescription()).isEqualTo(updatedDescription);
 
