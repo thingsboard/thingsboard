@@ -19,7 +19,7 @@ import lombok.Getter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public class EntitiesLimitException extends DataValidationException {
+public class EntitiesLimitExceededException extends DataValidationException {
     private static final long serialVersionUID = -9211462514373279196L;
 
     @Getter
@@ -30,7 +30,7 @@ public class EntitiesLimitException extends DataValidationException {
     @Getter
     private final long limit;
 
-    public EntitiesLimitException(TenantId tenantId, EntityType entityType, long limit) {
+    public EntitiesLimitExceededException(TenantId tenantId, EntityType entityType, long limit) {
         super(entityType.getNormalName() + "s limit reached");
         this.tenantId = tenantId;
         this.entityType = entityType;

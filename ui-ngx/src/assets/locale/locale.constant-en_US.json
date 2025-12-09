@@ -6140,7 +6140,8 @@
         "bad-request-params": "Bad request params",
         "item-not-found": "Item not found",
         "too-many-requests": "Too many requests",
-        "too-many-updates": "Too many updates"
+        "too-many-updates": "Too many updates",
+        "entities-limit-exceeded": "Entities limit exceeded"
     },
     "tenant": {
         "tenant": "Tenant",

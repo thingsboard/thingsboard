@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.exception.EntitiesLimitException;
+import org.thingsboard.server.dao.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 
 import java.util.HashSet;
@@ -124,7 +124,7 @@ public abstract class DataValidator<D extends BaseData<?>> {
                                                      EntityType entityType) {
         if (!apiLimitService.checkEntitiesLimit(tenantId, entityType)) {
             long limit = apiLimitService.getLimit(tenantId, profileConfiguration -> profileConfiguration.getEntitiesLimit(entityType));
-            throw new EntitiesLimitException(tenantId, entityType, limit);
+            throw new EntitiesLimitExceededException(tenantId, entityType, limit);
         }
     }
 

@@ -15,10 +15,8 @@
  */
 package org.thingsboard.server.exception;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import org.springframework.http.HttpStatus;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 
 @Schema
@@ -34,33 +32,15 @@ public class ThingsboardErrorResponse {
 
     private final long timestamp;
 
-    private EntityType entityType;
-
-    private Long limit;
-
     protected ThingsboardErrorResponse(final String message, final ThingsboardErrorCode errorCode, HttpStatus status) {
-        this(message, errorCode, null, null, status);
-    }
-
-    protected ThingsboardErrorResponse(final String message, final ThingsboardErrorCode errorCode, EntityType entityType, Long limit, HttpStatus status) {
         this.message = message;
         this.errorCode = errorCode;
-        this.entityType = entityType;
-        this.limit = limit;
         this.status = status;
         this.timestamp = System.currentTimeMillis();
     }
 
     public static ThingsboardErrorResponse of(final String message, final ThingsboardErrorCode errorCode, HttpStatus status) {
         return new ThingsboardErrorResponse(message, errorCode, status);
-    }
-
-    public static ThingsboardErrorResponse ofEntityLimitExceeded(final String message,
-                                                                 EntityType entityType,
-                                                                 Long limit,
-                                                                 HttpStatus status) {
-        return new ThingsboardErrorResponse(message, ThingsboardErrorCode.ENTITIES_LIMIT_EXCEEDED,
-                entityType, limit, status);
     }
 
     @Schema(description = "HTTP Response Status Code", example = "401", accessMode = Schema.AccessMode.READ_ONLY)
@@ -84,7 +64,8 @@ public class ThingsboardErrorResponse {
             "\n\n* `32` - Item not found (HTTP: 404 - Not Found)" +
             "\n\n* `33` - Too many requests (HTTP: 429 - Too Many Requests)" +
             "\n\n* `34` - Too many updates (Too many updates over Websocket session)" +
-            "\n\n* `40` - Subscription violation (HTTP: 403 - Forbidden)",
+            "\n\n* `40` - Subscription violation (HTTP: 403 - Forbidden)" +
+            "\n\n* `41` - Entities limit exceeded (HTTP: 403 - Forbidden)",
             example = "10", type = "integer",
             accessMode = Schema.AccessMode.READ_ONLY)
     public ThingsboardErrorCode getErrorCode() {
@@ -94,13 +75,5 @@ public class ThingsboardErrorResponse {
     @Schema(description = "Timestamp", accessMode = Schema.AccessMode.READ_ONLY)
     public long getTimestamp() {
         return timestamp;
-    }
-
-    public EntityType getEntityType() {
-        return entityType;
-    }
-
-    public Long getLimit() {
-        return limit;
     }
 }
