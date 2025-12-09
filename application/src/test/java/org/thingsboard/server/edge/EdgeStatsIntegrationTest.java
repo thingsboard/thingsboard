@@ -179,19 +179,19 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
 
     private void prepareTestData() throws InterruptedException, ExecutionException {
         statsCounterService.clear(edge.getId());
-        // 2 stats message ADDED Device Profile, ASSIGN Device
+        // 2 stats messages: ADDED Device Profile, ASSIGN Device
         edgeImitator.expectMessageAmount(4);
         Device device = saveDevice("StatisticDevice", STATISTICS_DEVICE_PROFILE);
         doPost("/api/edge/" + edge.getUuidId() + "/device/" + device.getUuidId(), Device.class);
         edgeImitator.waitForMessages();
-        // 1 stats message ASSIGN Asset
+        // 1 stats message: ASSIGN Asset
         edgeImitator.expectMessageAmount(2);
         Asset savedAsset = saveAsset("Edge Asset 2");
         doPost("/api/edge/" + edge.getUuidId()
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        // 2 stats message ADDED Customer, ASSIGN Customer
+        // 2 stats messages: ADDED Customer, ASSIGN Customer
         edgeImitator.expectMessageAmount(1);
         Customer customer = new Customer();
         customer.setTitle("Edge Customer");
@@ -204,7 +204,7 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
                 + "/edge/" + edge.getUuidId(), Edge.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        //1 stats message Timeseries
+        // 1 stats message: Timeseries
         edgeImitator.expectMessageAmount(1);
         String timeseriesData = "{\"data\":{\"temperature\":25},\"ts\":" + System.currentTimeMillis() + "}";
         JsonNode timeseriesEntityData = JacksonUtil.toJsonNode(timeseriesData);
@@ -222,7 +222,7 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
 
     private void awaitEdgeCountersUpdated() {
         await().atMost(10, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
-            MsgCounters counters = statsCounterService.getStatsByEdge().get(edge.getId()).getMsgCounters();
+            MsgCounters counters = statsCounterService.getMsgCountersByEdge().get(edge.getId());
             Map<String, Long> actualCounters = toMap(
                     Map.entry(DOWNLINK_MSGS_ADDED.getKey(), () -> counters.getMsgsAdded().get()),
                     Map.entry(DOWNLINK_MSGS_PUSHED.getKey(), () -> counters.getMsgsPushed().get()),
@@ -234,7 +234,7 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
     }
 
     @SafeVarargs
-    private final Map<String, Long> toMap(Map.Entry<String, Supplier<Long>>... suppliers) {
+    private Map<String, Long> toMap(Map.Entry<String, Supplier<Long>>... suppliers) {
         return Arrays.stream(suppliers)
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().get()));
     }

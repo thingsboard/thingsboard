@@ -24,17 +24,16 @@ import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.concurrent.ConcurrentHashMap;
 
-@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true")
 @Service
 @Slf4j
 @Getter
 public class EdgeStatsCounterService {
 
-    private final ConcurrentHashMap<EdgeId, EdgeStats> statsByEdge = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<EdgeId, MsgCounters> msgCountersByEdge = new ConcurrentHashMap<>();
 
     public void recordEvent(EdgeStatsKey type, TenantId tenantId, EdgeId edgeId, long value) {
-        EdgeStats edgeStats = getOrCreateEdgeStats(tenantId, edgeId);
-        MsgCounters counters = edgeStats.getMsgCounters();
+        MsgCounters counters = getOrCreateCounters(tenantId, edgeId);
         switch (type) {
             case DOWNLINK_MSGS_ADDED -> counters.getMsgsAdded().addAndGet(value);
             case DOWNLINK_MSGS_PUSHED -> counters.getMsgsPushed().addAndGet(value);
@@ -44,12 +43,12 @@ public class EdgeStatsCounterService {
         }
     }
 
-    public EdgeStats getOrCreateEdgeStats(TenantId tenantId, EdgeId edgeId) {
-        return statsByEdge.computeIfAbsent(edgeId, id -> new EdgeStats(tenantId));
+    public MsgCounters getOrCreateCounters(TenantId tenantId, EdgeId edgeId) {
+        return msgCountersByEdge.computeIfAbsent(edgeId, id -> new MsgCounters(tenantId));
     }
 
     public void clear(EdgeId edgeId) {
-        statsByEdge.remove(edgeId);
+        msgCountersByEdge.remove(edgeId);
     }
 
 }
