@@ -657,7 +657,7 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !Objects.equals(expression, other.expression)) {
             return true;
         }
-        if (hasOutputChanges(other.output)) {
+        if (output.hasContextOnlyChanges(other.output)) {
             return true;
         }
         if (calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration thisConfig
@@ -722,25 +722,6 @@ public class CalculatedFieldCtx implements Closeable {
             return true;
         }
         if (hasEntityAggregationConfigurationChanges(other)) {
-            return true;
-        }
-        return false;
-    }
-
-    private boolean hasOutputChanges(Output otherOutput) {
-        if (!output.getType().equals(otherOutput.getType())) {
-            return true;
-        }
-        if (!Objects.equals(output.getName(), otherOutput.getName())) {
-            return true;
-        }
-        if (output.getScope() != (otherOutput.getScope())) {
-            return true;
-        }
-        if (!Objects.equals(output.getDecimalsByDefault(), otherOutput.getDecimalsByDefault())) {
-            return true;
-        }
-        if (output.getStrategy().hasContextOnlyChanges(otherOutput.getStrategy())) {
             return true;
         }
         return false;

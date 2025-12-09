@@ -22,10 +22,8 @@ public interface OutputStrategy {
     @JsonIgnore
     OutputStrategyType getType();
 
-    @JsonIgnore
     boolean hasContextOnlyChanges(OutputStrategy other);
 
-    @JsonIgnore
     boolean hasRefreshContextOnlyChanges(OutputStrategy other);
 
 }
