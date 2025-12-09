@@ -63,6 +63,7 @@ import java.util.Map;
 import java.util.Optional;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("DashboardDaoService")
@@ -411,6 +412,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public PageData<DashboardId> findAllDashboardsIds(PageLink pageLink) {
         return dashboardDao.findAllIds(pageLink);
+    }
+
+    @Override
+    public List<DashboardInfo> findDashboardInfoByIds(TenantId tenantId, List<DashboardId> dashboardIds) {
+        log.trace("Executing findDashboardInfoByIds, dashboardIds [{}]", dashboardIds);
+        return dashboardInfoDao.findDashboardsByIds(tenantId.getId(), toUUIDs(dashboardIds));
     }
 
     private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {

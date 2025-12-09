@@ -55,8 +55,12 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -262,6 +266,37 @@ public class UserControllerTest extends AbstractControllerTest {
         foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
         Assert.assertEquals(savedUser, foundUser);
     }
+
+    @Test
+    public void testFindUsersByIds() throws Exception {
+        loginTenantAdmin();
+        List<User> savedUsers = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            User user = createTenantAdminUser();
+            savedUsers.add(doPost("/api/user", user, User.class));
+        }
+
+        String idsParam = savedUsers.stream()
+                .map(u -> u.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        User[] foundUsers = doGet("/api/users?userIds=" + idsParam, User[].class);
+
+        Assert.assertNotNull(foundUsers);
+        Assert.assertEquals(savedUsers.size(), foundUsers.length);
+
+        Map<UUID, User> foundById = Arrays.stream(foundUsers)
+                .collect(Collectors.toMap(u -> u.getId().getId(), Function.identity()));
+
+        for (User savedUser : savedUsers) {
+            User foundUser = foundById.get(savedUser.getId().getId());
+            Assert.assertNotNull("User not found for id " + savedUser.getId().getId(), foundUser);
+
+            foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
+            Assert.assertEquals(savedUser, foundUser);
+        }
+    }
+
 
     @Test
     public void testSaveUserWithSameEmail() throws Exception {

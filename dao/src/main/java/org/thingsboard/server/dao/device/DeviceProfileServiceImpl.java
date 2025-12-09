@@ -66,6 +66,7 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
@@ -389,6 +390,12 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         return deviceProfileDao.findTenantDeviceProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<DeviceProfileInfo> findDeviceProfilesByIds(TenantId tenantId, List<DeviceProfileId> deviceProfileIds) {
+        log.trace("Executing findDeviceProfilesByIds, tenantId [{}], deviceProfileIds [{}]", tenantId, deviceProfileIds);
+        return deviceProfileDao.findDeviceProfilesByTenantIdAndIds(tenantId.getId(), toUUIDs(deviceProfileIds));
     }
 
     private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

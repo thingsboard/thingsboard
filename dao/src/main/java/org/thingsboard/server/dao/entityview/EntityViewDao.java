@@ -169,6 +169,8 @@ public interface EntityViewDao extends Dao<EntityView>, ExportableEntityDao<Enti
                                                             UUID edgeId,
                                                             PageLink pageLink);
 
+    List<EntityView> findEntityViewsByTenantIdAndIds(UUID tenantId, List<UUID> entityViewIds);
+
     /**
      * Find entity views by tenantId, edgeId, type and page link.
      *

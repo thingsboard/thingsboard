@@ -85,6 +85,7 @@ import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.common.data.DataConstants.TENANT;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -871,6 +872,12 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         for (EntityRelation relation : nodeRelations) {
             deleteRuleNode(tenantId, relation.getTo());
         }
+    }
+
+    @Override
+    public List<RuleChain> findRuleChainsByIds(TenantId tenantId, List<RuleChainId> ruleChainIds) {
+        log.trace("Executing findRuleChainsByIds, tenantId [{}], ruleChainIds [{}]", tenantId, ruleChainIds);
+        return ruleChainDao.findRuleChainsByTenantIdAndIds(tenantId.getId(), toUUIDs(ruleChainIds));
     }
 
 

@@ -51,6 +51,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service("AssetProfileDaoService")
@@ -343,6 +344,12 @@ public class AssetProfileServiceImpl extends CachedVersionedEntityService<AssetP
         return assetProfileDao.findTenantAssetProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<AssetProfileInfo> findAssetProfilesByIds(TenantId tenantId, List<AssetProfileId> assetProfileIds) {
+        log.trace("Executing findAssetProfilesByIds, tenantId [{}], assetProfileIds [{}]", tenantId, assetProfileIds);
+        return assetProfileDao.findAssetProfilesByTenantIdAndIds(tenantId.getId(), toUUIDs(assetProfileIds));
     }
 
     private final PaginatedRemover<TenantId, AssetProfile> tenantAssetProfilesRemover =

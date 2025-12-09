@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.user.UserService;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -278,6 +279,12 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         log.trace("Executing deleteCustomersByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> "Incorrect tenantId " + id);
         customersByTenantRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public List<Customer> findCustomersByTenantIdAndIds(TenantId tenantId, List<CustomerId> customerIds) {
+        log.trace("Executing findCustomersByTenantIdAndIds, tenantId [{}], customerIds [{}]", tenantId, customerIds);
+        return customerDao.findCustomersByTenantIdAndIds(tenantId.getId(), customerIds.stream().map(CustomerId::getId).collect(Collectors.toList()));
     }
 
     @Override

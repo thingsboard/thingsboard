@@ -67,6 +67,11 @@ public class TenantAdminPermissions extends AbstractPermissions {
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
 
         @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return true;
+        }
+
+        @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
             if (!user.getTenantId().equals(entity.getTenantId())) {
                 return false;

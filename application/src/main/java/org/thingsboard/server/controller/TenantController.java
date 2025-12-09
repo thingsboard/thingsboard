@@ -16,11 +16,13 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,6 +44,11 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -160,6 +167,19 @@ public class TenantController extends BaseController {
     ) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenantInfos(pageLink));
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @GetMapping(value = "/tenants", params = {"tenantIds"})
+    public List<Tenant> getTenantsByIds(
+            @Parameter(description = "A list of tenant ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @RequestParam("tenantIds") Set<UUID> tenantUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<TenantId> tenantIds = new ArrayList<>();
+        for (UUID tenantIdUUID : tenantUUIDs) {
+            tenantIds.add(TenantId.fromUUID(tenantIdUUID));
+        }
+        return tenantService.findTenantsByIds(tenantId, tenantIds);
     }
 
 }

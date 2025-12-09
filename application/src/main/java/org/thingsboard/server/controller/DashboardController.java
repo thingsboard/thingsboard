@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -62,6 +63,7 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -592,19 +594,28 @@ public class DashboardController extends BaseController {
         checkEdgeId(edgeId, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         PageData<DashboardInfo> nonFilteredResult = dashboardService.findDashboardsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
-        List<DashboardInfo> filteredDashboards = nonFilteredResult.getData().stream().filter(dashboardInfo -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboardInfo.getId(), dashboardInfo);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        List<DashboardInfo> filteredDashboards = filterDashboardsByReadPermission(nonFilteredResult.getData());
         PageData<DashboardInfo> filteredResult = new PageData<>(filteredDashboards,
                 nonFilteredResult.getTotalPages(),
                 nonFilteredResult.getTotalElements(),
                 nonFilteredResult.hasNext());
         return checkNotNull(filteredResult);
+    }
+
+    @ApiOperation(value = "Get dashboards by Dashboard Ids (getDashboardsByIds)",
+            notes = "Returns a list of DashboardInfo objects based on the provided ids. " +
+                    TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/dashboards", params = {"dashboardIds"})
+    public List<DashboardInfo> getDashboardsByIds(@Parameter(description = "A list of dashboard ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("dashboardIds") Set<UUID> dashboardUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<DashboardId> dashboardIds = new ArrayList<>();
+        for (UUID dashboardUUID : dashboardUUIDs) {
+            dashboardIds.add(new DashboardId(dashboardUUID));
+        }
+        List<DashboardInfo> dashboards = dashboardService.findDashboardInfoByIds(tenantId, dashboardIds);
+        return filterDashboardsByReadPermission(dashboards);
     }
 
     private Set<CustomerId> customerIdFromStr(String[] strCustomerIds) {
@@ -615,6 +626,16 @@ public class DashboardController extends BaseController {
             }
         }
         return customerIds;
+    }
+
+    private List<DashboardInfo> filterDashboardsByReadPermission(List<DashboardInfo> dashboards) {
+        return dashboards.stream().filter(dashboard -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.DASHBOARD, Operation.READ, dashboard.getId(), dashboard);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
 }
