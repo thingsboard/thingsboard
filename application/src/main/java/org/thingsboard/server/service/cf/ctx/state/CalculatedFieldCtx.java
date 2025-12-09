@@ -637,10 +637,12 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public boolean hasRefreshContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state recalculation
-        var thisOutputStrategy = calculatedField.getConfiguration().getOutput().getStrategy();
-        var otherOutputStrategy = other.getCalculatedField().getConfiguration().getOutput().getStrategy();
-        if (thisOutputStrategy.hasRefreshContextOnlyChanges(otherOutputStrategy)) {
-            return true;
+        if (output != null) {
+            var thisOutputStrategy = output.getStrategy();
+            var otherOutputStrategy = other.getCalculatedField().getConfiguration().getOutput().getStrategy();
+            if (thisOutputStrategy.hasRefreshContextOnlyChanges(otherOutputStrategy)) {
+                return true;
+            }
         }
 
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
@@ -657,7 +659,7 @@ public class CalculatedFieldCtx implements Closeable {
         if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !Objects.equals(expression, other.expression)) {
             return true;
         }
-        if (output.hasContextOnlyChanges(other.output)) {
+        if (output != null && output.hasContextOnlyChanges(other.output)) {
             return true;
         }
         if (calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration thisConfig
