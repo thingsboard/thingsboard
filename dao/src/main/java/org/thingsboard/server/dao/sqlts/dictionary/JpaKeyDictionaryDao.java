@@ -51,9 +51,7 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
             return cached;
         }
         var compositeKey = new KeyDictionaryCompositeKey(strKey);
-        Optional<Integer> existingId = keyDictionaryRepository.findById(compositeKey)
-                .map(KeyDictionaryEntry::getKeyId)
-                .filter(id -> id != 0);
+        Optional<Integer> existingId = keyDictionaryRepository.findById(compositeKey).map(KeyDictionaryEntry::getKeyId);
         if (existingId.isPresent()) {
             return cacheAndReturn(strKey, existingId.get());
         }
@@ -64,13 +62,12 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
                 return fromCache;
             }
             Integer keyId = keyDictionaryRepository.upsertAndGetKeyId(strKey);
-            if (keyId != null && keyId != 0) {
+            if (keyId != null) {
                 return cacheAndReturn(strKey, keyId);
             }
             log.warn("upsertAndGetKeyId returned: [{}] for key: [{}], falling back to findById", keyId, strKey);
             keyId = keyDictionaryRepository.findById(compositeKey)
                     .map(KeyDictionaryEntry::getKeyId)
-                    .filter(id -> id != 0)
                     .orElseThrow(() -> new IllegalStateException(
                             "Failed to resolve keyId for string key: " + strKey + " after fallback."));
             return cacheAndReturn(strKey, keyId);
