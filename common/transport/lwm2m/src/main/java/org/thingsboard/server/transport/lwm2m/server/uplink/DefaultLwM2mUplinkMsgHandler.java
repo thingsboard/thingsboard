@@ -1033,7 +1033,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         });
     }
 
-    private void  updateValueOta(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfile, Lwm2mDeviceProfileTransportConfiguration newProfile) {
+    private void  updateValueOta(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration newProfile, Lwm2mDeviceProfileTransportConfiguration oldProfile) {
         OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
         OtherConfiguration oldLwM2mSettings = oldProfile.getClientLwM2mSettings();
         if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
