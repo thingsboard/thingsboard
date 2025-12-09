@@ -19,7 +19,6 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.NoArgsConstructor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfSingleValueArg;
@@ -120,7 +119,7 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
         if (entry instanceof SingleValueArgumentEntry singleValueEntry) {
-            if (singleValueEntry.getTs() <= this.ts) {
+            if (singleValueEntry.getTs() < this.ts) {
                 return false;
             }
 
@@ -136,4 +135,9 @@ public class SingleValueArgumentEntry implements ArgumentEntry {
         }
         return false;
     }
+
+    public boolean isDefaultValue() {
+        return DEFAULT_VERSION.equals(this.version);
+    }
+
 }
