@@ -84,7 +84,7 @@ public class DefaultNotifications {
             .build();
 
     public static final DefaultNotification entitiesLimitForSysadmin = DefaultNotification.builder()
-            .name("Entities count limit notification for sysadmin")
+            .name("Entities count limit notification to sysadmin")
             .type(NotificationType.ENTITIES_LIMIT)
             .subject("${entityType}s limit will be reached soon for tenant ${tenantName}")
             .text("${entityType}s usage: ${currentCount}/${limit} (${percents}%)")
