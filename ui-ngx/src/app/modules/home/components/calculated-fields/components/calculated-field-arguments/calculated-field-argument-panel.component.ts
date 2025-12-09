@@ -318,6 +318,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     ).subscribe((key) => {
       if (this.argumentFormGroup.get('argumentName').pristine) {
         this.argumentFormGroup.get('argumentName').setValue(key);
+        this.argumentFormGroup.get('argumentName').markAsTouched({emitEvent: false});
       }
     });
   }

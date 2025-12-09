@@ -13,22 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sqlts.dictionary;
+package org.thingsboard.server.service.cf.ctx.state;
 
-import jakarta.persistence.Transient;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+public interface HasLatestTs {
 
-import java.io.Serializable;
+    long getLatestTs();
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class KeyDictionaryCompositeKey implements Serializable {
-
-    @Transient
-    private static final long serialVersionUID = -4089175869616037523L;
-
-    private String key;
 }
