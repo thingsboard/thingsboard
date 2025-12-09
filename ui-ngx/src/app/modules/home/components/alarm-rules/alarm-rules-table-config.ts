@@ -55,14 +55,12 @@ import {
   AlarmRuleDialogComponent,
   AlarmRuleDialogData
 } from "@home/components/alarm-rules/alarm-rule-dialog.component";
-import {
-  CalculatedFieldDebugDialogComponent,
-  CalculatedFieldDebugDialogData
-} from "@home/components/calculated-fields/components/debug-dialog/calculated-field-debug-dialog.component";
 import { AlarmSeverity, alarmSeverityTranslations } from "@shared/models/alarm.models";
 import { UtilsService } from "@core/services/utils.service";
 import { deepClone, getEntityDetailsPageURL, isObject } from "@core/utils";
 import { AlarmRuleTableHeaderComponent } from "@home/components/alarm-rules/alarm-rule-table-header.component";
+import { EventsDialogComponent, EventsDialogData } from '@home/dialogs/events-dialog.component';
+import { DebugEventType, Event as DebugEvent, EventType } from '@shared/models/event.models';
 import { ActionNotificationShow } from "@core/notification/notification.actions";
 import {
   CalculatedFieldScriptTestDialogComponent,
@@ -266,13 +264,17 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   }
 
   private openDebugEventsDialog(calculatedField: CalculatedField): void {
-    this.dialog.open<CalculatedFieldDebugDialogComponent, CalculatedFieldDebugDialogData, null>(CalculatedFieldDebugDialogComponent, {
+    this.dialog.open<EventsDialogComponent, EventsDialogData, null>(EventsDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
+        title: 'alarm-rule.debugging',
         tenantId: this.tenantId,
-        value: calculatedField,
-        getTestScriptDialogFn: null,
+        entityId: calculatedField.id,
+        debugEventTypes:[DebugEventType.DEBUG_CALCULATED_FIELD],
+        disabledEventTypes:[EventType.LC_EVENT, EventType.ERROR, EventType.STATS],
+        defaultEventType: DebugEventType.DEBUG_CALCULATED_FIELD,
+        debugActionEnabledFn: () => false
       }
     })
       .afterClosed()
@@ -287,7 +289,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   }
 
   private importCalculatedField(): void {
-    this.importExportService.openCalculatedFieldImportDialog()
+    this.importExportService.openCalculatedFieldImportDialog('alarm-rule.import', 'alarm-rule.file')
       .pipe(
         filter(Boolean),
         switchMap(calculatedField => {

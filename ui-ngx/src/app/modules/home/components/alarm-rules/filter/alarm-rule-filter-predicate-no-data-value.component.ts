@@ -150,7 +150,7 @@ export class AlarmRuleFilterPredicateNoDataValueComponent implements ControlValu
   }
 
   writeValue(predicateValue: NoDataAlarmRuleFilterPredicate): void {
-    if (isDefinedAndNotNull(predicateValue.duration.dynamicValueArgument)) {
+    if (isDefinedAndNotNull(predicateValue?.duration?.dynamicValueArgument)) {
       const availableArgument = this.argumentsList.filter(arg => arg !== this.argumentInUse);
       if (!availableArgument.includes(predicateValue.duration.dynamicValueArgument)) {
         predicateValue.duration.dynamicValueArgument = '';

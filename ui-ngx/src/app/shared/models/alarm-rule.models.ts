@@ -18,17 +18,10 @@
 import { CustomTimeSchedulerItem } from "@shared/models/device.models";
 import { DashboardId } from "@shared/models/id/dashboard-id";
 import { TimeUnit } from "@shared/models/time/time.models";
-import {
-  BooleanOperation,
-  ComplexOperation,
-  EntityKeyValueType,
-  FilterPredicateType,
-  NumericOperation,
-  StringOperation
-} from "@shared/models/query/query.models";
+import { ComplexOperation, EntityKeyValueType, FilterPredicateType } from "@shared/models/query/query.models";
 import { EntityType } from "@shared/models/entity-type.models";
 import { Observable } from "rxjs";
-import { CalculatedField } from "@shared/models/calculated-field.models";
+import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
 export enum AlarmRuleScheduleType {
   ANY_TIME = 'ANY_TIME',
@@ -250,3 +243,62 @@ export const alarmRuleDefaultScript =
   'return temperature > 20;'
 
 export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, expression: string, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+
+export function checkPredicates(predicates: any[], validSet: Set<string>): boolean {
+  for (const predicate of predicates) {
+    if (!predicate) continue;
+    if (predicate?.value?.dynamicValueArgument) {
+      if (!validSet.has(predicate.value.dynamicValueArgument)) {
+        return false;
+      }
+    }
+    if (predicate.type === 'COMPLEX' && Array.isArray(predicate.predicates)) {
+      if (!checkPredicates(predicate.predicates, validSet)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function areFilterAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  const filter = obj || [];
+  if (filter.argument && !validSet.has(filter.argument)) {
+    return false;
+  }
+  if (Array.isArray(filter.predicates)) {
+    if (!checkPredicates(filter.predicates, validSet)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function areFiltersAndPredicateArgumentsValid(obj: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  const filters = obj || [];
+    for (const filter of filters) {
+      if (filter.argument && !validSet.has(filter.argument)) {
+        return false;
+      }
+    }
+  for (const filter of filters) {
+    if (Array.isArray(filter.predicates)) {
+      if (!checkPredicates(filter.predicates, validSet)) {
+        return false;
+      }
+    }
+  }
+  return true;
+}
+
+export function isPredicateArgumentsValid(predicates: any, args: Record<string, CalculatedFieldArgument>): boolean {
+  const validSet = new Set(Object.keys(args));
+  if (Array.isArray(predicates)) {
+    if (!checkPredicates(predicates, validSet)) {
+      return false;
+    }
+  }
+  return true;
+}

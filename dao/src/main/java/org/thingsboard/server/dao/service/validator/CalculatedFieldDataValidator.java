@@ -50,7 +50,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
         validateCalculatedFieldConfiguration(calculatedField);
         validateSchedulingConfiguration(tenantId, calculatedField);
         validateRelationQuerySourceArguments(tenantId, calculatedField);
-        validateAggregationConfiguration(tenantId, calculatedField);
+        validateRelatedAggregationConfiguration(tenantId, calculatedField);
         validateEntityAggregationConfiguration(tenantId, calculatedField);
     }
 
@@ -119,7 +119,7 @@ public class CalculatedFieldDataValidator extends DataValidator<CalculatedField>
                 wrapAsDataValidation(() -> relationQueryDynamicSourceConfiguration.validateMaxRelationLevel(argumentName, maxRelationLevel)));
     }
 
-    private void validateAggregationConfiguration(TenantId tenantId, CalculatedField calculatedField) {
+    private void validateRelatedAggregationConfiguration(TenantId tenantId, CalculatedField calculatedField) {
         if (!(calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration aggConfiguration)) {
             return;
         }
