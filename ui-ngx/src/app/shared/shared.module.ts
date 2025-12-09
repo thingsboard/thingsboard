@@ -236,6 +236,7 @@ import { PasswordRequirementsTooltipComponent } from '@shared/components/passwor
 import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
 import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
 import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
+import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -374,6 +375,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -643,6 +645,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
