@@ -15,10 +15,20 @@
  */
 package org.thingsboard.server.transport.mqtt.mqttv3.client;
 
+import org.awaitility.Awaitility;
+import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
+
+import java.util.concurrent.TimeUnit;
 
 @DaoSqlTest
 public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
@@ -44,5 +54,35 @@ public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
     @Test
     public void testClientWithWrongClientIdAndEmptyUsernamePassword() throws Exception {
         processClientWithWrongClientIdAndEmptyUsernamePasswordTest();
+    }
+
+    @Test
+    public void testClientShouldBeDisconnectedAfterTenantDeletion() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("Mqtt Client Connection Test Tenant");
+        Tenant savedTenant = saveTenant(tenant);
+
+        User tenantAdmin = new User();
+        tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdmin.setTenantId(savedTenant.getTenantId());
+        tenantAdmin.setEmail("mqttTestClient@thingsboard.org");
+        createUserAndLogin(tenantAdmin, TENANT_ADMIN_PASSWORD);
+
+        savedDevice = createDevice(RandomStringUtils.randomAlphabetic(10), "default", false);
+        DeviceCredentials deviceCredentials =
+                doGet("/api/device/" + savedDevice.getId().getId().toString() + "/credentials", DeviceCredentials.class);
+        accessToken = deviceCredentials.getCredentialsId();
+
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(accessToken);
+        Assert.assertTrue(client.isConnected());
+
+        loginSysAdmin();
+        deleteTenant(savedTenant.getId());
+
+        Awaitility.await()
+                .atMost(10, TimeUnit.SECONDS)
+                .until(() -> !client.isConnected());
     }
 }
