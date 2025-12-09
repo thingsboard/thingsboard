@@ -19,10 +19,6 @@
   <mat-toolbar color="primary">
     <h2>{{ (readonly ? 'alarm-rule.schedule-title' : 'alarm-rule.edit-schedule') | translate }}</h2>
     <span class="flex-1"></span>
-    <tb-toggle-select [formControl]="dynamicModeControl" appearance="fill-invert" selectMediaBreakpoint="xs">
-      <tb-toggle-option [value]="false">{{ 'alarm-rule.static-schedule' | translate }}</tb-toggle-option>
-      <tb-toggle-option [value]="true">{{ 'alarm-rule.dynamic-schedule' | translate }}</tb-toggle-option>
-    </tb-toggle-select>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -30,10 +26,21 @@
     </button>
   </mat-toolbar>
   <div mat-dialog-content>
-    <tb-cf-alarm-schedule [arguments]="arguments"
-                          [dynamicMode]="dynamicModeControl.value"
-                          [formControl]="alarmScheduleControl">
-    </tb-cf-alarm-schedule>
+    <div class="tb-form-panel no-padding no-border">
+      <div class="tb-form-panel stroked no-padding-bottom">
+        <div class="flex flex-row items-center justify-between">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.mode' | translate }}</div>
+          <tb-toggle-select [formControl]="dynamicModeControl" selectMediaBreakpoint="xs">
+            <tb-toggle-option [value]="false">{{ 'alarm-rule.static-schedule' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="true">{{ 'alarm-rule.dynamic-schedule' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <tb-cf-alarm-schedule [arguments]="arguments"
+                              [dynamicMode]="dynamicModeControl.value"
+                              [formControl]="alarmScheduleControl">
+        </tb-cf-alarm-schedule>
+      </div>
+    </div>
   </div>
   <div mat-dialog-actions class="justify-end">
     <button mat-button color="primary"

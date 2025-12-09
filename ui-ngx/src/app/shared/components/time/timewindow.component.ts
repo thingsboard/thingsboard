@@ -309,7 +309,8 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
 
   private onHistoryOnlyChanged(): boolean {
     if (this.historyOnlyValue && this.innerValue && this.innerValue.selectedTab !== TimewindowType.HISTORY) {
-      this.innerValue.selectedTab = TimewindowType.HISTORY;
+      this.innerValue = initModelFromDefaultTimewindow(this.innerValue, this.quickIntervalOnly, this.historyOnly,
+        this.timeService, this.aggregation);
       this.updateDisplayValue();
       return true;
     }

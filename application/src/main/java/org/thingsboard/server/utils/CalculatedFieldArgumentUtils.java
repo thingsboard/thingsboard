@@ -104,7 +104,6 @@ public class CalculatedFieldArgumentUtils {
     public static TsKvEntry createDefaultTsKvEntry(Argument argument, long ts) {
         return new BasicTsKvEntry(ts, createDefaultKvEntry(argument), DEFAULT_VERSION);
     }
-
     public static AttributeKvEntry createDefaultAttributeEntry(Argument argument, long ts) {
         return new BaseAttributeKvEntry(createDefaultKvEntry(argument), ts, DEFAULT_VERSION);
     }

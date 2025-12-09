@@ -164,7 +164,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.timewindowForm = this.fb.group({
       selectedTab: [isDefined(this.timewindow.selectedTab) ? this.timewindow.selectedTab : TimewindowType.REALTIME],
       realtime: this.fb.group({
-        realtimeType: [ isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL ],
+        realtimeType: [ this.quickIntervalOnly
+          ? RealtimeWindowType.INTERVAL
+          : (isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL) ],
         timewindowMs: [ isDefined(realtime?.timewindowMs) ? realtime.timewindowMs : null ],
         interval: [ isDefined(realtime?.interval) ? realtime.interval : null ],
         quickInterval: [ isDefined(realtime?.quickInterval) ? realtime.quickInterval : null ],

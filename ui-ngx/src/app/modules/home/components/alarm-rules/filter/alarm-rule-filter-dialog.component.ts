@@ -27,12 +27,12 @@
  import {
    AlarmRuleFilter,
    AlarmRuleFilterPredicate,
-   filterOperationTranslationMap
+   filterOperationTranslationMap,
+   isPredicateArgumentsValid
  } from "@shared/models/alarm-rule.models";
  import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
  import { FormControlsFrom } from "@shared/models/tenant.model";
  import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
- import { isDefinedAndNotNull } from "@core/utils";
 
  export interface AlarmRuleFilterDialogData {
   filter: AlarmRuleFilter;
@@ -87,11 +87,11 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
       }
     );
 
-    this.predicatesValid = this.isPredicateArgumentsValid(this.data.filter.predicates);
+    this.predicatesValid = isPredicateArgumentsValid(this.data.filter.predicates, this.arguments);
     this.filterFormGroup.get('predicates').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(predicates => {
-      this.predicatesValid = this.isPredicateArgumentsValid(predicates);
+      this.predicatesValid = isPredicateArgumentsValid(predicates, this.arguments);
     });
 
     this.filterFormGroup.get('valueType').valueChanges.pipe(
@@ -114,31 +114,6 @@ export class AlarmRuleFilterDialogComponent extends DialogComponent<AlarmRuleFil
         }
       }
     });
-  }
-
-  private isPredicateArgumentsValid(predicates: any): boolean {
-    const validSet = new Set(Object.keys(this.data.arguments));
-    function checkPredicates(predicates: any[]): boolean {
-      for (const p of predicates) {
-        if (isDefinedAndNotNull(p.value?.dynamicValueArgument)) {
-          if (!validSet.has(p.value.dynamicValueArgument)) {
-            return false;
-          }
-        }
-        if (p.type === 'COMPLEX' && Array.isArray(p.predicates)) {
-          if (!checkPredicates(p.predicates)) {
-            return false;
-          }
-        }
-      }
-      return true;
-    }
-    if (Array.isArray(predicates)) {
-      if (!checkPredicates(predicates)) {
-        return false;
-      }
-    }
-    return true;
   }
 
   argumentInUse(argument: string): boolean {

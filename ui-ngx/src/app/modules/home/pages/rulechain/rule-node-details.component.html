@@ -36,6 +36,7 @@
     </mat-form-field>
     <section class="mb-5 flex max-w-xs flex-row">
       <tb-entity-debug-settings-button
+        [additionalActionConfig]="additionalActionConfig"
         class="mr-2"
         formControlName="debugSettings"
         [entityType]="entityType.RULE_NODE"

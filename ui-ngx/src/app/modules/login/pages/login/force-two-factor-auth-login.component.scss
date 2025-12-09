@@ -24,6 +24,12 @@
   .tb-two-factor-auth-login-content {
     background-color: #eee;
 
+    .progress-bar {
+      z-index: 10;
+      margin-bottom: -4px;
+      width: 450px;
+    }
+
     .tb-two-factor-auth-login-card {
       max-height: 100vh;
       overflow: auto;

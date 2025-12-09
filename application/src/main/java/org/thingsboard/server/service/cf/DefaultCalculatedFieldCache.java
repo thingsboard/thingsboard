@@ -239,7 +239,7 @@ public class DefaultCalculatedFieldCache implements CalculatedFieldCache {
                     TenantProfile tenantProfile = tenantProfileCache.get(ctx.getTenantId());
                     return tenantProfile != null && tenantProfileId.equals(tenantProfile.getId());
                 })
-                .forEach(CalculatedFieldCtx::updateTenantProfileProperties);
+                .forEach(CalculatedFieldCtx::setTenantProfileProperties);
     }
 
     @Override

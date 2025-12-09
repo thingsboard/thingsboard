@@ -1456,20 +1456,18 @@ export class WidgetSubscription implements IWidgetSubscription {
     this.datasources.forEach((datasource) => {
       datasource.dataKeys.forEach((dataKey) => {
         if (datasource.generated || datasource.isAdditional) {
-          dataKey._hash = Math.random();
           dataKey.color = this.ctx.utils.getMaterialColor(index);
         }
         index++;
       });
-      if (datasource.latestDataKeys) {
-        datasource.latestDataKeys.forEach((dataKey) => {
-          if (datasource.generated || datasource.isAdditional) {
-            dataKey._hash = Math.random();
-            // dataKey.color = this.ctx.utils.getMaterialColor(index);
-          }
-          // index++;
-        });
-      }
+      // if (datasource.latestDataKeys) {
+      //   datasource.latestDataKeys.forEach((dataKey) => {
+      //     if (datasource.generated || datasource.isAdditional) {
+      //       // dataKey.color = this.ctx.utils.getMaterialColor(index);
+      //     }
+      //     // index++;
+      //   });
+      // }
     });
     if (this.comparisonEnabled) {
       this.datasourcePages.forEach(datasourcePage => {
@@ -1499,9 +1497,9 @@ export class WidgetSubscription implements IWidgetSubscription {
   private entityDataToDatasourceData(datasource: Datasource, data: Array<DataSetHolder>): Array<DatasourceData> {
     let datasourceDataArray: Array<DatasourceData> = [];
     datasourceDataArray = datasourceDataArray.concat(datasource.dataKeys.map((dataKey, keyIndex) => {
-      dataKey.hidden = !!dataKey.settings.hideDataByDefault;
-      dataKey.inLegend = dataKey.settings.showInLegend ||
-        (isUndefined(dataKey.settings.showInLegend) && !dataKey.settings.removeFromLegend);
+      dataKey.hidden = !!dataKey.settings?.hideDataByDefault;
+      dataKey.inLegend = dataKey.settings?.showInLegend ||
+        (isUndefined(dataKey.settings?.showInLegend) && !dataKey.settings?.removeFromLegend);
       dataKey.label = this.ctx.utils.customTranslation(dataKey.label, dataKey.label);
       const datasourceData: DatasourceData = {
         datasource,

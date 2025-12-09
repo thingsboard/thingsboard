@@ -29,10 +29,11 @@
     <div class="tb-form-panel no-border no-padding">
       <div class="tb-form-panel">
         <div class="tb-form-panel-title">{{ 'common.general' | translate }}</div>
-        <div class="flex items-center gap-2">
+        <div class="flex gap-2">
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-label>{{ 'alarm-rule.alarm-type' | translate }}</mat-label>
             <input matInput maxlength="255" formControlName="name" required>
+            <mat-hint translate>alarm-rule.alarm-type-hint</mat-hint>
             @if (fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched) {
               <mat-error>
                 @if (fieldFormGroup.get('name').hasError('required')) {
@@ -48,15 +49,18 @@
           <tb-entity-debug-settings-button
             formControlName="debugSettings"
             entityLabel="alarm-rule.alarm-rule"
+            class="pt-[10px]"
             [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
             [entityType]="EntityType.CALCULATED_FIELD"
             [additionalActionConfig]="additionalDebugActionConfig"
           />
         </div>
         @if (!data.entityId) {
-          <div class="flex flex-col gap-4" formGroupName="entityId">
-            <tb-entity-type-select appearance="outline"
+          <div class="flex flex-row xs:flex-col gap-4" formGroupName="entityId">
+            <tb-entity-type-select #entityTypeSelect
+                                   appearance="outline"
                                    subscriptSizing="dynamic"
+                                   class="flex-1"
                                    showLabel
                                    required
                                    label="{{ 'alarm-rule.target-entity-type' | translate }}"
@@ -65,13 +69,14 @@
                                    formControlName="entityType">
             </tb-entity-type-select>
             @if (fieldFormGroup.get('entityId.entityType').value) {
-              <tb-entity-autocomplete
-                formControlName="id"
-                appearance="outline"
-                subscriptSizing="dynamic"
-                [placeholder]="'action.set' | translate"
-                [required]="true"
-                [entityType]="fieldFormGroup.get('entityId.entityType').value"
+              <tb-entity-autocomplete #entityAutocompleteComponent
+                                      formControlName="id"
+                                      appearance="outline"
+                                      subscriptSizing="dynamic"
+                                      class="flex-1"
+                                      [placeholder]="'action.set' | translate"
+                                      [required]="true"
+                                      [entityType]="fieldFormGroup.get('entityId.entityType').value"
               />
             }
           </div>
@@ -79,24 +84,24 @@
       </div>
       <ng-container formGroupName="configuration">
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
+          <div class="tb-form-panel-title tb-required" [class.tb-disabled]="!fieldFormGroup.get('entityId.id').value || !fieldFormGroup.get('name').value">{{ 'calculated-fields.arguments' | translate }}</div>
           <tb-calculated-field-arguments-table formControlName="arguments"
                                                [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
                                                [tenantId]="data.tenantId"
                                                [ownerId]="data.ownerId"
                                                [watchKeyChange]="true"
-                                               [disabledAddButton]="!fieldFormGroup.get('entityId.id').value"
-                                               [entityName]="data.entityName"/>
+                                               [disable]="!fieldFormGroup.get('entityId.id').value || !fieldFormGroup.get('name').value"
+                                               [entityName]="entityName"/>
         </div>
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.create-conditions' | translate }}</div>
+          <div class="tb-form-panel-title" [class.tb-disabled]="!disabledClearRuleButton">{{ 'alarm-rule.create-conditions' | translate }}</div>
           <div class="flex flex-1 flex-col">
             <tb-create-cf-alarm-rules formControlName="createRules" [arguments]="arguments" [testScript]="onTestScript.bind(this)">
             </tb-create-cf-alarm-rules>
           </div>
         </div>
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.clear-condition' | translate }}</div>
+          <div class="tb-form-panel-title" [class.tb-disabled]="!disabledClearRuleButton">{{ 'alarm-rule.clear-condition' | translate }}</div>
           <div class="flex flex-row items-center justify-start gap-2 pb-2"
                [class.!hidden]="!configFormGroup.get('clearRule').value">
             <div class="clear-alarm-rule flex flex-1 flex-row">
@@ -113,11 +118,11 @@
             </button>
           </div>
           <div *ngIf="!configFormGroup.get('clearRule').value">
-            <span translate style="margin: 16px 0"
-                  class="tb-prompt flex items-center justify-center">alarm-rule.no-clear-alarm-rule</span>
+            <span translate class="tb-prompt text-base flex items-center justify-center">alarm-rule.no-clear-alarm-rule</span>
           </div>
           <div [class.!hidden]="configFormGroup.get('clearRule').value">
             <button mat-stroked-button color="primary"
+                    [disabled]="!disabledClearRuleButton"
                     type="button"
                     (click)="addClearAlarmRule()">
               {{ 'alarm-rule.add-clear-alarm-rule' | translate }}
@@ -126,7 +131,7 @@
         </div>
         <div class="tb-form-panel no-gap">
           <mat-expansion-panel class="tb-settings" [expanded]="false">
-            <mat-expansion-panel-header>
+            <mat-expansion-panel-header [class.tb-disabled]="!disabledClearRuleButton">
               {{ 'alarm-rule.advanced-settings' | translate }}
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
@@ -137,23 +142,14 @@
                   </mat-slide-toggle>
                 </div>
                 @if (configFormGroup.get('propagate').value) {
-                  <mat-form-field floatLabel="always" class="mat-block p-4" appearance="outline" subscriptSizing="dynamic">
-                    <mat-label translate>alarm-rule.alarm-rule-relation-types-list</mat-label>
-                    <mat-chip-grid #relationTypesChipList>
-                      <mat-chip-row
-                        *ngFor="let key of configFormGroup.get('propagateRelationTypes').value;"
-                        (removed)="removeRelationType(key)">
-                        {{key}}
-                        <mat-icon matChipRemove>close</mat-icon>
-                      </mat-chip-row>
-                      <input matInput type="text" placeholder="{{'alarm-rule.alarm-rule-relation-types-list' | translate}}"
-                             [matChipInputFor]="relationTypesChipList"
-                             [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                             matChipInputAddOnBlur
-                             (matChipInputTokenEnd)="addRelationType($event)">
-                    </mat-chip-grid>
-                    <mat-hint innerHTML="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"></mat-hint>
-                  </mat-form-field>
+                  <tb-string-items-list appearance="outline"
+                                        class="flex flex-1 px-4"
+                                        label="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
+                                        placeholder="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
+                                        hint="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"
+                                        [predefinedValues]="predefinedTypeValues"
+                                        formControlName="propagateRelationTypes">
+                  </tb-string-items-list>
                 }
               </div>
               <div class="tb-form-row">
@@ -181,7 +177,7 @@
     </button>
     <button mat-raised-button color="primary"
             (click)="add()"
-            [disabled]="(isLoading$ | async) || fieldFormGroup.invalid || !fieldFormGroup.dirty">
+            [disabled]="isLoading$ | async">
       {{ data.buttonTitle | translate }}
     </button>
   </div>
