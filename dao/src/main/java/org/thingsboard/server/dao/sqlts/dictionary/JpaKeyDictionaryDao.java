@@ -51,32 +51,29 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
             return cached;
         }
         var compositeKey = new KeyDictionaryCompositeKey(strKey);
-        Optional<KeyDictionaryEntry> entryOpt = keyDictionaryRepository.findById(compositeKey);
-        if (entryOpt.isPresent()) {
-            Integer keyId = entryOpt.get().getKeyId();
-            if (keyId != null) {
-                keyDictionaryMap.put(strKey, keyId);
-                return keyId;
-            }
+        Optional<Integer> existingId = keyDictionaryRepository.findById(compositeKey)
+                .map(KeyDictionaryEntry::getKeyId)
+                .filter(id -> id != 0);
+        if (existingId.isPresent()) {
+            return cacheAndReturn(strKey, existingId.get());
         }
         creationLock.lock();
         try {
-            Integer keyId = keyDictionaryMap.get(strKey);
-            if (keyId != null) {
-                return keyId;
+            Integer fromCache = keyDictionaryMap.get(strKey);
+            if (fromCache != null) {
+                return fromCache;
             }
-            keyId = keyDictionaryRepository.upsertAndGetKeyId(strKey);
-            if (keyId == null || keyId == 0) {
-                log.warn("upsertAndGetKeyId returned: [{}] for key: [{}], falling back to findById", keyId, strKey);
-                entryOpt = keyDictionaryRepository.findById(compositeKey);
-                if (entryOpt.isEmpty() ||
-                    entryOpt.get().getKeyId() == null ||
-                    entryOpt.get().getKeyId() == 0) {
-                    throw new IllegalStateException("Failed to resolve keyId for string key: " + strKey + " after fallback. keyId: " + keyId);
-                }
+            Integer keyId = keyDictionaryRepository.upsertAndGetKeyId(strKey);
+            if (keyId != null && keyId != 0) {
+                return cacheAndReturn(strKey, keyId);
             }
-            keyDictionaryMap.put(strKey, keyId);
-            return keyId;
+            log.warn("upsertAndGetKeyId returned: [{}] for key: [{}], falling back to findById", keyId, strKey);
+            keyId = keyDictionaryRepository.findById(compositeKey)
+                    .map(KeyDictionaryEntry::getKeyId)
+                    .filter(id -> id != 0)
+                    .orElseThrow(() -> new IllegalStateException(
+                            "Failed to resolve keyId for string key: " + strKey + " after fallback."));
+            return cacheAndReturn(strKey, keyId);
         } finally {
             creationLock.unlock();
         }
@@ -91,6 +88,11 @@ public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService 
     @Override
     public PageData<KeyDictionaryEntry> findAll(PageLink pageLink) {
         return DaoUtil.pageToPageData(keyDictionaryRepository.findAll(DaoUtil.toPageable(pageLink)));
+    }
+
+    private Integer cacheAndReturn(String key, Integer keyId) {
+        keyDictionaryMap.put(key, keyId);
+        return keyId;
     }
 
 }
