@@ -31,7 +31,7 @@
                                    [nowrap]="true"
                                    [specText]="specText"
                                    required
-                                   addFilterPrompt="{{ (isClearCondition ? 'alarm-rule.enter-alarm-rule-clear-condition-prompt' :'alarm-rule.enter-alarm-rule-condition-prompt') | translate }}">
+                                   addFilterPrompt="{{ 'alarm-rule.enter-alarm-rule-condition-prompt' | translate }}">
         </tb-alarm-rule-filter-text>
         <mat-icon [color]="disabled ? '' : (conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn')"
                   class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">

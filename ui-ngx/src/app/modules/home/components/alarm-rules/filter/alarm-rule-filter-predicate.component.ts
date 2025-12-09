@@ -150,6 +150,13 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
       this.filterPredicateFormGroup.disable({emitEvent: false});
     } else {
       this.filterPredicateFormGroup.enable({emitEvent: false});
+      if (this.filterPredicateFormGroup.get('operation').value === 'NO_DATA') {
+        this.filterPredicateFormGroup.get('duration').enable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').disable({emitEvent: false});
+      } else {
+        this.filterPredicateFormGroup.get('duration').disable({emitEvent: false});
+        this.filterPredicateFormGroup.get('value').enable({emitEvent: false});
+      }
     }
   }
 
@@ -170,12 +177,8 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
     }
     if (predicate.type === AlarmRuleFilterPredicateType.NO_DATA) {
       this.type = AlarmRuleFilterPredicateType[this.valueType];
-      this.filterPredicateFormGroup.get('duration').enable({emitEvent: false});
-      this.filterPredicateFormGroup.get('value').disable({emitEvent: false});
       this.filterPredicateFormGroup.patchValue({operation: 'NO_DATA', duration: predicate}, {emitEvent: false});
     } else {
-      this.filterPredicateFormGroup.get('duration').disable({emitEvent: false});
-      this.filterPredicateFormGroup.get('value').enable({emitEvent: false});
       this.filterPredicateFormGroup.patchValue(predicate, {emitEvent: false});
     }
   }

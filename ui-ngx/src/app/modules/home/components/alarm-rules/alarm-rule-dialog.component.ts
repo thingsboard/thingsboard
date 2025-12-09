@@ -75,7 +75,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
       id: [null as null | string, Validators.required],
     }),
     configuration: this.fb.group({
-      arguments: this.fb.control({}),
+      arguments: this.fb.control({}, Validators.required),
       propagate: [false],
       propagateToOwner: [false],
       propagateToTenant: [false],
@@ -164,30 +164,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
   }
 
-  removeRelationType(key: string): void {
-    const keys: string[] = this.configFormGroup.get('propagateRelationTypes').value;
-    const index = keys.indexOf(key);
-    if (index >= 0) {
-      keys.splice(index, 1);
-      this.configFormGroup.get('propagateRelationTypes').setValue(keys);
-    }
-  }
-
-  addRelationType(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    let value = (event.value ?? '').trim();
-    if (value) {
-      let keys: string[] = this.configFormGroup.get('propagateRelationTypes').value ?? [];
-      if (keys.indexOf(value) === -1) {
-        keys.push(value);
-        this.configFormGroup.get('propagateRelationTypes').setValue(keys);
-      }
-    }
-    if (input) {
-      input.value = '';
-    }
-  }
-
   get fromGroupValue(): CalculatedField {
     return deepTrim(this.fieldFormGroup.value as CalculatedField);
   }
@@ -197,7 +173,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   add(): void {
-    if (this.fieldFormGroup.valid) {
+    if (this.fieldFormGroup.valid && Object.keys(this.arguments ?? {}).length > 0) {
       const alarmRule = { entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue};
       alarmRule.configuration.type = CalculatedFieldType.ALARM;
 
@@ -206,8 +182,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
         .subscribe(calculatedField => this.dialogRef.close(calculatedField));
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
-      this.entityTypeSelect.markAsTouched();
-      this.entityAutocompleteComponent.markAsTouched();
+      this.entityTypeSelect?.markAsTouched();
+      this.entityAutocompleteComponent?.markAsTouched();
     }
   }
 
@@ -235,10 +211,18 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     if (Object.keys(this.arguments ?? {}).length > 0) {
       this.fieldFormGroup.get('configuration.createRules').enable({emitEvent: false});
       this.fieldFormGroup.get('configuration.clearRule').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagate').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToOwner').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToTenant').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateRelationTypes').enable({emitEvent: false});
       this.disabledClearRuleButton = true;
     } else {
       this.fieldFormGroup.get('configuration.createRules').disable({emitEvent: false});
       this.fieldFormGroup.get('configuration.clearRule').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagate').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToOwner').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToTenant').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateRelationTypes').disable({emitEvent: false});
       this.disabledClearRuleButton = false;
     }
   }

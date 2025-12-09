@@ -84,7 +84,7 @@
       </div>
       <ng-container formGroupName="configuration">
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
+          <div class="tb-form-panel-title tb-required" [class.tb-disabled]="!fieldFormGroup.get('entityId.id').value || !fieldFormGroup.get('name').value">{{ 'calculated-fields.arguments' | translate }}</div>
           <tb-calculated-field-arguments-table formControlName="arguments"
                                                [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
                                                [tenantId]="data.tenantId"
@@ -94,14 +94,14 @@
                                                [entityName]="entityName"/>
         </div>
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.create-conditions' | translate }}</div>
+          <div class="tb-form-panel-title" [class.tb-disabled]="!disabledClearRuleButton">{{ 'alarm-rule.create-conditions' | translate }}</div>
           <div class="flex flex-1 flex-col">
             <tb-create-cf-alarm-rules formControlName="createRules" [arguments]="arguments" [testScript]="onTestScript.bind(this)">
             </tb-create-cf-alarm-rules>
           </div>
         </div>
         <div class="tb-form-panel">
-          <div class="tb-form-panel-title">{{ 'alarm-rule.clear-condition' | translate }}</div>
+          <div class="tb-form-panel-title" [class.tb-disabled]="!disabledClearRuleButton">{{ 'alarm-rule.clear-condition' | translate }}</div>
           <div class="flex flex-row items-center justify-start gap-2 pb-2"
                [class.!hidden]="!configFormGroup.get('clearRule').value">
             <div class="clear-alarm-rule flex flex-1 flex-row">
@@ -118,7 +118,7 @@
             </button>
           </div>
           <div *ngIf="!configFormGroup.get('clearRule').value">
-            <span translate class="tb-prompt flex items-center justify-center">alarm-rule.no-clear-alarm-rule</span>
+            <span translate class="tb-prompt text-base flex items-center justify-center">alarm-rule.no-clear-alarm-rule</span>
           </div>
           <div [class.!hidden]="configFormGroup.get('clearRule').value">
             <button mat-stroked-button color="primary"
@@ -131,7 +131,7 @@
         </div>
         <div class="tb-form-panel no-gap">
           <mat-expansion-panel class="tb-settings" [expanded]="false">
-            <mat-expansion-panel-header>
+            <mat-expansion-panel-header [class.tb-disabled]="!disabledClearRuleButton">
               {{ 'alarm-rule.advanced-settings' | translate }}
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
