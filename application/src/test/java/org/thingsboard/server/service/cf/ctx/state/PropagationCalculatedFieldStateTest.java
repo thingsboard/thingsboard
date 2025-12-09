@@ -172,7 +172,7 @@ public class PropagationCalculatedFieldStateTest {
 
         assertThat(result).isNotNull();
         assertThat(result.isEmpty()).isTrue();
-        assertThat(result.getPropagationEntityIds()).isNullOrEmpty();
+        assertThat(result.getEntityIds()).isNullOrEmpty();
     }
 
     @Test
@@ -185,7 +185,7 @@ public class PropagationCalculatedFieldStateTest {
 
         assertThat(propagationResult).isNotNull();
         assertThat(propagationResult.isEmpty()).isFalse();
-        assertThat(propagationResult.getPropagationEntityIds()).containsExactly(ASSET_ID_2, ASSET_ID_1);
+        assertThat(propagationResult.getEntityIds()).containsExactly(ASSET_ID_2, ASSET_ID_1);
 
         TelemetryCalculatedFieldResult result = propagationResult.getResult();
         assertThat(result).isNotNull();
@@ -208,7 +208,7 @@ public class PropagationCalculatedFieldStateTest {
 
         assertThat(propagationResult).isNotNull();
         assertThat(propagationResult.isEmpty()).isFalse();
-        assertThat(propagationResult.getPropagationEntityIds()).containsExactly(ASSET_ID_2, ASSET_ID_1);
+        assertThat(propagationResult.getEntityIds()).containsExactly(ASSET_ID_2, ASSET_ID_1);
 
         TelemetryCalculatedFieldResult result = propagationResult.getResult();
         assertThat(result).isNotNull();
@@ -219,6 +219,23 @@ public class PropagationCalculatedFieldStateTest {
         expectedNode.put(TEST_RESULT_EXPRESSION_KEY, TEMPERATURE_VALUE * 2);
 
         assertThat(result.getResult()).isEqualTo(expectedNode);
+    }
+
+    @Test
+    void testPropagationWithUpdatedPropagationArgument() throws ExecutionException, InterruptedException {
+        initCtxAndState(false);
+        state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry);
+        state.getArguments().put(TEMPERATURE_ARGUMENT_NAME, singleValueArgEntry);
+
+        AssetId newEntityId = new AssetId(UUID.fromString("83e2c962-eeae-4708-984e-e6a24760f9c3"));
+        PropagationArgumentEntry propagationArgumentEntry = new PropagationArgumentEntry();
+        propagationArgumentEntry.setAdded(newEntityId);
+        Map<String, ArgumentEntry> updated = state.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry), ctx);
+        assertThat(updated).isNotNull().containsEntry(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry);
+
+        PropagationCalculatedFieldResult propagationCalculatedFieldResult = performCalculation(updated);
+        assertThat(propagationCalculatedFieldResult).isNotNull();
+        assertThat(propagationCalculatedFieldResult.getEntityIds()).isNotNull().containsExactly(newEntityId);
     }
 
     private CalculatedField getCalculatedField(boolean applyExpressionToResolvedArguments) {
@@ -254,6 +271,10 @@ public class PropagationCalculatedFieldStateTest {
     }
 
     private PropagationCalculatedFieldResult performCalculation() throws ExecutionException, InterruptedException {
-        return (PropagationCalculatedFieldResult) state.performCalculation(Collections.emptyMap(), ctx).get();
+        return performCalculation(Collections.emptyMap());
+    }
+
+    private PropagationCalculatedFieldResult performCalculation(Map<String, ArgumentEntry> updatedArgs) throws ExecutionException, InterruptedException {
+        return (PropagationCalculatedFieldResult) state.performCalculation(updatedArgs, ctx).get();
     }
 }

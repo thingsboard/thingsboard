@@ -57,6 +57,7 @@ import org.thingsboard.server.service.cf.ctx.state.alarm.AlarmRuleState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingZoneState;
+import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationCalculatedFieldState;
 
 import java.util.HashMap;
@@ -66,6 +67,8 @@ import java.util.TreeMap;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
 public class CalculatedFieldUtils {
 
@@ -261,14 +264,11 @@ public class CalculatedFieldUtils {
                 state.getArguments().put(argProto.getArgName(), fromSingleValueArgumentProto(argProto)));
 
         switch (type) {
-            case SCRIPT -> {
-                proto.getRollingValueArgumentsList().forEach(argProto ->
-                        state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
-            }
-            case GEOFENCING -> {
-                proto.getGeofencingArgumentsList().forEach(argProto ->
-                        state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
-            }
+            case SCRIPT -> proto.getRollingValueArgumentsList().forEach(argProto ->
+                    state.getArguments().put(argProto.getKey(), fromRollingArgumentProto(argProto)));
+            case GEOFENCING -> proto.getGeofencingArgumentsList().forEach(argProto ->
+                    state.getArguments().put(argProto.getArgName(), fromGeofencingArgumentProto(argProto)));
+            case PROPAGATION -> state.getArguments().put(PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry());
             case ALARM -> {
                 AlarmCalculatedFieldState alarmState = (AlarmCalculatedFieldState) state;
                 AlarmStateProto alarmStateProto = proto.getAlarmState();

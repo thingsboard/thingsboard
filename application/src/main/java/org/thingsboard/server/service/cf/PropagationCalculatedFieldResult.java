@@ -28,7 +28,7 @@ import java.util.List;
 @Builder
 public final class PropagationCalculatedFieldResult implements CalculatedFieldResult {
 
-    private final List<EntityId> propagationEntityIds;
+    private final List<EntityId> entityIds;
     private final TelemetryCalculatedFieldResult result;
 
     @Override
@@ -43,7 +43,7 @@ public final class PropagationCalculatedFieldResult implements CalculatedFieldRe
 
     @Override
     public boolean isEmpty() {
-        return CollectionsUtil.isEmpty(propagationEntityIds) || result.isEmpty();
+        return CollectionsUtil.isEmpty(entityIds) || result.isEmpty();
     }
 
 }

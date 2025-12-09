@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -25,7 +24,6 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Data
 public class RelationPathQueryDynamicSourceConfiguration implements CfArgumentDynamicSourceConfiguration {

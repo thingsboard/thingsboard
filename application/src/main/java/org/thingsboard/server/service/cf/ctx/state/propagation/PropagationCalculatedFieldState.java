@@ -34,6 +34,7 @@ import org.thingsboard.server.service.cf.ctx.state.ScriptCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
@@ -64,19 +65,29 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
     @Override
     public ListenableFuture<CalculatedFieldResult> performCalculation(Map<String, ArgumentEntry> updatedArgs, CalculatedFieldCtx ctx) {
         ArgumentEntry argumentEntry = arguments.get(PROPAGATION_CONFIG_ARGUMENT);
-        if (!(argumentEntry instanceof PropagationArgumentEntry propagationArgumentEntry) || propagationArgumentEntry.isEmpty()) {
+        if (!(argumentEntry instanceof PropagationArgumentEntry propagationArgumentEntry)) {
             return Futures.immediateFuture(PropagationCalculatedFieldResult.builder().build());
+        }
+        List<EntityId> entityIds;
+        if (propagationArgumentEntry.getAdded() != null) {
+            entityIds = List.of(propagationArgumentEntry.getAdded());
+            propagationArgumentEntry.setAdded(null);
+        } else {
+            if (propagationArgumentEntry.getEntityIds().isEmpty()) {
+                return Futures.immediateFuture(PropagationCalculatedFieldResult.builder().build());
+            }
+            entityIds = List.copyOf(propagationArgumentEntry.getEntityIds());
         }
         if (ctx.isApplyExpressionForResolvedArguments()) {
             return Futures.transform(super.performCalculation(updatedArgs, ctx), telemetryCfResult ->
                             PropagationCalculatedFieldResult.builder()
-                                    .propagationEntityIds(propagationArgumentEntry.getPropagationEntityIds())
+                                    .entityIds(entityIds)
                                     .result((TelemetryCalculatedFieldResult) telemetryCfResult)
                                     .build(),
                     MoreExecutors.directExecutor());
         }
         return Futures.immediateFuture(PropagationCalculatedFieldResult.builder()
-                .propagationEntityIds(propagationArgumentEntry.getPropagationEntityIds())
+                .entityIds(entityIds)
                 .result(toTelemetryResult(ctx))
                 .build());
     }
