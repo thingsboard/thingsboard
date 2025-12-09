@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TimeseriesSaveResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.dao.edge.stats.EdgeStats;
 import org.thingsboard.server.dao.edge.stats.EdgeStatsCounterService;
 import org.thingsboard.server.dao.edge.stats.MsgCounters;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -44,9 +45,11 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_ADDED;
@@ -57,6 +60,9 @@ import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_T
 
 @ExtendWith(MockitoExtension.class)
 public class EdgeStatsTest {
+
+    private static final int TTL_DAYS = 30;
+    private static final long REPORT_INTERVAL_MILLIS = 600_000L;
 
     @Mock
     private TimeseriesService tsService;
@@ -71,40 +77,45 @@ public class EdgeStatsTest {
 
     @BeforeEach
     void setUp() {
-        edgeStatsService = new EdgeStatsService(
+        edgeStatsService = createEdgeStatsService(Optional.empty());
+    }
+
+    private EdgeStatsService createEdgeStatsService(Optional<KafkaAdmin> kafkaAdmin) {
+        EdgeStatsService service = new EdgeStatsService(
                 tsService,
                 statsCounterService,
                 topicService,
-                Optional.empty()
+                kafkaAdmin
         );
-
-        ReflectionTestUtils.setField(edgeStatsService, "edgesStatsTtlDays", 30);
-        ReflectionTestUtils.setField(edgeStatsService, "reportIntervalMillis", 600_000L);
+        ReflectionTestUtils.setField(service, "edgesStatsTtlDays", TTL_DAYS);
+        ReflectionTestUtils.setField(service, "reportIntervalMillis", REPORT_INTERVAL_MILLIS);
+        return service;
     }
 
     @Test
     public void testReportStatsSavesTelemetry() {
-        // given
-        MsgCounters counters = new MsgCounters(tenantId);
+        EdgeStats edgeStats = new EdgeStats(tenantId);
+        MsgCounters counters = edgeStats.getMsgCounters();
         counters.getMsgsAdded().set(5);
         counters.getMsgsPushed().set(3);
         counters.getMsgsPermanentlyFailed().set(1);
         counters.getMsgsTmpFailed().set(0);
         counters.getMsgsLag().set(10);
 
-        ConcurrentHashMap<EdgeId, MsgCounters> countersByEdge = new ConcurrentHashMap<>();
-        countersByEdge.put(edgeId, counters);
+        ConcurrentHashMap<EdgeId, EdgeStats> edgeStatsByEdge = new ConcurrentHashMap<>();
+        edgeStatsByEdge.put(edgeId, edgeStats);
 
-        when(statsCounterService.getCounterByEdge()).thenReturn(countersByEdge);
+        when(statsCounterService.getStatsByEdge()).thenReturn(edgeStatsByEdge);
 
-        ArgumentCaptor<List<TsKvEntry>> captor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<TsKvEntry>> captor = ArgumentCaptor.forClass((Class) List.class);
         when(tsService.save(eq(tenantId), eq(edgeId), captor.capture(), anyLong()))
                 .thenReturn(Futures.immediateFuture(mock(TimeseriesSaveResult.class)));
 
-        // when
         edgeStatsService.reportStats();
 
-        // then
+        verify(tsService, times(1)).save(eq(tenantId), eq(edgeId), anyList(), anyLong());
+        verify(statsCounterService, times(1)).clear(edgeId);
+
         List<TsKvEntry> entries = captor.getValue();
         Assertions.assertEquals(5, entries.size());
 
@@ -116,26 +127,22 @@ public class EdgeStatsTest {
         Assertions.assertEquals(1L, valuesByKey.get(DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey()).longValue());
         Assertions.assertEquals(0L, valuesByKey.get(DOWNLINK_MSGS_TMP_FAILED.getKey()).longValue());
         Assertions.assertEquals(10L, valuesByKey.get(DOWNLINK_MSGS_LAG.getKey()).longValue());
-
-
-        verify(statsCounterService).clear(edgeId);
     }
 
     @Test
     public void testReportStatsWithKafkaLag() {
-        // given
-        MsgCounters counters = new MsgCounters(tenantId);
+        EdgeStats edgeStats = new EdgeStats(tenantId);
+        MsgCounters counters = edgeStats.getMsgCounters();
         counters.getMsgsAdded().set(2);
         counters.getMsgsPushed().set(2);
         counters.getMsgsPermanentlyFailed().set(0);
         counters.getMsgsTmpFailed().set(1);
         counters.getMsgsLag().set(0);
 
-        ConcurrentHashMap<EdgeId, MsgCounters> countersByEdge = new ConcurrentHashMap<>();
-        countersByEdge.put(edgeId, counters);
+        ConcurrentHashMap<EdgeId, EdgeStats> edgeStatsByEdge = new ConcurrentHashMap<>();
+        edgeStatsByEdge.put(edgeId, edgeStats);
 
-        // mocks
-        when(statsCounterService.getCounterByEdge()).thenReturn(countersByEdge);
+        when(statsCounterService.getStatsByEdge()).thenReturn(edgeStatsByEdge);
 
         String topic = "edge-topic";
         TopicPartitionInfo partitionInfo = new TopicPartitionInfo(topic, tenantId, 0, false);
@@ -145,29 +152,22 @@ public class EdgeStatsTest {
         when(kafkaAdmin.getTotalLagForGroupsBulk(Set.of(topic)))
                 .thenReturn(Map.of(topic, 15L));
 
-        ArgumentCaptor<List<TsKvEntry>> captor = ArgumentCaptor.forClass(List.class);
+        ArgumentCaptor<List<TsKvEntry>> captor = ArgumentCaptor.forClass((Class) List.class);
         when(tsService.save(eq(tenantId), eq(edgeId), captor.capture(), anyLong()))
                 .thenReturn(Futures.immediateFuture(mock(TimeseriesSaveResult.class)));
 
-        edgeStatsService = new EdgeStatsService(
-                tsService,
-                statsCounterService,
-                topicService,
-                Optional.of(kafkaAdmin)
-        );
-        ReflectionTestUtils.setField(edgeStatsService, "edgesStatsTtlDays", 30);
-        ReflectionTestUtils.setField(edgeStatsService, "reportIntervalMillis", 600_000L);
+        edgeStatsService = createEdgeStatsService(Optional.of(kafkaAdmin));
 
-        // when
         edgeStatsService.reportStats();
 
-        // then
+        verify(tsService, times(1)).save(eq(tenantId), eq(edgeId), anyList(), anyLong());
+        verify(statsCounterService, times(1)).clear(edgeId);
+
         List<TsKvEntry> entries = captor.getValue();
         Map<String, Long> valuesByKey = entries.stream()
                 .collect(Collectors.toMap(TsKvEntry::getKey, e -> e.getLongValue().orElse(-1L)));
 
         Assertions.assertEquals(15L, valuesByKey.get(DOWNLINK_MSGS_LAG.getKey()));
-        verify(statsCounterService).clear(edgeId);
     }
 
 }
