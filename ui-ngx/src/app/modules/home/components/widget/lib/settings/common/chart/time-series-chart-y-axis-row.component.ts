@@ -226,7 +226,6 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   private updateModel() {
     const value = this.axisFormGroup.getRawValue();
-    console.log("value", value);
     this.modelValue.label = value.label;
     this.modelValue.position = value.position;
     this.modelValue.units = value.units;

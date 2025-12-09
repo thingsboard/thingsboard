@@ -307,12 +307,10 @@ export class TbTimeSeriesChart {
           const data = this.ctx.latestData.find(d => d.dataKey === yAxis.maxLatestDataKey);
           if (data?.data[0]) {
             const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
-            // if (yAxis.option.max !== value) {
-            //   yAxis.option.max = value;
-            //   update = true;
-            // }
-            update = true;
-            yAxis.option.max = 124;
+            if (yAxis.option.max !== value) {
+              yAxis.option.max = value;
+              update = true;
+            }
           }
         }
       }
