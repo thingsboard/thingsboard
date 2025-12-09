@@ -462,6 +462,8 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                     stateAction = StateAction.REINIT; // refetch arguments, call state.init, then calculate
                 } else if (newCfCtx.hasContextOnlyChanges(oldCfCtx)) {
                     stateAction = StateAction.REPROCESS; // call state.setCtx, then calculate
+                } else if (newCfCtx.hasRefreshContextOnlyChanges(oldCfCtx)) {
+                    stateAction = StateAction.REFRESH_CTX;
                 } else {
                     callback.onSuccess();
                     return;

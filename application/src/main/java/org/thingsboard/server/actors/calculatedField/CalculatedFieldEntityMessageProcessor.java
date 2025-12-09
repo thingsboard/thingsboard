@@ -159,10 +159,14 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             } else {
                 state.setCtx(ctx, actorCtx);
             }
-            if (state.isSizeOk()) {
-                processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, null, msg.getCallback());
+            if (msg.getStateAction() != StateAction.REFRESH_CTX) {
+                if (state.isSizeOk()) {
+                    processStateIfReady(state, Collections.emptyMap(), ctx, Collections.singletonList(ctx.getCfId()), null, null, msg.getCallback());
+                } else {
+                    throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+                }
             } else {
-                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+                msg.getCallback().onSuccess();
             }
         } catch (Exception e) {
             log.debug("[{}][{}] Failed to initialize CF state", entityId, ctx.getCfId(), e);

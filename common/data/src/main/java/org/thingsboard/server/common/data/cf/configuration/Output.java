@@ -22,6 +22,8 @@ import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import org.thingsboard.server.common.data.AttributeScope;
 
+import java.util.Objects;
+
 @JsonTypeInfo(
         use = JsonTypeInfo.Id.NAME,
         include = JsonTypeInfo.As.PROPERTY,
@@ -49,5 +51,24 @@ public interface Output {
     Integer getDecimalsByDefault();
 
     void setDecimalsByDefault(Integer decimalsByDefault);
+
+    default boolean hasContextOnlyChanges(Output other) {
+        if (!getType().equals(other.getType())) {
+            return true;
+        }
+        if (!Objects.equals(getName(), other.getName())) {
+            return true;
+        }
+        if (getScope() != (other.getScope())) {
+            return true;
+        }
+        if (!Objects.equals(getDecimalsByDefault(), other.getDecimalsByDefault())) {
+            return true;
+        }
+        if (getStrategy().hasContextOnlyChanges(other.getStrategy())) {
+            return true;
+        }
+        return false;
+    }
 
 }

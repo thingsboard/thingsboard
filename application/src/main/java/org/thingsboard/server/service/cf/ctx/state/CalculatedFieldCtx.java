@@ -636,16 +636,33 @@ public class CalculatedFieldCtx implements Closeable {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
+    public boolean hasRefreshContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state recalculation
+        var thisOutputStrategy = calculatedField.getConfiguration().getOutput().getStrategy();
+        var otherOutputStrategy = other.getCalculatedField().getConfiguration().getOutput().getStrategy();
+        if (thisOutputStrategy.hasRefreshContextOnlyChanges(otherOutputStrategy)) {
+            return true;
+        }
+
+        if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
+                && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
+            if (thisConfig.isProduceIntermediateResult() != otherConfig.isProduceIntermediateResult()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public boolean hasContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state reinit and will be picked up by the state on the fly
         if (calculatedField.getConfiguration() instanceof ExpressionBasedCalculatedFieldConfiguration && !Objects.equals(expression, other.expression)) {
             return true;
         }
-        if (!Objects.equals(output, other.output)) {
+        if (output.hasContextOnlyChanges(other.output)) {
             return true;
         }
         if (calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration thisConfig
-            && other.calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration otherConfig
-            && thisConfig.isUseLatestTs() != otherConfig.isUseLatestTs()) {
+                && other.calculatedField.getConfiguration() instanceof SimpleCalculatedFieldConfiguration otherConfig
+                && thisConfig.isUseLatestTs() != otherConfig.isUseLatestTs()) {
             return true;
         }
         if (cfType == CalculatedFieldType.ALARM) {
@@ -667,18 +684,19 @@ public class CalculatedFieldCtx implements Closeable {
             return true;
         }
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
-            && other.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig
-            && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec()
+                && other.getCalculatedField().getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig
+                && (thisConfig.getDeduplicationIntervalInSec() != otherConfig.getDeduplicationIntervalInSec()
                 || !thisConfig.getMetrics().equals(otherConfig.getMetrics())
                 || thisConfig.isUseLatestTs() != otherConfig.isUseLatestTs())) {
             return true;
         }
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
-            && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
+                && other.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
             boolean metricsChanged = !Objects.equals(thisConfig.getMetrics(), otherConfig.getMetrics());
             boolean watermarkChanged = !Objects.equals(thisConfig.getWatermark(), otherConfig.getWatermark());
-            boolean produceIntermediateResultChanged = thisConfig.isProduceIntermediateResult() != otherConfig.isProduceIntermediateResult();
-            return metricsChanged || watermarkChanged || produceIntermediateResultChanged;
+            if (metricsChanged || watermarkChanged) {
+                return true;
+            }
         }
         return false;
     }
@@ -711,7 +729,7 @@ public class CalculatedFieldCtx implements Closeable {
 
     private boolean hasGeofencingZoneGroupConfigurationChanges(CalculatedFieldCtx other) {
         if (calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration thisConfig
-            && other.calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration otherConfig) {
+                && other.calculatedField.getConfiguration() instanceof GeofencingCalculatedFieldConfiguration otherConfig) {
             return !thisConfig.getZoneGroups().equals(otherConfig.getZoneGroups());
         }
         return false;
@@ -719,7 +737,7 @@ public class CalculatedFieldCtx implements Closeable {
 
     private boolean hasRelatedEntitiesAggregationConfigurationChanges(CalculatedFieldCtx other) {
         if (calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration thisConfig
-            && other.calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig) {
+                && other.calculatedField.getConfiguration() instanceof RelatedEntitiesAggregationCalculatedFieldConfiguration otherConfig) {
             return !thisConfig.getRelation().equals(otherConfig.getRelation());
         }
         return false;
@@ -727,7 +745,7 @@ public class CalculatedFieldCtx implements Closeable {
 
     private boolean hasEntityAggregationConfigurationChanges(CalculatedFieldCtx other) {
         if (calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration thisConfig
-            && other.calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
+                && other.calculatedField.getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration otherConfig) {
             return !thisConfig.getInterval().equals(otherConfig.getInterval());
         }
         return false;
@@ -752,7 +770,7 @@ public class CalculatedFieldCtx implements Closeable {
                     yield true;
                 }
                 yield geofencingState.getLastDynamicArgumentsRefreshTs() <
-                      System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+                        System.currentTimeMillis() - scheduledUpdateIntervalMillis;
             }
             default -> false;
         };
@@ -796,10 +814,10 @@ public class CalculatedFieldCtx implements Closeable {
     @Override
     public String toString() {
         return "CalculatedFieldCtx{" +
-               "cfId=" + cfId +
-               ", cfType=" + cfType +
-               ", entityId=" + entityId +
-               '}';
+                "cfId=" + cfId +
+                ", cfType=" + cfType +
+                ", entityId=" + entityId +
+                '}';
     }
 
 }
