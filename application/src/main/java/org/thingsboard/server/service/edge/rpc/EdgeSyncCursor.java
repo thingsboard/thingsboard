@@ -65,6 +65,12 @@ public class EdgeSyncCursor {
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
+            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getDomainService()));
+            fetchers.add(new SystemWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
+            fetchers.add(new TenantWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
+            fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
+            fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
+            fetchers.add(new AiModelEdgeEventFetcher(ctx.getAiModelService()));
         }
         Customer publicCustomer = ctx.getCustomerService().findPublicCustomer(edge.getTenantId());
         if (publicCustomer != null) {
@@ -85,15 +91,9 @@ public class EdgeSyncCursor {
             fetchers.add(new NotificationTemplateEdgeEventFetcher(ctx.getNotificationTemplateService()));
             fetchers.add(new NotificationTargetEdgeEventFetcher(ctx.getNotificationTargetService()));
             fetchers.add(new NotificationRuleEdgeEventFetcher(ctx.getNotificationRuleService()));
-            fetchers.add(new SystemWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
-            fetchers.add(new TenantWidgetTypesEdgeEventFetcher(ctx.getWidgetTypeService()));
-            fetchers.add(new SystemWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
-            fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
             fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
             fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
-            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getDomainService()));
-            fetchers.add(new AiModelEdgeEventFetcher(ctx.getAiModelService()));
         }
     }
 
