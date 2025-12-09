@@ -278,7 +278,7 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
         this.enableAutocomplete = (this.entityId.entityType === EntityType.DEVICE_PROFILE || this.entityId.entityType === EntityType.ASSET_PROFILE) && type === ArgumentEntityType.Owner;
         this.geofencingFormGroup.get('refEntityId').get('id').setValue(null);
         this.geofencingFormGroup.get('perimeterKeyName').reset('');
-        const isEntityWithId = !!type && ![ArgumentEntityType.Tenant, ArgumentEntityType.Current, ArgumentEntityType.Owner].includes(type);
+        const isEntityWithId = !!type && ![ArgumentEntityType.Tenant, ArgumentEntityType.Current, ArgumentEntityType.Owner, ArgumentEntityType.RelationQuery].includes(type);
         this.geofencingFormGroup.get('refEntityId').get('id')[isEntityWithId ? 'enable' : 'disable']();
         if (!isEntityWithId) {
           this.entityNameSubject.next(null);
