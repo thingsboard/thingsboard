@@ -217,9 +217,13 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     }
     if(!this.checkIsConstantLimit('min')){
       this.axisFormGroup.get('min').disable({emitEvent: false});
+    } else {
+      this.axisFormGroup.get('min').enable({emitEvent: false});
     }
     if(!this.checkIsConstantLimit('max')){
       this.axisFormGroup.get('max').disable({emitEvent: false});
+    } else {
+      this.axisFormGroup.get('max').enable({emitEvent: false});
     }
 
   }
@@ -270,6 +274,4 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       ...limit,
     };
   }
-
-
 }
