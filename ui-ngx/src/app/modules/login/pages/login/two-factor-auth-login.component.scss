@@ -21,6 +21,7 @@
 
   .tb-two-factor-auth-login-content {
     background-color: #eee;
+    --mdc-elevated-card-container-elevation: none;
 
     .tb-two-factor-auth-login-card {
       padding: 48px 48px 48px 16px;

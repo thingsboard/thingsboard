@@ -636,6 +636,39 @@ pre.tb-highlight {
     }
   }
 
+  .tb-autofilled:has(input:-webkit-autofill){
+    --mdc-outlined-text-field-label-text-color: var(--mdc-outlined-text-field-input-text-color);
+    --mdc-outlined-text-field-hover-label-text-color: var(--mdc-outlined-text-field-input-text-color);
+    .mat-mdc-form-field-flex {
+      &:before {
+        display: block;
+        height: auto;
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: #7986cb;
+        opacity: 0.5;
+        pointer-events: none;
+        border-radius: 4px;
+      }
+    }
+
+    .mdc-floating-label {
+      --mat-mdc-form-field-label-transform: translateY(calc(calc(6.7px + var(--mat-form-field-container-height) / 2) * -1)) scale(var(--mat-mdc-form-field-floating-label-scale, 0.75));
+    }
+    .mat-mdc-form-field-infix {
+      input {
+        &:-webkit-autofill,
+        &:-webkit-autofill:hover,
+        &:-webkit-autofill:focus,
+        &:-webkit-autofill:active {
+          -webkit-background-clip: text !important;
+          -webkit-text-fill-color: var(--mdc-outlined-text-field-input-text-color);
+        }
+      }
+    }
+  }
+
   // Material table
 
   .mat-toolbar.mat-primary {

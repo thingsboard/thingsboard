@@ -29,7 +29,7 @@ import { validateEmail } from '@app/core/utils';
   templateUrl: './reset-password-request.component.html',
   styleUrls: ['./reset-password-request.component.scss']
 })
-export class ResetPasswordRequestComponent extends PageComponent implements OnInit {
+export class ResetPasswordRequestComponent extends PageComponent {
 
   clicked: boolean = false;
 
@@ -42,9 +42,6 @@ export class ResetPasswordRequestComponent extends PageComponent implements OnIn
               private translate: TranslateService,
               public fb: UntypedFormBuilder) {
     super(store);
-  }
-
-  ngOnInit() {
   }
 
   disableInputs() {

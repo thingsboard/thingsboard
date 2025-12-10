@@ -41,7 +41,7 @@
           <div tb-toast class="flex flex-col">
             <p class="mat-body">{{ providerDescription }}</p>
             <div class="code-block flex flex-row gap-2">
-              <mat-form-field class="mat-block tb-appearance-transparent flex-1">
+              <mat-form-field class="mat-block flex-1" appearance="outline">
                 <input matInput formControlName="verificationCode"
                        required [maxlength]="maxLengthInput" type="text"
                        [attr.inputmode]="inputMode" [pattern]="pattern"
@@ -62,7 +62,7 @@
               </mat-form-field>
             </div>
             <span style="height: 50px;"></span>
-            <button mat-raised-button
+            <button mat-flat-button
                     color="accent"
                     [disabled]="(isLoading$ | async) || verificationForm.invalid"
                     type="submit">
