@@ -42,6 +42,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.common.util.ExceptionUtil;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -75,11 +76,19 @@ public class TenantController extends BaseController {
     public Tenant getTenantById(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
-        checkParameter(TENANT_ID, strTenantId);
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        Tenant tenant = checkTenantId(tenantId, Operation.READ);
-        checkDashboardInfo(tenant.getAdditionalInfo(), HOME_DASHBOARD);
-        return tenant;
+
+        log.info("Entering getTenantId: tenant={}", strTenantId);
+        try {
+            checkParameter(TENANT_ID, strTenantId);
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            Tenant tenant = checkTenantId(tenantId, Operation.READ);
+            checkDashboardInfo(tenant.getAdditionalInfo(), HOME_DASHBOARD);
+            log.info("Successfully retrieved tenant: tenantId={}, title={}", tenant.getId(), tenant.getTitle())
+            return tenant;
+        }catch(ThingsboardException e){
+            log.error("Failed to get tenant: tenantId={}. Reason: {}", strTenantId, ExceptionUtil.getMessage(e), e)
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Get Tenant Info (getTenantInfoById)",
@@ -90,9 +99,18 @@ public class TenantController extends BaseController {
     public TenantInfo getTenantInfoById(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
             @PathVariable(TENANT_ID) String strTenantId) throws ThingsboardException {
-        checkParameter(TENANT_ID, strTenantId);
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        return checkTenantInfoId(tenantId, Operation.READ);
+
+        log.info("Entering getTenantInfoById: tenantId={}", strTenantId);
+        try {
+            checkParameter(TENANT_ID, strTenantId);
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            TenantInfo tenantInfo = checkTenantInfoId(tenantId, Operation.READ);
+            log.info("Successfully retrieved tenant info: tenantId={}, title={}", tenantInfo.getId(), tenantInfo.getTitle());
+            return tenantInfo;
+        } catch (ThingsboardException e) {
+            log.error("Failed to get tenant info: tenantId={}. Reason: {}", strTenantId, ExceptionUtil.getMessage(e), e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Create Or update Tenant (saveTenant)",
@@ -107,8 +125,17 @@ public class TenantController extends BaseController {
     @PostMapping(value = "/tenant")
     public Tenant saveTenant(@Parameter(description = "A JSON value representing the tenant.")
                              @RequestBody Tenant tenant) throws Exception {
-        checkEntity(tenant.getId(), tenant, Resource.TENANT);
-        return tbTenantService.save(tenant);
+
+        log.info("Entering saveTenant: tenant={}", tenant.getTitle());
+        try {
+            checkEntity(tenant.getId(), tenant, Resource.TENANT);
+            Tenant savedTenant = tbTenantService.save(tenant);
+            log.info("Successfully saved tenant: tenantId={}, title={}", savedTenant.getId(), savedTenant.getTitle());
+            return savedTenant;
+        } catch (Exception e) {
+            log.error("Failed to save tenant: {}. Reason: {}", tenant.getTitle(), ExceptionUtil.getMessage(e), e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Delete Tenant (deleteTenant)",
@@ -118,10 +145,18 @@ public class TenantController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteTenant(@Parameter(description = TENANT_ID_PARAM_DESCRIPTION)
                              @PathVariable(TENANT_ID) String strTenantId) throws Exception {
-        checkParameter(TENANT_ID, strTenantId);
-        TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
-        Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
-        tbTenantService.delete(tenant);
+
+        log.info("Entering deleteTenant: tenantId={}", strTenantId);
+        try {
+            checkParameter(TENANT_ID, strTenantId);
+            TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
+            Tenant tenant = checkTenantId(tenantId, Operation.DELETE);
+            tbTenantService.delete(tenant);
+            log.info("Successfully deleted tenant: tenantId={}, title={}", tenant.getId(), tenant.getTitle());
+        } catch (Exception e) {
+            log.error("Failed to delete tenant: tenantId={}. Reason: {}", strTenantId, ExceptionUtil.getMessage(e), e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Get Tenants (getTenants)", notes = "Returns a page of tenants registered in the platform. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -138,8 +173,17 @@ public class TenantController extends BaseController {
             @RequestParam(required = false) String sortProperty,
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(tenantService.findTenants(pageLink));
+
+        log.info("Entering getTenants: page={}, pageSize={}, textSearch={}", page, pageSize, textSearch);
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            PageData<Tenant> tenants = checkNotNull(tenantService.findTenants(pageLink));
+            log.info("Successfully retrieved {} tenants", tenants.getData().size());
+            return tenants;
+        } catch (ThingsboardException e) {
+            log.error("Failed to get tenants: page={}, pageSize={}. Reason: {}", page, pageSize, ExceptionUtil.getMessage(e), e);
+            throw e;
+        }
     }
 
     @ApiOperation(value = "Get Tenants Info (getTenants)", notes = "Returns a page of tenant info objects registered in the platform. "
@@ -158,8 +202,17 @@ public class TenantController extends BaseController {
             @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
             @RequestParam(required = false) String sortOrder
     ) throws ThingsboardException {
-        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return checkNotNull(tenantService.findTenantInfos(pageLink));
+
+        log.info("Entering getTenantInfos: page={}, pageSize={}, textSearch={}", page, pageSize, textSearch);
+        try {
+            PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+            PageData<TenantInfo> tenantInfos = checkNotNull(tenantService.findTenantInfos(pageLink));
+            log.info("Successfully retrieved {} tenant infos", tenantInfos.getData().size());
+            return tenantInfos;
+        } catch (ThingsboardException e) {
+            log.error("Failed to get tenant infos: page={}, pageSize={}. Reason: {}", page, pageSize, ExceptionUtil.getMessage(e), e);
+            throw e;
+        }
     }
 
 }
