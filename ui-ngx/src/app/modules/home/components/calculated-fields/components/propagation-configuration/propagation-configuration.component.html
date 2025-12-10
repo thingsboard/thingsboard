@@ -77,7 +77,7 @@
         </div>
         <button toolbarSuffixButton
                 mat-icon-button
-                matTooltip="{{ 'calculated-fields.test-expression-function' | translate }}"
+                matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                 matTooltipPosition="above"
                 class="tb-mat-32"
                 [disabled]="propagateConfiguration.get('arguments').invalid"
@@ -90,7 +90,7 @@
                 type="button"
                 (click)="onTestScript()"
                 [disabled]="propagateConfiguration.get('arguments').invalid">
-          {{ 'calculated-fields.test-expression-function' | translate }}
+          {{ 'calculated-fields.test-script-function' | translate }}
         </button>
       </div>
     </div>
