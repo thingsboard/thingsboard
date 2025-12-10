@@ -24,7 +24,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { AuthService } from '@core/auth/auth.service';
-import { TenantService } from '@core/http/tenant.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { NotificationService } from '@core/http/notification.service';
 
@@ -51,7 +50,6 @@ export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLi
               private authService: AuthService,
               private dialogs: DialogService,
               private translate: TranslateService,
-              private tenantService: TenantService,
               private notificationService: NotificationService) {
     super(store, router, dialogRef);
 
@@ -89,12 +87,8 @@ export class EntityLimitExceededDialogComponent extends DialogComponent<EntityLi
       $event.preventDefault();
       $event.stopPropagation();
     }
-    this.tenantService.getTenant(getCurrentAuthUser(this.store).tenantId).subscribe(
-      (tenant) => {
-        this.authService.redirectUrl = `/tenantProfiles/${tenant.tenantProfileId.id}`;
-        this.authService.logout();
-      }
-    );
+    this.authService.redirectUrl = `/tenants/${getCurrentAuthUser(this.store).tenantId}`;
+    this.authService.logout();
   }
 
 }
