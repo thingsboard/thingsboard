@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
@@ -68,8 +69,9 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         if (!(argumentEntry instanceof PropagationArgumentEntry propagationArgumentEntry)) {
             return Futures.immediateFuture(PropagationCalculatedFieldResult.builder().build());
         }
+        boolean newEntityAdded = propagationArgumentEntry.getAdded() != null;
         List<EntityId> entityIds;
-        if (propagationArgumentEntry.getAdded() != null) {
+        if (newEntityAdded) {
             entityIds = List.of(propagationArgumentEntry.getAdded());
             propagationArgumentEntry.setAdded(null);
         } else {
@@ -86,13 +88,43 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
                                     .build(),
                     MoreExecutors.directExecutor());
         }
+        if (newEntityAdded || CollectionsUtil.isEmpty(updatedArgs)) {
+            updatedArgs = arguments;
+        }
         return Futures.immediateFuture(PropagationCalculatedFieldResult.builder()
                 .entityIds(entityIds)
-                .result(toTelemetryResult(ctx))
+                .result(toTelemetryResult(ctx, updatedArgs))
                 .build());
     }
 
-    private TelemetryCalculatedFieldResult toTelemetryResult(CalculatedFieldCtx ctx) {
+    @Override
+    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        if (ctx.isApplyExpressionForResolvedArguments() || currentArguments == null) {
+            return super.checkReadiness(requiredArguments, currentArguments);
+        }
+        boolean propagationNotEmpty = false;
+        boolean hasOtherNonEmpty = false;
+        List<String> emptyArguments = null;
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                if (emptyArguments == null) {
+                    emptyArguments = new ArrayList<>();
+                }
+                emptyArguments.add(requiredArgumentKey);
+            } else if (PROPAGATION_CONFIG_ARGUMENT.equals(requiredArgumentKey)) {
+                propagationNotEmpty = true;
+            } else {
+                hasOtherNonEmpty = true;
+            }
+        }
+        if (propagationNotEmpty && hasOtherNonEmpty) {
+            return ReadinessStatus.READY;
+        }
+        return ReadinessStatus.from(emptyArguments);
+    }
+
+    private TelemetryCalculatedFieldResult toTelemetryResult(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> updatedArgs) {
         Output output = ctx.getOutput();
         TelemetryCalculatedFieldResult.TelemetryCalculatedFieldResultBuilder telemetryCfBuilder =
                 TelemetryCalculatedFieldResult.builder()
@@ -100,12 +132,14 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
                         .type(output.getType())
                         .scope(output.getScope());
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
-        arguments.forEach((outputKey, argumentEntry) -> {
+        updatedArgs.forEach((outputKey, argumentEntry) -> {
             if (argumentEntry instanceof PropagationArgumentEntry) {
                 return;
             }
             if (argumentEntry instanceof SingleValueArgumentEntry singleArgumentEntry) {
-                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), outputKey);
+                if (!singleArgumentEntry.isEmpty()) {
+                    JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), outputKey);
+                }
                 return;
             }
             throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + outputKey + ". " +
