@@ -65,9 +65,9 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
     private EdgeStatsCounterService statsCounterService;
 
     @Test
-    public void testFullEdgeStatsCycle() throws Exception {
+    public void testReportStats() throws Exception {
         // GIVEN
-        prepareTestData();
+        simulateEdgeEventsAddedDownlinkPushed();
 
         // Await Edge Counters Updated
         await().atMost(10, TimeUnit.SECONDS).pollInterval(Duration.ofMillis(200)).untilAsserted(() -> {
@@ -104,7 +104,7 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
                 Arrays.stream(EdgeStatsKey.values()).map(EdgeStatsKey::getKey).toList()).get();
     }
 
-    private void prepareTestData() throws InterruptedException, ExecutionException {
+    private void simulateEdgeEventsAddedDownlinkPushed() throws InterruptedException, ExecutionException {
         statsCounterService.clear(edge.getId());
 
         // Save device and assign to edge
