@@ -64,6 +64,13 @@ public class EdgeStatsTest {
     private static final int TTL_DAYS = 30;
     private static final long REPORT_INTERVAL_MILLIS = 600_000L;
 
+    private static final long EXPECTED_MSGS_ADDED = 5L;
+    private static final long EXPECTED_MSGS_PUSHED = 3L;
+    private static final long EXPECTED_MSGS_PERMANENTLY_FAILED = 1L;
+    private static final long EXPECTED_MSGS_TMP_FAILED = 0L;
+    private static final long EXPECTED_MSGS_LAG = 10L;
+    private static final long EXPECTED_MSGS_KAFKA_LAG = 15L;
+
     @Mock
     private TimeseriesService tsService;
     @Mock
@@ -97,12 +104,38 @@ public class EdgeStatsTest {
 
     @Test
     public void testReportStatsSavesTelemetry() {
+        // GIVEN
+        setupCounters();
+
+        // WHEN
+        edgeStatsService.reportStats();
+
+        // THEN
+        Map<String, Long> counters = verifyCounters();
+        Assertions.assertEquals(EXPECTED_MSGS_LAG, counters.get(DOWNLINK_MSGS_LAG.getKey()).longValue());
+    }
+
+    @Test
+    public void testReportStatsWithKafkaLag() {
+        // GIVEN
+        setupCounters();
+        setupKafkaLag();
+
+        // WHEN
+        edgeStatsService.reportStats();
+
+        // THEN
+        Map<String, Long> valuesByKey = verifyCounters();
+        Assertions.assertEquals(EXPECTED_MSGS_KAFKA_LAG, valuesByKey.get(DOWNLINK_MSGS_LAG.getKey()));
+    }
+
+    private void setupCounters() {
         MsgCounters counters = new MsgCounters(tenantId);
-        counters.getMsgsAdded().set(5);
-        counters.getMsgsPushed().set(3);
-        counters.getMsgsPermanentlyFailed().set(1);
-        counters.getMsgsTmpFailed().set(0);
-        counters.getMsgsLag().set(10);
+        counters.getMsgsAdded().set(EXPECTED_MSGS_ADDED);
+        counters.getMsgsPushed().set(EXPECTED_MSGS_PUSHED);
+        counters.getMsgsPermanentlyFailed().set(EXPECTED_MSGS_PERMANENTLY_FAILED);
+        counters.getMsgsTmpFailed().set(EXPECTED_MSGS_TMP_FAILED);
+        counters.getMsgsLag().set(EXPECTED_MSGS_LAG);
 
         ConcurrentHashMap<EdgeId, MsgCounters> countersByEdge = new ConcurrentHashMap<>();
         countersByEdge.put(edgeId, counters);
@@ -111,9 +144,9 @@ public class EdgeStatsTest {
 
         when(tsService.save(eq(tenantId), eq(edgeId), captor.capture(), anyLong()))
                 .thenReturn(Futures.immediateFuture(mock(TimeseriesSaveResult.class)));
+    }
 
-        edgeStatsService.reportStats();
-
+    private Map<String, Long> verifyCounters() {
         verify(tsService, times(1)).save(eq(tenantId), eq(edgeId), anyList(), anyLong());
         verify(statsCounterService, times(1)).clear(edgeId);
 
@@ -123,50 +156,23 @@ public class EdgeStatsTest {
         Map<String, Long> valuesByKey = entries.stream()
                 .collect(Collectors.toMap(TsKvEntry::getKey, e -> e.getLongValue().orElse(-1L)));
 
-        Assertions.assertEquals(5L, valuesByKey.get(DOWNLINK_MSGS_ADDED.getKey()).longValue());
-        Assertions.assertEquals(3L, valuesByKey.get(DOWNLINK_MSGS_PUSHED.getKey()).longValue());
-        Assertions.assertEquals(1L, valuesByKey.get(DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey()).longValue());
-        Assertions.assertEquals(0L, valuesByKey.get(DOWNLINK_MSGS_TMP_FAILED.getKey()).longValue());
-        Assertions.assertEquals(10L, valuesByKey.get(DOWNLINK_MSGS_LAG.getKey()).longValue());
+        Assertions.assertEquals(EXPECTED_MSGS_ADDED, valuesByKey.get(DOWNLINK_MSGS_ADDED.getKey()).longValue());
+        Assertions.assertEquals(EXPECTED_MSGS_PUSHED, valuesByKey.get(DOWNLINK_MSGS_PUSHED.getKey()).longValue());
+        Assertions.assertEquals(EXPECTED_MSGS_PERMANENTLY_FAILED, valuesByKey.get(DOWNLINK_MSGS_PERMANENTLY_FAILED.getKey()).longValue());
+        Assertions.assertEquals(EXPECTED_MSGS_TMP_FAILED, valuesByKey.get(DOWNLINK_MSGS_TMP_FAILED.getKey()).longValue());
+        return valuesByKey;
     }
 
-    @Test
-    public void testReportStatsWithKafkaLag() {
-        MsgCounters counters = new MsgCounters(tenantId);
-        counters.getMsgsAdded().set(2);
-        counters.getMsgsPushed().set(2);
-        counters.getMsgsPermanentlyFailed().set(0);
-        counters.getMsgsTmpFailed().set(1);
-        counters.getMsgsLag().set(0);
-
-        ConcurrentHashMap<EdgeId, MsgCounters> countersByEdge = new ConcurrentHashMap<>();
-        countersByEdge.put(edgeId, counters);
-
-        when(statsCounterService.getMsgCountersByEdge()).thenReturn(countersByEdge);
-
+    private void setupKafkaLag() {
         String topic = "edge-topic";
         TopicPartitionInfo partitionInfo = new TopicPartitionInfo(topic, tenantId, 0, false);
         when(topicService.buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId)).thenReturn(partitionInfo);
 
         KafkaAdmin kafkaAdmin = mock(KafkaAdmin.class);
         when(kafkaAdmin.getTotalLagForGroupsBulk(Set.of(topic)))
-                .thenReturn(Map.of(topic, 15L));
-
-        when(tsService.save(eq(tenantId), eq(edgeId), captor.capture(), anyLong()))
-                .thenReturn(Futures.immediateFuture(mock(TimeseriesSaveResult.class)));
+                .thenReturn(Map.of(topic, EXPECTED_MSGS_KAFKA_LAG));
 
         edgeStatsService = createEdgeStatsService(Optional.of(kafkaAdmin));
-
-        edgeStatsService.reportStats();
-
-        verify(tsService, times(1)).save(eq(tenantId), eq(edgeId), anyList(), anyLong());
-        verify(statsCounterService, times(1)).clear(edgeId);
-
-        List<TsKvEntry> entries = captor.getValue();
-        Map<String, Long> valuesByKey = entries.stream()
-                .collect(Collectors.toMap(TsKvEntry::getKey, e -> e.getLongValue().orElse(-1L)));
-
-        Assertions.assertEquals(15L, valuesByKey.get(DOWNLINK_MSGS_LAG.getKey()));
     }
 
 }

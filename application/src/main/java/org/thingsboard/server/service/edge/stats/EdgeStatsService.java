@@ -54,7 +54,7 @@ import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_P
 import static org.thingsboard.server.dao.edge.stats.EdgeStatsKey.DOWNLINK_MSGS_TMP_FAILED;
 
 @TbCoreComponent
-@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "edges.stats", name = "enabled", havingValue = "true")
 @RequiredArgsConstructor
 @Service
 @Slf4j
@@ -69,7 +69,6 @@ public class EdgeStatsService {
     private int edgesStatsTtlDays;
     @Value("${edges.stats.report-interval-millis:600000}")
     private long reportIntervalMillis;
-
 
     @Scheduled(
             fixedDelayString = "${edges.stats.report-interval-millis:600000}",
