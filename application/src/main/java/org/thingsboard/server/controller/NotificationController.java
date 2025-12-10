@@ -312,7 +312,7 @@ public class NotificationController extends BaseController {
                     .entityType(entityType)
                     .userEmail(user.getEmail())
                     .increaseLimitActionLabel("Set new limit")
-                    .increaseLimitLink("/tenantProfiles/"+tenantService.findTenantById(user.getTenantId()).getTenantProfileId().toString())
+                    .increaseLimitLink("/tenants/"+user.getTenantId().toString())
                     .baseUrl(baseUrl)
                     .build();
             notificationCenter.sendSystemNotification(TenantId.SYS_TENANT_ID, notificationTargetId, NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST, info);
