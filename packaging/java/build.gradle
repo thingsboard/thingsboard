@@ -132,6 +132,8 @@ buildDeb {
     archiveFileName = "${pkgName}.deb"
 
     requires("openjdk-17-jre").or("java17-runtime").or("oracle-java17-installer").or("openjdk-17-jre-headless")
+            .or("openjdk-21-jre").or("java21-runtime").or("oracle-java21-installer").or("openjdk-21-jre-headless")
+            .or("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
