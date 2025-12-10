@@ -257,9 +257,6 @@ public class DeviceBulkImportService extends AbstractBulkImportService<Device> {
                     deviceProfile.setProvisionType(DeviceProfileProvisionType.DISABLED);
 
                     Lwm2mDeviceProfileTransportConfiguration transportConfiguration = new Lwm2mDeviceProfileTransportConfiguration();
-                    transportConfiguration.setBootstrap(Collections.emptyList());
-                    transportConfiguration.setClientLwM2mSettings(new OtherConfiguration(false,1, 1, 1, PowerMode.DRX, null, null, null, null, null, V1_0.toString()));
-                    transportConfiguration.setObserveAttr(new TelemetryMappingConfiguration(Collections.emptyMap(), Collections.emptySet(), Collections.emptySet(), Collections.emptySet(), Collections.emptyMap(), false, SINGLE));
 
                     DeviceProfileData deviceProfileData = new DeviceProfileData();
                     DefaultDeviceProfileConfiguration configuration = new DefaultDeviceProfileConfiguration();

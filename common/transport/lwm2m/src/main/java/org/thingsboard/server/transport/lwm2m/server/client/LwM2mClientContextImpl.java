@@ -27,7 +27,6 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.lwm2m.OtherConfiguration;
-import org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryMappingConfiguration;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.transport.TransportDeviceProfileCache;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -48,7 +47,6 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -58,9 +56,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
-import static org.eclipse.leshan.core.LwM2m.Version.V1_0;
 import static org.eclipse.leshan.core.SecurityMode.NO_SEC;
-import static org.thingsboard.server.common.data.device.profile.lwm2m.TelemetryObserveStrategy.SINGLE;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVersionedId;
 
 @Slf4j
@@ -381,9 +377,8 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
                 }
             }
         } else {
-            log.warn("Device profile not found! The device profile ID is null. Return Lwm2mDeviceProfileTransportConfiguration - default.");
+            log.warn("Device profile not found! The device profile ID is null. Return Lwm2mDeviceProfileTransportConfiguration with default.");
             result = new Lwm2mDeviceProfileTransportConfiguration();
-            result.updateDefault();
         }
         return result;
     }
