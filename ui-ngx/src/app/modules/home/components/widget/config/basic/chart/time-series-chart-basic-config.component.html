@@ -103,6 +103,9 @@
       formControlName="states">
   </tb-time-series-chart-states-panel>
   <tb-time-series-chart-y-axes-panel
+    [aliasController]="aliasController"
+    [dataKeyCallbacks]="callbacks"
+    [datasource]="datasource"
     formControlName="yAxes"
     [supportsUnitConversion]="widgetConfig.typeParameters.supportsUnitConversion"
     (axisRemoved)="yAxisRemoved($event)">

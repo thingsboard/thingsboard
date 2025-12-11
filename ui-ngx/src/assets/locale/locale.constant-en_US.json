@@ -8050,6 +8050,14 @@
               "update-animation-delay": "Update animation delay"
             },
             "chart-axis": {
+              "limit":"Limit",
+              "source": "Source",
+              "key-value": "Key / Value",
+              "value-required": "Value is required.",
+              "entity-key-required": "Entity key is required.",
+              "key-required": "Key is required.",
+              "scale-limits": "Scale limits",
+              "scale-appearance": "Scale appearance",
               "scale": "Scale",
               "scale-min": "min",
               "scale-max": "max",

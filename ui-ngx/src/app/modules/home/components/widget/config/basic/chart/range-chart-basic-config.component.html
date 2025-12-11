@@ -242,6 +242,9 @@
     <div class="tb-form-panel-title" translate>widgets.time-series-chart.axis.y-axis</div>
     <tb-time-series-chart-axis-settings
         formControlName="yAxis"
+        [aliasController]="aliasController"
+        [dataKeyCallbacks]="callbacks"
+        [datasource]="datasource"
         axisType="yAxis"
         hideUnits
         hideDecimals>
