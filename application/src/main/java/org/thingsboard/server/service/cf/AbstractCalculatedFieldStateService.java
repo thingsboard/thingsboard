@@ -62,14 +62,14 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     protected abstract void doRemove(CalculatedFieldEntityCtxId stateId, TbCallback callback);
 
-    protected void processRestoredState(CalculatedFieldStateProto stateMsg) {
+    protected void processRestoredState(CalculatedFieldStateProto stateMsg, TbCallback callback) {
         var id = fromProto(stateMsg.getId());
         var state = fromProto(stateMsg);
-        processRestoredState(id, state);
+        processRestoredState(id, state, callback);
     }
 
-    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state) {
-        actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state));
+    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state, TbCallback callback) {
+        actorSystemContext.tell(new CalculatedFieldStateRestoreMsg(id, state, callback));
     }
 
     @Override
