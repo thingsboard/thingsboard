@@ -17,7 +17,6 @@ package org.thingsboard.server.service.cf;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.function.TriConsumer;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.calculatedField.CalculatedFieldTelemetryMsg;
 import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
@@ -167,24 +166,6 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         }
 
         sendMsgToRuleEngine(tenantId, entityId, callback, result.toTbMsg(entityId, cfName, cfIds));
-    }
-
-    private void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,
-                                          TriConsumer<EntityId, TelemetryCalculatedFieldResult, TbCallback> telemetryResultHandler) {
-        List<EntityId> propagationEntityIds = propagationResult.getEntityIds();
-        if (propagationEntityIds.isEmpty()) {
-            callback.onSuccess();
-            return;
-        }
-        if (propagationEntityIds.size() == 1) {
-            EntityId propagationEntityId = propagationEntityIds.get(0);
-            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), callback);
-            return;
-        }
-        MultipleTbCallback multipleTbCallback = new MultipleTbCallback(propagationEntityIds.size(), callback);
-        for (var propagationEntityId : propagationEntityIds) {
-            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), multipleTbCallback);
-        }
     }
 
     @Override

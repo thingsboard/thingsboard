@@ -110,7 +110,7 @@ public interface CalculatedFieldState extends Closeable {
         private static final String MISSING_PROPAGATION_TARGETS_ERROR = "No entities found via 'Propagation path to related entities'. " +
                                                                         "Verify the configured relation type and direction.";
         private static final String MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR = MISSING_PROPAGATION_TARGETS_ERROR + " Missing arguments to propagate: ";
-        private static final ReadinessStatus READY = new ReadinessStatus(true, null);
+        public static final ReadinessStatus READY = new ReadinessStatus(true, null);
 
         public static ReadinessStatus from(List<String> emptyOrMissingArguments) {
             if (CollectionsUtil.isEmpty(emptyOrMissingArguments)) {
