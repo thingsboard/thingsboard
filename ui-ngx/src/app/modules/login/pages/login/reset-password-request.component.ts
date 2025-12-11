@@ -27,7 +27,7 @@ import { validateEmail } from '@app/core/utils';
 @Component({
   selector: 'tb-reset-password-request',
   templateUrl: './reset-password-request.component.html',
-  styleUrls: ['./reset-password-request.component.scss']
+  styleUrls: ['./password.component.scss']
 })
 export class ResetPasswordRequestComponent extends PageComponent {
 

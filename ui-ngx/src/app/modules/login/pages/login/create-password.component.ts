@@ -24,7 +24,7 @@ import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/mode
 @Component({
   selector: 'tb-create-password',
   templateUrl: './create-password.component.html',
-  styleUrls: ['./create-password.component.scss']
+  styleUrls: ['./password.component.scss']
 })
 export class CreatePasswordComponent {
 

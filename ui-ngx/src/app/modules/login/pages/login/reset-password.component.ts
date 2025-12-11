@@ -24,7 +24,7 @@ import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/mode
 @Component({
   selector: 'tb-reset-password',
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss']
+  styleUrls: ['./password.component.scss']
 })
 export class ResetPasswordComponent {
 
