@@ -16,7 +16,6 @@
 
 import { Component } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
-import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
@@ -25,11 +24,12 @@ import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/mode
 @Component({
   selector: 'tb-reset-password',
   templateUrl: './reset-password.component.html',
-  styleUrls: ['./reset-password.component.scss']
+  styleUrls: ['./password.component.scss']
 })
-export class ResetPasswordComponent extends PageComponent {
+export class ResetPasswordComponent {
 
   isExpiredPassword: boolean;
+  isLoading = false;
 
   resetPassword: FormGroup;
   passwordPolicy: UserPasswordPolicy;
@@ -40,7 +40,6 @@ export class ResetPasswordComponent extends PageComponent {
               private router: Router,
               private authService: AuthService,
               private fb: FormBuilder) {
-    super();
 
     this.resetToken = this.route.snapshot.queryParams['resetToken'] || '';
     this.passwordPolicy = this.route.snapshot.data['passwordPolicy'];
@@ -62,13 +61,13 @@ export class ResetPasswordComponent extends PageComponent {
 
   onResetPassword() {
     if (this.resetPassword.invalid) {
-     this.resetPassword.markAllAsTouched();
+      this.resetPassword.markAllAsTouched();
     } else {
-      this.authService.resetPassword(
-        this.resetToken,
-        this.resetPassword.get('newPassword').value).subscribe(
-        () => this.router.navigateByUrl('login')
-      );
+      this.isLoading = true;
+      this.authService.resetPassword(this.resetToken, this.resetPassword.get('newPassword').value).subscribe({
+        next: () => this.router.navigateByUrl('login'),
+        error: () => {this.isLoading = false;}
+      });
     }
   }
 }
