@@ -35,9 +35,10 @@
     </properties>
     <modules>
         <module>data</module>
-        <module>proto</module>
         <module>util</module>
         <module>message</module>
+        <module>proto</module>
+        <module>edge-api</module>
         <module>actor</module>
         <module>queue</module>
         <module>transport</module>
@@ -46,7 +47,6 @@
         <module>stats</module>
         <module>cache</module>
         <module>coap-server</module>
-        <module>edge-api</module>
         <module>version-control</module>
         <module>script</module>
         <module>edqs</module>

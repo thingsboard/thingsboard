@@ -31,6 +31,11 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+// ***** [BUILD-FAILURE-ANNOTATION] Score: 3
+// Reason: Missing Protobuf-generated classes (MsgProtos) during compilation. Protobuf generation step not executed in build lifecycle.
+// Recommended Fix: Run 'mvn protobuf:compile' manually or ensure protobuf-maven-plugin executes before compile phase.
+// Timestamp: 2025-10-02T05:14:32Z
+// *****
 import org.thingsboard.server.common.msg.gen.MsgProtos;
 import org.thingsboard.server.common.msg.gen.MsgProtos.TbMsgProto;
 import org.thingsboard.server.common.msg.queue.TbMsgCallback;
