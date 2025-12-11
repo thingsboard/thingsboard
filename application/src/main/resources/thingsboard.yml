@@ -516,14 +516,14 @@ actors:
     response_timeout_ms: "${ACTORS_RPC_RESPONSE_TIMEOUT_MS:30000}"
     # Close transport session if RPC delivery timed out. If enabled, RPC will be reverted to the queued state.
     # Note:
-    # - For MQTT transport:
-    #   - QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.
-    #   - QoS level 1: This feature applies, as an acknowledgment is expected.
-    #   - QoS level 2: Unsupported.
-    # - For CoAP transport:
-    #   - Confirmable requests: This feature applies, as delivery confirmation is expected.
-    #   - Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.
-    # - For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.
+    # <ul><li> For MQTT transport:
+    #   <ul><li> QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.</li>
+    #   <li> QoS level 1: This feature applies, as an acknowledgment is expected.</li>
+    #   <li> QoS level 2: Unsupported.</li></ul></li>
+    # <li> For CoAP transport:
+    #   <ul><li> Confirmable requests: This feature applies, as delivery confirmation is expected.</li>
+    #   <li> Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.</li></ul></li>
+    # <li> For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.</li></ul>
     close_session_on_rpc_delivery_timeout: "${ACTORS_RPC_CLOSE_SESSION_ON_RPC_DELIVERY_TIMEOUT:false}"
   statistics:
     # Enable/disable actor statistics
@@ -1044,10 +1044,10 @@ transport:
   activity:
     # This property specifies the strategy for reporting activity events within each reporting period.
     # The accepted values are 'FIRST', 'LAST', 'FIRST_AND_LAST' and 'ALL'.
-    # - 'FIRST': Only the first activity event in each reporting period is reported.
-    # - 'LAST': Only the last activity event in the reporting period is reported.
-    # - 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.
-    # - 'ALL': All activity events in the reporting period are reported.
+    # <ul><li> 'FIRST': Only the first activity event in each reporting period is reported.</li>
+    # <li> 'LAST': Only the last activity event in the reporting period is reported.</li>
+    # <li> 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.</li>
+    # <li> 'ALL': All activity events in the reporting period are reported.</li></ul>
     reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:LAST}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
@@ -1380,13 +1380,13 @@ coap:
     # In order to negotiate smaller maximum fragment lengths,
     # clients MAY include an extension of type "max_fragment_length" in the (extended) client hello.
     # The "extension_data" field of this extension SHALL contain:
-    # enum {
+    # <pre> enum {
     #   2^9(1) == 512,
     #   2^10(2) == 1024,
     #   2^11(3) == 2048,
     #   2^12(4) == 4096,
     #   (255)
-    # } MaxFragmentLength;
+    # } MaxFragmentLength; </pre>
     # TLS already requires clients and servers to support fragmentation of handshake messages.
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
