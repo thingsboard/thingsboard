@@ -100,6 +100,6 @@ export class AssetComponent extends EntityComponent<AssetInfo> {
   }
 
   onAssetProfileUpdated() {
-    this.entitiesTableConfig.updateData(false,false);
+    this.entitiesTableConfig.updateData(false, false);
   }
 }
