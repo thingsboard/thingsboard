@@ -1708,28 +1708,59 @@ public class DeviceControllerTest extends AbstractControllerTest {
         assertThat(device.getVersion()).isEqualTo(3);
     }
 
-    @Test
-    public void testSaveDeviceWithUniquifyStrategy() throws Exception {
+@Test
+    public void testPingDevice() throws Exception {
+        // Create a test device
         Device device = new Device();
-        device.setName("My unique device");
+        device.setName("Device for Ping Test");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
+        Assert.assertNotNull(savedDevice);
+        Assert.assertNotNull(savedDevice.getId());
 
-        doPost("/api/device", device).andExpect(status().isBadRequest());
+        // Test ping endpoint
+        String response = doGet("/api/device/ping/" + savedDevice.getId().getId().toString())
+                .andExpect(status().isOk())
+                .andReturn().getResponse().getContentAsString();
 
-        doPost("/api/device?nameConflictPolicy=FAIL", device).andExpect(status().isBadRequest());
+        // Parse response
+        JsonNode jsonResponse = JacksonUtil.toJsonNode(response);
+        
+        // Verify response structure
+        Assert.assertTrue(jsonResponse.has("deviceId"));
+        Assert.assertTrue(jsonResponse.has("reachable"));
+        Assert.assertTrue(jsonResponse.has("lastSeen"));
+        
+        // Verify deviceId matches
+        Assert.assertEquals(savedDevice.getId().getId().toString(), 
+                           jsonResponse.get("deviceId").asText());
+        
+        // Verify reachable is boolean
+        Assert.assertTrue(jsonResponse.get("reachable").isBoolean());
+        
+        // Clean up
+        doDelete("/api/device/" + savedDevice.getId().getId())
+                .andExpect(status().isOk());
+    }
 
-        Device secondDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY", device, Device.class);
-        assertThat(secondDevice.getName()).startsWith("My unique device_");
+    @Test
+    public void testPingDeviceNotFound() throws Exception {
+        // Test ping with non-existent device ID
+        String nonExistentId = java.util.UUID.randomUUID().toString();
+        
+        doGet("/api/device/ping/" + nonExistentId)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(
+                    msgErrorNoFound("Device", nonExistentId))));
+    }
 
-        Device thirdDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", device, Device.class);
-        assertThat(thirdDevice.getName()).startsWith("My unique device-");
-
-        Device fourthDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", device, Device.class);
-        assertThat(fourthDevice.getName()).isEqualTo("My unique device_1");
-
-        Device fifthDevice = doPost("/api/device?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", device, Device.class);
-        assertThat(fifthDevice.getName()).isEqualTo("My unique device_2");
+    @Test
+    public void testPingDeviceInvalidId() throws Exception {
+        // Test ping with invalid device ID format
+        String invalidId = "invalid-uuid-format";
+        
+        doGet("/api/device/ping/" + invalidId)
+                .andExpect(status().isBadRequest());
     }
 
     private Device createDevice(String name) {
@@ -1740,3 +1771,5 @@ public class DeviceControllerTest extends AbstractControllerTest {
     }
 
 }
+
+

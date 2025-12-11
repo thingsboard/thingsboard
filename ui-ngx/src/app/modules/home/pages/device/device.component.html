@@ -54,6 +54,13 @@
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'pingDevice')"
+          [class.!hidden]="isEdit">
+    <mat-icon>wifi_tethering</mat-icon>
+    <span>Ping Device</span>
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
           [class.!hidden]="isEdit || deviceScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
