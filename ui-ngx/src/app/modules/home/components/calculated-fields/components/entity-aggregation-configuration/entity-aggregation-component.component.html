@@ -127,7 +127,7 @@
     <div class="tb-form-panel stroked">
       <mat-slide-toggle class="mat-slide flex" formControlName="produceIntermediateResult">
         <div tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.produce-intermediate-result-hint' | translate: {
-          time: (intermediateAggregationIntervalInSecForCF * 1000 | milliSecondsToTimeString )
+          time: (intermediateAggregationIntervalInSecForCF * 1000 | milliSecondsToTimeString: false: true )
         } }}">
           {{ 'calculated-fields.entity-aggregation.produce-intermediate-result' | translate }}
         </div>

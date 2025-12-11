@@ -239,7 +239,7 @@ export const alarmRuleBooleanOperationTranslationMap = new Map<AlarmRuleBooleanO
 );
 
 export const alarmRuleDefaultScript =
-  '// Sample expression for an alarm rule: triggers when temperature is above 20 degree\n' +
+  '// Triggers when temperature is above 20 degrees\n' +
   'return temperature > 20;'
 
 export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, expression: string, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
