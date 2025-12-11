@@ -110,7 +110,13 @@ public interface CalculatedFieldState extends Closeable {
         private static final String MISSING_PROPAGATION_TARGETS_ERROR = "No entities found via 'Propagation path to related entities'. " +
                                                                         "Verify the configured relation type and direction.";
         private static final String MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR = MISSING_PROPAGATION_TARGETS_ERROR + " Missing arguments to propagate: ";
-        private static final ReadinessStatus READY = new ReadinessStatus(true, null);
+        public static final String MISSING_AGGREGATION_ENTITIES_ERROR = "No entities found via 'Aggregation path to related entities'. " +
+                                                                        "Verify the configured relation type and direction.";
+        public static final ReadinessStatus READY = new ReadinessStatus(true, null);
+
+        public static ReadinessStatus notReady(String errorMsg) {
+            return new ReadinessStatus(false, errorMsg);
+        }
 
         public static ReadinessStatus from(List<String> emptyOrMissingArguments) {
             if (CollectionsUtil.isEmpty(emptyOrMissingArguments)) {
@@ -118,13 +124,12 @@ public interface CalculatedFieldState extends Closeable {
             }
             boolean propagationCtxIsEmpty = emptyOrMissingArguments.remove(PROPAGATION_CONFIG_ARGUMENT);
             if (!propagationCtxIsEmpty) {
-                return new ReadinessStatus(false, MISSING_REQUIRED_ARGUMENTS_ERROR + String.join(", ", emptyOrMissingArguments));
+                return notReady(MISSING_REQUIRED_ARGUMENTS_ERROR + String.join(", ", emptyOrMissingArguments));
             }
             if (emptyOrMissingArguments.isEmpty()) {
-                return new ReadinessStatus(false, MISSING_PROPAGATION_TARGETS_ERROR);
+                return notReady(MISSING_PROPAGATION_TARGETS_ERROR);
             }
-            return new ReadinessStatus(false, MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR +
-                                              String.join(", ", emptyOrMissingArguments));
+            return notReady(MISSING_PROPAGATION_TARGETS_AND_ARGUMENTS_ERROR + String.join(", ", emptyOrMissingArguments));
         }
     }
 
