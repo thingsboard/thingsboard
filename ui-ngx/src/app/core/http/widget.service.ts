@@ -331,6 +331,11 @@ export class WidgetService {
     this.widgetsInfoInMemoryCache.delete(fullFqn);
   }
 
+  public getWidgetsBundlesByIds(widgetsBundleIds: Array<string>, config?: RequestConfig): Observable<Array<WidgetsBundle>> {
+    return this.http.get<Array<WidgetsBundle>>(`/api/widgetsBundles?widgetsBundleIds=${widgetsBundleIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   private loadWidgetsBundleCache(config?: RequestConfig): Observable<any> {
     if (!this.allWidgetsBundles) {
       if (!this.loadWidgetsBundleCacheSubject) {
