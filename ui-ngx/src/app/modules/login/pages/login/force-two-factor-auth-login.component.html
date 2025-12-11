@@ -162,9 +162,10 @@
               <div tb-toast class="flex flex-col items-center justify-start">
                 <form [formGroup]="emailConfigForm" class="mb-8 w-full">
                   <p class="mat-body step-description input" translate>login.email-description</p>
-                  <mat-form-field class="mat-block input-container flex-1" appearance="outline">
+                  <mat-form-field class="mat-block input-container tb-autofilled flex-1" appearance="outline">
                     <input matInput formControlName="email"
                            type="email" required
+                           autocomplete="email"
                            placeholder="{{ 'login.email-label' | translate }}" />
                     <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
                       {{ 'login.email-required' | translate }}
@@ -259,11 +260,11 @@
         }
       </p>
       <form [formGroup]="configForm" class="flex flex-col items-center justify-start">
-        <mat-form-field class="mat-block w-full" appearance="outline">
+        <mat-form-field class="mat-block tb-autofilled w-full" appearance="outline">
           <input matInput formControlName="verificationCode"
                  maxlength="6" type="text" required
                  inputmode="numeric" pattern="[0-9]*"
-                 autocomplete="off"
+                 autocomplete="one-time-code"
                  placeholder="{{ 'login.verification-code' | translate }}">
           @if (configForm.get('verificationCode').getError('required') ||
           configForm.get('verificationCode').getError('minlength') ||

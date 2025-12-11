@@ -58,7 +58,7 @@
           }
           <mat-form-field class="tb-autofilled" appearance="outline" hideRequiredMarker>
             <mat-label translate>login.username</mat-label>
-            <input id="username-input" matInput type="email" autofocus formControlName="username" autocomplete="username"/>
+            <input id="username-input" matInput type="email" autofocus formControlName="username" autocomplete="email"/>
             <mat-icon matPrefix>email</mat-icon>
             <mat-error *ngIf="loginFormGroup.get('username').invalid">
               {{ 'login.invalid-email-format' | translate }}
