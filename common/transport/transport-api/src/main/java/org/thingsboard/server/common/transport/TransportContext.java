@@ -30,9 +30,6 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 
 import java.util.concurrent.ExecutorService;
 
-/**
- * Created by ashvayka on 15.10.18.
- */
 @Slf4j
 @Data
 public abstract class TransportContext {
@@ -76,7 +73,5 @@ public abstract class TransportContext {
     public String getNodeId() {
         return serviceInfoProvider.getServiceId();
     }
-
-
 
 }

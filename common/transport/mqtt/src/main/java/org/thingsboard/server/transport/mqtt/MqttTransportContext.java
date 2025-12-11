@@ -32,9 +32,6 @@ import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by ashvayka on 04.10.18.
- */
 @Slf4j
 @Component
 @TbMqttTransportComponent

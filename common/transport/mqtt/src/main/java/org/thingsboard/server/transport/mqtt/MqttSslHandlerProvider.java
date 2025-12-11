@@ -17,6 +17,7 @@ package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.SmartInitializingSingleton;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,8 +49,8 @@ import java.util.concurrent.TimeUnit;
 
 @Slf4j
 @Component("MqttSslHandlerProvider")
-@ConditionalOnProperty(prefix = "transport.mqtt.ssl", value = "enabled", havingValue = "true", matchIfMissing = false)
-public class MqttSslHandlerProvider {
+@ConditionalOnProperty(prefix = "transport.mqtt.ssl", value = "enabled", havingValue = "true")
+public class MqttSslHandlerProvider implements SmartInitializingSingleton {
 
     @Value("${transport.mqtt.ssl.protocol}")
     private String sslProtocol;
@@ -67,11 +68,24 @@ public class MqttSslHandlerProvider {
     @Qualifier("mqttSslCredentials")
     private SslCredentialsConfig mqttSslCredentialsConfig;
 
-    private SSLContext sslContext;
+    private volatile SSLContext sslContext;
+
+    @Override
+    public void afterSingletonsInstantiated() {
+        mqttSslCredentialsConfig.registerReloadCallback(() -> {
+            log.info("MQTT SSL certificates reloaded. Invalidating SSL context...");
+            sslContext = null;
+            log.info("MQTT SSL context invalidated. Will be recreated on next connection.");
+        });
+    }
 
     public SslHandler getSslHandler() {
         if (sslContext == null) {
-            sslContext = createSslContext();
+            synchronized (this) {
+                if (sslContext == null) {
+                    sslContext = createSslContext();
+                }
+            }
         }
         SSLEngine sslEngine = sslContext.createSSLEngine();
         sslEngine.setUseClientMode(false);
@@ -99,7 +113,7 @@ public class MqttSslHandlerProvider {
             sslContext.init(km, tm, null);
             return sslContext;
         } catch (Exception e) {
-            log.error("Unable to set up SSL context. Reason: " + e.getMessage(), e);
+            log.error("Unable to set up SSL context. Reason: {}", e.getMessage(), e);
             throw new RuntimeException("Failed to get SSL context", e);
         }
     }
@@ -107,8 +121,8 @@ public class MqttSslHandlerProvider {
     private TrustManager getX509TrustManager(TrustManagerFactory tmf) throws Exception {
         X509TrustManager x509Tm = null;
         for (TrustManager tm : tmf.getTrustManagers()) {
-            if (tm instanceof X509TrustManager) {
-                x509Tm = (X509TrustManager) tm;
+            if (tm instanceof X509TrustManager x509TrustManager) {
+                x509Tm = x509TrustManager;
                 break;
             }
         }
@@ -192,5 +206,7 @@ public class MqttSslHandlerProvider {
                 return false;
             }
         }
+
     }
+
 }
