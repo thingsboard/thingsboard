@@ -125,10 +125,13 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (msg.getState() != null) {
                 msg.getState().setRequiredArguments(calculatedField.getArgNames());
             }
-            log.debug("Pushing CF state restore msg to specific actor [{}]", msg.getId().entityId());
+            log.debug("[{}] Pushing CF state restore msg to specific actor [{}]", tenantId, msg.getId().entityId());
             getOrCreateActor(msg.getId().entityId()).tell(msg);
-        } else {
+        } else if (msg.getState() != null) {
+            log.debug("[{}] Received CF state restore msg for non-existing CF [{}]. Removing state", tenantId, cfId);
             cfStateService.removeState(msg.getId(), msg.getCallback());
+        } else {
+            msg.getCallback().onSuccess();
         }
     }
 
