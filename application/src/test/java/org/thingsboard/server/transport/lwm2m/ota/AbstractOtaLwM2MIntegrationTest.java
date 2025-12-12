@@ -247,27 +247,4 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
         log.warn("{}", statuses);
         return statuses.containsAll(expectedStatuses);
     }
-
-    protected void resultReadOtaParams_19(String resourceIdVer, OtaPackageInfo otaPackageInfo)  throws Exception {
-        String actualResult = sendRPCById(resourceIdVer);
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String valStr =  rpcActualResult.get("value").asText();
-        String start = "{ id=0 value=";
-        String valHexDec = valStr.substring(valStr.indexOf(start) + start.length(), (valStr.indexOf("}")));
-        String valNode = new String(Hex.decodeHex((valHexDec).toCharArray()));
-        ObjectNode actualResultVal = JacksonUtil.fromString(valNode, ObjectNode.class);
-        assert actualResultVal != null;
-        assertEquals(otaPackageInfo.getTitle(), actualResultVal.get(OTA_INFO_19_TITLE).asText());
-        assertEquals(otaPackageInfo.getVersion(), actualResultVal.get(OTA_INFO_19_VERSION).asText());
-        assertEquals(otaPackageInfo.getChecksum(), actualResultVal.get(OTA_INFO_19_FILE_CHECKSUM256).asText());
-        assertEquals(otaPackageInfo.getFileName(), actualResultVal.get(OTA_INFO_19_FILE_NAME).asText());
-        assertEquals(Optional.of(otaPackageInfo.getDataSize()), Optional.of((long) actualResultVal.get(OTA_INFO_19_FILE_SIZE).asInt()));
-    }
-
-    private String sendRPCById(String path) throws Exception {
-        String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + path + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
-    }
-
 }
