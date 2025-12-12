@@ -288,7 +288,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             }
             if (!metricsNode.isEmpty()) {
                 ObjectNode resultNode = JacksonUtil.newObjectNode();
-                resultNode.put("ts", interval.getEndTs() - 1);
+                resultNode.put("ts", interval.getStartTs());
                 resultNode.set("values", metricsNode);
                 result.add(resultNode);
 
