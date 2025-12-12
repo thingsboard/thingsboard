@@ -68,7 +68,7 @@ export interface IEntitiesTableComponent {
 
   addEnabled(): boolean;
   clearSelection(): void;
-  updateData(closeDetails?: boolean): void;
+  updateData(closeDetails?: boolean, reloadEntity?: boolean): void;
   onRowClick($event: Event, entity): void;
   toggleEntityDetails($event: Event, entity);
   addEntity($event: Event): void;
