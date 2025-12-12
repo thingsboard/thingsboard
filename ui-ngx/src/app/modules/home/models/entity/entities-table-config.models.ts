@@ -236,9 +236,9 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
     this.table = null;
   }
 
-  updateData(closeDetails = false) {
+  updateData(closeDetails = false, reloadEntity = true) {
     if (this.table) {
-      this.table.updateData(closeDetails);
+      this.table.updateData(closeDetails, reloadEntity);
     } else if (this.entityDetailsPage) {
       this.entityDetailsPage.reload();
     }
