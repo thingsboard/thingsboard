@@ -15,12 +15,14 @@
  */
 package org.thingsboard.rule.engine.rest;
 
+import com.google.common.collect.Maps;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -47,6 +49,7 @@ import reactor.netty.transport.ProxyProvider;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.List;
@@ -213,8 +216,21 @@ public class TbHttpClient {
             }
 
             String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
+
+            Map<String, String> processedQueryParams;
+            if (config.isUseNewEncoding()) {
+                processedQueryParams = Maps.newHashMapWithExpectedSize(config.getQueryParams().size());
+                config.getQueryParams().forEach((name, value) -> {
+                    var processedParamName = TbNodeUtils.processPattern(name, msg);
+                    var processedParamValue = TbNodeUtils.processPattern(value, msg);
+                    processedQueryParams.put(processedParamName, processedParamValue);
+                });
+            } else {
+                processedQueryParams = null;
+            }
+
             HttpMethod method = HttpMethod.valueOf(config.getRequestMethod());
-            URI uri = buildEncodedUri(endpointUrl);
+            URI uri = buildEncodedUri(endpointUrl, processedQueryParams);
 
             RequestBodySpec request = webClient
                     .method(method)
@@ -262,7 +278,7 @@ public class TbHttpClient {
         return origin;
     }
 
-    public URI buildEncodedUri(String endpointUrl) {
+    public URI buildEncodedUri(String endpointUrl, Map<String, String> queryParams) {
         if (endpointUrl == null) {
             throw new RuntimeException("Url string cannot be null!");
         }
@@ -270,7 +286,13 @@ public class TbHttpClient {
             throw new RuntimeException("Url string cannot be empty!");
         }
 
-        URI uri = UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
+        URI uri;
+        if (queryParams != null) {
+            uri = buildEncodedUriNew(endpointUrl, queryParams);
+        } else {
+            uri = buildEncodedUriLegacy(endpointUrl);
+        }
+
         if (uri.getScheme() == null || uri.getScheme().isEmpty()) {
             throw new RuntimeException("Transport scheme(protocol) must be provided!");
         }
@@ -282,6 +304,36 @@ public class TbHttpClient {
         }
 
         return uri;
+    }
+
+    private URI buildEncodedUriNew(String endpointUrl, Map<String, String> queryParams) {
+        try {
+            URIBuilder builder = new URIBuilder(endpointUrl);
+            queryParams.forEach(builder::addParameter);
+            return builder.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("""
+                    Invalid REST endpoint URL: '%s'. The URL must be valid and properly encoded.
+                    If the path contains special characters (e.g., spaces, braces), they must be percent-encoded (e.g., '/my file/' should be '/my%%20file/', '/path/{id}/' should be '/path/%%7Bid%%7D/').
+                    Query parameters should be configured separately and will be encoded automatically.""".formatted(endpointUrl), e);
+        }
+    }
+
+    /**
+     * @deprecated Query params embedded in the URL string are not encoded correctly.
+     * <p>
+     * In query strings, {@code +} is interpreted as a space (URL form encoding),
+     * so {@code email=user+tag@test.com} becomes {@code email=user tag@test.com} on the server.
+     * <p>
+     * Pre-encoding the URL (e.g., {@code email=user%2Btag@test.com}) doesn't help
+     * because {@code .encode()} will double-encode it to {@code email=user%252Btag@test.com}.
+     * <p>
+     * Use {@link #buildEncodedUriNew} with a separate query params map,
+     * where values are encoded exactly once: {@code +} → {@code %2B}, {@code @} → {@code %40}.
+     */
+    @Deprecated(since = "4.2.1.2", forRemoval = true) // fixme: remove in major 5.0
+    private URI buildEncodedUriLegacy(String endpointUrl) {
+        return UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
     }
 
     private Object getData(TbMsg tbMsg, boolean parseToPlainText) {
