@@ -47,6 +47,7 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
 import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgumentEntry;
@@ -57,12 +58,17 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
@@ -105,15 +111,19 @@ public class PropagationCalculatedFieldStateTest {
     @MockitoBean
     private ActorSystemContext actorSystemContext;
 
+    @MockitoBean
+    private CalculatedFieldProcessingService cfProcessingService;
+
     @BeforeEach
     void setUp() {
         when(actorSystemContext.getTbelInvokeService()).thenReturn(tbelInvokeService);
         when(actorSystemContext.getApiLimitService()).thenReturn(apiLimitService);
+        when(actorSystemContext.getCalculatedFieldProcessingService()).thenReturn(cfProcessingService);
         when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
     }
 
     void initCtxAndState(boolean applyExpressionToResolvedArguments) {
-        ctx = new CalculatedFieldCtx(getCalculatedField(applyExpressionToResolvedArguments), actorSystemContext);
+        ctx = spy(new CalculatedFieldCtx(getCalculatedField(applyExpressionToResolvedArguments), actorSystemContext));
         ctx.init();
 
         state = new PropagationCalculatedFieldState(ctx.getEntityId());
@@ -287,7 +297,7 @@ public class PropagationCalculatedFieldStateTest {
 
         AssetId newEntityId = new AssetId(UUID.fromString("83e2c962-eeae-4708-984e-e6a24760f9c3"));
         PropagationArgumentEntry propagationArgumentEntry = new PropagationArgumentEntry();
-        propagationArgumentEntry.setAdded(newEntityId);
+        propagationArgumentEntry.setAdded(List.of(newEntityId));
         Map<String, ArgumentEntry> updated = state.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry), ctx);
         assertThat(updated).isNotNull().containsEntry(PROPAGATION_CONFIG_ARGUMENT, propagationArgumentEntry);
 
@@ -297,6 +307,32 @@ public class PropagationCalculatedFieldStateTest {
         assertThat(propagationCalculatedFieldResult.getResult()).isNotNull();
         assertThat(propagationCalculatedFieldResult.getResult().getResult()).isNotNull();
         assertThat(propagationCalculatedFieldResult.getResult().getResult()).isEqualTo(JacksonUtil.newObjectNode().put(TEMPERATURE_ARGUMENT_NAME, TEMPERATURE_VALUE));
+    }
+
+    @Test
+    void testPropapagationStateInitWithRestoredSetToFalse() {
+        initCtxAndState(false);
+        verify(cfProcessingService, never()).fetchPropagationArgumentFromDb(any(), any());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropapagationStateInitWithRestoredSetToTrue() {
+        initCtxAndState(false);
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())
+        );
+        state.update(initArgs, ctx);
+        assertThat(state.isReady()).isFalse();
+
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(propagationArgEntry));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx).scheduleReevaluation(0L, state.getActorCtx());
     }
 
     private CalculatedField getCalculatedField(boolean applyExpressionToResolvedArguments) {

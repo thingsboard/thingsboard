@@ -104,19 +104,19 @@ public class PropagationArgumentEntryTest {
     @Test
     void testUpdateEntryWhenAdded() {
         var added = new PropagationArgumentEntry();
-        added.setAdded(ENTITY_3_ID);
+        added.setAdded(List.of(ENTITY_3_ID));
 
         boolean changed = entry.updateEntry(added);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
-        assertThat(entry.getAdded()).isEqualTo(ENTITY_3_ID);
+        assertThat(entry.getAdded()).isEqualTo(List.of(ENTITY_3_ID));
     }
 
     @Test
     void testUpdateEntryWhenAddedExistingEntity() {
         var added = new PropagationArgumentEntry();
-        added.setAdded(ENTITY_2_ID);
+        added.setAdded(List.of(ENTITY_2_ID));
 
         boolean changed = entry.updateEntry(added);
 
@@ -147,6 +147,72 @@ public class PropagationArgumentEntryTest {
         assertThat(changed).isFalse();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
         assertThat(entry.getRemoved()).isNull();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreAddsMissingIds() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID), true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isTrue();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
+        assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isPartitionStateRestore()).isFalse();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreRemovesStaleIds() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID), true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID);
+        assertThat(entry.getAdded()).isNull();
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isPartitionStateRestore()).isFalse();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreAddsAndRemoves() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_3_ID), true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isTrue();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_3_ID);
+        assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isPartitionStateRestore()).isFalse();
+    }
+
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreNoChanges() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID), true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isFalse();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
+        assertThat(entry.getAdded()).isNull();
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isPartitionStateRestore()).isFalse();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreEmptySet() {
+        var restore = new PropagationArgumentEntry(List.of(), true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(entry.getEntityIds()).isEmpty();
+        assertThat(entry.getAdded()).isNull();
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isPartitionStateRestore()).isFalse();
     }
 
     @Test

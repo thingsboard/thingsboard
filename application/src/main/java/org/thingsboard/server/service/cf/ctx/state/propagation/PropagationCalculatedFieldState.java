@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
@@ -37,10 +38,14 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ScheduledFuture;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
 public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState {
+
+    private CalculatedFieldProcessingService cfProcessingService;
+    private ScheduledFuture<?> reevaluationFuture;
 
     public PropagationCalculatedFieldState(EntityId entityId) {
         super(entityId);
@@ -50,11 +55,38 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
     public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
         this.ctx = ctx;
         this.actorCtx = actorCtx;
+        this.cfProcessingService = ctx.getCfProcessingService();
         this.requiredArguments = new ArrayList<>(ctx.getArgNames());
         requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
         this.readinessStatus = checkReadiness(requiredArguments, arguments);
         if (ctx.isApplyExpressionForResolvedArguments()) {
             this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
+        }
+    }
+
+    @Override
+    public void init(boolean restored) {
+        super.init(restored);
+        if (restored) {
+            cfProcessingService.fetchPropagationArgumentFromDb(ctx, entityId).ifPresent(fromDb -> {
+                var update = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
+                if (update.isEmpty()) {
+                    return;
+                }
+                ScheduledFuture<?> future = ctx.scheduleReevaluation(0L, actorCtx);
+                if (future != null) {
+                    reevaluationFuture = future;
+                }
+            });
+        }
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (reevaluationFuture != null) {
+            reevaluationFuture.cancel(true);
+            reevaluationFuture = null;
         }
     }
 
@@ -72,7 +104,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         boolean newEntityAdded = propagationArgumentEntry.getAdded() != null;
         List<EntityId> entityIds;
         if (newEntityAdded) {
-            entityIds = List.of(propagationArgumentEntry.getAdded());
+            entityIds = propagationArgumentEntry.getAdded();
             propagationArgumentEntry.setAdded(null);
         } else {
             if (propagationArgumentEntry.getEntityIds().isEmpty()) {

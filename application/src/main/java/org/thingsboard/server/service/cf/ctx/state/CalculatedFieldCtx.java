@@ -63,8 +63,7 @@ import org.thingsboard.server.dao.util.TimeUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
-import org.thingsboard.server.service.cf.ctx.state.aggregation.RelatedEntitiesAggregationCalculatedFieldState;
-import org.thingsboard.server.service.cf.ctx.state.geofencing.GeofencingCalculatedFieldState;
+import org.thingsboard.server.service.cf.ctx.state.geofencing.ScheduledRefreshSupported;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
 import java.io.Closeable;
@@ -122,7 +121,7 @@ public class CalculatedFieldCtx implements Closeable {
     private long maxSingleValueArgumentSize;
     private long intermediateAggregationIntervalMillis;
 
-    private boolean relationQueryDynamicArguments;
+    private boolean relationPathSource;
     private List<String> mainEntityGeofencingArgumentNames;
     private List<String> linkedEntityAndCurrentOwnerGeofencingArgumentNames;
     private List<String> relatedEntityArgumentNames;
@@ -161,10 +160,11 @@ public class CalculatedFieldCtx implements Closeable {
                 if (refId == null) {
                     if (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cfType)) {
                         relatedEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
+                        relationPathSource = true;
                         continue;
                     }
                     if (entry.getValue().hasRelationQuerySource()) {
-                        relationQueryDynamicArguments = true;
+                        relationPathSource = true;
                         continue;
                     }
                     if (entry.getValue().hasOwnerSource()) {
@@ -201,7 +201,7 @@ public class CalculatedFieldCtx implements Closeable {
             if (calculatedField.getConfiguration() instanceof PropagationCalculatedFieldConfiguration propagationConfig) {
                 propagationArgument = propagationConfig.toPropagationArgument();
                 applyExpressionForResolvedArguments = propagationConfig.isApplyExpressionToResolvedArguments();
-                relationQueryDynamicArguments = true;
+                relationPathSource = true;
             }
         }
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
@@ -636,6 +636,7 @@ public class CalculatedFieldCtx implements Closeable {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
+    // TODO: Consider to reevaluate if we need to refresh relationPathSource and scheduled update
     public boolean hasRefreshContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state recalculation
         if (output != null) {
             var thisOutputStrategy = output.getStrategy();
@@ -757,38 +758,20 @@ public class CalculatedFieldCtx implements Closeable {
         return scheduledUpdateIntervalMillis == DISABLED_INTERVAL_VALUE;
     }
 
-    public boolean shouldFetchRelationQueryDynamicArgumentsFromDb(CalculatedFieldState state) {
-        if (!relationQueryDynamicArguments) {
-            return false;
-        }
-        return switch (cfType) {
-            case PROPAGATION -> true;
-            case GEOFENCING -> {
-                if (isScheduledUpdateDisabled()) {
-                    yield false;
-                }
-                var geofencingState = (GeofencingCalculatedFieldState) state;
-                if (geofencingState.getLastDynamicArgumentsRefreshTs() == DEFAULT_LAST_UPDATE_TS) {
-                    yield true;
-                }
-                yield geofencingState.getLastDynamicArgumentsRefreshTs() <
-                        System.currentTimeMillis() - scheduledUpdateIntervalMillis;
-            }
-            default -> false;
-        };
-    }
-
-    public boolean shouldFetchEntityRelations(CalculatedFieldState state) {
-        if (!(state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesAggState)) {
+    public boolean shouldFetchRelatedEntities(CalculatedFieldState state) {
+        if (!relationPathSource) {
             return false;
         }
         if (isScheduledUpdateDisabled()) {
             return false;
         }
-        if (relatedEntitiesAggState.getLastRelatedEntitiesRefreshTs() == DEFAULT_LAST_UPDATE_TS) {
+        if (!(state instanceof ScheduledRefreshSupported scheduledRefreshSupported)) {
+            return false;
+        }
+        if (scheduledRefreshSupported.getLastScheduledRefreshTs() == DEFAULT_LAST_UPDATE_TS) {
             return true;
         }
-        return relatedEntitiesAggState.getLastRelatedEntitiesRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
+        return scheduledRefreshSupported.getLastScheduledRefreshTs() < System.currentTimeMillis() - scheduledUpdateIntervalMillis;
     }
 
     @Override

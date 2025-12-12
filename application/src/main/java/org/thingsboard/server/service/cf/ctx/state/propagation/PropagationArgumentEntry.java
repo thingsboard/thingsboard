@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -30,8 +32,9 @@ import java.util.Set;
 public class PropagationArgumentEntry implements ArgumentEntry {
 
     private Set<EntityId> entityIds;
-    private transient EntityId added;
+    private transient List<EntityId> added;
     private transient EntityId removed;
+    private transient boolean partitionStateRestore;
 
     private boolean forceResetPrevious;
 
@@ -39,10 +42,16 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         this.entityIds = new HashSet<>();
         this.added = null;
         this.removed = null;
+        this.partitionStateRestore = false;
     }
 
     public PropagationArgumentEntry(List<EntityId> entityIds) {
+        this(entityIds, false);
+    }
+
+    public PropagationArgumentEntry(List<EntityId> entityIds, boolean partitionStateRestore) {
         this.entityIds = new HashSet<>(entityIds);
+        this.partitionStateRestore = partitionStateRestore;
     }
 
     @Override
@@ -57,25 +66,42 @@ public class PropagationArgumentEntry implements ArgumentEntry {
 
     @Override
     public boolean updateEntry(ArgumentEntry entry) {
-        if (!(entry instanceof PropagationArgumentEntry propagationArgumentEntry)) {
+        if (!(entry instanceof PropagationArgumentEntry updated)) {
             throw new IllegalArgumentException("Unsupported argument entry type for propagation argument entry: " + entry.getType());
         }
-        if (propagationArgumentEntry.getAdded() != null) {
-            boolean updated = entityIds.add(propagationArgumentEntry.getAdded());
-            if (updated) {
-                added = propagationArgumentEntry.getAdded();
+        if (updated.getAdded() != null) {
+            return checkAdded(updated.getAdded());
+        }
+        if (updated.getRemoved() != null) {
+            return entityIds.remove(updated.getRemoved());
+        }
+        if (updated.isPartitionStateRestore()) {
+            Set<EntityId> updatedIds = updated.getEntityIds();
+            if (updatedIds.isEmpty()) {
+                entityIds.clear();
+                return false;
             }
-            return updated;
+            entityIds.retainAll(updatedIds);
+            return checkAdded(updatedIds);
         }
-        if (propagationArgumentEntry.getRemoved() != null) {
-            return entityIds.remove(propagationArgumentEntry.getRemoved());
-        }
-        if (propagationArgumentEntry.isEmpty()) {
+        if (updated.isEmpty()) {
             entityIds.clear();
             return true;
         }
-        entityIds = propagationArgumentEntry.getEntityIds();
+        entityIds = updated.getEntityIds();
         return true;
+    }
+
+    private boolean checkAdded(Collection<EntityId> updatedIds) {
+        for (EntityId id : updatedIds) {
+            if (entityIds.add(id)) {
+                if (added == null) {
+                    added = new ArrayList<>();
+                }
+                added.add(id);
+            }
+        }
+        return added != null && !added.isEmpty();
     }
 
     @Override
