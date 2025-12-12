@@ -112,6 +112,7 @@ public class TbKafkaSettings {
     @Value("${queue.kafka.fetch_max_bytes:134217728}")
     private int fetchMaxBytes;
 
+    @Getter
     @Value("${queue.kafka.request.timeout.ms:30000}")
     private int requestTimeoutMs;
 
