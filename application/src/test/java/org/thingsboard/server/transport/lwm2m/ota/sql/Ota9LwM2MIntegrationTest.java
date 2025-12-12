@@ -51,7 +51,8 @@ public class Ota9LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
      * => PKG integrity verified -> DELIVERED  (Res=3 (Successfully Downloaded and package integrity verified) && State=3) -> INSTALLED;
      * => Install -> INSTALLED (Res=2 SW successfully installed) && State=4) -> Start
      *
-     * */
+     *
+     */
     @Test
     public void testSoftwareUpdateByObject9() throws Exception {
         String clientEndpoint = this.CLIENT_ENDPOINT_OTA9;
@@ -73,49 +74,6 @@ public class Ota9LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         List<TsKvEntry> ts = await("await on timeseries")
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getFwSwStateTelemetryFromAPI(device.getId().getId(), "sw_state"), this::predicateForStatuses);
-        log.warn("Object9: Got the ts: {}", ts);
-    }
-    /**
-     * ObjectId = 19/65534/0
-     * {
-     *   "title" : "My sw",
-     *   "version" : "v1.0.19",
-     *   "checksum" : "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a",
-     *   "fileSize" : 1,
-     *   "fileName" : "filename.txt"
-     * }
-     * => Start -> INITIAL (State=0) -> DOWNLOAD STARTED;
-     * => PKG / URI Write -> DOWNLOAD STARTED (Res=1 (Downloading) && State=1) -> DOWNLOADED
-     * => PKG Written -> DOWNLOADED (Res=1 Initial && State=2) -> DELIVERED;
-     * => PKG integrity verified -> DELIVERED  (Res=3 (Successfully Downloaded and package integrity verified) && State=3) -> INSTALLED;
-     * => Install -> INSTALLED (Res=2 SW successfully installed) && State=4) -> Start
-     *
-     * */
-    @Test
-    public void testSoftwareUpdateByObject9WithObject19_Ok() throws Exception {
-        String clientEndpoint = this.CLIENT_ENDPOINT_OTA9_19;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration19(OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA9_19, getBootstrapServerCredentialsNoSec(NONE));
-        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
-        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(clientEndpoint));
-        final Device device = createLwm2mDevice(deviceCredentials, clientEndpoint, deviceProfile.getId());
-        createNewClient(SECURITY_NO_SEC, null, false, clientEndpoint, device.getId().getId().toString());
-        awaitObserveReadAll(5, device.getId().getId().toString());
-        OtaPackageInfo otaPackageInfo = createSoftware(deviceProfile.getId(), "v1.0.19");
-        device.setSoftwareId(otaPackageInfo.getId());
-        final Device savedDevice = doPost("/api/device", device, Device.class); //sync call
-
-        assertThat(savedDevice).as("saved device").isNotNull();
-        assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
-
-        expectedStatuses = List.of(
-                QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
-        List<TsKvEntry> ts = await("await on timeseries")
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> getFwSwStateTelemetryFromAPI(device.getId().getId(), "sw_state"), this::predicateForStatuses);
-
-        String ver_Id_19 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(BINARY_APP_DATA_CONTAINER).version;
-        String resourceIdVer = "/" + BINARY_APP_DATA_CONTAINER + "_" + ver_Id_19 + "/" + SW_INSTANCE_ID + "/" + RESOURCE_ID_0;
-        resultReadOtaParams_19(resourceIdVer, otaPackageInfo);
         log.warn("Object9: Got the ts: {}", ts);
     }
 }
