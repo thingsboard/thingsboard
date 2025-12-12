@@ -37,10 +37,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.rest.client.utils.RestJsonConverter.toTimeseries;
@@ -251,9 +249,6 @@ public abstract class AbstractOtaLwM2MIntegrationTest extends AbstractLwM2MInteg
     }
 
     protected void resultReadOtaParams_19(String resourceIdVer, OtaPackageInfo otaPackageInfo)  throws Exception {
-        await("await on Read")
-                .atMost(TIMEOUT*2, TimeUnit.SECONDS)
-                .until(() -> Boolean.valueOf(sendRPCById(resourceIdVer)));
         String actualResult = sendRPCById(resourceIdVer);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
