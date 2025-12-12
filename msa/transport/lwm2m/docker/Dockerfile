@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bookworm-slim
+FROM ${docker.base.image}
 
 COPY start-tb-lwm2m-transport.sh ${pkg.name}.deb /tmp/
 
