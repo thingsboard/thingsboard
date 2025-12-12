@@ -34,6 +34,7 @@ import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
@@ -58,6 +59,7 @@ import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.query.SingleEntityFilter;
 import org.thingsboard.server.common.data.query.TsValue;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
 import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
@@ -476,6 +478,56 @@ public class WebsocketApiTest extends AbstractControllerTest {
         AlarmStatusUpdate alarmStatusUpdate5 = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
         Assert.assertEquals(2, alarmStatusUpdate5.getCmdId());
         Assert.assertFalse(alarmStatusUpdate5.isActive());
+    }
+
+    @Test
+    public void testAlarmStatusWsCmdForPropagatedAlarms() throws Exception {
+        loginTenantAdmin();
+        Device device = new Device();
+        device.setName("Test device");
+        device.setLabel("Label");
+        device.setType("default");
+        device = doPost("/api/device", device, Device.class);
+
+        Asset asset = new Asset();
+        asset.setName("My asset");
+        asset.setType("default");
+        asset = doPost("/api/asset", asset, Asset.class);
+
+        EntityRelation entityRelation = new EntityRelation(asset.getId(), device.getId(), "CONTAINS");
+        doPost("/api/relation", entityRelation);
+
+        AlarmStatusCmd cmd = new AlarmStatusCmd(1, asset.getId(), null, List.of(AlarmSeverity.CRITICAL));
+        getWsClient().send(cmd);
+
+        AlarmStatusUpdate update = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(1, update.getCmdId());
+        Assert.assertFalse(update.isActive());
+
+        //create alarm
+        getWsClient().registerWaitForUpdate();
+
+        Alarm alarm = Alarm.builder()
+                .originator(device.getId())
+                .severity(AlarmSeverity.CRITICAL)
+                .type("test_type")
+                .propagate(true)
+                .build();
+
+        alarm = doPost("/api/alarm", alarm, Alarm.class);
+        Assert.assertNotNull(alarm);
+
+        // check no update for asset
+        String msg = getWsClient().waitForUpdate(TimeUnit.SECONDS.toMillis(1));
+        Assert.assertNull(msg);
+
+        // check device
+        AlarmStatusCmd deviceCmd = new AlarmStatusCmd(2, device.getId(), null, List.of(AlarmSeverity.CRITICAL));
+        getWsClient().send(deviceCmd);
+
+        AlarmStatusUpdate deviceUpdate = JacksonUtil.fromString(getWsClient().waitForReply(), AlarmStatusUpdate.class);
+        Assert.assertEquals(2, deviceUpdate.getCmdId());
+        Assert.assertTrue(deviceUpdate.isActive());
     }
 
     @Test
