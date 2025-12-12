@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -63,11 +62,22 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
     public void restore(QueueKey queueKey, Set<TopicPartitionInfo> partitions) {
         if (stateService.getPartitions().isEmpty()) {
             cfRocksDb.forEach((key, value) -> {
+                CalculatedFieldStateProto stateMsg;
                 try {
-                    processRestoredState(CalculatedFieldStateProto.parseFrom(value));
-                } catch (InvalidProtocolBufferException e) {
-                    log.error("[{}] Failed to process restored state", key, e);
+                    stateMsg = CalculatedFieldStateProto.parseFrom(value);
+                } catch (Exception e) {
+                    log.error("Failed to parse CalculatedFieldStateProto for key {}", key, e);
+                    return;
                 }
+                processRestoredState(stateMsg, new TbCallback() {
+                    @Override
+                    public void onSuccess() {}
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        log.error("Failed to process CF state message: {}", stateMsg, t);
+                    }
+                });
             });
         }
         super.restore(queueKey, partitions);

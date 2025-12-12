@@ -112,6 +112,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } else {
             states.remove(cfId);
         }
+        msg.getCallback().onSuccess();
     }
 
     public void process(EntityInitCalculatedFieldMsg msg) throws CalculatedFieldException {

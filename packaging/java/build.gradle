@@ -92,7 +92,11 @@ buildRpm {
     archiveVersion = projectVersion.replace('-', '')
     archiveFileName = "${pkgName}.rpm"
 
-    requires("(java-17 or java-17-headless or jre-17 or jre-17-headless)") // .or() notation does work in RPM plugin
+    // Support Java 17 (existing), plus Java 21 and Java 25 for RPM-based distros
+    // Keep using RPM boolean expression syntax since .or() chaining is for DEB only
+    requires("(java-17 or java-17-headless or jre-17 or jre-17-headless or " +
+              "java-21 or java-21-headless or jre-21 or jre-21-headless or " +
+              "java-25 or java-25-headless or jre-25 or jre-25-headless)")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
@@ -132,6 +136,8 @@ buildDeb {
     archiveFileName = "${pkgName}.deb"
 
     requires("openjdk-17-jre").or("java17-runtime").or("oracle-java17-installer").or("openjdk-17-jre-headless")
+            .or("openjdk-21-jre").or("java21-runtime").or("oracle-java21-installer").or("openjdk-21-jre-headless")
+            .or("openjdk-25-jre").or("java25-runtime").or("oracle-java25-installer").or("openjdk-25-jre-headless")
 
     from("${buildDir}/conf") {
         include "${pkgName}.conf"
