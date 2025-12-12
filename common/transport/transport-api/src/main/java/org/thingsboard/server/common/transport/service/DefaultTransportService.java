@@ -930,9 +930,9 @@ public class DefaultTransportService extends TransportActivityManager implements
                     tenantProfileCache.remove(new TenantProfileId(entityUuid));
                 } else if (EntityType.TENANT.equals(entityType)) {
                     TenantId tenantId = TenantId.fromUUID(entityUuid);
+                    onDevicesDeleted(tenantId);
                     rateLimitService.remove(tenantId);
                     partitionService.removeTenant(tenantId);
-                    onTenantDeleted(tenantId);
                 } else if (EntityType.DEVICE.equals(entityType)) {
                     rateLimitService.remove(new DeviceId(entityUuid));
                     onDeviceDeleted(new DeviceId(entityUuid));
@@ -968,7 +968,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
     }
 
-    private void onTenantDeleted(TenantId tenantId) {
+    private void onDevicesDeleted(TenantId tenantId) {
         sessions.forEach((id, md) -> {
             TenantId sessionTenantId = getTenantId(md.getSessionInfo());
             if (sessionTenantId.equals(tenantId)) {
