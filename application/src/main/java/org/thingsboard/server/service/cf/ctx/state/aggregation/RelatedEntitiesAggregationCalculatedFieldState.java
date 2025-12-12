@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx.DISABLED_INTERVAL_VALUE;
+import static org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState.ReadinessStatus.MISSING_AGGREGATION_ENTITIES_ERROR;
 
 @Slf4j
 @Getter
@@ -165,6 +166,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         });
         lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
         lastArgsRefreshTs = System.currentTimeMillis();
+        readinessStatus = checkReadiness(requiredArguments, arguments);
     }
 
     public void scheduleReevaluation() {
@@ -275,5 +277,19 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     record RelatedEntitiesArgument(ArgumentEntryType type, List<EntityArgument> entitiesArguments) {}
 
     record EntityArgument(EntityInfo entity, JsonNode entityArguments) {}
+
+    @Override
+    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
+        if (currentArguments == null) {
+            return ReadinessStatus.notReady(MISSING_AGGREGATION_ENTITIES_ERROR);
+        }
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                return ReadinessStatus.notReady(MISSING_AGGREGATION_ENTITIES_ERROR);
+            }
+        }
+        return ReadinessStatus.READY;
+    }
 
 }
