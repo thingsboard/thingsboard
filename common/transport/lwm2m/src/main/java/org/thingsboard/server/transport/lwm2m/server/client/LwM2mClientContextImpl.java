@@ -364,16 +364,21 @@ public class LwM2mClientContextImpl implements LwM2mClientContext {
     }
 
     private Lwm2mDeviceProfileTransportConfiguration doGetAndCache(UUID profileId) {
-
-        Lwm2mDeviceProfileTransportConfiguration result = profiles.get(profileId);
-        if (result == null) {
-            log.debug("Fetching profile [{}]", profileId);
-            DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
-            if (deviceProfile != null) {
-                result = profileUpdate(deviceProfile);
-            } else {
-                log.warn("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
+        Lwm2mDeviceProfileTransportConfiguration result;
+        if (profileId != null) {
+            result = profiles.get(profileId);
+            if (result == null) {
+                log.debug("Fetching profile [{}]", profileId);
+                DeviceProfile deviceProfile = deviceProfileCache.get(new DeviceProfileId(profileId));
+                if (deviceProfile != null) {
+                    result = profileUpdate(deviceProfile);
+                } else {
+                    log.warn("Device profile was not found! Most probably device profile [{}] has been removed from the database.", profileId);
+                }
             }
+        } else {
+            log.warn("Device profile not found! The device profile ID is null. Return Lwm2mDeviceProfileTransportConfiguration with default.");
+            result = new Lwm2mDeviceProfileTransportConfiguration();
         }
         return result;
     }

@@ -484,13 +484,18 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      */
     private void initClientTelemetry(LwM2mClient lwM2MClient) {
         Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getRegistration());
-        Set<String> supportedObjects = clientContext.getSupportedIdVerInClient(lwM2MClient);
-        if (supportedObjects != null && supportedObjects.size() > 0) {
-            this.sendReadRequests(lwM2MClient, profile, supportedObjects);
-            this.sendInitObserveRequests(lwM2MClient, profile, supportedObjects);
-            this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
+        if (profile != null) {
+            Set<String> supportedObjects = clientContext.getSupportedIdVerInClient(lwM2MClient);
+            if (supportedObjects != null && !supportedObjects.isEmpty()) {
+                this.sendInitObserveRequests(lwM2MClient, profile, supportedObjects);
+                this.sendReadRequests(lwM2MClient, profile, supportedObjects);
+                this.sendWriteAttributeRequests(lwM2MClient, profile, supportedObjects);
 //            Removed. Used only for debug.
 //            this.sendDiscoverRequests(lwM2MClient, profile, supportedObjects);
+            }
+        } else {
+            log.warn("[{}] Failed to process initClientTelemetry! Profile is null. Update procedure may not have completed after reboot yet", lwM2MClient.getEndpoint());
+            logService.log(lwM2MClient, "Failed to process initClientTelemetry. Profile is null. Update procedure may not have completed after reboot yet");
         }
     }
 
@@ -1016,7 +1021,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         });
     }
 
-    private void  updateValueOta(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfile, Lwm2mDeviceProfileTransportConfiguration newProfile) {
+    private void  updateValueOta(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration newProfile, Lwm2mDeviceProfileTransportConfiguration oldProfile) {
         OtherConfiguration newLwM2mSettings = newProfile.getClientLwM2mSettings();
         OtherConfiguration oldLwM2mSettings = oldProfile.getClientLwM2mSettings();
         if (!newLwM2mSettings.getFwUpdateStrategy().equals(oldLwM2mSettings.getFwUpdateStrategy())
@@ -1098,6 +1103,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     v -> attributesService.onAttributesUpdate(lwM2MClient, v, logFailedUpdateOfNonChangedValue),
                     t -> log.error("[{}] Failed to get attributes", lwM2MClient.getEndpoint(), t),
                     executor);
+        } else {
+            log.warn("[{}] Failed to process initAttributes! Profile is null. Update procedure may not have completed after reboot yet", lwM2MClient.getEndpoint());
+            logService.log(lwM2MClient, "Failed to process initAttributes. Profile is null. Update procedure may not have completed after reboot yet");
         }
     }
 
@@ -1107,7 +1115,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private Map<String, String> getNamesFromProfileForSharedAttributes(LwM2mClient lwM2MClient) {
         Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getRegistration());
-        return profile.getObserveAttr().getKeyName();
+        return profile != null ? profile.getObserveAttr().getKeyName() : Collections.emptyMap();
     }
 
     public LwM2MTransportServerConfig getConfig() {
