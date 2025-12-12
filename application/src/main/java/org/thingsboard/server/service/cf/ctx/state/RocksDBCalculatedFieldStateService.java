@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf.ctx.state;
 
-import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
@@ -66,7 +65,7 @@ public class RocksDBCalculatedFieldStateService extends AbstractCalculatedFieldS
                 CalculatedFieldStateProto stateMsg;
                 try {
                     stateMsg = CalculatedFieldStateProto.parseFrom(value);
-                } catch (InvalidProtocolBufferException e) {
+                } catch (Exception e) {
                     log.error("Failed to parse CalculatedFieldStateProto for key {}", key, e);
                     return;
                 }
