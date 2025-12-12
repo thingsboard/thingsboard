@@ -406,7 +406,8 @@ public class InstallScripts {
 
         Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
         loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE, null);
-        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE, ResourceSubType.EXTENSION);
+        loadSystemResources(resourcesDir.resolve("js_extensions"), ResourceType.JS_MODULE, ResourceSubType.EXTENSION);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE, ResourceSubType.MODULE);
         loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD, null);
     }
 
