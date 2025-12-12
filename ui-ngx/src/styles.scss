@@ -665,6 +665,10 @@ pre.tb-highlight {
           -webkit-background-clip: text !important;
           -webkit-text-fill-color: var(--mdc-outlined-text-field-input-text-color);
         }
+        &::spelling-error {
+          color: var(--mdc-outlined-text-field-input-text-color);
+          text-decoration: none;
+        }
       }
     }
   }
