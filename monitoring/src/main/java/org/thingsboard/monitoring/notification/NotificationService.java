@@ -64,11 +64,11 @@ public class NotificationService {
         try {
             notificationExecutor.shutdown();
             if (!notificationExecutor.awaitTermination(10, TimeUnit.SECONDS)) {
-                java.util.List<Runnable> dropped = notificationExecutor.shutdownNow();
+                var dropped = notificationExecutor.shutdownNow();
                 log.warn("Notification executor did not terminate in time. Forced shutdown; {} task(s) will not be executed.", dropped.size());
             }
         } catch (InterruptedException e) {
-            java.util.List<Runnable> dropped = notificationExecutor.shutdownNow();
+            var dropped = notificationExecutor.shutdownNow();
             Thread.currentThread().interrupt();
             log.warn("Interrupted during notification executor shutdown. Forced shutdown; {} task(s) will not be executed.", dropped.size());
         } catch (Exception e) {
