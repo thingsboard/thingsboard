@@ -127,7 +127,8 @@
         <jeasy.version>5.0.0</jeasy.version>
         <!--      BLACKBOX TEST SCOPE     -->
         <testng.version>7.10.1</testng.version>
-        <testcontainers.version>1.20.6</testcontainers.version>
+        <testcontainers.version>2.0.2</testcontainers.version>
+        <testcontainers-junit-jupiter.version>1.21.3</testcontainers-junit-jupiter.version>
         <testcontainers-junit4-mock.version>1.0.2</testcontainers-junit4-mock.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <webdrivermanager.version>6.1.0</webdrivermanager.version>
@@ -1760,7 +1761,7 @@
             <dependency>
                 <groupId>org.testcontainers</groupId>
                 <artifactId>junit-jupiter</artifactId>
-                <version>${testcontainers.version}</version>
+                <version>${testcontainers-junit-jupiter.version}</version>
                 <scope>test</scope>
                 <exclusions>
                     <exclusion>

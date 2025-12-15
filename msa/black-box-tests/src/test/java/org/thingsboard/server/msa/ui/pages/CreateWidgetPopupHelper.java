@@ -17,7 +17,7 @@ package org.thingsboard.server.msa.ui.pages;
 
 import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 
 public class CreateWidgetPopupHelper extends CreateWidgetPopupElements {
     public CreateWidgetPopupHelper(WebDriver driver) {

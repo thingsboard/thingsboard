@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.msa.connectivity.lwm2m.security;
 
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;

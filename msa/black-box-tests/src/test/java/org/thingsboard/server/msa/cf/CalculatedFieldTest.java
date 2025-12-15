@@ -16,7 +16,7 @@
 package org.thingsboard.server.msa.cf;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;

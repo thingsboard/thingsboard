@@ -16,7 +16,7 @@
 package org.thingsboard.server.msa.edqs;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterClass;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
