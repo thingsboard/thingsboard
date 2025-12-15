@@ -66,9 +66,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-/**
- * Created by ashvayka on 04.10.18.
- */
 public interface TransportService {
 
     GetEntityProfileResponseMsg getEntityProfile(GetEntityProfileRequestMsg msg);
@@ -162,4 +159,5 @@ public interface TransportService {
     boolean hasSession(SessionInfoProto sessionInfo);
 
     void createGaugeStats(String openConnections, AtomicInteger connectionsCounter);
+
 }
