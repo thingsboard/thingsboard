@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -36,10 +35,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.INIT
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.QUEUED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.VERIFIED;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
-import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_INSTANCE_ID;
 
 @Slf4j
 public class Ota9LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
