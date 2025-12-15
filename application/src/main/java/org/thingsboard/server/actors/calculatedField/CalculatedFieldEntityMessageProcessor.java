@@ -469,7 +469,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         state.setCtx(ctx, actorCtx);
         state.init(false);
 
-        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isRelationPathSource()) {
+        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isCfHasRelationPathQuerySource()) {
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
             geofencingState.updateScheduledRefreshTs();
         }

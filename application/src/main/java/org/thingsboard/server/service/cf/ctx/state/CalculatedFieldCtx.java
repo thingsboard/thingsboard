@@ -121,7 +121,7 @@ public class CalculatedFieldCtx implements Closeable {
     private long maxSingleValueArgumentSize;
     private long intermediateAggregationIntervalMillis;
 
-    private boolean relationPathSource;
+    private boolean cfHasRelationPathQuerySource;
     private List<String> mainEntityGeofencingArgumentNames;
     private List<String> linkedEntityAndCurrentOwnerGeofencingArgumentNames;
     private List<String> relatedEntityArgumentNames;
@@ -160,11 +160,11 @@ public class CalculatedFieldCtx implements Closeable {
                 if (refId == null) {
                     if (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION.equals(cfType)) {
                         relatedEntityArguments.compute(refKey, (key, existingNames) -> CollectionsUtil.addToSet(existingNames, entry.getKey()));
-                        relationPathSource = true;
+                        cfHasRelationPathQuerySource = true;
                         continue;
                     }
                     if (entry.getValue().hasRelationQuerySource()) {
-                        relationPathSource = true;
+                        cfHasRelationPathQuerySource = true;
                         continue;
                     }
                     if (entry.getValue().hasOwnerSource()) {
@@ -201,7 +201,7 @@ public class CalculatedFieldCtx implements Closeable {
             if (calculatedField.getConfiguration() instanceof PropagationCalculatedFieldConfiguration propagationConfig) {
                 propagationArgument = propagationConfig.toPropagationArgument();
                 applyExpressionForResolvedArguments = propagationConfig.isApplyExpressionToResolvedArguments();
-                relationPathSource = true;
+                cfHasRelationPathQuerySource = true;
             }
         }
         if (calculatedField.getConfiguration() instanceof ScheduledUpdateSupportedCalculatedFieldConfiguration scheduledConfig) {
@@ -759,7 +759,7 @@ public class CalculatedFieldCtx implements Closeable {
     }
 
     public boolean shouldFetchRelatedEntities(CalculatedFieldState state) {
-        if (!relationPathSource) {
+        if (!cfHasRelationPathQuerySource) {
             return false;
         }
         if (isScheduledUpdateDisabled()) {
