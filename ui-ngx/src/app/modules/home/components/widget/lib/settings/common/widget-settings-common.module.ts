@@ -267,6 +267,7 @@ import {
 import {
   ShapeFillStripeSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/map/shape-fill-stripe-settings-panel.component';
+import { AxisScaleRowComponent } from './axis-scale-row.component';
 
 @NgModule({
   declarations: [
@@ -372,7 +373,8 @@ import {
     DataKeysComponent,
     DataKeyConfigDialogComponent,
     DataKeyConfigComponent,
-    WidgetSettingsComponent
+    WidgetSettingsComponent,
+    AxisScaleRowComponent
   ],
   imports: [
     CommonModule,
@@ -453,7 +455,8 @@ import {
     DataKeysComponent,
     DataKeyConfigDialogComponent,
     DataKeyConfigComponent,
-    WidgetSettingsComponent
+    WidgetSettingsComponent,
+    AxisScaleRowComponent
   ],
   providers: [
     ColorSettingsComponentService,

@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bookworm-slim
+FROM ${docker.base.image}
 
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update \

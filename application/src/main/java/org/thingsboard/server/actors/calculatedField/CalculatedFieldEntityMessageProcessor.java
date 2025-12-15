@@ -132,6 +132,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } else {
             removeState(cfId);
         }
+        msg.getCallback().onSuccess();
     }
 
     public void process(CalculatedFieldStatePartitionRestoreMsg msg) {

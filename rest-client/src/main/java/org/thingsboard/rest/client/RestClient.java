@@ -4499,7 +4499,7 @@ public class RestClient implements Closeable {
     public Optional<AiModel> getAiModel(AiModelId aiModelId) {
         try {
             ResponseEntity<AiModel> response = restTemplate.getForEntity(
-                    baseURL + "/api/aiModel/{aiModelId}", AiModel.class, aiModelId.getId());
+                    baseURL + "/api/ai/model/{aiModelId}", AiModel.class, aiModelId.getId());
             return Optional.ofNullable(response.getBody());
         } catch (HttpClientErrorException exception) {
             if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
@@ -4511,7 +4511,7 @@ public class RestClient implements Closeable {
     }
 
     public void deleteAiModel(AiModelId aiModelId) {
-        restTemplate.delete(baseURL + "/api/aiModel/{aiModelId}", aiModelId.getId());
+        restTemplate.delete(baseURL + "/api/ai/model/{aiModelId}", aiModelId.getId());
     }
 
 
