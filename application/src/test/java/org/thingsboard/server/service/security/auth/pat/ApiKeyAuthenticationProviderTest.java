@@ -15,18 +15,24 @@
  */
 package org.thingsboard.server.service.security.auth.pat;
 
+import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
+import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.pat.ApiKey;
 import org.thingsboard.server.common.data.pat.ApiKeyInfo;
+import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.concurrent.TimeUnit;
+
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
@@ -99,6 +105,62 @@ public class ApiKeyAuthenticationProviderTest extends AbstractControllerTest {
         setApiKey(savedApiKeyWithBad.getValue());
         doPost("/api/apiKey", savedApiKey, ApiKeyInfo.class);
         doGetWithApiKey("/api/admin/featuresInfo").andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    public void testUnauthorizedWhenUserCredentialsDisabled() throws Exception {
+        User newUser = new User();
+        newUser.setAuthority(Authority.TENANT_ADMIN);
+        newUser.setTenantId(tenantId);
+        newUser.setEmail("testUser" + RandomStringUtils.secure().nextAlphanumeric(10) + "@thingsboard.org");
+        newUser.setFirstName("Test");
+        newUser.setLastName("User");
+        User savedUser = createUser(newUser, "testPassword1");
+
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setDescription("Test API key for user credentials test");
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setUserId(savedUser.getId());
+        ApiKey testApiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+        setApiKey(testApiKey.getValue());
+
+        doGetWithApiKey("/api/admin/repositorySettings/exists").andExpect(status().isOk());
+
+        doPost("/api/user/" + savedUser.getId().getId() + "/userCredentialsEnabled?userCredentialsEnabled=false").andExpect(status().isOk());
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> doGetWithApiKey("/api/admin/repositorySettings/exists").andExpect(status().isUnauthorized()));
+
+        resetApiKey();
+        doDelete("/api/apiKey/" + testApiKey.getId()).andExpect(status().isOk());
+        loginSysAdmin();
+        doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
+    }
+
+    @Test
+    public void testUnauthorizedWhenUserDeleted() throws Exception {
+        User newUser = new User();
+        newUser.setAuthority(Authority.TENANT_ADMIN);
+        newUser.setTenantId(tenantId);
+        newUser.setEmail("testUser" + RandomStringUtils.secure().nextAlphanumeric(10) + "@thingsboard.org");
+        newUser.setFirstName("Test");
+        newUser.setLastName("User");
+        User savedUser = createUser(newUser, "testPassword1");
+
+        ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
+        apiKeyInfo.setDescription("Test API key for user deletion test");
+        apiKeyInfo.setEnabled(true);
+        apiKeyInfo.setUserId(savedUser.getId());
+        ApiKey testApiKey = doPost("/api/apiKey", apiKeyInfo, ApiKey.class);
+        setApiKey(testApiKey.getValue());
+
+        doGetWithApiKey("/api/admin/repositorySettings/exists").andExpect(status().isOk());
+
+        loginSysAdmin();
+        doDelete("/api/user/" + savedUser.getId().getId()).andExpect(status().isOk());
+
+        await().atMost(5, TimeUnit.SECONDS)
+                .untilAsserted(() -> doGetWithApiKey("/api/admin/repositorySettings/exists").andExpect(status().isUnauthorized()));
     }
 
     private ApiKeyInfo constructApiKeyInfo() {
