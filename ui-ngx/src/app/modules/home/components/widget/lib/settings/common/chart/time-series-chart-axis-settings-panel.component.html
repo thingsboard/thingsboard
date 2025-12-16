@@ -19,6 +19,9 @@
   <div class="tb-axis-settings-title">{{ panelTitle }}</div>
   <div class="tb-axis-settings-panel-content">
     <tb-time-series-chart-axis-settings
+      [aliasController]="aliasController"
+      [dataKeyCallbacks]="dataKeyCallbacks"
+      [datasource]="datasource"
       formControlName="axis"
       alwaysExpanded
       [advanced]="advanced"

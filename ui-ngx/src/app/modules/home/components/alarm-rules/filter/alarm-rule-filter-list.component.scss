@@ -20,13 +20,13 @@
     font-size: 14px;
     font-weight: 500;
   }
+  .no-data-found {
+    height: 50px;
+    font-size: 16px;
+  }
   .filter-list {
     overflow: auto;
     max-height: 300px;
-    .no-data-found {
-      height: 50px;
-      font-size: 16px;
-    }
 
     &-divider {
       border-top: 1px solid rgba(0, 0, 0, 0.12);

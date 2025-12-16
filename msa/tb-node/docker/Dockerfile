@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM thingsboard/openjdk17:bookworm-slim
+FROM ${docker.base.image}
 
 COPY logback.xml start-tb-node.sh ${pkg.name}.deb /tmp/
 

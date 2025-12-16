@@ -22,17 +22,18 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.function.TriConsumer;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest;
 import org.thingsboard.rule.engine.api.AttributesSaveRequest.Strategy;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
+import org.thingsboard.server.actors.calculatedField.MultipleTbCallback;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -80,7 +81,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.function.Function;
@@ -391,6 +391,24 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), startTs, endTs, 0, limit, Aggregation.NONE);
     }
 
+    protected void handlePropagationResults(PropagationCalculatedFieldResult propagationResult, TbCallback callback,
+                                          TriConsumer<EntityId, TelemetryCalculatedFieldResult, TbCallback> telemetryResultHandler) {
+        List<EntityId> propagationEntityIds = propagationResult.getEntityIds();
+        if (propagationEntityIds.isEmpty()) {
+            callback.onSuccess();
+            return;
+        }
+        if (propagationEntityIds.size() == 1) {
+            EntityId propagationEntityId = propagationEntityIds.get(0);
+            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), callback);
+            return;
+        }
+        MultipleTbCallback multipleTbCallback = new MultipleTbCallback(propagationEntityIds.size(), callback);
+        for (var propagationEntityId : propagationEntityIds) {
+            telemetryResultHandler.accept(propagationEntityId, propagationResult.getResult(), multipleTbCallback);
+        }
+    }
+
     protected void sendMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbCallback callback, TbMsg msg) {
         try {
             clusterService.pushMsgToRuleEngine(tenantId, entityId, msg, new TbQueueCallback() {
@@ -413,7 +431,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
 
     protected void saveTelemetryResult(TenantId tenantId, EntityId entityId, String cfName, TelemetryCalculatedFieldResult cfResult, List<CalculatedFieldId> cfIds, TbCallback callback) {
         OutputType type = cfResult.getType();
-        JsonElement jsonResult = JsonParser.parseString(Objects.requireNonNull(cfResult.stringValue()));
+        JsonElement jsonResult = cfResult.toJsonElement();
 
         log.trace("[{}][{}] Saving CF result: {}", tenantId, entityId, jsonResult);
         switch (type) {
