@@ -69,6 +69,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         super.init(restored);
         if (restored) {
             cfProcessingService.fetchPropagationArgumentFromDb(ctx, entityId).ifPresent(fromDb -> {
+                fromDb.setPartitionStateRestore(true);
                 var update = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
                 if (update.isEmpty()) {
                     return;

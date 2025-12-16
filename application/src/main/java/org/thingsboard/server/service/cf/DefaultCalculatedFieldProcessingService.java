@@ -106,10 +106,8 @@ public class DefaultCalculatedFieldProcessingService extends AbstractCalculatedF
         if (ctx.getCfType() != CalculatedFieldType.PROPAGATION) {
             return Optional.empty();
         }
-        PropagationArgumentEntry argumentEntry = (PropagationArgumentEntry)
-                resolveArgumentValue(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId));
-        argumentEntry.setPartitionStateRestore(true);
-        return Optional.of(argumentEntry);
+        return Optional.of((PropagationArgumentEntry)
+                resolveArgumentValue(PROPAGATION_CONFIG_ARGUMENT, fetchPropagationCalculatedFieldArgument(ctx, entityId)));
     }
 
     @Override
