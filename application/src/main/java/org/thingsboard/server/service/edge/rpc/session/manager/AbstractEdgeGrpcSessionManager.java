@@ -99,6 +99,10 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
 
     @Override
     public void onConfigurationUpdate(Edge edge) {
+        EdgeSessionState state = getState();
+        if (state != null) {
+            state.setEdge(edge);
+        }
         EdgeUpdateMsg edgeConfig = EdgeUpdateMsg.newBuilder()
                 .setConfiguration(EdgeMsgConstructorUtils.constructEdgeConfiguration(edge)).build();
 
