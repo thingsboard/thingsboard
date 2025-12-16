@@ -50,13 +50,11 @@ public abstract class AbstractNoSqlContainer {
         protected void before() throws Throwable {
             cassandraContainer.start();
 
-            // Підключаємося до контейнера через CqlSession
             session = CqlSession.builder()
                     .addContactPoint(cassandraContainer.getContactPoint())
                     .withLocalDatacenter("datacenter1")
                     .build();
 
-            // Виконання скриптів
             for (String script : INIT_SCRIPTS) {
                 runInitScriptIfRequired(script);
             }
@@ -85,7 +83,6 @@ public abstract class AbstractNoSqlContainer {
                         throw new ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
                     }
                     String cql = IOUtils.toString(resource, StandardCharsets.UTF_8);
-                    // Виконуємо кожну команду окремо (розділяємо по ;)
                     for (String stmt : cql.split(";")) {
                         if (StringUtils.isNotBlank(stmt)) {
                             session.execute(stmt);
