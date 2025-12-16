@@ -83,9 +83,11 @@ public abstract class AbstractNoSqlContainer {
                         throw new ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
                     }
                     String cql = IOUtils.toString(resource, StandardCharsets.UTF_8);
-                    for (String stmt : cql.split(";")) {
-                        if (StringUtils.isNotBlank(stmt)) {
-                            session.execute(stmt);
+                    String[] statements = cql.split(";(\\s*\\r?\\n)+");
+                    for (String stmt : statements) {
+                        String s = stmt.trim();
+                        if (!s.isEmpty()) {
+                            session.execute(s + ";");
                         }
                     }
                 } catch (IOException e) {
