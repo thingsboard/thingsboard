@@ -243,7 +243,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
                 if (state instanceof PropagationCalculatedFieldState propagationState) {
                     PropagationArgumentEntry entry = new PropagationArgumentEntry();
-                    entry.setAdded(msg.getRelatedEntityId());
+                    entry.setAdded(List.of(msg.getRelatedEntityId()));
                     updatedArgs = propagationState.update(Map.of(PROPAGATION_CONFIG_ARGUMENT, entry), ctx);
                 }
                 if (CollectionsUtil.isEmpty(updatedArgs)) {
@@ -422,19 +422,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         if (state == null) {
             state = createState(ctx);
             justRestored = true;
-        } else if (ctx.shouldFetchRelationQueryDynamicArgumentsFromDb(state)) {
-            log.debug("[{}][{}] Going to update dynamic arguments for CF.", entityId, ctx.getCfId());
-            try {
-                Map<String, ArgumentEntry> dynamicArgsFromDb = cfService.fetchDynamicArgsFromDb(ctx, entityId);
-                dynamicArgsFromDb.forEach(newArgValues::putIfAbsent);
-                if (ctx.getCfType() == CalculatedFieldType.GEOFENCING) {
-                    var geofencingState = (GeofencingCalculatedFieldState) state;
-                    geofencingState.updateLastDynamicArgumentsRefreshTs();
-                }
-            } catch (Exception e) {
-                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
-            }
-        } else if (ctx.shouldFetchEntityRelations(state)) {
+        } else if (ctx.shouldFetchRelatedEntities(state)) {
             log.debug("[{}][{}] Going to update related entities for CF.", entityId, ctx.getCfId());
             try {
                 if (state instanceof RelatedEntitiesAggregationCalculatedFieldState relatedEntitiesState) {
@@ -447,6 +435,11 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                         });
                         justRestored = true;
                     }
+                }
+                if (state instanceof GeofencingCalculatedFieldState geofencingCalculatedFieldState) {
+                    Map<String, ArgumentEntry> dynamicArgsFromDb = cfService.fetchDynamicArgsFromDb(ctx, entityId);
+                    dynamicArgsFromDb.forEach(newArgValues::putIfAbsent);
+                    geofencingCalculatedFieldState.updateScheduledRefreshTs();
                 }
             } catch (Exception e) {
                 throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
@@ -477,9 +470,9 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         state.setCtx(ctx, actorCtx);
         state.init(false);
 
-        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isRelationQueryDynamicArguments()) {
+        if (ctx.getCfType() == CalculatedFieldType.GEOFENCING && ctx.isCfHasRelationPathQuerySource()) {
             GeofencingCalculatedFieldState geofencingState = (GeofencingCalculatedFieldState) state;
-            geofencingState.updateLastDynamicArgumentsRefreshTs();
+            geofencingState.updateScheduledRefreshTs();
         }
 
         Map<String, ArgumentEntry> arguments = fetchArguments(ctx);
