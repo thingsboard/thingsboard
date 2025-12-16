@@ -113,7 +113,7 @@ public abstract class EdgeGrpcSession implements Closeable {
     private static final int MAX_DOWNLINK_ATTEMPTS = 3;
     private static final String RATE_LIMIT_REACHED = "Rate limit reached";
 
-    protected static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
+    protected final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
 
     protected UUID sessionId;
     private BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener;
