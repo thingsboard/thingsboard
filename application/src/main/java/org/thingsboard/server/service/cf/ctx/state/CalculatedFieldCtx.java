@@ -636,7 +636,6 @@ public class CalculatedFieldCtx implements Closeable {
         return new CalculatedFieldEntityCtxId(tenantId, cfId, entityId);
     }
 
-    // TODO: Consider to reevaluate if we need to refresh relationPathSource and scheduled update
     public boolean hasRefreshContextOnlyChanges(CalculatedFieldCtx other) { // has changes that do not require state recalculation
         if (output != null) {
             var thisOutputStrategy = output.getStrategy();

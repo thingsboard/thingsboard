@@ -34,24 +34,18 @@ public class PropagationArgumentEntry implements ArgumentEntry {
     private Set<EntityId> entityIds;
     private transient List<EntityId> added;
     private transient EntityId removed;
-    private transient boolean partitionStateRestore;
 
-    private boolean forceResetPrevious;
+    private transient boolean forceResetPrevious;
+    private transient boolean ignoreRemovedEntities;
 
     public PropagationArgumentEntry() {
         this.entityIds = new HashSet<>();
         this.added = null;
         this.removed = null;
-        this.partitionStateRestore = false;
     }
 
     public PropagationArgumentEntry(List<EntityId> entityIds) {
-        this(entityIds, false);
-    }
-
-    public PropagationArgumentEntry(List<EntityId> entityIds, boolean partitionStateRestore) {
         this.entityIds = new HashSet<>(entityIds);
-        this.partitionStateRestore = partitionStateRestore;
     }
 
     @Override
@@ -75,7 +69,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         if (updated.getRemoved() != null) {
             return entityIds.remove(updated.getRemoved());
         }
-        if (updated.isPartitionStateRestore()) {
+        if (updated.isIgnoreRemovedEntities()) {
             Set<EntityId> updatedIds = updated.getEntityIds();
             if (updatedIds.isEmpty()) {
                 entityIds.clear();

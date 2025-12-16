@@ -38,14 +38,12 @@ import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ScheduledFuture;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
 public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState {
 
     private CalculatedFieldProcessingService cfProcessingService;
-    private ScheduledFuture<?> reevaluationFuture;
 
     public PropagationCalculatedFieldState(EntityId entityId) {
         super(entityId);
@@ -58,7 +56,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         this.cfProcessingService = ctx.getCfProcessingService();
         this.requiredArguments = new ArrayList<>(ctx.getArgNames());
         requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
-        this.readinessStatus = checkReadiness(requiredArguments, arguments);
+        this.readinessStatus = checkReadiness();
         if (ctx.isApplyExpressionForResolvedArguments()) {
             this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
         }
@@ -69,25 +67,13 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         super.init(restored);
         if (restored) {
             cfProcessingService.fetchPropagationArgumentFromDb(ctx, entityId).ifPresent(fromDb -> {
-                fromDb.setPartitionStateRestore(true);
-                var update = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
-                if (update.isEmpty()) {
+                fromDb.setIgnoreRemovedEntities(true);
+                var updatedArgs = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
+                if (updatedArgs.isEmpty()) {
                     return;
                 }
-                ScheduledFuture<?> future = ctx.scheduleReevaluation(0L, actorCtx);
-                if (future != null) {
-                    reevaluationFuture = future;
-                }
+                ctx.scheduleReevaluation(0L, actorCtx);
             });
-        }
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        if (reevaluationFuture != null) {
-            reevaluationFuture.cancel(true);
-            reevaluationFuture = null;
         }
     }
 
@@ -131,15 +117,15 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
     }
 
     @Override
-    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
-        if (ctx.isApplyExpressionForResolvedArguments() || currentArguments == null) {
-            return super.checkReadiness(requiredArguments, currentArguments);
+    protected ReadinessStatus checkReadiness() {
+        if (ctx.isApplyExpressionForResolvedArguments() || arguments == null) {
+            return super.checkReadiness();
         }
         boolean propagationNotEmpty = false;
         boolean hasOtherNonEmpty = false;
         List<String> emptyArguments = null;
         for (String requiredArgumentKey : requiredArguments) {
-            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            ArgumentEntry argumentEntry = arguments.get(requiredArgumentKey);
             if (argumentEntry == null || argumentEntry.isEmpty()) {
                 if (emptyArguments == null) {
                     emptyArguments = new ArrayList<>();
