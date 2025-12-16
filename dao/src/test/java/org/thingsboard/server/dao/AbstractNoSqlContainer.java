@@ -15,17 +15,14 @@
  */
 package org.thingsboard.server.dao;
 
-import com.github.dockerjava.api.command.InspectContainerResponse;
+import com.datastax.oss.driver.api.core.CqlSession;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.testcontainers.containers.CassandraContainer;
-import org.testcontainers.containers.delegate.CassandraDatabaseDelegate;
-import org.testcontainers.delegate.DatabaseDelegate;
-import org.testcontainers.ext.ScriptUtils;
 
-import javax.script.ScriptException;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
@@ -47,11 +44,22 @@ public abstract class AbstractNoSqlContainer {
 
     @ClassRule(order = 1)
     public static final ExternalResource cassandra = new ExternalResource() {
+        private CqlSession session;
+
         @Override
         protected void before() throws Throwable {
             cassandraContainer.start();
-            DatabaseDelegate db = new CassandraDatabaseDelegate(cassandraContainer);
-            INIT_SCRIPTS.forEach(script -> runInitScriptIfRequired(db, script));
+
+            // Підключаємося до контейнера через CqlSession
+            session = CqlSession.builder()
+                    .addContactPoint(cassandraContainer.getContactPoint())
+                    .withLocalDatacenter("datacenter1")
+                    .build();
+
+            // Виконання скриптів
+            for (String script : INIT_SCRIPTS) {
+                runInitScriptIfRequired(script);
+            }
 
             String cassandraUrl = String.format("%s:%s", cassandraContainer.getHost(), cassandraContainer.getMappedPort(9042));
             log.debug("Cassandra url [{}]", cassandraUrl);
@@ -60,30 +68,46 @@ public abstract class AbstractNoSqlContainer {
 
         @Override
         protected void after() {
+            if (session != null) {
+                session.close();
+            }
             cassandraContainer.stop();
-            List.of("cassandra.url")
-                    .forEach(System.getProperties()::remove);
+            List.of("cassandra.url").forEach(System.getProperties()::remove);
         }
 
-        private void runInitScriptIfRequired(DatabaseDelegate db, String initScriptPath) {
+        private void runInitScriptIfRequired(String initScriptPath) {
             log.info("Init script [{}]", initScriptPath);
-            if (initScriptPath != null) {
+            if (StringUtils.isNotBlank(initScriptPath)) {
                 try {
                     URL resource = Thread.currentThread().getContextClassLoader().getResource(initScriptPath);
                     if (resource == null) {
                         log.warn("Could not load classpath init script: {}", initScriptPath);
-                        throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
+                        throw new ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
                     }
                     String cql = IOUtils.toString(resource, StandardCharsets.UTF_8);
-                    ScriptUtils.executeDatabaseScript(db, initScriptPath, cql);
+                    // Виконуємо кожну команду окремо (розділяємо по ;)
+                    for (String stmt : cql.split(";")) {
+                        if (StringUtils.isNotBlank(stmt)) {
+                            session.execute(stmt);
+                        }
+                    }
                 } catch (IOException e) {
                     log.warn("Could not load classpath init script: {}", initScriptPath);
-                    throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath, e);
-                } catch (ScriptException e) {
+                    throw new ScriptLoadException("Could not load classpath init script: " + initScriptPath, e);
+                } catch (Exception e) {
                     log.error("Error while executing init script: {}", initScriptPath, e);
-                    throw new ScriptUtils.UncategorizedScriptException("Error while executing init script: " + initScriptPath, e);
+                    throw new UncategorizedScriptException("Error while executing init script: " + initScriptPath, e);
                 }
             }
         }
     };
+
+    public static class ScriptLoadException extends RuntimeException {
+        public ScriptLoadException(String message) { super(message); }
+        public ScriptLoadException(String message, Throwable cause) { super(message, cause); }
+    }
+
+    public static class UncategorizedScriptException extends RuntimeException {
+        public UncategorizedScriptException(String message, Throwable cause) { super(message, cause); }
+    }
 }
