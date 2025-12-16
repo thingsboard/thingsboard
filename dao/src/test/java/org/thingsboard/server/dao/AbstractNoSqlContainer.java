@@ -40,56 +40,50 @@ public abstract class AbstractNoSqlContainer {
             "cassandra/schema-ts-latest.cql"
     );
 
-    @ClassRule(order = 0)
-    public static final CassandraContainer cassandra = (CassandraContainer) new CassandraContainer("cassandra:5.0") {
-        @Override
-        protected void containerIsStarted(InspectContainerResponse containerInfo) {
-            super.containerIsStarted(containerInfo);
-            DatabaseDelegate db = new CassandraDatabaseDelegate(this);
-            INIT_SCRIPTS.forEach(script -> runInitScriptIfRequired(db, script));
-        }
-
-        private void runInitScriptIfRequired(DatabaseDelegate db, String initScriptPath) {
-            logger().info("Init script [{}]", initScriptPath);
-            if (initScriptPath != null) {
-                try {
-                    URL resource = Thread.currentThread().getContextClassLoader().getResource(initScriptPath);
-                    if (resource == null) {
-                        logger().warn("Could not load classpath init script: {}", initScriptPath);
-                        throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
-                    }
-                    String cql = IOUtils.toString(resource, StandardCharsets.UTF_8);
-                    ScriptUtils.executeDatabaseScript(db, initScriptPath, cql);
-                } catch (IOException e) {
-                    logger().warn("Could not load classpath init script: {}", initScriptPath);
-                    throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath, e);
-                } catch (ScriptException e) {
-                    logger().error("Error while executing init script: {}", initScriptPath, e);
-                    throw new ScriptUtils.UncategorizedScriptException("Error while executing init script: " + initScriptPath, e);
-                }
-            }
-        }
-    }
+    public static final CassandraContainer<?> cassandraContainer = new CassandraContainer<>("cassandra:5.0")
             .withEnv("HEAP_NEWSIZE", "64M")
             .withEnv("MAX_HEAP_SIZE", "512M")
             .withEnv("CASSANDRA_CLUSTER_NAME", "ThingsBoard Cluster");
 
     @ClassRule(order = 1)
-    public static ExternalResource resource = new ExternalResource() {
+    public static final ExternalResource cassandra = new ExternalResource() {
         @Override
         protected void before() throws Throwable {
-            cassandra.start();
-            String cassandraUrl = String.format("%s:%s", cassandra.getHost(), cassandra.getMappedPort(9042));
+            cassandraContainer.start();
+            DatabaseDelegate db = new CassandraDatabaseDelegate(cassandraContainer);
+            INIT_SCRIPTS.forEach(script -> runInitScriptIfRequired(db, script));
+
+            String cassandraUrl = String.format("%s:%s", cassandraContainer.getHost(), cassandraContainer.getMappedPort(9042));
             log.debug("Cassandra url [{}]", cassandraUrl);
             System.setProperty("cassandra.url", cassandraUrl);
         }
 
         @Override
         protected void after() {
-            cassandra.stop();
+            cassandraContainer.stop();
             List.of("cassandra.url")
                     .forEach(System.getProperties()::remove);
         }
-    };
 
+        private void runInitScriptIfRequired(DatabaseDelegate db, String initScriptPath) {
+            log.info("Init script [{}]", initScriptPath);
+            if (initScriptPath != null) {
+                try {
+                    URL resource = Thread.currentThread().getContextClassLoader().getResource(initScriptPath);
+                    if (resource == null) {
+                        log.warn("Could not load classpath init script: {}", initScriptPath);
+                        throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
+                    }
+                    String cql = IOUtils.toString(resource, StandardCharsets.UTF_8);
+                    ScriptUtils.executeDatabaseScript(db, initScriptPath, cql);
+                } catch (IOException e) {
+                    log.warn("Could not load classpath init script: {}", initScriptPath);
+                    throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath, e);
+                } catch (ScriptException e) {
+                    log.error("Error while executing init script: {}", initScriptPath, e);
+                    throw new ScriptUtils.UncategorizedScriptException("Error while executing init script: " + initScriptPath, e);
+                }
+            }
+        }
+    };
 }

@@ -26,29 +26,37 @@ import java.util.List;
 @Slf4j
 public class AbstractRedisContainer {
 
-    @ClassRule(order = 0)
-    public static GenericContainer redis = new GenericContainer("bitnamilegacy/valkey:8.0")
-            .withEnv("ALLOW_EMPTY_PASSWORD","yes")
-            .withLogConsumer(s -> log.warn(((OutputFrame) s).getUtf8String().trim()))
-            .withExposedPorts(6379);
-
-    @ClassRule(order = 1)
+    @ClassRule
     public static ExternalResource resource = new ExternalResource() {
+
+        private GenericContainer<?> redis;
+
         @Override
-        protected void before() throws Throwable {
+        protected void before() {
+            redis = new GenericContainer<>("bitnamilegacy/valkey:8.0")
+                    .withEnv("ALLOW_EMPTY_PASSWORD", "yes")
+                    .withExposedPorts(6379);
+
             redis.start();
+
             System.setProperty("cache.type", "redis");
             System.setProperty("redis.connection.type", "standalone");
             System.setProperty("redis.standalone.host", redis.getHost());
-            System.setProperty("redis.standalone.port", String.valueOf(redis.getMappedPort(6379)));
+            System.setProperty("redis.standalone.port",
+                    String.valueOf(redis.getMappedPort(6379)));
         }
 
         @Override
         protected void after() {
-            redis.stop();
-            List.of("cache.type", "redis.connection.type", "redis.standalone.host", "redis.standalone.port")
-                    .forEach(System.getProperties()::remove);
+            if (redis != null) {
+                redis.stop();
+            }
+            List.of(
+                    "cache.type",
+                    "redis.connection.type",
+                    "redis.standalone.host",
+                    "redis.standalone.port"
+            ).forEach(System.getProperties()::remove);
         }
     };
-
 }
