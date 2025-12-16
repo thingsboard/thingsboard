@@ -1441,7 +1441,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                                                             EntityType entityType,
                                                             List<UUID> entities,
                                                             List<String> names) throws Exception {
-        return doGetTypedWithPageLink("/api/calculatedFields?type=" + type + "&" +
+        return doGetTypedWithPageLink("/api/calculatedFields?" +
+                                      (type != null ? "types=" + type + "&" : "") +
                                       (entityType != null ? "entityType=" + entityType + "&" : "") +
                                       (entities != null ? "entities=" + String.join(",",
                                               entities.stream().map(UUID::toString).toList()) + "&" : "") +

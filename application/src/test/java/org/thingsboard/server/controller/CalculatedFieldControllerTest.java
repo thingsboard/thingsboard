@@ -259,6 +259,8 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
         List<CalculatedFieldInfo> allCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
                 null, null, null);
         assertThat(allCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
+        allCalculatedFields = getCalculatedFields(null, null, null, null);
+        assertThat(allCalculatedFields).contains(deviceCalculatedField, profileCalculatedField);
 
         List<CalculatedFieldInfo> profileLevelCalculatedFields = getCalculatedFields(CalculatedFieldType.SIMPLE,
                 EntityType.DEVICE_PROFILE, null, null);
