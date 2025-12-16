@@ -120,6 +120,10 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
         this.updatedStrategy();
       });
 
+    this.outputForm.get('strategy.saveTimeSeries').valueChanges
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(value => this.updateTimeSeriesTtl(value));
+
     merge(
       this.outputForm.get('strategy.type').valueChanges,
       this.outputForm.get('strategy.useCustomTtl').valueChanges
@@ -178,6 +182,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       this.updatedFormWithMode();
       this.toggleScopeByOutputType(this.outputForm.get('type').value);
       this.updatedStrategy();
+      this.updateTimeSeriesTtl(this.outputForm.get('strategy.saveTimeSeries').value);
     }
   }
 
@@ -240,6 +245,15 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
           this.outputForm.get('strategy.ttl').enable({emitEvent: false});
         }
       }
+    }
+  }
+
+  private updateTimeSeriesTtl(value: boolean) {
+    if (value) {
+      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: true});
+    } else {
+      this.outputForm.get('strategy.useCustomTtl').disable({emitEvent: false});
+      this.outputForm.get('strategy.ttl').disable({emitEvent: false});
     }
   }
 }
