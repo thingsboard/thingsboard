@@ -77,7 +77,7 @@ import static org.thingsboard.server.service.state.DefaultDeviceStateService.LAS
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class EdgeRpcServiceImpl extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
+public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase implements EdgeRpcService {
 
     @Value("${edges.send_scheduler_pool_size}")
     private int sendSchedulerPoolSize;

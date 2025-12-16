@@ -23,10 +23,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.ResourceUtils;
-import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc;
 import org.thingsboard.server.gen.edge.v1.EdgeRpcServiceGrpc.EdgeRpcServiceImplBase;
 import org.thingsboard.server.queue.util.AfterStartUp;
-import org.thingsboard.server.service.edge.rpc.service.EdgeRpcServiceImpl;
 
 import java.io.IOException;
 import java.io.InputStream;

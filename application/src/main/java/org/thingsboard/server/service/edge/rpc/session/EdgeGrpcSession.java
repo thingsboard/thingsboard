@@ -78,7 +78,7 @@ import java.util.function.BiConsumer;
 
 @Slf4j
 @RequiredArgsConstructor
-public class BaseEdgeSession implements EdgeSession {
+public class EdgeGrpcSession implements EdgeSession {
 
     private static final int MAX_DOWNLINK_ATTEMPTS = 3;
     private static final String RATE_LIMIT_REACHED = "Rate limit reached";

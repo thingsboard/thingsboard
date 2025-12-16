@@ -31,7 +31,7 @@ import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.edge.rpc.DownlinkMessageMapper;
 import org.thingsboard.server.service.edge.rpc.EdgeSessionState;
 import org.thingsboard.server.service.edge.rpc.EdgeUplinkMessageDispatcher;
-import org.thingsboard.server.service.edge.rpc.session.BaseEdgeSession;
+import org.thingsboard.server.service.edge.rpc.session.EdgeGrpcSession;
 import org.thingsboard.server.service.edge.rpc.session.EdgeGrpcSessionDelegate;
 import org.thingsboard.server.service.edge.rpc.session.EdgeSession;
 import org.thingsboard.server.service.edge.rpc.session.ZombieSessionCleanupService;
@@ -79,7 +79,7 @@ public abstract class AbstractEdgeGrpcSessionManager extends EdgeGrpcSessionDele
         }
         initLock.lock();
         try {
-            this.session = new BaseEdgeSession(
+            this.session = new EdgeGrpcSession(
                     this, ctx, outputStream, downlinkMessageMapper, uplinkMessageDispatcher,
                     sessionOpenListener, sessionCloseListener,
                     sendDownlinkExecutorService, maxInboundMessageSize, maxHighPriorityQueueSizePerSession);
