@@ -60,7 +60,7 @@ import { UtilsService } from "@core/services/utils.service";
 import { deepClone, getEntityDetailsPageURL, isObject } from "@core/utils";
 import { AlarmRuleTableHeaderComponent } from "@home/components/alarm-rules/alarm-rule-table-header.component";
 import { EventsDialogComponent, EventsDialogData } from '@home/dialogs/events-dialog.component';
-import { DebugEventType, Event as DebugEvent, EventType } from '@shared/models/event.models';
+import { DebugEventType, EventType } from '@shared/models/event.models';
 import { ActionNotificationShow } from "@core/notification/notification.actions";
 import {
   CalculatedFieldScriptTestDialogComponent,
@@ -188,7 +188,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
     return this.pageMode ?
-      this.calculatedFieldsService.getCalculatedFieldsFilter(pageLink, {type: CalculatedFieldType.ALARM, ...this.alarmRuleFilterConfig}) :
+      this.calculatedFieldsService.getCalculatedFieldsFilter(pageLink, {types: [CalculatedFieldType.ALARM], ...this.alarmRuleFilterConfig}) :
       this.calculatedFieldsService.getCalculatedFields(this.entityId, pageLink, CalculatedFieldType.ALARM);
   }
 

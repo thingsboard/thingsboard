@@ -15,6 +15,6 @@
     limitations under the License.
 
 -->
-@if (calculatedFieldsTableConfig) {
-  <tb-entities-table [class.white-background]="!pageMode" [entitiesTableConfig]="calculatedFieldsTableConfig"></tb-entities-table>
-}
+<tb-calculated-fields-filter-config [ngModel]="calculatedFieldsTableConfig.calculatedFieldFilterConfig"
+                                    (ngModelChange)="calculatedFieldsFilterChanged($event)">
+</tb-calculated-fields-filter-config>
