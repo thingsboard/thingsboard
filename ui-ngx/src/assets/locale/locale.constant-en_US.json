@@ -1221,10 +1221,9 @@
         "deduplication-interval-min": "Deduplication interval should be at least {{ sec }} seconds.",
         "deduplication-interval-required": "Deduplication interval is required.",
         "calculated-fields-filter": "Calculated fields filter",
-        "calculated-field-names": "Calculated field names",
         "calculated-field-types": "Calculated field types",
         "any-type": "Any type",
-        "all-names": "All",
+        "target-entity": "Target entity",
         "metrics": {
             "metrics": "Metrics",
             "metrics-empty": "At least one metric must be configured.",

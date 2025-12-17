@@ -57,17 +57,6 @@
 <ng-template #calculatedFieldsFilter>
   <div class="tb-form-panel tb-calculated-fields-config-component no-padding no-border" [formGroup]="cfFilterForm">
     <div class="tb-form-row column-xs">
-      <div class="fixed-title-width" translate>calculated-fields.calculated-field-names</div>
-      <tb-string-items-list subscriptSizing="dynamic"
-                            formControlName="name"
-                            appearance="outline"
-                            fieldClass="flex"
-                            class="flex-1"
-                            placeholder="{{ !cfFilterForm.get('name').value?.length ? ('calculated-fields.all-names' | translate) : '' }}"
-                            allowUserValue>
-      </tb-string-items-list>
-    </div>
-    <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>calculated-fields.calculated-field-types</div>
       <tb-string-items-list subscriptSizing="dynamic"
                             formControlName="types"

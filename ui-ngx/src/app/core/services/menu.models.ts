@@ -634,7 +634,7 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       name: 'entity.type-calculated-fields',
       type: 'link',
       path: '/calculatedFields',
-      icon: 'mdi:plus-minus-variant',
+      icon: 'mdi:function-variant',
     }
   ],
   [

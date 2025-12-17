@@ -99,6 +99,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
       this.handleRowClick = ($event, entity) => {
         this.editCalculatedField($event, entity);
+        this.rowPointer = true;
         return true;
       };
     }
@@ -131,30 +132,15 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
 
-    const expressionColumn = new EntityTableColumn<CalculatedField>('expression', 'calculated-fields.expression', '250px');
-    expressionColumn.sortable = false;
-    expressionColumn.cellContentFunction = entity => {
-      const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel?.length < 45 ? expressionLabel : `<span style="display: inline-block; width: 45ch">${expressionLabel.substring(0, 44)}…</span>`;
-    }
-    expressionColumn.cellTooltipFunction = entity => {
-      const expressionLabel = this.getExpressionLabel(entity);
-      return expressionLabel?.length < 45 ? null : expressionLabel
-    };
-
     this.columns.push(new DateEntityTableColumn<CalculatedField>('createdTime', 'common.created-time', this.datePipe, '150px'));
-    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', this.pageMode ? '30%' :'33%',
+    this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', this.pageMode ? '33%' : '60%',
       entity => this.utilsService.customTranslation(entity.name, entity.name)));
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', '170px', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
-    this.columns.push(expressionColumn);
-
     if (this.pageMode) {
-      this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('entityType', 'alarm-rule.target-entity-type', '15%',
-        entity => this.translate.instant(entityTypeTranslations.get(entity.entityId.entityType).type)));
-      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'alarm-rule.target-entity', '30%',
+      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'calculated-fields.target-entity', '33%',
         entity => this.utilsService.customTranslation(entity['entityName'], entity['entityName']),
         entity => getEntityDetailsPageURL(entity.entityId?.id, entity.entityId?.entityType as EntityType), false));
     }
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', this.pageMode ? '33%' : '40%', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
 
     this.cellActionDescriptors.push(
       {
@@ -190,16 +176,6 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         onAction: ($event, entity) => this.editCalculatedField($event, entity),
       }
     );
-  }
-
-  private getExpressionLabel(entity: CalculatedField): string {
-    if (entity.type === CalculatedFieldType.SCRIPT ||
-      entity.type === CalculatedFieldType.PROPAGATION && entity.configuration.applyExpressionToResolvedArguments === true) {
-      return 'function calculate(ctx, ' + Object.keys(entity.configuration.arguments).join(', ') + ')';
-    } else if (entity.type === CalculatedFieldType.SIMPLE) {
-      return entity.configuration.expression ?? '';
-    }
-    return '';
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
