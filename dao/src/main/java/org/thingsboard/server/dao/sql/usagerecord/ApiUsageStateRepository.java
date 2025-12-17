@@ -29,9 +29,6 @@ import org.thingsboard.server.dao.model.sql.ApiUsageStateEntity;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * @author Valerii Sosliuk
- */
 public interface ApiUsageStateRepository extends JpaRepository<ApiUsageStateEntity, UUID> {
 
     @Query("SELECT ur FROM ApiUsageStateEntity ur WHERE ur.tenantId = :tenantId " +
