@@ -113,8 +113,12 @@ public class CalculatedFieldUtils {
                 case PROPAGATION -> builder.addAllPropagationEntityIds(toPropagationEntityIdsProto((PropagationArgumentEntry) argEntry));
                 case RELATED_ENTITIES -> {
                     RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry = (RelatedEntitiesArgumentEntry) argEntry;
-                    relatedEntitiesArgumentEntry.getEntityInputs()
-                            .forEach((entityId, entry) -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
+                    Map<EntityId, ArgumentEntry> entityInputs = relatedEntitiesArgumentEntry.getEntityInputs();
+                    if (entityInputs.isEmpty()) {
+                        builder.addSingleValueArguments(SingleValueArgumentProto.newBuilder().setArgName(argName).build());
+                    } else {
+                        entityInputs.forEach((entityId, entry) -> builder.addSingleValueArguments(toSingleValueArgumentProto(argName, (SingleValueArgumentEntry) entry)));
+                    }
                 }
                 case ENTITY_AGGREGATION -> {
                     EntityAggregationArgumentEntry entityAggregationArgumentEntry = (EntityAggregationArgumentEntry) argEntry;
@@ -241,7 +245,10 @@ public class CalculatedFieldUtils {
             Map<String, Map<EntityId, ArgumentEntry>> arguments = new HashMap<>();
             proto.getSingleValueArgumentsList().forEach(argProto -> {
                 SingleValueArgumentEntry entry = fromSingleValueArgumentProto(argProto);
-                arguments.computeIfAbsent(argProto.getArgName(), name -> new HashMap<>()).put(entry.getEntityId(), entry);
+                Map<EntityId, ArgumentEntry> entityInputs = arguments.computeIfAbsent(argProto.getArgName(), name -> new HashMap<>());
+                if (entry.getEntityId() != null) {
+                    entityInputs.put(entry.getEntityId(), entry);
+                }
             });
             arguments.forEach((argName, entityInputs) -> {
                 relatedEntitiesAggState.getArguments().put(argName, new RelatedEntitiesArgumentEntry(entityInputs, false));
