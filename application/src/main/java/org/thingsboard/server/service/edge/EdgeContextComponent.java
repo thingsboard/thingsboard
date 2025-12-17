@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.service.edge;
 
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -83,6 +86,8 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Lazy
 @Data
@@ -91,7 +96,12 @@ import java.util.Optional;
 @TbCoreComponent
 public class EdgeContextComponent {
 
+    @Value("${edges.scheduler_pool_size}")
+    private int schedulerPoolSize;
+
     private final Map<EdgeEventType, EdgeProcessor> processorMap = new EnumMap<>(EdgeEventType.class);
+
+    private ScheduledExecutorService edgeEventProcessingExecutorService;
 
     @Autowired
     public EdgeContextComponent(List<EdgeProcessor> processors) {
@@ -101,6 +111,14 @@ public class EdgeContextComponent {
                 processorMap.put(eventType, processor);
             }
         });
+        this.edgeEventProcessingExecutorService = ThingsBoardExecutors.newScheduledThreadPool(schedulerPoolSize, "edge-event-check-scheduler");
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (edgeEventProcessingExecutorService != null && !edgeEventProcessingExecutorService.isShutdown()) {
+            edgeEventProcessingExecutorService.shutdownNow();
+        }
     }
 
     // services
