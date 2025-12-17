@@ -40,7 +40,7 @@ public abstract class AbstractNoSqlContainer {
             "cassandra/schema-ts-latest.cql"
     );
 
-    @ClassRule(order = 0)
+//    @ClassRule(order = 0)
     public static final CassandraContainer cassandra = (CassandraContainer) new CassandraContainer("cassandra:5.0") {
         @Override
         protected void containerIsStarted(InspectContainerResponse containerInfo) {
@@ -59,14 +59,15 @@ public abstract class AbstractNoSqlContainer {
                         throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath + ". Resource not found.");
                     }
                     String cql = IOUtils.toString(resource, StandardCharsets.UTF_8);
-                    ScriptUtils.executeDatabaseScript(db, initScriptPath, cql);
+//                    ScriptUtils.executeDatabaseScript(db, initScriptPath, cql);
                 } catch (IOException e) {
                     logger().warn("Could not load classpath init script: {}", initScriptPath);
                     throw new ScriptUtils.ScriptLoadException("Could not load classpath init script: " + initScriptPath, e);
-                } catch (ScriptException e) {
-                    logger().error("Error while executing init script: {}", initScriptPath, e);
-                    throw new ScriptUtils.UncategorizedScriptException("Error while executing init script: " + initScriptPath, e);
                 }
+//                catch (ScriptException e) {
+//                    logger().error("Error while executing init script: {}", initScriptPath, e);
+//                    throw new ScriptUtils.UncategorizedScriptException("Error while executing init script: " + initScriptPath, e);
+//                }
             }
         }
     }
