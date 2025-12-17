@@ -13,14 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.exception;
+package org.thingsboard.server.service.cf.ctx.state.geofencing;
 
-import org.thingsboard.server.exception.DataValidationException;
+public interface ScheduledRefreshSupported {
 
-public class DeviceCredentialsValidationException extends DataValidationException {
+    void resetScheduledRefreshTs();
 
-    public DeviceCredentialsValidationException(String message) {
-        super(message);
-    }
+    long getLastScheduledRefreshTs();
+
+    void updateScheduledRefreshTs();
 
 }

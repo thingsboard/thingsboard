@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
@@ -41,6 +43,8 @@ import static org.thingsboard.server.common.data.cf.configuration.PropagationCal
 
 public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState {
 
+    private CalculatedFieldProcessingService cfProcessingService;
+
     public PropagationCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
@@ -49,11 +53,27 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
     public void setCtx(CalculatedFieldCtx ctx, TbActorRef actorCtx) {
         this.ctx = ctx;
         this.actorCtx = actorCtx;
+        this.cfProcessingService = ctx.getCfProcessingService();
         this.requiredArguments = new ArrayList<>(ctx.getArgNames());
         requiredArguments.add(PROPAGATION_CONFIG_ARGUMENT);
-        this.readinessStatus = checkReadiness(requiredArguments, arguments);
+        this.readinessStatus = checkReadiness();
         if (ctx.isApplyExpressionForResolvedArguments()) {
             this.tbelExpression = ctx.getTbelExpressions().get(ctx.getExpression());
+        }
+    }
+
+    @Override
+    public void init(boolean restored) {
+        super.init(restored);
+        if (restored) {
+            cfProcessingService.fetchPropagationArgumentFromDb(ctx, entityId).ifPresent(fromDb -> {
+                fromDb.setIgnoreRemovedEntities(true);
+                var updatedArgs = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
+                if (updatedArgs.isEmpty()) {
+                    return;
+                }
+                ctx.scheduleReevaluation(0L, actorCtx);
+            });
         }
     }
 
@@ -68,9 +88,10 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         if (!(argumentEntry instanceof PropagationArgumentEntry propagationArgumentEntry)) {
             return Futures.immediateFuture(PropagationCalculatedFieldResult.builder().build());
         }
+        boolean newEntityAdded = propagationArgumentEntry.getAdded() != null;
         List<EntityId> entityIds;
-        if (propagationArgumentEntry.getAdded() != null) {
-            entityIds = List.of(propagationArgumentEntry.getAdded());
+        if (newEntityAdded) {
+            entityIds = propagationArgumentEntry.getAdded();
             propagationArgumentEntry.setAdded(null);
         } else {
             if (propagationArgumentEntry.getEntityIds().isEmpty()) {
@@ -86,13 +107,43 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
                                     .build(),
                     MoreExecutors.directExecutor());
         }
+        if (newEntityAdded || CollectionsUtil.isEmpty(updatedArgs)) {
+            updatedArgs = arguments;
+        }
         return Futures.immediateFuture(PropagationCalculatedFieldResult.builder()
                 .entityIds(entityIds)
-                .result(toTelemetryResult(ctx))
+                .result(toTelemetryResult(ctx, updatedArgs))
                 .build());
     }
 
-    private TelemetryCalculatedFieldResult toTelemetryResult(CalculatedFieldCtx ctx) {
+    @Override
+    protected ReadinessStatus checkReadiness() {
+        if (ctx.isApplyExpressionForResolvedArguments() || arguments == null) {
+            return super.checkReadiness();
+        }
+        boolean propagationNotEmpty = false;
+        boolean hasOtherNonEmpty = false;
+        List<String> emptyArguments = null;
+        for (String requiredArgumentKey : requiredArguments) {
+            ArgumentEntry argumentEntry = arguments.get(requiredArgumentKey);
+            if (argumentEntry == null || argumentEntry.isEmpty()) {
+                if (emptyArguments == null) {
+                    emptyArguments = new ArrayList<>();
+                }
+                emptyArguments.add(requiredArgumentKey);
+            } else if (PROPAGATION_CONFIG_ARGUMENT.equals(requiredArgumentKey)) {
+                propagationNotEmpty = true;
+            } else {
+                hasOtherNonEmpty = true;
+            }
+        }
+        if (propagationNotEmpty && hasOtherNonEmpty) {
+            return ReadinessStatus.READY;
+        }
+        return ReadinessStatus.from(emptyArguments);
+    }
+
+    private TelemetryCalculatedFieldResult toTelemetryResult(CalculatedFieldCtx ctx, Map<String, ArgumentEntry> updatedArgs) {
         Output output = ctx.getOutput();
         TelemetryCalculatedFieldResult.TelemetryCalculatedFieldResultBuilder telemetryCfBuilder =
                 TelemetryCalculatedFieldResult.builder()
@@ -100,12 +151,14 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
                         .type(output.getType())
                         .scope(output.getScope());
         ObjectNode valuesNode = JacksonUtil.newObjectNode();
-        arguments.forEach((outputKey, argumentEntry) -> {
+        updatedArgs.forEach((outputKey, argumentEntry) -> {
             if (argumentEntry instanceof PropagationArgumentEntry) {
                 return;
             }
             if (argumentEntry instanceof SingleValueArgumentEntry singleArgumentEntry) {
-                JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), outputKey);
+                if (!singleArgumentEntry.isEmpty()) {
+                    JacksonUtil.addKvEntry(valuesNode, singleArgumentEntry.getKvEntryValue(), outputKey);
+                }
                 return;
             }
             throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + outputKey + ". " +

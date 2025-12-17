@@ -205,7 +205,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             handleExpiredInterval(intervalEntry, args, results);
             expiredIntervals.add(intervalEntry);
         } else if (now - startTs >= intervalEntry.getIntervalDuration()) {
-            handleActiveInterval(ctx.getCfCheckReevaluationInterval(), intervalEntry, args, results);
+            handleActiveInterval(ctx.getCfCheckReevaluationIntervalMillis(), intervalEntry, args, results);
             if (watermarkDuration == 0) {
                 expiredIntervals.add(intervalEntry);
             }
@@ -288,7 +288,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
             }
             if (!metricsNode.isEmpty()) {
                 ObjectNode resultNode = JacksonUtil.newObjectNode();
-                resultNode.put("ts", interval.getEndTs() - 1);
+                resultNode.put("ts", interval.getStartTs());
                 resultNode.set("values", metricsNode);
                 result.add(resultNode);
 
