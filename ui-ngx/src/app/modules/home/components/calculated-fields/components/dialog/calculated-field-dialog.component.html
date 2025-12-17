@@ -21,6 +21,7 @@
     <span class="flex-1"></span>
     <div tb-help="calculatedField"></div>
     <button mat-icon-button
+            [disabled]="isLoading"
             (click)="cancel()"
             type="button">
       <mat-icon class="material-icons">close</mat-icon>
@@ -49,7 +50,7 @@
           </mat-form-field>
           <tb-entity-debug-settings-button
             formControlName="debugSettings"
-            [class.mb-5]="fieldFormGroup.get('name').errors && fieldFormGroup.get('name').touched"
+            style="margin-bottom: 22px"
             [entityType]="EntityType.CALCULATED_FIELD"
             [additionalActionConfig]="additionalDebugActionConfig"
           />
@@ -74,6 +75,7 @@
                                       [placeholder]="'action.set' | translate"
                                       [required]="true"
                                       [entityType]="fieldFormGroup.get('entityId.entityType').value"
+                                      (entityChanged)="changeEntity($event)"
               />
             }
           </div>
@@ -93,6 +95,7 @@
       @switch (fieldFormGroup.get('type').value) {
         @case (CalculatedFieldType.GEOFENCING) {
           <tb-geofencing-configuration formControlName="configuration"
+                                       [class.tb-form-panel-disabled]="disabledConfiguration"
                                        [entityId]="entityId"
                                        [entityName]="entityName"
                                        [ownerId]="data.ownerId"
@@ -101,6 +104,7 @@
         }
         @case (CalculatedFieldType.PROPAGATION) {
           <tb-propagation-configuration formControlName="configuration"
+                                        [class.tb-form-panel-disabled]="disabledConfiguration"
                                         [entityId]="entityId"
                                         [entityName]="entityName"
                                         [tenantId]="data.tenantId"
@@ -110,6 +114,7 @@
         }
         @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
           <tb-related-entities-aggregation-component formControlName="configuration"
+                                                     [class.tb-form-panel-disabled]="disabledConfiguration"
                                                      [entityId]="entityId"
                                                      [entityName]="entityName"
                                                      [tenantId]="data.tenantId"
@@ -118,6 +123,7 @@
         }
         @case (CalculatedFieldType.ENTITY_AGGREGATION) {
           <tb-entity-aggregation-component formControlName="configuration"
+                                           [class.tb-form-panel-disabled]="disabledConfiguration"
                                            [entityId]="entityId"
                                            [entityName]="entityName"
                                            [tenantId]="data.tenantId"
@@ -125,6 +131,7 @@
         }
         @default {
           <tb-simple-configuration formControlName="configuration"
+                                   [class.tb-form-panel-disabled]="disabledConfiguration"
                                    [entityId]="entityId"
                                    [entityName]="entityName"
                                    [ownerId]="data.ownerId"
@@ -140,12 +147,13 @@
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial
+            [disabled]="isLoading"
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             (click)="add()"
-            [disabled]="(isLoading$ | async) || fieldFormGroup.invalid || !fieldFormGroup.dirty">
+            [disabled]="isLoading || fieldFormGroup.invalid || !fieldFormGroup.dirty">
       {{ data.buttonTitle | translate }}
     </button>
   </div>

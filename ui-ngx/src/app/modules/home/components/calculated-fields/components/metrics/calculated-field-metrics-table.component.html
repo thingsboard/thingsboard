@@ -97,6 +97,7 @@
                     mat-icon-button
                     #button
                     (click)="manageMetrics($event, button, metric)"
+                    [disabled]="disable"
                     [matTooltip]="'action.edit' | translate"
                     matTooltipPosition="above">
               <mat-icon>edit</mat-icon>
@@ -104,6 +105,7 @@
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, metric)"
+                    [disabled]="disable"
                     [matTooltip]="'action.delete' | translate"
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
@@ -116,7 +118,7 @@
     </table>
   </div>
   <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
-       class="tb-prompt flex flex-1 items-end justify-center text-base required">
+       class="tb-prompt flex flex-1 items-end justify-center text-base" [class.required]="!disable">
     {{ 'calculated-fields.metrics.no-metrics-configured' | translate }}
   </div>
   <div class="flex h-9 justify-between">
@@ -125,7 +127,7 @@
             color="primary"
             #button
             (click)="manageMetrics($event, button)"
-            [disabled]="maxArgumentsPerCF > 0 && metricsFormArray.length >= maxArgumentsPerCF">
+            [disabled]="maxArgumentsPerCF > 0 && metricsFormArray.length >= maxArgumentsPerCF || disable">
       {{ 'calculated-fields.metrics.add-metric' | translate }}
     </button>
     @if (maxArgumentsPerCF && metricsFormArray.length >= maxArgumentsPerCF) {

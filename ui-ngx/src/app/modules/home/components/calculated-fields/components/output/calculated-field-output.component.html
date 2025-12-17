@@ -78,7 +78,7 @@
       <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
-            <div class="tb-form-panel-title" style="color: var(--mat-expansion-header-text-color)" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
+            <div class="tb-form-panel-title" [style.color]="disabled ? 'var(--mdc-outlined-text-field-disabled-input-text-color)' : 'var(--mat-expansion-header-text-color)'" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
               {{ 'calculated-fields.output-strategy.strategy' | translate }}
             </div>
             <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" disablePagination appearance="fill" (click)="$event.stopPropagation()">
@@ -90,7 +90,7 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       @if (outputForm.get('strategy.type').value === OutputStrategyType.IMMEDIATE) {
-        <div class="tb-form-panel stroked">
+        <div class="tb-form-panel stroked" [class.disabled]="disabled">
           <div class="tb-form-panel-title" translate>calculated-fields.output-strategy.processing-parameters</div>
           @if (outputForm.get('type').value === OutputType.Timeseries) {
             <mat-slide-toggle class="mat-slide" formControlName="saveTimeSeries">

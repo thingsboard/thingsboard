@@ -42,7 +42,7 @@ import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entit
 import { deepTrim, isDefined } from '@core/utils';
 import { EntityTypeSelectComponent } from '@shared/components/entity/entity-type-select.component';
 import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
-import { EntityService } from '@core/http/entity.service';
+import { BaseData } from '@shared/models/base-data';
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -82,6 +82,9 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   entityName = this.data.entityName;
 
+  disabledConfiguration = false;
+  isLoading = false;
+
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
@@ -96,25 +99,25 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
               @Inject(MAT_DIALOG_DATA) public data: CalculatedFieldDialogData,
               protected dialogRef: MatDialogRef<CalculatedFieldDialogComponent, CalculatedField>,
               private calculatedFieldsService: CalculatedFieldsService,
-              private entityService: EntityService,
               private destroyRef: DestroyRef,
               private fb: FormBuilder) {
     super(store, router, dialogRef);
-    this.observeIsLoading();
     this.observeType();
     this.applyDialogData();
 
-    if (!this.entityName) {
+    if (this.data.isDirty) {
+      this.fieldFormGroup.markAsDirty();
+    }
+
+    if (!this.data.entityId) {
       this.fieldFormGroup.get('entityId.id').valueChanges.pipe(
         takeUntilDestroyed(this.destroyRef)
       ).subscribe((entityId) => {
-        if (entityId && (this.fieldFormGroup.get('entityId.entityType').value === EntityType.DEVICE_PROFILE ||
-          this.fieldFormGroup.get('entityId.entityType').value === EntityType.ASSET_PROFILE)) {
-          this.entityService.getEntity(this.fieldFormGroup.get('entityId.entityType').value as EntityType, entityId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-            value => {
-              this.entityName = value.name;
-            }
-          )
+        this.disabledConfiguration = !entityId;
+        if (this.disabledConfiguration) {
+          this.fieldFormGroup.get('configuration').disable({emitEvent: false});
+        } else {
+          this.fieldFormGroup.get('configuration').enable({emitEvent: false});
         }
       });
     }
@@ -130,9 +133,13 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   add(): void {
     if (this.fieldFormGroup.valid) {
+      this.isLoading = true;
       this.calculatedFieldsService.saveCalculatedField({ entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue})
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(calculatedField => this.dialogRef.close(calculatedField));
+        .subscribe({
+          next: calculatedField => this.dialogRef.close(calculatedField),
+          error: () => this.isLoading = false
+        });
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
       this.entityTypeSelect?.markAsTouched();
@@ -155,6 +162,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     return this.data.getTestScriptDialogFn(this.fromGroupValue, null, false, expression);
   }
 
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityName = entity.name;
+  }
+
   get entityId(): EntityId {
     return this.data.entityId || this.fieldFormGroup.get('entityId').value;
   }
@@ -168,19 +179,10 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
     }
     this.fieldFormGroup.patchValue({ configuration, type, debugSettings, entityId, ...value }, {emitEvent: false});
     setTimeout(() => this.fieldFormGroup.get('type').updateValueAndValidity({onlySelf: true}));
-  }
-
-  private observeIsLoading(): void {
-    this.isLoading$.pipe(takeUntilDestroyed()).subscribe(loading => {
-      if (loading) {
-        this.fieldFormGroup.disable({emitEvent: false});
-      } else {
-        this.fieldFormGroup.enable({emitEvent: false});
-        if (this.data.isDirty) {
-          this.fieldFormGroup.markAsDirty();
-        }
-      }
-    });
+    if (!this.data.entityId) {
+      this.fieldFormGroup.get('configuration').disable({emitEvent: false});
+      this.disabledConfiguration = true;
+    }
   }
 
   private observeType(): void {
