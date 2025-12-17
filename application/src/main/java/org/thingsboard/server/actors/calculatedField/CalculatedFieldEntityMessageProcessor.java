@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -48,6 +49,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +63,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry.getValueForTsRecord;
 
 
 /**
@@ -356,13 +360,39 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
             Set<String> argNames = args.get(key);
             if (argNames != null) {
-                argNames.forEach(argName -> arguments.put(argName, new SingleValueArgumentEntry(item)));
+                SingleValueArgumentEntry incoming = new SingleValueArgumentEntry(item);
+                argNames.forEach(argName -> arguments.compute(argName, (name, existing) -> {
+                    if (existing == null) {
+                        return incoming;
+                    }
+                    existing.updateEntry(incoming);
+                    return existing;
+                }));
             }
 
             key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_ROLLING, null);
             argNames = args.get(key);
             if (argNames != null) {
-                argNames.forEach(argName -> arguments.put(argName, new SingleValueArgumentEntry(item)));
+                Double recordValue = getValueForTsRecord(ProtoUtils.fromProto(item.getKv()));
+                argNames.forEach(argName -> arguments.compute(argName, (name, existing) -> {
+                    if (existing instanceof TsRollingArgumentEntry rolling) {
+                        if (recordValue != null) {
+                            rolling.getTsRecords().put(item.getTs(), recordValue);
+                        }
+                        return rolling;
+                    }
+                    TsRollingArgumentEntry rolling = new TsRollingArgumentEntry();
+                    if (recordValue != null) {
+                        rolling.getTsRecords().put(item.getTs(), recordValue);
+                    }
+                    if (existing instanceof SingleValueArgumentEntry single) {
+                        Double existingValue = getValueForTsRecord(single.getKvEntryValue());
+                        if (existingValue != null) {
+                            rolling.getTsRecords().put(single.getTs(), existingValue);
+                        }
+                    }
+                    return rolling;
+                }));
             }
         }
         return arguments;
