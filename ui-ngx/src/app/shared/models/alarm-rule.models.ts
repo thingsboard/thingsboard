@@ -23,6 +23,8 @@ import { EntityType } from "@shared/models/entity-type.models";
 import { Observable } from "rxjs";
 import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
+export const alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+
 export enum AlarmRuleScheduleType {
   ANY_TIME = 'ANY_TIME',
   SPECIFIC_TIME = 'SPECIFIC_TIME',
