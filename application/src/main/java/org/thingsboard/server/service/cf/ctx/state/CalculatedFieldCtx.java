@@ -127,8 +127,8 @@ public class CalculatedFieldCtx implements Closeable {
     private List<String> relatedEntityArgumentNames;
 
     private long scheduledUpdateIntervalMillis;
-    private long cfCheckReevaluationInterval;
-    private long alarmReevaluationInterval;
+    private long cfCheckReevaluationIntervalMillis;
+    private long alarmReevaluationIntervalMillis;
 
     private Argument propagationArgument;
     private boolean applyExpressionForResolvedArguments;
@@ -246,8 +246,7 @@ public class CalculatedFieldCtx implements Closeable {
         boolean requiresScheduledReevaluation = calculatedField.getConfiguration().requiresScheduledReevaluation();
         if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration) {
             if (requiresScheduledReevaluation) {
-                long reevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(alarmReevaluationInterval);
-                if (now - lastReevaluationTs >= reevaluationIntervalMillis) {
+                if (now - lastReevaluationTs >= alarmReevaluationIntervalMillis) {
                     lastReevaluationTs = now;
                     return true;
                 }
@@ -306,8 +305,8 @@ public class CalculatedFieldCtx implements Closeable {
         this.maxStateSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxStateSizeInKBytes) * 1024;
         this.maxSingleValueArgumentSize = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxSingleValueArgumentSizeInKBytes) * 1024;
         this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getIntermediateAggregationIntervalInSecForCF));
-        this.cfCheckReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
-        this.alarmReevaluationInterval = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval);
+        this.cfCheckReevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval));
+        this.alarmReevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval));
     }
 
     public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {
