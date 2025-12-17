@@ -178,7 +178,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
         });
         lastMetricsEvalTs = DEFAULT_LAST_UPDATE_TS;
         lastArgsRefreshTs = System.currentTimeMillis();
-        readinessStatus = checkReadiness(requiredArguments, arguments);
+        readinessStatus = checkReadiness();
     }
 
     public void scheduleReevaluation() {
@@ -291,12 +291,12 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     record EntityArgument(EntityInfo entity, JsonNode entityArguments) {}
 
     @Override
-    protected ReadinessStatus checkReadiness(List<String> requiredArguments, Map<String, ArgumentEntry> currentArguments) {
-        if (currentArguments == null) {
+    protected ReadinessStatus checkReadiness() {
+        if (arguments == null) {
             return ReadinessStatus.notReady(MISSING_AGGREGATION_ENTITIES_ERROR);
         }
         for (String requiredArgumentKey : requiredArguments) {
-            ArgumentEntry argumentEntry = currentArguments.get(requiredArgumentKey);
+            ArgumentEntry argumentEntry = arguments.get(requiredArgumentKey);
             if (argumentEntry == null || argumentEntry.isEmpty()) {
                 return ReadinessStatus.notReady(MISSING_AGGREGATION_ENTITIES_ERROR);
             }
