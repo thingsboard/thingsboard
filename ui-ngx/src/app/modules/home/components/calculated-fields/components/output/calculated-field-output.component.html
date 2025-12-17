@@ -90,7 +90,7 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       @if (outputForm.get('strategy.type').value === OutputStrategyType.IMMEDIATE) {
-        <div class="tb-form-panel stroked" [class.disabled]="disabled">
+        <div class="tb-form-panel stroked">
           <div class="tb-form-panel-title" translate>calculated-fields.output-strategy.processing-parameters</div>
           @if (outputForm.get('type').value === OutputType.Timeseries) {
             <mat-slide-toggle class="mat-slide" formControlName="saveTimeSeries">
