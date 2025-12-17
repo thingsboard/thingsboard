@@ -23,6 +23,7 @@
 
   .tb-two-factor-auth-login-content {
     background-color: #eee;
+    --mdc-elevated-card-container-elevation: none;
 
     .progress-bar {
       z-index: 10;

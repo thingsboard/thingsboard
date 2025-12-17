@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.exception;
 
-:host {
-  display: flex;
-  flex: 1 1 0;
-  .tb-request-password-reset-content {
-    background-color: #eee;
-    .tb-request-password-reset-card {
-      @media #{$mat-gt-xs} {
-        width: 450px !important;
-      }
+public class DataValidationException extends RuntimeException {
+
+    public DataValidationException(String message) {
+        super(message);
     }
-  }
+
+    public DataValidationException(String message, Throwable cause) {
+        super(message, cause);
+    }
+
 }

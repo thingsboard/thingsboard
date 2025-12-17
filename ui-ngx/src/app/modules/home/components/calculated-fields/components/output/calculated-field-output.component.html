@@ -51,14 +51,9 @@
       } @else {
         <div class="flex items-start gap-3 xs:flex-col xs:items-stretch">
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-            <mat-label>
-              {{
-                (outputForm.get('type').value === OutputType.Timeseries
-                  ? 'calculated-fields.timeseries-key'
-                  : 'calculated-fields.attribute-key')
-                  | translate
-              }}
-            </mat-label>
+            <mat-label>{{ (outputForm.get('type').value === OutputType.Timeseries
+              ? 'calculated-fields.timeseries-key'
+              : 'calculated-fields.attribute-key') | translate }}</mat-label>
             <input matInput formControlName="name" required>
             @if (outputForm.get('name').errors && outputForm.get('name').touched) {
               <mat-error>

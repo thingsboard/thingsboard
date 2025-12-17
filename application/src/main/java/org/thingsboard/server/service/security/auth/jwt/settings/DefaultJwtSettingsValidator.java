@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.Arrays;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Base64;
 import java.util.Optional;

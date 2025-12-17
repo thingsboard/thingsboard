@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.service.cf.ctx.state.geofencing;
 
-:host {
-  display: flex;
-  flex: 1 1 0;
-  .tb-create-password-content {
-    background-color: #eee;
-    .tb-create-password-card {
-      @media #{$mat-gt-xs} {
-        width: 450px !important;
-      }
-    }
-  }
+public interface ScheduledRefreshSupported {
+
+    void resetScheduledRefreshTs();
+
+    long getLastScheduledRefreshTs();
+
+    void updateScheduledRefreshTs();
+
 }

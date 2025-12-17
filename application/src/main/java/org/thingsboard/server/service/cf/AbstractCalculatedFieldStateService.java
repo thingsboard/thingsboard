@@ -68,7 +68,7 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
 
     protected abstract void doRemove(CalculatedFieldEntityCtxId stateId, TbCallback callback);
 
-    protected void processRestoredState(CalculatedFieldStateProto stateMsg, TopicPartitionInfo partition) {
+    protected void processRestoredState(CalculatedFieldStateProto stateMsg, TopicPartitionInfo partition, TbCallback callback) {
         var id = fromProto(stateMsg.getId());
         if (partition == null) {
             try {
@@ -79,12 +79,12 @@ public abstract class AbstractCalculatedFieldStateService implements CalculatedF
             }
         }
         var state = fromProto(id, stateMsg);
-        processRestoredState(id, state, partition);
+        processRestoredState(id, state, partition, callback);
     }
 
-    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state, TopicPartitionInfo partition) {
+    protected void processRestoredState(CalculatedFieldEntityCtxId id, CalculatedFieldState state, TopicPartitionInfo partition, TbCallback callback) {
         partition = partition.withTopic(DataConstants.CF_STATES_QUEUE_NAME);
-        actorSystemContext.tellWithHighPriority(new CalculatedFieldStateRestoreMsg(id, state, partition));
+        actorSystemContext.tellWithHighPriority(new CalculatedFieldStateRestoreMsg(id, state, partition, callback));
     }
 
     @Override
