@@ -72,7 +72,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.edge.EdgeDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.edge.imitator.EdgeImitator;

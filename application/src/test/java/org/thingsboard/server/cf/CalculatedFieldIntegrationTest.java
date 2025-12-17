@@ -1089,7 +1089,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         // Telemetry on device
         doPost("/api/plugins/telemetry/DEVICE/" + device.getUuidId() + "/timeseries/unusedScope",
-                JacksonUtil.toJsonNode("{\"temperature\":12.5}")).andExpect(status().isOk());
+                JacksonUtil.toJsonNode("{\"temperature\":12.5, \"humidity\":85}")).andExpect(status().isOk());
 
         // --- Build CF: PROPAGATION with expression ---
         CalculatedField cf = new CalculatedField();
@@ -1102,11 +1102,14 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setApplyExpressionToResolvedArguments(true);
 
-        Argument arg = new Argument();
-        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
-        cfg.setArguments(Map.of("t", arg));
+        Argument arg1 = new Argument();
+        arg1.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
 
-        cfg.setExpression("{\"testResult\": t * 2}");
+        Argument arg2 = new Argument();
+        arg2.setRefEntityKey(new ReferencedEntityKey("humidity", ArgumentType.TS_LATEST, null));
+
+        cfg.setArguments(Map.of("t", arg1, "h", arg2));
+        cfg.setExpression("return { testResult: (t + h) / 2};");
 
         AttributesOutput output = new AttributesOutput();
         output.setScope(AttributeScope.SERVER_SCOPE);
@@ -1125,8 +1128,8 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ArrayNode attrs2 = getServerAttributes(asset2.getId(), "testResult");
                     assertThat(attrs1).isNotNull();
                     assertThat(attrs2).isNotNull();
-                    assertThat(attrs1.get(0).get("value").asDouble()).isEqualTo(25.0);
-                    assertThat(attrs2.get(0).get("value").asDouble()).isEqualTo(25.0);
+                    assertThat(attrs1.get(0).get("value").asDouble()).isEqualTo(48.75);
+                    assertThat(attrs2.get(0).get("value").asDouble()).isEqualTo(48.75);
                 });
 
         String deleteUrl = String.format("/api/v2/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
@@ -1148,7 +1151,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ArrayNode attrs2 = getServerAttributes(asset2.getId(), "testResult");
                     assertThat(attrs1).isNullOrEmpty();
                     assertThat(attrs2).isNotNull();
-                    assertThat(attrs2.get(0).get("value").asDouble()).isEqualTo(50);
+                    assertThat(attrs2.get(0).get("value").asDouble()).isEqualTo(55);
                 });
     }
 
@@ -1167,7 +1170,7 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
 
         // Telemetry on device
         long ts = System.currentTimeMillis() - 300000L;
-        postTelemetry(device.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":12.5}}", ts));
+        postTelemetry(device.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":12.5, \"humidity\":85}}", ts));
 
         // --- Build CF: PROPAGATION without expression ---
         CalculatedField cf = new CalculatedField();
@@ -1180,9 +1183,12 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
         cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
         cfg.setApplyExpressionToResolvedArguments(false); // arguments-only mode
 
-        Argument arg = new Argument();
-        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
-        cfg.setArguments(Map.of("temperatureComputed", arg));
+        Argument arg1 = new Argument();
+        arg1.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        Argument arg2 = new Argument();
+        arg2.setRefEntityKey(new ReferencedEntityKey("humidity", ArgumentType.TS_LATEST, null));
+
+        cfg.setArguments(Map.of("temperatureComputed", arg1, "humidityComputed", arg2));
 
         TimeSeriesOutput output = new TimeSeriesOutput();
         output.setStrategy(new TimeSeriesImmediateOutputStrategy(0, true, true, true, true));
@@ -1197,14 +1203,18 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed");
-                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed");
+                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed,humidityComputed");
+                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed,humidityComputed");
                     assertThat(telemetry1).isNotNull();
                     assertThat(telemetry2).isNotNull();
                     assertThat(telemetry1.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
                     assertThat(telemetry1.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(12.5);
+                    assertThat(telemetry1.get("humidityComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry1.get("humidityComputed").get(0).get("value").asDouble()).isEqualTo(85);
                     assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
                     assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(12.5);
+                    assertThat(telemetry2.get("humidityComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry2.get("humidityComputed").get(0).get("value").asDouble()).isEqualTo(85);
                 });
 
         String deleteUrl = String.format("/api/v2/relation?fromId=%s&fromType=%s&relationType=%s&toId=%s&toType=%s",
@@ -1212,10 +1222,10 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 EntityRelation.CONTAINS_TYPE, device.getId().getId(), EntityType.DEVICE
         );
         doDelete(deleteUrl).andExpect(status().isOk());
-        doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/timeseries/delete?keys=temperatureComputed&deleteAllDataForKeys=true").andExpect(status().isOk());
+        doDelete("/api/plugins/telemetry/ASSET/" + asset1.getId() + "/timeseries/delete?keys=temperatureComputed,humidityComputed&deleteAllDataForKeys=true").andExpect(status().isOk());
 
-        // Update telemetry on device
-        long newTs = System.currentTimeMillis() - 300000L;
+        // Update telemetry on the device
+        long newTs = ts + 300000L;
         postTelemetry(device.getId(), String.format("{\"ts\": %s, \"values\": {\"temperature\":25}}", newTs));
 
         // --- Assert propagated calculation (arguments-only mode after update) ---
@@ -1223,13 +1233,18 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed");
-                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed");
+                    ObjectNode telemetry1 = getLatestTelemetry(asset1.getId(), "temperatureComputed,humidityComputed");
+                    ObjectNode telemetry2 = getLatestTelemetry(asset2.getId(), "temperatureComputed,humidityComputed");
                     assertThat(telemetry1).isNotNull();
                     assertThat(telemetry2).isNotNull();
                     assertThat(telemetry1.get("temperatureComputed").get(0).get("value")).isEqualTo(NullNode.instance);
+                    assertThat(telemetry1.get("humidityComputed").get(0).get("value")).isEqualTo(NullNode.instance);
+
                     assertThat(telemetry2.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
                     assertThat(telemetry2.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(25);
+                    // TS for humidity is not updated -> expected
+                    assertThat(telemetry2.get("humidityComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(ts));
+                    assertThat(telemetry2.get("humidityComputed").get(0).get("value").asDouble()).isEqualTo(85);
                 });
 
         Asset asset3 = createAsset("Propagated Asset 3", null);
@@ -1241,10 +1256,12 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
-                    ObjectNode telemetry = getLatestTelemetry(asset3.getId(), "temperatureComputed");
+                    ObjectNode telemetry = getLatestTelemetry(asset3.getId(), "temperatureComputed,humidityComputed");
                     assertThat(telemetry).isNotNull();
                     assertThat(telemetry.get("temperatureComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
                     assertThat(telemetry.get("temperatureComputed").get(0).get("value").asDouble()).isEqualTo(25);
+                    assertThat(telemetry.get("humidityComputed").get(0).get("ts").asText()).isEqualTo(Long.toString(newTs));
+                    assertThat(telemetry.get("humidityComputed").get(0).get("value").asDouble()).isEqualTo(85);
                 });
 
     }
@@ -1295,6 +1312,84 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
                     ObjectNode c = getLatestTelemetry(testDevice.getId(), "c");
                     assertThat(c).isNotNull();
                     assertThat(c.get("c").get(0).get("value").asText()).isEqualTo("20");
+                });
+    }
+
+    @Test
+    public void testCalculatedFieldWhenBatchOfTelemetrySent() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":5}"));
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"b\":10}"));
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"b\":20}"));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("Script CF");
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        Argument argumentA = new Argument();
+        argumentA.setRefEntityKey(refEntityKeyA);
+        Argument argumentB = new Argument();
+        ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_ROLLING, null);
+        argumentB.setTimeWindow(TimeUnit.MINUTES.toMillis(10));
+        argumentB.setLimit(1000);
+        argumentB.setRefEntityKey(refEntityKeyB);
+        config.setArguments(Map.of("a", argumentA, "b", argumentB));
+        config.setExpression("""
+                return {
+                    "latestA": a,
+                    "avgB": b.avg
+                };
+                """);
+
+        config.setOutput(new TimeSeriesOutput());
+
+        calculatedField.setConfiguration(config);
+
+        doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("5");
+                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("15.0");
+                });
+
+        long now = System.currentTimeMillis();
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("""
+                [{
+                    "ts": %s,
+                    "values": {
+                        "a": 6,
+                        "b": 100
+                    }
+                }, {
+                    "ts": %s,
+                    "values": {
+                        "a": 7,
+                        "b": 200
+                    }
+                }, {
+                    "ts": %s,
+                    "values": {
+                        "a": 8,
+                        "b": 300
+                    }
+                }]""", now - TimeUnit.MINUTES.toMillis(2), now, now - TimeUnit.MINUTES.toMillis(5))));
+
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("7");
+                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("126.0");
                 });
     }
 

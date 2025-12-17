@@ -22,6 +22,7 @@ import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
 import lombok.extern.slf4j.Slf4j;
+import org.awaitility.Awaitility;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -102,6 +103,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
@@ -736,6 +738,29 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         rpc.put("timeout", 5000);
 
         return rpc;
+    }
+
+    protected void verifyEdgeDisconnected() {
+        verifyEdgeActiveFlag(false);
+    }
+
+    protected void verifyEdgeConnected() {
+        verifyEdgeActiveFlag(true);
+    }
+
+    private void verifyEdgeActiveFlag(boolean value) {
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
+                            "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
+                    Optional<Map<String, Object>> activeAttrOpt = values.stream().filter(att -> att.get("key").equals("active")).findFirst();
+                    if (activeAttrOpt.isEmpty()) {
+                        return false;
+                    }
+                    Map<String, Object> activeAttr = activeAttrOpt.get();
+                    return Boolean.toString(value).equals(activeAttr.get("value").toString());
+                });
     }
 
 }

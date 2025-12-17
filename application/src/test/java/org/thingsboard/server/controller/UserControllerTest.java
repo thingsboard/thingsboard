@@ -50,7 +50,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.settings.StarredDashboardInfo;
 import org.thingsboard.server.common.data.settings.UserDashboardsInfo;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserDao;
 

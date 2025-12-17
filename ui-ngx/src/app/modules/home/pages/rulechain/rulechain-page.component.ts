@@ -1660,7 +1660,7 @@ export class RuleChainPageComponent extends PageComponent
 
   get additionalActionConfig (): AdditionalDebugActionConfig {
     return {
-      title: this.translate.instant('rulenode.rule-node-events'),
+      title: this.translate.instant('action.see-debug-events'),
       action: this.switchToEventsTab.bind(this)
     }
   }

@@ -94,8 +94,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private Alarm currentAlarm;
     private boolean initialFetchDone;
 
-    // TODO: deprecate device profile node, describe the differences and improvements
-
     public AlarmCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }

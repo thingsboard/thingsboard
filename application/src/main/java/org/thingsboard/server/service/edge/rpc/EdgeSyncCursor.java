@@ -92,6 +92,7 @@ public class EdgeSyncCursor {
             fetchers.add(new NotificationTargetEdgeEventFetcher(ctx.getNotificationTargetService()));
             fetchers.add(new NotificationRuleEdgeEventFetcher(ctx.getNotificationRuleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
+            // sync device profiles twice to update software and hardware fields
             fetchers.add(new DeviceProfilesEdgeEventFetcher(ctx.getDeviceProfileService()));
             fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
         }

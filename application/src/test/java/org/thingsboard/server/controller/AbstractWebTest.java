@@ -1209,7 +1209,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Map<CalculatedFieldId, CalculatedFieldState> statesMap = (Map<CalculatedFieldId, CalculatedFieldState>) ReflectionTestUtils.getField(processor, "states");
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
-            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs() <
+            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastScheduledRefreshTs() <
                                                               System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;

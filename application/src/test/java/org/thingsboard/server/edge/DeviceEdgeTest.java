@@ -893,18 +893,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         ObjectNode attributes = JacksonUtil.newObjectNode();
         attributes.put("active", true);
         doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
-        Awaitility.await()
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> {
-                    List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
-                            "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
-                    Optional<Map<String, Object>> activeAttrOpt = values.stream().filter(att -> att.get("key").equals("active")).findFirst();
-                    if (activeAttrOpt.isEmpty()) {
-                        return false;
-                    }
-                    Map<String, Object> activeAttr = activeAttrOpt.get();
-                    return "true".equals(activeAttr.get("value").toString());
-                });
+        verifyEdgeConnected();
     }
 
 }
