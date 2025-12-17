@@ -71,7 +71,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
 
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
-    title: this.translate.instant('calculated-fields.see-debug-events'),
+    title: this.translate.instant('action.see-debug-events'),
     action: (calculatedField: CalculatedField) => this.openDebugEventsDialog.call(this, calculatedField),
   };
 

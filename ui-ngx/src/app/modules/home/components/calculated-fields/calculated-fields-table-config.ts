@@ -72,7 +72,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
-    title: this.translate.instant('calculated-fields.see-debug-events'),
+    title: this.translate.instant('action.see-debug-events'),
     action: (calculatedField: CalculatedField) => this.openDebugEventsDialog.call(this, null, calculatedField),
   };
 
