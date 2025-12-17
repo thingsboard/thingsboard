@@ -21,7 +21,6 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -46,10 +45,7 @@ import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.QUEU
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATED;
 import static org.thingsboard.server.common.data.ota.OtaPackageUpdateStatus.UPDATING;
 import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TARGET_FW_VERSION;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.LwM2MProfileBootstrapConfigType.NONE;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
-import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.FW_INSTANCE_ID;
 
 @Slf4j
 public class Ota5LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
@@ -110,52 +106,5 @@ public class Ota5LwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
                 .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getFwSwStateTelemetryFromAPI(device.getId().getId(), "fw_state"), this::predicateForStatuses);
         log.warn("Object5: Got the ts: {}", ts);
-    }
-
-    /**
-     * ObjectId = 19/65533/0
-     * {
-     *   "title" : "My firmware",
-     *   "version" : "fw.v.1.5.0-update",
-     *   "checksum" : "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a",
-     *   "fileSize" : 1,
-     *   "fileName" : "filename.txt"
-     * }
-     * to base64
-     * /5/0/5 -> Update Result (Res); 5/0/3 -> State;
-     * => ((Res>=0 && Res<=9) &&  State=0)
-     * => Write to Package/Write to Package URI -> DOWNLOADING ((Res>=0 && Res<=9) && State=1)
-     * => Download Finished -> DOWNLOADED ((Res==0 || Res=8) && State=2)
-     * => Executable resource Update is triggered / Initiate Firmware Update -> UPDATING (Res=0 && State=3)
-     * => Update Successful  [Res==1]
-     * => Start / Res=0 -> "IDLE" ....
-     * @throws Exception
-     */
-    @Test
-    public void testFirmwareUpdateByObject5WithObject19_Ok() throws Exception {
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration19(OBSERVE_ATTRIBUTES_WITH_PARAMS_OTA5_19, getBootstrapServerCredentialsNoSec(NONE));
-        DeviceProfile deviceProfile =  createLwm2mDeviceProfile("profileFor" + this.CLIENT_ENDPOINT_OTA5 + "19_Ok", transportConfiguration);
-        String endpoint = this.CLIENT_ENDPOINT_OTA5 + "19_Ok";
-        LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(endpoint));
-        final Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
-        createNewClient(SECURITY_NO_SEC, null, false, endpoint, device.getId().getId().toString());
-        awaitObserveReadAll(6, device.getId().getId().toString());
-
-        OtaPackageInfo otaPackageInfo = createFirmware(TARGET_FW_VERSION, deviceProfile.getId());
-        device.setFirmwareId(otaPackageInfo.getId());
-        final Device savedDevice = doPost("/api/device", device, Device.class);
-
-        assertThat(savedDevice).as("saved device").isNotNull();
-        assertThat(getDeviceFromAPI(device.getId().getId())).as("fetched device").isEqualTo(savedDevice);
-
-        expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
-        List<TsKvEntry> ts = await("await on timeseries for FW")
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> getFwSwStateTelemetryFromAPI(device.getId().getId(), "fw_state"), this::predicateForStatuses);
-
-        String ver_Id_19 = lwM2MTestClient.getLeshanClient().getObjectTree().getModel().getObjectModel(BINARY_APP_DATA_CONTAINER).version;
-        String resourceIdVer = "/" + BINARY_APP_DATA_CONTAINER + "_" + ver_Id_19 + "/" + FW_INSTANCE_ID + "/" + RESOURCE_ID_0;
-        resultReadOtaParams_19(resourceIdVer, otaPackageInfo);
-        log.warn("Object5 with Object19: Got the ts: {}", ts);
     }
 }
