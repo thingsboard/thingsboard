@@ -30,8 +30,10 @@ import java.io.IOException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+
 @Slf4j
 public abstract class AbstractNoSqlContainer {
+
     public static final List<String> INIT_SCRIPTS = List.of(
             "cassandra/schema-keyspace.cql",
             "cassandra/schema-ts.cql",
