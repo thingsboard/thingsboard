@@ -36,5 +36,9 @@ public class HousekeeperConfig {
     private int taskReprocessingDelay;
     @Value("${queue.core.housekeeper.max-reprocessing-attempts:10}")
     private int maxReprocessingAttempts;
+    @Value("${queue.housekeeper.async-processing-enabled:true}")
+    private boolean asyncProcessingEnabled;
+    @Value("${queue.housekeeper.async-processing-threads:0}")
+    private int asyncProcessingThreads;
 
 }
