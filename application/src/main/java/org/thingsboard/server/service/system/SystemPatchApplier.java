@@ -16,7 +16,9 @@
 package org.thingsboard.server.service.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.base.Charsets;
 import com.google.common.hash.Hashing;
+import com.google.common.io.Resources;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +36,7 @@ import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
@@ -52,6 +55,8 @@ import java.util.stream.Stream;
 @TbCoreComponent
 @RequiredArgsConstructor
 public class SystemPatchApplier {
+
+    private static final String SCHEMA_VIEWS_SQL = "sql/schema-views.sql";
 
     private static final long ADVISORY_LOCK_ID = 7536891047216478431L;
 
@@ -86,6 +91,9 @@ public class SystemPatchApplier {
         }
 
         try {
+            updateSqlViews();
+            log.info("Updated sql database views");
+
             int updated = updateWidgetTypes();
             log.info("Updated {} widget types", updated);
 
@@ -122,6 +130,16 @@ public class SystemPatchApplier {
     private boolean isPatchVersionChanged(VersionInfo packageVersion, VersionInfo dbVersion) {
         return packageVersion.major == dbVersion.major && packageVersion.minor == dbVersion.minor
                 && packageVersion.maintenance == dbVersion.maintenance && packageVersion.patch > dbVersion.patch;
+    }
+
+    private void updateSqlViews() {
+        try {
+            URL schemaViewsUrl = Resources.getResource(SCHEMA_VIEWS_SQL);
+            String sql = Resources.toString(schemaViewsUrl, Charsets.UTF_8);
+            jdbcTemplate.execute(sql);
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to update database views from schema-views.sql", e);
+        }
     }
 
     private int updateWidgetTypes() {
