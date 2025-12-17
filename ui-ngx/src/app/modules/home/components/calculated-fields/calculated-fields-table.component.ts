@@ -36,6 +36,7 @@ import { ImportExportService } from '@shared/import-export/import-export.service
 import { EntityDebugSettingsService } from '@home/components/entity/debug/entity-debug-settings.service';
 import { DatePipe } from '@angular/common';
 import { UtilsService } from "@core/services/utils.service";
+import { ActivatedRoute } from '@angular/router';
 
 @Component({
   selector: 'tb-calculated-fields-table',
@@ -55,6 +56,8 @@ export class CalculatedFieldsTableComponent {
 
   calculatedFieldsTableConfig: CalculatedFieldsTableConfig;
 
+  pageMode: boolean = false;
+
   constructor(private calculatedFieldsService: CalculatedFieldsService,
               private translate: TranslateService,
               private dialog: MatDialog,
@@ -65,10 +68,12 @@ export class CalculatedFieldsTableComponent {
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
-              private destroyRef: DestroyRef) {
-
+              private destroyRef: DestroyRef,
+              private route: ActivatedRoute,
+  ) {
+    this.pageMode = !!this.route.snapshot.data.isPage;
     effect(() => {
-      if (this.active()) {
+      if (this.active() || this.pageMode) {
         this.calculatedFieldsTableConfig = new CalculatedFieldsTableConfig(
           this.calculatedFieldsService,
           this.translate,
@@ -83,6 +88,7 @@ export class CalculatedFieldsTableComponent {
           this.importExportService,
           this.entityDebugSettingsService,
           this.utilsService,
+          this.pageMode,
         );
         this.cd.markForCheck();
       }

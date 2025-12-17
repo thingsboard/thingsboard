@@ -81,7 +81,7 @@
                 matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                 matTooltipPosition="above"
                 class="tb-mat-32"
-                [disabled]="propagateConfiguration.get('arguments').invalid"
+                [disabled]="propagateConfiguration.get('arguments').invalid || disabled"
                 (click)="onTestScript()">
           <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
         </button>
@@ -90,7 +90,7 @@
         <button mat-button mat-raised-button color="primary"
                 type="button"
                 (click)="onTestScript()"
-                [disabled]="propagateConfiguration.get('arguments').invalid">
+                [disabled]="propagateConfiguration.get('arguments').invalid || disabled">
           {{ 'calculated-fields.test-script-function' | translate }}
         </button>
       </div>

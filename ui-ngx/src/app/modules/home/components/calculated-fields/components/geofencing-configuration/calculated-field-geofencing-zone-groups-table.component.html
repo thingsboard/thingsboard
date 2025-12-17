@@ -101,6 +101,7 @@
                     #button
                     (click)="manageZone($event, button, geofenceZone)"
                     [matTooltip]="'action.edit' | translate"
+                    [disabled]="disable"
                     matTooltipPosition="above">
               <mat-icon [matBadgeHidden]="geofenceZone.refEntityId?.id !== NULL_UUID"
                         matBadgeColor="warn"
@@ -112,6 +113,7 @@
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, geofenceZone)"
+                    [disabled]="disable"
                     [matTooltip]="'action.delete' | translate"
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
@@ -128,7 +130,7 @@
     }
   </div>
   <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
-       class="tb-prompt flex flex-1 items-end justify-center text-base required">
+       class="tb-prompt flex flex-1 items-end justify-center text-base" [class.required]="!disable">
     {{ 'calculated-fields.no-zone-configured' | translate }}
   </div>
   <div class="flex h-9 justify-between">
@@ -137,7 +139,7 @@
             color="primary"
             #button
             (click)="manageZone($event, button)"
-            [disabled]="maxArgumentsPerCF > 0 && zoneGroupsFormArray.length >= maxArgumentsPerCF">
+            [disabled]="maxArgumentsPerCF > 0 && zoneGroupsFormArray.length >= maxArgumentsPerCF || disable">
       {{ 'calculated-fields.add-zone-group' | translate }}
     </button>
     @if (maxArgumentsPerCF && zoneGroupsFormArray.length >= maxArgumentsPerCF) {

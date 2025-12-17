@@ -88,6 +88,8 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
     output: this.fb.control<CalculatedFieldOutput>(defaultCalculatedFieldOutput),
   });
 
+  disabled = false;
+
   readonly ScriptLanguage = ScriptLanguage;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly OutputType = OutputType;
@@ -142,6 +144,7 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   registerOnTouched(_: any): void { }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.propagateConfiguration.disable({emitEvent: false});
     } else {
