@@ -39,7 +39,7 @@ import { fromEvent, Subscription } from 'rxjs';
 import { POSITION_MAP } from '@shared/models/overlay.models';
 import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AlarmRuleFilterConfig } from "@shared/models/alarm-rule.models";
+import { alarmRuleEntityTypeList, AlarmRuleFilterConfig } from "@shared/models/alarm-rule.models";
 
 export const ALARM_FILTER_CONFIG_DATA = new InjectionToken<any>('AlarmRuleFilterConfigData');
 
@@ -100,7 +100,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
 
   entityType = EntityType;
 
-  listEntityTypes = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+  listEntityTypes = alarmRuleEntityTypeList;
   entityTypeTranslations = entityTypeTranslations;
 
   private alarmRuleFilterConfig: AlarmRuleFilterConfig;

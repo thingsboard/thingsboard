@@ -72,7 +72,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('calculated-fields.see-debug-events'),
-    action: (calculatedField: CalculatedField) => this.openDebugEventsDialog.call(this, calculatedField),
+    action: (calculatedField: CalculatedField) => this.openDebugEventsDialog.call(this, null, calculatedField),
   };
 
   alarmRuleFilterConfig: CalculatedFieldsQuery;
@@ -95,6 +95,13 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     super();
     if (this.pageMode) {
       this.headerComponent = AlarmRuleTableHeaderComponent;
+
+      this.rowPointer = true;
+
+      this.handleRowClick = ($event, model) => {
+        this.editCalculatedField($event, model);
+        return true;
+      };
     }
     this.tableTitle = this.pageMode ? '' : this.translate.instant('alarm-rule.alarm-rules');
     this.detailsPanelEnabled = false;
@@ -153,7 +160,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
         name: this.translate.instant('alarm-rule.copy'),
         icon: 'content_copy',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.copyCalculatedField(entity)
+        onAction: ($event, entity) => this.copyCalculatedField($event, entity)
       }
     );
     this.cellActionDescriptors.push(
@@ -161,13 +168,13 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
         name: this.translate.instant('action.export'),
         icon: 'file_download',
         isEnabled: () => true,
-        onAction: (event$, entity) => this.exportAlarmRule(event$, entity),
+        onAction: ($event, entity) => this.exportAlarmRule($event, entity),
       },
       {
         name: this.translate.instant('entity-view.events'),
         icon: 'mdi:clipboard-text-clock',
         isEnabled: () => true,
-        onAction: (_, entity) => this.openDebugEventsDialog(entity),
+        onAction: ($event, entity) => this.openDebugEventsDialog($event, entity),
       },
       {
         name: '',
@@ -181,7 +188,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
         name: this.translate.instant('action.edit'),
         icon: 'edit',
         isEnabled: () => true,
-        onAction: (_, entity) => this.editCalculatedField(entity),
+        onAction: ($event, entity) => this.editCalculatedField($event, entity),
       }
     );
   }
@@ -193,14 +200,12 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   }
 
   onOpenDebugConfig($event: Event, calculatedField: CalculatedField): void {
+    $event?.stopPropagation();
     const { debugSettings = {}, id } = calculatedField;
     const additionalActionConfig = {
       ...this.additionalDebugActionConfig,
-      action: () => this.openDebugEventsDialog(calculatedField)
+      action: () => this.openDebugEventsDialog($event, calculatedField)
     };
-    if ($event) {
-      $event.stopPropagation();
-    }
 
     const { viewContainerRef, renderer } = this.entityDebugSettingsService;
     if (!viewContainerRef || !renderer) {
@@ -219,7 +224,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     }, $event.target as Element);
   }
 
-  private editCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
+  private editCalculatedField($event: Event, calculatedField: CalculatedField, isDirty = false): void {
+    $event?.stopPropagation();
     this.getCalculatedAlarmDialog(calculatedField, 'action.apply', isDirty)
       .subscribe((res) => {
         if (res) {
@@ -228,7 +234,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       });
   }
 
-  private copyCalculatedField(calculatedField: CalculatedField, isDirty = false): void {
+  private copyCalculatedField($event: Event, calculatedField: CalculatedField, isDirty = false): void {
+    $event?.stopPropagation();
     const copyCalculatedAlarmRule = deepClone(calculatedField);
     if (this.pageMode) {
       copyCalculatedAlarmRule.entityId = null;
@@ -243,13 +250,14 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   }
 
   private getCalculatedAlarmDialog(value?: CalculatedField, buttonTitle = 'action.add', isDirty = false): Observable<CalculatedField> {
+    const entityId = this.entityId || value?.entityId;
     return this.dialog.open<AlarmRuleDialogComponent, AlarmRuleDialogData, CalculatedField>(AlarmRuleDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         value,
         buttonTitle,
-        entityId: this.entityId,
+        entityId,
         tenantId: this.tenantId,
         entityName: this.entityName,
         ownerId: this.ownerId ?? {entityType: EntityType.TENANT, id: this.tenantId},
@@ -263,7 +271,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       .pipe(filter(Boolean));
   }
 
-  private openDebugEventsDialog(calculatedField: CalculatedField): void {
+  private openDebugEventsDialog($event: Event, calculatedField: CalculatedField): void {
+    $event?.stopPropagation();
     this.dialog.open<EventsDialogComponent, EventsDialogData, null>(EventsDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -282,9 +291,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
   }
 
   private exportAlarmRule($event: Event, calculatedField: CalculatedField): void {
-    if ($event) {
-      $event.stopPropagation();
-    }
+    $event?.stopPropagation();
     this.importExportService.exportCalculatedField(calculatedField.id.id);
   }
 
@@ -361,7 +368,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
           filter(Boolean),
           tap(expression => {
             if (openCalculatedFieldEdit) {
-              this.editCalculatedField({
+              this.editCalculatedField(null, {
                 entityId: this.entityId, ...calculatedField,
                 configuration: {...calculatedField.configuration, expression} as any
               }, true)
