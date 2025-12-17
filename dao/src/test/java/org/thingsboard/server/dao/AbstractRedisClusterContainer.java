@@ -20,7 +20,6 @@ import org.assertj.core.api.Assertions;
 import org.junit.ClassRule;
 import org.junit.rules.ExternalResource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.output.OutputFrame;
 
 import java.util.List;
@@ -28,33 +27,32 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@SuppressWarnings("resource") // GenericContainer is closed manually via stop()
 public class AbstractRedisClusterContainer {
 
-    static final String NODES = "127.0.0.1:6371,127.0.0.1:6372,127.0.0.1:6373,127.0.0.1:6374,127.0.0.1:6375,127.0.0.1:6376";
+    static final String NODES =
+            "127.0.0.1:6371,127.0.0.1:6372,127.0.0.1:6373," +
+                    "127.0.0.1:6374,127.0.0.1:6375,127.0.0.1:6376";
+
     static final String IMAGE = "bitnamilegacy/valkey-cluster:8.0";
-    static final Map<String,String> ENVS = Map.of(
+
+    static final Map<String, String> ENVS = Map.of(
             "VALKEY_CLUSTER_ANNOUNCE_IP", "127.0.0.1",
             "VALKEY_CLUSTER_DYNAMIC_IPS", "no",
             "ALLOW_EMPTY_PASSWORD", "yes",
             "VALKEY_NODES", NODES
-    ); 
+    );
 
-    @ClassRule(order = 1)
-    public static GenericContainer redis1 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6371").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
-    @ClassRule(order = 2)
-    public static GenericContainer redis2 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6372").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
-    @ClassRule(order = 3)
-    public static GenericContainer redis3 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6373").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
-    @ClassRule(order = 4)
-    public static GenericContainer redis4 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6374").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
-    @ClassRule(order = 5)
-    public static GenericContainer redis5 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6375").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
-    @ClassRule(order = 6)
-    public static GenericContainer redis6 = new GenericContainer(IMAGE).withEnv(ENVS).withEnv("VALKEY_PORT_NUMBER", "6376").withNetworkMode("host").withLogConsumer(AbstractRedisClusterContainer::consumeLog);
-
+    static final GenericContainer<?> redis1 = container("6371");
+    static final GenericContainer<?> redis2 = container("6372");
+    static final GenericContainer<?> redis3 = container("6373");
+    static final GenericContainer<?> redis4 = container("6374");
+    static final GenericContainer<?> redis5 = container("6375");
+    static final GenericContainer<?> redis6 = container("6376");
 
     @ClassRule(order = 100)
-    public static ExternalResource resource = new ExternalResource() {
+    public static final ExternalResource resource = new ExternalResource() {
+
         @Override
         protected void before() throws Throwable {
             redis1.start();
@@ -64,17 +62,18 @@ public class AbstractRedisClusterContainer {
             redis5.start();
             redis6.start();
 
-            Thread.sleep(TimeUnit.SECONDS.toMillis(5)); // otherwise not all containers have time to start
+            Thread.sleep(TimeUnit.SECONDS.toMillis(5));
 
-            String clusterCreateCommand = "valkey-cli --cluster create " + NODES.replace(","," ") + " --cluster-replicas 1 --cluster-yes";
-            log.warn("Command to init ValKey Cluster: {}", clusterCreateCommand);
-            var result = redis6.execInContainer("/bin/sh", "-c", clusterCreateCommand);
-            log.warn("Init cluster result: {}", result);
-            Assertions.assertThat(result.getExitCode()).isEqualTo(0);
+            String cmd = "valkey-cli --cluster create " +
+                    NODES.replace(",", " ") +
+                    " --cluster-replicas 1 --cluster-yes";
 
-            Thread.sleep(TimeUnit.SECONDS.toMillis(5)); // otherwise cluster not always ready
+            log.warn("Init Valkey cluster: {}", cmd);
+            var result = redis6.execInContainer("/bin/sh", "-c", cmd);
+            Assertions.assertThat(result.getExitCode()).isZero();
 
-            log.warn("Connect to nodes: {}", NODES);
+            Thread.sleep(TimeUnit.SECONDS.toMillis(5));
+
             System.setProperty("cache.type", "redis");
             System.setProperty("redis.connection.type", "cluster");
             System.setProperty("redis.cluster.nodes", NODES);
@@ -89,12 +88,25 @@ public class AbstractRedisClusterContainer {
             redis4.stop();
             redis5.stop();
             redis6.stop();
-            List.of("cache.type", "redis.connection.type", "redis.cluster.nodes", "redis.cluster.useDefaultPoolConfig")
-                    .forEach(System.getProperties()::remove);
+
+            List.of(
+                    "cache.type",
+                    "redis.connection.type",
+                    "redis.cluster.nodes",
+                    "redis.cluster.useDefaultPoolConfig"
+            ).forEach(System.getProperties()::remove);
         }
     };
 
-    private static void consumeLog(Object x) {
-        log.warn("{}", ((OutputFrame) x).getUtf8StringWithoutLineEnding());
+    private static GenericContainer<?> container(String port) {
+        return new GenericContainer<>(IMAGE)
+                .withEnv(ENVS)
+                .withEnv("VALKEY_PORT_NUMBER", port)
+                .withNetworkMode("host")
+                .withLogConsumer(AbstractRedisClusterContainer::consumeLog);
+    }
+
+    private static void consumeLog(OutputFrame frame) {
+        log.warn(frame.getUtf8StringWithoutLineEnding());
     }
 }
