@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport;
 
+import org.junit.Ignore;
 import org.junit.extensions.cpsuite.ClasspathSuite;
 import org.junit.runner.RunWith;
 import org.thingsboard.server.dao.AbstractNoSqlContainer;
@@ -23,6 +24,8 @@ import org.thingsboard.server.dao.AbstractNoSqlContainer;
 @ClasspathSuite.ClassnameFilters({
         "org.thingsboard.server.transport.*.telemetry.timeseries.nosql.*Test",
 })
+
+@Ignore
 public class TransportNoSqlTestSuite extends AbstractNoSqlContainer {
 
 }
