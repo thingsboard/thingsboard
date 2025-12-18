@@ -121,7 +121,24 @@
                     "noDataDisplayMessage": "",
                     "configMode": "basic",
                     "borderRadius": "12px",
-                    "titleColor": "rgba(0, 0, 0, 0.54)"
+                    "titleColor": "rgba(0, 0, 0, 0.54)",
+                    "timewindowStyle": {
+                        "showIcon": false,
+                        "iconSize": "24px",
+                        "icon": "query_builder",
+                        "iconPosition": "left",
+                        "font": {
+                            "size": 12,
+                            "sizeUnit": "px",
+                            "family": "Roboto",
+                            "weight": "400",
+                            "style": "normal",
+                            "lineHeight": "16px"
+                        },
+                        "color": "rgba(0, 0, 0, 0.38)",
+                        "displayTypePrefix": true
+                    },
+                    "titleFont": null
                 },
                 "id": "a669cf86-e715-efa4-dd9a-b839abf499e9",
                 "typeFullFqn": "system.cards.timeseries_table"
@@ -4519,7 +4536,7 @@
                                 "name": "{i18n:api-usage.view-statistics}",
                                 "buttonType": "icon",
                                 "icon": "show_chart",
-                                "buttonColor": "rgba(0, 0, 0, 0.87)",
+                                "buttonColor": "rgba(0, 0, 0, 0.54)",
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
@@ -4955,7 +4972,7 @@
                                 "name": "{i18n:api-usage.view-statistics}",
                                 "buttonType": "icon",
                                 "icon": "show_chart",
-                                "buttonColor": "rgba(0, 0, 0, 0.87)",
+                                "buttonColor": "rgba(0, 0, 0, 0.54)",
                                 "customButtonStyle": {},
                                 "useShowWidgetActionFunction": null,
                                 "showWidgetActionFunction": "return true;",
