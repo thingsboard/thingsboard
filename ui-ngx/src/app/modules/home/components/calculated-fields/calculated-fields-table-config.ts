@@ -136,11 +136,13 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     this.columns.push(new EntityTableColumn<CalculatedField>('name', 'common.name', this.pageMode ? '33%' : '60%',
       entity => this.utilsService.customTranslation(entity.name, entity.name)));
     if (this.pageMode) {
-      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'calculated-fields.target-entity', '33%',
+      this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('entityType', 'entity.entity-type', '10%',
+        entity => this.translate.instant(entityTypeTranslations.get(entity.entityId.entityType).type)));
+      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'entity.entity', '33%',
         entity => this.utilsService.customTranslation(entity['entityName'], entity['entityName']),
         entity => getEntityDetailsPageURL(entity.entityId?.id, entity.entityId?.entityType as EntityType), false));
     }
-    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', this.pageMode ? '33%' : '40%', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
+    this.columns.push(new EntityTableColumn<CalculatedField>('type', 'common.type', this.pageMode ? '23%' : '40%', entity => this.translate.instant(CalculatedFieldTypeTranslations.get(entity.type).name), () => ({whiteSpace: 'nowrap' })));
 
     this.cellActionDescriptors.push(
       {

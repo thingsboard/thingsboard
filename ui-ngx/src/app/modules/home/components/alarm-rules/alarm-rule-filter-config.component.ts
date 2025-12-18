@@ -73,14 +73,6 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
   @Input()
   buttonMode = true;
 
-  @coerceBoolean()
-  @Input()
-  userMode = false;
-
-  @coerceBoolean()
-  @Input()
-  propagatedFilter = true;
-
   @Input()
   initialAlarmRuleFilterConfig: AlarmRuleFilterConfig = {
     name: [],
@@ -124,7 +116,6 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
   ngOnInit(): void {
     if (this.data) {
       this.panelMode = this.data.panelMode;
-      this.userMode = this.data.userMode;
       this.alarmRuleFilterConfig = this.data.alarmRuleFilterConfig;
       this.initialAlarmRuleFilterConfig = this.data.initialAlarmRuleFilterConfig;
       if (this.panelMode && !this.initialAlarmRuleFilterConfig) {
@@ -248,7 +239,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
       if (!isArraysEqualIgnoreUndefined(filter1.entities, filter2.entities)) {
         return false;
       }
-      return filter1.entityType !== filter2.entityType;
+      return filter1.entityType === filter2.entityType;
     }
     return false;
   };
@@ -287,7 +278,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
       if (!filterTextParts.length) {
         this.buttonDisplayValue = this.translate.instant('alarm-rule.alarm-rule-filter-title');
       } else {
-        this.buttonDisplayValue = this.translate.instant('alarm-rule.alarm-rule-filter-title') + `: ${filterTextParts.join(', ')}`;
+        this.buttonDisplayValue = this.translate.instant('alarm-rule.filter-title') + `: ${filterTextParts.join(', ')}`;
       }
     }
   }
