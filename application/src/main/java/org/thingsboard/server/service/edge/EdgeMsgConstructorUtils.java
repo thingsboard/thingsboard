@@ -51,6 +51,8 @@ import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
@@ -261,10 +263,38 @@ public class EdgeMsgConstructorUtils {
         return DeviceCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(deviceCredentials)).build();
     }
 
-    public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile) {
-        return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(deviceProfile))
+    public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        String entity = getEntityAndFixLwm2mBootstrapShortServerId(deviceProfile, edgeVersion);
+        return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(entity)
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(deviceProfile.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static String getEntityAndFixLwm2mBootstrapShortServerId(DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        if (!(transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) || edgeVersion.getNumber() >= EdgeVersion.V_4_3_0.getNumber()) {
+            return JacksonUtil.toString(deviceProfile);
+        }
+        JsonNode jsonNode = JacksonUtil.valueToTree(deviceProfile);
+        JsonNode profileDataNode = jsonNode.get("profileData");
+        if (profileDataNode != null && profileDataNode.has("transportConfiguration")) {
+            JsonNode transportConfigNode = profileDataNode.get("transportConfiguration");
+            JsonNode bootstrapNode = transportConfigNode.get("bootstrap");
+            if (bootstrapNode != null && bootstrapNode.isArray()) {
+                for (JsonNode bootstrapServerNode : bootstrapNode) {
+                    if (bootstrapServerNode.isObject()) {
+                        ObjectNode serverObjectNode = (ObjectNode) bootstrapServerNode;
+                        JsonNode isBootstrapNode = serverObjectNode.get("bootstrapServerIs");
+                        boolean isBootstrapServer = isBootstrapNode != null && isBootstrapNode.asBoolean(false);
+                        JsonNode shortServerIdNode = serverObjectNode.get("shortServerId");
+                        if (isBootstrapServer && (shortServerIdNode == null || shortServerIdNode.isNull())) {
+                            serverObjectNode.put("shortServerId", 0);
+                        }
+                    }
+                }
+            }
+        }
+        return JacksonUtil.toString(jsonNode);
     }
 
     public static DeviceProfileUpdateMsg constructDeviceProfileDeleteMsg(DeviceProfileId deviceProfileId) {
