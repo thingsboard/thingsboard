@@ -107,7 +107,7 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             " a.type as type, " +
             " a.originator_name as originator_name, " +
             " a.originator_label as originator_label, " +
-            " coalesce(a.originator_label, a.originator_label) as originator_display_name, " +
+            " coalesce(a.originator_label, a.originator_name) as originator_display_name, " +
             " a.assignee_first_name as assignee_first_name, " +
             " a.assignee_last_name as assignee_last_name, " +
             " a.assignee_email as assignee_email, " +
