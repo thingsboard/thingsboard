@@ -48,7 +48,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
 
     protected Map<String, ArgumentEntry> arguments = new HashMap<>();
     protected boolean sizeExceedsLimit;
-    protected long latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     protected ReadinessStatus readinessStatus;
 
     @Setter
@@ -121,7 +120,6 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         requiredArguments = null;
         arguments.clear();
         sizeExceedsLimit = false;
-        latestTimestamp = DEFAULT_LAST_UPDATE_TS;
     }
 
     @Override

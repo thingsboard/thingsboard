@@ -78,6 +78,8 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   @Input({required: true})
   entityId: EntityId;
 
+  disabled = false;
+
   readonly outputTypes = Object.values(OutputType) as OutputType[];
   readonly OutputType = OutputType;
   readonly AttributeScope = AttributeScope;
@@ -175,6 +177,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
   registerOnTouched(_: any): void { }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.outputForm.disable({emitEvent: false});
     } else {

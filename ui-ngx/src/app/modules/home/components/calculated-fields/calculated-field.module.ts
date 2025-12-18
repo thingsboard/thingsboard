@@ -44,12 +44,20 @@ import {
 import {
   EntityAggregationComponentModule
 } from '@home/components/calculated-fields/components/entity-aggregation-configuration/entity-aggregation-component.module';
+import {
+  CalculatedFieldsHeaderComponent
+} from '@home/components/calculated-fields/table-header/calculated-fields-header.component';
+import {
+  CalculatedFieldsFilterConfigComponent
+} from '@home/components/calculated-fields/table-header/calculated-fields-filter-config.component';
 
 @NgModule({
   declarations: [
     CalculatedFieldDialogComponent,
     CalculatedFieldScriptTestDialogComponent,
     CalculatedFieldTestArgumentsComponent,
+    CalculatedFieldsHeaderComponent,
+    CalculatedFieldsFilterConfigComponent
   ],
   imports: [
     CommonModule,

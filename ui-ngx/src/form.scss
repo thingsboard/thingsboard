@@ -107,6 +107,9 @@
         }
       }
     }
+    &.disabled {
+      color: var(--mdc-outlined-text-field-disabled-input-text-color);
+    }
     .mat-expansion-panel {
       &.tb-settings {
         box-shadow: none;
@@ -157,6 +160,13 @@
     }
     .tb-json-object-panel, .tb-css-content-panel {
       margin: 0 0 8px;
+    }
+  }
+
+  .tb-form-panel-disabled {
+    color: var(--mdc-outlined-text-field-disabled-input-text-color);
+    .tb-form-panel {
+      color: var(--mdc-outlined-text-field-disabled-input-text-color);
     }
   }
 

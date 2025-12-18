@@ -1316,6 +1316,84 @@ public class CalculatedFieldIntegrationTest extends CalculatedFieldControllerTes
     }
 
     @Test
+    public void testCalculatedFieldWhenBatchOfTelemetrySent() throws Exception {
+        Device testDevice = createDevice("Test device", "1234567890");
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"a\":5}"));
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"b\":10}"));
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode("{\"b\":20}"));
+
+        CalculatedField calculatedField = new CalculatedField();
+        calculatedField.setEntityId(testDevice.getId());
+        calculatedField.setType(CalculatedFieldType.SCRIPT);
+        calculatedField.setName("Script CF");
+        calculatedField.setDebugSettings(DebugSettings.all());
+
+        SimpleCalculatedFieldConfiguration config = new SimpleCalculatedFieldConfiguration();
+
+        ReferencedEntityKey refEntityKeyA = new ReferencedEntityKey("a", ArgumentType.TS_LATEST, null);
+        Argument argumentA = new Argument();
+        argumentA.setRefEntityKey(refEntityKeyA);
+        Argument argumentB = new Argument();
+        ReferencedEntityKey refEntityKeyB = new ReferencedEntityKey("b", ArgumentType.TS_ROLLING, null);
+        argumentB.setTimeWindow(TimeUnit.MINUTES.toMillis(10));
+        argumentB.setLimit(1000);
+        argumentB.setRefEntityKey(refEntityKeyB);
+        config.setArguments(Map.of("a", argumentA, "b", argumentB));
+        config.setExpression("""
+                return {
+                    "latestA": a,
+                    "avgB": b.avg
+                };
+                """);
+
+        config.setOutput(new TimeSeriesOutput());
+
+        calculatedField.setConfiguration(config);
+
+        doPost("/api/calculatedField", calculatedField, CalculatedField.class);
+
+        await().alias("create CF -> perform initial calculation").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("5");
+                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("15.0");
+                });
+
+        long now = System.currentTimeMillis();
+        doPost("/api/plugins/telemetry/DEVICE/" + testDevice.getUuidId() + "/timeseries/" + DataConstants.SERVER_SCOPE, JacksonUtil.toJsonNode(String.format("""
+                [{
+                    "ts": %s,
+                    "values": {
+                        "a": 6,
+                        "b": 100
+                    }
+                }, {
+                    "ts": %s,
+                    "values": {
+                        "a": 7,
+                        "b": 200
+                    }
+                }, {
+                    "ts": %s,
+                    "values": {
+                        "a": 8,
+                        "b": 300
+                    }
+                }]""", now - TimeUnit.MINUTES.toMillis(2), now, now - TimeUnit.MINUTES.toMillis(5))));
+
+        await().alias("update telemetry -> recalculate state").atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode result = getLatestTelemetry(testDevice.getId(), "latestA", "avgB");
+                    assertThat(result).isNotNull();
+                    assertThat(result.get("latestA").get(0).get("value").asText()).isEqualTo("7");
+                    assertThat(result.get("avgB").get(0).get("value").asText()).isEqualTo("126.0");
+                });
+    }
+
+    @Test
     public void testSimpleCalculatedFieldWhenSkipRuleEngineOutputProcessing() throws Exception {
         Device testDevice = createDevice("Test device", "1234567890");
 

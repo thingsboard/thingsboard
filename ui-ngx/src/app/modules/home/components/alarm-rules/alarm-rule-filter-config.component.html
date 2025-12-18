@@ -66,7 +66,7 @@
       </tb-entity-subtype-list>
     </div>
     <div class="tb-form-row column-xs">
-      <div class="fixed-title-width" translate>alarm-rule.target-entity-type</div>
+      <div class="fixed-title-width" translate>entity.entity-type</div>
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="entityType" placeholder="{{ 'alarm-rule.any-type' | translate }}">
           <mat-option>{{ 'alarm-rule.any-type' | translate }}</mat-option>
@@ -78,7 +78,7 @@
     </div>
     @if (alarmRuleFilterConfigForm.get('entityType').value) {
       <div class="tb-form-row column-xs">
-        <div class="fixed-title-width" translate>alarm-rule.target-entities</div>
+        <div class="fixed-title-width" translate>entity.entities</div>
         <tb-entity-list appearance="outline"
                         subscriptSizing="dynamic"
                         class="flex flex-1"

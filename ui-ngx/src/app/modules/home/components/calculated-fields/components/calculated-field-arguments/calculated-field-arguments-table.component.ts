@@ -157,6 +157,10 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     return this.errorText ? { argumentsFormArray: false } : null;
   }
 
+  setDisabledState(isDisabled: boolean): void {
+    this.disable = isDisabled;
+  }
+
   onDelete($event: Event, argument: CalculatedFieldArgumentValue): void {
     $event.stopPropagation();
     const index = this.argumentsFormArray.controls.findIndex(control => isEqual(control.value, argument));
