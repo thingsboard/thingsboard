@@ -581,6 +581,8 @@ export class TbTimeSeriesChart {
     yAxisSettingsList.sort((a1, a2) => a1.order - a2.order);
     const axisLimitDatasources: Datasource[] = [];
     for (const yAxisSettings of yAxisSettingsList) {
+      yAxisSettings.min = this.normalizeAxisLimit(yAxisSettings.min);
+      yAxisSettings.max = this.normalizeAxisLimit(yAxisSettings.max);
       const axisSettings = mergeDeep<TimeSeriesChartYAxisSettings>({} as TimeSeriesChartYAxisSettings,
         defaultTimeSeriesChartYAxisSettings, yAxisSettings);
       const units = isNotEmptyTbUnits(axisSettings.units) ? axisSettings.units : this.ctx.units;
@@ -1077,5 +1079,22 @@ export class TbTimeSeriesChart {
       });
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
     }
+  }
+
+  private normalizeAxisLimit(limit: string | number | ValueSourceConfig): string | number | ValueSourceConfig  {
+    if (!limit) {
+      return {
+        type: ValueSourceType.constant,
+        value: null,
+        entityAlias: null
+      };
+    } else if (typeof limit === 'number' || typeof limit === 'string') {
+      return {
+        type: ValueSourceType.constant,
+        value: Number(limit),
+        entityAlias: null
+      };
+    }
+    return limit;
   }
 }
