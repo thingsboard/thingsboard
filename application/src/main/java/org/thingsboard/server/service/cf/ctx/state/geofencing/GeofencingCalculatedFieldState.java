@@ -110,10 +110,14 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState imp
                     return;
                 }
                 GeofencingTransitionEvent transitionEvent = eval.transition();
-                if (transitionEvent == null && !firstEval) {
-                    return;
+                if (transitionEvent == null) {
+                    if (!firstEval) {
+                        return;
+                    }
+                    transitionEvent = eval.status() == INSIDE ?
+                            GeofencingTransitionEvent.ENTERED :
+                            GeofencingTransitionEvent.LEFT;
                 }
-                transitionEvent = transitionEvent == null ? GeofencingTransitionEvent.LEFT : transitionEvent;
                 EntityRelation relation = switch (zoneGroupCfg.getDirection()) {
                     case TO -> new EntityRelation(zoneId, entityId, zoneGroupCfg.getRelationType());
                     case FROM -> new EntityRelation(entityId, zoneId, zoneGroupCfg.getRelationType());
