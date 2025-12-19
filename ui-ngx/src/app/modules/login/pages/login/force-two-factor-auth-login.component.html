@@ -1,0 +1,317 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-col items-center justify-center"
+     style="width: 100%;">
+  @if (isLoading$ | async) {
+    <mat-progress-bar color="warn" class="progress-bar" mode="indeterminate"></mat-progress-bar>
+  }
+  @switch (state()) {
+    @case (ForceTwoFAState.SETUP) {
+      <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+        <mat-card-header>
+          <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
+            <button mat-icon-button type="button" (click)="cancelLogin()">
+              <mat-icon>chevron_left</mat-icon>
+            </button>
+            {{ (config ? 'login.two-fa' :'login.two-fa-required') | translate }}
+          </mat-card-title>
+        </mat-card-header>
+        <mat-card-content>
+          <div class="providers-container tb-default flex flex-col gap-2">
+            <p class="mat-body"> {{ (config ? 'login.set-up-verification-method-login' :'login.set-up-verification-method') | translate }}</p>
+            @for (provider of allowProviders; track provider) {
+              <button type="button" [disabled]="config?.configs?.[provider]" mat-stroked-button class="provider" (click)="updateState(provider)">
+                <mat-icon class="tb-mat-18" svgIcon="{{ providersData.get(provider).icon }}"></mat-icon>
+                {{ providersData.get(provider).name | translate }}
+              </button>
+            }
+            @if (config) {
+              <button type="button" mat-flat-button color="accent" class="navigation w-full" (click)="cancelLogin()">
+                {{ 'login.login' | translate }}
+              </button>
+            }
+          </div>
+        </mat-card-content>
+      </mat-card>
+    }
+    @case (ForceTwoFAState.AUTHENTICATOR_APP) {
+      @switch (appState()) {
+        @case (ProvidersState.INPUT) {
+          <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+            <mat-card-header>
+              <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
+                <button mat-icon-button type="button" (click)="state.set(ForceTwoFAState.SETUP)">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                {{ 'login.enable-authenticator-app' | translate }}
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div tb-toast class="flex flex-col items-center justify-start">
+                <p class="mat-body qr-code-description mb-4" translate>login.scan-qr-code</p>
+                <canvas class="flex-1" #canvas [style.display]="totpAuthURL ? 'block' : 'none'"></canvas>
+                <p class="mat-body qr-code-description" translate>login.enter-key-manually</p>
+                <div class="mb-8 flex w-full flex-row items-center overflow-hidden">
+                  <span tbTruncateWithTooltip class="w-full">{{ totpAuthURLSecret }}</span>
+                  <tb-copy-button
+                    class="attribute-copy"
+                    [disabled]="isLoading$ | async"
+                    [copyText]="totpAuthURLSecret"
+                    tooltipText="{{ 'login.copy-key' | translate }}"
+                    tooltipPosition="above"
+                    icon="content_copy"
+                    [style]="{'font-size': '24px', color: 'rgba(255,255,255,.8)'}"
+                  >
+                  </tb-copy-button>
+                </div>
+                <div class="flex w-full flex-col items-center justify-start gap-2">
+                  <button type="button" mat-stroked-button class="navigation w-full" (click)="appState.set(ProvidersState.ENTER_CODE)">
+                    {{ 'login.continue' | translate }}
+                  </button>
+                  <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(TwoFactorAuthProviderType.TOTP)">
+                    {{ 'login.try-another-way' | translate }}
+                  </button>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @case (ProvidersState.ENTER_CODE) {
+          <ng-container *ngTemplateOutlet="enterCodeTemplateCard; context: {providerType: TwoFactorAuthProviderType.TOTP}"></ng-container>
+        }
+        @case (ProvidersState.SUCCESS) {
+          <ng-container *ngTemplateOutlet="successTemplateCard; context: {providerType: TwoFactorAuthProviderType.TOTP}"></ng-container>
+        }
+      }
+    }
+    @case (ForceTwoFAState.SMS) {
+      @switch (smsState()) {
+        @case (ProvidersState.INPUT) {
+          <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+            <mat-card-header>
+              <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
+                <button mat-icon-button type="button" (click)="state.set(ForceTwoFAState.SETUP)">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                {{ 'login.enable-authenticator-sms' | translate }}
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div tb-toast class="flex flex-col items-center justify-start">
+                <form [formGroup]="smsConfigForm" class="mb-12">
+                  <p class="mat-body step-description input" translate>login.sms-description</p>
+                  <div class="flex flex-row items-center justify-between gap-3.75">
+                    <tb-phone-input class="flex-1"
+                                    label="{{ 'login.phone-input.phone-input-label' | translate }}"
+                                    hint="login.phone-input.phone-input-hint"
+                                    requiredErrorText="{{ 'login.phone-input.phone-input-required' | translate }}"
+                                    validationErrorText="{{ 'login.phone-input.phone-input-validation' | translate }}"
+                                    formControlName="phone"
+                                    [floatLabel]="'auto'">
+                    </tb-phone-input>
+                  </div>
+                </form>
+                <div class="flex w-full flex-col items-center justify-start gap-2">
+                  <button type="button" mat-stroked-button [disabled]="(isLoading$ | async) || smsConfigForm.invalid || !smsConfigForm.dirty" class="navigation w-full" (click)="sendSmsCode()">
+                    {{ 'login.send-code' | translate }}
+                  </button>
+                  <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(TwoFactorAuthProviderType.SMS)">
+                    {{ 'login.try-another-way' | translate }}
+                  </button>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @case (ProvidersState.ENTER_CODE) {
+          <ng-container *ngTemplateOutlet="enterCodeTemplateCard; context: {providerType: TwoFactorAuthProviderType.SMS}"></ng-container>
+        }
+        @case (ProvidersState.SUCCESS) {
+          <ng-container *ngTemplateOutlet="successTemplateCard; context: {providerType: TwoFactorAuthProviderType.SMS}"></ng-container>
+        }
+      }
+    }
+    @case (ForceTwoFAState.EMAIL) {
+      @switch (emailState()) {
+        @case (ProvidersState.INPUT) {
+          <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+            <mat-card-header>
+              <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
+                <button mat-icon-button type="button" (click)="state.set(ForceTwoFAState.SETUP)">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                {{ 'login.enable-authenticator-email' | translate }}
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div tb-toast class="flex flex-col items-center justify-start">
+                <form [formGroup]="emailConfigForm" class="mb-8 w-full">
+                  <p class="mat-body step-description input" translate>login.email-description</p>
+                  <mat-form-field class="mat-block input-container tb-autofilled flex-1" appearance="outline">
+                    <input matInput formControlName="email"
+                           type="email" required
+                           autocomplete="email"
+                           placeholder="{{ 'login.email-label' | translate }}" />
+                    <mat-error *ngIf="emailConfigForm.get('email').hasError('required')">
+                      {{ 'login.email-required' | translate }}
+                    </mat-error>
+                    <mat-error *ngIf="emailConfigForm.get('email').hasError('email')">
+                      {{ 'login.invalid-email-format' | translate }}
+                    </mat-error>
+                  </mat-form-field>
+                </form>
+                <div class="flex w-full flex-col items-center justify-start gap-2">
+                  <button type="button" mat-stroked-button [disabled]="(isLoading$ | async) || emailConfigForm.invalid" class="navigation w-full" (click)="sendEmailCode()">
+                    {{ 'login.send-code' | translate }}
+                  </button>
+                  <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(TwoFactorAuthProviderType.EMAIL)">
+                    {{ 'login.try-another-way' | translate }}
+                  </button>
+                </div>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @case (ProvidersState.ENTER_CODE) {
+          <ng-container *ngTemplateOutlet="enterCodeTemplateCard; context: {providerType: TwoFactorAuthProviderType.EMAIL}"></ng-container>
+        }
+        @case (ProvidersState.SUCCESS) {
+          <ng-container *ngTemplateOutlet="successTemplateCard; context: {providerType: TwoFactorAuthProviderType.EMAIL}"></ng-container>
+        }
+      }
+    }
+    @case (ForceTwoFAState.BACKUP_CODE) {
+      @switch (backupCodeState()) {
+        @case (BackupCodeState.CODE) {
+          <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+            <mat-card-header>
+              <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
+                <button mat-icon-button type="button" (click)="state.set(ForceTwoFAState.SETUP)">
+                  <mat-icon>chevron_left</mat-icon>
+                </button>
+                {{ 'login.get-backup-code' | translate }}
+              </mat-card-title>
+            </mat-card-header>
+            <mat-card-content>
+              <div mat-dialog-content tb-toast class="backup-code">
+                <p class="mat-body-2 description" translate>login.backup-code-description</p>
+                <div class="container">
+                  @for (code of backupCode?.codes; track code) {
+                    <div class="code">{{ code }}</div>
+                  }
+                </div>
+                <div class="action-buttons flex flex-row items-center justify-start gap-4">
+                  <button type="button" mat-flat-button class="provider w-full" (click)="downloadFile()">
+                    {{ 'login.download-txt' | translate }}
+                  </button>
+                  <button type="button" mat-stroked-button class="provider w-full" (click)="printCode()">
+                    {{ 'login.print' | translate }}
+                  </button>
+                </div>
+                <p class="mat-body-2 description" translate>login.backup-code-warn</p>
+                <button type="button" mat-flat-button color="accent" class="navigation w-full" (click)="backupCodeState.set(BackupCodeState.SUCCESS)">
+                  {{ 'login.continue' | translate }}
+                </button>
+              </div>
+            </mat-card-content>
+          </mat-card>
+        }
+        @case (BackupCodeState.SUCCESS) {
+          <ng-container *ngTemplateOutlet="successTemplateCard; context: {providerType: TwoFactorAuthProviderType.BACKUP_CODE}"></ng-container>
+        }
+      }
+    }
+  }
+</div>
+
+<ng-template #enterCodeTemplateCard let-providerType="providerType">
+  <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+    <mat-card-header>
+      <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
+        <button mat-icon-button type="button" (click)="goBackByType(providerType)">
+          <mat-icon>chevron_left</mat-icon>
+        </button>
+        {{ twoFactorAuthProvidersEnterCodeCardTranslate.get(providerType).name | translate }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="mat-body inline-block">
+        {{ twoFactorAuthProvidersEnterCodeCardTranslate.get(providerType).description | translate }}
+        @if (providerType === TwoFactorAuthProviderType.SMS) {
+          <span>{{ smsConfigForm.get('phone').value }}</span>
+        }
+        @if (providerType === TwoFactorAuthProviderType.EMAIL) {
+          <span>{{ emailConfigForm.get('email').value }}</span>
+        }
+      </p>
+      <form [formGroup]="configForm" class="flex flex-col items-center justify-start">
+        <mat-form-field class="mat-block tb-autofilled w-full" appearance="outline">
+          <input matInput formControlName="verificationCode"
+                 maxlength="6" type="text" required
+                 inputmode="numeric" pattern="[0-9]*"
+                 autocomplete="one-time-code"
+                 placeholder="{{ 'login.verification-code' | translate }}">
+          @if (configForm.get('verificationCode').getError('required') ||
+          configForm.get('verificationCode').getError('minlength') ||
+          configForm.get('verificationCode').getError('maxlength') ||
+          configForm.get('verificationCode').getError('pattern')) {
+            <mat-error>{{ 'login.verification-code-invalid' | translate }}</mat-error>
+          }
+          @if (configForm.get('verificationCode').getError('incorrectCode')) {
+            <mat-error>{{ 'login.verification-code-incorrect' | translate }}</mat-error>
+          }
+          @if (configForm.get('verificationCode').getError('tooManyRequest')) {
+            <mat-error>{{ 'login.verification-code-many-request' | translate }}</mat-error>
+          }
+        </mat-form-field>
+        <div class="flex w-full flex-col items-center justify-start gap-2">
+          <button type="button" mat-flat-button color="accent" [disabled]="(isLoading$ | async) || configForm.invalid || !configForm.dirty" class="navigation w-full" (click)="saveConfig(providerType)">
+            {{ 'login.confirm' | translate }}
+          </button>
+          <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(providerType)">
+            {{ 'login.try-another-way' | translate }}
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</ng-template>
+<ng-template #successTemplateCard let-providerType="providerType">
+  <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
+    <mat-card-header>
+      <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start pl-10">
+        {{ twoFactorAuthProvidersSuccessCardTranslate.get(providerType).name | translate }}
+      </mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+      <p class="mat-body mb-16" translate>{{ twoFactorAuthProvidersSuccessCardTranslate.get(providerType).description | translate }}</p>
+      <div class="flex flex-col items-center justify-start">
+        <div class="flex w-full flex-col items-center justify-start gap-2">
+          <button type="button" mat-flat-button color="accent" class="navigation w-full" (click)="cancelLogin()">
+            {{ 'login.login' | translate }}
+          </button>
+          @if (isAnyProviderAvailable) {
+            <button type="button" mat-flat-button class="navigation w-full" (click)="tryAnotherWay(providerType)">
+              {{ 'login.add-verification-method' | translate }}
+            </button>
+          }
+        </div>
+      </div>
+    </mat-card-content>
+  </mat-card>
+</ng-template>

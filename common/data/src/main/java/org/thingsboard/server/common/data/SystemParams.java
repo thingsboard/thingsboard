@@ -38,5 +38,10 @@ public class SystemParams {
     String calculatedFieldDebugPerTenantLimitsConfiguration;
     long maxArgumentsPerCF;
     long maxDataPointsPerRollingArg;
+    int minAllowedScheduledUpdateIntervalInSecForCF;
+    int maxRelationLevelPerCfArgument;
+    long minAllowedDeduplicationIntervalInSecForCF;
+    long minAllowedAggregationIntervalInSecForCF;
+    long intermediateAggregationIntervalInSecForCF;
     TrendzSettings trendzSettings;
 }

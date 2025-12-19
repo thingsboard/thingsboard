@@ -1,0 +1,91 @@
+/**
+ * Copyright © 2016-2025 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  .tb-filter-text {
+    overflow-y: auto;
+    text-align: start;
+    &.required {
+      color: #f44336;
+      padding: 0;
+    }
+    &.disabled {
+      color: rgba(0,0,0,0.38);
+    }
+    &.nowrap {
+      white-space: nowrap;
+      text-overflow: ellipsis;
+      overflow: hidden;
+    }
+    &.wrap {
+      white-space: pre-wrap !important;
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-filter-text {
+    line-height: 1.8em;
+    span {
+      display: inline-block;
+      vertical-align: middle;
+      line-height: 1.4em;
+    }
+    .tb-filter-predicate {
+      padding-right: 4px;
+      padding-left: 4px;
+    }
+    .tb-filter-entity-key, .tb-filter-value, .tb-filter-dynamic-source {
+      font-weight: bold;
+      border: 1px groove rgba(0, 0, 0, .25);
+      border-radius: 4px;
+      padding-left: 4px;
+      padding-right: 4px;
+    }
+    .tb-filter-entity-key, .tb-filter-value {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 150px;
+    }
+    .tb-filter-dynamic-source {
+    }
+    .tb-filter-entity-key {
+      color: #305680;
+    }
+    .tb-filter-value {
+      color: #ff5722;
+    }
+    .tb-filter-simple-operation {
+      font-size: 0.9em;
+    }
+    .tb-filter-complex-operation {
+      font-weight: 400;
+      font-style: italic;
+    }
+    .tb-filter-dynamic-value {
+      .tb-filter-dynamic-source, .tb-filter-value {
+        color: #0c959c;
+      }
+    }
+    .tb-filter-bracket {
+      .tb-left-bracket, .tb-right-bracket {
+        font-size: 1.2em;
+      }
+    }
+  }
+}

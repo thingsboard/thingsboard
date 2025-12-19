@@ -79,7 +79,7 @@
                     formControlName="funcBody">
         </tb-js-func>
       </section>
-      <ng-container *ngIf="widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries">
+      <ng-container *ngIf="!hideDataKeyAggregation && widgetType === widgetTypes.latest && modelValue.type === dataKeyTypes.timeseries">
         <div class="tb-form-row column">
           <div class="tb-form-row space-between no-border no-padding">
             <div>{{ 'datakey.aggregation' | translate }}</div>

@@ -14,39 +14,60 @@
 /// limitations under the License.
 ///
 
-import { Injectable, NgModule } from '@angular/core';
+import { NgModule } from '@angular/core';
 import { RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
-import { Observable } from 'rxjs';
-import { OAuth2Service } from '@core/http/oauth2.service';
 import { AlarmTableComponent } from '@home/components/alarm/alarm-table.component';
 import { AlarmsMode } from '@shared/models/alarm.models';
 import { MenuId } from '@core/services/menu.models';
-
-@Injectable()
-export class OAuth2LoginProcessingUrlResolver  {
-
-  constructor(private oauth2Service: OAuth2Service) {
-  }
-
-  resolve(): Observable<string> {
-    return this.oauth2Service.getLoginProcessingUrl();
-  }
-}
+import { RouterTabsComponent } from "@home/components/router-tabs.component";
+import { AlarmRulesTableComponent } from "@home/components/alarm-rules/alarm-rules-table.component";
 
 const routes: Routes = [
   {
     path: 'alarms',
-    component: AlarmTableComponent,
+    component: RouterTabsComponent,
     data: {
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-      title: 'alarm.alarms',
       breadcrumb: {
-        menuId: MenuId.alarms
+        menuId: MenuId.alarms_center
+      }
+    },
+    children: [
+      {
+        path: '',
+        children: [],
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          redirectTo: '/alarms/alarms'
+        }
       },
-      isPage: true,
-      alarmsMode: AlarmsMode.ALL
-    }
+      {
+        path: 'alarms',
+        component: AlarmTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+          title: 'alarm.alarms',
+          breadcrumb: {
+            menuId: MenuId.alarms
+          },
+          isPage: true,
+          alarmsMode: AlarmsMode.ALL
+        }
+      },
+      {
+        path: 'alarm-rules',
+        component: AlarmRulesTableComponent,
+        data: {
+          auth: [Authority.TENANT_ADMIN],
+          title: 'alarm-rule.alarm-rules',
+          breadcrumb: {
+            menuId: MenuId.alarm_rules
+          },
+          isPage: true,
+        }
+      }
+    ]
   }
 ];
 

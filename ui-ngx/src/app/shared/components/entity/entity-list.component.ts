@@ -39,7 +39,7 @@ import { Observable } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, getEntityDisplayName } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 import { EntityService } from '@core/http/entity.service';
 import { MatAutocomplete } from '@angular/material/autocomplete';
@@ -124,6 +124,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   @Input()
   @coerceBoolean()
   allowCreateNew: boolean;
+
+  @Input()
+  @coerceBoolean()
+  useEntityDisplayName = false;
 
   @Output()
   createNew = new EventEmitter<string>();
@@ -279,7 +283,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, OnChan
   }
 
   public displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
-    return entity ? entity.name : undefined;
+    return entity ? (this.useEntityDisplayName ? getEntityDisplayName(entity) : entity.name) : undefined;
   }
 
   private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {

@@ -1,0 +1,101 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="propagateConfiguration" class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.propagation-path-related-entities' | translate }}">
+      {{ 'calculated-fields.propagation-path-related-entities' | translate }}
+    </div>
+    <div class="flex gap-3 xs:flex-col" formGroupName="relation">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" hideRequiredMarker>
+        <mat-label>{{ 'calculated-fields.direction' | translate }}</mat-label>
+        <mat-select formControlName="direction">
+          @for (direction of Directions; track direction) {
+            <mat-option [value]="direction">{{ PropagationDirectionTranslations.get(direction) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                              class="flex-1"
+                              panelWidth=""
+                              additionalClass=""
+                              required
+                              [label]="'calculated-fields.relation-type' | translate"
+                              [errorText]="'calculated-fields.hint.relation-type-required' | translate"
+                              formControlName="relationType">
+      </tb-string-autocomplete>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="flex flex-row items-center justify-between gap-2">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.data-propagate' | translate }}">
+        {{ 'calculated-fields.data-propagate' | translate }}
+      </div>
+      <tb-toggle-select formControlName="applyExpressionToResolvedArguments" selectMediaBreakpoint="xs" disablePagination>
+        <tb-toggle-option [value]="false">{{ 'calculated-fields.propagate-type.arguments-only' | translate }}</tb-toggle-option>
+        <tb-toggle-option [value]="true">{{ 'calculated-fields.propagate-type.expression-result' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <tb-propagate-arguments-table formControlName="arguments"
+                                  [entityId]="entityId"
+                                  [tenantId]="tenantId"
+                                  [entityName]="entityName"
+                                  [ownerId]="ownerId"
+                                  [watchKeyChange]="true"
+                                  [isScript]="this.propagateConfiguration.get('applyExpressionToResolvedArguments').value"/>
+  </div>
+  <div class="tb-form-panel no-gap" [class.!hidden]="!this.propagateConfiguration.get('applyExpressionToResolvedArguments').value">
+    <div class="tb-form-panel-title tb-required">
+      {{ 'calculated-fields.script' | translate }}
+    </div>
+    <div>
+      <tb-js-func required
+                  formControlName="expression"
+                  functionName="calculate"
+                  [functionArgs]="functionArgs$ | async"
+                  [disableUndefinedCheck]="true"
+                  [scriptLanguage]="ScriptLanguage.TBEL"
+                  [highlightRules]="argumentsHighlightRules$ | async"
+                  [editorCompleter]="argumentsEditorCompleter$ | async"
+                  [helpPopupStyle]="{ width: '1200px' }"
+                  helpId="calculated-field/expression_fn">
+        <div toolbarPrefixButton
+             class="tb-primary-background tbel-script-lang-chip">{{ 'api-usage.tbel' | translate }}
+        </div>
+        <button toolbarSuffixButton
+                mat-icon-button
+                matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                matTooltipPosition="above"
+                class="tb-mat-32"
+                [disabled]="propagateConfiguration.get('arguments').invalid || disabled"
+                (click)="onTestScript()">
+          <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+        </button>
+      </tb-js-func>
+      <div>
+        <button mat-button mat-raised-button color="primary"
+                type="button"
+                (click)="onTestScript()"
+                [disabled]="propagateConfiguration.get('arguments').invalid || disabled">
+          {{ 'calculated-fields.test-script-function' | translate }}
+        </button>
+      </div>
+    </div>
+  </div>
+  <tb-calculate-field-output formControlName="output" [entityId]="entityId">
+  </tb-calculate-field-output>
+</div>

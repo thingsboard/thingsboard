@@ -19,13 +19,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.NoXssValidator;
+import org.thingsboard.server.exception.DataValidationException;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class KvUtils {
 
@@ -74,4 +82,33 @@ public class KvUtils {
             }
         }
     }
+
+    public static List<TsKvEntry> toTsKvEntryList(Map<Long, List<KvEntry>> tsKvMap) {
+        List<TsKvEntry> tsKvEntryList = new ArrayList<>();
+        for (Map.Entry<Long, List<KvEntry>> tsKvEntry : tsKvMap.entrySet()) {
+            for (KvEntry kvEntry : tsKvEntry.getValue()) {
+                tsKvEntryList.add(new BasicTsKvEntry(tsKvEntry.getKey(), kvEntry));
+            }
+        }
+        return tsKvEntryList;
+    }
+
+    public static List<AttributeKvEntry> filterChangedAttr(List<AttributeKvEntry> currentAttributes, List<AttributeKvEntry> newAttributes) {
+        if (currentAttributes == null || currentAttributes.isEmpty()) {
+            return newAttributes;
+        }
+
+        Map<String, AttributeKvEntry> currentAttrMap = currentAttributes.stream()
+                .collect(Collectors.toMap(AttributeKvEntry::getKey, Function.identity(), (existing, replacement) -> existing));
+
+        return newAttributes.stream()
+                .filter(item -> {
+                    AttributeKvEntry cacheAttr = currentAttrMap.get(item.getKey());
+                    return cacheAttr == null
+                            || !Objects.equals(item.getValue(), cacheAttr.getValue()) //JSON and String can be equals by value, but different by type
+                            || !Objects.equals(item.getDataType(), cacheAttr.getDataType());
+                })
+                .collect(Collectors.toList());
+    }
+
 }

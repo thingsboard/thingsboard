@@ -64,7 +64,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 
@@ -146,18 +146,26 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
         var result = withPropagated(alarmDao.acknowledgeAlarm(tenantId, alarmId, ackTs));
         if (result.getAlarm() != null) {
-            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                    .actionType(ActionType.ALARM_ACK).build());
+            eventPublisher.publishEvent(ActionEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(result.getAlarm().getId())
+                    .entity(result.getAlarm())
+                    .actionType(ActionType.ALARM_ACK)
+                    .build());
         }
         return result;
     }
 
     @Override
-    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent) {
         var result = withPropagated(alarmDao.clearAlarm(tenantId, alarmId, clearTs, details));
-        if (result.getAlarm() != null) {
-            eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(result.getAlarm().getId())
-                    .actionType(ActionType.ALARM_CLEAR).build());
+        if (pushEvent && result.getAlarm() != null) {
+            eventPublisher.publishEvent(ActionEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(result.getAlarm().getId())
+                    .entity(result.getAlarm())
+                    .actionType(ActionType.ALARM_CLEAR)
+                    .build());
         }
         return result;
     }
@@ -204,6 +212,12 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
                     .tenantId(tenantId)
                     .entityId(alarm.getId())
                     .entity(alarm)
+                    .build());
+            eventPublisher.publishEvent(ActionEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(alarm.getId())
+                    .entity(alarm)
+                    .actionType(ActionType.ALARM_DELETE)
                     .build());
             if (deleteAlarmTypes) {
                 delAlarmTypes(tenantId, Collections.singleton(alarm.getType()));

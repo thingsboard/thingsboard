@@ -17,55 +17,67 @@
 -->
 <div class="tb-login-content mat-app-background tb-dark flex flex-1 items-center justify-center">
   <mat-card appearance="raised" style="max-height: 80vh; overflow-y: auto;">
-    <mat-card-content>
-      <form class="tb-login-form" [formGroup]="loginFormGroup" (ngSubmit)="login()">
-        <fieldset class="flex flex-col">
-          <div class="flex flex-col items-center justify-start" style="padding: 15px 0;">
-            <tb-logo class="login-logo"></tb-logo>
-          </div>
-          <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
-          </mat-progress-bar>
-          <span style="height: 4px;" *ngIf="!(isLoading$ | async)"></span>
-          <div tb-toast class="layout-padding flex flex-col">
-            <span style="height: 50px;"></span>
-            <div class="oauth-container tb-default flex flex-col gap-4" *ngIf="oauth2Clients?.length">
-              <ng-container *ngFor="let oauth2Client of oauth2Clients">
-                <a mat-raised-button class="login-with-button" href="{{ getOAuth2Uri(oauth2Client) }}">
-                  <mat-icon class="icon" svgIcon="{{ oauth2Client.icon }}"></mat-icon>
-                  {{ 'login.login-with' | translate: {name: oauth2Client.name} }}
-                </a>
-              </ng-container>
+    <mat-card-content class="!p-6">
+      <form class="tb-login-form flex flex-col" [formGroup]="loginFormGroup" (ngSubmit)="login()">
+        <div class="flex flex-col items-center justify-start" style="padding: 16px 0;">
+          <tb-logo link="https://thingsboard.io" target="_blank" class="login-logo"></tb-logo>
+        </div>
+        <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading">
+        </mat-progress-bar>
+        <span style="height: 4px;" *ngIf="!isLoading"></span>
+        <span tb-toast style="height: 20px;"></span>
+        <div class="flex flex-col">
+          @if(oauth2Clients?.length) {
+            <div class="oauth-container tb-default flex flex-col gap-4">
+              @if(oauth2Clients.length !== 1) {
+                <div class="title">{{ 'login.sign-in-with' | translate: {name: ''} }}</div>
+              }
+              <div class="login-button-container flex flex-wrap justify-center gap-4">
+                @for(oauth2Client of oauth2Clients; track oauth2Client.url) {
+                  <a mat-stroked-button class="login-with-button"
+                     [href]=getOAuth2Uri(oauth2Client)>
+                    <tb-icon matButtonIcon class="tb-mat-20">{{ oauth2Client.icon }}</tb-icon>
+                    @if(oauth2Clients.length === 1) {
+                      {{ 'login.sign-in-with' | translate: {name: oauth2Clients[0].name} }}
+                    } @else {
+                      {{ oauth2Client.name }}
+                    }
+                  </a>
+                }
+              </div>
               <div class="container-divider">
-                <div class="line"><mat-divider></mat-divider></div>
-                <div class="text mat-typography">{{ "login.or" | translate | uppercase }}</div>
-                <div class="line"><mat-divider></mat-divider></div>
+                <mat-divider class="tb-dark flex-1"></mat-divider>
+                <div class="text">{{ "login.or" | translate | uppercase }}</div>
+                <mat-divider class="tb-dark flex-1"></mat-divider>
               </div>
             </div>
-            <mat-form-field class="tb-appearance-transparent">
-              <mat-label translate>login.username</mat-label>
-              <input id="username-input" matInput type="email" autofocus formControlName="username"/>
-              <mat-icon matPrefix>email</mat-icon>
-              <mat-error *ngIf="loginFormGroup.get('username').invalid">
-                {{ 'login.invalid-email-format' | translate }}
-              </mat-error>
-            </mat-form-field>
-            <mat-form-field class="tb-appearance-transparent">
-              <mat-label translate>common.password</mat-label>
-              <input id="password-input" matInput type="password" formControlName="password"/>
-              <tb-toggle-password matSuffix></tb-toggle-password>
-              <mat-icon matPrefix>lock</mat-icon>
-            </mat-form-field>
-            <div class="forgot-password flex items-center justify-end">
-              <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">
-                {{ (passwordViolation ? 'login.reset-password' : 'login.forgot-password') | translate }}
-              </button>
+          } @else {
+            <div class="oauth-container flex flex-col">
+              <div class="title !mb-4" translate>login.sign-in-to-your-account</div>
             </div>
-            <div class="tb-action-button flex flex-col">
-              <button mat-raised-button color="accent" [disabled]="(isLoading$ | async)"
-                      type="submit">{{ 'login.login' | translate }}</button>
-            </div>
+          }
+          <mat-form-field class="tb-autofilled" appearance="outline" hideRequiredMarker>
+            <mat-label translate>login.username</mat-label>
+            <input id="username-input" matInput type="email" autofocus formControlName="username" autocomplete="email"/>
+            <mat-icon matPrefix>email</mat-icon>
+            <mat-error *ngIf="loginFormGroup.get('username').invalid">
+              {{ 'login.invalid-email-format' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="tb-autofilled" appearance="outline">
+            <mat-label translate>common.password</mat-label>
+            <input id="password-input" matInput type="password" formControlName="password" autocomplete="current-password"/>
+            <tb-toggle-password matSuffix></tb-toggle-password>
+            <mat-icon matPrefix>lock</mat-icon>
+          </mat-form-field>
+          <button mat-flat-button color="accent" [disabled]="isLoading"
+                  class="tb-action-button" type="submit">{{ 'login.sign-in' | translate }}</button>
+          <div class="forgot-password flex items-center justify-end gap-5">
+            <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">
+              {{ (passwordViolation ? 'login.reset-password' : 'login.forgot-password') | translate }}
+            </button>
           </div>
-        </fieldset>
+        </div>
       </form>
     </mat-card-content>
   </mat-card>

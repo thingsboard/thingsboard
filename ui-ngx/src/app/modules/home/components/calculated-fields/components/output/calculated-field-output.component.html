@@ -1,0 +1,177 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel" [formGroup]="outputForm">
+  <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
+  <div [class]=containerInputClass>
+    <div class="flex gap-3 xs:flex-col">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'calculated-fields.output-type' | translate }}</mat-label>
+        <mat-select formControlName="type">
+          @for (type of outputTypes; track type) {
+            <mat-option [value]="type">{{ OutputTypeTranslations.get(type) | translate }}</mat-option>
+          }
+        </mat-select>
+      </mat-form-field>
+      @if (outputForm.get('type').value === OutputType.Attribute
+      && (entityId.entityType === EntityType.DEVICE || entityId.entityType === EntityType.DEVICE_PROFILE)) {
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
+          <mat-select formControlName="scope" class="w-full">
+            <mat-option [value]="AttributeScope.SERVER_SCOPE">
+              {{ 'calculated-fields.server-attributes' | translate }}
+            </mat-option>
+            <mat-option [value]="AttributeScope.SHARED_SCOPE">
+              {{ 'calculated-fields.shared-attributes' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      }
+    </div>
+    @if (simpleMode) {
+      @if (hiddenName) {
+        <div class="grid items-start gap-3 has-[.simpleMode]:grid-cols-2 xs:grid-cols-1">
+          <ng-container *ngTemplateOutlet="decimalsByDefaultField"></ng-container>
+          <ng-container *ngTemplateOutlet="simpleContentTemplate"></ng-container>
+        </div>
+      } @else {
+        <div class="flex items-start gap-3 xs:flex-col xs:items-stretch">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+            <mat-label>{{ (outputForm.get('type').value === OutputType.Timeseries
+              ? 'calculated-fields.timeseries-key'
+              : 'calculated-fields.attribute-key') | translate }}</mat-label>
+            <input matInput formControlName="name" required>
+            @if (outputForm.get('name').errors && outputForm.get('name').touched) {
+              <mat-error>
+                @if (outputForm.get('name').hasError('required')) {
+                  {{ 'common.hint.key-required' | translate }}
+                } @else if (outputForm.get('name').hasError('pattern')) {
+                  {{ 'common.hint.key-pattern' | translate }}
+                } @else if (outputForm.get('name').hasError('maxlength')) {
+                  {{ 'common.hint.key-max-length' | translate }}
+                }
+              </mat-error>
+            }
+          </mat-form-field>
+          <ng-container *ngTemplateOutlet="decimalsByDefaultField"></ng-container>
+        </div>
+        <ng-container *ngTemplateOutlet="simpleContentTemplate"></ng-container>
+      }
+    }
+  </div>
+  <div class="tb-form-panel stroked" formGroupName="strategy">
+    <mat-expansion-panel class="tb-settings" [disabled]="outputForm.get('strategy.type').value === OutputStrategyType.RULE_CHAIN">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
+        <mat-panel-title>
+          <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
+            <div class="tb-form-panel-title" [style.color]="disabled ? 'var(--mdc-outlined-text-field-disabled-input-text-color)' : 'var(--mat-expansion-header-text-color)'" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
+              {{ 'calculated-fields.output-strategy.strategy' | translate }}
+            </div>
+            <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" disablePagination appearance="fill" (click)="$event.stopPropagation()">
+              @for (outputStrategyType of OutputStrategyTypes; track outputStrategyType) {
+                <tb-toggle-option [value]="outputStrategyType">{{ OutputStrategyTypeTranslations.get(outputStrategyType) | translate }}</tb-toggle-option>
+              }
+            </tb-toggle-select>
+          </div>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      @if (outputForm.get('strategy.type').value === OutputStrategyType.IMMEDIATE) {
+        <div class="tb-form-panel stroked">
+          <div class="tb-form-panel-title" translate>calculated-fields.output-strategy.processing-parameters</div>
+          @if (outputForm.get('type').value === OutputType.Timeseries) {
+            <mat-slide-toggle class="mat-slide" formControlName="saveTimeSeries">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-time-series' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-time-series</div>
+              </div>
+            </mat-slide-toggle>
+            <mat-slide-toggle class="mat-slide" formControlName="saveLatest">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-latest-values' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-latest-values</div>
+              </div>
+            </mat-slide-toggle>
+          } @else {
+            <mat-slide-toggle class="mat-slide" formControlName="saveAttribute">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.save-database' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-database</div>
+              </div>
+            </mat-slide-toggle>
+          }
+          <mat-slide-toggle class="mat-slide" formControlName="sendWsUpdate">
+            <div tb-hint-tooltip-icon="{{ (outputForm.get('type').value === OutputType.Attribute
+                                            ? 'calculated-fields.output-strategy.hint.send-web-sockets-attribute'
+                                            : 'calculated-fields.output-strategy.hint.send-web-sockets-time-series') | translate }}">
+              <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.send-web-sockets</div>
+            </div>
+          </mat-slide-toggle>
+          <mat-slide-toggle class="mat-slide" formControlName="processCfs">
+            <div tb-hint-tooltip-icon="{{ (outputForm.get('type').value === OutputType.Attribute
+                                            ? 'calculated-fields.output-strategy.hint.save-calculated-fields-attribute'
+                                            : 'calculated-fields.output-strategy.hint.save-calculated-fields-time-series') | translate }}">
+              <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.save-calculated-fields</div>
+            </div>
+          </mat-slide-toggle>
+        </div>
+        @if (outputForm.get('type').value === OutputType.Attribute) {
+          <div class="tb-form-row flex-1">
+            <mat-slide-toggle class="mat-slide" formControlName="updateAttributesOnlyOnValueChange">
+              <div tb-hint-tooltip-icon="{{ (outputForm.get('strategy.updateAttributesOnlyOnValueChange').value
+                                              ? 'calculated-fields.output-strategy.hint.update-attribute-only-on-value-change-enabled'
+                                              : 'calculated-fields.output-strategy.hint.update-attribute-only-on-value-change') | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.update-attribute-only-on-value-change</div>
+              </div>
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row flex-1">
+            <mat-slide-toggle class="mat-slide" formControlName="sendAttributesUpdatedNotification">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.send-attributes-updated-notification' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.send-attributes-updated-notification</div>
+              </div>
+            </mat-slide-toggle>
+          </div>
+        } @else {
+          <div class="tb-form-row space-between column-xs">
+            <mat-slide-toggle class="mat-slide" formControlName="useCustomTtl">
+              <div tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.ttl' | translate }}">
+                <div translate tbTruncateWithTooltip>calculated-fields.output-strategy.ttl</div>
+              </div>
+            </mat-slide-toggle>
+            <tb-time-unit-input
+              required
+              inlineField
+              class="medium-width"
+              requiredText="{{ 'calculated-fields.output-strategy.ttl-required' | translate }}"
+              minErrorText="{{ 'calculated-fields.output-strategy.ttl-min' | translate }}"
+              formControlName="ttl">
+            </tb-time-unit-input>
+          </div>
+        }
+      }
+    </mat-expansion-panel>
+  </div>
+</div>
+<ng-template #decimalsByDefaultField>
+  <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic" [formGroup]="outputForm">
+    <mat-label>{{ 'calculated-fields.decimals-by-default' | translate }}</mat-label>
+    <input matInput type="number" formControlName="decimalsByDefault">
+    @if (outputForm.get('decimalsByDefault').errors && outputForm.get('decimalsByDefault').touched) {
+      <mat-error>{{ 'calculated-fields.hint.decimals-range' | translate }}</mat-error>
+    }
+  </mat-form-field>
+</ng-template>
+<ng-template #simpleContentTemplate>
+  <ng-content select=".simpleMode"></ng-content>
+</ng-template>

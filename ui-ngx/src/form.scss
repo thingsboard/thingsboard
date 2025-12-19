@@ -107,6 +107,9 @@
         }
       }
     }
+    &.disabled {
+      color: var(--mdc-outlined-text-field-disabled-input-text-color);
+    }
     .mat-expansion-panel {
       &.tb-settings {
         box-shadow: none;
@@ -157,6 +160,13 @@
     }
     .tb-json-object-panel, .tb-css-content-panel {
       margin: 0 0 8px;
+    }
+  }
+
+  .tb-form-panel-disabled {
+    color: var(--mdc-outlined-text-field-disabled-input-text-color);
+    .tb-form-panel {
+      color: var(--mdc-outlined-text-field-disabled-input-text-color);
     }
   }
 
@@ -253,6 +263,12 @@
       }
       &.flex-lt-md {
         @media #{$mat-lt-md} {
+          width: auto;
+          flex: 1;
+        }
+      }
+      &.flex-lt-lg {
+        @media #{$mat-lt-lg} {
           width: auto;
           flex: 1;
         }
@@ -422,10 +438,13 @@
           }
         }
         .mat-mdc-form-field-infix {
+          --mat-form-field-container-vertical-padding: 8px;
           padding-top: 8px;
           padding-bottom: 8px;
           min-height: 40px;
           width: auto;
+          font-weight: 400;
+          font-size: 14px;
           .mdc-text-field__input, .mat-mdc-select {
             font-weight: 400;
             font-size: 14px;

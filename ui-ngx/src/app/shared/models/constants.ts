@@ -31,6 +31,7 @@ export const Constants = {
     itemNotFound: 32,
     tooManyRequests: 33,
     tooManyUpdates: 34,
+    entitiesLimitExceeded: 41,
     passwordViolation: 45
   },
   entryPoints: {
@@ -52,6 +53,7 @@ export const serverErrorCodesTranslations = new Map<number, string>([
   [Constants.serverErrorCode.itemNotFound, 'server-error.item-not-found'],
   [Constants.serverErrorCode.tooManyRequests, 'server-error.too-many-requests'],
   [Constants.serverErrorCode.tooManyUpdates, 'server-error.too-many-updates'],
+  [Constants.serverErrorCode.entitiesLimitExceeded, 'server-error.entities-limit-exceeded'],
 ]);
 
 export const MediaBreakpoints = {
@@ -184,6 +186,7 @@ export const HelpLinks = {
     entitiesImport: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/bulk-provisioning`,
     rulechains: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/rule-chains`,
     lwm2mResourceLibrary: `${helpBaseUrl}/docs${docPlatformPrefix}/reference/lwm2m-api`,
+    jsExtension: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/ui/advanced-development`,
     dashboards: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/dashboards`,
     otaUpdates: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ota-updates`,
     widgetTypes: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/widget-library/#widget-types`,
@@ -214,8 +217,10 @@ export const HelpLinks = {
     mobileQrCode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/mobile-qr-code/`,
     calculatedField: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/calculated-fields/`,
     aiModels: `${helpBaseUrl}/docs${docPlatformPrefix}/samples/analytics/ai-models/`,
+    apiKeys: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/api-keys`,
     timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
-    trendzSettings: `${helpBaseUrl}/docs/trendz/`
+    trendzSettings: `${helpBaseUrl}/docs/trendz/`,
+    alarmRules: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/alarm-rules/`,
   }
 };
 /* eslint-enable max-len */

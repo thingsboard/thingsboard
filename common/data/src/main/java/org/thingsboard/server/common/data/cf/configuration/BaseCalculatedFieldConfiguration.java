@@ -16,46 +16,28 @@
 package org.thingsboard.server.common.data.cf.configuration;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.cf.CalculatedFieldLink;
-import org.thingsboard.server.common.data.id.CalculatedFieldId;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 @Data
-public abstract class BaseCalculatedFieldConfiguration implements CalculatedFieldConfiguration {
+public abstract class BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration {
 
     protected Map<String, Argument> arguments;
     protected String expression;
     protected Output output;
 
     @Override
-    public List<EntityId> getReferencedEntities() {
-        return arguments.values().stream()
-                .map(Argument::getRefEntityId)
-                .filter(Objects::nonNull)
-                .collect(Collectors.toList());
+    public void validate() {
+        baseCalculatedFieldRestriction();
+        if (arguments.values().stream().anyMatch(Argument::hasRelationQuerySource)) {
+            throw new IllegalArgumentException("Calculated field with type: '" + getType() + "' doesn't support relation query configuration!");
+        }
     }
 
-    @Override
-    public List<CalculatedFieldLink> buildCalculatedFieldLinks(TenantId tenantId, EntityId cfEntityId, CalculatedFieldId calculatedFieldId) {
-        return getReferencedEntities().stream()
-                .filter(referencedEntity -> !referencedEntity.equals(cfEntityId))
-                .map(referencedEntityId -> buildCalculatedFieldLink(tenantId, referencedEntityId, calculatedFieldId))
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public CalculatedFieldLink buildCalculatedFieldLink(TenantId tenantId, EntityId referencedEntityId, CalculatedFieldId calculatedFieldId) {
-        CalculatedFieldLink link = new CalculatedFieldLink();
-        link.setTenantId(tenantId);
-        link.setEntityId(referencedEntityId);
-        link.setCalculatedFieldId(calculatedFieldId);
-        return link;
+    protected void baseCalculatedFieldRestriction() {
+        if (arguments.containsKey("ctx")) {
+            throw new IllegalArgumentException("Argument name 'ctx' is reserved and cannot be used.");
+        }
     }
 
 }
