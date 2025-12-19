@@ -13,17 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.exception;
+package org.thingsboard.monitoring.data.notification;
 
-public class DataValidationException extends RuntimeException {
+import lombok.RequiredArgsConstructor;
 
-    private static final long serialVersionUID = 7659985660312721830L;
-
-    public DataValidationException(String message) {
-        super(message);
-    }
-
-    public DataValidationException(String message, Throwable cause) {
-        super(message, cause);
+@RequiredArgsConstructor
+public class InfoNotification implements Notification {
+    private final String message;
+    @Override
+    public String getText() {
+        return message;
     }
 }

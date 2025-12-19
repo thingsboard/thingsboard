@@ -1209,7 +1209,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         Map<CalculatedFieldId, CalculatedFieldState> statesMap = (Map<CalculatedFieldId, CalculatedFieldState>) ReflectionTestUtils.getField(processor, "states");
         Awaitility.await("CF state for entity actor ready to refresh dynamic arguments").atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> {
             CalculatedFieldState calculatedFieldState = statesMap.get(cfId);
-            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastDynamicArgumentsRefreshTs() <
+            boolean isReady = calculatedFieldState != null && ((GeofencingCalculatedFieldState) calculatedFieldState).getLastScheduledRefreshTs() <
                                                               System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(scheduledUpdateInterval);
             log.warn("entityId {}, cfId {}, state ready to refresh == {}", entityId, cfId, isReady);
             return isReady;
@@ -1441,7 +1441,8 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                                                             EntityType entityType,
                                                             List<UUID> entities,
                                                             List<String> names) throws Exception {
-        return doGetTypedWithPageLink("/api/calculatedFields?type=" + type + "&" +
+        return doGetTypedWithPageLink("/api/calculatedFields?" +
+                                      (type != null ? "types=" + type + "&" : "") +
                                       (entityType != null ? "entityType=" + entityType + "&" : "") +
                                       (entities != null ? "entities=" + String.join(",",
                                               entities.stream().map(UUID::toString).toList()) + "&" : "") +

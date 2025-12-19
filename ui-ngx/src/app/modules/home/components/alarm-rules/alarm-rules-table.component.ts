@@ -88,7 +88,7 @@ export class AlarmRulesTableComponent {
           this.importExportService,
           this.entityDebugSettingsService,
           this.utilsService,
-          this.pageMode
+          this.pageMode,
         );
         this.cd.markForCheck();
       }

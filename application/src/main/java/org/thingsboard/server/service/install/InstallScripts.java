@@ -39,7 +39,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.dashboard.DashboardService;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.resource.ResourceService;
@@ -406,7 +406,8 @@ public class InstallScripts {
 
         Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
         loadSystemResources(resourcesDir.resolve("images"), ResourceType.IMAGE, null);
-        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE, ResourceSubType.EXTENSION);
+        loadSystemResources(resourcesDir.resolve("js_extensions"), ResourceType.JS_MODULE, ResourceSubType.EXTENSION);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE, ResourceSubType.MODULE);
         loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD, null);
     }
 

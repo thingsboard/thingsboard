@@ -94,8 +94,6 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
     private Alarm currentAlarm;
     private boolean initialFetchDone;
 
-    // TODO: deprecate device profile node, describe the differences and improvements
-
     public AlarmCalculatedFieldState(EntityId entityId) {
         super(entityId);
     }
@@ -358,7 +356,7 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
             newAlarm.setAcknowledged(false);
             newAlarm.setCleared(false);
             newAlarm.setSeverity(severity);
-            long startTs = latestTimestamp;
+            long startTs = getLatestTimestamp();
             long currentTime = System.currentTimeMillis();
             if (startTs <= 0L || startTs > currentTime) {
                 startTs = currentTime;

@@ -219,7 +219,8 @@ export const HelpLinks = {
     aiModels: `${helpBaseUrl}/docs${docPlatformPrefix}/samples/analytics/ai-models/`,
     apiKeys: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/api-keys`,
     timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
-    trendzSettings: `${helpBaseUrl}/docs/trendz/`
+    trendzSettings: `${helpBaseUrl}/docs/trendz/`,
+    alarmRules: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/alarm-rules/`,
   }
 };
 /* eslint-enable max-len */
