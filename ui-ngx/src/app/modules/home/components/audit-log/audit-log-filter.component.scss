@@ -33,3 +33,12 @@
     }
   }
 }
+
+::ng-deep {
+  .tb-audit-log-config-component {
+    max-width: 100%;
+    width: 600px;
+    min-width: 100%;
+    flex: 1;
+  }
+}

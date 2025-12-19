@@ -14,8 +14,6 @@
  * limitations under the License.
  */
 
-@import '../scss/constants';
-
 :host {
   display: flex;
   max-width: 100%;
@@ -42,15 +40,5 @@
     width: 600px;
     min-width: 100%;
     flex: 1;
-
-    tb-entity-subtype-list {
-      flex: 1;
-      @media #{$mat-gt-xs} {
-        width: 180px;
-      }
-      .mdc-evolution-chip-set__chips {
-        width: 100%;
-      }
-    }
   }
 }

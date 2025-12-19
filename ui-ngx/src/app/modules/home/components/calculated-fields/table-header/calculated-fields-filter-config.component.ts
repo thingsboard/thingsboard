@@ -79,14 +79,6 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
   @Input()
   buttonMode = true;
 
-  @coerceBoolean()
-  @Input()
-  userMode = false;
-
-  @coerceBoolean()
-  @Input()
-  propagatedFilter = true;
-
   @Input()
   initialCfFilterConfig: CalculatedFieldsQuery = {
     types: [],
@@ -95,6 +87,8 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
   };
 
   panelMode = false;
+
+  buttonDisplayValue = this.translate.instant('calculated-fields.calculated-field-filter-title');
 
   cfFilterForm: FormGroup;
 
@@ -130,7 +124,6 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
   ngOnInit(): void {
     if (this.data) {
       this.panelMode = this.data.panelMode;
-      this.userMode = this.data.userMode;
       this.cfFilterConfig = this.data.filterConfig;
       this.initialCfFilterConfig = this.data.initialFilterConfig;
       if (this.panelMode && !this.initialCfFilterConfig) {
@@ -177,6 +170,7 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
     if (!this.initialCfFilterConfig && cfFilterConfig) {
       this.initialCfFilterConfig = deepClone(cfFilterConfig);
     }
+    this.updateButtonDisplayValue();
     this.updateCfConfigForm(cfFilterConfig);
   }
 
@@ -253,7 +247,7 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
       if (!isArraysEqualIgnoreUndefined(filter1.entities, filter2.entities)) {
         return false;
       }
-      return filter1.entityType !== filter2.entityType;
+      return filter1.entityType === filter2.entityType;
     }
     return false;
   };
@@ -268,7 +262,25 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
 
   private cfConfigUpdated(formValue: any) {
     this.cfFilterConfig = this.cfFilterFromFormValue(formValue);
+    this.updateButtonDisplayValue();
     this.propagateChange(this.cfFilterConfig);
+  }
+
+  private updateButtonDisplayValue() {
+    if (this.buttonMode) {
+      const filterTextParts: string[] = [];
+      if (this.cfFilterConfig?.types?.length) {
+        filterTextParts.push(this.cfFilterConfig.types.map((type) => this.translate.instant(CalculatedFieldTypeTranslations.get(type).name)).join(', '));
+      }
+      if (this.cfFilterConfig?.entityType) {
+        filterTextParts.push(this.translate.instant( entityTypeTranslations.get(this.cfFilterConfig.entityType).type));
+      }
+      if (!filterTextParts.length) {
+        this.buttonDisplayValue = this.translate.instant('calculated-fields.calculated-field-filter-title');
+      } else {
+        this.buttonDisplayValue = this.translate.instant('calculated-fields.filter-title') + `: ${filterTextParts.join(', ')}`;
+      }
+    }
   }
 
   private cfFilterFromFormValue(formValue: any): CalculatedFieldsQuery {
