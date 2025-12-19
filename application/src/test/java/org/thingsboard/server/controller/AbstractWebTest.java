@@ -1137,7 +1137,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         TenantProfile oldTenantProfile = tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID);
         TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
         updater.accept(tenantProfile);
-        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
+        tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile, tenantAdminUser);
     }
 
     protected OAuth2Client createOauth2Client(TenantId tenantId, String title) {
