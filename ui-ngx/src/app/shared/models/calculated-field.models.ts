@@ -79,6 +79,8 @@ export type CalculatedField =
   | CalculatedFieldRelatedEntityAggregation
   | CalculatedFieldAlarmRule;
 
+export type CalculatedFieldInfo = CalculatedField & {entityName: string};
+
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
   SCRIPT = 'SCRIPT',
