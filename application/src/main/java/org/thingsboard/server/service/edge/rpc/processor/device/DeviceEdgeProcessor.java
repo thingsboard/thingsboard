@@ -237,7 +237,7 @@ public class DeviceEdgeProcessor extends BaseDeviceProcessor implements DevicePr
 
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
                         DeviceProfile deviceProfile = edgeCtx.getDeviceProfileService().findDeviceProfileById(edgeEvent.getTenantId(), device.getDeviceProfileId());
-                        builder.addDeviceProfileUpdateMsg(EdgeMsgConstructorUtils.constructDeviceProfileUpdatedMsg(msgType, deviceProfile));
+                        builder.addDeviceProfileUpdateMsg(EdgeMsgConstructorUtils.constructDeviceProfileUpdatedMsg(msgType, deviceProfile, edgeVersion));
                     }
                     return builder.build();
                 }
