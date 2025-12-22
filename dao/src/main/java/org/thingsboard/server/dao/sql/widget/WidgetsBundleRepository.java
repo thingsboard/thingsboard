@@ -21,7 +21,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.edqs.fields.WidgetTypeFields;
 import org.thingsboard.server.common.data.edqs.fields.WidgetsBundleFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
@@ -29,9 +28,6 @@ import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 4/23/2017.
- */
 public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEntity, UUID>, ExportableEntityRepository<WidgetsBundleEntity> {
 
     WidgetsBundleEntity findWidgetsBundleByTenantIdAndAlias(UUID tenantId, String alias);

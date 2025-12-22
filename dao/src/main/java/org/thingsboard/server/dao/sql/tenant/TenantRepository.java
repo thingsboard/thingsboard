@@ -28,9 +28,6 @@ import org.thingsboard.server.dao.model.sql.TenantInfoEntity;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Valerii Sosliuk on 4/30/2017.
- */
 public interface TenantRepository extends JpaRepository<TenantEntity, UUID> {
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.TenantInfoEntity(t, p.name) " +
