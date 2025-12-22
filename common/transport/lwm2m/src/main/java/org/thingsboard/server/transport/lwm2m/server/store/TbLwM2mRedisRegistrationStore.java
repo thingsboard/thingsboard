@@ -750,11 +750,14 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
                         System.currentTimeMillis(), 0, cleanLimit);
 
                 for (byte[] endpoint : endpointsExpired) {
-                    Registration r = deserializeReg(connection.get(toEndpointKey(endpoint)));
-                    if (!r.isAlive(gracePeriod)) {
-                        Deregistration dereg = removeRegistration(connection, r.getId(), true);
-                        if (dereg != null)
-                            expirationListener.registrationExpired(dereg.getRegistration(), dereg.getObservations());
+                    byte[] data = connection.get(toEndpointKey(endpoint));
+                    if (data != null && data.length > 0) {
+                        Registration r = deserializeReg(data);
+                        if (!r.isAlive(gracePeriod)) {
+                            Deregistration dereg = removeRegistration(connection, r.getId(), true);
+                            if (dereg != null)
+                                expirationListener.registrationExpired(dereg.getRegistration(), dereg.getObservations());
+                        }
                     }
                 }
             } catch (Exception e) {

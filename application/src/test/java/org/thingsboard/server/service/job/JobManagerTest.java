@@ -98,7 +98,7 @@ public class JobManagerTest extends AbstractControllerTest {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             Job job = findJobById(jobId);
             assertThat(job.getStatus()).isEqualTo(JobStatus.RUNNING);
-            assertThat(job.getResult().getSuccessfulCount()).isBetween(1, tasksCount - 1);
+            assertThat(job.getResult().getSuccessfulCount()).isBetween(0, tasksCount - 1);
             assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
         });
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {

@@ -1295,6 +1295,8 @@ transport:
       ignore_type_cast_errors: "${SNMP_RESPONSE_IGNORE_TYPE_CAST_ERRORS:false}"
     # Thread pool size for scheduler that executes device querying tasks
     scheduler_thread_pool_size: "${SNMP_SCHEDULER_THREAD_POOL_SIZE:4}"
+    # Maximum number of retry attempts for a single SNMP devices batch during bootstrap.
+    batch_retries: "${SNMP_BOOTSTRAP_RETRIES:8}"
   stats:
     # Enable/Disable the collection of transport statistics
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
@@ -1718,6 +1720,8 @@ queue:
       print-interval-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_MIN_PRINT_INTERVAL_MS:60000}"
       # Time to wait for the stats-loading requests to Kafka to finish
       kafka-response-timeout-ms: "${TB_QUEUE_KAFKA_CONSUMER_STATS_RESPONSE_TIMEOUT_MS:1000}"
+    # Topics cache TTL in milliseconds. 5 minutes by default
+    topics_cache_ttl_ms: "${TB_QUEUE_KAFKA_TOPICS_CACHE_TTL_MS:300000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:

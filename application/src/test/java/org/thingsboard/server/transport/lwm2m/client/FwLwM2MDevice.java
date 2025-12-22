@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
@@ -32,6 +33,9 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicInteger;
+import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TARGET_FW_VERSION;
+import static org.thingsboard.server.dao.service.OtaPackageServiceTest.TITLE;
 
 @Slf4j
 public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
@@ -43,6 +47,12 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     private final AtomicInteger state = new AtomicInteger(0);
 
     private final AtomicInteger updateResult = new AtomicInteger(0);
+
+    private LeshanClient leshanClient;
+    private String pkgNameDef = "firmware";
+    private String pkgName;
+    private String pkgVersionDef = "1.0.0";
+    private String pkgVersion;
 
     @Override
     public ReadResponse read(LwM2mServer identity, int resourceId) {
@@ -74,7 +84,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
         switch (resourceId) {
             case 2:
-                startUpdating();
+                startUpdating(identity);
                 return ExecuteResponse.success();
             default:
                 return super.execute(identity, resourceId, arguments);
@@ -106,11 +116,13 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
     }
 
     private String getPkgName() {
-        return "firmware";
+        this.pkgName = this.pkgName == null ? this.pkgNameDef : this.pkgName;
+        return this.pkgName;
     }
 
     private String getPkgVersion() {
-        return "1.0.0";
+        this.pkgVersion = this.pkgVersion == null ? this.pkgVersionDef : this.pkgVersion;
+        return this.pkgVersion;
     }
 
     private int getFirmwareUpdateDeliveryMethod() {
@@ -140,7 +152,7 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
         }, 100, TimeUnit.MILLISECONDS);
     }
 
-    private void startUpdating() {
+    private void startUpdating(LwM2mServer identity) {
         scheduler.schedule(() -> {
             try {
                 state.set(3);
@@ -148,9 +160,25 @@ public class FwLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
                 Thread.sleep(100);
                 updateResult.set(1);
                 fireResourceChange(5);
+                this.pkgName = TITLE;
+                fireResourceChange(6);
+                this.pkgVersion = TARGET_FW_VERSION;
+                fireResourceChange(7);
+                if (this.leshanClient != null) {
+                    log.info("Stop/reboot LwM2M client {}", this.leshanClient.getEndpoint(identity));
+                    this.leshanClient.stop(false);
+                    log.info("Start after update fw LwM2M client {}", this.leshanClient.getEndpoint(identity));
+                    this.leshanClient.start();
+                    this.pkgName = this.pkgNameDef;
+                    this.pkgVersion = this.pkgVersionDef;
+                }
             } catch (Exception e) {
             }
         }, 100, TimeUnit.MILLISECONDS);
+    }
+
+    protected void setLeshanClient(LeshanClient leshanClient) {
+        this.leshanClient = leshanClient;
     }
 
 }

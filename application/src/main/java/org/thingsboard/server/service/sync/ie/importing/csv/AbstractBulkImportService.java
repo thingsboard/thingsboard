@@ -186,7 +186,7 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                             .forEach(dataEntry -> kvs.add(dataEntry.getKey().getKey(), dataEntry.getValue().toJsonPrimitive()));
                     return Map.entry(kvType, kvs);
                 })
-                .filter(kvsEntry -> kvsEntry.getValue().entrySet().size() > 0)
+                .filter(kvsEntry -> !kvsEntry.getValue().entrySet().isEmpty())
                 .forEach(kvsEntry -> {
                     BulkImportColumnType kvType = kvsEntry.getKey();
                     if (kvType == BulkImportColumnType.SHARED_ATTRIBUTE || kvType == BulkImportColumnType.SERVER_ATTRIBUTE) {

@@ -96,9 +96,6 @@ import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConn
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.STATE;
 import static org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugMessageType.messageName;
 
-/**
- * Created by ashvayka on 19.01.17.
- */
 @Slf4j
 public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDeviceSessionContext> {
 
@@ -108,6 +105,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     public static final String CLAIMING = "claiming";
     public static final String ATTRIBUTE = "attribute";
     public static final String RPC_RESPONSE = "Rpc response";
+    public static final String CONNECT = "connect";
     public static final String ATTRIBUTES_REQUEST = "attributes request";
 
     protected final MqttTransportContext context;
@@ -116,6 +114,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     @Getter
     protected final UUID sessionId;
     private final ConcurrentMap<String, Lock> deviceCreationLockMap;
+    @Getter
     private final ConcurrentMap<String, T> devices;
     private final ConcurrentMap<String, ListenableFuture<T>> deviceFutures;
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
@@ -259,12 +258,14 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     protected void processOnConnect(MqttPublishMessage msg, String deviceName, String deviceType) {
         log.trace("[{}][{}][{}] onDeviceConnect: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
+        int msgId = getMsgId(msg);
+        AtomicBoolean ackSent = new AtomicBoolean(false);
         process(onDeviceConnect(deviceName, deviceType),
                 result -> {
                     ack(msg, MqttReasonCodes.PubAck.SUCCESS);
                     log.trace("[{}][{}][{}] onDeviceConnectOk: [{}]", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
                 },
-                t -> logDeviceCreationError(t, deviceName));
+                t -> processFailure(msgId, deviceName, CONNECT, ackSent, t));
     }
 
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
@@ -821,11 +822,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         transportService.process(sessionInfo, postTelemetryMsg, pubAckCallback);
     }
 
-    public ConcurrentMap<String, T> getDevices() {
-        return this.devices;
-    }
-
-    protected <T>TransportServiceCallback<Void> getAggregatePubAckCallback(
+    protected <T> TransportServiceCallback<Void> getAggregatePubAckCallback(
             final ChannelHandlerContext ctx,
             final int msgId,
             final String deviceName,
@@ -915,4 +912,5 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
             log.trace("Failed to send device disconnect to gateway session", e);
         }
     }
+
 }

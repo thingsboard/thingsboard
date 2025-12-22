@@ -25,7 +25,7 @@ import java.io.Serializable;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class KeyDictionaryCompositeKey implements Serializable{
+public class KeyDictionaryCompositeKey implements Serializable {
 
     @Transient
     private static final long serialVersionUID = -4089175869616037523L;

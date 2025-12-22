@@ -21,9 +21,9 @@ import { HttpClient } from '@angular/common/http';
 import {
   AdminSettings,
   AutoCommitSettings,
-  MailConfigTemplate,
   FeaturesInfo,
   JwtSettings,
+  MailConfigTemplate,
   MailServerSettings,
   RepositorySettings,
   RepositorySettingsInfo,

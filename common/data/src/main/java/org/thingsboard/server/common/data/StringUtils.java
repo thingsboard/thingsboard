@@ -275,11 +275,4 @@ public class StringUtils {
         return result;
     }
 
-    public static String escapeControlChars(String text) {
-        return text
-                .replace("\n", "\\n")
-                .replace("\r", "\\r")
-                .replace("\t", "\\t");
-    }
-
 }

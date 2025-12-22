@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.cf.CalculatedFieldPartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TbCallback;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeScopeProto;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.CalculatedFieldTelemetryMsgProto;
@@ -48,6 +49,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -61,6 +63,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry.getValueForTsRecord;
 
 
 /**
@@ -112,6 +116,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         } else {
             states.remove(cfId);
         }
+        msg.getCallback().onSuccess();
     }
 
     public void process(EntityInitCalculatedFieldMsg msg) throws CalculatedFieldException {
@@ -346,21 +351,48 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(argNames, data);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, List<TsKvProto> data) {
-        if (argNames.isEmpty()) {
+    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, Set<String>> args, List<TsKvProto> data) {
+        if (args.isEmpty()) {
             return Collections.emptyMap();
         }
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (TsKvProto item : data) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
-            String argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            Set<String> argNames = args.get(key);
+            if (argNames != null) {
+                SingleValueArgumentEntry incoming = new SingleValueArgumentEntry(item);
+                argNames.forEach(argName -> arguments.compute(argName, (name, existing) -> {
+                    if (existing == null) {
+                        return incoming;
+                    }
+                    existing.updateEntry(incoming);
+                    return existing;
+                }));
             }
+
             key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_ROLLING, null);
-            argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            argNames = args.get(key);
+            if (argNames != null) {
+                Double recordValue = getValueForTsRecord(ProtoUtils.fromProto(item.getKv()));
+                argNames.forEach(argName -> arguments.compute(argName, (name, existing) -> {
+                    if (existing instanceof TsRollingArgumentEntry rolling) {
+                        if (recordValue != null) {
+                            rolling.getTsRecords().put(item.getTs(), recordValue);
+                        }
+                        return rolling;
+                    }
+                    TsRollingArgumentEntry rolling = new TsRollingArgumentEntry();
+                    if (recordValue != null) {
+                        rolling.getTsRecords().put(item.getTs(), recordValue);
+                    }
+                    if (existing instanceof SingleValueArgumentEntry single) {
+                        Double existingValue = getValueForTsRecord(single.getKvEntryValue());
+                        if (existingValue != null) {
+                            rolling.getTsRecords().put(single.getTs(), existingValue);
+                        }
+                    }
+                    return rolling;
+                }));
             }
         }
         return arguments;
@@ -378,13 +410,13 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArguments(argNames, scope, attrDataList);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, String> argNames, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
+    private Map<String, ArgumentEntry> mapToArguments(Map<ReferencedEntityKey, Set<String>> args, AttributeScopeProto scope, List<AttributeValueProto> attrDataList) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (AttributeValueProto item : attrDataList) {
             ReferencedEntityKey key = new ReferencedEntityKey(item.getKey(), ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-            String argName = argNames.get(key);
-            if (argName != null) {
-                arguments.put(argName, new SingleValueArgumentEntry(item));
+            Set<String> argNames = args.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> arguments.put(argName, new SingleValueArgumentEntry(item)));
             }
         }
         return arguments;
@@ -402,18 +434,19 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return mapToArgumentsWithDefaultValue(ctx.getMainEntityArguments(), ctx.getArguments(), scope, removedAttrKeys);
     }
 
-    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(Map<ReferencedEntityKey, String> argNames, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
+    private Map<String, ArgumentEntry> mapToArgumentsWithDefaultValue(Map<ReferencedEntityKey, Set<String>> args, Map<String, Argument> configArguments, AttributeScopeProto scope, List<String> removedAttrKeys) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         for (String removedKey : removedAttrKeys) {
             ReferencedEntityKey key = new ReferencedEntityKey(removedKey, ArgumentType.ATTRIBUTE, AttributeScope.valueOf(scope.name()));
-            String argName = argNames.get(key);
-            if (argName != null) {
-                Argument argument = configArguments.get(argName);
-                String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
-                arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
-                        ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
-                        : new SingleValueArgumentEntry());
-
+            Set<String> argNames = args.get(key);
+            if (argNames != null) {
+                argNames.forEach(argName -> {
+                    Argument argument = configArguments.get(argName);
+                    String defaultValue = (argument != null) ? argument.getDefaultValue() : null;
+                    arguments.put(argName, StringUtils.isNotEmpty(defaultValue)
+                            ? new SingleValueArgumentEntry(System.currentTimeMillis(), new StringDataEntry(removedKey, defaultValue), null)
+                            : new SingleValueArgumentEntry());
+                });
             }
         }
         return arguments;
