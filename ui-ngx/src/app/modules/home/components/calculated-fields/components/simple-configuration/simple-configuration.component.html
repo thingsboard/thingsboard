@@ -27,9 +27,7 @@
                                          [isScript]="isScript" />
   </div>
   <div class="tb-form-panel no-gap">
-    <div class="tb-form-panel-title tb-required">
-      {{ (isScript ? 'calculated-fields.type.script' : 'calculated-fields.expression') | translate }}
-    </div>
+    <div class="tb-form-panel-title tb-required">{{ (isScript ? 'calculated-fields.type.script' : 'calculated-fields.expression') | translate }}</div>
     <mat-form-field class="mt-3" appearance="outline" subscriptSizing="dynamic" [class.hidden]="isScript">
       <input matInput formControlName="expressionSIMPLE" maxlength="255" [placeholder]="'(temperature - 32) / 1.8'"
              required>

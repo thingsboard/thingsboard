@@ -43,6 +43,7 @@ import {
   CalculatedField,
   CalculatedFieldAlarmRule,
   CalculatedFieldEventArguments,
+  CalculatedFieldInfo,
   CalculatedFieldsQuery,
   CalculatedFieldType,
   getCalculatedFieldArgumentsEditorCompleter,
@@ -67,12 +68,14 @@ import {
   CalculatedFieldTestScriptDialogData
 } from "@home/components/calculated-fields/components/test-dialog/calculated-field-script-test-dialog.component";
 
-export class AlarmRulesTableConfig extends EntityTableConfig<any> {
+type AlarmRuleTableEntity = CalculatedField | CalculatedFieldInfo;
+
+export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntity> {
 
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('action.see-debug-events'),
-    action: (calculatedField: CalculatedField) => this.openDebugEventsDialog.call(this, calculatedField),
+    action: (calculatedField: AlarmRuleTableEntity) => this.openDebugEventsDialog.call(this, calculatedField),
   };
 
   alarmRuleFilterConfig: CalculatedFieldsQuery;
@@ -81,11 +84,11 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
               private translate: TranslateService,
               private dialog: MatDialog,
               private datePipe: DatePipe,
-              public entityId: EntityId = null,
+              private entityId: EntityId = null,
               private store: Store<AppState>,
               private destroyRef: DestroyRef,
               private renderer: Renderer2,
-              public entityName: string,
+              private entityName: string,
               private ownerId: EntityId = null,
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
@@ -118,7 +121,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
 
     this.entitiesFetchFunction = (pageLink: PageLink) => this.fetchCalculatedFields(pageLink);
     this.addEntity = this.getCalculatedAlarmDialog.bind(this);
-    this.deleteEntityTitle = (field: CalculatedField) => this.translate.instant('alarm-rule.delete-title', {title: field.name});
+    this.deleteEntityTitle = (field) => this.translate.instant('alarm-rule.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('alarm-rule.delete-text');
     this.deleteEntitiesTitle = count => this.translate.instant('alarm-rule.delete-multiple-title', {count});
     this.deleteEntitiesContent = () => this.translate.instant('alarm-rule.delete-multiple-text');
@@ -143,10 +146,10 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('name', 'alarm-rule.alarm-type', '33%',
       entity => this.utilsService.customTranslation(entity.name, entity.name)));
     if (this.pageMode) {
-      this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('entityType', 'entity.entity-type', '10%',
+      this.columns.push(new EntityTableColumn<CalculatedFieldInfo>('entityType', 'entity.entity-type', '10%',
         entity => this.translate.instant(entityTypeTranslations.get(entity.entityId.entityType).type)));
-      this.columns.push(new EntityLinkTableColumn<CalculatedFieldAlarmRule>('entityName', 'entity.entity', '33%',
-        entity => this.utilsService.customTranslation(entity['entityName'], entity['entityName']),
+      this.columns.push(new EntityLinkTableColumn<CalculatedFieldInfo>('entityName', 'entity.entity', '33%',
+        entity => this.utilsService.customTranslation(entity.entityName, entity.entityName),
         entity => getEntityDetailsPageURL(entity.entityId?.id, entity.entityId?.entityType as EntityType), false));
     }
     this.columns.push(new EntityTableColumn<CalculatedFieldAlarmRule>('createRule', 'alarm-rule.severities', this.pageMode ? '23%' : '67%',
@@ -193,13 +196,13 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     );
   }
 
-  fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedField>> {
+  fetchCalculatedFields(pageLink: PageLink): Observable<PageData<AlarmRuleTableEntity>> {
     return this.pageMode ?
-      this.calculatedFieldsService.getCalculatedFieldsFilter(pageLink, {types: [CalculatedFieldType.ALARM], ...this.alarmRuleFilterConfig}) :
-      this.calculatedFieldsService.getCalculatedFields(this.entityId, pageLink, CalculatedFieldType.ALARM);
+      this.calculatedFieldsService.getCalculatedFields(pageLink, {types: [CalculatedFieldType.ALARM], ...this.alarmRuleFilterConfig}) :
+      this.calculatedFieldsService.getCalculatedFieldsByEntityId(this.entityId, pageLink, CalculatedFieldType.ALARM);
   }
 
-  onOpenDebugConfig($event: Event, calculatedField: CalculatedField): void {
+  onOpenDebugConfig($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     const { debugSettings = {}, id } = calculatedField;
     const additionalActionConfig = {
@@ -224,7 +227,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     }, $event.target as Element);
   }
 
-  private editCalculatedField($event: Event, calculatedField: CalculatedField, isDirty = false): void {
+  private editCalculatedField($event: Event, calculatedField: AlarmRuleTableEntity, isDirty = false): void {
     $event?.stopPropagation();
     this.getCalculatedAlarmDialog(calculatedField, 'action.apply', isDirty)
       .subscribe((res) => {
@@ -234,11 +237,12 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       });
   }
 
-  private copyCalculatedField($event: Event, calculatedField: CalculatedField, isDirty = false): void {
+  private copyCalculatedField($event: Event, calculatedField: AlarmRuleTableEntity, isDirty = false): void {
     $event?.stopPropagation();
     const copyCalculatedAlarmRule = deepClone(calculatedField);
     if (this.pageMode) {
       copyCalculatedAlarmRule.entityId = null;
+      delete (copyCalculatedAlarmRule as CalculatedFieldInfo).entityName;
     }
     delete copyCalculatedAlarmRule.id;
     this.getCalculatedAlarmDialog(copyCalculatedAlarmRule, 'action.apply', isDirty)
@@ -249,8 +253,9 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       });
   }
 
-  private getCalculatedAlarmDialog(value?: CalculatedField, buttonTitle = 'action.add', isDirty = false): Observable<CalculatedField> {
+  private getCalculatedAlarmDialog(value?: AlarmRuleTableEntity, buttonTitle = 'action.add', isDirty = false): Observable<CalculatedField> {
     const entityId = this.entityId || value?.entityId;
+    const entityName = this.entityName || (value as CalculatedFieldInfo)?.entityName;
     return this.dialog.open<AlarmRuleDialogComponent, AlarmRuleDialogData, CalculatedField>(AlarmRuleDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -258,8 +263,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
         value,
         buttonTitle,
         entityId,
+        entityName,
         tenantId: this.tenantId,
-        entityName: this.entityName,
         ownerId: this.ownerId ?? {entityType: EntityType.TENANT, id: this.tenantId},
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         isDirty,
@@ -271,7 +276,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       .pipe(filter(Boolean));
   }
 
-  private openDebugEventsDialog($event: Event, calculatedField: CalculatedField): void {
+  private openDebugEventsDialog($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     this.dialog.open<EventsDialogComponent, EventsDialogData, null>(EventsDialogComponent, {
       disableClose: true,
@@ -290,7 +295,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
       .subscribe();
   }
 
-  private exportAlarmRule($event: Event, calculatedField: CalculatedField): void {
+  private exportAlarmRule($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     this.importExportService.exportCalculatedField(calculatedField.id.id);
   }
@@ -343,7 +348,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<any> {
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: CalculatedField, expression: string, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
+  private getTestScriptDialog(calculatedField: AlarmRuleTableEntity, expression: string, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
     if (calculatedField.type === CalculatedFieldType.ALARM) {
       const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
         const type = calculatedField.configuration.arguments[key].refEntityKey.type;
