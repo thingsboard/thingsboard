@@ -35,6 +35,7 @@ import {
   AlarmInfo,
   AlarmQueryV2,
   AlarmSearchStatus,
+  alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
   alarmStatusTranslations,
@@ -65,7 +66,6 @@ import { getEntityDetailsPageURL, isDefinedAndNotNull, isNotEmptyStr } from '@co
 import { UtilsService } from '@core/services/utils.service';
 import { AlarmFilterConfig } from '@shared/models/query/query.models';
 import { EntityService } from '@core/http/entity.service';
-import { AlarmSeverityNotificationColors } from '@shared/models/notification.models';
 
 export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink> {
 
@@ -127,7 +127,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
         (entity) => this.translate.instant(alarmSeverityTranslations.get(entity.severity)),
         entity => ({
           fontWeight: 'bold',
-          color: AlarmSeverityNotificationColors.get(entity.severity)
+          color: alarmSeverityColors.get(entity.severity)
         })));
     this.columns.push(
       new EntityTableColumn<AlarmInfo>('assignee', 'alarm.assignee', '240px',

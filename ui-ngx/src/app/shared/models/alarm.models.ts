@@ -88,11 +88,11 @@ export const alarmSearchStatusTranslations = new Map<AlarmSearchStatus, string>(
 
 export const alarmSeverityColors = new Map<AlarmSeverity, string>(
   [
-    [AlarmSeverity.CRITICAL, 'red'],
-    [AlarmSeverity.MAJOR, 'orange'],
-    [AlarmSeverity.MINOR, '#ffca3d'],
-    [AlarmSeverity.WARNING, '#abab00'],
-    [AlarmSeverity.INDETERMINATE, 'green']
+    [AlarmSeverity.CRITICAL, '#D12730'],
+    [AlarmSeverity.MAJOR, '#FEAC0C'],
+    [AlarmSeverity.MINOR, '#F2DA05'],
+    [AlarmSeverity.WARNING, '#F66716'],
+    [AlarmSeverity.INDETERMINATE, '#00000061']
   ]
 );
 
