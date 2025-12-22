@@ -818,13 +818,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationsDeduplication_resourcesShortage() throws Exception {
         loginSysAdmin();
+        NotificationTarget sysadmins = createNotificationTarget(new SystemAdministratorsFilter());
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
                 .ramThreshold(0.01f)
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
-        loginTenantAdmin();
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", sysadmins.getId());
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
         for (int i = 0; i < 10; i++) {
@@ -854,13 +854,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
         loginSysAdmin();
+        NotificationTarget sysadmins = createNotificationTarget(new SystemAdministratorsFilter());
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
                 .ramThreshold(0.99f)
                 .cpuThreshold(0.99f)
                 .storageThreshold(0.99f)
                 .build();
-        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
-        loginTenantAdmin();
+        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", sysadmins.getId());
 
         // Mock SystemUtil to return 15% usages (not exceeds 99% threshold)
         Method method;
@@ -877,7 +877,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         TimeUnit.SECONDS.sleep(5);
         assertThat(getMyNotifications(false, 100)).size().isZero();
 
-        loginSysAdmin();
         triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
                 .ramThreshold(0.01f)
                 .cpuThreshold(1f)
@@ -885,7 +884,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .build();
         rule.setTriggerConfig(triggerConfig);
         saveNotificationRule(rule);
-        loginTenantAdmin();
 
         method.invoke(systemInfoService);
 
