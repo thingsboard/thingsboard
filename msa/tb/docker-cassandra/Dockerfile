@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM ${docker.base.image}
+FROM thingsboard/openjdk17:bookworm-slim
 
 ENV PG_MAJOR=16
 
