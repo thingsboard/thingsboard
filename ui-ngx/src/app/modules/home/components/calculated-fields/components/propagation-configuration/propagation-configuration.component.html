@@ -59,9 +59,7 @@
                                   [isScript]="this.propagateConfiguration.get('applyExpressionToResolvedArguments').value"/>
   </div>
   <div class="tb-form-panel no-gap" [class.!hidden]="!this.propagateConfiguration.get('applyExpressionToResolvedArguments').value">
-    <div class="tb-form-panel-title tb-required">
-      {{ 'calculated-fields.script' | translate }}
-    </div>
+    <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.script' | translate }}</div>
     <div>
       <tb-js-func required
                   formControlName="expression"

@@ -27,5 +27,5 @@ import java.lang.annotation.RetentionPolicy;
 
 @Inherited
 @Retention(RetentionPolicy.RUNTIME)
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled:true}'=='true' && '${transport.mqtt.ssl.enabled:false}'=='true')")
+@ConditionalOnExpression("'${transport.mqtt.ssl.enabled:false}'=='true' && ('${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.mqtt.enabled:true}'=='true'))")
 public @interface TbMqttSslTransportComponent {}
