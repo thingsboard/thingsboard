@@ -126,10 +126,10 @@
             </build>
         </profile>
         <profile>
-            <id>lts</id>
+            <id>push-lts-docker-amd-arm-images</id>
             <activation>
                 <property>
-                    <name>lts</name>
+                    <name>push-lts-docker-amd-arm-images</name>
                 </property>
             </activation>
             <properties>
@@ -141,6 +141,27 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
                         <executions>
+                            <execution>
+                                <id>push-version-docker-amd-arm-images</id>
+                                <phase>${docker.push-arm-amd-image.phase}</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <workingDirectory>${project.build.directory}</workingDirectory>
+                                    <arguments>
+                                        <argument>buildx</argument>
+                                        <argument>build</argument>
+                                        <argument>-t</argument>
+                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                        <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>-o</argument>
+                                        <argument>type=registry</argument>
+                                        <argument>.</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
                             <execution>
                                 <id>push-lts-docker-amd-arm-images</id>
                                 <phase>${docker.push-arm-amd-image.phase}</phase>
