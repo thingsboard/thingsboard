@@ -18,6 +18,7 @@ package org.thingsboard.server.common.data.util;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -68,6 +69,15 @@ public class CollectionsUtil {
             T key = kvs[i];
             T value = kvs[i + 1];
             map.put(key, value);
+        }
+        return map;
+    }
+
+    @SafeVarargs
+    public static <K, V> LinkedHashMap<K, V> orderedMapOf(Map.Entry<K, V>... entries) {
+        LinkedHashMap<K, V> map = new LinkedHashMap<>();
+        for (Map.Entry<K, V> entry : entries) {
+            map.put(entry.getKey(), entry.getValue());
         }
         return map;
     }
