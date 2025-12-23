@@ -223,7 +223,7 @@
         </mat-form-field>
       </div>
     </ng-container>
-    <div class="tb-form-panel stroked">
+    <div class="tb-form-panel stroked" [class.!hidden]="entityType !== ArgumentEntityType.RelationQuery">
       <mat-slide-toggle class="mat-slide" formControlName="createRelationsWithMatchedZones" (click)="$event.stopPropagation()">
         <div tb-hint-tooltip-icon="{{ 'calculated-fields.hint.create-relation-with-matched-zones' | translate }}">
           {{ 'calculated-fields.create-relation-with-matched-zones' | translate }}
