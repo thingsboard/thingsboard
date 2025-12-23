@@ -32,7 +32,7 @@
     <properties>
         <main.dir>${basedir}/..</main.dir>
         <docker.repo>thingsboard</docker.repo>
-        <docker.base.image>thingsboard/openjdk25:trixie-slim</docker.base.image>
+        <docker.base.image>thingsboard/openjdk17:bookworm-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
@@ -126,10 +126,10 @@
             </build>
         </profile>
         <profile>
-            <id>lts</id>
+            <id>push-lts-docker-amd-arm-images</id>
             <activation>
                 <property>
-                    <name>lts</name>
+                    <name>push-lts-docker-amd-arm-images</name>
                 </property>
             </activation>
             <properties>
@@ -141,6 +141,27 @@
                         <groupId>org.codehaus.mojo</groupId>
                         <artifactId>exec-maven-plugin</artifactId>
                         <executions>
+                            <execution>
+                                <id>push-version-docker-amd-arm-images</id>
+                                <phase>${docker.push-arm-amd-image.phase}</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <workingDirectory>${project.build.directory}</workingDirectory>
+                                    <arguments>
+                                        <argument>buildx</argument>
+                                        <argument>build</argument>
+                                        <argument>-t</argument>
+                                        <argument>${docker.repo}/${docker.name}:${project.version}</argument>
+                                        <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>-o</argument>
+                                        <argument>type=registry</argument>
+                                        <argument>.</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
                             <execution>
                                 <id>push-lts-docker-amd-arm-images</id>
                                 <phase>${docker.push-arm-amd-image.phase}</phase>
