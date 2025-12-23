@@ -88,11 +88,21 @@ export const alarmSearchStatusTranslations = new Map<AlarmSearchStatus, string>(
 
 export const alarmSeverityColors = new Map<AlarmSeverity, string>(
   [
-    [AlarmSeverity.CRITICAL, '#D12730'],
-    [AlarmSeverity.MAJOR, '#FEAC0C'],
-    [AlarmSeverity.MINOR, '#F2DA05'],
-    [AlarmSeverity.WARNING, '#F66716'],
-    [AlarmSeverity.INDETERMINATE, '#00000061']
+    [AlarmSeverity.CRITICAL, 'var(--tb-alarm-severity-critical, rgb(209, 39, 48))'],
+    [AlarmSeverity.MAJOR, 'var(--tb-alarm-severity-major, rgb(246, 103, 22))'],
+    [AlarmSeverity.MINOR, 'var(--tb-alarm-severity-minor, rgb(250, 164, 5))'],
+    [AlarmSeverity.WARNING, 'var(--tb-alarm-severity-warning, rgb(242, 218, 5))'],
+    [AlarmSeverity.INDETERMINATE, 'var(--tb-alarm-severity-indeterminate, rgba(0, 0, 0, 0.38))']
+  ]
+);
+
+export const alarmSeverityBackgroundColors = new Map<AlarmSeverity, string>(
+  [
+    [AlarmSeverity.CRITICAL, `var(--tb-alarm-severity-critical-bg, rgba(209, 39, 48, 0.06))`],
+    [AlarmSeverity.MAJOR, 'var(--tb-alarm-severity-major-bg, rgba(246, 103, 22, 0.06))'],
+    [AlarmSeverity.MINOR, 'var(--tb-alarm-severity-minor-bg, rgba(250, 164, 5, 0.06))'],
+    [AlarmSeverity.WARNING, 'var(--tb-alarm-severity-warning-bg, rgba(242, 218, 5, 0.06))'],
+    [AlarmSeverity.INDETERMINATE, 'var(--tb-alarm-severity-indeterminate-bg, rgba(0, 0, 0, 0.06))']
   ]
 );
 

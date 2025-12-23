@@ -151,8 +151,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     this.widget.widgetContext.containerChangeDetector = this.cd;
     const cssString = this.widget.widget.config.widgetCss;
     if (isNotEmptyStr(cssString)) {
-      this.cssClass =
-        this.utils.applyCssToElement(this.renderer, this.gridsterItem.el, 'tb-widget-css', cssString);
+      this.cssClass = this.utils.applyCssToElement(this.renderer, this.gridsterItem.el, 'tb-widget-css', cssString, true);
+      this.widget.widgetContext.widgetCssClass = this.cssClass;
     }
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));

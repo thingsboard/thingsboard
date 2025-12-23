@@ -968,7 +968,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       (AlarmDetailsDialogComponent,
         {
           disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+          panelClass: ['tb-dialog', 'tb-fullscreen-dialog', this.ctx.stateController.dashboardCtrl.dashboardCtx.dashboardCssClass, this.ctx.widgetCssClass],
           data: {
             alarmId: alarm.id.id,
             allowAcknowledgment: this.allowAcknowledgment,
