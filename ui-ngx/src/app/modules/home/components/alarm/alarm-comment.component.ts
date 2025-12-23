@@ -154,22 +154,20 @@ export class AlarmCommentComponent implements OnInit {
 
   private parseSystemComment(alarm: AlarmCommentInfo): string {
     const subTypeKey = alarm.comment?.subtype;
-    const alarmComment = deepClone(alarm.comment);
     if (subTypeKey && AlarmMessage[subTypeKey]) {
+      const alarmComment = deepClone(alarm.comment);
       const translationKey = AlarmMessage[subTypeKey];
       if (alarmComment?.newSeverity) {
-        const newSeverityKey =
+        alarmComment.newSeverity =
           (alarmSeverityTranslations.has(alarmComment.newSeverity)
-            ? alarmSeverityTranslations.get(alarmComment.newSeverity)
+            ? this.translate.instant(alarmSeverityTranslations.get(alarmComment.newSeverity))
             : alarmComment.newSeverity) as AlarmSeverity;
-        alarmComment.newSeverity = this.translate.instant(newSeverityKey);
       }
       if (alarmComment?.oldSeverity) {
-        const oldSeverityKey =
+        alarmComment.oldSeverity =
           (alarmSeverityTranslations.has(alarmComment.oldSeverity)
-            ? alarmSeverityTranslations.get(alarmComment.oldSeverity)
+            ? this.translate.instant(alarmSeverityTranslations.get(alarmComment.oldSeverity))
             : alarmComment.oldSeverity) as AlarmSeverity;
-        alarmComment.oldSeverity = this.translate.instant(oldSeverityKey);
       }
       return this.translate.instant(translationKey, alarmComment);
     }
