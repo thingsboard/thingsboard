@@ -42,7 +42,7 @@
       <mat-icon>check_circle_outline</mat-icon>
     </button>
     <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM && !notification.info.cleared"
-         [style.background-color]="alarmColorSeverity(0.06)">
+         [style.background-color]="alarmColorSeverityBackground()">
       <span [style]="notificationIconColor()" class="severity">
         {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}
       </span>
