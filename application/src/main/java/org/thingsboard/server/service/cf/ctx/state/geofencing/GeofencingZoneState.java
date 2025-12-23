@@ -89,11 +89,7 @@ public class GeofencingZoneState {
         // first evaluation
         if (this.lastPresence == null) {
             this.lastPresence = status;
-            GeofencingTransitionEvent transition = null;
-            if (status == GeofencingPresenceStatus.INSIDE) {
-                transition = GeofencingTransitionEvent.ENTERED;
-            }
-            return new GeofencingEvalResult(transition, status);
+            return new GeofencingEvalResult(null, status);
         }
         // State changed
         if (this.lastPresence != status) {

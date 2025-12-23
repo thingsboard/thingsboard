@@ -178,10 +178,11 @@
     }
 
     &.tb-required::after {
-      font-size: 13px;
-      color: rgba(0, 0, 0, .54);
+      font-size: inherit;
+      color: inherit;
       vertical-align: top;
-      content: " *";
+      content: "*";
+      margin-left: 1px;
     }
   }
   .tb-form-panel-hint {
@@ -298,10 +299,11 @@
       margin: 8px 0;
     }
     .tb-required::after {
-      font-size: 13px;
-      color: rgba(0, 0, 0, .54);
+      font-size: inherit;
+      color: inherit;
       vertical-align: top;
-      content: " *";
+      content: "*";
+      margin-left: 1px;
     }
   }
 

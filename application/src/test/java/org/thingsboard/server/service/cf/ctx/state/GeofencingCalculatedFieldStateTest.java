@@ -249,7 +249,6 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result.getScope()).isEqualTo(output.getScope());
         assertThat(result.getResult().get("values")).isEqualTo(
                 JacksonUtil.newObjectNode()
-                        .put("allowedZonesEvent", "ENTERED")
                         .put("allowedZonesStatus", "INSIDE")
                         .put("restrictedZonesStatus", "OUTSIDE")
         );
@@ -329,9 +328,7 @@ public class GeofencingCalculatedFieldStateTest {
         assertThat(result).isNotNull();
         assertThat(result.getType()).isEqualTo(output.getType());
         assertThat(result.getScope()).isEqualTo(output.getScope());
-        assertThat(result.getResult().get("values")).isEqualTo(
-                JacksonUtil.newObjectNode().put("allowedZonesEvent", "ENTERED")
-        );
+        assertThat(result.getResult().get("values")).isEmpty();
 
         SingleValueArgumentEntry newLatitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("latitude", 50.4760), 146L);
         SingleValueArgumentEntry newLongitude = new SingleValueArgumentEntry(System.currentTimeMillis(), new DoubleDataEntry("longitude", 30.5110), 166L);
