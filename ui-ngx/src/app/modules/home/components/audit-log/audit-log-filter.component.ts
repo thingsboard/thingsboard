@@ -163,11 +163,13 @@ export class AuditLogFilterComponent implements OnInit, ControlValueAccessor {
 
   cancel() {
     this.updateAuditLogFilterForm(this.auditLogFilter);
+    this.auditLogFilterForm.markAsPristine();
     this.auditLogOverlayRef.dispose();
   }
 
   update() {
     this.auditLogFilterUpdated(this.auditLogFilterForm.value);
+    this.auditLogFilterForm.markAsPristine();
     this.auditLogOverlayRef.dispose();
   }
 
