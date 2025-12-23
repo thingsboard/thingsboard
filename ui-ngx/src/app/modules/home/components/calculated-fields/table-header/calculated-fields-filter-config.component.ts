@@ -210,6 +210,7 @@ export class CalculatedFieldsFilterConfigComponent implements OnInit, ControlVal
 
   cancel() {
     this.updateCfConfigForm(this.cfFilterConfig);
+    this.cfFilterForm.markAsPristine();
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {

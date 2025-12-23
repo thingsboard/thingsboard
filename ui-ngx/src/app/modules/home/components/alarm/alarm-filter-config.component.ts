@@ -224,6 +224,7 @@ export class AlarmFilterConfigComponent implements OnInit, OnDestroy, ControlVal
 
   cancel() {
     this.updateAlarmConfigForm(this.alarmFilterConfig);
+    this.alarmFilterConfigForm.markAsPristine();
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {

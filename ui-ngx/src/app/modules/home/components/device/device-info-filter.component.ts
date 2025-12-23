@@ -187,6 +187,7 @@ export class DeviceInfoFilterComponent implements OnInit, OnDestroy, ControlValu
 
   cancel() {
     this.updateDeviceInfoFilterForm(this.deviceInfoFilter);
+    this.deviceInfoFilterForm.markAsPristine();
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {
@@ -196,6 +197,7 @@ export class DeviceInfoFilterComponent implements OnInit, OnDestroy, ControlValu
 
   update() {
     this.deviceFilterUpdated(this.deviceInfoFilterForm.value);
+    this.deviceInfoFilterForm.markAsPristine();
     if (this.panelMode) {
       this.panelResult = this.deviceInfoFilter;
     }
