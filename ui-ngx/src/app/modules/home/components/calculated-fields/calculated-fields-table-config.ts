@@ -20,7 +20,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import { Direction } from '@shared/models/page/sort-order';
 import { MatDialog, MatDialogRef } from '@angular/material/dialog';
@@ -67,8 +67,11 @@ import { EventsDialogComponent, EventsDialogData } from '@home/dialogs/events-di
 import {
   CalculatedFieldsHeaderComponent
 } from '@home/components/calculated-fields/table-header/calculated-fields-header.component';
+import { EntityAction } from '@home/models/entity/entity-component.models';
+import { CalculatedFieldComponent } from '@home/components/calculated-fields/calculated-field.component';
+import { Router } from '@angular/router';
 
-type CalculatedFieldsTableEntity = CalculatedField | CalculatedFieldInfo;
+export type CalculatedFieldsTableEntity = CalculatedField | CalculatedFieldInfo;
 
 export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFieldsTableEntity> {
 
@@ -93,30 +96,33 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
               private importExportService: ImportExportService,
               private entityDebugSettingsService: EntityDebugSettingsService,
               private utilsService: UtilsService,
+              private router: Router,
               public pageMode = false,
   ) {
     super();
     if (this.pageMode) {
       this.headerComponent = CalculatedFieldsHeaderComponent;
 
-      this.handleRowClick = ($event, entity) => {
-        this.editCalculatedField($event, entity);
-        this.rowPointer = true;
-        return true;
-      };
+      this.entityComponent = CalculatedFieldComponent;
+      this.rowPointer = true;
     }
     this.tableTitle = this.pageMode ? '' : this.translate.instant('entity.type-calculated-fields');
-    this.detailsPanelEnabled = false;
+    this.detailsPanelEnabled = this.pageMode;
     this.entityType = EntityType.CALCULATED_FIELD;
     this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
+    this.entityResources = entityTypeResources.get(EntityType.CALCULATED_FIELD);
 
     this.entitiesFetchFunction = (pageLink: PageLink) => this.fetchCalculatedFields(pageLink);
     this.addEntity = this.getCalculatedFieldDialog.bind(this);
+    this.loadEntity = id => this.calculatedFieldsService.getCalculatedFieldById(id.id);
     this.deleteEntityTitle = (field) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('calculated-fields.delete-text');
     this.deleteEntitiesTitle = count => this.translate.instant('calculated-fields.delete-multiple-title', {count});
     this.deleteEntitiesContent = () => this.translate.instant('calculated-fields.delete-multiple-text');
     this.deleteEntity = id => this.calculatedFieldsService.deleteCalculatedField(id.id);
+
+    this.onEntityAction = action => this.onCFAction(action);
+
     this.addActionDescriptors = [
       {
         name: this.translate.instant('calculated-fields.create'),
@@ -172,14 +178,16 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         isEnabled: () => true,
         iconFunction: ({ debugSettings }) => this.entityDebugSettingsService.isDebugActive(debugSettings?.allEnabledUntil) || debugSettings?.failuresEnabled ? 'mdi:bug' : 'mdi:bug-outline',
         onAction: ($event, entity) => this.onOpenDebugConfig($event, entity),
-      },
-      {
+      }
+    );
+    if (!this.pageMode) {
+      this.cellActionDescriptors.push({
         name: this.translate.instant('action.edit'),
         icon: 'edit',
         isEnabled: () => true,
         onAction: ($event, entity) => this.editCalculatedField($event, entity),
-      }
-    );
+      })
+    }
   }
 
   fetchCalculatedFields(pageLink: PageLink): Observable<PageData<CalculatedFieldsTableEntity>> {
@@ -354,7 +362,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: CalculatedFieldsTableEntity, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true, expression?: string): Observable<string> {
+  getTestScriptDialog(calculatedField: CalculatedFieldsTableEntity, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true, expression?: string): Observable<string> {
     if (
       calculatedField.type === CalculatedFieldType.SCRIPT ||
       calculatedField.type === CalculatedFieldType.RELATED_ENTITIES_AGGREGATION ||
@@ -393,5 +401,23 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
     } else {
       return of(null);
     }
+  }
+
+  private openCalculatedField($event: Event, entity: CalculatedFieldsTableEntity) {
+    $event?.stopPropagation();
+    const url = this.router.createUrlTree(['calculatedFields', entity.id.id]);
+    this.router.navigateByUrl(url);
+  }
+
+  private onCFAction(action: EntityAction<CalculatedFieldsTableEntity>): boolean {
+    switch (action.action) {
+      case 'open':
+        this.openCalculatedField(action.event, action.entity);
+        return true;
+      case 'export':
+        this.exportCalculatedField(action.event, action.entity);
+        return true;
+    }
+    return false;
   }
 }
