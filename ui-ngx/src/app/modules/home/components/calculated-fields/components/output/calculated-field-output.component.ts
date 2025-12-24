@@ -167,7 +167,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     if (value.type === OutputType.Timeseries && value.strategy?.type === OutputStrategyType.IMMEDIATE && value.strategy?.ttl) {
       this.outputForm.get('strategy.useCustomTtl').setValue(true, {emitEvent: false});
     }
-    this.outputForm.get('type').updateValueAndValidity({onlySelf: true});
+    this.outputForm.get('type').updateValueAndValidity({onlySelf: true, emitEvent: false});
   }
 
   registerOnChange(fn: (config: CalculatedFieldOutput | CalculatedFieldSimpleOutput) => void): void {

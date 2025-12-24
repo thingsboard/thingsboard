@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import { AfterViewInit, Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,6 +26,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { BaseData } from '@shared/models/base-data';
 
 @Component({
   selector: 'tb-entity-select',
@@ -65,6 +66,12 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   @coerceBoolean()
   useEntityDisplayName = false;
+
+  @Input()
+  filterAllowedEntityTypes: boolean;
+
+  @Output()
+  entityChanged = new EventEmitter<BaseData<EntityId>>();
 
   displayEntityTypeSelect: boolean;
 
@@ -175,5 +182,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         this.propagateChange(null);
       }
     }
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityChanged.emit(entity);
   }
 }

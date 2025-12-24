@@ -60,7 +60,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   disabledConfiguration = false;
 
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
-  readonly ownerId = getCurrentAuthUser(this.store).tenantId;
+  readonly ownerId: EntityId = {entityType: EntityType.TENANT, id: getCurrentAuthUser(this.store).tenantId};
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;

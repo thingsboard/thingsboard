@@ -242,7 +242,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         entityId,
         entityName,
         tenantId: this.tenantId,
-        ownerId: this.ownerId,
+        ownerId: this.ownerId ?? {entityType: EntityType.TENANT, id: this.tenantId},
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty,
