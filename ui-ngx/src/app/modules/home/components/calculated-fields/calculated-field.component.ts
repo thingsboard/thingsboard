@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, DestroyRef, Inject, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -27,23 +27,18 @@ import {
   calculatedFieldsEntityTypeList,
   CalculatedFieldType,
   calculatedFieldTypes,
-  CalculatedFieldTypeTranslations,
-  OutputStrategyType
+  CalculatedFieldTypeTranslations
 } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
-import { isDefined } from '@core/utils';
 import { EntityId } from '@shared/models/id/entity-id';
-import { pairwise, switchMap } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BaseData } from '@shared/models/base-data';
 import { Observable } from 'rxjs';
-import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import {
   CalculatedFieldsTableConfig,
   CalculatedFieldsTableEntity
 } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { CalculatedFieldFormService } from '@home/components/calculated-fields/calculated-field-form.service';
 
 @Component({
   selector: 'tb-calculated-field',
@@ -68,14 +63,15 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   readonly fieldTypes = calculatedFieldTypes;
   readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
 
+  private cfFormService = inject(CalculatedFieldFormService);
+  private destroyRef = inject(DestroyRef);
+
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: CalculatedFieldInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: CalculatedFieldsTableConfig,
               protected fb: FormBuilder,
-              protected cd: ChangeDetectorRef,
-              private destroyRef: DestroyRef,
-              private calculatedFieldsService: CalculatedFieldsService) {
+              protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -111,60 +107,30 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
     this.entityName = entity?.name;
   }
 
-  buildForm(entity?: CalculatedFieldInfo): FormGroup {
-    const form = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-      entityId: [null],
-      type: [CalculatedFieldType.SIMPLE],
-      debugSettings: [],
-      configuration: this.fb.control<CalculatedFieldConfiguration>({} as CalculatedFieldConfiguration),
-    });
-    form.get('type').valueChanges.pipe(
-      pairwise(),
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(([prevType, nextType]) => {
-      if (this.isEditValue) {
-        if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
-          ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
-          form.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
-        }
-      }
-    });
+  buildForm(_entity?: CalculatedFieldInfo): FormGroup {
+    const form = inject(CalculatedFieldFormService).buildForm();
+    inject(CalculatedFieldFormService).setupTypeChange(form, inject(DestroyRef), () => this.isEditValue);
     return form;
   }
 
   updateForm(entity: CalculatedFieldInfo) {
     const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
-    if (configuration.type !== CalculatedFieldType.ALARM) {
-      if (isDefined(configuration?.output) && !configuration?.output?.strategy) {
-        configuration.output.strategy = {type: OutputStrategyType.RULE_CHAIN};
-      }
-    }
+    const preparedConfig = this.cfFormService.prepareConfig(configuration);
     this.entityForm.patchValue({ type }, {emitEvent: false});
     setTimeout(() => {
-      this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
+      this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, ...value }, {emitEvent: false});
       this.entityForm.get('type').updateValueAndValidity({onlySelf: true});
     });
-    if (!entityId) {
-      this.entityForm.get('configuration').disable({emitEvent: false});
-      this.disabledConfiguration = true;
-    }
   }
 
   onTestScript(expression?: string): Observable<string> {
-    const calculatedFieldId = this.entity?.id?.id;
-    if (calculatedFieldId) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
-        .pipe(
-          switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.entitiesTableConfig.getTestScriptDialog(this.entityFormValue(), args, false, expression);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
-    }
-
-    return this.entitiesTableConfig.getTestScriptDialog(this.entityFormValue(), null, false, expression);
+    return this.cfFormService.testScript(
+      this.entity?.id?.id,
+      this.entityFormValue(),
+      this.entitiesTableConfig.getTestScriptDialog.bind(this.entitiesTableConfig),
+      this.destroyRef,
+      expression
+    );
   }
 
   updateFormState() {

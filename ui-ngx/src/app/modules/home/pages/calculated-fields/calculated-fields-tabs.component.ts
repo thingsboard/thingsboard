@@ -42,8 +42,16 @@ export class CalculatedFieldsTabsComponent extends EntityTabsComponent<Calculate
   };
 
   onDebugEventSelected(event: CalculatedFieldEventBody) {
-    (this.entitiesTableConfig as CalculatedFieldsTableConfig).getTestScriptDialog(this.entity, JSON.parse(event.arguments))
+    (this.entitiesTableConfig as CalculatedFieldsTableConfig).getTestScriptDialog(this.entity, JSON.parse(event.arguments), false)
       .subscribe((expression) => {
+        (this.entitiesTableConfig as CalculatedFieldsTableConfig).getTable();
+        const entityDetailsPanel = this.entitiesTableConfig.getTable().entityDetailsPanel;
+        entityDetailsPanel.onToggleEditMode(true);
+        entityDetailsPanel.selectedTab = 0;
+        setTimeout(() => {
+          entityDetailsPanel.detailsForm.get('configuration').setValue({...this.entity.configuration, expression});
+          entityDetailsPanel.detailsForm.get('configuration').markAsDirty();
+        });
       });
   };
 }
