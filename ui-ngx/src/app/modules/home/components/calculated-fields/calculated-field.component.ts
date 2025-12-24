@@ -18,17 +18,17 @@ import { ChangeDetectorRef, Component, DestroyRef, Inject, Input } from '@angula
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
-import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { NULL_UUID } from '@shared/models/id/has-uuid';
-import { ActionNotificationShow } from '@core/notification/notification.actions';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
-import { AssetInfo } from '@app/shared/models/asset.models';
-import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import {
   CalculatedFieldConfiguration,
-  CalculatedFieldInfo, calculatedFieldsEntityTypeList,
-  CalculatedFieldType, calculatedFieldTypes, CalculatedFieldTypeTranslations, OutputStrategyType
+  CalculatedFieldInfo,
+  calculatedFieldsEntityTypeList,
+  CalculatedFieldType,
+  calculatedFieldTypes,
+  CalculatedFieldTypeTranslations,
+  OutputStrategyType
 } from '@shared/models/calculated-field.models';
 import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { isDefined } from '@core/utils';
@@ -36,13 +36,14 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { pairwise, switchMap } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BaseData } from '@shared/models/base-data';
-import { Observable, of } from 'rxjs';
+import { Observable } from 'rxjs';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import {
   CalculatedFieldsTableConfig,
   CalculatedFieldsTableEntity
 } from '@home/components/calculated-fields/calculated-fields-table-config';
+import { TenantId } from '@shared/models/id/tenant-id';
 
 @Component({
   selector: 'tb-calculated-field',
@@ -60,7 +61,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   disabledConfiguration = false;
 
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
-  readonly ownerId: EntityId = {entityType: EntityType.TENANT, id: getCurrentAuthUser(this.store).tenantId};
+  readonly ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
@@ -86,9 +87,17 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
     }
   }
 
-  isAssignedToCustomer(entity: AssetInfo): boolean {
-    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
-  }
+  additionalDebugActionConfig = {
+    ...this.entitiesTableConfig.additionalDebugActionConfig,
+    action: () => this.entitiesTableConfig.additionalDebugActionConfig.action(
+      { id: this.entity.id, ...this.entityFormValue() }, false,
+      (expression) => {
+        if (expression) {
+          this.entityForm.get('configuration').setValue({...this.entityFormValue().configuration, expression});
+          this.entityForm.get('configuration').markAsDirty();
+        }
+      }),
+  };
 
   get entityId(): EntityId {
     return this.entityForm.get('entityId').value;
@@ -114,9 +123,11 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
       pairwise(),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(([prevType, nextType]) => {
-      if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
-        ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
-        form.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
+      if (this.isEditValue) {
+        if (![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(prevType) ||
+          ![CalculatedFieldType.SIMPLE, CalculatedFieldType.SCRIPT].includes(nextType)) {
+          form.get('configuration').setValue(({} as CalculatedFieldConfiguration), {emitEvent: false});
+        }
       }
     });
     return form;
@@ -129,8 +140,11 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
         configuration.output.strategy = {type: OutputStrategyType.RULE_CHAIN};
       }
     }
-    this.entityForm.patchValue({ configuration, type, debugSettings, entityId, ...value }, {emitEvent: false});
-    setTimeout(() => this.entityForm.get('type').updateValueAndValidity({onlySelf: true}));
+    this.entityForm.patchValue({ type }, {emitEvent: false});
+    setTimeout(() => {
+      this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
+      this.entityForm.get('type').updateValueAndValidity({onlySelf: true});
+    });
     if (!entityId) {
       this.entityForm.get('configuration').disable({emitEvent: false});
       this.disabledConfiguration = true;
@@ -138,7 +152,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   }
 
   onTestScript(expression?: string): Observable<string> {
-    const calculatedFieldId = this.entityId?.id;
+    const calculatedFieldId = this.entity?.id?.id;
     if (calculatedFieldId) {
       return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
         .pipe(

@@ -46,6 +46,7 @@ import {
   CalculatedFieldsQuery,
   CalculatedFieldType,
   CalculatedFieldTypeTranslations,
+  debugCfActionEnabled,
   getCalculatedFieldArgumentsEditorCompleter,
   getCalculatedFieldArgumentsHighlights,
   PropagationWithExpression,
@@ -62,7 +63,7 @@ import { EntityDebugSettingsService } from '@home/components/entity/debug/entity
 import { DatePipe } from '@angular/common';
 import { UtilsService } from "@core/services/utils.service";
 import { ActionNotificationShow } from "@core/notification/notification.actions";
-import { CalculatedFieldEventBody, DebugEventType, Event as DebugEvent, EventType } from '@shared/models/event.models';
+import { CalculatedFieldEventBody, DebugEventType, EventType } from '@shared/models/event.models';
 import { EventsDialogComponent, EventsDialogData } from '@home/dialogs/events-dialog.component';
 import {
   CalculatedFieldsHeaderComponent
@@ -70,6 +71,7 @@ import {
 import { EntityAction } from '@home/models/entity/entity-component.models';
 import { CalculatedFieldComponent } from '@home/components/calculated-fields/calculated-field.component';
 import { Router } from '@angular/router';
+import { CalculatedFieldsTabsComponent } from '@home/pages/calculated-fields/calculated-fields-tabs.component';
 
 export type CalculatedFieldsTableEntity = CalculatedField | CalculatedFieldInfo;
 
@@ -78,7 +80,9 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   additionalDebugActionConfig = {
     title: this.translate.instant('action.see-debug-events'),
-    action: (calculatedField: CalculatedFieldsTableEntity) => this.openDebugEventsDialog.call(this, null, calculatedField),
+    action: (calculatedField: CalculatedFieldsTableEntity,
+             openCalculatedFieldEdit = true,
+             afterCloseCallback?: (expression: string) => void) => this.openDebugEventsDialog.call(this, null, calculatedField, openCalculatedFieldEdit, afterCloseCallback),
   };
 
   calculatedFieldFilterConfig: CalculatedFieldsQuery;
@@ -104,6 +108,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       this.headerComponent = CalculatedFieldsHeaderComponent;
 
       this.entityComponent = CalculatedFieldComponent;
+      this.entityTabsComponent = CalculatedFieldsTabsComponent;
       this.rowPointer = true;
     }
     this.tableTitle = this.pageMode ? '' : this.translate.instant('entity.type-calculated-fields');
@@ -114,6 +119,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
 
     this.entitiesFetchFunction = (pageLink: PageLink) => this.fetchCalculatedFields(pageLink);
     this.addEntity = this.getCalculatedFieldDialog.bind(this);
+    this.saveEntity = (cf) => this.calculatedFieldsService.saveCalculatedField(cf);
     this.loadEntity = id => this.calculatedFieldsService.getCalculatedFieldById(id.id);
     this.deleteEntityTitle = (field) => this.translate.instant('calculated-fields.delete-title', {title: field.name});
     this.deleteEntityContent = () => this.translate.instant('calculated-fields.delete-text');
@@ -253,17 +259,11 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       .pipe(filter(Boolean));
   }
 
-  private openDebugEventsDialog($event: Event, calculatedField: CalculatedFieldsTableEntity): void {
+  private openDebugEventsDialog($event: Event, calculatedField: CalculatedFieldsTableEntity, openCalculatedFieldEdit = true, afterCloseCallback?: (expression: string) => void ): void {
     $event?.stopPropagation();
-    const debugActionEnabledFn = (event: DebugEvent) => {
-      return (calculatedField.type === CalculatedFieldType.SCRIPT ||
-        (calculatedField.type === CalculatedFieldType.PROPAGATION &&
-          calculatedField.configuration.applyExpressionToResolvedArguments)
-      ) && !!(event as DebugEvent).body.arguments;
-    };
 
     const onDebugEventSelected = (event: CalculatedFieldEventBody, dialogRef: MatDialogRef<EventsDialogComponent, string>) => {
-      this.getTestScriptDialog(calculatedField, JSON.parse(event.arguments))
+      this.getTestScriptDialog(calculatedField, JSON.parse(event.arguments), openCalculatedFieldEdit)
         .subscribe(expression => dialogRef.close(expression));
     };
 
@@ -278,11 +278,15 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         disabledEventTypes:[EventType.LC_EVENT, EventType.ERROR, EventType.STATS],
         defaultEventType: DebugEventType.DEBUG_CALCULATED_FIELD,
         onDebugEventSelected,
-        debugActionEnabledFn
+        debugActionDisabled: !debugCfActionEnabled(calculatedField)
       }
     })
       .afterClosed()
-      .subscribe();
+      .subscribe(value => {
+        if (afterCloseCallback) {
+          afterCloseCallback(value)
+        }
+      });
   }
 
   private exportCalculatedField($event: Event, calculatedField: CalculatedFieldsTableEntity): void {

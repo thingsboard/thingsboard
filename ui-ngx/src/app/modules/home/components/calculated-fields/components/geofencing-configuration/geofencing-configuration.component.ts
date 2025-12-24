@@ -124,7 +124,9 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
   writeValue(config: CalculatedFieldGeofencingConfiguration): void {
     this.geofencingConfiguration.patchValue(config, {emitEvent: false});
     this.checkRelatedEntity(this.geofencingConfiguration.get('zoneGroups').value);
-    this.checkScheduledUpdateEnabled(this.geofencingConfiguration.get('scheduledUpdateEnabled').value);
+    if (this.geofencingConfiguration.enabled) {
+      this.checkScheduledUpdateEnabled(this.geofencingConfiguration.get('scheduledUpdateEnabled').value);
+    }
   }
 
   registerOnChange(fn: (config: CalculatedFieldGeofencingConfiguration) => void): void {

@@ -59,7 +59,7 @@ import { CalculatedFieldComponent } from '@home/components/calculated-fields/cal
     CalculatedFieldTestArgumentsComponent,
     CalculatedFieldsHeaderComponent,
     CalculatedFieldsFilterConfigComponent,
-    CalculatedFieldComponent
+    CalculatedFieldComponent,
   ],
   imports: [
     CommonModule,
@@ -74,6 +74,7 @@ import { CalculatedFieldComponent } from '@home/components/calculated-fields/cal
   exports: [
     CalculatedFieldDialogComponent,
     CalculatedFieldScriptTestDialogComponent,
+    CalculatedFieldComponent,
   ]
 })
 export class CalculatedFieldsModule {}

@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { DestroyRef, inject, NgModule, Renderer2 } from '@angular/core';
+import { DestroyRef, inject, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
 import { MenuId } from '@core/services/menu.models';
@@ -63,7 +63,7 @@ export const CalculatedFieldsTableConfigResolver: ResolveFn<CalculatedFieldsTabl
       entityDebugSettingsService,
       utilsService,
       router,
-      false,
+      true,
     );
   };
 

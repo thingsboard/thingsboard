@@ -109,7 +109,6 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   private propagateChange: (config: SimpeConfiguration) => void = () => { };
 
   constructor(private fb: FormBuilder) {
-    this.updatedFormWithScript();
     this.simpleConfiguration.get('output').valueChanges.pipe(
       takeUntilDestroyed(),
     ).subscribe(() => {

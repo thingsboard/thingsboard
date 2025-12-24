@@ -148,7 +148,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (propName === 'simpleMode') {
+        if (propName === 'simpleMode' && !this.disabled) {
           this.updatedFormWithMode();
           if (!change.firstChange) {
             this.outputForm.updateValueAndValidity();

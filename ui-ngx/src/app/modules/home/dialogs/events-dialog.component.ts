@@ -23,7 +23,6 @@ import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { DebugEventType, EventType } from '@shared/models/event.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import { BaseData, HasId } from '@shared/models/base-data';
 
 export interface EventsDialogData {
   title: string;
@@ -34,7 +33,7 @@ export interface EventsDialogData {
   disabledEventTypes?: Array<EventType | DebugEventType>;
   functionTestButtonLabel?: string;
   onDebugEventSelected?: (event: any, dialogRef: MatDialogRef<EventsDialogComponent, string>) => void;
-  debugActionEnabledFn?: (event: BaseData<HasId>) => boolean;
+  debugActionDisabled?: boolean;
 }
 
 @Component({
@@ -54,9 +53,6 @@ export class EventsDialogComponent extends DialogComponent<EventsDialogComponent
   }
 
  ngAfterViewInit() {
-   if (this.data.debugActionEnabledFn && this.eventsTable.entitiesTable.cellActionDescriptors?.length > 0) {
-     this.eventsTable.entitiesTable.cellActionDescriptors[0].isEnabled = this.data.debugActionEnabledFn;
-   }
    this.eventsTable.entitiesTable.updateData();
  }
 
