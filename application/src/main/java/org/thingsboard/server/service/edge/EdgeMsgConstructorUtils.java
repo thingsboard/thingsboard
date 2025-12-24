@@ -172,6 +172,10 @@ public class EdgeMsgConstructorUtils {
             Set.of(
                     TbAiNode.class.getName()
             ),
+            EdgeVersion.V_4_0_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
             EdgeVersion.V_3_9_0,
             Set.of(
                     TbCalculatedFieldsNode.class.getName()
