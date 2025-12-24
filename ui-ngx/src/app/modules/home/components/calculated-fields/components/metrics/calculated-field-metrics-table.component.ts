@@ -89,6 +89,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   metricsFormArray = this.fb.array<CalculatedFieldAggMetricValue>([]);
   sortOrder = { direction: 'asc' as SortDirection, property: '' };
   dataSource = new CalculatedFieldMetricsDatasource();
+  disable = false;
 
   displayColumns = ['name', 'function', 'filter', 'valueSource', 'actions'];
 
@@ -116,7 +117,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
 
   ngOnInit() {
     if (this.simpleMode) {
-      this.displayColumns = ['name', 'function', 'actions'];
+      this.displayColumns = ['name', 'function', 'argumentName', 'actions'];
     }
   }
 
@@ -139,6 +140,10 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   validate(): ValidationErrors | null {
     this.updateErrorText();
     return this.errorText ? { metricsFormArray: false } : null;
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disable = isDisabled;
   }
 
   onDelete($event: Event, metric: CalculatedFieldAggMetricValue): void {

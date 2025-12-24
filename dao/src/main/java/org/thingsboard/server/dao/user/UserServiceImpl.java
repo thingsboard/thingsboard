@@ -85,6 +85,7 @@ import java.util.stream.Collectors;
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
 import static org.apache.commons.collections4.CollectionUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -542,6 +543,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         log.trace("Executing findUserAuthDetailsByUserId [{}]", userId);
         validateId(userId, id -> INCORRECT_USER_ID + id);
         return userDao.findUserAuthDetailsByUserId(tenantId.getId(), userId.getId());
+    }
+
+    @Override
+    public List<User> findUsersByTenantIdAndIds(TenantId tenantId, List<UserId> userIds) {
+        log.trace("Executing findUsersByTenantIdAndIds, tenantId [{}], userIds [{}]", tenantId, userIds);
+        return userDao.findUsersByTenantIdAndIds(tenantId.getId(), toUUIDs(userIds));
     }
 
     private Optional<UserMobileSessionInfo> findMobileSessionInfo(TenantId tenantId, UserId userId) {

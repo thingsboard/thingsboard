@@ -111,6 +111,7 @@
             </button>
             <button type="button"
                     mat-icon-button
+                    [disabled]="disable"
                     (click)="onDelete($event, argument)"
                     [matTooltip]="'action.delete' | translate"
                     matTooltipPosition="above">
@@ -128,7 +129,7 @@
   </div>
   <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
        [class.required]="!disable"
-       class="tb-prompt flex flex-1 items-end justify-center tb-prompt required">
+       class="tb-prompt flex flex-1 items-end justify-center text-base">
     {{ 'calculated-fields.no-arguments' | translate }}
   </div>
   <div class="flex h-9 justify-between">

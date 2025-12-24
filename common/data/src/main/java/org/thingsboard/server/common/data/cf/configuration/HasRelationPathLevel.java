@@ -13,17 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
+package org.thingsboard.server.common.data.cf.configuration;
 
-:host {
-  display: flex;
-  flex: 1 1 0;
-  .tb-request-password-reset-content {
-    background-color: #eee;
-    .tb-request-password-reset-card {
-      @media #{$mat-gt-xs} {
-        width: 450px !important;
-      }
-    }
-  }
+import org.thingsboard.server.common.data.relation.RelationPathLevel;
+
+public interface HasRelationPathLevel {
+
+    RelationPathLevel getRelation();
+
 }

@@ -48,6 +48,11 @@ export class EntityViewService {
     return this.http.get<EntityView>(`/api/entityView/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }
 
+  public getEntityViews(entityViewIds: Array<string>, config?: RequestConfig): Observable<Array<EntityView>> {
+    return this.http.get<Array<EntityView>>(`/api/entityViews?entityViewIds=${entityViewIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
   public getEntityViewInfo(entityViewId: string, config?: RequestConfig): Observable<EntityViewInfo> {
     return this.http.get<EntityViewInfo>(`/api/entityView/info/${entityViewId}`, defaultHttpOptionsFromConfig(config));
   }

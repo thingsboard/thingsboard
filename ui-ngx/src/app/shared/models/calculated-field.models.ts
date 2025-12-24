@@ -79,6 +79,8 @@ export type CalculatedField =
   | CalculatedFieldRelatedEntityAggregation
   | CalculatedFieldAlarmRule;
 
+export type CalculatedFieldInfo = CalculatedField & {entityName: string};
+
 export enum CalculatedFieldType {
   SIMPLE = 'SIMPLE',
   SCRIPT = 'SCRIPT',
@@ -118,6 +120,8 @@ export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, Calc
     }],
   ]
 )
+
+export const calculatedFieldTypes = Object.values(CalculatedFieldType).filter(type => type !== CalculatedFieldType.ALARM)
 
 export type CalculatedFieldConfiguration =
   | CalculatedFieldSimpleConfiguration
@@ -566,6 +570,8 @@ export type CalculatedFieldSingleArgumentValue<ValueType = unknown> = Calculated
 export type CalculatedFieldArgumentEventValue<ValueType = unknown> = CalculatedFieldAttributeArgumentValue<ValueType> | CalculatedFieldLatestTelemetryArgumentValue<ValueType> | CalculatedFieldRollingTelemetryArgumentValue<ValueType>;
 
 export type CalculatedFieldEventArguments<ValueType = unknown> = Record<string, CalculatedFieldArgumentEventValue<ValueType>>;
+
+export const calculatedFieldsEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
 
 export const defaultCalculatedFieldOutput: CalculatedFieldOutputTimeSeries = {
   type: OutputType.Timeseries,
@@ -1062,8 +1068,8 @@ export function uniqueNameValidator(existingNames: string[]): ValidatorFn {
 }
 
 export interface CalculatedFieldsQuery {
-  type: CalculatedFieldType;
+  types: Array<CalculatedFieldType>;
   entityType?: EntityType;
   entities?: Array<string>;
-  name?: string;
+  name?: Array<string>;
 }

@@ -17,11 +17,13 @@ package org.thingsboard.server.controller;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -57,7 +59,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
 
@@ -346,14 +351,7 @@ public class EntityViewController extends BaseController {
         checkNotNull(query.getEntityViewTypes());
         checkEntityId(query.getParameters().getEntityId(), Operation.READ);
         List<EntityView> entityViews = checkNotNull(entityViewService.findEntityViewsByQuery(getTenantId(), query).get());
-        entityViews = entityViews.stream().filter(entityView -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        entityViews = filterEntityViewsByReadPermission(entityViews);
         return entityViews;
     }
 
@@ -453,19 +451,37 @@ public class EntityViewController extends BaseController {
         } else {
             nonFilteredResult = entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edgeId, pageLink);
         }
-        List<EntityView> filteredEntityViews = nonFilteredResult.getData().stream().filter(entityView -> {
-            try {
-                accessControlService.checkPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
-                return true;
-            } catch (ThingsboardException e) {
-                return false;
-            }
-        }).collect(Collectors.toList());
+        List<EntityView> filteredEntityViews = filterEntityViewsByReadPermission(nonFilteredResult.getData());
         PageData<EntityView> filteredResult = new PageData<>(filteredEntityViews,
                 nonFilteredResult.getTotalPages(),
                 nonFilteredResult.getTotalElements(),
                 nonFilteredResult.hasNext());
         return checkNotNull(filteredResult);
+    }
+
+    @ApiOperation(value = "Get Entity Views By Ids (getEntityViewsByIds)",
+            notes = "Requested entity views must be owned by tenant or assigned to customer which user is performing the request. ")
+    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/entityViews", params = {"entityViewIds"})
+    public List<EntityView> getEntityViewsByIds(@Parameter(description = "A list of entity view ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("entityViewIds") Set<UUID> entityViewUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<EntityViewId> entityViewIds = new ArrayList<>();
+        for (UUID entityViewUUID : entityViewUUIDs) {
+            entityViewIds.add(new EntityViewId(entityViewUUID));
+        }
+        List<EntityView> entityViews = entityViewService.findEntityViewsByTenantIdAndIds(tenantId, entityViewIds);
+        return filterEntityViewsByReadPermission(entityViews);
+    }
+
+    private List<EntityView> filterEntityViewsByReadPermission(List<EntityView> entityViews) {
+        return entityViews.stream().filter(entityView -> {
+            try {
+                return accessControlService.hasPermission(getCurrentUser(), Resource.ENTITY_VIEW, Operation.READ, entityView.getId(), entityView);
+            } catch (ThingsboardException e) {
+                return false;
+            }
+        }).collect(Collectors.toList());
     }
 
 }

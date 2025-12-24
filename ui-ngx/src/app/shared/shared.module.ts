@@ -236,6 +236,8 @@ import { PasswordRequirementsTooltipComponent } from '@shared/components/passwor
 import { StringPatternAutocompleteComponent } from '@shared/components/string-pattern-autocomplete.component';
 import { TimeUnitInputComponent } from '@shared/components/time-unit-input.component';
 import { DateExpirationPipe } from '@shared/pipe/date-expiration.pipe';
+import { EntityLimitExceededDialogComponent } from '@shared/components/dialog/entity-limit-exceeded-dialog.component';
+import { DynamicMatDialogModule } from '@shared/components/dialog/dynamic/dynamic-dialog.module';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -374,6 +376,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -518,7 +521,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         useFactory: MarkedOptionsFactory,
         deps: [MarkedOptionsService]
       }
-    })
+    }),
+    DynamicMatDialogModule
   ],
   exports: [
     FooterComponent,
@@ -643,6 +647,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TodoDialogComponent,
     ColorPickerDialogComponent,
     MaterialIconsDialogComponent,
+    EntityLimitExceededDialogComponent,
     ColorInputComponent,
     MaterialIconSelectComponent,
     NodeScriptTestDialogComponent,
@@ -723,7 +728,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MqttVersionSelectComponent,
     PasswordRequirementsTooltipComponent,
     TimeUnitInputComponent,
-    StringPatternAutocompleteComponent
+    StringPatternAutocompleteComponent,
+    DynamicMatDialogModule
   ]
 })
 export class SharedModule { }

@@ -25,6 +25,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TimeseriesSaveRequest;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -101,11 +102,15 @@ public class TbCalculatedFieldsNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
+        AttributeScope scope = resolveScope(ctx, msg);
+        if (scope == null) {
+            return;
+        }
 
         AttributesSaveRequest attributesSaveRequest = AttributesSaveRequest.builder()
                 .tenantId(ctx.getTenantId())
                 .entityId(msg.getOriginator())
-                .scope(AttributeScope.valueOf(msg.getMetaData().getValue(SCOPE)))
+                .scope(scope)
                 .entries(newAttributes)
                 .strategy(AttributesSaveRequest.Strategy.CF_ONLY)
                 .previousCalculatedFieldIds(msg.getPreviousCalculatedFieldIds())
@@ -114,6 +119,22 @@ public class TbCalculatedFieldsNode implements TbNode {
                 .callback(new TelemetryNodeCallback(ctx, msg))
                 .build();
         ctx.getTelemetryService().saveAttributes(attributesSaveRequest);
+    }
+
+    private AttributeScope resolveScope(TbContext ctx, TbMsg msg) {
+        String scopeStr = msg.getMetaData().getValue(SCOPE);
+
+        if (StringUtils.isEmpty(scopeStr)) {
+            ctx.tellFailure(msg, new IllegalArgumentException("Attribute scope is missing"));
+            return null;
+        }
+
+        try {
+            return AttributeScope.valueOf(scopeStr);
+        } catch (IllegalArgumentException e) {
+            ctx.tellFailure(msg, new IllegalArgumentException("Invalid attribute scope: " + scopeStr));
+            return null;
+        }
     }
 
 }

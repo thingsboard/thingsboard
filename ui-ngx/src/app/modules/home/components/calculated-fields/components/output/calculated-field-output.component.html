@@ -51,14 +51,9 @@
       } @else {
         <div class="flex items-start gap-3 xs:flex-col xs:items-stretch">
           <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
-            <mat-label>
-              {{
-                (outputForm.get('type').value === OutputType.Timeseries
-                  ? 'calculated-fields.timeseries-key'
-                  : 'calculated-fields.attribute-key')
-                  | translate
-              }}
-            </mat-label>
+            <mat-label>{{ (outputForm.get('type').value === OutputType.Timeseries
+              ? 'calculated-fields.timeseries-key'
+              : 'calculated-fields.attribute-key') | translate }}</mat-label>
             <input matInput formControlName="name" required>
             @if (outputForm.get('name').errors && outputForm.get('name').touched) {
               <mat-error>
@@ -83,7 +78,7 @@
       <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
           <div class="flex flex-1 flex-row items-center justify-between xs:flex-col xs:items-start xs:gap-3">
-            <div class="tb-form-panel-title" style="color: var(--mat-expansion-header-text-color)" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
+            <div class="tb-form-panel-title" [style.color]="disabled ? 'var(--mdc-outlined-text-field-disabled-input-text-color)' : 'var(--mat-expansion-header-text-color)'" tb-hint-tooltip-icon="{{ 'calculated-fields.output-strategy.hint.strategy' | translate }}">
               {{ 'calculated-fields.output-strategy.strategy' | translate }}
             </div>
             <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" disablePagination appearance="fill" (click)="$event.stopPropagation()">

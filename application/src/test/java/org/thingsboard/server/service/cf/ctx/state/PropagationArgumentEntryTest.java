@@ -25,6 +25,7 @@ import org.thingsboard.server.service.cf.ctx.state.propagation.PropagationArgume
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -59,10 +60,10 @@ public class PropagationArgumentEntryTest {
 
     @Test
     void testGetValueReturnsPropagationIds() {
-        assertThat(entry.getValue()).isInstanceOf(List.class);
+        assertThat(entry.getValue()).isInstanceOf(Set.class);
         @SuppressWarnings("unchecked")
-        List<AssetId> value = (List<AssetId>) entry.getValue();
-        assertThat(value).containsExactly(ENTITY_1_ID, ENTITY_2_ID);
+        Set<AssetId> value = (Set<AssetId>) entry.getValue();
+        assertThat(value).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
     }
 
     @Test
@@ -87,7 +88,7 @@ public class PropagationArgumentEntryTest {
         boolean changed = entry.updateEntry(updated);
 
         assertThat(changed).isTrue();
-        assertThat(entry.getPropagationEntityIds()).containsExactlyElementsOf(newIds);
+        assertThat(entry.getEntityIds()).containsExactlyElementsOf(newIds);
     }
 
     @Test
@@ -97,7 +98,126 @@ public class PropagationArgumentEntryTest {
         boolean changed = entry.updateEntry(updatedEmpty);
 
         assertThat(changed).isTrue();
-        assertThat(entry.getPropagationEntityIds()).isEmpty();
+        assertThat(entry.getEntityIds()).isEmpty();
+    }
+
+    @Test
+    void testUpdateEntryWhenAdded() {
+        var added = new PropagationArgumentEntry();
+        added.setAdded(List.of(ENTITY_3_ID));
+
+        boolean changed = entry.updateEntry(added);
+
+        assertThat(changed).isTrue();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
+        assertThat(entry.getAdded()).isEqualTo(List.of(ENTITY_3_ID));
+    }
+
+    @Test
+    void testUpdateEntryWhenAddedExistingEntity() {
+        var added = new PropagationArgumentEntry();
+        added.setAdded(List.of(ENTITY_2_ID));
+
+        boolean changed = entry.updateEntry(added);
+
+        assertThat(changed).isFalse();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
+        assertThat(entry.getAdded()).isNull();
+    }
+
+    @Test
+    void testUpdateEntryWhenRemoved() {
+        var removed = new PropagationArgumentEntry();
+        removed.setRemoved(ENTITY_2_ID);
+
+        boolean changed = entry.updateEntry(removed);
+
+        assertThat(changed).isTrue();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID);
+        assertThat(entry.getRemoved()).isNull();
+    }
+
+    @Test
+    void testUpdateEntryWhenRemovedNonExistingEntity() {
+        var removed = new PropagationArgumentEntry();
+        removed.setRemoved(ENTITY_3_ID);
+
+        boolean changed = entry.updateEntry(removed);
+
+        assertThat(changed).isFalse();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
+        assertThat(entry.getRemoved()).isNull();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreAddsMissingIds() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID));
+        restore.setIgnoreRemovedEntities(true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isTrue();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
+        assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreRemovesStaleIds() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID));
+        restore.setIgnoreRemovedEntities(true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID);
+        assertThat(entry.getAdded()).isNull();
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreAddsAndRemoves() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_3_ID));
+        restore.setIgnoreRemovedEntities(true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isTrue();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_3_ID);
+        assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+    }
+
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreNoChanges() {
+        var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID));
+        restore.setIgnoreRemovedEntities(true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isFalse();
+        assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
+        assertThat(entry.getAdded()).isNull();
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+    }
+
+    @Test
+    void testUpdateEntryWhenPartitionStateRestoreEmptySet() {
+        var restore = new PropagationArgumentEntry(List.of());
+        restore.setIgnoreRemovedEntities(true);
+
+        boolean changed = entry.updateEntry(restore);
+
+        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(entry.getEntityIds()).isEmpty();
+        assertThat(entry.getAdded()).isNull();
+        assertThat(entry.getRemoved()).isNull();
+        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
     }
 
     @Test
@@ -107,8 +227,8 @@ public class PropagationArgumentEntryTest {
         assertThat(arg).isInstanceOf(TbelCfPropagationArg.class);
 
         TbelCfPropagationArg tbelCfPropagationArg = (TbelCfPropagationArg) arg;
-        assertThat(tbelCfPropagationArg.getValue()).isInstanceOf(List.class);
-        assertThat((List<EntityId>) tbelCfPropagationArg.getValue()).containsExactly(ENTITY_1_ID, ENTITY_2_ID);
+        assertThat(tbelCfPropagationArg.getValue()).isInstanceOf(Set.class);
+        assertThat((Set<EntityId>) tbelCfPropagationArg.getValue()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
     }
 
 
@@ -120,8 +240,8 @@ public class PropagationArgumentEntryTest {
         assertThat(emptyArg).isInstanceOf(TbelCfPropagationArg.class);
 
         TbelCfPropagationArg tbelCfPropagationArg = (TbelCfPropagationArg) emptyArg;
-        assertThat(tbelCfPropagationArg.getValue()).isInstanceOf(List.class);
-        assertThat((List<EntityId>) tbelCfPropagationArg.getValue()).isEmpty();
+        assertThat(tbelCfPropagationArg.getValue()).isInstanceOf(Set.class);
+        assertThat((Set<EntityId>) tbelCfPropagationArg.getValue()).isEmpty();
     }
 
 }

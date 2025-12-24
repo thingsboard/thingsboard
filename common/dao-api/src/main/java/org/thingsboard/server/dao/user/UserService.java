@@ -126,4 +126,7 @@ public interface UserService extends EntityDaoService {
 
     UserAuthDetails findUserAuthDetailsByUserId(TenantId tenantId, UserId userId);
 
+
+    List<User> findUsersByTenantIdAndIds(TenantId tenantId, List<UserId> userIds);
+
 }

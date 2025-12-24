@@ -64,7 +64,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 

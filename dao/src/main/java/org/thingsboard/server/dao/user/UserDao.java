@@ -106,4 +106,6 @@ public interface UserDao extends Dao<User>, TenantEntityDao<User> {
 
     UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId);
 
+    List<User> findUsersByTenantIdAndIds(UUID tenantId, List<UUID> userIds);
+
 }

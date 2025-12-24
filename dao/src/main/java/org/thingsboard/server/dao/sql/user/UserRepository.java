@@ -83,4 +83,6 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
             "FROM UserEntity u JOIN UserCredentialsEntity uc ON u.id = uc.userId WHERE u.id = :userId ")
     TbPair<UserEntity, Boolean> findUserAuthDetailsByUserId(@Param("userId") UUID userId);
 
+    List<UserEntity> findUsersByTenantIdAndIdIn(UUID tenantId, List<UUID> userIds);
+
 }

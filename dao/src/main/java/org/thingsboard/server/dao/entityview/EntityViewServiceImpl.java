@@ -51,7 +51,7 @@ import org.thingsboard.server.dao.entity.CachedVersionedEntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.validator.EntityViewDataValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
@@ -64,6 +64,7 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
 import static org.thingsboard.server.dao.service.Validator.validateString;
@@ -265,6 +266,12 @@ public class EntityViewServiceImpl extends CachedVersionedEntityService<EntityVi
         validatePageLink(pageLink);
         return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(),
                 customerId.getId(), pageLink);
+    }
+
+    @Override
+    public List<EntityView> findEntityViewsByTenantIdAndIds(TenantId tenantId, List<EntityViewId> entityViewIds) {
+        log.trace("Executing findEntityViewsByTenantIdAndIds, tenantId [{}], entityViewIds [{}]", tenantId, entityViewIds);
+        return entityViewDao.findEntityViewsByTenantIdAndIds(tenantId.getId(), toUUIDs(entityViewIds));
     }
 
     @Override

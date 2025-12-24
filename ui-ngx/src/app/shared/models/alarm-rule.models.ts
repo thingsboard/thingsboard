@@ -23,6 +23,8 @@ import { EntityType } from "@shared/models/entity-type.models";
 import { Observable } from "rxjs";
 import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 
+export const alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+
 export enum AlarmRuleScheduleType {
   ANY_TIME = 'ANY_TIME',
   SPECIFIC_TIME = 'SPECIFIC_TIME',
@@ -239,7 +241,7 @@ export const alarmRuleBooleanOperationTranslationMap = new Map<AlarmRuleBooleanO
 );
 
 export const alarmRuleDefaultScript =
-  '// Sample expression for an alarm rule: triggers when temperature is above 20 degree\n' +
+  '// Triggers when temperature is above 20 degrees\n' +
   'return temperature > 20;'
 
 export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, expression: string, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;

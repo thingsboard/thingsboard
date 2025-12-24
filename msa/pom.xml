@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.3.0-RC</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>msa</artifactId>
@@ -32,6 +32,7 @@
     <properties>
         <main.dir>${basedir}/..</main.dir>
         <docker.repo>thingsboard</docker.repo>
+        <docker.base.image>thingsboard/openjdk17:bookworm-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <dockerfile-maven.version>1.4.13</dockerfile-maven.version>

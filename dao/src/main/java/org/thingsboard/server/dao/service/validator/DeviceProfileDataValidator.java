@@ -52,11 +52,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
@@ -174,6 +174,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                 }
+                // call setProfileData after validation to ensure 'profileData' and 'profileDataBytes' fields are synchronized and ProtoUtils.toProto is not broken
+                deviceProfile.setProfileData(deviceProfile.getProfileData());
             }
         }
 
@@ -341,7 +343,7 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
 
-            if (serverConfig.isBootstrapServerIs()){
+            if (serverConfig.isBootstrapServerIs()) {
                 if (serverConfig.getShortServerId() != null) {
                     if (serverConfig.getShortServerId() == 0) {
                         serverConfig.setShortServerId(null);

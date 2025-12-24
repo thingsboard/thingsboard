@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.0-SNAPSHOT</version>
+        <version>4.3.0-RC</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>rest-client</artifactId>

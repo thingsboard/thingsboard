@@ -56,6 +56,20 @@
           <div tbTruncateWithTooltip>{{ AggFunctionTranslations.get(metric.function) | translate }}</div>
         </mat-cell>
       </ng-container>
+      <ng-container [matColumnDef]="'argumentName'">
+        <mat-header-cell mat-sort-header *matHeaderCellDef class="xs:hidden lt-md:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
+          {{ 'calculated-fields.metrics.argument-name' | translate }}
+        </mat-header-cell>
+        <mat-cell *matCellDef="let metric" class="xs:hidden lt-md:w-1/2" [class]="{
+            'w-1/5': !simpleMode,
+            'w-1/2': simpleMode,
+        }">
+          <div tbTruncateWithTooltip>{{ metric.input.key }}</div>
+        </mat-cell>
+      </ng-container>
       <ng-container [matColumnDef]="'filter'">
         <mat-header-cell mat-sort-header *matHeaderCellDef class="w-1/5 lt-md:hidden">
           {{ 'calculated-fields.metrics.filtered' | translate }}
@@ -83,6 +97,7 @@
                     mat-icon-button
                     #button
                     (click)="manageMetrics($event, button, metric)"
+                    [disabled]="disable"
                     [matTooltip]="'action.edit' | translate"
                     matTooltipPosition="above">
               <mat-icon>edit</mat-icon>
@@ -90,6 +105,7 @@
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, metric)"
+                    [disabled]="disable"
                     [matTooltip]="'action.delete' | translate"
                     matTooltipPosition="above">
               <mat-icon>delete</mat-icon>
@@ -102,7 +118,7 @@
     </table>
   </div>
   <div [class.!hidden]="(dataSource.isEmpty() | async) === false"
-       class="tb-prompt flex flex-1 items-end justify-center required">
+       class="tb-prompt flex flex-1 items-end justify-center text-base" [class.required]="!disable">
     {{ 'calculated-fields.metrics.no-metrics-configured' | translate }}
   </div>
   <div class="flex h-9 justify-between">
@@ -111,7 +127,7 @@
             color="primary"
             #button
             (click)="manageMetrics($event, button)"
-            [disabled]="maxArgumentsPerCF > 0 && metricsFormArray.length >= maxArgumentsPerCF">
+            [disabled]="maxArgumentsPerCF > 0 && metricsFormArray.length >= maxArgumentsPerCF || disable">
       {{ 'calculated-fields.metrics.add-metric' | translate }}
     </button>
     @if (maxArgumentsPerCF && metricsFormArray.length >= maxArgumentsPerCF) {

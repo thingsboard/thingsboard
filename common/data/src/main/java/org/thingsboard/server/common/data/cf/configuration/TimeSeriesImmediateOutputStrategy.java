@@ -35,4 +35,25 @@ public class TimeSeriesImmediateOutputStrategy implements TimeSeriesOutputStrate
     public OutputStrategyType getType() {
         return OutputStrategyType.IMMEDIATE;
     }
+
+    @Override
+    public boolean hasContextOnlyChanges(OutputStrategy other) {
+        if (!(other instanceof TimeSeriesImmediateOutputStrategy otherStrategy)) {
+            return true;
+        }
+        boolean saveTimeSeriesUpdated = saveTimeSeries != otherStrategy.isSaveTimeSeries();
+        boolean saveLatestUpdated = saveLatest != otherStrategy.isSaveLatest();
+        boolean sendWsUpdateUpdated = sendWsUpdate != otherStrategy.isSendWsUpdate();
+        boolean processCfsUpdated = processCfs != otherStrategy.isProcessCfs();
+        return saveTimeSeriesUpdated || saveLatestUpdated || sendWsUpdateUpdated || processCfsUpdated;
+    }
+
+    @Override
+    public boolean hasRefreshContextOnlyChanges(OutputStrategy other) {
+        if (!(other instanceof TimeSeriesImmediateOutputStrategy otherStrategy)) {
+            return true;
+        }
+        return ttl != otherStrategy.getTtl();
+    }
+
 }

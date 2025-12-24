@@ -104,6 +104,8 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     map(argumentsObj => getCalculatedFieldArgumentsHighlights(argumentsObj))
   );
 
+  disabled = false;
+
   private propagateChange: (config: SimpeConfiguration) => void = () => { };
 
   constructor(private fb: FormBuilder) {
@@ -127,7 +129,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (propName === 'isScript') {
+        if (propName === 'isScript' && !this.disabled) {
           this.updatedFormWithScript();
           if (!change.firstChange) {
             this.simpleConfiguration.updateValueAndValidity();
@@ -163,6 +165,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
     if (isDisabled) {
       this.simpleConfiguration.disable({emitEvent: false});
     } else {

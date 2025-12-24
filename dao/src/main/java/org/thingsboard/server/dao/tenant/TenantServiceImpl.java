@@ -53,7 +53,9 @@ import java.util.Optional;
 import java.util.function.Consumer;
 
 import static com.google.common.util.concurrent.MoreExecutors.directExecutor;
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("TenantDaoService")
 @Slf4j
@@ -223,6 +225,12 @@ public class TenantServiceImpl extends AbstractCachedEntityService<TenantId, Ten
         log.trace("Executing findTenantsIds");
         Validator.validatePageLink(pageLink);
         return tenantDao.findTenantsIds(pageLink);
+    }
+
+    @Override
+    public List<Tenant> findTenantsByIds(TenantId callerId, List<TenantId> tenantIds) {
+        log.trace("Executing findTenantsByIds, callerId [{}], tenantIds [{}]", callerId, tenantIds);
+        return tenantDao.findTenantsByIds(callerId.getId(), toUUIDs(tenantIds));
     }
 
     @Override

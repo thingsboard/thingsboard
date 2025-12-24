@@ -113,8 +113,10 @@ public class RelatedEntitiesAggregationCalculatedFieldStateTest {
     }
 
     @Test
-    void testIsReadyReturnFalseWhenNoArgumentsSet() {
+    void testIsReadyWhenNoRelatedEntities() {
         assertThat(state.isReady()).isFalse();
+        assertThat(state.getReadinessStatus().errorMsg())
+                .isEqualTo("No entities found via 'Aggregation path to related entities'. Verify the configured relation type and direction.");
     }
 
     @Test

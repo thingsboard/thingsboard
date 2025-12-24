@@ -26,4 +26,15 @@ public class AttributesRuleChainOutputStrategy implements AttributesOutputStrate
     public OutputStrategyType getType() {
         return OutputStrategyType.RULE_CHAIN;
     }
+
+    @Override
+    public boolean hasContextOnlyChanges(OutputStrategy other) {
+        return !(other instanceof AttributesRuleChainOutputStrategy);
+    }
+
+    @Override
+    public boolean hasRefreshContextOnlyChanges(OutputStrategy other) {
+        return false;
+    }
+
 }

@@ -150,7 +150,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.job.JobService;
 import org.thingsboard.server.dao.mobile.MobileAppBundleService;
@@ -174,6 +173,8 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
+import org.thingsboard.server.exception.DataValidationException;
+import org.thingsboard.server.exception.EntitiesLimitExceededException;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -452,6 +453,8 @@ public abstract class BaseController {
         }
         if (exception instanceof ThingsboardException) {
             return (ThingsboardException) exception;
+        } else if (exception instanceof EntitiesLimitExceededException) {
+            return new ThingsboardException(exception, ThingsboardErrorCode.ENTITIES_LIMIT_EXCEEDED);
         } else if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
                 || exception instanceof DataValidationException || cause instanceof IncorrectParameterException) {
             return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);

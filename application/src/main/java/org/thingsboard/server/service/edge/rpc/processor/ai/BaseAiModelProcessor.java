@@ -22,8 +22,10 @@ import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.ai.AiModel;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
@@ -76,6 +78,14 @@ public abstract class BaseAiModelProcessor extends BaseEdgeProcessor {
             throw e;
         }
         return Pair.of(isCreated, isNameUpdated);
+    }
+
+    protected void deleteAiModel(TenantId tenantId, Edge edge, AiModelId aiModelId) {
+        Optional<AiModel> aiModel = edgeCtx.getAiModelService().findAiModelById(tenantId, aiModelId);
+        if (aiModel.isPresent()) {
+            edgeCtx.getAiModelService().deleteByTenantIdAndId(tenantId, aiModelId);
+            pushEntityEventToRuleEngine(tenantId, edge, aiModel.get(), TbMsgType.ENTITY_DELETED);
+        }
     }
 
 }

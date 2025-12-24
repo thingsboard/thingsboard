@@ -27,7 +27,7 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration {
+public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel {
 
     public static final String PROPAGATION_CONFIG_ARGUMENT = "propagationCtx";
 

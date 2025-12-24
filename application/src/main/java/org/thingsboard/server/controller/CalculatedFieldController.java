@@ -21,6 +21,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.http.HttpStatus;
@@ -68,7 +69,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
-import java.util.List;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -198,12 +199,12 @@ public class CalculatedFieldController extends BaseController {
                                                              @RequestParam int pageSize,
                                                              @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                              @RequestParam int page,
-                                                             @Parameter(description = "Calculated field type filter.")
-                                                             @RequestParam CalculatedFieldType type,
+                                                             @Parameter(description = "Calculated field types filter.")
+                                                             @RequestParam(required = false) Set<CalculatedFieldType> types,
                                                              @Parameter(description = "Entity type filter. If not specified, calculated fields for all supported entity types will be returned.")
                                                              @RequestParam(required = false) EntityType entityType,
                                                              @Parameter(description = "Entities filter. If not specified, calculated fields for entity type filter will be returned.")
-                                                             @RequestParam(required = false) List<UUID> entities,
+                                                             @RequestParam(required = false) Set<UUID> entities,
                                                              @Parameter(description = "Name filter. To specify multiple names, duplicate 'name' parameter for each name, for example '?name=name1&name=name2")
                                                              @RequestParam(required = false) String name, // for Swagger only, retrieved from MultiValueMap params (due to issues when name contains comma)
                                                              @Parameter(description = CF_TEXT_SEARCH_DESCRIPTION)
@@ -215,6 +216,12 @@ public class CalculatedFieldController extends BaseController {
                                                              @RequestParam MultiValueMap<String, String> params) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         SecurityUser user = getCurrentUser();
+
+        if (CollectionUtils.isEmpty(types)) {
+            types = EnumSet.allOf(CalculatedFieldType.class);
+            types.remove(CalculatedFieldType.ALARM);
+        }
+
         Set<EntityType> entityTypes;
         if (entityType == null) {
             entityTypes = CalculatedField.SUPPORTED_ENTITIES.keySet();
@@ -223,10 +230,10 @@ public class CalculatedFieldController extends BaseController {
         }
 
         CalculatedFieldFilter filter = CalculatedFieldFilter.builder()
-                .type(type)
+                .types(types)
                 .entityTypes(entityTypes)
                 .entityIds(entities)
-                .names(params.get("name"))
+                .names(Optional.ofNullable(params.get("name")).map(HashSet::new).orElse(null))
                 .build();
         return calculatedFieldService.findCalculatedFieldsByTenantIdAndFilter(user.getTenantId(), filter, pageLink);
     }
@@ -361,8 +368,7 @@ public class CalculatedFieldController extends BaseController {
                     return;
                 }
                 case CUSTOMER, ASSET, DEVICE -> checkEntityId(referencedEntityId, Operation.READ);
-                default ->
-                        throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
+                default -> throw new IllegalArgumentException("Calculated fields do not support '" + entityType + "' for referenced entities.");
             }
         }
     }

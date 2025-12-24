@@ -31,6 +31,7 @@ export const Constants = {
     itemNotFound: 32,
     tooManyRequests: 33,
     tooManyUpdates: 34,
+    entitiesLimitExceeded: 41,
     passwordViolation: 45
   },
   entryPoints: {
@@ -52,6 +53,7 @@ export const serverErrorCodesTranslations = new Map<number, string>([
   [Constants.serverErrorCode.itemNotFound, 'server-error.item-not-found'],
   [Constants.serverErrorCode.tooManyRequests, 'server-error.too-many-requests'],
   [Constants.serverErrorCode.tooManyUpdates, 'server-error.too-many-updates'],
+  [Constants.serverErrorCode.entitiesLimitExceeded, 'server-error.entities-limit-exceeded'],
 ]);
 
 export const MediaBreakpoints = {
@@ -217,7 +219,8 @@ export const HelpLinks = {
     aiModels: `${helpBaseUrl}/docs${docPlatformPrefix}/samples/analytics/ai-models/`,
     apiKeys: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/api-keys`,
     timewindowSettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/dashboards/#time-window`,
-    trendzSettings: `${helpBaseUrl}/docs/trendz/`
+    trendzSettings: `${helpBaseUrl}/docs/trendz/`,
+    alarmRules: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/alarm-rules/`,
   }
 };
 /* eslint-enable max-len */

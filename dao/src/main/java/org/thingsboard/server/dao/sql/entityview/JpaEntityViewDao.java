@@ -189,6 +189,11 @@ public class JpaEntityViewDao extends JpaAbstractDao<EntityViewEntity, EntityVie
     }
 
     @Override
+    public List<EntityView> findEntityViewsByTenantIdAndIds(UUID tenantId, List<UUID> entityViewIds) {
+        return DaoUtil.convertDataList(entityViewRepository.findEntityViewsByTenantIdAndIdIn(tenantId, entityViewIds));
+    }
+
+    @Override
     public PageData<EntityView> findEntityViewsByTenantIdAndEdgeIdAndType(UUID tenantId, UUID edgeId, String type, PageLink pageLink) {
         log.debug("Try to find entity views by tenantId [{}], edgeId [{}], type [{}] and pageLink [{}]", tenantId, edgeId, type, pageLink);
         return DaoUtil.toPageData(entityViewRepository

@@ -13,22 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import '../../../../../scss/constants';
 
 :host {
   display: flex;
-  flex: 1 1 0;
-  .tb-reset-password-content {
-    background-color: #eee;
-    .tb-reset-password-card {
-      @media #{$mat-gt-sm} {
-        width: 450px !important;
-      }
-    }
+  max-width: 100%;
+  .mdc-button {
+    max-width: 100%;
+  }
+}
 
-    .tb-card-title{
-      padding-top: 0;
-      padding-bottom: 0;
+:host ::ng-deep {
+  .mdc-button {
+    .mat-icon {
+      min-width: 24px;
     }
+    .mdc-button__label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+  }
+}
+
+::ng-deep {
+  .tb-calculated-fields-config-component {
+    max-width: 100%;
+    width: 600px;
+    min-width: 100%;
+    flex: 1;
   }
 }

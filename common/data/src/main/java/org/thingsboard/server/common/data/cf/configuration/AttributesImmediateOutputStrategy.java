@@ -35,4 +35,26 @@ public class AttributesImmediateOutputStrategy implements AttributesOutputStrate
     public OutputStrategyType getType() {
         return OutputStrategyType.IMMEDIATE;
     }
+
+    @Override
+    public boolean hasContextOnlyChanges(OutputStrategy other) {
+        if (!(other instanceof AttributesImmediateOutputStrategy otherStrategy)) {
+            return true;
+        }
+        boolean saveTimeSeriesUpdated = saveAttribute != otherStrategy.isSaveAttribute();
+        boolean sendWsUpdateUpdated = sendWsUpdate != otherStrategy.isSendWsUpdate();
+        boolean processCfsUpdated = processCfs != otherStrategy.isProcessCfs();
+        return saveTimeSeriesUpdated || sendWsUpdateUpdated || processCfsUpdated;
+    }
+
+    @Override
+    public boolean hasRefreshContextOnlyChanges(OutputStrategy other) {
+        if (!(other instanceof AttributesImmediateOutputStrategy otherStrategy)) {
+            return true;
+        }
+        boolean updateAttrOnValueChangedChanged = updateAttributesOnlyOnValueChange != otherStrategy.isUpdateAttributesOnlyOnValueChange();
+        boolean sendAttrUpdatedNotificationChanged = sendAttributesUpdatedNotification != otherStrategy.isSendAttributesUpdatedNotification();
+        return updateAttrOnValueChangedChanged || sendAttrUpdatedNotificationChanged;
+    }
+
 }

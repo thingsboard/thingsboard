@@ -13,23 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.exception;
+package org.thingsboard.server.exception;
 
 import lombok.Getter;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public class EntitiesLimitException extends DataValidationException {
-    private static final long serialVersionUID = -9211462514373279196L;
+public class EntitiesLimitExceededException extends DataValidationException {
 
     @Getter
     private final TenantId tenantId;
     @Getter
     private final EntityType entityType;
 
-    public EntitiesLimitException(TenantId tenantId, EntityType entityType) {
+    @Getter
+    private final long limit;
+
+    public EntitiesLimitExceededException(TenantId tenantId, EntityType entityType, long limit) {
         super(entityType.getNormalName() + "s limit reached");
         this.tenantId = tenantId;
         this.entityType = entityType;
+        this.limit = limit;
     }
+
 }

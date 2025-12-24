@@ -27,9 +27,7 @@
                                          [isScript]="isScript" />
   </div>
   <div class="tb-form-panel no-gap">
-    <div class="tb-form-panel-title tb-required">
-      {{ (isScript ? 'calculated-fields.type.script' : 'calculated-fields.expression') | translate }}
-    </div>
+    <div class="tb-form-panel-title tb-required">{{ (isScript ? 'calculated-fields.type.script' : 'calculated-fields.expression') | translate }}</div>
     <mat-form-field class="mt-3" appearance="outline" subscriptSizing="dynamic" [class.hidden]="isScript">
       <input matInput formControlName="expressionSIMPLE" maxlength="255" [placeholder]="'(temperature - 32) / 1.8'"
              required>
@@ -72,7 +70,7 @@
                 matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                 matTooltipPosition="above"
                 class="tb-mat-32"
-                [disabled]="simpleConfiguration.get('arguments').invalid"
+                [disabled]="simpleConfiguration.get('arguments').invalid || disabled"
                 (click)="onTestScript()">
           <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
         </button>
@@ -81,7 +79,7 @@
         <button mat-button mat-raised-button color="primary"
                 type="button"
                 (click)="onTestScript()"
-                [disabled]="simpleConfiguration.get('arguments').invalid">
+                [disabled]="simpleConfiguration.get('arguments').invalid || disabled">
           {{ 'calculated-fields.test-script-function' | translate }}
         </button>
       </div>

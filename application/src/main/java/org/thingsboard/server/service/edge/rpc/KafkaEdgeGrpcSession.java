@@ -82,15 +82,17 @@ public class KafkaEdgeGrpcSession extends EdgeGrpcSession {
             edgeEvents.add(edgeEvent);
         }
         List<DownlinkMsg> downlinkMsgsPack = convertToDownlinkMsgsPack(edgeEvents);
+        boolean isInterrupted = true;
         try {
-            boolean isInterrupted = sendDownlinkMsgsPack(downlinkMsgsPack).get();
+            isInterrupted = sendDownlinkMsgsPack(downlinkMsgsPack).get();
             if (isInterrupted) {
                 log.debug("[{}][{}] Send downlink messages task was interrupted", tenantId, edge.getId());
-            } else {
-                consumer.commit();
             }
         } catch (Exception e) {
             log.error("[{}][{}] Failed to process downlink messages", tenantId, edge.getId(), e);
+        }
+        if (!isInterrupted) {
+            consumer.commit();
         }
     }
 

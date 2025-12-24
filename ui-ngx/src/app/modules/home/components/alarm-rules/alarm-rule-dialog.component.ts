@@ -30,21 +30,22 @@ import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 import { COMMA, ENTER, SEMICOLON } from "@angular/cdk/keycodes";
-import { MatChipInputEvent } from "@angular/material/chips";
 import {
   AlarmRule,
   AlarmRuleConditionType,
+  alarmRuleEntityTypeList,
   AlarmRuleExpressionType,
   AlarmRuleTestScriptFn
 } from "@shared/models/alarm-rule.models";
 import { deepTrim } from "@core/utils";
-import { Observable } from "rxjs";
-import { switchMap } from "rxjs/operators";
+import { combineLatest, Observable } from "rxjs";
+import { debounceTime, startWith, switchMap } from "rxjs/operators";
 import { EntityTypeSelectComponent } from "@shared/components/entity/entity-type-select.component";
 import { EntityAutocompleteComponent } from "@shared/components/entity/entity-autocomplete.component";
 import { EntityService } from "@core/http/entity.service";
 import { RelationTypes } from "@shared/models/relation.models";
 import { StringItemsOption } from "@shared/components/string-items-list.component";
+import { BaseData } from "@shared/models/base-data";
 
 export interface AlarmRuleDialogData {
   value?: CalculatedField;
@@ -75,7 +76,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
       id: [null as null | string, Validators.required],
     }),
     configuration: this.fb.group({
-      arguments: this.fb.control({}),
+      arguments: this.fb.control({}, Validators.required),
       propagate: [false],
       propagateToOwner: [false],
       propagateToTenant: [false],
@@ -92,7 +93,7 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
 
   readonly EntityType = EntityType;
   readonly entityTypeTranslations = entityTypeTranslations;
-  readonly alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
+  readonly alarmRuleEntityTypeList = alarmRuleEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly ScriptLanguage = ScriptLanguage;
 
@@ -101,6 +102,8 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   entityName = this.data.entityName;
 
   disabledClearRuleButton = false;
+  disabledArguments = false;
+  isLoading = false;
 
   @ViewChild('entityTypeSelect') entityTypeSelect: EntityTypeSelectComponent;
   @ViewChild('entityAutocompleteComponent') entityAutocompleteComponent: EntityAutocompleteComponent;
@@ -117,23 +120,30 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     this.applyDialogData();
     this.updateRulesValidators();
 
+    if (this.data.isDirty) {
+      this.fieldFormGroup.markAsDirty();
+    }
+
     this.fieldFormGroup.get('configuration.arguments').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.updateRulesValidators();
     });
 
-    if (!this.entityName) {
-      this.fieldFormGroup.get('entityId.id').valueChanges.pipe(
-        takeUntilDestroyed(this.destroyRef)
-      ).subscribe((entityId) => {
-        if (entityId && (this.fieldFormGroup.get('entityId.entityType').value === EntityType.DEVICE_PROFILE ||
-          this.fieldFormGroup.get('entityId.entityType').value === EntityType.ASSET_PROFILE)) {
-          this.entityService.getEntity(this.fieldFormGroup.get('entityId.entityType').value as EntityType, entityId, {ignoreLoading: true, ignoreErrors: true}).subscribe(
-            value => {
-              this.entityName = value.name;
-            }
-          )
+    if (!this.data.entityId) {
+      combineLatest([
+        this.fieldFormGroup.get('entityId.id')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('entityId.id')!.value)),
+        this.fieldFormGroup.get('name')!.valueChanges.pipe(startWith(this.fieldFormGroup.get('name')!.value))
+      ]).pipe(
+        debounceTime(50),
+        takeUntilDestroyed()
+      ).subscribe(([entityId, name]) => {
+        this.disabledArguments = !entityId || !name?.length;
+        const argsControl = this.fieldFormGroup.get('configuration.arguments')!;
+        if (this.disabledArguments) {
+          argsControl.disable({ emitEvent: false });
+        } else {
+          argsControl.enable({ emitEvent: false });
         }
       });
     }
@@ -164,30 +174,6 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
   }
 
-  removeRelationType(key: string): void {
-    const keys: string[] = this.configFormGroup.get('propagateRelationTypes').value;
-    const index = keys.indexOf(key);
-    if (index >= 0) {
-      keys.splice(index, 1);
-      this.configFormGroup.get('propagateRelationTypes').setValue(keys);
-    }
-  }
-
-  addRelationType(event: MatChipInputEvent): void {
-    const input = event.chipInput.inputElement;
-    let value = (event.value ?? '').trim();
-    if (value) {
-      let keys: string[] = this.configFormGroup.get('propagateRelationTypes').value ?? [];
-      if (keys.indexOf(value) === -1) {
-        keys.push(value);
-        this.configFormGroup.get('propagateRelationTypes').setValue(keys);
-      }
-    }
-    if (input) {
-      input.value = '';
-    }
-  }
-
   get fromGroupValue(): CalculatedField {
     return deepTrim(this.fieldFormGroup.value as CalculatedField);
   }
@@ -197,17 +183,21 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
   }
 
   add(): void {
-    if (this.fieldFormGroup.valid) {
+    if (this.fieldFormGroup.valid && Object.keys(this.arguments ?? {}).length > 0) {
+      this.isLoading = true;
       const alarmRule = { entityId: this.data.entityId, ...(this.data.value ?? {}),  ...this.fromGroupValue};
       alarmRule.configuration.type = CalculatedFieldType.ALARM;
 
       this.calculatedFieldsService.saveCalculatedField(alarmRule)
         .pipe(takeUntilDestroyed(this.destroyRef))
-        .subscribe(calculatedField => this.dialogRef.close(calculatedField));
+        .subscribe({
+          next: calculatedField => this.dialogRef.close(calculatedField),
+          error: () => this.isLoading = false
+        });
     } else {
       this.fieldFormGroup.get('name').markAsTouched();
-      this.entityTypeSelect.markAsTouched();
-      this.entityAutocompleteComponent.markAsTouched();
+      this.entityTypeSelect?.markAsTouched();
+      this.entityAutocompleteComponent?.markAsTouched();
     }
   }
 
@@ -235,11 +225,19 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
     if (Object.keys(this.arguments ?? {}).length > 0) {
       this.fieldFormGroup.get('configuration.createRules').enable({emitEvent: false});
       this.fieldFormGroup.get('configuration.clearRule').enable({emitEvent: false});
-      this.disabledClearRuleButton = true;
+      this.fieldFormGroup.get('configuration.propagate').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToOwner').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToTenant').enable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateRelationTypes').enable({emitEvent: false});
+      this.disabledClearRuleButton = false;
     } else {
       this.fieldFormGroup.get('configuration.createRules').disable({emitEvent: false});
       this.fieldFormGroup.get('configuration.clearRule').disable({emitEvent: false});
-      this.disabledClearRuleButton = false;
+      this.fieldFormGroup.get('configuration.propagate').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToOwner').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateToTenant').disable({emitEvent: false});
+      this.fieldFormGroup.get('configuration.propagateRelationTypes').disable({emitEvent: false});
+      this.disabledClearRuleButton = true;
     }
   }
   get predefinedTypeValues(): StringItemsOption[] {
@@ -247,6 +245,10 @@ export class AlarmRuleDialogComponent extends DialogComponent<AlarmRuleDialogCom
       name: type,
       value: type
     }));
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityName = entity.name;
   }
 
 }

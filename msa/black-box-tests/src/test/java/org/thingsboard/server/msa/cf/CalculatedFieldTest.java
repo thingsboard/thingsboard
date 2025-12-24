@@ -409,11 +409,10 @@ public class CalculatedFieldTest extends AbstractContainerTest {
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     ArrayNode attrs = testRestClient.getAttributes(device.getId(), SERVER_SCOPE,
-                            "allowedZonesEvent,allowedZonesStatus,restrictedZonesStatus");
-                    assertThat(attrs).isNotNull().hasSize(3);
+                            "allowedZonesEvent,allowedZonesStatus,restrictedZonesEvent,restrictedZonesStatus");
+                    assertThat(attrs).isNotNull().hasSize(2);
                     Map<String, String> m = kv(attrs);
-                    assertThat(m).containsEntry("allowedZonesEvent", "ENTERED")
-                            .containsEntry("allowedZonesStatus", "INSIDE")
+                    assertThat(m).containsEntry("allowedZonesStatus", "INSIDE")
                             .containsEntry("restrictedZonesStatus", "OUTSIDE");
                 });
 
