@@ -247,7 +247,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     const targetDataKey: DataKey = this.dataLayerFormGroup.get(keyType).value;
     this.context.editKey(targetDataKey,
       this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value,
-      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest).subscribe(
+      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest, false).subscribe(
       (updatedDataKey) => {
         if (updatedDataKey) {
           this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
