@@ -125,7 +125,12 @@
               [additionalActionConfig]="entitiesTableConfig.additionalDebugActionConfig"
           />
         </div>
-        <tb-entity-select formControlName="entityId" appearance="outline" [allowedEntityTypes]="calculatedFieldsEntityTypeList"></tb-entity-select>
+        <tb-entity-select formControlName="entityId"
+                          appearance="outline"
+                          [filterAllowedEntityTypes]="false"
+                          [allowedEntityTypes]="calculatedFieldsEntityTypeList"
+                          (entityChanged)="changeEntity($event)">
+        </tb-entity-select>
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'common.type' | translate }}</mat-label>
           <mat-select formControlName="type">
