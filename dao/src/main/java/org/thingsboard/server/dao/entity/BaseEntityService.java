@@ -135,7 +135,7 @@ public class BaseEntityService extends AbstractEntityService implements EntitySe
 
         long startNs = System.nanoTime();
         PageData<EntityData> result;
-        if (edqsService.isApiEnabled() && validForEdqs(query)) {
+        if (edqsService.isApiEnabled() && validForEdqs(query) && !tenantId.isSysTenantId()) {
             EdqsRequest request = EdqsRequest.builder()
                     .entityDataQuery(query)
                     .build();
