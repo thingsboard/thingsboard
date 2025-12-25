@@ -1394,6 +1394,7 @@
         "create": "Create new alarm rule",
         "add": "Add alarm rule",
         "copy": "Copy alarm rule configuration",
+        "details": "Alarm rule details",
         "no-found": "No alarm rules found",
         "list": "{ count, plural, =1 {One alarm rule} other {List of # alarm rules} }",
         "selected-fields": "{ count, plural, =1 {1 alarm rule} other {# alarm rules} } selected",
