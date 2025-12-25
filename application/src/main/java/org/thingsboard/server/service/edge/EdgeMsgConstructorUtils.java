@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
+import org.thingsboard.rule.engine.ai.TbAiNode;
 import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
 import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
 import org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode;
@@ -167,6 +168,14 @@ public class EdgeMsgConstructorUtils {
     );
 
     public static final Map<EdgeVersion, Set<String>> EXCLUDED_NODES_BY_EDGE_VERSION = Map.of(
+            EdgeVersion.V_4_1_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
+            EdgeVersion.V_4_0_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
             EdgeVersion.V_3_9_0,
             Set.of(
                     TbCalculatedFieldsNode.class.getName()
