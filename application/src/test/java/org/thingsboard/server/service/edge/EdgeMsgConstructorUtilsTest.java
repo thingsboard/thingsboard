@@ -230,8 +230,33 @@ public class EdgeMsgConstructorUtilsTest {
         Assertions.assertEquals(8, getIntValue(assetMergedAttrAD.getBody(), "d"));
     }
 
+    @Test
+    public void testMergeDownlinkDuplicates_attrBodyHasNoTs_returnOriginalList() {
+        UUID deviceId = UUID.randomUUID();
+        TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
+
+        var deviceAttrUpdate1 = createEdgeEvent(tenantId, 1, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                deviceId, EdgeEventType.DEVICE, createAttrBodyWithoutTs("{\"a\":1,\"b\":1,\"d\":1}"));
+        var deviceAttrUpdate2 = createEdgeEvent(tenantId, 2, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                deviceId, EdgeEventType.DEVICE, createAttrBodyWithoutTs("{\"a\":2,\"b\":2,\"c\":2}"));
+        var deviceAttrUpdate3 = createEdgeEvent(tenantId, 3, EdgeEventActionType.ATTRIBUTES_UPDATED,
+                deviceId, EdgeEventType.DEVICE, createAttrBodyWithoutTs("{\"a\":3,\"d\":3}"));
+
+        List<EdgeEvent> input = List.of(deviceAttrUpdate1, deviceAttrUpdate2, deviceAttrUpdate3);
+        List<EdgeEvent> merged = EdgeMsgConstructorUtils.mergeAndFilterDownlinkDuplicates(input);
+
+        Assertions.assertEquals(3, merged.size());
+        Assertions.assertEquals(deviceAttrUpdate1, merged.get(0));
+        Assertions.assertEquals(deviceAttrUpdate2, merged.get(1));
+        Assertions.assertEquals(deviceAttrUpdate3, merged.get(2));
+    }
+
     private Integer getIntValue(JsonNode body, String key) {
         return body.get("kv").get(key) != null ? body.get("kv").get(key).asInt() : null;
+    }
+
+    private static JsonNode createAttrBodyWithoutTs(String kvJson) {
+        return JacksonUtil.toJsonNode("{\"kv\":" + kvJson + "}");
     }
 
     private static JsonNode createAttrBody(long ts, String kvJson) {

@@ -49,8 +49,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -671,8 +669,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> {
                     String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/attributes/" + scope;
-                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {
-                    });
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
                     return actualKeys != null && !actualKeys.isEmpty() && actualKeys.contains(expectedKey);
                 });
 
