@@ -21,7 +21,7 @@
 
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.2.1.1-RC</version>
+        <version>4.2.1.2-SNAPSHOT</version>
         <artifactId>msa</artifactId>
     </parent>
     <groupId>org.thingsboard.msa</groupId>
