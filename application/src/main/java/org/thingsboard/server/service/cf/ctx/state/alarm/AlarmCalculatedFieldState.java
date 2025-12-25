@@ -150,7 +150,8 @@ public class AlarmCalculatedFieldState extends BaseCalculatedFieldState {
                 clearRuleState = null;
             }
         }
-        log.debug("Initialized create rule states {} and clear rule state {} for {}", createRuleStates, clearRuleState, configuration);
+        log.debug("Initialized create rule states {} and clear rule state {} for {}. Restored: {}, reeval needed: {}",
+                createRuleStates, clearRuleState, configuration, restored, reevalNeeded);
 
         if (reevalNeeded.get()) {
             initCurrentAlarm(ctx);
