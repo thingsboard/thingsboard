@@ -30,7 +30,8 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="entityAutocomplete"
-         [class.!hidden]="showEntityLink">
+         [class.!hidden]="showEntityLink"
+         (blur)="updateEntityValidation()">
   <a *ngIf="showEntityLink" aria-label="Open entity details page" [routerLink]=entityURL>
     {{ displayEntityFn(selectEntityFormGroup.get('entity').value) }}
   </a>
@@ -81,5 +82,8 @@
   </mat-autocomplete>
   <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('required')">
     {{ requiredErrorText | translate }}
+  </mat-error>
+  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('notValid') && !selectEntityFormGroup.get('entity').hasError('required')">
+    {{ entityNotValidText | translate }}
   </mat-error>
 </mat-form-field>
