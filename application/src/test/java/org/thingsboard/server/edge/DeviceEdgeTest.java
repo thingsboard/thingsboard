@@ -49,8 +49,6 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -79,6 +77,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
@@ -413,12 +412,10 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectResponsesAmount(1);
         edgeImitator.sendUplinkMsg(upLinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
-        DeviceInfo deviceInfo = doGet("/api/device/info/" + savedDevice.getUuidId(), DeviceInfo.class);
-        Assert.assertNotNull(deviceInfo);
-        List<DeviceInfo> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
-                new TypeReference<PageData<DeviceInfo>>() {
-                }, new PageLink(100)).getData();
-        Assert.assertFalse(edgeDevices.contains(deviceInfo));
+
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
+                doGet("/api/device/info/" + savedDevice.getUuidId(), DeviceInfo.class, status().isNotFound())
+        );
     }
 
     @Test
@@ -672,8 +669,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> {
                     String urlTemplate = "/api/plugins/telemetry/DEVICE/" + device.getId() + "/keys/attributes/" + scope;
-                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {
-                    });
+                    List<String> actualKeys = doGetAsyncTyped(urlTemplate, new TypeReference<>() {});
                     return actualKeys != null && !actualKeys.isEmpty() && actualKeys.contains(expectedKey);
                 });
 
@@ -894,18 +890,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         ObjectNode attributes = JacksonUtil.newObjectNode();
         attributes.put("active", true);
         doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
-        Awaitility.await()
-                .atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> {
-                    List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
-                            "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
-                    Optional<Map<String, Object>> activeAttrOpt = values.stream().filter(att -> att.get("key").equals("active")).findFirst();
-                    if (activeAttrOpt.isEmpty()) {
-                        return false;
-                    }
-                    Map<String, Object> activeAttr = activeAttrOpt.get();
-                    return "true".equals(activeAttr.get("value").toString());
-                });
+        verifyEdgeConnected();
     }
 
 }

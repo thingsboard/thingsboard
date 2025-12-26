@@ -164,7 +164,7 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
         renderer: this.renderer,
         componentType: ColorSettingsPanelComponent,
         hostView: this.viewContainerRef,
-        preferredPlacement: 'left',
+        preferredPlacement: ['leftTopOnly', 'leftOnly', 'leftBottomOnly'],
         context: {
           colorSettings: this.modelValue,
           settingsComponents: this.colorSettingsComponentService.getOtherColorSettingsComponents(this),

@@ -17,7 +17,6 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
   ActionButtonLinkType,
-  AlarmSeverityNotificationColors,
   Notification,
   NotificationStatus,
   NotificationType,
@@ -25,7 +24,7 @@ import {
 } from '@shared/models/notification.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Router } from '@angular/router';
-import { alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
 import { StateObject } from '@core/api/widget-api.models';
 import { objToBase64URI } from '@core/utils';
@@ -135,12 +134,12 @@ export class NotificationComponent implements OnInit {
   }
 
   alarmColorSeverity(alpha: number) {
-    return tinycolor(AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
+    return tinycolor(alarmSeverityColors.get(this.notification.info.alarmSeverity)).setAlpha(alpha).toRgbString();
   }
 
   notificationColor(): string {
     if (this.notification.type === NotificationType.ALARM && !this.notification.info.cleared) {
-      return AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity);
+      return alarmSeverityColors.get(this.notification.info.alarmSeverity);
     }
     return 'transparent';
   }
@@ -154,9 +153,11 @@ export class NotificationComponent implements OnInit {
 
   notificationIconColor(): object {
     if (this.notification.type === NotificationType.ALARM) {
-      return {color: AlarmSeverityNotificationColors.get(this.notification.info.alarmSeverity)};
+      return {color: alarmSeverityColors.get(this.notification.info.alarmSeverity)};
     } else if (this.notification.type === NotificationType.RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT) {
       return {color: '#D12730'};
+    } else if (this.notification.type === NotificationType.ENTITIES_LIMIT_INCREASE_REQUEST) {
+      return {color: '#305680'};
     }
     return null;
   }

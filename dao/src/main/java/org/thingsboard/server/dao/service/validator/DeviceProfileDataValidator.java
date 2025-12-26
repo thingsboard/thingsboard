@@ -52,11 +52,11 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.device.DeviceProfileService;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.io.FileInputStream;
 import java.security.KeyStore;
@@ -68,6 +68,10 @@ import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.LWM2M_SERVER_MAX;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.PRIMARY_LWM2M_SERVER;
+import static org.thingsboard.server.common.data.device.credentials.lwm2m.Lwm2mServerIdentifier.isNotLwm2mServer;
 
 @Slf4j
 @Component
@@ -170,6 +174,8 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
                 }
+                // call setProfileData after validation to ensure 'profileData' and 'profileDataBytes' fields are synchronized and ProtoUtils.toProto is not broken
+                deviceProfile.setProfileData(deviceProfile.getProfileData());
             }
         }
 
@@ -337,19 +343,22 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
 
-            if (serverConfig.getShortServerId() != null) {
-                if (serverConfig.isBootstrapServerIs()) {
-                    if (serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535) {
-                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
-                    }
-                } else {
-                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
-                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+            if (serverConfig.isBootstrapServerIs()) {
+                if (serverConfig.getShortServerId() != null) {
+                    if (serverConfig.getShortServerId() == 0) {
+                        serverConfig.setShortServerId(null);
+                    } else {
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be null!");
                     }
                 }
             } else {
-                String serverName = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
-                throw new DeviceCredentialsValidationException(serverName + " ShortServerId must not be null!");
+                if (serverConfig.getShortServerId() != null) {
+                    if (isNotLwm2mServer(serverConfig.getShortServerId())) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [" + PRIMARY_LWM2M_SERVER.getId() + " - " + LWM2M_SERVER_MAX.getId() + "]!");
+                    }
+                } else {
+                    throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be null!");
+                }
             }
 
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";

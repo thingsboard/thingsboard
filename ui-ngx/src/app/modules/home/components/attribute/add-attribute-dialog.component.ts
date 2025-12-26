@@ -23,13 +23,23 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { EntityId } from '@shared/models/id/entity-id';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
-import { AttributeData, AttributeScope, LatestTelemetry, TelemetryType } from '@shared/models/telemetry/telemetry.models';
+import {
+  AttributeData,
+  AttributeScope,
+  LatestTelemetry,
+  TelemetryType
+} from '@shared/models/telemetry/telemetry.models';
 import { AttributeService } from '@core/http/attribute.service';
 import { Observable } from 'rxjs';
+import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
+import { map } from 'rxjs/operators';
+import { ErrorMessageConfig } from '@shared/components/string-autocomplete.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface AddAttributeDialogData {
   entityId: EntityId;
   attributeScope: TelemetryType;
+  datasource?: AttributeDatasource;
 }
 
 @Component({
@@ -47,19 +57,22 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
 
   isTelemetry = false;
 
+  keyValidators = [Validators.required, Validators.maxLength(255)];
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddAttributeDialogData,
               private attributeService: AttributeService,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<AddAttributeDialogComponent, boolean>,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private translate: TranslateService) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
     this.attributeFormGroup = this.fb.group({
-      key: ['', [Validators.required, Validators.maxLength(255)]],
+      key: ['', this.keyValidators],
       value: [null, [Validators.required]]
     });
     this.isTelemetry = this.data.attributeScope === LatestTelemetry.LATEST_TELEMETRY;
@@ -96,5 +109,19 @@ export class AddAttributeDialogComponent extends DialogComponent<AddAttributeDia
         this.data.attributeScope as AttributeScope, [attribute]);
     }
     task.subscribe(() => this.dialogRef.close(true));
+  }
+
+  fetchOptions(searchText: string): Observable<Array<string>> {
+    const search = searchText ? searchText?.toLowerCase() : '';
+    return this.data.datasource?.getAllAttributes(this.data.entityId,this.data.attributeScope).pipe(
+      map(attributes => attributes?.filter(attribute => attribute.key.toLowerCase().includes(search)).map(a => a.key)),
+    )
+  }
+
+  get attributeErrorMessages(): ErrorMessageConfig {
+    return {
+      required: this.translate.instant(this.isTelemetry ? 'attribute.telemetry-key-required' : 'attribute.key-required'),
+      maxlength: this.translate.instant('attribute.key-max-length')
+    }
   }
 }

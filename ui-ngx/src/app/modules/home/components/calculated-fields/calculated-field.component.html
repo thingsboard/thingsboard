@@ -1,0 +1,135 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [class.!hidden]="isEdit || isDetailsPage">
+    {{ 'common.open-details-page' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'export')"
+          [class.!hidden]="isEdit">
+    {{ 'action.export' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [class.!hidden]="hideDelete() || isEdit">
+    {{ 'action.delete' | translate }}
+  </button>
+</div>
+<div class="mat-padding flex flex-1 flex-col" [formGroup]="entityForm">
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-panel no-gap">
+      <div class="tb-form-panel-title mb-4">{{ 'common.general' | translate }}</div>
+      <div class="flex items-center gap-2">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'entity-field.title' | translate }}</mat-label>
+          <input matInput maxlength="255" formControlName="name" required>
+          @if (entityForm.get('name').errors && entityForm.get('name').touched) {
+            <mat-error>
+              @if (entityForm.get('name').hasError('required')) {
+                {{ 'common.hint.title-required' | translate }}
+              } @else if (entityForm.get('name').hasError('pattern')) {
+                {{ 'common.hint.title-pattern' | translate }}
+              } @else if (entityForm.get('name').hasError('maxlength')) {
+                {{ 'common.hint.title-max-length' | translate }}
+              }
+            </mat-error>
+          }
+          <mat-hint></mat-hint>
+        </mat-form-field>
+        <tb-entity-debug-settings-button
+            formControlName="debugSettings"
+            style="margin-bottom: 22px"
+            [entityType]="EntityType.CALCULATED_FIELD"
+            [additionalActionConfig]="additionalDebugActionConfig"
+        />
+      </div>
+      <tb-entity-select formControlName="entityId"
+                        appearance="outline"
+                        required
+                        [filterAllowedEntityTypes]="false"
+                        [allowedEntityTypes]="calculatedFieldsEntityTypeList"
+                        (entityChanged)="changeEntity($event)">
+      </tb-entity-select>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <mat-label>{{ 'common.type' | translate }}</mat-label>
+        <mat-select formControlName="type">
+          @for (type of fieldTypes; track type) {
+            <mat-option [value]="type">{{ CalculatedFieldTypeTranslations.get(type).name | translate }}</mat-option>
+          }
+        </mat-select>
+        @if (CalculatedFieldTypeTranslations.get(entityForm.get('type').value).hint) {
+          <mat-hint>{{ CalculatedFieldTypeTranslations.get(entityForm.get('type').value).hint | translate }}</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+    @switch (entityForm.get('type').value) {
+      @case (CalculatedFieldType.GEOFENCING) {
+        <tb-geofencing-configuration formControlName="configuration"
+                                     [class.tb-form-panel-disabled]="disabledConfiguration"
+                                     [entityId]="entityId"
+                                     [entityName]="entityName"
+                                     [ownerId]="ownerId"
+                                     [tenantId]="tenantId"
+        ></tb-geofencing-configuration>
+      }
+      @case (CalculatedFieldType.PROPAGATION) {
+        <tb-propagation-configuration formControlName="configuration"
+                                      [class.tb-form-panel-disabled]="disabledConfiguration"
+                                      [entityId]="entityId"
+                                      [entityName]="entityName"
+                                      [tenantId]="tenantId"
+                                      [ownerId]="ownerId"
+                                      [testScript]="onTestScript.bind(this)"
+        ></tb-propagation-configuration>
+      }
+      @case (CalculatedFieldType.RELATED_ENTITIES_AGGREGATION) {
+        <tb-related-entities-aggregation-component formControlName="configuration"
+                                                   [class.tb-form-panel-disabled]="disabledConfiguration"
+                                                   [entityId]="entityId"
+                                                   [entityName]="entityName"
+                                                   [tenantId]="tenantId"
+                                                   [testScript]="onTestScript.bind(this)"
+        ></tb-related-entities-aggregation-component>
+      }
+      @case (CalculatedFieldType.ENTITY_AGGREGATION) {
+        <tb-entity-aggregation-component formControlName="configuration"
+                                         [class.tb-form-panel-disabled]="disabledConfiguration"
+                                         [entityId]="entityId"
+                                         [entityName]="entityName"
+                                         [tenantId]="tenantId"
+        ></tb-entity-aggregation-component>
+      }
+      @default {
+        <tb-simple-configuration formControlName="configuration"
+                                 [class.tb-form-panel-disabled]="disabledConfiguration"
+                                 [entityId]="entityId"
+                                 [entityName]="entityName"
+                                 [ownerId]="ownerId"
+                                 [tenantId]="tenantId"
+                                 [isScript]="entityForm.get('type').value === CalculatedFieldType.SCRIPT"
+                                 [testScript]="onTestScript.bind(this)"
+        ></tb-simple-configuration>
+      }
+    }
+  </div>
+</div>

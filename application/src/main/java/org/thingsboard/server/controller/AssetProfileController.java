@@ -16,11 +16,13 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -45,7 +47,10 @@ import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.ASSET_PROFILE_ID_PARAM_DESCRIPTION;
@@ -220,6 +225,22 @@ public class AssetProfileController extends BaseController {
         SecurityUser user = getCurrentUser();
         TenantId tenantId = user.getTenantId();
         return checkNotNull(assetProfileService.findAssetProfileNamesByTenantId(tenantId, activeOnly));
+    }
+
+    @ApiOperation(value = "Get Asset Profiles By Ids (getAssetProfilesByIds)",
+            notes = "Requested asset profiles must be owned by tenant which is performing the request. " +
+                    NEW_LINE)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/assetProfileInfos", params = {"assetProfileIds"})
+    public List<AssetProfileInfo> getAssetProfilesByIds(
+            @Parameter(description = "A list of asset profile ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("assetProfileIds") Set<UUID> assetProfileUUIDs) throws ThingsboardException {
+        TenantId tenantId = getCurrentUser().getTenantId();
+        List<AssetProfileId> assetProfileIds = new ArrayList<>();
+        for (UUID assetProfileUUID : assetProfileUUIDs) {
+            assetProfileIds.add(new AssetProfileId(assetProfileUUID));
+        }
+        return assetProfileService.findAssetProfilesByIds(tenantId, assetProfileIds);
     }
 
 }

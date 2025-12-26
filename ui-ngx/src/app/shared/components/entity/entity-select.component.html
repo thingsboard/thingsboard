@@ -25,6 +25,7 @@
     [useAliasEntityTypes]="useAliasEntityTypes"
     [allowedEntityTypes]="allowedEntityTypes"
     [additionEntityTypes]="additionEntityTypes"
+    [filterAllowedEntityTypes]="filterAllowedEntityTypes"
     formControlName="entityType">
   </tb-entity-type-select>
   <tb-entity-autocomplete
@@ -33,6 +34,8 @@
     [appearance]="appearance"
     [required]="required"
     [entityType]="modelValue.entityType"
+    [useEntityDisplayName]="useEntityDisplayName"
+    (entityChanged)="changeEntity($event)"
     formControlName="entityId">
   </tb-entity-autocomplete>
 </div>

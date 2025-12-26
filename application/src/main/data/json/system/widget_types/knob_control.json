@@ -14,7 +14,7 @@
     "controllerScript": "self.onInit = function() {\n}\n\nself.onResize = function() {\n}\n\nself.onDestroy = function() {\n}\n",
     "dataKeySettingsForm": [],
     "settingsDirective": "tb-knob-control-widget-settings",
-    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{},\"title\":\"Knob Control\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"useDashboardTimewindow\":true,\"showLegend\":false,\"actions\":{},\"decimals\":2,\"units\":null}"
+    "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":false,\"backgroundColor\":\"#e6e7e8\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{},\"title\":\"Knob Control\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"showLegend\":false,\"actions\":{},\"decimals\":2,\"units\":null}"
   },
   "tags": [
     "dial",

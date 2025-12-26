@@ -37,7 +37,7 @@ import static org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldSta
 @NoArgsConstructor
 @AllArgsConstructor
 @Slf4j
-public class TsRollingArgumentEntry implements ArgumentEntry {
+public class TsRollingArgumentEntry implements ArgumentEntry, HasLatestTs {
 
     private Integer limit;
     private Long timeWindow;

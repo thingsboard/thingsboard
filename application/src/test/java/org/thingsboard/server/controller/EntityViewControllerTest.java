@@ -63,16 +63,19 @@ import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.dao.entityview.EntityViewDao;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static java.util.concurrent.TimeUnit.HOURS;
@@ -146,6 +149,36 @@ public class EntityViewControllerTest extends AbstractControllerTest {
         EntityView foundView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
         Assert.assertNotNull(foundView);
         assertEquals(savedView, foundView);
+    }
+
+    @Test
+    public void testFindEntityViewByIds() throws Exception {
+        List<EntityView> assetProfiles = new ArrayList<>();
+        for (int i = 0; i < 20; i++) {
+            assetProfiles.add(getNewSavedEntityView("Test entity view " + i));
+        }
+
+        List<EntityView> expected = assetProfiles.subList(5, 15);
+
+        String idsParam = expected.stream()
+                .map(ap -> ap.getId().getId().toString())
+                .collect(Collectors.joining(","));
+        EntityView[] foundEntityViews = doGet("/api/entityViews?entityViewIds=" + idsParam, EntityView[].class);
+
+        Assert.assertNotNull(foundEntityViews);
+        Assert.assertEquals(expected.size(), foundEntityViews.length);
+
+        Map<UUID, EntityView> infoById = Arrays.stream(foundEntityViews)
+                .collect(Collectors.toMap(info -> info.getId().getId(), Function.identity()));
+
+        for (EntityView entityView : expected) {
+            UUID id = entityView.getId().getId();
+            EntityView view = infoById.get(id);
+            Assert.assertNotNull("Entity view not found for id " + id, view);
+
+            Assert.assertEquals(entityView.getId(), view.getId());
+            Assert.assertEquals(entityView.getName(), view.getName());
+        }
     }
 
     @Test
@@ -852,5 +885,30 @@ public class EntityViewControllerTest extends AbstractControllerTest {
     public void testDeleteEntityViewExceptionWithRelationsTransactional() throws Exception {
         EntityViewId entityViewId = getNewSavedEntityView("EntityView for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(entityViewDao, tenantId, entityViewId, "/api/entityView/" + entityViewId);
+    }
+
+    @Test
+    public void testSaveEntityViewWithUniquifyStrategy() throws Exception {
+        EntityView view = new EntityView();
+        view.setEntityId(testDevice.getId());
+        view.setTenantId(tenantId);
+        view.setType("default");
+        view.setName("My unique view");
+
+        EntityView savedView = doPost("/api/entityView", view, EntityView.class);
+
+        doPost("/api/entityView?nameConflictPolicy=FAIL", view).andExpect(status().isBadRequest());
+
+        EntityView secondView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY", view, EntityView.class);
+        assertThat(secondView.getName()).startsWith("My unique view_");
+
+        EntityView thirdView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY&uniquifySeparator=-", view, EntityView.class);
+        assertThat(thirdView.getName()).startsWith("My unique view-");
+
+        EntityView fourthView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", view, EntityView.class);
+        assertThat(fourthView.getName()).isEqualTo("My unique view_1");
+
+        EntityView fifthEntityView = doPost("/api/entityView?nameConflictPolicy=UNIQUIFY&uniquifyStrategy=INCREMENTAL", view, EntityView.class);
+        assertThat(fifthEntityView.getName()).isEqualTo("My unique view_2");
     }
 }

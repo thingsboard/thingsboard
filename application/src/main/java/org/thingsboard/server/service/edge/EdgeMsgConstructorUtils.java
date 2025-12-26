@@ -21,6 +21,7 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
@@ -44,14 +45,19 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.id.AiModelId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.CalculatedFieldId;
@@ -74,6 +80,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.targets.NotificationTarget;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
@@ -86,6 +93,8 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.transport.util.JsonUtils;
+import org.thingsboard.server.gen.edge.v1.AiModelUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmCommentUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AlarmUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
@@ -124,11 +133,16 @@ import org.thingsboard.server.gen.edge.v1.WidgetTypeUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Slf4j
 public class EdgeMsgConstructorUtils {
@@ -249,10 +263,38 @@ public class EdgeMsgConstructorUtils {
         return DeviceCredentialsUpdateMsg.newBuilder().setEntity(JacksonUtil.toString(deviceCredentials)).build();
     }
 
-    public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile) {
-        return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(deviceProfile))
+    public static DeviceProfileUpdateMsg constructDeviceProfileUpdatedMsg(UpdateMsgType msgType, DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        String entity = getEntityAndFixLwm2mBootstrapShortServerId(deviceProfile, edgeVersion);
+        return DeviceProfileUpdateMsg.newBuilder().setMsgType(msgType).setEntity(entity)
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(deviceProfile.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static String getEntityAndFixLwm2mBootstrapShortServerId(DeviceProfile deviceProfile, EdgeVersion edgeVersion) {
+        DeviceProfileTransportConfiguration transportConfiguration = deviceProfile.getProfileData().getTransportConfiguration();
+        if (!(transportConfiguration instanceof Lwm2mDeviceProfileTransportConfiguration) || edgeVersion.getNumber() >= EdgeVersion.V_4_3_0.getNumber()) {
+            return JacksonUtil.toString(deviceProfile);
+        }
+        JsonNode jsonNode = JacksonUtil.valueToTree(deviceProfile);
+        JsonNode profileDataNode = jsonNode.get("profileData");
+        if (profileDataNode != null && profileDataNode.has("transportConfiguration")) {
+            JsonNode transportConfigNode = profileDataNode.get("transportConfiguration");
+            JsonNode bootstrapNode = transportConfigNode.get("bootstrap");
+            if (bootstrapNode != null && bootstrapNode.isArray()) {
+                for (JsonNode bootstrapServerNode : bootstrapNode) {
+                    if (bootstrapServerNode.isObject()) {
+                        ObjectNode serverObjectNode = (ObjectNode) bootstrapServerNode;
+                        JsonNode isBootstrapNode = serverObjectNode.get("bootstrapServerIs");
+                        boolean isBootstrapServer = isBootstrapNode != null && isBootstrapNode.asBoolean(false);
+                        JsonNode shortServerIdNode = serverObjectNode.get("shortServerId");
+                        if (isBootstrapServer && (shortServerIdNode == null || shortServerIdNode.isNull())) {
+                            serverObjectNode.put("shortServerId", 0);
+                        }
+                    }
+                }
+            }
+        }
+        return JacksonUtil.toString(jsonNode);
     }
 
     public static DeviceProfileUpdateMsg constructDeviceProfileDeleteMsg(DeviceProfileId deviceProfileId) {
@@ -518,7 +560,7 @@ public class EdgeMsgConstructorUtils {
                 .setEntityIdMSB(entityId.getId().getMostSignificantBits())
                 .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
                 .setEntityType(entityId.getEntityType().name());
-        long ts = getTs(entityData.getAsJsonObject());
+        long ts = extractTs(entityData.getAsJsonObject());
         switch (actionType) {
             case TIMESERIES_UPDATED:
                 try {
@@ -571,8 +613,8 @@ public class EdgeMsgConstructorUtils {
         return builder.build();
     }
 
-    private static long getTs(JsonObject data) {
-        if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
+    private static long extractTs(JsonObject data) {
+        if (data.has("ts") && data.get("ts").isJsonPrimitive()) {
             return data.getAsJsonPrimitive("ts").getAsLong();
         }
         return System.currentTimeMillis();
@@ -652,6 +694,148 @@ public class EdgeMsgConstructorUtils {
                 .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
                 .setIdMSB(calculatedFieldId.getId().getMostSignificantBits())
                 .setIdLSB(calculatedFieldId.getId().getLeastSignificantBits()).build();
+    }
+
+    public static AiModelUpdateMsg constructAiModelUpdatedMsg(UpdateMsgType msgType, AiModel aiModel) {
+        return AiModelUpdateMsg.newBuilder().setMsgType(msgType).setEntity(JacksonUtil.toString(aiModel))
+                .setIdMSB(aiModel.getId().getId().getMostSignificantBits())
+                .setIdLSB(aiModel.getId().getId().getLeastSignificantBits()).build();
+    }
+
+    public static AiModelUpdateMsg constructAiModelDeleteMsg(AiModelId aiModelId) {
+        return AiModelUpdateMsg.newBuilder()
+                .setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(aiModelId.getId().getMostSignificantBits())
+                .setIdLSB(aiModelId.getId().getLeastSignificantBits()).build();
+    }
+
+    public static List<EdgeEvent> mergeAndFilterDownlinkDuplicates(List<EdgeEvent> edgeEvents) {
+        try {
+            edgeEvents = removeDownlinkDuplicates(edgeEvents);
+
+            List<AttrUpdateMsg> attrUpdateMsgs = new ArrayList<>();
+            for (EdgeEvent edgeEvent : edgeEvents) {
+                if (EdgeEventActionType.ATTRIBUTES_UPDATED.equals(edgeEvent.getAction())) {
+                    attrUpdateMsgs.add(new AttrUpdateMsg(edgeEvent.getEntityId(), edgeEvent.getBody()));
+                }
+            }
+            Map<UUID, Map<String, Long>> latestTsByEntityAndKey = computeLatestTsByEntityAndKey(attrUpdateMsgs);
+
+            List<EdgeEvent> result = new ArrayList<>();
+            for (EdgeEvent edgeEvent : edgeEvents) {
+                if (!EdgeEventActionType.ATTRIBUTES_UPDATED.equals(edgeEvent.getAction())) {
+                    result.add(edgeEvent);
+                    continue;
+                }
+
+                Map<String, Long> latestByKey = latestTsByEntityAndKey.get(edgeEvent.getEntityId());
+                JsonNode filteredBody = filterAttributesBody(edgeEvent.getBody(), latestByKey);
+                if (filteredBody == null) {
+                    continue;
+                }
+
+                result.add(createFilteredEdgeEvent(edgeEvent, filteredBody));
+            }
+
+            result.sort(Comparator.comparingLong(EdgeEvent::getSeqId));
+            return result;
+        } catch (Exception e) {
+            log.info("Can't merge downlink duplicates. Sending downlinks without merge. Original edgeEvents [{}]", edgeEvents, e);
+            return edgeEvents;
+        }
+    }
+
+    private static AttrsTs extractAttributes(JsonNode body) {
+        if (body == null) {
+            return new AttrsTs(0L, List.of());
+        }
+        String bodyStr = JacksonUtil.toString(body);
+        var jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
+        if (!jsonObject.has("ts")) {
+            return new AttrsTs(0L, List.of());
+        }
+        long ts = jsonObject.get("ts").getAsLong();
+        var kv = jsonObject.getAsJsonObject("kv");
+        List<AttributeKvEntry> attrs = JsonConverter.convertToAttributes(
+                JsonUtils.getJsonObject(
+                        JsonConverter.convertToAttributesProto(kv).getKvList()
+                ), ts);
+        return new AttrsTs(ts, attrs);
+    }
+
+    private static JsonNode filterAttributesBody(JsonNode body, Map<String, Long> latestByKey) {
+        if (body == null) {
+            return null;
+        }
+        String bodyStr = JacksonUtil.toString(body);
+        JsonObject jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
+        if (jsonObject.has("ts") && latestByKey != null && !latestByKey.isEmpty()) {
+            long ts = jsonObject.get("ts").getAsLong();
+            JsonObject kv = jsonObject.getAsJsonObject("kv");
+            for (Iterator<Map.Entry<String, JsonElement>> it = kv.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, JsonElement> e = it.next();
+                Long latestTs = latestByKey.get(e.getKey());
+                if (latestTs == null || !latestTs.equals(ts)) {
+                    it.remove();
+                }
+            }
+            if (kv.isEmpty()) {
+                return null;
+            }
+        }
+        return JacksonUtil.toJsonNode(jsonObject.toString());
+    }
+
+    private static Map<UUID, Map<String, Long>> computeLatestTsByEntityAndKey(List<AttrUpdateMsg> attrUpdateMsgs) {
+        Map<UUID, Map<String, Long>> latestTsByEntityAndKey = new HashMap<>();
+        for (AttrUpdateMsg attrUpdateMsg : attrUpdateMsgs) {
+            UUID entityId = attrUpdateMsg.entityId();
+            AttrsTs attrsTs = extractAttributes(attrUpdateMsg.body());
+            Map<String, Long> map = latestTsByEntityAndKey.computeIfAbsent(entityId, id -> new HashMap<>());
+            long ts = attrsTs.ts();
+            for (AttributeKvEntry attr : attrsTs.attrs()) {
+                map.merge(attr.getKey(), ts, Math::max);
+            }
+        }
+        return latestTsByEntityAndKey;
+    }
+
+    private static EdgeEvent createFilteredEdgeEvent(EdgeEvent edgeEvent, JsonNode filteredBody) {
+        EdgeEvent filtered = new EdgeEvent();
+        filtered.setSeqId(edgeEvent.getSeqId());
+        filtered.setTenantId(edgeEvent.getTenantId());
+        filtered.setEdgeId(edgeEvent.getEdgeId());
+        filtered.setAction(edgeEvent.getAction());
+        filtered.setEntityId(edgeEvent.getEntityId());
+        filtered.setUid(edgeEvent.getUid());
+        filtered.setType(edgeEvent.getType());
+        filtered.setBody(filteredBody);
+        return filtered;
+    }
+
+    private static List<EdgeEvent> removeDownlinkDuplicates(List<EdgeEvent> edgeEvents) {
+        Set<EventKey> seen = new HashSet<>();
+        return edgeEvents.stream()
+                .filter(e -> seen.add(new EventKey(
+                        e.getTenantId(),
+                        e.getAction(),
+                        e.getEntityId(),
+                        e.getType().name(),
+                        (e.getBody() != null ? e.getBody().toString() : "null"))))
+                .collect(Collectors.toList());
+    }
+
+    private record EventKey(TenantId tenantId,
+                            EdgeEventActionType action,
+                            UUID entityId,
+                            String type,
+                            String body) {
+    }
+
+    private record AttrsTs(long ts, List<AttributeKvEntry> attrs) {
+    }
+
+    private record AttrUpdateMsg(UUID entityId, JsonNode body) {
     }
 
 }
