@@ -11,11 +11,15 @@ function calculate(ctx, arg1, arg2, ...): object | object[]
 
 ### Supported Arguments
 
+Arguments are passed to the function by **name** defined in the calculated field configuration.
+
 There are three types of arguments supported in the calculated field configuration:
 
 #### Attribute and Latest Telemetry Arguments
 
 These arguments are single values and may be of type: boolean, int64 (long), double, string, or JSON.
+
+#### Direct argument access via **`<argName>`**
 
 **Example: Convert Temperature from Fahrenheit to Celsius**
 
@@ -26,7 +30,9 @@ return {
 }
 ```
 
-Alternatively, using `ctx` to access the argument as an object:
+#### Accessing argument via **`ctx.args.<argName>`**
+
+In addition to direct access, arguments can be accessed via the `ctx.args.<argName>` object, which includes both the `value` of an argument and its timestamp as `ts`:
 
 ```json
 {
@@ -37,7 +43,6 @@ Alternatively, using `ctx` to access the argument as an object:
 }
 ```
 
-You may notice that the object includes both the `value` of an argument and its timestamp as `ts`.
 Let's modify the function that converts Fahrenheit to Celsius to also return the timestamp information:
 
 ```javascript
