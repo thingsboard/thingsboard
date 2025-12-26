@@ -249,7 +249,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
   }
 
   protected changeIsScriptMode(): void {
-    this.argumentsFormArray.updateValueAndValidity();
+    this.argumentsFormArray.updateValueAndValidity({emitEvent: !this.disable});
   }
 
   protected isEditButtonShowBadge(argument: CalculatedFieldArgumentValue): boolean {
@@ -265,7 +265,6 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
       this.argumentsFormArray.push(this.fb.control(value), { emitEvent: false });
     });
     this.updateDataSource(this.argumentsFormArray.value);
-    // this.argumentsFormArray.updateValueAndValidity({emitEvent: false});
   }
 
   private updateEntityNameMap(values: CalculatedFieldArgumentValue[]): void {

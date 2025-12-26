@@ -35,7 +35,7 @@ import { DestroyRef, Renderer2 } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, first, switchMap, tap } from 'rxjs/operators';
 import {
   ArgumentEntityType,
   ArgumentType,
@@ -175,7 +175,8 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         name: this.translate.instant('entity-view.events'),
         icon: 'mdi:clipboard-text-clock',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.openDebugEventsDialog($event, entity),
+        onAction: ($event, entity) =>
+          this.pageMode ? this.openDebugTab($event, entity) : this.openDebugEventsDialog($event, entity),
       },
       {
         name: '',
@@ -202,7 +203,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       this.calculatedFieldsService.getCalculatedFieldsByEntityId(this.entityId, pageLink);
   }
 
-  onOpenDebugConfig($event: Event, calculatedField: CalculatedFieldsTableEntity): void {
+  private onOpenDebugConfig($event: Event, calculatedField: CalculatedFieldsTableEntity): void {
     $event?.stopPropagation();
     const { debugSettings = {}, id } = calculatedField;
     const additionalActionConfig = {
@@ -224,6 +225,22 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       },
       onSettingsAppliedFn: settings => this.onDebugConfigChanged(id.id, settings)
     }, $event.target as Element);
+  }
+
+  private openDebugTab($event: Event, calculatedField: CalculatedFieldsTableEntity) {
+    const table = this.getTable();
+    if (!table.isDetailsOpen) {
+      table.toggleEntityDetails($event, calculatedField);
+      if (table.entityDetailsPanel.matTabGroup._tabs.length > 1) {
+        table.entityDetailsPanel.matTabGroup.selectedIndex = 1;
+      } else {
+        table.entityDetailsPanel.matTabGroup._tabs.changes.pipe(
+          first()
+        ).subscribe(() => {
+          table.entityDetailsPanel.matTabGroup.selectedIndex = 1;
+        })
+      }
+    }
   }
 
   private editCalculatedField($event: Event, calculatedField: CalculatedFieldsTableEntity, isDirty = false): void {
