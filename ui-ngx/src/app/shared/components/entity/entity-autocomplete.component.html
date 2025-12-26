@@ -83,7 +83,7 @@
   <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('required')">
     {{ requiredErrorText | translate }}
   </mat-error>
-  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('notValid') && !selectEntityFormGroup.get('entity').hasError('required')">
+  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('notValid')">
     {{ entityNotValidText | translate }}
   </mat-error>
 </mat-form-field>
