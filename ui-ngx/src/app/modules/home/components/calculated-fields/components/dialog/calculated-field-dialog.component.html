@@ -58,6 +58,7 @@
         @if (!data.entityId) {
           <tb-entity-select formControlName="entityId"
                             appearance="outline"
+                            required
                             [filterAllowedEntityTypes]="false"
                             [allowedEntityTypes]="calculatedFieldsEntityTypeList"
                             [defaultEntityType]="EntityType.DEVICE_PROFILE"

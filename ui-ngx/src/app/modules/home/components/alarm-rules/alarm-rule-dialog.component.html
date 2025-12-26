@@ -58,31 +58,14 @@
           />
         </div>
         @if (!data.entityId) {
-          <div class="flex flex-row gap-4 xs:flex-col" formGroupName="entityId">
-            <tb-entity-type-select #entityTypeSelect
-                                   appearance="outline"
-                                   subscriptSizing="dynamic"
-                                   class="flex-1"
-                                   showLabel
-                                   required
-                                   label="{{ 'entity.entity-type' | translate }}"
-                                   [filterAllowedEntityTypes]="false"
-                                   [allowedEntityTypes]="alarmRuleEntityTypeList"
-                                   formControlName="entityType">
-            </tb-entity-type-select>
-            @if (fieldFormGroup.get('entityId.entityType').value) {
-              <tb-entity-autocomplete #entityAutocompleteComponent
-                                      formControlName="id"
-                                      appearance="outline"
-                                      subscriptSizing="dynamic"
-                                      class="flex-1"
-                                      [placeholder]="'action.set' | translate"
-                                      [required]="true"
-                                      [entityType]="fieldFormGroup.get('entityId.entityType').value"
-                                      (entityChanged)="changeEntity($event)"
-              />
-            }
-          </div>
+          <tb-entity-select formControlName="entityId"
+                            appearance="outline"
+                            required
+                            [filterAllowedEntityTypes]="false"
+                            [allowedEntityTypes]="alarmRuleEntityTypeList"
+                            [defaultEntityType]="EntityType.DEVICE_PROFILE"
+                            (entityChanged)="changeEntity($event)">
+          </tb-entity-select>
         }
       </div>
       <ng-container formGroupName="configuration">

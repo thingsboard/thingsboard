@@ -30,7 +30,6 @@ import { isDefined } from '@core/utils';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { CalculatedFieldsTableEntity } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { EntityType } from '@shared/models/entity-type.models';
 
 @Injectable({ providedIn: 'root' })
 export class CalculatedFieldFormService {
@@ -40,10 +39,29 @@ export class CalculatedFieldFormService {
   buildForm(): FormGroup {
     return this.fb.group({
       name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-      entityId: [{type: EntityType.DEVICE_PROFILE, id: null}, Validators.required],
+      entityId: [null, Validators.required],
       type: [CalculatedFieldType.SIMPLE],
       debugSettings: [],
       configuration: this.fb.control<CalculatedFieldConfiguration>({} as CalculatedFieldConfiguration),
+    });
+  }
+
+  buildAlarmRuleForm(): FormGroup {
+    return this.fb.group({
+      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
+      entityId: [null, Validators.required],
+      type: [CalculatedFieldType.ALARM],
+      debugSettings: [],
+      configuration: this.fb.group({
+        type: [CalculatedFieldType.ALARM],
+        arguments: this.fb.control({}, Validators.required),
+        propagate: [false],
+        propagateToOwner: [false],
+        propagateToTenant: [false],
+        propagateRelationTypes: [null],
+        createRules: [null, Validators.required],
+        clearRule: [null],
+      }),
     });
   }
 

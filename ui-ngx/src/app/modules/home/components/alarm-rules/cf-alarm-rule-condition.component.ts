@@ -137,15 +137,19 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   writeValue(value: AlarmRuleCondition): void {
     this.modelValue = value;
     this.updateConditionInfo();
-    if (value) {
-      this.onValidatorChange();
+    if (value && !this.disabled) {
+      if (this.validate(this.alarmRuleConditionFormGroup)) {
+        this.onValidatorChange();
+      }
     }
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes.arguments) {
-      if (changes.arguments && !changes.arguments.firstChange && this.modelValue) {
-        this.onValidatorChange();
+      if (changes.arguments && !changes.arguments.firstChange && this.modelValue && !this.disabled) {
+        if (this.validate(this.alarmRuleConditionFormGroup)) {
+          this.onValidatorChange();
+        }
       }
     }
   }
@@ -181,7 +185,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
     this.filtersArgumentsValid = this.areFilterAndPredicateArgumentsValid(this.modelValue, this.arguments);
     this.schedulerArgumentsValid = this.isScheduleArgumentValid(this.modelValue, Object.keys(this.arguments));
     this.onValidatorChange = () => {
-      control.updateValueAndValidity({ emitEvent: true });
+      control.updateValueAndValidity({ emitEvent: !this.disabled });
     };
     return this.conditionSet() && this.filtersArgumentsValid && this.schedulerArgumentsValid ? null : {
       alarmRuleCondition: {
@@ -303,7 +307,7 @@ export class CfAlarmRuleConditionComponent implements ControlValueAccessor, Vali
   }
 
   private updateScheduleText() {
-    let schedule = this.modelValue?.schedule;
+    const schedule = this.modelValue?.schedule;
     this.scheduleText = '';
     if (isDefinedAndNotNull(schedule)) {
       if (schedule.dynamicValueArgument) {

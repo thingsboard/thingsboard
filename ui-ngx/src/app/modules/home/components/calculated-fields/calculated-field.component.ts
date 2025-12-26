@@ -38,7 +38,7 @@ import {
   CalculatedFieldsTableEntity
 } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { TenantId } from '@shared/models/id/tenant-id';
-import { CalculatedFieldFormService } from '@home/components/calculated-fields/calculated-field-form.service';
+import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 
 @Component({
   selector: 'tb-calculated-field',
@@ -55,8 +55,8 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
 
   disabledConfiguration = false;
 
-  readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
+  readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;

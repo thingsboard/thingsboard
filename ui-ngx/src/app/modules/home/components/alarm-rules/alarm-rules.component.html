@@ -65,6 +65,7 @@
       </div>
       <tb-entity-select formControlName="entityId"
                         appearance="outline"
+                        required
                         [filterAllowedEntityTypes]="false"
                         [allowedEntityTypes]="calculatedFieldsEntityTypeList"
                         (entityChanged)="changeEntity($event)">

@@ -37,7 +37,7 @@ import { EntityId } from '@shared/models/id/entity-id';
 import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 import { deepTrim } from '@core/utils';
 import { BaseData } from '@shared/models/base-data';
-import { CalculatedFieldFormService } from '@home/components/calculated-fields/calculated-field-form.service';
+import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 import { FormGroup } from '@angular/forms';
 
 export interface CalculatedFieldDialogData {

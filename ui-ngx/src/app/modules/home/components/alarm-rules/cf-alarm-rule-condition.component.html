@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-alarm-rule-condition flex flex-col gap-4 min-w-0" [formGroup]="alarmRuleConditionFormGroup">
+<div class="tb-alarm-rule-condition flex min-w-0 flex-col gap-4" [formGroup]="alarmRuleConditionFormGroup">
   <div class="tb-form-row column-xs">
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.condition' | translate }}</div>
     <button [disabled]="disabled"
@@ -23,7 +23,7 @@
             class="tb-alarm-rule-condition-button"
             mat-stroked-button [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'"
             (click)="openFilterDialog($event)">
-      <div class="flex items-center gap-2 justify-between">
+      <div class="flex items-center justify-between gap-2">
         <tb-alarm-rule-filter-text [alarmRuleExpression]="alarmRuleConditionFormGroup.get('expression').value"
                                    [arguments]="arguments"
                                    [disabled]="disabled"

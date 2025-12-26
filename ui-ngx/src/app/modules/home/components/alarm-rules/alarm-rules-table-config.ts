@@ -36,7 +36,7 @@ import { DestroyRef, Renderer2 } from '@angular/core';
 import { EntityDebugSettings } from '@shared/models/entity.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
-import { catchError, filter, switchMap, tap } from 'rxjs/operators';
+import { catchError, filter, first, switchMap, tap } from 'rxjs/operators';
 import {
   ArgumentEntityType,
   ArgumentType,
@@ -186,7 +186,8 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         name: this.translate.instant('entity-view.events'),
         icon: 'mdi:clipboard-text-clock',
         isEnabled: () => true,
-        onAction: ($event, entity) => this.openDebugEventsDialog($event, entity),
+        onAction: ($event, entity) =>
+          this.pageMode ? this.openDebugTab($event, entity) : this.openDebugEventsDialog($event, entity),
       },
       {
         name: '',
@@ -308,6 +309,22 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
       .subscribe();
   }
 
+  private openDebugTab($event: Event, calculatedField: AlarmRuleTableEntity) {
+    const table = this.getTable();
+    if (!table.isDetailsOpen) {
+      table.toggleEntityDetails($event, calculatedField);
+      if (table.entityDetailsPanel.matTabGroup._tabs.length > 1) {
+        table.entityDetailsPanel.matTabGroup.selectedIndex = 1;
+      } else {
+        table.entityDetailsPanel.matTabGroup._tabs.changes.pipe(
+          first()
+        ).subscribe(() => {
+          table.entityDetailsPanel.matTabGroup.selectedIndex = 1;
+        })
+      }
+    }
+  }
+
   private exportAlarmRule($event: Event, calculatedField: AlarmRuleTableEntity): void {
     $event?.stopPropagation();
     this.importExportService.exportCalculatedField(calculatedField.id.id);
@@ -361,7 +378,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     ).subscribe(() => this.updateData());
   }
 
-  private getTestScriptDialog(calculatedField: AlarmRuleTableEntity, expression: string, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true): Observable<string> {
+  private getTestScriptDialog(calculatedField: AlarmRuleTableEntity, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit = true, expression?: string): Observable<string> {
     if (calculatedField.type === CalculatedFieldType.ALARM) {
       const resultArguments = Object.keys(calculatedField.configuration.arguments).reduce((acc, key) => {
         const type = calculatedField.configuration.arguments[key].refEntityKey.type;

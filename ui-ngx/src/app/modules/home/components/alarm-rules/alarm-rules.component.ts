@@ -14,11 +14,11 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, DestroyRef, Inject, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, DestroyRef, inject, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityComponent } from '../../components/entity/entity.component';
-import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { EntityComponent } from '@home/components/entity/entity.component';
+import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
@@ -28,13 +28,9 @@ import {
   calculatedFieldsEntityTypeList,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
-import { oneSpaceInsideRegex } from '@shared/models/regex.constants';
 import { EntityId } from '@shared/models/id/entity-id';
-import { switchMap } from 'rxjs/operators';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { BaseData } from '@shared/models/base-data';
 import { Observable } from 'rxjs';
-import { CalculatedFieldsService } from '@core/http/calculated-fields.service';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import {
   CalculatedFieldsTableConfig,
@@ -44,6 +40,7 @@ import { TenantId } from '@shared/models/id/tenant-id';
 import { StringItemsOption } from '@shared/components/string-items-list.component';
 import { RelationTypes } from '@shared/models/relation.models';
 import { AlarmRule, AlarmRuleConditionType, AlarmRuleExpressionType } from '@shared/models/alarm-rule.models';
+import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 
 @Component({
   selector: 'tb-alarm-rules',
@@ -58,20 +55,21 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
   @Input()
   entityName: string;
 
-  readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
+  readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
+
+  private cfFormService = inject(CalculatedFieldFormService);
+  private destroyRef = inject(DestroyRef);
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
               @Inject('entity') protected entityValue: CalculatedFieldInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: CalculatedFieldsTableConfig,
               protected fb: FormBuilder,
-              protected cd: ChangeDetectorRef,
-              private destroyRef: DestroyRef,
-              private calculatedFieldsService: CalculatedFieldsService) {
+              protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -107,24 +105,8 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
     this.entityName = entity?.name;
   }
 
-  buildForm(entity?: CalculatedFieldInfo): FormGroup {
-    const form = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(oneSpaceInsideRegex), Validators.maxLength(255)]],
-      entityId: [null],
-      type: [CalculatedFieldType.ALARM],
-      debugSettings: [],
-      configuration: this.fb.group({
-        type: [CalculatedFieldType.ALARM],
-        arguments: this.fb.control({}, Validators.required),
-        propagate: [false],
-        propagateToOwner: [false],
-        propagateToTenant: [false],
-        propagateRelationTypes: [null],
-        createRules: [null, Validators.required],
-        clearRule: [null],
-      }),
-    });
-    return form;
+  buildForm(_entity?: CalculatedFieldInfo): FormGroup {
+    return inject(CalculatedFieldFormService).buildAlarmRuleForm();
   }
 
   updateForm(entity: CalculatedFieldInfo) {
@@ -138,19 +120,13 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
   }
 
   onTestScript(expression?: string): Observable<string> {
-    const calculatedFieldId = this.entity?.id?.id;
-    if (calculatedFieldId) {
-      return this.calculatedFieldsService.getLatestCalculatedFieldDebugEvent(calculatedFieldId, {ignoreLoading: true})
-        .pipe(
-          switchMap(event => {
-            const args = event?.arguments ? JSON.parse(event.arguments) : null;
-            return this.entitiesTableConfig.getTestScriptDialog(this.entityFormValue(), args, false, expression);
-          }),
-          takeUntilDestroyed(this.destroyRef)
-        )
-    }
-
-    return this.entitiesTableConfig.getTestScriptDialog(this.entityFormValue(), null, false, expression);
+    return this.cfFormService.testScript(
+      this.entity?.id?.id,
+      this.entityFormValue(),
+      this.entitiesTableConfig.getTestScriptDialog.bind(this.entitiesTableConfig),
+      this.destroyRef,
+      expression
+    );
   }
 
   updateFormState() {
