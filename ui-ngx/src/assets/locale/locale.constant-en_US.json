@@ -1183,7 +1183,7 @@
         "perimeter-attribute-key": "Perimeter attribute key",
         "perimeter-attribute-key-required": "Perimeter attribute key is required.",
         "perimeter-attribute-key-pattern": "Perimeter attribute key is invalid.",
-        "entity-zone-relationship": "Path from Entity to Zones *",
+        "entity-zone-relationship": "Path from Entity to Zones",
         "direction": "Relation direction",
         "direction-from": "From entity to zone",
         "direction-to": "From zone to entity",

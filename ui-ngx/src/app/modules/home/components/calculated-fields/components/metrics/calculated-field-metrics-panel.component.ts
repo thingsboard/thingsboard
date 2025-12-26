@@ -74,7 +74,7 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
 
   entityFilter: EntityFilter;
 
-  readonly AggFunctions = Object.values(AggFunction) as AggFunction[];
+  AggFunctions = Object.values(AggFunction) as AggFunction[];
   readonly AggFunctionTranslations = AggFunctionTranslations;
   readonly ScriptLanguage = ScriptLanguage;
   readonly AggInputType = AggInputType;
@@ -103,6 +103,10 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     this.validateInputKey();
 
     this.functionArgs = ['ctx', ...this.arguments];
+
+    if (this.simpleMode) {
+      this.AggFunctions = this.AggFunctions.filter(aggFunc => aggFunc !== AggFunction.COUNT_UNIQUE);
+    }
   }
 
   saveMetric(): void {
