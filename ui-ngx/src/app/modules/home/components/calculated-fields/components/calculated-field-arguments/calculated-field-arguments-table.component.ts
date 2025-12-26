@@ -154,7 +154,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
 
   validate(): ValidationErrors | null {
     this.updateErrorText();
-    return this.errorText ? { argumentsFormArray: false } : null;
+    return this.errorText || !this.argumentsFormArray.controls.length ? { argumentsFormArray: false } : null;
   }
 
   setDisabledState(isDisabled: boolean): void {
