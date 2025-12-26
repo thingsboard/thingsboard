@@ -111,7 +111,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       this.entityTabsComponent = CalculatedFieldsTabsComponent;
       this.rowPointer = true;
     }
-    this.tableTitle = this.pageMode ? '' : this.translate.instant('entity.type-calculated-fields');
+    this.tableTitle = this.translate.instant('entity.type-calculated-fields');
     this.detailsPanelEnabled = this.pageMode;
     this.entityType = EntityType.CALCULATED_FIELD;
     this.entityTranslations = entityTypeTranslations.get(EntityType.CALCULATED_FIELD);
