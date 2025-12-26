@@ -82,6 +82,15 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
         produceIntermediateResult = configuration.isProduceIntermediateResult();
+        setCtxToArguments();
+    }
+
+    private void setCtxToArguments() {
+        arguments.values().forEach(argument -> {
+            if (argument instanceof EntityAggregationArgumentEntry entityAggArgument) {
+                entityAggArgument.setCtx(ctx);
+            }
+        });
     }
 
     @Override
@@ -154,8 +163,10 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
     }
 
     private void fillMissingIntervals() {
+        long now = System.currentTimeMillis();
         ZoneId zoneId = interval.getZoneId();
         long currentIntervalEndTs = interval.getCurrentIntervalEndTs();
+        long watermarkThresholdTs = now - watermarkDuration;
 
         Map<AggIntervalEntry, Map<String, AggIntervalEntryStatus>> intervals = getIntervals();
         AggIntervalEntry lastIntervalEntry = intervals.keySet().stream().max(Comparator.comparing(AggIntervalEntry::getEndTs)).orElse(null);
@@ -169,6 +180,13 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         while (nextEnd.toInstant().toEpochMilli() <= currentIntervalEndTs) {
             long nextStartTs = nextStart.toInstant().toEpochMilli();
             long nextEndTs = nextEnd.toInstant().toEpochMilli();
+
+            if (nextEndTs < watermarkThresholdTs) {
+                nextStart = nextEnd;
+                nextEnd = interval.getNextIntervalStart(nextStart);
+                continue;
+            }
+
             AggIntervalEntry missing = new AggIntervalEntry(nextStartTs, nextEndTs);
 
             arguments.forEach((argName, argumentEntry) -> {

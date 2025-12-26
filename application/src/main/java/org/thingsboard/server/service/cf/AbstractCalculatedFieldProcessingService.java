@@ -233,7 +233,7 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return config.getArguments().entrySet().stream()
                 .collect(Collectors.toMap(
                         Map.Entry::getKey,
-                        entry -> fetchTimeSeries(ctx.getTenantId(), entityId, entry.getValue(), config.getInterval(), ts)
+                        entry -> fetchTimeSeries(ctx, entityId, entry.getValue(), config.getInterval(), ts)
                 ));
     }
 
@@ -341,11 +341,11 @@ public abstract class AbstractCalculatedFieldProcessingService {
         return resolveArgumentValue(argKey, argumentEntryFut);
     }
 
-    private ListenableFuture<ArgumentEntry> fetchTimeSeries(TenantId tenantId, EntityId entityId, Argument argument, AggInterval interval, long queryEndTs) {
+    private ListenableFuture<ArgumentEntry> fetchTimeSeries(CalculatedFieldCtx ctx, EntityId entityId, Argument argument, AggInterval interval, long queryEndTs) {
         long intervalStartTs = interval.getCurrentIntervalStartTs();
         long intervalEndTs = interval.getCurrentIntervalEndTs();
         ReadTsKvQuery query = new BaseReadTsKvQuery(argument.getRefEntityKey().getKey(), intervalStartTs, queryEndTs, 0, 1, Aggregation.NONE);
-        return fetchTimeSeriesInternal(tenantId, entityId, query, timeSeries -> transformAggregationArgument(timeSeries, intervalStartTs, intervalEndTs));
+        return fetchTimeSeriesInternal(ctx.getTenantId(), entityId, query, timeSeries -> transformAggregationArgument(timeSeries, intervalStartTs, intervalEndTs, ctx));
     }
 
     private ListenableFuture<ArgumentEntry> fetchTsRolling(TenantId tenantId, EntityId entityId, Argument argument, long queryEndTs) {
