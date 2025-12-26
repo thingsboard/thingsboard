@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -26,6 +26,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { BaseData } from '@shared/models/base-data';
 
 @Component({
   selector: 'tb-entity-select',
@@ -37,7 +38,7 @@ import { MatFormFieldAppearance } from '@angular/material/form-field';
     multi: true
   }]
 })
-export class EntitySelectComponent implements ControlValueAccessor, OnInit, AfterViewInit {
+export class EntitySelectComponent implements ControlValueAccessor, OnInit {
 
   entitySelectFormGroup: UntypedFormGroup;
 
@@ -66,6 +67,15 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @coerceBoolean()
   useEntityDisplayName = false;
 
+  @Input()
+  filterAllowedEntityTypes: boolean;
+
+  @Input()
+  defaultEntityType: AliasEntityType | EntityType;
+
+  @Output()
+  entityChanged = new EventEmitter<BaseData<EntityId>>();
+
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
@@ -73,8 +83,6 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   entityTypeNullUUID: Set<AliasEntityType | EntityType | string> = new Set([
     AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
   ]);
-
-  private readonly defaultEntityType: EntityType | AliasEntityType = null;
 
   private propagateChange = (v: any) => { };
 
@@ -86,15 +94,18 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
 
     const entityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes,
                                                                          this.useAliasEntityTypes);
+
+    let defaultEntityType: EntityType | AliasEntityType = null
+
     if (entityTypes.length === 1) {
       this.displayEntityTypeSelect = false;
-      this.defaultEntityType = entityTypes[0];
+      defaultEntityType = entityTypes[0];
     } else {
       this.displayEntityTypeSelect = true;
     }
 
     this.entitySelectFormGroup = this.fb.group({
-      entityType: [this.defaultEntityType],
+      entityType: [defaultEntityType],
       entityId: [null]
     });
   }
@@ -126,9 +137,19 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
     if (additionNullUIIDEntityTypes.length > 0) {
       additionNullUIIDEntityTypes.forEach((entityType) => this.entityTypeNullUUID.add(entityType));
     }
-  }
 
-  ngAfterViewInit(): void {
+    if (this.filterAllowedEntityTypes === false) {
+      if (this.allowedEntityTypes?.length === 1) {
+        this.displayEntityTypeSelect = false;
+        this.entitySelectFormGroup.get('entityType').setValue(this.allowedEntityTypes[0])
+      } else {
+        this.displayEntityTypeSelect = true;
+      }
+    }
+
+    if (this.defaultEntityType) {
+      this.entitySelectFormGroup.get('entityType').setValue(this.defaultEntityType);
+    }
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -175,5 +196,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         this.propagateChange(null);
       }
     }
+  }
+
+  changeEntity(entity: BaseData<EntityId>): void {
+    this.entityChanged.emit(entity);
   }
 }

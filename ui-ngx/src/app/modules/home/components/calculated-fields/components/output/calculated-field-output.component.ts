@@ -148,7 +148,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (change.currentValue !== change.previousValue) {
-        if (propName === 'simpleMode') {
+        if (propName === 'simpleMode' && !this.disabled) {
           this.updatedFormWithMode();
           if (!change.firstChange) {
             this.outputForm.updateValueAndValidity();
@@ -167,7 +167,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
     if (value.type === OutputType.Timeseries && value.strategy?.type === OutputStrategyType.IMMEDIATE && value.strategy?.ttl) {
       this.outputForm.get('strategy.useCustomTtl').setValue(true, {emitEvent: false});
     }
-    this.outputForm.get('type').updateValueAndValidity({onlySelf: true});
+    this.outputForm.get('type').updateValueAndValidity({onlySelf: true, emitEvent: false});
   }
 
   registerOnChange(fn: (config: CalculatedFieldOutput | CalculatedFieldSimpleOutput) => void): void {
@@ -253,7 +253,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
 
   private updateTimeSeriesTtl(value: boolean) {
     if (value) {
-      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: true});
+      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: false});
     } else {
       this.outputForm.get('strategy.useCustomTtl').disable({emitEvent: false});
       this.outputForm.get('strategy.ttl').disable({emitEvent: false});

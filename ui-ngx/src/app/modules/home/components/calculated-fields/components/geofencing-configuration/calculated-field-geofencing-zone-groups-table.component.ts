@@ -214,7 +214,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   }
 
   writeValue(zonesObj: Record<string, CalculatedFieldGeofencing>): void {
-    this.zoneGroupsFormArray.clear();
+    this.zoneGroupsFormArray.clear({emitEvent: false});
     this.populateZonesFormArray(zonesObj);
     this.updateEntityNameMap(this.zoneGroupsFormArray.value);
   }
@@ -231,7 +231,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
       };
       this.zoneGroupsFormArray.push(this.fb.control(value), { emitEvent: false });
     });
-    this.zoneGroupsFormArray.updateValueAndValidity();
+    this.updateDataSource(this.zoneGroupsFormArray.value);
   }
 
   private updateEntityNameMap(values: CalculatedFieldGeofencingValue[]): void {

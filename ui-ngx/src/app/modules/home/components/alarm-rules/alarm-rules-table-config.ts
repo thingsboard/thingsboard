@@ -288,7 +288,7 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
         debugEventTypes:[DebugEventType.DEBUG_CALCULATED_FIELD],
         disabledEventTypes:[EventType.LC_EVENT, EventType.ERROR, EventType.STATS],
         defaultEventType: DebugEventType.DEBUG_CALCULATED_FIELD,
-        debugActionEnabledFn: () => false
+        debugActionDisabled: true
       }
     })
       .afterClosed()

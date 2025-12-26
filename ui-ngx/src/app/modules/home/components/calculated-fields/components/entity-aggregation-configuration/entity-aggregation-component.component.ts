@@ -182,10 +182,12 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
       interval: {...value.interval, allowOffsetSec: isDefinedAndNotNull(value?.interval?.offsetSec)}
     }
     this.entityAggregationConfiguration.patchValue(data, {emitEvent: false});
-    this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
-    this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
-    this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
-    this.checkProduceIntermediate();
+    if (this.entityAggregationConfiguration.enabled) {
+      this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
+      this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
+      this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
+      this.checkProduceIntermediate();
+    }
     this.updatedOffsetHint();
     setTimeout(() => {
       this.entityAggregationConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});

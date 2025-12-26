@@ -50,6 +50,7 @@ import {
 import {
   CalculatedFieldsFilterConfigComponent
 } from '@home/components/calculated-fields/table-header/calculated-fields-filter-config.component';
+import { CalculatedFieldComponent } from '@home/components/calculated-fields/calculated-field.component';
 
 @NgModule({
   declarations: [
@@ -57,7 +58,8 @@ import {
     CalculatedFieldScriptTestDialogComponent,
     CalculatedFieldTestArgumentsComponent,
     CalculatedFieldsHeaderComponent,
-    CalculatedFieldsFilterConfigComponent
+    CalculatedFieldsFilterConfigComponent,
+    CalculatedFieldComponent,
   ],
   imports: [
     CommonModule,
@@ -72,6 +74,7 @@ import {
   exports: [
     CalculatedFieldDialogComponent,
     CalculatedFieldScriptTestDialogComponent,
+    CalculatedFieldComponent,
   ]
 })
 export class CalculatedFieldsModule {}

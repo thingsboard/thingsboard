@@ -131,9 +131,11 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   writeValue(value: PropagationWithExpression): void {
     value.expression = value.expression ?? calculatedFieldDefaultScript;
     this.propagateConfiguration.patchValue(value, {emitEvent: false});
-    this.updatedFormWithScript();
+    if (!this.disabled) {
+      this.updatedFormWithScript();
+    }
     setTimeout(() => {
-      this.propagateConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
+      this.propagateConfiguration.get('arguments').updateValueAndValidity({onlySelf: true, emitEvent: false});
     });
   }
 
