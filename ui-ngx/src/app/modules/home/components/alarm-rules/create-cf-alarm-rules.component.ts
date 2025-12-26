@@ -114,7 +114,7 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
         }
         createAlarmRulesControls.push(this.fb.group({
           severity: [severity, Validators.required],
-          alarmRule: {value: [createAlarmRule, Validators.required], disabled: this.disabled}
+          alarmRule: [{value: createAlarmRule, disabled: this.disabled}, Validators.required]
         }));
       });
     }
