@@ -116,10 +116,9 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   updateForm(entity: CalculatedFieldInfo) {
     const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
     const preparedConfig = this.cfFormService.prepareConfig(configuration);
-    this.entityForm.patchValue({ type }, {emitEvent: false});
+    this.entityForm.patchValue({ type }, {emitEvent: false, onlySelf: true});
     setTimeout(() => {
       this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, ...value }, {emitEvent: false});
-      this.entityForm.get('type').updateValueAndValidity({onlySelf: true});
     });
   }
 

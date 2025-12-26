@@ -253,7 +253,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
 
   private updateTimeSeriesTtl(value: boolean) {
     if (value) {
-      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: true});
+      this.outputForm.get('strategy.useCustomTtl').enable({emitEvent: false});
     } else {
       this.outputForm.get('strategy.useCustomTtl').disable({emitEvent: false});
       this.outputForm.get('strategy.ttl').disable({emitEvent: false});
