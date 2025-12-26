@@ -34,16 +34,6 @@
           [class.!hidden]="hideDelete() || isEdit">
     {{ 'action.delete' | translate }}
   </button>
-  <!--  <div class="flex flex-row xs:flex-col">-->
-  <!--    <button mat-raised-button-->
-  <!--            ngxClipboard-->
-  <!--            (cbOnSuccess)="onAssetProfileIdCopied($event)"-->
-  <!--            [cbContent]="entity?.id?.id"-->
-  <!--            [class.!hidden]="isEdit">-->
-  <!--      <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>-->
-  <!--      <span translate>asset-profile.copyId</span>-->
-  <!--    </button>-->
-  <!--  </div>-->
 </div>
 <div class="mat-padding flex flex-1 flex-col" [formGroup]="entityForm">
   <div class="tb-form-panel no-border no-padding">
@@ -75,6 +65,7 @@
       </div>
       <tb-entity-select formControlName="entityId"
                         appearance="outline"
+                        required
                         [filterAllowedEntityTypes]="false"
                         [allowedEntityTypes]="calculatedFieldsEntityTypeList"
                         (entityChanged)="changeEntity($event)">

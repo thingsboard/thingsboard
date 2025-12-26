@@ -17,17 +17,16 @@
 import { ChangeDetectorRef, Component, DestroyRef, inject, Inject, Input } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { EntityComponent } from '../../components/entity/entity.component';
+import { EntityComponent } from '@home/components/entity/entity.component';
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { EntityType } from '@shared/models/entity-type.models';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  CalculatedFieldArgument,
   CalculatedFieldConfiguration,
   CalculatedFieldInfo,
   calculatedFieldsEntityTypeList,
-  CalculatedFieldType,
-  calculatedFieldTypes,
-  CalculatedFieldTypeTranslations
+  CalculatedFieldType
 } from '@shared/models/calculated-field.models';
 import { EntityId } from '@shared/models/id/entity-id';
 import { BaseData } from '@shared/models/base-data';
@@ -38,14 +37,17 @@ import {
   CalculatedFieldsTableEntity
 } from '@home/components/calculated-fields/calculated-fields-table-config';
 import { TenantId } from '@shared/models/id/tenant-id';
+import { StringItemsOption } from '@shared/components/string-items-list.component';
+import { RelationTypes } from '@shared/models/relation.models';
+import { AlarmRule, AlarmRuleConditionType, AlarmRuleExpressionType } from '@shared/models/alarm-rule.models';
 import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 
 @Component({
-  selector: 'tb-calculated-field',
-  templateUrl: './calculated-field.component.html',
-  styleUrls: ['./calculated-field.component.scss']
+  selector: 'tb-alarm-rules',
+  templateUrl: './alarm-rules.component.html',
+  styleUrls: []
 })
-export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTableEntity> {
+export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEntity> {
 
   @Input()
   standalone = false;
@@ -53,15 +55,11 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   @Input()
   entityName: string;
 
-  disabledConfiguration = false;
-
   readonly ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
   readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
-  readonly fieldTypes = calculatedFieldTypes;
-  readonly CalculatedFieldTypeTranslations = CalculatedFieldTypeTranslations;
 
   private cfFormService = inject(CalculatedFieldFormService);
   private destroyRef = inject(DestroyRef);
@@ -108,18 +106,17 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
   }
 
   buildForm(_entity?: CalculatedFieldInfo): FormGroup {
-    const form = inject(CalculatedFieldFormService).buildForm();
-    inject(CalculatedFieldFormService).setupTypeChange(form, inject(DestroyRef), () => this.isEditValue);
-    return form;
+    return inject(CalculatedFieldFormService).buildAlarmRuleForm();
   }
 
   updateForm(entity: CalculatedFieldInfo) {
-    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.SIMPLE, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
-    const preparedConfig = this.cfFormService.prepareConfig(configuration);
-    this.entityForm.patchValue({ type }, {emitEvent: false, onlySelf: true});
+    const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
     setTimeout(() => {
-      this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, ...value }, {emitEvent: false});
+      this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
     });
+    if (!entityId) {
+      this.entityForm.get('configuration').disable({emitEvent: false});
+    }
   }
 
   onTestScript(expression?: string): Observable<string> {
@@ -142,4 +139,37 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
       }
     }
   }
+
+  get arguments(): Record<string, CalculatedFieldArgument> {
+    return this.entityForm.get('configuration.arguments').value;
+  }
+
+  get predefinedTypeValues(): StringItemsOption[] {
+    return RelationTypes.map(type => ({
+      name: type,
+      value: type
+    }));
+  }
+
+  get configFormGroup(): FormGroup {
+    return this.entityForm.get('configuration') as FormGroup;
+  }
+
+  public removeClearAlarmRule() {
+    this.configFormGroup.patchValue({clearRule: null});
+    this.entityForm.markAsDirty();
+  }
+
+  public addClearAlarmRule() {
+    const clearAlarmRule: AlarmRule = {
+      condition: {
+        type: AlarmRuleConditionType.SIMPLE,
+        expression: {
+          type: AlarmRuleExpressionType.SIMPLE
+        }
+      }
+    };
+    this.configFormGroup.patchValue({clearRule: clearAlarmRule});
+  }
+
 }
