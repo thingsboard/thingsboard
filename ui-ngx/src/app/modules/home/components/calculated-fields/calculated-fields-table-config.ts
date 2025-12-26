@@ -253,7 +253,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       });
   }
 
-  private getCalculatedFieldDialog(value?: CalculatedFieldsTableEntity, buttonTitle = 'action.add', isDirty = false): Observable<CalculatedField> {
+  private getCalculatedFieldDialog(value?: CalculatedFieldsTableEntity, buttonTitle = 'action.add', isDirty = false, disabledSelectType = false): Observable<CalculatedField> {
     const entityId = this.entityId || value?.entityId;
     const entityName = this.entityName || (value as CalculatedFieldInfo)?.entityName;
     return this.dialog.open<CalculatedFieldDialogComponent, CalculatedFieldDialogData, CalculatedField>(CalculatedFieldDialogComponent, {
@@ -269,6 +269,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
         additionalDebugActionConfig: this.additionalDebugActionConfig,
         getTestScriptDialogFn: this.getTestScriptDialog.bind(this),
         isDirty,
+        disabledSelectType
       },
       enterAnimationDuration: isDirty ? 0 : null,
     })
@@ -344,7 +345,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
           }
           return of(calculatedField);
         }),
-        switchMap(calculatedField => this.getCalculatedFieldDialog(this.updateImportedCalculatedField(calculatedField), 'action.add', true)),
+        switchMap(calculatedField => this.getCalculatedFieldDialog(this.updateImportedCalculatedField(calculatedField), 'action.add', true, true)),
         filter(Boolean),
         switchMap(calculatedField => this.calculatedFieldsService.saveCalculatedField(calculatedField)),
         filter(Boolean),
