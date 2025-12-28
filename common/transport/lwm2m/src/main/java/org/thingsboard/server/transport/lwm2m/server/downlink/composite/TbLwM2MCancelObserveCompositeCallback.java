@@ -20,6 +20,8 @@ import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
 import org.thingsboard.server.transport.lwm2m.server.downlink.AbstractTbLwM2MRequestCallback;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 
+import java.util.Arrays;
+
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 
 @Slf4j
@@ -35,6 +37,6 @@ public class TbLwM2MCancelObserveCompositeCallback extends AbstractTbLwM2MReques
     @Override
     public void onSuccess(TbLwM2MCancelObserveCompositeRequest request, Integer canceledSubscriptionsCount) {
         log.trace("[{}] Cancel composite observation of [{}] successful: {}", client.getEndpoint(),  this.versionedIds, canceledSubscriptionsCount);
-        logService.log(client, String.format("[%s]: Cancel Composite Observe for [%s] successful. Result: [%s]", LOG_LWM2M_INFO, this.versionedIds, canceledSubscriptionsCount));
+        logService.log(client, String.format("[%s]: Cancel Composite Observe for [%s] successful. Result: [%s]", LOG_LWM2M_INFO, Arrays.toString(this.versionedIds), canceledSubscriptionsCount));
     }
 }
