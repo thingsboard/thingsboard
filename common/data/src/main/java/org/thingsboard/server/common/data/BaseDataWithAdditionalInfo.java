@@ -92,7 +92,7 @@ public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends Ba
 
     @Override
     public int hashCode() {
-        return Objects.hash(super.hashCode(), additionalInfoBytes);
+        return Objects.hash(super.hashCode(), Arrays.hashCode(additionalInfoBytes));
     }
 
     public static JsonNode getJson(Supplier<JsonNode> jsonData, Supplier<byte[]> binaryData) {
