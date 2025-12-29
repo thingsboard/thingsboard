@@ -66,6 +66,7 @@
       <tb-entity-select formControlName="entityId"
                         appearance="outline"
                         required
+                        entityTypeLabel="{{ 'entity.entity-type' | translate }}"
                         [filterAllowedEntityTypes]="false"
                         [allowedEntityTypes]="calculatedFieldsEntityTypeList"
                         (entityChanged)="changeEntity($event)">

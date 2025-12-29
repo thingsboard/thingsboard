@@ -73,6 +73,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit {
   @Input()
   defaultEntityType: AliasEntityType | EntityType;
 
+  @Input()
+  entityTypeLabel: string;
+
   @Output()
   entityChanged = new EventEmitter<BaseData<EntityId>>();
 

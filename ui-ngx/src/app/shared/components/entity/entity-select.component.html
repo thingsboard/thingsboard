@@ -19,6 +19,7 @@
   <tb-entity-type-select
     *ngIf="displayEntityTypeSelect"
     class="flex-1"
+    [label]="entityTypeLabel ?? null"
     [appearance]="appearance"
     [showLabel]="true"
     [required]="required"

@@ -262,6 +262,14 @@ public class AlarmRuleState {
         }
     }
 
+    public void setDurationCheckFuture(ScheduledFuture<?> durationCheckFuture) {
+        if (this.durationCheckFuture != null) {
+            log.warn("Setting new duration check future while previous is not null for state {}", this, new RuntimeException("stacktrace"));
+            this.durationCheckFuture.cancel(true);
+        }
+        this.durationCheckFuture = durationCheckFuture;
+    }
+
     public boolean isEmpty() {
         return eventCount == 0L && firstEventTs == 0L && lastCheckTs == 0L && durationCheckFuture == null;
     }

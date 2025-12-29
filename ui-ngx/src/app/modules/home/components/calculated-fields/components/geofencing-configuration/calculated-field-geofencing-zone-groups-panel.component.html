@@ -95,7 +95,9 @@
     <ng-container [formGroup]="refDynamicSourceFormGroup">
       <div class="tb-form-panel stroked" *ngIf="entityType === ArgumentEntityType.RelationQuery">
         <mat-expansion-panel class="tb-settings" expanded>
-          <mat-expansion-panel-header>{{ 'calculated-fields.entity-zone-relationship' | translate }}</mat-expansion-panel-header>
+          <mat-expansion-panel-header>
+            <span class="tb-form-panel-title tb-required">{{ 'calculated-fields.entity-zone-relationship' | translate }}</span>
+          </mat-expansion-panel-header>
           <div class="tb-form-table">
             <div class="tb-form-table-header">
               <div class="tb-form-table-header-cell tb-actions-header"></div>
