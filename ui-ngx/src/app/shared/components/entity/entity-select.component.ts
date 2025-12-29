@@ -68,7 +68,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit {
   useEntityDisplayName = false;
 
   @Input()
-  filterAllowedEntityTypes: boolean;
+  filterAllowedEntityTypes = true;
 
   @Input()
   defaultEntityType: AliasEntityType | EntityType;
@@ -83,7 +83,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit {
 
   AliasEntityType = AliasEntityType;
 
-  entityTypeNullUUID: Set<AliasEntityType | EntityType | string> = new Set([
+  entityTypeNullUUID = new Set<AliasEntityType | EntityType | string>([
     AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
   ]);
 
