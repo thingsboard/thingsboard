@@ -25,6 +25,7 @@ import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
+import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.HasLatestTs;
 
 import java.util.Map;
@@ -68,7 +69,7 @@ public class GeofencingArgumentEntry implements ArgumentEntry, HasLatestTs {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (!(entry instanceof GeofencingArgumentEntry geofencingArgumentEntry)) {
             throw new IllegalArgumentException("Unsupported argument entry type for geofencing argument entry: " + entry.getType());
         }

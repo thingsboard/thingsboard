@@ -572,24 +572,24 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, List<TsKvProto> data) {
-        return mapToArguments(entityId, ctx.getMainEntityArguments(), Collections.emptyMap(), data);
+        return mapToArguments(entityId, ctx, ctx.getMainEntityArguments(), Collections.emptyMap(), data);
     }
 
     private Map<String, ArgumentEntry> mapToArguments(CalculatedFieldCtx ctx, EntityId entityId, List<TsKvProto> data) {
-        return mapToArguments(entityId, ctx.getLinkedAndDynamicArgs(entityId), ctx.getRelatedEntityArguments(), data);
+        return mapToArguments(entityId, ctx, ctx.getLinkedAndDynamicArgs(entityId), ctx.getRelatedEntityArguments(), data);
     }
 
-    private Map<String, ArgumentEntry> mapToArguments(EntityId originator, Map<ReferencedEntityKey, Set<String>> args, Map<ReferencedEntityKey, Set<String>> relatedEntityArgs, List<TsKvProto> data) {
+    private Map<String, ArgumentEntry> mapToArguments(EntityId originator, CalculatedFieldCtx ctx, Map<ReferencedEntityKey, Set<String>> args, Map<ReferencedEntityKey, Set<String>> relatedEntityArgs, List<TsKvProto> data) {
         Map<String, ArgumentEntry> arguments = new HashMap<>();
         if (!relatedEntityArgs.isEmpty() || !args.isEmpty()) {
             for (TsKvProto item : data) {
                 ReferencedEntityKey key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_LATEST, null);
 
                 SingleValueArgumentEntry relatedArgIncoming = new SingleValueArgumentEntry(originator, item);
-                mapLatest(relatedArgIncoming, relatedEntityArgs.get(key), arguments);
+                mapLatest(ctx, relatedArgIncoming, relatedEntityArgs.get(key), arguments);
 
                 SingleValueArgumentEntry incoming = new SingleValueArgumentEntry(item);
-                mapLatest(incoming, args.get(key), arguments);
+                mapLatest(ctx, incoming, args.get(key), arguments);
 
                 key = new ReferencedEntityKey(item.getKv().getKey(), ArgumentType.TS_ROLLING, null);
                 mapRolling(item, args.get(key), arguments);
@@ -598,7 +598,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
         return arguments;
     }
 
-    private void mapLatest(SingleValueArgumentEntry incoming,
+    private void mapLatest(CalculatedFieldCtx ctx,
+                           SingleValueArgumentEntry incoming,
                            Set<String> argNames,
                            Map<String, ArgumentEntry> arguments) {
         if (argNames != null) {
@@ -606,7 +607,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 if (existing == null) {
                     return incoming;
                 }
-                existing.updateEntry(incoming);
+                existing.updateEntry(incoming, ctx);
                 return existing;
             }));
         }
