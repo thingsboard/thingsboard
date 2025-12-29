@@ -14,7 +14,7 @@
 # limitations under the License.
 #
 
-FROM ${docker.base.image}
+FROM thingsboard/openjdk17:bookworm-slim
 
 ENV PG_MAJOR=16
 
@@ -39,21 +39,6 @@ ENV PATH=$PATH:/usr/lib/postgresql/$PG_MAJOR/bin
 
 ENV PGLOG=/var/log/postgres
 ENV CASSANDRA_LOG=/var/log/cassandra
-
-# For SVG renderer Debian Trixie slim fonts should be installed explicitly
-RUN echo "Previously installed font libraries:" \
- && (dpkg -l | grep -E 'font|dejavu|harfbuzz' || echo "  (none)") \
- && apt-get update \
- && apt-get install -y --no-install-recommends \
-      libharfbuzz0b fontconfig fonts-dejavu-core \
- && rm -rf /var/lib/apt/lists/* \
- && echo "Current fonts libraries:" \
- && (dpkg -l | grep -E 'font|dejavu|harfbuzz') \
- && echo "Font config list:" \
- && fc-list && test -n "$(fc-list)" \
- && (fc-list | grep -i dejavu) \
- && echo "Harfbuzz library test with ldconfig:" \
- && (ldconfig -p | grep harfbuzz)
 
 COPY logback.xml ${pkg.name}.conf start-db.sh stop-db.sh start-tb.sh upgrade-tb.sh install-tb.sh ${pkg.name}.deb /tmp/
 
