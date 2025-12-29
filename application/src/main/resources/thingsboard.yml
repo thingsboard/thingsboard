@@ -1467,7 +1467,7 @@ device:
       pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
     gateway:
       # The docker tag for thingsboard/tb-gateway image used in docker-compose file for gateway launch
-      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.7-stable}"
+      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.8-stable}"
 
 # Edges parameters
 edges:

@@ -95,7 +95,7 @@ public class DeviceConnectivityControllerTest extends AbstractControllerTest {
     private DeviceProfileId mqttDeviceProfileId;
     private DeviceProfileId coapDeviceProfileId;
 
-    @Value("${device.connectivity.gateway.image_version:3.7-stable}")
+    @Value("${device.connectivity.gateway.image_version:3.8-stable}")
     private String gatewayImageVersion;
 
     @Before
