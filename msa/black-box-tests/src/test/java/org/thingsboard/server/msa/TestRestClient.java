@@ -485,7 +485,7 @@ public class TestRestClient {
                 .as(DeviceProfile.class);
     }
 
-    public void deleteDeviseProfile(DeviceProfileId deviceProfileId) {
+    public void deleteDeviceProfile(DeviceProfileId deviceProfileId) {
         given().spec(requestSpec)
                 .delete("/api/deviceProfile/{deviceProfileId}", deviceProfileId.getId())
                 .then()
