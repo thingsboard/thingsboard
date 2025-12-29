@@ -82,15 +82,6 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
         interval = configuration.getInterval();
         metrics = configuration.getMetrics();
         produceIntermediateResult = configuration.isProduceIntermediateResult();
-        setCtxToArguments();
-    }
-
-    private void setCtxToArguments() {
-        arguments.values().forEach(argument -> {
-            if (argument instanceof EntityAggregationArgumentEntry entityAggArgument) {
-                entityAggArgument.setCtx(ctx);
-            }
-        });
     }
 
     @Override

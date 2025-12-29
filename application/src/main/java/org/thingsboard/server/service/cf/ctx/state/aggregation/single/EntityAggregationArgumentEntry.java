@@ -39,16 +39,8 @@ public class EntityAggregationArgumentEntry implements ArgumentEntry {
 
     private boolean forceResetPrevious;
 
-    private AggInterval interval;
-    private long watermarkDuration;
-
     public EntityAggregationArgumentEntry(Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals) {
         this.aggIntervals = aggIntervals;
-    }
-
-    public EntityAggregationArgumentEntry(Map<AggIntervalEntry, AggIntervalEntryStatus> aggIntervals, CalculatedFieldCtx ctx) {
-        this(aggIntervals);
-        setCtx(ctx);
     }
 
     @Override
@@ -61,15 +53,8 @@ public class EntityAggregationArgumentEntry implements ArgumentEntry {
         return aggIntervals;
     }
 
-    public void setCtx(CalculatedFieldCtx ctx) {
-        var configuration = (EntityAggregationCalculatedFieldConfiguration) ctx.getCalculatedField().getConfiguration();
-        interval = configuration.getInterval();
-        Watermark watermark = configuration.getWatermark();
-        watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
-    }
-
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof EntityAggregationArgumentEntry entityAggEntry) {
             aggIntervals.putAll(entityAggEntry.getAggIntervals());
             return true;
@@ -79,7 +64,7 @@ public class EntityAggregationArgumentEntry implements ArgumentEntry {
             if (updateExistingIntervals(singleValueArgEntry, entryTs, now)) {
                 return true;
             }
-            return createNewInterval(entryTs, now);
+            return createNewInterval(entryTs, now, ctx);
         }
         return false;
     }
@@ -104,7 +89,14 @@ public class EntityAggregationArgumentEntry implements ArgumentEntry {
         return updated;
     }
 
-    private boolean createNewInterval(long entryTs, long now) {
+    private boolean createNewInterval(long entryTs, long now, CalculatedFieldCtx ctx) {
+        if (!(ctx.getCalculatedField().getConfiguration() instanceof EntityAggregationCalculatedFieldConfiguration config)) {
+            return false;
+        }
+        AggInterval interval = config.getInterval();
+        Watermark watermark = config.getWatermark();
+        long watermarkDuration = watermark == null ? 0 : TimeUnit.SECONDS.toMillis(watermark.getDuration());
+
         ZonedDateTime zdt = ZonedDateTime.ofInstant(Instant.ofEpochMilli(entryTs), interval.getZoneId());
 
         long startTs = interval.getDateTimeIntervalStartTs(zdt);

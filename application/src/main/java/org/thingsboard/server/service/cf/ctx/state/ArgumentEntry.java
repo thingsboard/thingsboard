@@ -52,7 +52,7 @@ public interface ArgumentEntry {
 
     Object getValue();
 
-    boolean updateEntry(ArgumentEntry entry);
+    boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx);
 
     boolean isEmpty();
 
