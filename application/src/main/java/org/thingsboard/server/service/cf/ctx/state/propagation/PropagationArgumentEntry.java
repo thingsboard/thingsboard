@@ -36,7 +36,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
     private transient EntityId removed;
 
     private transient boolean forceResetPrevious;
-    private transient boolean ignoreRemovedEntities;
+    private transient boolean syncWithDb;
 
     public PropagationArgumentEntry() {
         this.entityIds = new HashSet<>();
@@ -69,14 +69,18 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         if (updated.getRemoved() != null) {
             return entityIds.remove(updated.getRemoved());
         }
-        if (updated.isIgnoreRemovedEntities()) {
-            Set<EntityId> updatedIds = updated.getEntityIds();
-            if (updatedIds.isEmpty()) {
+        if (updated.isSyncWithDb()) {
+            Set<EntityId> dbEntityIds = updated.getEntityIds();
+            if (dbEntityIds.isEmpty()) {
+                if (entityIds.isEmpty()) {
+                    return false;
+                }
                 entityIds.clear();
-                return false;
+                return true;
             }
-            entityIds.retainAll(updatedIds);
-            return checkAdded(updatedIds);
+            boolean retained = entityIds.retainAll(dbEntityIds);
+            boolean added = checkAdded(dbEntityIds);
+            return retained || added;
         }
         if (updated.isEmpty()) {
             entityIds.clear();
