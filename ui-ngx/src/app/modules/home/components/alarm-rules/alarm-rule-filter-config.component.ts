@@ -196,6 +196,7 @@ export class AlarmRuleFilterConfigComponent implements OnInit, ControlValueAcces
 
   cancel() {
     this.updateAlarmRuleConfigForm(this.alarmRuleFilterConfig);
+    this.alarmRuleFilterConfigForm.markAsPristine();
     if (this.overlayRef) {
       this.overlayRef.dispose();
     } else {

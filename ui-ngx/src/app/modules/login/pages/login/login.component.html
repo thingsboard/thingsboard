@@ -22,9 +22,9 @@
         <div class="flex flex-col items-center justify-start" style="padding: 16px 0;">
           <tb-logo link="https://thingsboard.io" target="_blank" class="login-logo"></tb-logo>
         </div>
-        <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading">
+        <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading || (isLoading$ | async)">
         </mat-progress-bar>
-        <span style="height: 4px;" *ngIf="!isLoading"></span>
+        <span style="height: 4px;" *ngIf="!isLoading && !(isLoading$ | async)"></span>
         <span tb-toast style="height: 20px;"></span>
         <div class="flex flex-col">
           @if(oauth2Clients?.length) {
@@ -70,7 +70,7 @@
             <tb-toggle-password matSuffix></tb-toggle-password>
             <mat-icon matPrefix>lock</mat-icon>
           </mat-form-field>
-          <button mat-flat-button color="accent" [disabled]="isLoading"
+          <button mat-flat-button color="accent" [disabled]="isLoading || (isLoading$ | async)"
                   class="tb-action-button" type="submit">{{ 'login.sign-in' | translate }}</button>
           <div class="forgot-password flex items-center justify-end gap-5">
             <button class="tb-reset-password" mat-button type="button" routerLink="/login/resetPasswordRequest">

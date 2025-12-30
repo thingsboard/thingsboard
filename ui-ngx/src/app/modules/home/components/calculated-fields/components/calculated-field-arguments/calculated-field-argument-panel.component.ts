@@ -259,7 +259,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
         };
     }
     if (!onInit) {
-      this.argumentFormGroup.get('refEntityKey').get('key').setValue('');
+      this.argumentFormGroup.get('refEntityKey').get('key').setValue('', {emitEvents: !this.watchKeyChange});
+      if (this.watchKeyChange && this.argumentFormGroup.get('argumentName').pristine) {
+        this.argumentFormGroup.get('argumentName').markAsUntouched({emitEvent: false});
+        this.argumentFormGroup.get('argumentName').setValue('', {emitEvent: false});
+      }
     } else if (this.predefinedEntityFilter) {
       entityFilter = this.predefinedEntityFilter;
     }

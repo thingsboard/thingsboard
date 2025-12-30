@@ -27,10 +27,9 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { AlarmSeverity, alarmSeverityTranslations } from '@shared/models/alarm.models';
+import { AlarmSeverity, alarmSeverityColors, alarmSeverityTranslations } from '@shared/models/alarm.models';
 import { AlarmRule } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
-import { AlarmSeverityNotificationColors } from "@shared/models/notification.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { coerceBoolean } from "@shared/decorators/coercion";
 import { Observable } from "rxjs";
@@ -68,7 +67,7 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
   alarmSeverityEnum = AlarmSeverity;
   alarmSeverityTranslationMap = alarmSeverityTranslations;
 
-  AlarmSeverityNotificationColors = AlarmSeverityNotificationColors;
+  AlarmSeverityNotificationColors = alarmSeverityColors;
 
   createAlarmRulesFormGroup = this.fb.group({
     createAlarmRules: this.fb.array<{severity: AlarmSeverity, alarmRule: AlarmRule}>([])
@@ -115,13 +114,13 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
         }
         createAlarmRulesControls.push(this.fb.group({
           severity: [severity, Validators.required],
-          alarmRule: [createAlarmRule, Validators.required]
+          alarmRule: [{value: createAlarmRule, disabled: this.disabled}, Validators.required]
         }));
       });
     }
     const formArray = this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray;
-    formArray.clear();
-    createAlarmRulesControls.forEach(c => formArray.push(c));
+    formArray.clear({emitEvent: false});
+    createAlarmRulesControls.forEach(c => formArray.push(c, {emitEvent: false}));
     if (this.disabled) {
       this.createAlarmRulesFormGroup.disable({emitEvent: false});
     } else {

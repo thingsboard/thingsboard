@@ -27,6 +27,7 @@ import com.google.gson.reflect.TypeToken;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.action.TbSaveToCustomCassandraTableNode;
+import org.thingsboard.rule.engine.ai.TbAiNode;
 import org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNode;
 import org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode;
 import org.thingsboard.rule.engine.telemetry.TbCalculatedFieldsNode;
@@ -167,6 +168,14 @@ public class EdgeMsgConstructorUtils {
     );
 
     public static final Map<EdgeVersion, Set<String>> EXCLUDED_NODES_BY_EDGE_VERSION = Map.of(
+            EdgeVersion.V_4_1_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
+            EdgeVersion.V_4_0_0,
+            Set.of(
+                    TbAiNode.class.getName()
+            ),
             EdgeVersion.V_3_9_0,
             Set.of(
                     TbCalculatedFieldsNode.class.getName()
@@ -560,7 +569,7 @@ public class EdgeMsgConstructorUtils {
                 .setEntityIdMSB(entityId.getId().getMostSignificantBits())
                 .setEntityIdLSB(entityId.getId().getLeastSignificantBits())
                 .setEntityType(entityId.getEntityType().name());
-        long ts = getTs(entityData.getAsJsonObject());
+        long ts = extractTs(entityData.getAsJsonObject());
         switch (actionType) {
             case TIMESERIES_UPDATED:
                 try {
@@ -613,8 +622,8 @@ public class EdgeMsgConstructorUtils {
         return builder.build();
     }
 
-    private static long getTs(JsonObject data) {
-        if (data.get("ts") != null && !data.get("ts").isJsonNull()) {
+    private static long extractTs(JsonObject data) {
+        if (data.has("ts") && data.get("ts").isJsonPrimitive()) {
             return data.getAsJsonPrimitive("ts").getAsLong();
         }
         return System.currentTimeMillis();
@@ -740,7 +749,7 @@ public class EdgeMsgConstructorUtils {
             result.sort(Comparator.comparingLong(EdgeEvent::getSeqId));
             return result;
         } catch (Exception e) {
-            log.warn("Can't merge downlink duplicates, edgeEvents [{}]", edgeEvents, e);
+            log.info("Can't merge downlink duplicates. Sending downlinks without merge. Original edgeEvents [{}]", edgeEvents, e);
             return edgeEvents;
         }
     }
@@ -751,6 +760,9 @@ public class EdgeMsgConstructorUtils {
         }
         String bodyStr = JacksonUtil.toString(body);
         var jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
+        if (!jsonObject.has("ts")) {
+            return new AttrsTs(0L, List.of());
+        }
         long ts = jsonObject.get("ts").getAsLong();
         var kv = jsonObject.getAsJsonObject("kv");
         List<AttributeKvEntry> attrs = JsonConverter.convertToAttributes(
@@ -761,22 +773,24 @@ public class EdgeMsgConstructorUtils {
     }
 
     private static JsonNode filterAttributesBody(JsonNode body, Map<String, Long> latestByKey) {
-        if (body == null || latestByKey == null || latestByKey.isEmpty()) {
+        if (body == null) {
             return null;
         }
         String bodyStr = JacksonUtil.toString(body);
         JsonObject jsonObject = JsonParser.parseString(bodyStr).getAsJsonObject();
-        long ts = jsonObject.get("ts").getAsLong();
-        JsonObject kv = jsonObject.getAsJsonObject("kv");
-        for (Iterator<Map.Entry<String, JsonElement>> it = kv.entrySet().iterator(); it.hasNext(); ) {
-            Map.Entry<String, JsonElement> e = it.next();
-            Long latestTs = latestByKey.get(e.getKey());
-            if (latestTs == null || !latestTs.equals(ts)) {
-                it.remove();
+        if (jsonObject.has("ts") && latestByKey != null && !latestByKey.isEmpty()) {
+            long ts = jsonObject.get("ts").getAsLong();
+            JsonObject kv = jsonObject.getAsJsonObject("kv");
+            for (Iterator<Map.Entry<String, JsonElement>> it = kv.entrySet().iterator(); it.hasNext(); ) {
+                Map.Entry<String, JsonElement> e = it.next();
+                Long latestTs = latestByKey.get(e.getKey());
+                if (latestTs == null || !latestTs.equals(ts)) {
+                    it.remove();
+                }
             }
-        }
-        if (kv.isEmpty()) {
-            return null;
+            if (kv.isEmpty()) {
+                return null;
+            }
         }
         return JacksonUtil.toJsonNode(jsonObject.toString());
     }

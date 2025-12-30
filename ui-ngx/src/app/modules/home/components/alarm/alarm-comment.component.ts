@@ -32,13 +32,15 @@ import {
   AlarmCommentInfo,
   AlarmCommentType,
   AlarmMessage,
+  AlarmSeverity,
+  alarmSeverityTranslations,
   getUserDisplayName
 } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DatePipe } from '@angular/common';
 import { ImportExportService } from '@shared/import-export/import-export.service';
-import { isNotEmptyStr } from '@core/utils';
+import { deepClone, isNotEmptyStr } from '@core/utils';
 
 interface AlarmCommentsDisplayData {
   commentId?: string;
@@ -153,8 +155,21 @@ export class AlarmCommentComponent implements OnInit {
   private parseSystemComment(alarm: AlarmCommentInfo): string {
     const subTypeKey = alarm.comment?.subtype;
     if (subTypeKey && AlarmMessage[subTypeKey]) {
+      const alarmComment = deepClone(alarm.comment);
       const translationKey = AlarmMessage[subTypeKey];
-      return this.translate.instant(translationKey, alarm.comment);
+      if (alarmComment?.newSeverity) {
+        alarmComment.newSeverity =
+          (alarmSeverityTranslations.has(alarmComment.newSeverity)
+            ? this.translate.instant(alarmSeverityTranslations.get(alarmComment.newSeverity))
+            : alarmComment.newSeverity) as AlarmSeverity;
+      }
+      if (alarmComment?.oldSeverity) {
+        alarmComment.oldSeverity =
+          (alarmSeverityTranslations.has(alarmComment.oldSeverity)
+            ? this.translate.instant(alarmSeverityTranslations.get(alarmComment.oldSeverity))
+            : alarmComment.oldSeverity) as AlarmSeverity;
+      }
+      return this.translate.instant(translationKey, alarmComment);
     }
     return alarm.comment.text;
   }

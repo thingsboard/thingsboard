@@ -1,0 +1,159 @@
+<!--
+
+    Copyright © 2016-2025 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'open')"
+          [class.!hidden]="isEdit || isDetailsPage">
+    {{ 'common.open-details-page' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'export')"
+          [class.!hidden]="isEdit">
+    {{ 'action.export' | translate }}
+  </button>
+  <button mat-raised-button color="primary"
+          [disabled]="(isLoading$ | async)"
+          (click)="onEntityAction($event, 'delete')"
+          [class.!hidden]="hideDelete() || isEdit">
+    {{ 'action.delete' | translate }}
+  </button>
+</div>
+<div class="mat-padding flex flex-1 flex-col" [formGroup]="entityForm">
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-panel no-gap">
+      <div class="tb-form-panel-title mb-4">{{ 'common.general' | translate }}</div>
+      <div class="flex items-center gap-2">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+          <mat-label>{{ 'entity-field.title' | translate }}</mat-label>
+          <input matInput maxlength="255" formControlName="name" required>
+          @if (entityForm.get('name').errors && entityForm.get('name').touched) {
+            <mat-error>
+              @if (entityForm.get('name').hasError('required')) {
+                {{ 'common.hint.title-required' | translate }}
+              } @else if (entityForm.get('name').hasError('pattern')) {
+                {{ 'common.hint.title-pattern' | translate }}
+              } @else if (entityForm.get('name').hasError('maxlength')) {
+                {{ 'common.hint.title-max-length' | translate }}
+              }
+            </mat-error>
+          }
+          <mat-hint></mat-hint>
+        </mat-form-field>
+        <tb-entity-debug-settings-button
+            formControlName="debugSettings"
+            style="margin-bottom: 22px"
+            [entityType]="EntityType.CALCULATED_FIELD"
+            [additionalActionConfig]="additionalDebugActionConfig"
+        />
+      </div>
+      <tb-entity-select formControlName="entityId"
+                        appearance="outline"
+                        required
+                        entityTypeLabel="{{ 'entity.entity-type' | translate }}"
+                        [filterAllowedEntityTypes]="false"
+                        [allowedEntityTypes]="calculatedFieldsEntityTypeList"
+                        (entityChanged)="changeEntity($event)">
+      </tb-entity-select>
+    </div>
+    <ng-container formGroupName="configuration">
+      <div class="tb-form-panel" [class.disabled]="!isEditValue">
+        <div class="tb-form-panel-title tb-required">{{ 'calculated-fields.arguments' | translate }}</div>
+        <tb-calculated-field-arguments-table formControlName="arguments"
+                                             [entityId]="entityId"
+                                             [tenantId]="tenantId"
+                                             [ownerId]="ownerId"
+                                             [watchKeyChange]="true"
+                                             [entityName]="entityName"/>
+      </div>
+      <div class="tb-form-panel" [class.disabled]="!isEditValue">
+        <div class="tb-form-panel-title">{{ 'alarm-rule.create-conditions' | translate }}</div>
+        <div class="flex flex-1 flex-col">
+          <tb-create-cf-alarm-rules formControlName="createRules" [arguments]="arguments" [testScript]="onTestScript.bind(this)">
+          </tb-create-cf-alarm-rules>
+        </div>
+      </div>
+      <div class="tb-form-panel" [class.disabled]="!isEditValue">
+        <div class="tb-form-panel-title">{{ 'alarm-rule.clear-condition' | translate }}</div>
+        <div class="flex flex-row items-center justify-start gap-2 pb-2"
+             [class.!hidden]="!configFormGroup.get('clearRule').value">
+          <div class="clear-alarm-rule flex flex-1 flex-row">
+            <tb-cf-alarm-rule formControlName="clearRule" class="flex-1" [arguments]="arguments" [testScript]="onTestScript.bind(this)" isClearCondition>
+            </tb-cf-alarm-rule>
+          </div>
+          <button mat-icon-button
+                  class="button-icon"
+                  type="button"
+                  (click)="removeClearAlarmRule()"
+                  matTooltip="{{ 'action.remove' | translate }}"
+                  matTooltipPosition="above">
+            <mat-icon>delete</mat-icon>
+          </button>
+        </div>
+        <div *ngIf="!configFormGroup.get('clearRule').value">
+          <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>
+        </div>
+        <div [class.!hidden]="configFormGroup.get('clearRule').value">
+          <button mat-stroked-button color="primary"
+                  [disabled]="!isEditValue"
+                  type="button"
+                  (click)="addClearAlarmRule()">
+            {{ 'alarm-rule.add-clear-alarm-rule' | translate }}
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-panel no-gap">
+        <mat-expansion-panel class="tb-settings" [expanded]="false">
+          <mat-expansion-panel-header [class.tb-disabled]="!isEditValue">
+            {{ 'alarm-rule.advanced-settings' | translate }}
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <div class="tb-form-panel stroked no-padding no-gap">
+              <div class="tb-form-row no-border">
+                <mat-slide-toggle class="mat-slide margin" formControlName="propagate">
+                  {{ 'alarm-rule.propagate-alarm' | translate }}
+                </mat-slide-toggle>
+              </div>
+              @if (configFormGroup.get('propagate').value) {
+                <tb-string-items-list appearance="outline"
+                                      class="flex flex-1 px-4"
+                                      label="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
+                                      placeholder="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
+                                      hint="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"
+                                      [predefinedValues]="predefinedTypeValues"
+                                      formControlName="propagateRelationTypes">
+                </tb-string-items-list>
+              }
+            </div>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide margin" formControlName="propagateToOwner">
+                {{ 'alarm-rule.propagate-alarm-to-owner' | translate }}
+              </mat-slide-toggle>
+            </div>
+            <div class="tb-form-row">
+              <mat-slide-toggle class="mat-slide margin" formControlName="propagateToTenant">
+                {{ 'alarm-rule.propagate-alarm-to-tenant' | translate }}
+              </mat-slide-toggle>
+            </div>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+    </ng-container>
+  </div>
+</div>

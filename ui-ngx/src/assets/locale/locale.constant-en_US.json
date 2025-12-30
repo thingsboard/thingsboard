@@ -1086,7 +1086,7 @@
         "filter-types": "Audit log types"
     },
     "debug-settings": {
-        "label": "Debug Configuration",
+        "label": "Debug configuration",
         "on-failure": "Failures only (24/7)",
         "all-messages": "All messages ({{time}})",
         "failures": "Failures",
@@ -1115,6 +1115,7 @@
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
         "debugging": "Calculated field debugging",
+        "calculated-field-details": "Calculated field details",
         "argument-name": "Argument name",
         "name": "Name",
         "datasource": "Datasource",
@@ -1182,7 +1183,7 @@
         "perimeter-attribute-key": "Perimeter attribute key",
         "perimeter-attribute-key-required": "Perimeter attribute key is required.",
         "perimeter-attribute-key-pattern": "Perimeter attribute key is invalid.",
-        "entity-zone-relationship": "Path from Entity to Zones *",
+        "entity-zone-relationship": "Path from Entity to Zones",
         "direction": "Relation direction",
         "direction-from": "From entity to zone",
         "direction-to": "From zone to entity",
@@ -1220,6 +1221,7 @@
         "calculated-field-filter-title": "Calculated field filter",
         "filter-title": "Filter",
         "calculated-field-types": "Calculated field types",
+        "events": "Events",
         "any-type": "Any type",
         "metrics": {
             "metrics": "Metrics",
@@ -1392,6 +1394,7 @@
         "create": "Create new alarm rule",
         "add": "Add alarm rule",
         "copy": "Copy alarm rule configuration",
+        "details": "Alarm rule details",
         "no-found": "No alarm rules found",
         "list": "{ count, plural, =1 {One alarm rule} other {List of # alarm rules} }",
         "selected-fields": "{ count, plural, =1 {1 alarm rule} other {# alarm rules} } selected",
