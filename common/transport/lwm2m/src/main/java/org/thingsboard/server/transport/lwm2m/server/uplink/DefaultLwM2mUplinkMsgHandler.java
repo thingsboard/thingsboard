@@ -420,7 +420,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             });
             if (!clients.isEmpty()) {
                 var oldProfile = clientContext.getProfile(clients.get(0).getRegistration());
-                this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
+                if (oldProfile != null) this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
             }
         } catch (Exception e) {
             log.warn("[{}] failed to update profile: {} [{}]", deviceProfile.getId(), e.getMessage(), deviceProfile);
@@ -725,8 +725,10 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private void onDeviceUpdate(LwM2mClient lwM2MClient, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         var oldProfile = clientContext.getProfile(lwM2MClient.getRegistration());
-        deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), oldProfile, deviceProfile));
-        lwM2MClient.onDeviceUpdate(device, deviceProfileOpt);
+        if (oldProfile != null) {
+            deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), oldProfile, deviceProfile));
+            lwM2MClient.onDeviceUpdate(device, deviceProfileOpt);
+        }
     }
 
     /**
@@ -740,45 +742,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         Set<String> paths = updateResource.getPaths();
         ResultsAddKeyValueProto results = new ResultsAddKeyValueProto();
         var profile = clientContext.getProfile(registration);
-        List<TransportProtos.KeyValueProto> resultAttributes = new ArrayList<>();
-        Set<String> attributes = profile.getObserveAttr().getAttribute().stream()
-                .filter(paths::contains)
-                .collect(Collectors.toSet());
-        if (!attributes.isEmpty()){
-            attributes.stream()
-                    .map(attr -> this.getKvToThingsBoard(attr, registration))
-                    .filter(Objects::nonNull)
-                    .forEach(resultAttributes::add);
-        }
-        List<TransportProtos.KeyValueProto> resultTelemetries = new ArrayList<>();
-        Set<String> telemetries = profile.getObserveAttr().getTelemetry().stream()
-                .filter(paths::contains)
-                .collect(Collectors.toSet());
-        if (!telemetries.isEmpty()){
-            telemetries.stream()
-                    .map(telemetry -> this.getKvToThingsBoard(telemetry, registration))
-                    .filter(Objects::nonNull)
-                    .forEach(resultTelemetries::add);
-        }
-        if (resultAttributes.size() > 0) {
-            results.setResultAttributes(resultAttributes);
-        }
-        if (resultTelemetries.size() > 0) {
-            results.setResultTelemetries(resultTelemetries);
-        }
-        return results;
-    }
-
-    private ResultsAddKeyValueProto getParametersFromProfile(Registration registration, Set<String> path) {
-        if (!path.isEmpty()) {
-            ResultsAddKeyValueProto results = new ResultsAddKeyValueProto();
-            var profile = clientContext.getProfile(registration);
+        if (profile != null) {
             List<TransportProtos.KeyValueProto> resultAttributes = new ArrayList<>();
             Set<String> attributes = profile.getObserveAttr().getAttribute().stream()
-                    .map(LwM2MTransportUtil::fromVersionedIdToObjectId)
-                    .filter(path::contains)
+                    .filter(paths::contains)
                     .collect(Collectors.toSet());
-            if (!attributes.isEmpty()){
+            if (!attributes.isEmpty()) {
                 attributes.stream()
                         .map(attr -> this.getKvToThingsBoard(attr, registration))
                         .filter(Objects::nonNull)
@@ -786,10 +755,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             }
             List<TransportProtos.KeyValueProto> resultTelemetries = new ArrayList<>();
             Set<String> telemetries = profile.getObserveAttr().getTelemetry().stream()
-                    .map(LwM2MTransportUtil::fromVersionedIdToObjectId)
-                    .filter(path::contains)
+                    .filter(paths::contains)
                     .collect(Collectors.toSet());
-            if (!telemetries.isEmpty()){
+            if (!telemetries.isEmpty()) {
                 telemetries.stream()
                         .map(telemetry -> this.getKvToThingsBoard(telemetry, registration))
                         .filter(Objects::nonNull)
@@ -801,14 +769,15 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             if (resultTelemetries.size() > 0) {
                 results.setResultTelemetries(resultTelemetries);
             }
-            return results;
         }
-        return null;
+        return results;
     }
 
     private TransportProtos.KeyValueProto getKvToThingsBoard(String pathIdVer, Registration registration) {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        Map<String, String> names = clientContext.getProfile(lwM2MClient.getRegistration()).getObserveAttr().getKeyName();
+        var clientProfile = clientContext.getProfile(lwM2MClient.getRegistration());
+        if (clientProfile == null) return null;
+        Map<String, String> names = clientProfile.getObserveAttr().getKeyName();
         if (names != null && names.containsKey(pathIdVer)) {
             String resourceName = names.get(pathIdVer);
             if (resourceName != null && !resourceName.isEmpty()) {
@@ -899,10 +868,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void onDeviceProfileUpdate(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfileTransportConfiguration, DeviceProfile deviceProfile) {
         if (clientContext.profileUpdate(deviceProfile) != null) {
             var newProfileTransportConfiguration = clientContext.getProfile(clients.get(0).getRegistration());
-            ParametersUpdateAnalyzeResult parametersUpdate = getParametersUpdate(oldProfileTransportConfiguration, newProfileTransportConfiguration);
-            ParametersObserveAnalyzeResult parametersObserve = getParametersObserve(oldProfileTransportConfiguration.getObserveAttr(), newProfileTransportConfiguration.getObserveAttr(), deviceProfile.getId().getId());
-            compareAndSetWriteAttributesObservations(clients, parametersUpdate, parametersObserve);
-            updateValueOta(clients, newProfileTransportConfiguration, oldProfileTransportConfiguration);
+            if (newProfileTransportConfiguration != null) {
+                ParametersUpdateAnalyzeResult parametersUpdate = getParametersUpdate(oldProfileTransportConfiguration, newProfileTransportConfiguration);
+                ParametersObserveAnalyzeResult parametersObserve = getParametersObserve(oldProfileTransportConfiguration.getObserveAttr(), newProfileTransportConfiguration.getObserveAttr(), deviceProfile.getId().getId());
+                compareAndSetWriteAttributesObservations(clients, parametersUpdate, parametersObserve);
+                updateValueOta(clients, newProfileTransportConfiguration, oldProfileTransportConfiguration);
+            }
         }
     }
 
