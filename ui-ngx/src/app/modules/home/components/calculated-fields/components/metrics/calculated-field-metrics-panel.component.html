@@ -130,7 +130,10 @@
     <ng-container formGroupName="input">
       @if (!simpleMode) {
         <div class="tb-form-row">
-          <div class="fixed-title-width">{{ 'calculated-fields.metrics.value-source' | translate }}</div>
+          <div class="fixed-title-width"
+               tb-hint-tooltip-icon="{{ 'calculated-fields.metrics.value-source-hint' | translate }}">
+            {{ 'calculated-fields.metrics.value-source' | translate }}
+          </div>
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="type">
               @for (inputType of AggInputTypes; track inputType) {

@@ -16,7 +16,9 @@
 
 -->
 <div class="tb-form-panel" [formGroup]="outputForm">
-  <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
+  <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.output-hint' | translate }}">
+    {{ 'calculated-fields.output' | translate }}
+  </div>
   <div [class]=containerInputClass>
     <div class="flex gap-3 xs:flex-col">
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">

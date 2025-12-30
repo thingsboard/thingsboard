@@ -63,10 +63,10 @@
     <tb-time-unit-input required
                         sameWidthInputs
                         appearance="outline"
-                        subscriptSizing="dynamic"
                         labelText="{{ 'calculated-fields.deduplication-interval' | translate }}"
                         requiredText="{{ 'calculated-fields.deduplication-interval-required' | translate }}"
                         minErrorText="{{ 'calculated-fields.deduplication-interval-min' | translate: {sec: minAllowedDeduplicationIntervalInSecForCF} }}"
+                        hintText="{{ 'calculated-fields.deduplication-interval-hint' | translate }}"
                         [minTime]="minAllowedDeduplicationIntervalInSecForCF"
                         formControlName="deduplicationIntervalInSec">
     </tb-time-unit-input>

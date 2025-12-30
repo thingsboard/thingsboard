@@ -1104,11 +1104,15 @@
         "selected-fields": "{ count, plural, =1 {1 calculated field} other {# calculated fields} } selected",
         "type": {
             "simple": "Simple",
+            "simple-hint": "Simple arithmetic calculation based on input arguments.",
             "script": "Script",
+            "script-hint": "Calculation over defined arguments using a TBEL script.",
             "geofencing" : "Geofencing",
+            "geofencing-hint" : "Evaluation of entity GPS position and transitions against configured geofencing zone groups.",
             "propagation": "Propagation",
+            "propagation-hint": "Propagation of data to parent or child entities based on relation direction and type.",
             "related-entities-aggregation": "Related entities aggregation",
-            "related-entities-aggregation-hint": "Aggregation of data from related entities.",
+            "related-entities-aggregation-hint": "Aggregation of latest data from related entities.",
             "time-series-data-aggregation": "Time series data aggregation",
             "time-series-data-aggregation-hint": "Aggregation of historical data from a current entity."
         },
@@ -1151,6 +1155,7 @@
         "asset-name": "Asset name",
         "timeseries": "Time series",
         "output": "Output",
+        "output-hint": "Defines how output is processed.",
         "create": "Create new calculated field",
         "file": "Calculated field file",
         "invalid-file-error": "Invalid file format. Please make sure the file is a valid JSON file.",
@@ -1217,6 +1222,7 @@
         "aggregation-path-related-entities": "Aggregation path to related entities",
         "deduplication-interval": "Deduplication interval",
         "deduplication-interval-min": "Deduplication interval should be at least {{ sec }} seconds.",
+        "deduplication-interval-hint": "Minimum time between telemetry aggregations.",
         "deduplication-interval-required": "Deduplication interval is required.",
         "calculated-field-filter-title": "Calculated field filter",
         "filter-title": "Filter",
@@ -1245,6 +1251,7 @@
             },
             "filtered": "Filtered",
             "value-source": "Value source",
+            "value-source-hint": "Defines how the value for aggregation is obtained.",
             "value-source-type": {
                 "key": "Key",
                 "function": "Function"
@@ -1306,9 +1313,10 @@
         "aggregate-period-hint-offset-and-so-on": "Your aggregation interval will be: {{ interval }} and so on.",
         "entity-aggregation": {
             "argument-hint": "Data will be fetched from current entity.",
+            "argument-title-hint": "Defines the input arguments used for aggregation.",
             "argument-setting-hint": "Latest telemetry is the only available argument type for this calculated field.",
             "aggregation-interval": "Aggregation interval",
-            "aggregation-interval-hint": "Defines how often to perform aggregation. Example: every 1 hour aggregates data at 00:00, 01:00, 02:00, etc.",
+            "aggregation-interval-hint": "Defines how often aggregation is performed. Example: every 1 hour aggregates data at 00:00, 01:00, 02:00, etc. Aggregation results are stored with the timestamp corresponding to the start of the aggregation interval.",
             "apply-offset": "Apply offset to aggregation interval",
             "apply-offset-hint": "Defines how much to shift the start of each aggregation period (e.g., +10 minutes - 00:10, 01:10).",
             "offset-value": "Offset value",
@@ -1372,11 +1380,16 @@
             "zone-group-refresh-interval-min": "Zone group refresh interval should be at least {{ min }} seconds.",
             "propagation-path-related-entities": "Defines a direct, single-level path to a related entity based on the selected direction and relation type.",
             "data-propagate": "Defines the data to be propagated from the arguments configured below. 'Arguments only' uses the retrieved data directly, while 'Expression result' calculates a new value from that data.",
-            "aggregation-path-related-entities": "Defines a single-level aggregation path via direct relations with parent or child entities based on direction and relation type. Only relations between device, asset, customer, and tenant entities are supported.",
-            "arguments-aggregation": "Defines input parameters used for filtering and aggregation.",
+            "aggregation-path-related-entities": "Defines a single-level aggregation path via direct relations with parent or child entities, based on direction and relation type. Only relations between device, asset, customer, and tenant entities are supported.",
+            "arguments-aggregation": "Defines the input arguments used for filtering and aggregation.",
             "setting-arguments-aggregation": "Data will be fetched from related entities configured in aggregation path.",
-            "metrics": "Defines metrics aggregated based on the configured arguments.",
-            "import-invalid-calculated-field-type": "Unable to import calculated field: Invalid calculated field structure."
+            "metrics": "Defines metrics aggregated based on configured arguments.",
+            "entity-aggregation-metrics": "Defines metrics aggregated based on configured arguments over the specified time intervals.",
+            "import-invalid-calculated-field-type": "Unable to import calculated field: Invalid calculated field structure.",
+            "simple-expression-title": "Arithmetic expression that defines how the calculated value is computed.",
+            "script-title": "TBEL script that defines the calculation logic and output values.",
+            "simple-arguments": "Arithmetic expression that defines how the calculated value is computed.",
+            "script-arguments": "Defines the input arguments available to the script."
         }
     },
     "alarm-rule": {

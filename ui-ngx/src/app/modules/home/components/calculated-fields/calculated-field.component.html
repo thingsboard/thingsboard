@@ -74,13 +74,23 @@
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <mat-label>{{ 'common.type' | translate }}</mat-label>
         <mat-select formControlName="type">
+          <mat-select-trigger>
+            {{ CalculatedFieldTypeTranslations.has(entityForm.get('type').value)
+                ? (CalculatedFieldTypeTranslations.get(entityForm.get('type').value).name | translate)
+                : entityForm.get('type').value }}
+          </mat-select-trigger>
           @for (type of fieldTypes; track type) {
-            <mat-option [value]="type">{{ CalculatedFieldTypeTranslations.get(type).name | translate }}</mat-option>
+            <mat-option [value]="type" class="py-1">
+              <span matListItemTitle>
+                {{ CalculatedFieldTypeTranslations.get(type).name | translate }}
+              </span>
+              <br>
+              <small matListItemMeta style="color: inherit">
+                {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
+              </small>
+            </mat-option>
           }
         </mat-select>
-        @if (CalculatedFieldTypeTranslations.get(entityForm.get('type').value).hint) {
-          <mat-hint>{{ CalculatedFieldTypeTranslations.get(entityForm.get('type').value).hint | translate }}</mat-hint>
-        }
       </mat-form-field>
     </div>
     @switch (entityForm.get('type').value) {
