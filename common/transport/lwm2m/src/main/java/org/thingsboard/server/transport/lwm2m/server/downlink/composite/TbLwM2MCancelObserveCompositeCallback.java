@@ -36,7 +36,9 @@ public class TbLwM2MCancelObserveCompositeCallback extends AbstractTbLwM2MReques
 
     @Override
     public void onSuccess(TbLwM2MCancelObserveCompositeRequest request, Integer canceledSubscriptionsCount) {
-        log.trace("[{}] Cancel composite observation of [{}] successful: {}", client.getEndpoint(),  this.versionedIds, canceledSubscriptionsCount);
+        if (log.isTraceEnabled()) {
+            log.trace("[{}] Cancel composite observation of [{}] successful: {}", client.getEndpoint(), Arrays.toString(this.versionedIds), canceledSubscriptionsCount);
+        }
         logService.log(client, String.format("[%s]: Cancel Composite Observe for [%s] successful. Result: [%s]", LOG_LWM2M_INFO, Arrays.toString(this.versionedIds), canceledSubscriptionsCount));
     }
 }
