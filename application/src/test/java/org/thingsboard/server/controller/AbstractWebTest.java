@@ -1143,7 +1143,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
         EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
-        doPost("/api/relation", relation);
+        doPost("/api/relation", relation).andExpect(status().isOk());
     }
 
     protected void deleteEntityRelation(EntityRelation entityRelation) throws Exception {
