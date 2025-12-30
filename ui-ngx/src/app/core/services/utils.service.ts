@@ -454,11 +454,11 @@ export class UtilsService {
     return base64toObj(b64Encoded);
   }
 
-  public applyCssToElement(renderer: Renderer2, element: any, cssClassPrefix: string, css: string): string {
+  public applyCssToElement(renderer: Renderer2, element: any, cssClassPrefix: string, css: string, addTbDefaultClass: boolean = false): string {
     const cssParser = new cssjs();
     cssParser.testMode = false;
     const cssClass = `${cssClassPrefix}-${guid()}`;
-    cssParser.cssPreviewNamespace = cssClass;
+    cssParser.cssPreviewNamespace = addTbDefaultClass ? 'tb-default .' + cssClass : cssClass;
     cssParser.createStyleElement(cssClass, css);
     renderer.addClass(element, cssClass);
     return cssClass;
