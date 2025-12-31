@@ -1434,7 +1434,7 @@
         "condition-during": "During {{during}}",
         "condition-during-dynamic": "During \"{{ attribute }}\"",
         "condition-repeat-times": "Repeats { count, plural, =1 {1 time} other {# times} }",
-        "condition-repeat-times-dynamic": "Repeats \"{{ attribute }}\"",
+        "condition-repeat-times-dynamic": "Repeats \"{{ attribute }}\" times",
         "filter-preview": "Filter preview",
         "condition-settings": "Condition settings",
         "static": "Static",

@@ -59,6 +59,7 @@
         </div>
         @if (!data.entityId) {
           <tb-entity-select formControlName="entityId"
+                            #entitySelect
                             appearance="outline"
                             required
                             entityTypeLabel="{{ 'entity.entity-type' | translate }}"
@@ -75,7 +76,7 @@
           <tb-calculated-field-arguments-table formControlName="arguments"
                                                [entityId]="data.entityId || fieldFormGroup.get('entityId').value"
                                                [tenantId]="data.tenantId"
-                                               [ownerId]="data.ownerId"
+                                               [ownerId]="ownerId"
                                                [watchKeyChange]="true"
                                                [entityName]="entityName"/>
         </div>
@@ -134,6 +135,7 @@
                                         placeholder="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
                                         hint="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"
                                         [predefinedValues]="predefinedTypeValues"
+                                        allowUserValue
                                         formControlName="propagateRelationTypes">
                   </tb-string-items-list>
                 }

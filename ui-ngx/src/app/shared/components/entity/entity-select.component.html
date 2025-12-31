@@ -30,6 +30,7 @@
     formControlName="entityType">
   </tb-entity-type-select>
   <tb-entity-autocomplete
+    #entityAutocompleteComponent
     *ngIf="modelValue.entityType && !entityTypeNullUUID.has(modelValue.entityType)"
     class="flex-1"
     [appearance]="appearance"
