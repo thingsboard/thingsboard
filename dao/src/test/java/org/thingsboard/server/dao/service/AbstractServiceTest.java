@@ -78,6 +78,11 @@ import java.util.UUID;
 
 import static org.junit.Assert.assertNotNull;
 
+// ***** [BUILD-FAILURE-ANNOTATION] Score: 4
+// Reason: Spring ApplicationContext failure threshold exceeded - 368 test errors due to context initialization failure. Base test class configuration issues.
+// Recommended Fix: Check Spring configuration, database connection settings, and test profile configurations. Consider skipping integration tests temporarily.
+// Timestamp: 2025-01-27T16:25:00Z
+// *****
 @RunWith(SpringRunner.class)
 @ContextConfiguration(classes = AbstractServiceTest.class, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)

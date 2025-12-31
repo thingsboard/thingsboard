@@ -31,6 +31,7 @@
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <main.dir>${basedir}</main.dir>
+        <shared-proto-deps.dir>${basedir}/shared-proto-deps</shared-proto-deps.dir>
         <pkg.disabled>true</pkg.disabled>
         <pkg.process-resources.phase>none</pkg.process-resources.phase>
         <pkg.package.phase>none</pkg.package.phase>
@@ -159,10 +160,10 @@
         <module>transport</module>
         <module>ui-ngx</module>
         <module>tools</module>
-        <module>application</module>
-        <module>msa</module>
         <module>rest-client</module>
         <module>monitoring</module>
+        <module>application</module>
+        <module>msa</module>
     </modules>
 
     <profiles>
@@ -179,6 +180,47 @@
             <properties>
                 <downloadSources>true</downloadSources>
                 <downloadJavadocs>true</downloadJavadocs>
+            </properties>
+        </profile>
+
+        <!-- Phase 2: Shared protobuf directory profile -->
+        <profile>
+            <id>shared-proto</id>
+            <activation>
+                <property>
+                    <name>use.shared-proto-deps</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.xolstice.maven.plugins</groupId>
+                        <artifactId>protobuf-maven-plugin</artifactId>
+                        <configuration>
+                            <protoSourceRoot>${shared-proto-deps.dir}</protoSourceRoot>
+                            <!-- Enhanced cleanup settings for shared directory -->
+                            <checkStaleness>false</checkStaleness>
+                            <clearOutputDirectory>false</clearOutputDirectory>
+                            <temporaryProtoFileDirectory>${project.build.directory}/protoc-temp</temporaryProtoFileDirectory>
+                        </configuration>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <!-- Long-term solution: Sequential build profile -->
+        <profile>
+            <id>sequential-build</id>
+            <activation>
+                <property>
+                    <name>build.sequential</name>
+                    <value>true</value>
+                </property>
+            </activation>
+            <properties>
+                <maven.build.parallel>false</maven.build.parallel>
+                <maven.build.parallel.threads>1</maven.build.parallel.threads>
             </properties>
         </profile>
 
@@ -607,7 +649,7 @@
                     <configuration>
                         <release>17</release>
                         <compilerArgs>
-                            <arg>-Xlint:deprecation</arg>
+                            <arg>-Xlint:deprecation</arg>                                                 
                             <arg>-Xlint:removal</arg>
                             <arg>-Xlint:unchecked</arg>
                             <arg>-parameters</arg>
@@ -723,6 +765,12 @@
                         <pluginId>grpc-java</pluginId>
                         <pluginArtifact>io.grpc:protoc-gen-grpc-java:${grpc.version}:exe:${os.detected.classifier}
                         </pluginArtifact>
+                        <!-- Enhanced cleanup settings to prevent file locks -->
+                        <checkStaleness>false</checkStaleness>
+                        <clearOutputDirectory>false</clearOutputDirectory>
+                        <temporaryProtoFileDirectory>${project.build.directory}/protoc-temp</temporaryProtoFileDirectory>
+                        <useSystemProtoc>false</useSystemProtoc>
+                        <!-- Use individual module proto directories by default -->
                     </configuration>
                     <executions>
                         <execution>
