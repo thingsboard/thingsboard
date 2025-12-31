@@ -22,7 +22,9 @@ import { TranslateService } from '@ngx-translate/core';
 import { DurationLeftPipe } from '@shared/pipe/duration-left.pipe';
 import { EntityDebugSettingPanelConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
-@Injectable()
+@Injectable({
+  providedIn: 'root'
+})
 export class EntityDebugSettingsService {
 
   constructor(

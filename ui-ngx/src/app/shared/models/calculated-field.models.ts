@@ -540,6 +540,12 @@ export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entity
   }
 }
 
+export const debugCfActionEnabled = (cf: CalculatedField) => {
+  return (cf.type === CalculatedFieldType.SCRIPT ||
+    (cf.type === CalculatedFieldType.PROPAGATION && cf.configuration.applyExpressionToResolvedArguments)
+  );
+}
+
 export interface CalculatedFieldArgumentValueBase {
   argumentName: string;
   type: ArgumentType;

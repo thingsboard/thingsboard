@@ -21,7 +21,11 @@ import { TimeUnit } from "@shared/models/time/time.models";
 import { ComplexOperation, EntityKeyValueType, FilterPredicateType } from "@shared/models/query/query.models";
 import { EntityType } from "@shared/models/entity-type.models";
 import { Observable } from "rxjs";
-import { CalculatedField, CalculatedFieldArgument } from "@shared/models/calculated-field.models";
+import {
+  CalculatedField,
+  CalculatedFieldArgument,
+  CalculatedFieldEventArguments
+} from "@shared/models/calculated-field.models";
 
 export const alarmRuleEntityTypeList = [EntityType.DEVICE, EntityType.ASSET, EntityType.CUSTOMER, EntityType.DEVICE_PROFILE, EntityType.ASSET_PROFILE];
 
@@ -244,7 +248,7 @@ export const alarmRuleDefaultScript =
   '// Triggers when temperature is above 20 degrees\n' +
   'return temperature > 20;'
 
-export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, expression: string, argumentsObj?: Record<string, unknown>, closeAllOnSave?: boolean) => Observable<string>;
+export type AlarmRuleTestScriptFn = (calculatedField: CalculatedField, argumentsObj?: CalculatedFieldEventArguments, openCalculatedFieldEdit?: boolean, expression?: string) => Observable<string>;
 
 export function checkPredicates(predicates: any[], validSet: Set<string>): boolean {
   for (const predicate of predicates) {
