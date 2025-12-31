@@ -94,7 +94,7 @@
                                        [class.tb-form-panel-disabled]="disabledConfiguration"
                                        [entityId]="entityId"
                                        [entityName]="entityName"
-                                       [ownerId]="data.ownerId"
+                                       [ownerId]="ownerId"
                                        [tenantId]="data.tenantId"
           ></tb-geofencing-configuration>
         }
@@ -104,7 +104,7 @@
                                         [entityId]="entityId"
                                         [entityName]="entityName"
                                         [tenantId]="data.tenantId"
-                                        [ownerId]="data.ownerId"
+                                        [ownerId]="ownerId"
                                         [testScript]="onTestScript.bind(this)"
           ></tb-propagation-configuration>
         }
@@ -130,7 +130,7 @@
                                    [class.tb-form-panel-disabled]="disabledConfiguration"
                                    [entityId]="entityId"
                                    [entityName]="entityName"
-                                   [ownerId]="data.ownerId"
+                                   [ownerId]="ownerId"
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"
