@@ -147,7 +147,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
     this.zoneGroupsFormArray.markAsDirty();
   }
 
-  manageZone($event: Event, matButton: MatButton, zone = {} as CalculatedFieldGeofencingValue): void {
+  manageZone($event: Event, matButton: MatButton, zone = {} as CalculatedFieldGeofencingValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();
@@ -167,6 +167,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
         entityName: this.entityName,
         ownerId: this.ownerId,
         usedNames: this.zoneGroupsFormArray.value.map(({ name }) => name).filter(name => name !== zone.name),
+        readonly
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,

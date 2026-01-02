@@ -93,15 +93,26 @@
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let metric;">
           <div class="tb-form-table-row-cell-buttons min-w-20">
-            <button type="button"
-                    mat-icon-button
-                    #button
-                    (click)="manageMetrics($event, button, metric)"
-                    [disabled]="disable"
-                    [matTooltip]="'action.edit' | translate"
-                    matTooltipPosition="above">
-              <mat-icon>edit</mat-icon>
-            </button>
+            @if (disable) {
+              <button type="button"
+                      mat-icon-button
+                      #previewButton
+                      (click)="manageMetrics($event, previewButton, metric, true)"
+                      [matTooltip]="'calculated-fields.preview' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            } @else {
+              <button type="button"
+                      mat-icon-button
+                      #button
+                      (click)="manageMetrics($event, button, metric)"
+                      [disabled]="disable"
+                      [matTooltip]="'action.edit' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, metric)"

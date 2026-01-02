@@ -260,12 +260,14 @@
             (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            (click)="saveZone()"
-            [disabled]="geofencingFormGroup.invalid || !geofencingFormGroup.dirty">
-      {{ buttonTitle | translate }}
-    </button>
+    @if (!readonly) {
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="saveZone()"
+              [disabled]="geofencingFormGroup.invalid || !geofencingFormGroup.dirty">
+        {{ buttonTitle | translate }}
+      </button>
+    }
   </div>
 </div>
