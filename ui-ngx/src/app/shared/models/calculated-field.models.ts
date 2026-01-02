@@ -525,7 +525,7 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
 ])
 
 export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId) => {
-  switch (entityId.entityType) {
+  switch (entityId?.entityType) {
     case EntityType.ASSET_PROFILE:
       return {
         assetTypes: [entityName],

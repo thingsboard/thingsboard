@@ -68,7 +68,7 @@
                         required
                         entityTypeLabel="{{ 'entity.entity-type' | translate }}"
                         [filterAllowedEntityTypes]="false"
-                        [allowedEntityTypes]="calculatedFieldsEntityTypeList"
+                        [allowedEntityTypes]="alarmRuleEntityTypeList"
                         (entityChanged)="changeEntity($event)">
       </tb-entity-select>
     </div>
@@ -137,6 +137,7 @@
                                       placeholder="{{ 'alarm-rule.alarm-rule-relation-types-list' | translate }}"
                                       hint="{{ 'alarm-rule.alarm-rule-relation-types-list-hint' | translate }}"
                                       [predefinedValues]="predefinedTypeValues"
+                                      allowUserValue
                                       formControlName="propagateRelationTypes">
                 </tb-string-items-list>
               }

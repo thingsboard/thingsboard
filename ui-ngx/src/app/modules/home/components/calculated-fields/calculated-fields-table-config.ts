@@ -333,7 +333,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       .pipe(
         filter(Boolean),
         switchMap(calculatedField => {
-          if (calculatedField.type === CalculatedFieldType.ALARM) {
+          if (calculatedField.type === CalculatedFieldType.ALARM || !CalculatedFieldType[calculatedField.type]) {
             this.store.dispatch(new ActionNotificationShow({
               message: this.translate.instant('calculated-fields.hint.import-invalid-calculated-field-type'),
               type: 'error',
