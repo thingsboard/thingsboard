@@ -75,7 +75,7 @@ public class EntityQueryController extends BaseController {
     }
 
     @ApiOperation(value = "Find Entity Data by Query", notes = ENTITY_DATA_QUERY_DESCRIPTION)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @PostMapping("/entitiesQuery/find")
     public PageData<EntityData> findEntityDataByQuery(
             @Parameter(description = "A JSON value representing the entity data query. See API call notes above for more details.")

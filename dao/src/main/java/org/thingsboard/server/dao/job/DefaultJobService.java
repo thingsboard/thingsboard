@@ -154,6 +154,9 @@ public class DefaultJobService extends AbstractEntityService implements JobServi
                     job.setStatus(COMPLETED);
                     publishEvent = true;
                 }
+                if (result.getTotalCount() == 0 && lastFinishTs == 0) {
+                    lastFinishTs = System.currentTimeMillis();
+                }
                 result.setFinishTs(lastFinishTs);
                 job.getConfiguration().setToReprocess(null);
             }
