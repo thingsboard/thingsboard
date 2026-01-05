@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -205,11 +206,11 @@ public class DynamicProtoUtilsTest {
         assertTrue("JSON should contain snake_case field 'target_fw_version'", json.contains("\"target_fw_version\""));
         
         // Verify that camelCase versions are NOT present
-        assertTrue("JSON should NOT contain camelCase field 'currentFwTitle'", !json.contains("\"currentFwTitle\""));
-        assertTrue("JSON should NOT contain camelCase field 'currentFwVersion'", !json.contains("\"currentFwVersion\""));
-        assertTrue("JSON should NOT contain camelCase field 'fwState'", !json.contains("\"fwState\""));
-        assertTrue("JSON should NOT contain camelCase field 'targetFwTitle'", !json.contains("\"targetFwTitle\""));
-        assertTrue("JSON should NOT contain camelCase field 'targetFwVersion'", !json.contains("\"targetFwVersion\""));
+        assertFalse("JSON should NOT contain camelCase field 'currentFwTitle'", json.contains("\"currentFwTitle\""));
+        assertFalse("JSON should NOT contain camelCase field 'currentFwVersion'", json.contains("\"currentFwVersion\""));
+        assertFalse("JSON should NOT contain camelCase field 'fwState'", json.contains("\"fwState\""));
+        assertFalse("JSON should NOT contain camelCase field 'targetFwTitle'", json.contains("\"targetFwTitle\""));
+        assertFalse("JSON should NOT contain camelCase field 'targetFwVersion'", json.contains("\"targetFwVersion\""));
     }
 
 }
