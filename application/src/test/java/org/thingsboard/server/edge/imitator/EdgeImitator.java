@@ -438,7 +438,7 @@ public class EdgeImitator {
         Optional<T> result;
         lock.lock();
         try {
-            result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).findAny();
+            result = (Optional<T>) downlinkMsgs.stream().filter(downlinkMsg -> tClass.isAssignableFrom(downlinkMsg.getClass())).findAny();
         } finally {
             lock.unlock();
         }
@@ -450,7 +450,7 @@ public class EdgeImitator {
         List<T> result;
         lock.lock();
         try {
-            result = (List<T>) downlinkMsgs.stream().filter(downlinkMsg -> downlinkMsg.getClass().isAssignableFrom(tClass)).collect(Collectors.toList());
+            result = (List<T>) downlinkMsgs.stream().filter(downlinkMsg -> tClass.isAssignableFrom(downlinkMsg.getClass())).collect(Collectors.toList());
         } finally {
             lock.unlock();
         }
