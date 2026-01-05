@@ -168,7 +168,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
     this.argumentsFormArray.markAsDirty();
   }
 
-  manageArgument($event: Event, matButton: MatButton, argument = {} as CalculatedFieldArgumentValue): void {
+  manageArgument($event: Event, matButton: MatButton, argument = {} as CalculatedFieldArgumentValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();
@@ -190,6 +190,7 @@ export class CalculatedFieldArgumentsTableComponent implements ControlValueAcces
         ownerId: this.ownerId,
         watchKeyChange: this.watchKeyChange,
         usedArgumentNames: this.argumentsFormArray.value.map(({ argumentName }) => argumentName).filter(name => name !== argument.argumentName),
+        readonly
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,
