@@ -96,20 +96,31 @@
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let geofenceZone;">
           <div class="tb-form-table-row-cell-buttons min-w-20">
-            <button type="button"
-                    mat-icon-button
-                    #button
-                    (click)="manageZone($event, button, geofenceZone)"
-                    [matTooltip]="'action.edit' | translate"
-                    [disabled]="disable"
-                    matTooltipPosition="above">
-              <mat-icon [matBadgeHidden]="geofenceZone.refEntityId?.id !== NULL_UUID"
-                        matBadgeColor="warn"
-                        matBadgeSize="small"
-                        matBadge="*">
-                edit
-              </mat-icon>
-            </button>
+            @if (disable) {
+              <button type="button"
+                      mat-icon-button
+                      #previewButton
+                      (click)="manageZone($event, previewButton, geofenceZone, true)"
+                      [matTooltip]="'calculated-fields.preview' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            } @else {
+              <button type="button"
+                      mat-icon-button
+                      #button
+                      (click)="manageZone($event, button, geofenceZone)"
+                      [matTooltip]="'action.edit' | translate"
+                      [disabled]="disable"
+                      matTooltipPosition="above">
+                <mat-icon [matBadgeHidden]="geofenceZone.refEntityId?.id !== NULL_UUID"
+                          matBadgeColor="warn"
+                          matBadgeSize="small"
+                          matBadge="*">
+                  edit
+                </mat-icon>
+              </button>
+            }
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, geofenceZone)"

@@ -1116,6 +1116,7 @@
             "time-series-data-aggregation": "Time series data aggregation",
             "time-series-data-aggregation-hint": "Aggregation of historical data from a current entity."
         },
+        "preview": "Preview",
         "arguments": "Arguments",
         "decimals-by-default": "Decimals by default",
         "debugging": "Calculated field debugging",
