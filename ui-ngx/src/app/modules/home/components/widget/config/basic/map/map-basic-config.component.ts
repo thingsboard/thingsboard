@@ -24,16 +24,12 @@ import { WidgetConfigComponentData } from '@home/models/widget-component.models'
 import { isDefinedAndNotNull, isUndefined, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
-import {
-  datasourcesHasOnlyComparisonAggregation,
-  WidgetConfig,
-  widgetTitleAutocompleteValues
-} from '@shared/models/widget.models';
+import { WidgetConfig, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { findWidgetModelDefinition } from '@shared/models/widget/widget-model.definition';
+import { MapModelDefinition } from '@shared/models/widget/maps/map-model.definition';
 
 @Component({
   selector: 'tb-map-basic-config',
@@ -92,6 +88,8 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     this.mapWidgetConfigForm = this.fb.group({
       mapSettings: [settings, []],
 
+      timewindowConfig: [getTimewindowConfig(configData.config), []],
+
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
       titleFont: [configData.config.titleFont, []],
@@ -111,7 +109,6 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 
       actions: [configData.config.actions || {}, []]
     });
-    this.mapWidgetConfigForm.addControl('timewindowConfig', this.fb.control(getTimewindowConfig(configData.config)));
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
@@ -191,12 +188,7 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     if (this.trip) {
       return true;
     } else {
-      const widgetDefinition = findWidgetModelDefinition(this.widget);
-      if (widgetDefinition) {
-        return widgetDefinition.hasTimewindow(this.widget);
-      } else {
-        return false;
-      }
+      return this.widget ? MapModelDefinition.hasTimewindow(this.widget) : false;
     }
   }
 
@@ -204,12 +196,7 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     if (this.trip) {
       return false;
     } else {
-      const widgetDefinition = findWidgetModelDefinition(this.widget);
-      if (widgetDefinition) {
-        return widgetDefinition.datasourcesHasOnlyComparisonAggregation(this.widget);
-      } else {
-        return false;
-      }
+      return this.widget ? MapModelDefinition.datasourcesHasOnlyComparisonAggregation(this.widget) : false;
     }
   }
 

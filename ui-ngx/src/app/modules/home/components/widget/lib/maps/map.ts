@@ -342,8 +342,7 @@ export abstract class TbMap<S extends BaseMapSettings> {
             const dataLayersSubscriptionOptions: WidgetSubscriptionOptions = {
               datasources,
               hasDataPageLink: true,
-              useDashboardTimewindow: isDefined(this.ctx.widgetConfig.useDashboardTimewindow)
-                ? this.ctx.widgetConfig.useDashboardTimewindow : true,
+              useDashboardTimewindow: this.ctx.widgetConfig.useDashboardTimewindow ?? true,
               type: widgetType.latest,
               callbacks: {
                 onDataUpdated: (subscription) => {
