@@ -48,7 +48,7 @@ public class DynamicProtoUtils {
     
     private static final JsonFormat.Printer JSON_PRINTER = JsonFormat.printer().includingDefaultValueFields();
     private static final JsonFormat.Printer JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES = JsonFormat.printer().preservingProtoFieldNames().includingDefaultValueFields();
-    private static final boolean PRESERVE_PROTO_FIELD_NAMES = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
+    private static boolean preserveProtoFieldNames = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
 
     public static Descriptors.Descriptor getDescriptor(String protoSchema, String schemaName) {
         try {
@@ -103,13 +103,17 @@ public class DynamicProtoUtils {
 
     public static String dynamicMsgToJson(Descriptors.Descriptor descriptor, byte[] payload) throws InvalidProtocolBufferException {
         DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, payload);
-        JsonFormat.Printer printer = PRESERVE_PROTO_FIELD_NAMES ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
+        JsonFormat.Printer printer = preserveProtoFieldNames ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
         return printer.print(dynamicMessage);
     }
 
     public static DynamicMessage jsonToDynamicMessage(DynamicMessage.Builder builder, String payload) throws InvalidProtocolBufferException {
         JsonFormat.parser().ignoringUnknownFields().merge(payload, builder);
         return builder.build();
+    }
+
+    static void setPreserveProtoFieldNames(boolean preserve) {
+        preserveProtoFieldNames = preserve;
     }
 
     private static List<MessageElement> getMessageTypes(List<TypeElement> types) {
