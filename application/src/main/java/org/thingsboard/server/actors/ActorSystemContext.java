@@ -846,7 +846,7 @@ public class ActorSystemContext {
                 if (tbMsgType != null) {
                     eventBuilder.msgType(tbMsgType);
                 }
-                if (arguments != null) {
+                if (arguments != null && !arguments.isEmpty()) {
                     eventBuilder.arguments(JacksonUtil.toString(arguments));
                 }
                 if (result != null) {

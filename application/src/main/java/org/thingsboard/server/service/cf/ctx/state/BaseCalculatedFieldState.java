@@ -201,7 +201,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     @Override
     public JsonNode getArgumentsJson() {
         return JacksonUtil.valueToTree(arguments.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue())));
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue()))
+        );
     }
 
 }
