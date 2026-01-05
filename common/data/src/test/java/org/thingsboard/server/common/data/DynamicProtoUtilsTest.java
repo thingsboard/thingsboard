@@ -166,4 +166,50 @@ public class DynamicProtoUtilsTest {
                 DynamicProtoUtils.dynamicMsgToJson(sampleMsgDescriptor, sampleMsgWithOneOfSubMessage.toByteArray()));
     }
 
+    @Test
+    public void testProtoSchemaPreservesSnakeCaseFieldNames() throws Exception {
+        String schema = "syntax = \"proto3\";\n" +
+                "\n" +
+                "package firmware;\n" +
+                "\n" +
+                "message FirmwareStatus {\n" +
+                "  string current_fw_title = 1;\n" +
+                "  string current_fw_version = 2;\n" +
+                "  string fw_state = 3;\n" +
+                "  string target_fw_title = 4;\n" +
+                "  string target_fw_version = 5;\n" +
+                "}";
+        ProtoFileElement protoFileElement = DynamicProtoUtils.getProtoFileElement(schema);
+        DynamicSchema dynamicSchema = DynamicProtoUtils.getDynamicSchema(protoFileElement, "test schema with snake_case fields");
+        assertNotNull(dynamicSchema);
+        
+        DynamicMessage.Builder firmwareStatusBuilder = dynamicSchema.newMessageBuilder("firmware.FirmwareStatus");
+        Descriptors.Descriptor firmwareStatusDescriptor = firmwareStatusBuilder.getDescriptorForType();
+        assertNotNull(firmwareStatusDescriptor);
+        
+        DynamicMessage firmwareStatus = firmwareStatusBuilder
+                .setField(firmwareStatusDescriptor.findFieldByName("current_fw_title"), "firmware_v1")
+                .setField(firmwareStatusDescriptor.findFieldByName("current_fw_version"), "1.0.0")
+                .setField(firmwareStatusDescriptor.findFieldByName("fw_state"), "DOWNLOADING")
+                .setField(firmwareStatusDescriptor.findFieldByName("target_fw_title"), "firmware_v2")
+                .setField(firmwareStatusDescriptor.findFieldByName("target_fw_version"), "2.0.0")
+                .build();
+        
+        String json = DynamicProtoUtils.dynamicMsgToJson(firmwareStatusDescriptor, firmwareStatus.toByteArray());
+        
+        // Verify that snake_case field names are preserved (not converted to camelCase)
+        assertTrue("JSON should contain snake_case field 'current_fw_title'", json.contains("\"current_fw_title\""));
+        assertTrue("JSON should contain snake_case field 'current_fw_version'", json.contains("\"current_fw_version\""));
+        assertTrue("JSON should contain snake_case field 'fw_state'", json.contains("\"fw_state\""));
+        assertTrue("JSON should contain snake_case field 'target_fw_title'", json.contains("\"target_fw_title\""));
+        assertTrue("JSON should contain snake_case field 'target_fw_version'", json.contains("\"target_fw_version\""));
+        
+        // Verify that camelCase versions are NOT present
+        assertTrue("JSON should NOT contain camelCase field 'currentFwTitle'", !json.contains("\"currentFwTitle\""));
+        assertTrue("JSON should NOT contain camelCase field 'currentFwVersion'", !json.contains("\"currentFwVersion\""));
+        assertTrue("JSON should NOT contain camelCase field 'fwState'", !json.contains("\"fwState\""));
+        assertTrue("JSON should NOT contain camelCase field 'targetFwTitle'", !json.contains("\"targetFwTitle\""));
+        assertTrue("JSON should NOT contain camelCase field 'targetFwVersion'", !json.contains("\"targetFwVersion\""));
+    }
+
 }

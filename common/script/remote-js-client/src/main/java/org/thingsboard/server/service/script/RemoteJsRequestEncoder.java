@@ -30,7 +30,7 @@ public class RemoteJsRequestEncoder implements TbKafkaEncoder<TbProtoQueueMsg<Js
     @Override
     public byte[] encode(TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest> value) {
         try {
-            return JsonFormat.printer().print(value.getValue()).getBytes(StandardCharsets.UTF_8);
+            return JsonFormat.printer().preservingProtoFieldNames().print(value.getValue()).getBytes(StandardCharsets.UTF_8);
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }

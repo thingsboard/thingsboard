@@ -99,7 +99,7 @@ public class DynamicProtoUtils {
 
     public static String dynamicMsgToJson(Descriptors.Descriptor descriptor, byte[] payload) throws InvalidProtocolBufferException {
         DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, payload);
-        return JsonFormat.printer().includingDefaultValueFields().print(dynamicMessage);
+        return JsonFormat.printer().preservingProtoFieldNames().includingDefaultValueFields().print(dynamicMessage);
     }
 
     public static DynamicMessage jsonToDynamicMessage(DynamicMessage.Builder builder, String payload) throws InvalidProtocolBufferException {

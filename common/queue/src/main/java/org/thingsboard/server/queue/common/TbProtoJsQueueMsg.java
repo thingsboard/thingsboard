@@ -35,7 +35,7 @@ public class TbProtoJsQueueMsg<T extends com.google.protobuf.GeneratedMessageV3>
     @Override
     public byte[] getData() {
         try {
-            return JsonFormat.printer().print(value).getBytes(StandardCharsets.UTF_8);
+            return JsonFormat.printer().preservingProtoFieldNames().print(value).getBytes(StandardCharsets.UTF_8);
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }
