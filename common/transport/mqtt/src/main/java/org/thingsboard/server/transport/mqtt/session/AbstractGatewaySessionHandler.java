@@ -227,6 +227,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         deregisterSession(deviceName);
     }
 
+    public void onDeviceDeleted(String deviceName, boolean notifyCore) {
+        deregisterSession(deviceName, notifyCore);
+    }
+
     public String getNodeId() {
         return context.getNodeId();
     }
@@ -236,9 +240,13 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     void deregisterSession(String deviceName) {
+        deregisterSession(deviceName, true);
+    }
+
+    void deregisterSession(String deviceName, boolean notifyCore) {
         MqttDeviceAwareSessionContext deviceSessionCtx = devices.remove(deviceName);
         if (deviceSessionCtx != null) {
-            deregisterSession(deviceName, deviceSessionCtx);
+            deregisterSession(deviceName, deviceSessionCtx, notifyCore);
         } else {
             log.debug("[{}][{}][{}] Device [{}] was already removed from the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
         }
@@ -802,12 +810,18 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
+        deregisterSession(deviceName, deviceSessionCtx, true);
+    }
+
+    private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx, boolean notifyCore) {
         if (this.deviceSessionCtx.isSparkplug()) {
             sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
-        transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+        if (notifyCore) {
+            transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+        }
         log.debug("[{}][{}][{}] Removed device [{}] from the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
     }
 

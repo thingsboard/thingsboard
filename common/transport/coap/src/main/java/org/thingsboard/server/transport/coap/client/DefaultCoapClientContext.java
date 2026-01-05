@@ -561,6 +561,12 @@ public class DefaultCoapClientContext implements CoapClientContext {
         }
 
         @Override
+        public void onTenantDeleted(DeviceId deviceId) {
+            cancelRpcSubscription(state, false);
+            cancelAttributeSubscription(state, false);
+        }
+
+        @Override
         public void onRemoteSessionCloseCommand(UUID sessionId, TransportProtos.SessionCloseNotificationProto sessionCloseNotification) {
             log.trace("[{}] Received the remote command to close the session: {}", sessionId, sessionCloseNotification.getMessage());
             cancelRpcSubscription(state);
@@ -812,35 +818,49 @@ public class DefaultCoapClientContext implements CoapClientContext {
     }
 
     private void cancelRpcSubscription(TbCoapClientState state) {
+        cancelRpcSubscription(state, true);
+    }
+
+    private void cancelRpcSubscription(TbCoapClientState state, boolean notifyCore) {
         if (state.getRpc() != null) {
             clientsByToken.remove(state.getRpc().getToken());
             CoapExchange exchange = state.getRpc().getExchange();
             state.setRpc(null);
-            transportService.process(state.getSession(),
-                    TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
-                    new CoapResponseCodeCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+            if (notifyCore) {
+                transportService.process(state.getSession(),
+                        TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
+                        new CoapResponseCodeCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+            }
             if (state.getAttrs() == null) {
-                closeAndCleanup(state);
+                closeAndCleanup(state, notifyCore);
             }
         }
     }
 
     private void cancelAttributeSubscription(TbCoapClientState state) {
+        cancelAttributeSubscription(state, true);
+    }
+
+    private void cancelAttributeSubscription(TbCoapClientState state, boolean notifyCore) {
         if (state.getAttrs() != null) {
             clientsByToken.remove(state.getAttrs().getToken());
             CoapExchange exchange = state.getAttrs().getExchange();
             state.setAttrs(null);
-            transportService.process(state.getSession(),
-                    TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
-                    new CoapResponseCodeCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+            if (notifyCore) {
+                transportService.process(state.getSession(),
+                        TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
+                        new CoapResponseCodeCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
+            }
             if (state.getRpc() == null) {
-                closeAndCleanup(state);
+                closeAndCleanup(state, notifyCore);
             }
         }
     }
 
-    private void closeAndCleanup(TbCoapClientState state) {
-        transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+    private void closeAndCleanup(TbCoapClientState state, boolean notifyCore) {
+        if (notifyCore) {
+            transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
+        }
         transportService.deregisterSession(state.getSession());
         state.setSession(null);
         state.setConfiguration(null);

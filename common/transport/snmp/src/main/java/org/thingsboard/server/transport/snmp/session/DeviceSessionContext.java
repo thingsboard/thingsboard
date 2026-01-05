@@ -109,6 +109,11 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     }
 
     @Override
+    public void onTenantDeleted(DeviceId deviceId) {
+        snmpTransportContext.onDeviceDeleted(this, false);
+    }
+
+    @Override
     public void onResponse(ResponseEvent event) {
         if (isActive) {
             snmpTransportContext.getSnmpTransportService().processResponseEvent(this, event);

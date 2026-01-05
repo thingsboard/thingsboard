@@ -145,6 +145,11 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
         parent.onDeviceDeleted(this.getSessionInfo().getDeviceName());
     }
 
+    @Override
+    public void onTenantDeleted(DeviceId deviceId) {
+        parent.onDeviceDeleted(this.getSessionInfo().getDeviceName(), false);
+    }
+
     private boolean isAckExpected(MqttMessage message) {
         return message.fixedHeader().qosLevel().value() > 0;
     }

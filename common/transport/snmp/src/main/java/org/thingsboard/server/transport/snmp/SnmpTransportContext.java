@@ -201,6 +201,10 @@ public class SnmpTransportContext extends TransportContext {
     }
 
     private void destroyDeviceSession(DeviceSessionContext sessionContext) {
+        destroyDeviceSession(sessionContext, true);
+    }
+
+    private void destroyDeviceSession(DeviceSessionContext sessionContext, boolean notifyCore) {
         if (sessionContext == null) return;
         log.info("Destroying SNMP device session for device {}", sessionContext.getDevice().getId());
         sessionContext.close();
@@ -208,7 +212,9 @@ public class SnmpTransportContext extends TransportContext {
         transportService.deregisterSession(sessionContext.getSessionInfo());
         snmpTransportService.cancelQueryingTasks(sessionContext);
         sessions.remove(sessionContext.getDeviceId());
-        transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STOPPED, true, null);
+        if (notifyCore) {
+            transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.STOPPED, true, null);
+        }
         log.trace("Unregistered and removed session");
     }
 
@@ -290,6 +296,10 @@ public class SnmpTransportContext extends TransportContext {
 
     public void onDeviceDeleted(DeviceSessionContext sessionContext) {
         destroyDeviceSession(sessionContext);
+    }
+
+    public void onDeviceDeleted(DeviceSessionContext sessionContext, boolean notifyCore) {
+        destroyDeviceSession(sessionContext, notifyCore);
     }
 
     public void onDeviceProfileUpdated(DeviceProfile deviceProfile, DeviceSessionContext sessionContext) {
