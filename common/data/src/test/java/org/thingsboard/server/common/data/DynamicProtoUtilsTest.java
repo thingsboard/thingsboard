@@ -169,8 +169,8 @@ public class DynamicProtoUtilsTest {
 
     @Test
     public void testProtoSchemaDefaultBehaviorConvertsToCamelCase() throws Exception {
-        // By default (when TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES is not set), 
-        // field names should be converted to camelCase for backward compatibility
+        // Test default behavior when TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES is not set
+        // Field names should be converted to camelCase for backward compatibility
         String schema = "syntax = \"proto3\";\n" +
                 "\n" +
                 "package firmware;\n" +
@@ -200,7 +200,63 @@ public class DynamicProtoUtilsTest {
         
         String json = DynamicProtoUtils.dynamicMsgToJson(firmwareStatusDescriptor, firmwareStatus.toByteArray());
         
-        // By default, field names should be converted to camelCase (backward compatible behavior)
+        // Check the actual behavior based on the current flag setting
+        boolean preserveFieldNames = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
+        
+        if (!preserveFieldNames) {
+            // Default behavior: field names converted to camelCase
+            assertTrue("JSON should contain camelCase field 'currentFwTitle'", json.contains("\"currentFwTitle\""));
+            assertTrue("JSON should contain camelCase field 'currentFwVersion'", json.contains("\"currentFwVersion\""));
+            assertTrue("JSON should contain camelCase field 'fwState'", json.contains("\"fwState\""));
+            assertTrue("JSON should contain camelCase field 'targetFwTitle'", json.contains("\"targetFwTitle\""));
+            assertTrue("JSON should contain camelCase field 'targetFwVersion'", json.contains("\"targetFwVersion\""));
+            
+            // Verify snake_case versions are NOT present
+            assertFalse("JSON should NOT contain snake_case field 'current_fw_title'", json.contains("\"current_fw_title\""));
+            assertFalse("JSON should NOT contain snake_case field 'fw_state'", json.contains("\"fw_state\""));
+        } else {
+            // This test is designed to verify default behavior, skip if flag is set
+            // The next test will verify the preserve behavior
+            assertTrue("This test expects default behavior (camelCase conversion). " +
+                    "Set TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES=false or run without the flag.", 
+                    !preserveFieldNames);
+        }
+    }
+
+    @Test
+    public void testProtoSchemaPreservesSnakeCaseFieldNamesWhenEnabled() throws Exception {
+        // Test behavior when TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES is set to true
+        // Field names should be preserved as defined in .proto schema
+        String schema = "syntax = \"proto3\";\n" +
+                "\n" +
+                "package firmware;\n" +
+                "\n" +
+                "message FirmwareStatus {\n" +
+                "  string current_fw_title = 1;\n" +
+                "  string current_fw_version = 2;\n" +
+                "  string fw_state = 3;\n" +
+                "  string target_fw_title = 4;\n" +
+                "  string target_fw_version = 5;\n" +
+                "}";
+        ProtoFileElement protoFileElement = DynamicProtoUtils.getProtoFileElement(schema);
+        DynamicSchema dynamicSchema = DynamicProtoUtils.getDynamicSchema(protoFileElement, "test schema with snake_case fields");
+        assertNotNull(dynamicSchema);
+        
+        DynamicMessage.Builder firmwareStatusBuilder = dynamicSchema.newMessageBuilder("firmware.FirmwareStatus");
+        Descriptors.Descriptor firmwareStatusDescriptor = firmwareStatusBuilder.getDescriptorForType();
+        assertNotNull(firmwareStatusDescriptor);
+        
+        DynamicMessage firmwareStatus = firmwareStatusBuilder
+                .setField(firmwareStatusDescriptor.findFieldByName("current_fw_title"), "firmware_v1")
+                .setField(firmwareStatusDescriptor.findFieldByName("current_fw_version"), "1.0.0")
+                .setField(firmwareStatusDescriptor.findFieldByName("fw_state"), "DOWNLOADING")
+                .setField(firmwareStatusDescriptor.findFieldByName("target_fw_title"), "firmware_v2")
+                .setField(firmwareStatusDescriptor.findFieldByName("target_fw_version"), "2.0.0")
+                .build();
+        
+        String json = DynamicProtoUtils.dynamicMsgToJson(firmwareStatusDescriptor, firmwareStatus.toByteArray());
+        
+        // Check the actual behavior based on the current flag setting
         boolean preserveFieldNames = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
         
         if (preserveFieldNames) {
@@ -210,13 +266,16 @@ public class DynamicProtoUtilsTest {
             assertTrue("JSON should contain snake_case field 'fw_state'", json.contains("\"fw_state\""));
             assertTrue("JSON should contain snake_case field 'target_fw_title'", json.contains("\"target_fw_title\""));
             assertTrue("JSON should contain snake_case field 'target_fw_version'", json.contains("\"target_fw_version\""));
+            
+            // Verify camelCase versions are NOT present
+            assertFalse("JSON should NOT contain camelCase field 'currentFwTitle'", json.contains("\"currentFwTitle\""));
+            assertFalse("JSON should NOT contain camelCase field 'fwState'", json.contains("\"fwState\""));
         } else {
-            // Default behavior: field names converted to camelCase
-            assertTrue("JSON should contain camelCase field 'currentFwTitle'", json.contains("\"currentFwTitle\""));
-            assertTrue("JSON should contain camelCase field 'currentFwVersion'", json.contains("\"currentFwVersion\""));
-            assertTrue("JSON should contain camelCase field 'fwState'", json.contains("\"fwState\""));
-            assertTrue("JSON should contain camelCase field 'targetFwTitle'", json.contains("\"targetFwTitle\""));
-            assertTrue("JSON should contain camelCase field 'targetFwVersion'", json.contains("\"targetFwVersion\""));
+            // This test is designed to verify preserve behavior, skip if flag is not set
+            // Run this test with: TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES=true
+            assertTrue("This test expects preserve behavior (snake_case preservation). " +
+                    "Set TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES=true to run this test.", 
+                    preserveFieldNames);
         }
     }
 

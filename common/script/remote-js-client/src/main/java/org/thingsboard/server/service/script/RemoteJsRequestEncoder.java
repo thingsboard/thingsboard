@@ -27,16 +27,10 @@ import java.nio.charset.StandardCharsets;
  * Created by ashvayka on 25.09.18.
  */
 public class RemoteJsRequestEncoder implements TbKafkaEncoder<TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest>> {
-    
-    private static final JsonFormat.Printer JSON_PRINTER = JsonFormat.printer();
-    private static final JsonFormat.Printer JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES = JsonFormat.printer().preservingProtoFieldNames();
-    private static final boolean PRESERVE_PROTO_FIELD_NAMES = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
-    
     @Override
     public byte[] encode(TbProtoQueueMsg<JsInvokeProtos.RemoteJsRequest> value) {
         try {
-            JsonFormat.Printer printer = PRESERVE_PROTO_FIELD_NAMES ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
-            return printer.print(value.getValue()).getBytes(StandardCharsets.UTF_8);
+            return JsonFormat.printer().print(value.getValue()).getBytes(StandardCharsets.UTF_8);
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }

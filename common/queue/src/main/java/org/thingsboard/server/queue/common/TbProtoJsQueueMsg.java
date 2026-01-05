@@ -24,10 +24,6 @@ import java.util.UUID;
 
 public class TbProtoJsQueueMsg<T extends com.google.protobuf.GeneratedMessageV3> extends TbProtoQueueMsg<T> {
 
-    private static final JsonFormat.Printer JSON_PRINTER = JsonFormat.printer();
-    private static final JsonFormat.Printer JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES = JsonFormat.printer().preservingProtoFieldNames();
-    private static final boolean PRESERVE_PROTO_FIELD_NAMES = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
-
     public TbProtoJsQueueMsg(UUID key, T value) {
         super(key, value);
     }
@@ -39,8 +35,7 @@ public class TbProtoJsQueueMsg<T extends com.google.protobuf.GeneratedMessageV3>
     @Override
     public byte[] getData() {
         try {
-            JsonFormat.Printer printer = PRESERVE_PROTO_FIELD_NAMES ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
-            return printer.print(value).getBytes(StandardCharsets.UTF_8);
+            return JsonFormat.printer().print(value).getBytes(StandardCharsets.UTF_8);
         } catch (InvalidProtocolBufferException e) {
             throw new RuntimeException(e);
         }
