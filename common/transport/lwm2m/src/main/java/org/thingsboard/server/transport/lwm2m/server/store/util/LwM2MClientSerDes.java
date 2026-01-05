@@ -71,7 +71,7 @@ public class LwM2MClientSerDes {
         JsonObject sharedAttributes = new JsonObject();
 
         for (Map.Entry<String, TransportProtos.TsKvProto> entry : client.getSharedAttributes().entrySet()) {
-            sharedAttributes.addProperty(entry.getKey(), JsonFormat.printer().print(entry.getValue()));
+            sharedAttributes.addProperty(entry.getKey(), JsonFormat.printer().preservingProtoFieldNames().print(entry.getValue()));
         }
 
         o.add("sharedAttributes", sharedAttributes);
@@ -84,7 +84,7 @@ public class LwM2MClientSerDes {
         o.addProperty("state", client.getState().toString());
 
         if (client.getSession() != null) {
-            o.addProperty("session", JsonFormat.printer().print(client.getSession()));
+            o.addProperty("session", JsonFormat.printer().preservingProtoFieldNames().print(client.getSession()));
         }
         if (client.getTenantId() != null) {
             o.addProperty("tenantId", client.getTenantId().toString());
