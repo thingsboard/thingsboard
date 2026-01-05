@@ -540,7 +540,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
     }
 
     private String buildPermissionQuery(SqlQueryContext ctx, EntityFilter entityFilter) {
-        if (ctx.isIgnorePermissionCheck()) {
+        if (ctx.isIgnorePermissionCheck() || (ctx.getTenantId().isSysTenantId() &&
+                (ctx.getEntityType() == EntityType.TENANT || ctx.getEntityType() == EntityType.TENANT_PROFILE))) {
             return "1=1";
         }
         switch (entityFilter.getType()) {
