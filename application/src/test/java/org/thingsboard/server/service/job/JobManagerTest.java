@@ -107,6 +107,8 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getSuccessfulCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getResults()).isEmpty();
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
         });
     }
 
@@ -133,6 +135,8 @@ public class JobManagerTest extends AbstractControllerTest {
                 assertThat(failure.getError()).isEqualTo("error3"); // last error
             });
             assertThat(jobResult.getCompletedCount()).isEqualTo(jobResult.getTotalCount());
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
         });
     }
 
@@ -168,6 +172,9 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getDiscardedCount()).isBetween(1, tasksCount);
             assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
+            assertThat(job.getResult().getCancellationTs()).isPositive();
         });
     }
 
@@ -194,6 +201,9 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getTotalCount()).isEqualTo(1);
             assertThat(job.getResult().getDiscardedCount()).isEqualTo(1);
             assertThat(job.getResult().getFailedCount()).isZero();
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
+            assertThat(job.getResult().getCancellationTs()).isPositive();
         });
     }
 
@@ -222,6 +232,9 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getDiscardedCount()).isBetween(1, tasksCount - 1);
             assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
             assertThat(job.getResult().getCompletedCount()).isEqualTo(tasksCount);
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
+            assertThat(job.getResult().getCancellationTs()).isPositive();
         });
     }
 
@@ -275,6 +288,8 @@ public class JobManagerTest extends AbstractControllerTest {
                 assertThat(job.getResult().getTotalCount()).isEqualTo(tasksCount);
                 assertThat(job.getEntityId()).isEqualTo(jobEntity.getId());
                 assertThat(job.getEntityName()).isEqualTo(jobEntity.getName());
+                assertThat(job.getResult().getStartTs()).isPositive();
+                assertThat(job.getResult().getFinishTs()).isPositive();
             }
         });
 
@@ -385,6 +400,8 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getTotalCount()).isEqualTo(submittedTasks);
             assertThat(job.getResult().getFailedCount()).isZero();
             assertThat(job.getResult().getDiscardedCount()).isZero();
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
         });
     }
 
@@ -425,6 +442,8 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(job.getResult().getTotalCount()).isEqualTo(totalTasksCount);
             assertThat(job.getResult().getResults()).isEmpty();
             assertThat(job.getConfiguration().getToReprocess()).isNullOrEmpty();
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
         });
     }
 
@@ -449,6 +468,8 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks);
             assertThat(jobResult.getFailedCount()).isEqualTo(failedTasks + permanentlyFailedTasks);
             assertThat(jobResult.getTotalCount()).isEqualTo(totalTasksCount);
+            assertThat(jobResult.getStartTs()).isPositive();
+            assertThat(jobResult.getFinishTs()).isPositive();
 
             List<DummyTaskFailure> failures = getFailures(jobResult);
             for (int i = 0, taskNumber = successfulTasks + 1; taskNumber <= totalTasksCount; i++, taskNumber++) {
@@ -467,6 +488,8 @@ public class JobManagerTest extends AbstractControllerTest {
             assertThat(jobResult.getSuccessfulCount()).isEqualTo(successfulTasks + failedTasks);
             assertThat(jobResult.getFailedCount()).isEqualTo(permanentlyFailedTasks);
             assertThat(jobResult.getTotalCount()).isEqualTo(totalTasksCount);
+            assertThat(jobResult.getStartTs()).isPositive();
+            assertThat(jobResult.getFinishTs()).isPositive();
 
             List<DummyTaskFailure> failures = getFailures(jobResult);
             for (int i = 0, taskNumber = successfulTasks + failedTasks + 1; taskNumber <= totalTasksCount; i++, taskNumber++) {
@@ -475,6 +498,23 @@ public class JobManagerTest extends AbstractControllerTest {
                 assertThat(failure.getError()).isEqualTo("error");
                 assertThat(failure.isFailAlways()).isTrue();
             }
+        });
+    }
+
+    @Test
+    public void testSubmitJob_zeroTasks() {
+        JobId jobId = submitJob(DummyJobConfiguration.builder()
+                .successfulTasksCount(0)
+                .build()).getId();
+
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Job job = findJobById(jobId);
+            assertThat(job.getStatus()).isEqualTo(JobStatus.COMPLETED);
+            assertThat(job.getResult().getSuccessfulCount()).isEqualTo(0);
+            assertThat(job.getResult().getResults()).isEmpty();
+            assertThat(job.getResult().getCompletedCount()).isEqualTo(0);
+            assertThat(job.getResult().getStartTs()).isPositive();
+            assertThat(job.getResult().getFinishTs()).isPositive();
         });
     }
 
