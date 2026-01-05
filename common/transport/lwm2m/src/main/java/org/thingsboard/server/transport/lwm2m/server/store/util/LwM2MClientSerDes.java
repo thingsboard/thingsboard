@@ -53,6 +53,9 @@ import static org.thingsboard.common.util.JacksonUtil.toJsonNode;
 public class LwM2MClientSerDes {
     public static final String VALUE = "value";
     private static final RegistrationSerDes registrationSerDes = new RegistrationSerDes();
+    private static final JsonFormat.Printer JSON_PRINTER = JsonFormat.printer();
+    private static final JsonFormat.Printer JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES = JsonFormat.printer().preservingProtoFieldNames();
+    private static final boolean PRESERVE_PROTO_FIELD_NAMES = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
 
     @SneakyThrows
     public static byte[] serialize(LwM2mClient client) {
@@ -71,7 +74,8 @@ public class LwM2MClientSerDes {
         JsonObject sharedAttributes = new JsonObject();
 
         for (Map.Entry<String, TransportProtos.TsKvProto> entry : client.getSharedAttributes().entrySet()) {
-            sharedAttributes.addProperty(entry.getKey(), JsonFormat.printer().preservingProtoFieldNames().print(entry.getValue()));
+            JsonFormat.Printer printer = PRESERVE_PROTO_FIELD_NAMES ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
+            sharedAttributes.addProperty(entry.getKey(), printer.print(entry.getValue()));
         }
 
         o.add("sharedAttributes", sharedAttributes);
@@ -84,7 +88,8 @@ public class LwM2MClientSerDes {
         o.addProperty("state", client.getState().toString());
 
         if (client.getSession() != null) {
-            o.addProperty("session", JsonFormat.printer().preservingProtoFieldNames().print(client.getSession()));
+            JsonFormat.Printer printer = PRESERVE_PROTO_FIELD_NAMES ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
+            o.addProperty("session", printer.print(client.getSession()));
         }
         if (client.getTenantId() != null) {
             o.addProperty("tenantId", client.getTenantId().toString());

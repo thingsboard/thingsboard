@@ -45,6 +45,10 @@ public class DynamicProtoUtils {
 
     public static final Location LOCATION = new Location("", "", -1, -1);
     public static final String PROTO_3_SYNTAX = "proto3";
+    
+    private static final JsonFormat.Printer JSON_PRINTER = JsonFormat.printer().includingDefaultValueFields();
+    private static final JsonFormat.Printer JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES = JsonFormat.printer().preservingProtoFieldNames().includingDefaultValueFields();
+    private static final boolean PRESERVE_PROTO_FIELD_NAMES = Boolean.parseBoolean(System.getProperty("transport.json.preserve_proto_field_names", System.getenv("TB_TRANSPORT_JSON_PRESERVE_PROTO_FIELD_NAMES")));
 
     public static Descriptors.Descriptor getDescriptor(String protoSchema, String schemaName) {
         try {
@@ -99,7 +103,8 @@ public class DynamicProtoUtils {
 
     public static String dynamicMsgToJson(Descriptors.Descriptor descriptor, byte[] payload) throws InvalidProtocolBufferException {
         DynamicMessage dynamicMessage = DynamicMessage.parseFrom(descriptor, payload);
-        return JsonFormat.printer().preservingProtoFieldNames().includingDefaultValueFields().print(dynamicMessage);
+        JsonFormat.Printer printer = PRESERVE_PROTO_FIELD_NAMES ? JSON_PRINTER_PRESERVING_PROTO_FIELD_NAMES : JSON_PRINTER;
+        return printer.print(dynamicMessage);
     }
 
     public static DynamicMessage jsonToDynamicMessage(DynamicMessage.Builder builder, String payload) throws InvalidProtocolBufferException {
