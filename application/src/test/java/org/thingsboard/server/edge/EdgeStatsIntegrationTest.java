@@ -78,8 +78,6 @@ public class EdgeStatsIntegrationTest extends AbstractEdgeTest {
             assertEquals(EXPECTED_MSGS_TMP_FAILED, counters.getMsgsTmpFailed().get());
         });
 
-        Thread.sleep(1000);
-
         // WHEN
         edgeStatsService.reportStats();
 
