@@ -52,8 +52,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
@@ -121,13 +120,27 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
+    public void shouldNotAllowNullQueryParamNames() {
+        // GIVEN
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setUseNewEncoding(true);
+        config.setQueryParams(List.of(new QueryParam(null, "value")));
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .matches(e -> ((TbNodeException) e).isUnrecoverable())
+                .rootCause()
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("query parameter names must be non-null");
+    }
+
+    @Test
     public void shouldNotAllowNullQueryParamValues() {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
         config.setUseNewEncoding(true);
-        var params = new HashMap<String, String>();
-        params.put("key", null);
-        config.setQueryParams(params);
+        config.setQueryParams(List.of(new QueryParam("key", null)));
 
         // WHEN-THEN
         assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
@@ -143,7 +156,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
         config.setUseNewEncoding(false);
-        config.setQueryParams(Map.of("key", "value"));
+        config.setQueryParams(List.of(new QueryParam("key", "value")));
 
         // WHEN-THEN
         assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
@@ -175,7 +188,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
 
         // THEN
         assertTrue(defaultConfig.isUseNewEncoding());
-        assertEquals(Collections.emptyMap(), defaultConfig.getQueryParams());
+        assertEquals(Collections.emptyList(), defaultConfig.getQueryParams());
     }
 
     @Test

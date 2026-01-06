@@ -17,6 +17,7 @@ package org.thingsboard.rule.engine.rest;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -27,6 +28,7 @@ import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
@@ -36,7 +38,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String restEndpointUrlPattern;
     private String requestMethod;
     private boolean useNewEncoding;
-    private Map<@NotNull String, @NotNull(message = "query parameter values must be non-null") String> queryParams;
+    private List<@NotNull @Valid QueryParam> queryParams;
     private Map<String, String> headers;
     private boolean useSimpleClientHttpFactory;
     private int readTimeoutMs;
@@ -78,7 +80,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setRequestMethod("POST");
         configuration.setHeaders(Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
         configuration.setUseNewEncoding(true);
-        configuration.setQueryParams(Collections.emptyMap());
+        configuration.setQueryParams(Collections.emptyList());
         configuration.setUseSimpleClientHttpFactory(false);
         configuration.setReadTimeoutMs(0);
         configuration.setMaxParallelRequestsCount(0);

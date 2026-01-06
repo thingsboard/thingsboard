@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.rest;
 
-import com.google.common.collect.Maps;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
@@ -217,14 +216,15 @@ public class TbHttpClient {
 
             String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
 
-            Map<String, String> processedQueryParams;
+            List<QueryParam> processedQueryParams;
             if (config.isUseNewEncoding()) {
-                processedQueryParams = Maps.newHashMapWithExpectedSize(config.getQueryParams().size());
-                config.getQueryParams().forEach((name, value) -> {
-                    var processedParamName = TbNodeUtils.processPattern(name, msg);
-                    var processedParamValue = TbNodeUtils.processPattern(value, msg);
-                    processedQueryParams.put(processedParamName, processedParamValue);
-                });
+                processedQueryParams = config.getQueryParams().stream()
+                        .map(param -> {
+                            var processedParamName = TbNodeUtils.processPattern(param.name(), msg);
+                            var processedParamValue = TbNodeUtils.processPattern(param.value(), msg);
+                            return new QueryParam(processedParamName, processedParamValue);
+                        })
+                        .toList();
             } else {
                 processedQueryParams = null;
             }
@@ -278,7 +278,7 @@ public class TbHttpClient {
         return origin;
     }
 
-    public URI buildEncodedUri(String endpointUrl, Map<String, String> queryParams) {
+    public URI buildEncodedUri(String endpointUrl, List<QueryParam> queryParams) {
         if (endpointUrl == null) {
             throw new RuntimeException("Url string cannot be null!");
         }
@@ -306,16 +306,15 @@ public class TbHttpClient {
         return uri;
     }
 
-    private URI buildEncodedUriNew(String endpointUrl, Map<String, String> queryParams) {
+    private URI buildEncodedUriNew(String endpointUrl, List<QueryParam> queryParams) {
         try {
             URIBuilder builder = new URIBuilder(endpointUrl);
-            queryParams.forEach(builder::addParameter);
+            queryParams.forEach(param -> builder.addParameter(param.name(), param.value()));
             return builder.build();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException("""
-                    Invalid REST endpoint URL: '%s'. The URL must be valid and properly encoded.
-                    If the path contains special characters (e.g., spaces, braces), they must be percent-encoded (e.g., '/my file/' should be '/my%%20file/', '/path/{id}/' should be '/path/%%7Bid%%7D/').
-                    Query parameters should be configured separately and will be encoded automatically.""".formatted(endpointUrl), e);
+                    Invalid request URL: '%s'. The URL must be valid and properly encoded.
+                    If URL contains special characters (e.g., spaces), they must be percent-encoded (e.g., '/my file/' should be '/my%%20file/').""".formatted(endpointUrl), e);
         }
     }
 
