@@ -78,6 +78,12 @@ public abstract class AbstractSyncSessionCallback implements SessionMsgListener 
             return false;
         }
     }
+    public static boolean isMulticastRequest(TbCoapObservationState state) {
+        if (state != null) {
+            return state.getExchange().advanced().getRequest().isMulticast();
+        }
+        return false;
+    }
 
     protected void respond(Response response) {
         response.getOptions().setContentFormat(TbCoapContentFormatUtil.getContentFormat(exchange.getRequestOptions().getContentFormat(), state.getContentFormat()));
