@@ -24,6 +24,8 @@ import {
   AggInputType,
   AggInputTypeTranslations,
   CalculatedFieldAggMetricValue,
+  calculatedFieldMetricFilterDefaultScript,
+  calculatedFieldMetricMapDefaultScript,
   FORBIDDEN_NAMES,
   forbiddenNamesValidator,
   uniqueNameValidator
@@ -64,11 +66,11 @@ export class CalculatedFieldMetricsPanelComponent implements OnInit {
     name: ['', [Validators.required, forbiddenNamesValidator(FORBIDDEN_NAMES), Validators.pattern(charsWithNumRegex), Validators.maxLength(255)]],
     function: [AggFunction.AVG],
     allowFilter: [false],
-    filter: ['', Validators.required],
+    filter: [calculatedFieldMetricFilterDefaultScript, Validators.required],
     input: this.fb.group({
       type: [AggInputType.key],
       key: ['', Validators.required],
-      function: ['', Validators.required],
+      function: [calculatedFieldMetricMapDefaultScript, Validators.required],
     }),
     defaultValue: [null]
   });

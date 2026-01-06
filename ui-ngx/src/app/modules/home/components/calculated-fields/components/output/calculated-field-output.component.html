@@ -30,7 +30,7 @@
         </mat-select>
       </mat-form-field>
       @if (outputForm.get('type').value === OutputType.Attribute
-      && (entityId.entityType === EntityType.DEVICE || entityId.entityType === EntityType.DEVICE_PROFILE)) {
+      && (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.DEVICE_PROFILE)) {
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
           <mat-select formControlName="scope" class="w-full">

@@ -1083,3 +1083,14 @@ export interface CalculatedFieldsQuery {
   entities?: Array<string>;
   name?: Array<string>;
 }
+
+export const calculatedFieldMetricFilterDefaultScript =
+  '// Sample filter script to include only active and unoccupied parking spaces\n' +
+  '// Goal: Count only parking spaces that are active and currently free\n\n' +
+  'return active == true && occupied == false;';
+
+export const calculatedFieldMetricMapDefaultScript =
+  '// Sample map script to convert temperature from Fahrenheit to Celsius\n' +
+  '// Goal: Apply conversion per entity before aggregation (e.g., for average temperature)\n\n' +
+  'var temperatureC = (temperature - 32) / 1.8;\n' +
+  'return toFixed(temperatureC, 2);';
