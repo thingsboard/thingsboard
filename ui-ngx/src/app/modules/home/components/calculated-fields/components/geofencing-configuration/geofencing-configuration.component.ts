@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -58,7 +58,7 @@ import { EntityId } from '@shared/models/id/entity-id';
     }
   ],
 })
-export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnInit {
+export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 
   @Input({required: true})
   entityId: EntityId;
@@ -113,8 +113,14 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
     })
   }
 
-  ngOnInit() {
-    this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.entityName || changes.entityId) {
+      const entityNameChanges = changes.entityName;
+      const entityIdChanges = changes.entityId;
+      if ((entityNameChanges?.currentValue !== entityNameChanges?.previousValue) || (entityIdChanges?.currentValue !== entityIdChanges?.previousValue)) {
+        this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
+      }
+    }
   }
 
   validate(): ValidationErrors | null {
@@ -124,7 +130,9 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
   writeValue(config: CalculatedFieldGeofencingConfiguration): void {
     this.geofencingConfiguration.patchValue(config, {emitEvent: false});
     this.checkRelatedEntity(this.geofencingConfiguration.get('zoneGroups').value);
-    this.checkScheduledUpdateEnabled(this.geofencingConfiguration.get('scheduledUpdateEnabled').value);
+    if (this.geofencingConfiguration.enabled) {
+      this.checkScheduledUpdateEnabled(this.geofencingConfiguration.get('scheduledUpdateEnabled').value);
+    }
   }
 
   registerOnChange(fn: (config: CalculatedFieldGeofencingConfiguration) => void): void {

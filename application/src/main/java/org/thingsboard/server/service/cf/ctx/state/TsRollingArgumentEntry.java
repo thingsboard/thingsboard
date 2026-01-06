@@ -100,7 +100,7 @@ public class TsRollingArgumentEntry implements ArgumentEntry, HasLatestTs {
     }
 
     @Override
-    public boolean updateEntry(ArgumentEntry entry) {
+    public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof TsRollingArgumentEntry tsRollingEntry) {
             updateTsRollingEntry(tsRollingEntry);
         } else if (entry instanceof SingleValueArgumentEntry singleValueEntry) {

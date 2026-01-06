@@ -20,13 +20,15 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
+import { finalize } from 'rxjs/operators';
+import { PageComponent } from '@shared/components/page.component';
 
 @Component({
   selector: 'tb-create-password',
   templateUrl: './create-password.component.html',
   styleUrls: ['./password.component.scss']
 })
-export class CreatePasswordComponent {
+export class CreatePasswordComponent extends PageComponent {
 
   passwordPolicy: UserPasswordPolicy;
   createPassword: FormGroup;
@@ -38,7 +40,7 @@ export class CreatePasswordComponent {
   constructor(private route: ActivatedRoute,
               private authService: AuthService,
               private fb: FormBuilder) {
-
+    super();
     this.activateToken = this.route.snapshot.queryParams['activateToken'] || '';
     this.passwordPolicy = this.route.snapshot.data['passwordPolicy'];
 
@@ -60,11 +62,10 @@ export class CreatePasswordComponent {
     if (this.createPassword.invalid) {
       this.createPassword.markAllAsTouched();
     } else {
-      this.isLoading = true
-      this.authService.activate(this.activateToken, this.createPassword.get('newPassword').value, true)
-        .subscribe({
-          error: () => {this.isLoading = false;}
-        });
+      this.isLoading = true;
+      this.authService.activate(this.activateToken, this.createPassword.get('newPassword').value, true).pipe(
+        finalize(() => {this.isLoading = false;})
+      ).subscribe(() => {});
     }
   }
 }

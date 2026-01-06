@@ -86,13 +86,13 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
                 validateNewEntry(key, newEntry);
                 if (existingEntry instanceof RelatedEntitiesArgumentEntry ||
                     existingEntry instanceof EntityAggregationArgumentEntry) {
-                    updateEntry(existingEntry, newEntry);
+                    updateEntry(existingEntry, newEntry, ctx);
                 } else {
                     arguments.put(key, newEntry);
                 }
                 entryUpdated = true;
             } else {
-                entryUpdated = updateEntry(existingEntry, newEntry);
+                entryUpdated = updateEntry(existingEntry, newEntry, ctx);
             }
 
             if (entryUpdated) {
@@ -111,8 +111,8 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
         return updatedArguments;
     }
 
-    protected boolean updateEntry(ArgumentEntry existingEntry, ArgumentEntry newEntry) {
-        return existingEntry.updateEntry(newEntry);
+    protected boolean updateEntry(ArgumentEntry existingEntry, ArgumentEntry newEntry, CalculatedFieldCtx ctx) {
+        return existingEntry.updateEntry(newEntry, ctx);
     }
 
     @Override
@@ -201,7 +201,9 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     @Override
     public JsonNode getArgumentsJson() {
         return JacksonUtil.valueToTree(arguments.entrySet().stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue())));
+                .filter(entry -> !entry.getValue().isEmpty())
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().jsonValue()))
+        );
     }
 
 }

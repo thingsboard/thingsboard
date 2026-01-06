@@ -17,6 +17,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.script.api.tbel.TbelCfPropagationArg;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -31,6 +34,7 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ExtendWith(MockitoExtension.class)
 public class PropagationArgumentEntryTest {
 
     private final AssetId ENTITY_1_ID = new AssetId(UUID.fromString("b0a8637d-6d67-43d5-a483-c0e391afe805"));
@@ -38,6 +42,9 @@ public class PropagationArgumentEntryTest {
     private final AssetId ENTITY_3_ID = new AssetId(UUID.fromString("d64f3e51-2ec2-472f-b475-b095ef8bdc70"));
 
     private PropagationArgumentEntry entry;
+
+    @Mock
+    private CalculatedFieldCtx ctx;
 
     @BeforeEach
     void setUp() {
@@ -68,14 +75,14 @@ public class PropagationArgumentEntryTest {
 
     @Test
     void testUpdateEntryWhenSingleEntryPassed() {
-        assertThatThrownBy(() -> entry.updateEntry(new SingleValueArgumentEntry()))
+        assertThatThrownBy(() -> entry.updateEntry(new SingleValueArgumentEntry(), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for propagation argument entry: SINGLE_VALUE");
     }
 
     @Test
     void testUpdateEntryWhenRollingEntryPassed() {
-        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L)))
+        assertThatThrownBy(() -> entry.updateEntry(new TsRollingArgumentEntry(5, 30000L), ctx))
                 .isInstanceOf(IllegalArgumentException.class)
                 .hasMessage("Unsupported argument entry type for propagation argument entry: TS_ROLLING");
     }
@@ -85,7 +92,7 @@ public class PropagationArgumentEntryTest {
         var newIds = new ArrayList<EntityId>(List.of(ENTITY_3_ID, ENTITY_1_ID));
         var updated = new PropagationArgumentEntry(newIds);
 
-        boolean changed = entry.updateEntry(updated);
+        boolean changed = entry.updateEntry(updated, ctx);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).containsExactlyElementsOf(newIds);
@@ -95,7 +102,7 @@ public class PropagationArgumentEntryTest {
     void testUpdateEntryClearsWhenNewEntryIsEmpty() {
         var updatedEmpty = new PropagationArgumentEntry(List.of());
 
-        boolean changed = entry.updateEntry(updatedEmpty);
+        boolean changed = entry.updateEntry(updatedEmpty, ctx);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).isEmpty();
@@ -106,7 +113,7 @@ public class PropagationArgumentEntryTest {
         var added = new PropagationArgumentEntry();
         added.setAdded(List.of(ENTITY_3_ID));
 
-        boolean changed = entry.updateEntry(added);
+        boolean changed = entry.updateEntry(added, ctx);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
@@ -118,7 +125,7 @@ public class PropagationArgumentEntryTest {
         var added = new PropagationArgumentEntry();
         added.setAdded(List.of(ENTITY_2_ID));
 
-        boolean changed = entry.updateEntry(added);
+        boolean changed = entry.updateEntry(added, ctx);
 
         assertThat(changed).isFalse();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
@@ -130,7 +137,7 @@ public class PropagationArgumentEntryTest {
         var removed = new PropagationArgumentEntry();
         removed.setRemoved(ENTITY_2_ID);
 
-        boolean changed = entry.updateEntry(removed);
+        boolean changed = entry.updateEntry(removed, ctx);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID);
@@ -142,7 +149,7 @@ public class PropagationArgumentEntryTest {
         var removed = new PropagationArgumentEntry();
         removed.setRemoved(ENTITY_3_ID);
 
-        boolean changed = entry.updateEntry(removed);
+        boolean changed = entry.updateEntry(removed, ctx);
 
         assertThat(changed).isFalse();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
@@ -152,72 +159,72 @@ public class PropagationArgumentEntryTest {
     @Test
     void testUpdateEntryWhenPartitionStateRestoreAddsMissingIds() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
-        boolean changed = entry.updateEntry(restore);
+        boolean changed = entry.updateEntry(restore, ctx);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
         assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreRemovesStaleIds() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
-        boolean changed = entry.updateEntry(restore);
+        boolean changed = entry.updateEntry(restore, ctx);
 
-        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(changed).isTrue(); // expected to be changed, so we re-check readiness for the state
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID);
         assertThat(entry.getAdded()).isNull();
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreAddsAndRemoves() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_3_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
-        boolean changed = entry.updateEntry(restore);
+        boolean changed = entry.updateEntry(restore, ctx);
 
         assertThat(changed).isTrue();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_3_ID);
         assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreNoChanges() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
-        boolean changed = entry.updateEntry(restore);
+        boolean changed = entry.updateEntry(restore, ctx);
 
         assertThat(changed).isFalse();
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
         assertThat(entry.getAdded()).isNull();
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreEmptySet() {
         var restore = new PropagationArgumentEntry(List.of());
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
-        boolean changed = entry.updateEntry(restore);
+        boolean changed = entry.updateEntry(restore, ctx);
 
-        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(changed).isTrue(); // expected to be changed, so we re-check readiness for the state
         assertThat(entry.getEntityIds()).isEmpty();
         assertThat(entry.getAdded()).isNull();
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test

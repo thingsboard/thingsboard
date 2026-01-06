@@ -15,15 +15,14 @@
     limitations under the License.
 
 -->
-<div class="tb-alarm-rule-condition flex flex-col gap-4 min-w-0" [formGroup]="alarmRuleConditionFormGroup">
+<div class="tb-alarm-rule-condition flex min-w-0 flex-col gap-4" [formGroup]="alarmRuleConditionFormGroup">
   <div class="tb-form-row column-xs">
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.condition' | translate }}</div>
-    <button [disabled]="disabled"
-            type="button"
+    <button type="button"
             class="tb-alarm-rule-condition-button"
-            mat-stroked-button [color]="conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn'"
+            mat-stroked-button [color]="conditionSet() || this.filtersArgumentsValid ? 'primary' : 'warn'"
             (click)="openFilterDialog($event)">
-      <div class="flex items-center gap-2 justify-between">
+      <div class="flex items-center justify-between gap-2">
         <tb-alarm-rule-filter-text [alarmRuleExpression]="alarmRuleConditionFormGroup.get('expression').value"
                                    [arguments]="arguments"
                                    [disabled]="disabled"
@@ -35,15 +34,14 @@
         </tb-alarm-rule-filter-text>
         <mat-icon [color]="disabled ? '' : (conditionSet() && this.filtersArgumentsValid ? 'primary' : 'warn')"
                   class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
-          {{ conditionSet() ? 'edit' : 'add' }}
+          {{ disabled ? 'visibility' : (conditionSet() ? 'edit' : 'add') }}
         </mat-icon>
       </div>
     </button>
   </div>
   <div class="tb-form-row column-xs">
     <div class="min-w-40 xs:min-w-fit">{{ 'alarm-rule.schedule-title' | translate }}</div>
-    <button [disabled]="disabled"
-            [color]="schedulerArgumentsValid ? 'primary' : 'warn'"
+    <button [color]="schedulerArgumentsValid ? 'primary' : 'warn'"
             type="button"
             class="tb-alarm-rule-condition-button"
             mat-stroked-button
@@ -52,7 +50,7 @@
         <span class="tb-alarm-rule-condition-label" tbTruncateWithTooltip [innerHTML]="scheduleText"></span>
         <mat-icon [color]="disabled ? '' : (schedulerArgumentsValid ? 'primary' : 'warn')"
                   class="tb-mat-20 tb-alarm-rule-schedule-edit-icon">
-          edit
+          {{ disabled ? 'visibility' : 'edit' }}
         </mat-icon>
       </div>
     </button>

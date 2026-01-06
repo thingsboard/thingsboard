@@ -34,6 +34,7 @@
       [tenantId]="data.tenantId"
       [entityId]="data.entityId"
       [functionTestButtonLabel]="data.functionTestButtonLabel ?? ''"
+      [disableDebugEventAction]="data.debugActionDisabled"
       (debugEventSelected)="this.onDebugEventSelected($event)"
     />
   </div>

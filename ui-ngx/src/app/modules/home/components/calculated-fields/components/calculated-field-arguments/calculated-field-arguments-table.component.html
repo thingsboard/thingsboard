@@ -93,22 +93,33 @@
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let argument;">
           <div class="tb-form-table-row-cell-buttons min-w-20">
-            <button type="button"
-                    mat-icon-button
-                    #button
-                    [disabled]="disable"
-                    (click)="manageArgument($event, button, argument)"
-                    [matTooltip]="'action.edit' | translate"
-                    matTooltipPosition="above">
-              <mat-icon
-                [matBadgeHidden]="isEditButtonShowBadge(argument)"
-                matBadgeColor="warn"
-                matBadgeSize="small"
-                matBadge="*"
-              >
-                edit
-              </mat-icon>
-            </button>
+            @if (disable) {
+              <button type="button"
+                      mat-icon-button
+                      #previewButton
+                      (click)="manageArgument($event, previewButton, argument, true)"
+                      [matTooltip]="'calculated-fields.preview' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            } @else {
+              <button type="button"
+                      mat-icon-button
+                      #button
+                      [disabled]="disable"
+                      (click)="manageArgument($event, button, argument)"
+                      [matTooltip]="'action.edit' | translate"
+                      matTooltipPosition="above">
+                <mat-icon
+                  [matBadgeHidden]="isEditButtonShowBadge(argument)"
+                  matBadgeColor="warn"
+                  matBadgeSize="small"
+                  matBadge="*"
+                >
+                  edit
+                </mat-icon>
+              </button>
+            }
             <button type="button"
                     mat-icon-button
                     [disabled]="disable"

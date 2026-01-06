@@ -16,7 +16,7 @@
 
 import { BaseData, HasId } from '@shared/models/base-data';
 import { PageComponent } from '@shared/components/page.component';
-import { AfterViewInit, Directive, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Directive, inject, Input, OnInit, QueryList, ViewChildren } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -100,9 +100,11 @@ export abstract class EntityTabsComponent<T extends BaseData<HasId>,
 
   entityTabsChanged = this.entityTabsSubject.asObservable();
 
-  protected constructor(protected store: Store<AppState>) {
-    super(store);
-    this.authUser = getCurrentAuthUser(store);
+  protected store: Store<AppState> = inject(Store<AppState>);
+
+  protected constructor(...args: unknown[]) {
+    super();
+    this.authUser = getCurrentAuthUser(this.store);
   }
 
   ngOnInit() {

@@ -17,7 +17,7 @@
 -->
 <div [formGroup]="entityAggregationConfiguration" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.entity-aggregation.argument-title-hint' | translate }}">
       {{ 'calculated-fields.arguments' | translate }}
     </div>
     <div class="tb-form-hint tb-primary-fill hint-container">
@@ -29,7 +29,7 @@
                                            [entityName]="entityName"/>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.metrics' | translate }}">
+    <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.hint.entity-aggregation-metrics' | translate }}">
       {{ 'calculated-fields.metrics.metrics' | translate }}
     </div>
     <tb-calculated-field-metrics-table formControlName="metrics"

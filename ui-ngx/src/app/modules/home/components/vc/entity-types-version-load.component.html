@@ -72,7 +72,9 @@
                   <mat-checkbox [class.hidden]="entityTypesWithoutRelatedData.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadRelations">
                     {{ 'version-control.load-relations' | translate }}
                   </mat-checkbox>
-                  <mat-checkbox [class.hidden]="!typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)" formControlName="loadCalculatedFields">
+                  <mat-checkbox [class.hidden]="!typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)"
+                                formControlName="loadCalculatedFields"
+                                class="checkbox-pre-line">
                     {{ 'version-control.load-calculated-fields' | translate }}
                   </mat-checkbox>
                 </div>

@@ -114,13 +114,13 @@ export class CreateCfAlarmRulesComponent implements ControlValueAccessor, Valida
         }
         createAlarmRulesControls.push(this.fb.group({
           severity: [severity, Validators.required],
-          alarmRule: [createAlarmRule, Validators.required]
+          alarmRule: [{value: createAlarmRule, disabled: this.disabled}, Validators.required]
         }));
       });
     }
     const formArray = this.createAlarmRulesFormGroup.get('createAlarmRules') as FormArray;
-    formArray.clear();
-    createAlarmRulesControls.forEach(c => formArray.push(c));
+    formArray.clear({emitEvent: false});
+    createAlarmRulesControls.forEach(c => formArray.push(c, {emitEvent: false}));
     if (this.disabled) {
       this.createAlarmRulesFormGroup.disable({emitEvent: false});
     } else {

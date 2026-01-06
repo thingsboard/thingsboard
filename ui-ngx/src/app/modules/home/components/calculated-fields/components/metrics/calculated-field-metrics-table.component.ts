@@ -153,7 +153,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
     this.metricsFormArray.markAsDirty();
   }
 
-  manageMetrics($event: Event, matButton: MatButton, metric = {} as CalculatedFieldAggMetricValue): void {
+  manageMetrics($event: Event, matButton: MatButton, metric = {} as CalculatedFieldAggMetricValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();
@@ -173,7 +173,8 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
         editorCompleter: this.editorCompleter,
         highlightRules: this.highlightRules,
         simpleMode: this.simpleMode,
-        testScript: this.testScript
+        testScript: this.testScript,
+        readonly
       };
       this.popoverComponent = this.popoverService.displayPopover({
         trigger,
@@ -218,7 +219,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
   }
 
   writeValue(metrics: Record<string, CalculatedFieldAggMetric>): void {
-    this.metricsFormArray.clear();
+    this.metricsFormArray.clear({emitEvent: false});
     this.populateZonesFormArray(metrics);
   }
 
@@ -230,7 +231,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
       };
       this.metricsFormArray.push(this.fb.control(value), { emitEvent: false });
     });
-    this.metricsFormArray.updateValueAndValidity();
+    this.updateDataSource(this.metricsFormArray.value);
   }
 
   private getSortValue(metric: CalculatedFieldAggMetricValue, column: string): string {
