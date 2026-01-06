@@ -44,6 +44,7 @@ export const createTooltip = (map: TbMap<any>,
         tooltip.close();
       } else if (canOpen()) {
         if ((tooltip as any)._prepareOpen((layer as any)._latlng)) {
+          map.deselectItem();
           tooltip.openOn(map.getMap());
         }
       }
