@@ -147,6 +147,7 @@
                       <button type="button"
                               mat-icon-button
                               (click)="removeKey($index)"
+                              [disabled]="readonly"
                               matTooltip="{{ 'calculated-fields.delete-level' | translate }}"
                               matTooltipPosition="above">
                         <mat-icon>delete</mat-icon>
@@ -169,7 +170,7 @@
                 <span>{{ 'calculated-fields.max-allowed-levels-error' | translate }}</span>
               </div>
             } @else {
-              <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+              <button type="button" mat-stroked-button color="primary" (click)="addKey()" [disabled]="readonly">
                 {{ 'calculated-fields.add-level' | translate }}
               </button>
             }

@@ -326,6 +326,6 @@ export class CalculatedFieldGeofencingZoneGroupsPanelComponent implements OnInit
   }
 
   get dragEnabled(): boolean {
-    return this.levelsFormArray().controls.length > 1;
+    return this.levelsFormArray().controls.length > 1 && !this.readonly;
   }
 }

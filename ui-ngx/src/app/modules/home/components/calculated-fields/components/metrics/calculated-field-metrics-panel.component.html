@@ -182,7 +182,7 @@
                   matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                   matTooltipPosition="above"
                   class="tb-mat-32"
-                  [disabled]="!arguments.length"
+                  [disabled]="!arguments.length || readonly"
                   (click)="onTestScript('input.function')">
             <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
           </button>
@@ -191,7 +191,7 @@
           <button mat-button mat-raised-button color="primary"
                   type="button"
                   (click)="onTestScript('input.function')"
-                  [disabled]="!arguments.length">
+                  [disabled]="!arguments.length || readonly">
             {{ 'calculated-fields.test-script-function' | translate }}
           </button>
         </div>
