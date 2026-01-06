@@ -75,7 +75,7 @@
                   <mat-checkbox [class.hidden]="!typesWithCalculatedFields.has(entityTypeFormGroup.get('entityType').value)"
                                 formControlName="loadCalculatedFields"
                                 class="checkbox-pre-line">
-                    {{ 'version-control.load-calculated-fields' | translate }}
+                    {{ (entityTypeFormGroup.get('entityType').value === entityTypes.CUSTOMER ? 'version-control.load-alarm-rules' : 'version-control.load-calculated-fields') | translate }}
                   </mat-checkbox>
                 </div>
               </div>

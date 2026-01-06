@@ -49,7 +49,7 @@
           {{ 'version-control.export-relations' | translate }}
         </mat-checkbox>
         <mat-checkbox [class.hidden]="!typesWithCalculatedFields.has(entityId.entityType)" formControlName="saveCalculatedFields" class="mb-4">
-          {{ 'version-control.export-calculated-fields' | translate }}
+          {{ (entityId.entityType === entityTypes.CUSTOMER ? 'version-control.export-alarm-rules' : 'version-control.export-calculated-fields') | translate }}
         </mat-checkbox>
       </div>
     </fieldset>
