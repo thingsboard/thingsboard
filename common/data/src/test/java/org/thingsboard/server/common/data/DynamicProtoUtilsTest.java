@@ -215,15 +215,15 @@ public class DynamicProtoUtilsTest {
         String json = DynamicProtoUtils.dynamicMsgToJson(firmwareStatusDescriptor, firmwareStatus.toByteArray());
         
         // Default behavior: field names converted to camelCase
-        assertTrue("JSON should contain camelCase field 'currentFwTitle'", json.contains("\"currentFwTitle\""));
-        assertTrue("JSON should contain camelCase field 'currentFwVersion'", json.contains("\"currentFwVersion\""));
-        assertTrue("JSON should contain camelCase field 'fwState'", json.contains("\"fwState\""));
-        assertTrue("JSON should contain camelCase field 'targetFwTitle'", json.contains("\"targetFwTitle\""));
-        assertTrue("JSON should contain camelCase field 'targetFwVersion'", json.contains("\"targetFwVersion\""));
+        assertTrue(json.contains("\"currentFwTitle\""), "JSON should contain camelCase field 'currentFwTitle'");
+        assertTrue(json.contains("\"currentFwVersion\""), "JSON should contain camelCase field 'currentFwVersion'");
+        assertTrue(json.contains("\"fwState\""), "JSON should contain camelCase field 'fwState'");
+        assertTrue(json.contains("\"targetFwTitle\""), "JSON should contain camelCase field 'targetFwTitle'");
+        assertTrue(json.contains("\"targetFwVersion\""), "JSON should contain camelCase field 'targetFwVersion'");
         
         // Verify snake_case versions are NOT present
-        assertFalse("JSON should NOT contain snake_case field 'current_fw_title'", json.contains("\"current_fw_title\""));
-        assertFalse("JSON should NOT contain snake_case field 'fw_state'", json.contains("\"fw_state\""));
+        assertFalse(json.contains("\"current_fw_title\""), "JSON should NOT contain snake_case field 'current_fw_title'");
+        assertFalse(json.contains("\"fw_state\""), "JSON should NOT contain snake_case field 'fw_state'");
     }
 
     @Test
@@ -261,15 +261,15 @@ public class DynamicProtoUtilsTest {
         String json = DynamicProtoUtils.dynamicMsgToJson(firmwareStatusDescriptor, firmwareStatus.toByteArray());
         
         // When flag is enabled, verify snake_case is preserved
-        assertTrue("JSON should contain snake_case field 'current_fw_title'", json.contains("\"current_fw_title\""));
-        assertTrue("JSON should contain snake_case field 'current_fw_version'", json.contains("\"current_fw_version\""));
-        assertTrue("JSON should contain snake_case field 'fw_state'", json.contains("\"fw_state\""));
-        assertTrue("JSON should contain snake_case field 'target_fw_title'", json.contains("\"target_fw_title\""));
-        assertTrue("JSON should contain snake_case field 'target_fw_version'", json.contains("\"target_fw_version\""));
+        assertTrue(json.contains("\"current_fw_title\""), "JSON should contain snake_case field 'current_fw_title'");
+        assertTrue(json.contains("\"current_fw_version\""), "JSON should contain snake_case field 'current_fw_version'");
+        assertTrue(json.contains("\"fw_state\""), "JSON should contain snake_case field 'fw_state'");
+        assertTrue(json.contains("\"target_fw_title\""), "JSON should contain snake_case field 'target_fw_title'");
+        assertTrue(json.contains("\"target_fw_version\""), "JSON should contain snake_case field 'target_fw_version'");
         
         // Verify camelCase versions are NOT present
-        assertFalse("JSON should NOT contain camelCase field 'currentFwTitle'", json.contains("\"currentFwTitle\""));
-        assertFalse("JSON should NOT contain camelCase field 'fwState'", json.contains("\"fwState\""));
+        assertFalse(json.contains("\"currentFwTitle\""), "JSON should NOT contain camelCase field 'currentFwTitle'");
+        assertFalse(json.contains("\"fwState\""), "JSON should NOT contain camelCase field 'fwState'");
     }
 
 }
