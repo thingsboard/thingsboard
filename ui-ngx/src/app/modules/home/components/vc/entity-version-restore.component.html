@@ -37,7 +37,7 @@
             {{ 'version-control.load-relations' | translate }}
           </mat-checkbox>
           <mat-checkbox [class.hidden]="!entityDataInfo?.hasCalculatedFields" formControlName="loadCalculatedFields" class="mb-4">
-            {{ 'version-control.load-calculated-fields' | translate }}
+            {{ ( externalEntityId?.entityType === EntityType.CUSTOMER ? 'version-control.load-alarm-rules' : 'version-control.load-calculated-fields') | translate }}
           </mat-checkbox>
         </div>
       </fieldset>

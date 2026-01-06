@@ -7258,6 +7258,7 @@
         "load-attributes": "Load attributes",
         "load-credentials": "Load credentials",
         "load-calculated-fields": "Load calculated fields and alarm rules",
+        "load-alarm-rules": "Load alarm rules",
         "compare-with-current": "Compare with current",
         "diff-entity-with-version": "Diff with entity version '{{versionName}}'",
         "previous-difference": "Previous Difference",
