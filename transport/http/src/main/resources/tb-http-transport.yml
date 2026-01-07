@@ -127,6 +127,8 @@ redis:
   db: "${REDIS_DB:0}"
   # db password
   password: "${REDIS_PASSWORD:}"
+  # Redis username for ACL authentication (Redis 6.0+). Leave empty for legacy password-only auth
+  username: "${REDIS_USERNAME:}"
   ssl:
     # Enable/disable secure connection
     enabled: "${TB_REDIS_SSL_ENABLED:false}"
