@@ -20,33 +20,42 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationRequestConfig;
+import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.dao.notification.NotificationRequestDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NOTIFICATION_TABLE_NAME;
 
-@Service
-@ConditionalOnExpression("${sql.ttl.notifications.enabled:true} && ${sql.ttl.notifications.ttl:0} > 0")
 @Slf4j
+@Service
+@TbCoreComponent
+@ConditionalOnExpression("${sql.ttl.notifications.enabled:true} && ${sql.ttl.notifications.ttl:0} > 0")
 public class NotificationsCleanUpService extends AbstractCleanUpService {
 
     private final SqlPartitioningRepository partitioningRepository;
     private final NotificationRequestDao notificationRequestDao;
+    private final TenantService tenantService;
 
     @Value("${sql.ttl.notifications.ttl:2592000}")
     private long ttlInSec;
     @Value("${sql.notifications.partition_size:168}")
     private int partitionSizeInHours;
+    @Value("${sql.ttl.notifications.removal_batch_size:10000}")
+    private int removalBatchSize;
 
     public NotificationsCleanUpService(PartitionService partitionService, SqlPartitioningRepository partitioningRepository,
-                                       NotificationRequestDao notificationRequestDao) {
+                                       NotificationRequestDao notificationRequestDao, TenantService tenantService) {
         super(partitionService);
         this.partitioningRepository = partitioningRepository;
         this.notificationRequestDao = notificationRequestDao;
+        this.tenantService = tenantService;
     }
 
     @Scheduled(initialDelayString = "#{T(org.apache.commons.lang3.RandomUtils).nextLong(0, ${sql.ttl.notifications.checking_interval_ms:86400000})}",
@@ -63,9 +72,46 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
         if (lastRemovedNotificationTs > 0) {
             long gap = TimeUnit.MINUTES.toMillis(10);
             long requestExpTime = lastRemovedNotificationTs - TimeUnit.SECONDS.toMillis(NotificationRequestConfig.MAX_SENDING_DELAY) - gap;
-            int removed = notificationRequestDao.removeAllByCreatedTimeBefore(requestExpTime);
-            log.info("Removed {} outdated notification requests older than {}", removed, requestExpTime);
+            cleanUpNotificationRequests(requestExpTime);
         }
+    }
+
+    private void cleanUpNotificationRequests(long expirationTime) {
+        log.info("Starting notification requests cleanup for records older than {}", expirationTime);
+        int totalRemoved = 0;
+        int tenantsProcessed = 0;
+
+        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
+        for (TenantId tenantId : tenants) {
+            try {
+                int tenantRemoved = cleanUpByTenant(tenantId, expirationTime);
+                totalRemoved += tenantRemoved;
+                tenantsProcessed++;
+                if (tenantRemoved > 0) {
+                    log.debug("Removed {} notification requests for tenant {} older than {}", tenantRemoved, tenantId, expirationTime);
+                }
+            } catch (Exception e) {
+                log.warn("Failed to clean up notification requests for tenant {}", tenantId, e);
+            }
+        }
+
+        log.info("Notification requests cleanup completed. Processed {} tenants, removed {} total records", tenantsProcessed, totalRemoved);
+    }
+
+    private int cleanUpByTenant(TenantId tenantId, long expirationTime) {
+        int totalRemoved = 0;
+        int batchRemoved;
+
+        do {
+            batchRemoved = notificationRequestDao.removeByTenantIdAndCreatedTimeBeforeBatch(tenantId, expirationTime, removalBatchSize);
+            totalRemoved += batchRemoved;
+
+            if (batchRemoved > 0) {
+                log.trace("Removed {} notification requests in batch for tenant {}", batchRemoved, tenantId);
+            }
+        } while (batchRemoved >= removalBatchSize);
+
+        return totalRemoved;
     }
 
 }

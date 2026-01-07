@@ -419,6 +419,7 @@ sql:
     rpc:
       enabled: "${SQL_TTL_RPC_ENABLED:true}" # Enable/disable TTL (Time To Live) for rpc call records
       checking_interval: "${SQL_RPC_TTL_CHECKING_INTERVAL:7200000}" # Number of milliseconds. The current value corresponds to two hours
+      removal_batch_size: "${SQL_RPC_TTL_REMOVAL_BATCH_SIZE:10000}" # To delete outdated rpc not all at once but in batches
     audit_logs:
       enabled: "${SQL_TTL_AUDIT_LOGS_ENABLED:true}" # Enable/disable TTL (Time To Live) for audit log records
       ttl: "${SQL_TTL_AUDIT_LOGS_SECS:0}" # Disabled by default. The accuracy of the cleanup depends on the sql.audit_logs.partition_size
@@ -427,6 +428,7 @@ sql:
       enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for notification center records
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+      removal_batch_size: "${SQL_TTL_NOTIFICATIONS_REMOVAL_BATCH_SIZE:10000}" # To delete outdated notification requests not all at once but in batches
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonably small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
