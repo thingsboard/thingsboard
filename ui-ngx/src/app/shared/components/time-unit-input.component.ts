@@ -145,7 +145,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
       }
       if (isDefinedAndNotNull(this.minTime)) {
         validators.push((control: AbstractControl) =>
-          Validators.min(Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
+          Validators.min(this.minValue)(control)
         );
       }
 
@@ -169,6 +169,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     ).subscribe(value => {
       this.updatedModel(value);
     });
+  }
+
+  get minValue(): number {
+    return Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value));
   }
 
   get hasError(): string {
