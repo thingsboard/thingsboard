@@ -36,6 +36,7 @@ export interface AlarmRuleComplexFilterPredicateDialogData {
   valueType: EntityKeyValueType;
   arguments: Record<string, CalculatedFieldArgument>;
   argumentInUse: string;
+  readonly: boolean;
 }
 
 @Component({
@@ -63,6 +64,8 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
 
   arguments = this.data.arguments;
 
+  readonly = this.data.readonly;
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AlarmRuleComplexFilterPredicateDialogData,
@@ -73,6 +76,10 @@ export class AlarmRuleComplexFilterPredicateDialogComponent extends
     this.isAdd = this.data.isAdd;
 
     this.complexFilterFormGroup.patchValue(this.data.complexPredicate, {emitEvent: false});
+
+    if (this.readonly) {
+      this.complexFilterFormGroup.disable({emitEvent: false});
+    }
   }
 
   cancel(): void {

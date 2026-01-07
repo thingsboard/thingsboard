@@ -53,7 +53,7 @@ import { EntityService } from '@core/http/entity.service';
 @Component({
   selector: 'tb-alarm-rules',
   templateUrl: './alarm-rules.component.html',
-  styleUrls: []
+  styleUrls: ['./alarm-rule-dialog.component.scss']
 })
 export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEntity> {
 
@@ -175,7 +175,8 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
         expression: {
           type: AlarmRuleExpressionType.SIMPLE
         }
-      }
+      },
+      alarmDetails: null
     };
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
   }
