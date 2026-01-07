@@ -661,7 +661,7 @@ export class TbTimeSeriesChart {
           }
         }
       } else if (limit.type === ValueSourceType.constant) {
-        const value = unitConvertor ? unitConvertor(limit.value) : limit.value;
+        const value = unitConvertor && isDefinedAndNotNull(limit.value) ? unitConvertor(limit.value) : limit.value;
         if (limitType === 'min') {
           yAxis.option.min = value;
         } else {
