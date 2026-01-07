@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -333,7 +333,7 @@ export class CalculatedFieldsTableConfig extends EntityTableConfig<CalculatedFie
       .pipe(
         filter(Boolean),
         switchMap(calculatedField => {
-          if (calculatedField.type === CalculatedFieldType.ALARM) {
+          if (calculatedField.type === CalculatedFieldType.ALARM || !CalculatedFieldType[calculatedField.type]) {
             this.store.dispatch(new ActionNotificationShow({
               message: this.translate.instant('calculated-fields.hint.import-invalid-calculated-field-type'),
               type: 'error',

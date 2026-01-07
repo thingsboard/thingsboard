@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -121,6 +121,7 @@ import * as TbErrorComponent from '@shared/components/tb-error.component';
 import * as TbCheatSheetComponent from '@shared/components/cheatsheet.component';
 import * as BreadcrumbComponent from '@shared/components/breadcrumb.component';
 import * as UserMenuComponent from '@shared/components/user-menu.component';
+import * as TimeUnitInputComponent from '@shared/components/time-unit-input.component';
 import * as TimewindowComponent from '@shared/components/time/timewindow.component';
 import * as TimewindowPanelComponent from '@shared/components/time/timewindow-panel.component';
 import * as TimeintervalComponent from '@shared/components/time/timeinterval.component';
@@ -458,6 +459,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/cheatsheet.component': TbCheatSheetComponent,
     '@shared/components/breadcrumb.component': BreadcrumbComponent,
     '@shared/components/user-menu.component': UserMenuComponent,
+    '@shared/components/time-unit-input.component': TimeUnitInputComponent,
     '@shared/components/time/timewindow.component': TimewindowComponent,
     '@shared/components/time/timewindow-panel.component': TimewindowPanelComponent,
     '@shared/components/time/timeinterval.component': TimeintervalComponent,

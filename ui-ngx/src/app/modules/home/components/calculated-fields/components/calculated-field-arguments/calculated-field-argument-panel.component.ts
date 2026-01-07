@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -88,6 +88,7 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
     maxlength: 'calculated-fields.hint.argument-name-max-length',
     forbidden: 'calculated-fields.hint.argument-name-forbidden'
   };
+  @Input() readonly = false;
 
   @ViewChild('entityAutocomplete') entityAutocomplete: EntityAutocompleteComponent;
 
@@ -176,6 +177,11 @@ export class CalculatedFieldArgumentPanelComponent implements OnInit, AfterViewI
 
     this.argumentTypes = Object.values(ArgumentType)
       .filter(type => type !== ArgumentType.Rolling || this.isScript);
+
+    if (this.readonly) {
+      this.argumentType.disable({emitEvent: false});
+      this.argumentFormGroup.disable({emitEvent: false});
+    }
   }
 
   ngAfterViewInit(): void {

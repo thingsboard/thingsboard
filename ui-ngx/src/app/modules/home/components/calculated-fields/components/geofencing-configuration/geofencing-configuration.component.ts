@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -58,7 +58,7 @@ import { EntityId } from '@shared/models/id/entity-id';
     }
   ],
 })
-export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnInit {
+export class GeofencingConfigurationComponent implements ControlValueAccessor, Validator, OnChanges {
 
   @Input({required: true})
   entityId: EntityId;
@@ -113,8 +113,14 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
     })
   }
 
-  ngOnInit() {
-    this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.entityName || changes.entityId) {
+      const entityNameChanges = changes.entityName;
+      const entityIdChanges = changes.entityId;
+      if ((entityNameChanges?.currentValue !== entityNameChanges?.previousValue) || (entityIdChanges?.currentValue !== entityIdChanges?.previousValue)) {
+        this.currentEntityFilter = getCalculatedFieldCurrentEntityFilter(this.entityName, this.entityId);
+      }
+    }
   }
 
   validate(): ValidationErrors | null {

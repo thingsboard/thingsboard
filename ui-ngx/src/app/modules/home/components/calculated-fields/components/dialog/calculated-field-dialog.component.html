@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -69,13 +69,23 @@
         <mat-form-field appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'common.type' | translate }}</mat-label>
           <mat-select formControlName="type">
+            <mat-select-trigger>
+              {{ CalculatedFieldTypeTranslations.has(fieldFormGroup.get('type').value)
+                  ? (CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).name | translate)
+                  : fieldFormGroup.get('type').value }}
+            </mat-select-trigger>
             @for (type of fieldTypes; track type) {
-              <mat-option [value]="type">{{ CalculatedFieldTypeTranslations.get(type).name | translate}}</mat-option>
+              <mat-option [value]="type" class="py-1">
+                <span matListItemTitle>
+                  {{ CalculatedFieldTypeTranslations.get(type).name | translate}}
+                </span>
+                <br>
+                <small matListItemMeta style="color: inherit">
+                  {{ CalculatedFieldTypeTranslations.get(type).hint | translate }}
+                </small>
+              </mat-option>
             }
           </mat-select>
-          @if (CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).hint) {
-            <mat-hint>{{ CalculatedFieldTypeTranslations.get(fieldFormGroup.get('type').value).hint | translate }}</mat-hint>
-          }
         </mat-form-field>
       </div>
       @switch (fieldFormGroup.get('type').value) {
@@ -84,7 +94,7 @@
                                        [class.tb-form-panel-disabled]="disabledConfiguration"
                                        [entityId]="entityId"
                                        [entityName]="entityName"
-                                       [ownerId]="data.ownerId"
+                                       [ownerId]="ownerId"
                                        [tenantId]="data.tenantId"
           ></tb-geofencing-configuration>
         }
@@ -94,7 +104,7 @@
                                         [entityId]="entityId"
                                         [entityName]="entityName"
                                         [tenantId]="data.tenantId"
-                                        [ownerId]="data.ownerId"
+                                        [ownerId]="ownerId"
                                         [testScript]="onTestScript.bind(this)"
           ></tb-propagation-configuration>
         }
@@ -120,7 +130,7 @@
                                    [class.tb-form-panel-disabled]="disabledConfiguration"
                                    [entityId]="entityId"
                                    [entityName]="entityName"
-                                   [ownerId]="data.ownerId"
+                                   [ownerId]="ownerId"
                                    [tenantId]="data.tenantId"
                                    [isScript]="fieldFormGroup.get('type').value === CalculatedFieldType.SCRIPT"
                                    [testScript]="onTestScript.bind(this)"

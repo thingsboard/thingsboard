@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,9 @@ import { deepTrim } from '@core/utils';
 import { BaseData } from '@shared/models/base-data';
 import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
 import { FormGroup } from '@angular/forms';
+import { AssetInfo } from '@shared/models/asset.models';
+import { DeviceInfo } from '@shared/models/device.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 export interface CalculatedFieldDialogData {
   value?: CalculatedField;
@@ -69,6 +72,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
   } : null;
 
   entityName = this.data.entityName;
+  ownerId = this.data.ownerId;
 
   disabledConfiguration = false;
   isLoading = false;
@@ -104,6 +108,7 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
           this.fieldFormGroup.get('configuration').disable({emitEvent: false});
         } else {
           this.fieldFormGroup.get('configuration').enable({emitEvent: false});
+          this.fieldFormGroup.get('configuration').updateValueAndValidity({emitEvent: false});
         }
       });
     }
@@ -147,6 +152,9 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
 
   changeEntity(entity: BaseData<EntityId>): void {
     this.entityName = entity.name;
+    if (this.isAssignedToCustomer(entity as AssetInfo | DeviceInfo)) {
+      this.ownerId = (entity as AssetInfo | DeviceInfo).customerId;
+    }
   }
 
   get entityId(): EntityId {
@@ -162,5 +170,9 @@ export class CalculatedFieldDialogComponent extends DialogComponent<CalculatedFi
       this.fieldFormGroup.get('configuration').disable({emitEvent: false});
       this.disabledConfiguration = true;
     }
+  }
+
+  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
+    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 }

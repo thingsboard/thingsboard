@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -159,7 +159,7 @@ public class PropagationArgumentEntryTest {
     @Test
     void testUpdateEntryWhenPartitionStateRestoreAddsMissingIds() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
         boolean changed = entry.updateEntry(restore, ctx);
 
@@ -167,27 +167,27 @@ public class PropagationArgumentEntryTest {
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID, ENTITY_3_ID);
         assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreRemovesStaleIds() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
         boolean changed = entry.updateEntry(restore, ctx);
 
-        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(changed).isTrue(); // expected to be changed, so we re-check readiness for the state
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID);
         assertThat(entry.getAdded()).isNull();
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreAddsAndRemoves() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_3_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
         boolean changed = entry.updateEntry(restore, ctx);
 
@@ -195,14 +195,14 @@ public class PropagationArgumentEntryTest {
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_3_ID);
         assertThat(entry.getAdded()).containsExactly(ENTITY_3_ID);
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreNoChanges() {
         var restore = new PropagationArgumentEntry(List.of(ENTITY_1_ID, ENTITY_2_ID));
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
         boolean changed = entry.updateEntry(restore, ctx);
 
@@ -210,21 +210,21 @@ public class PropagationArgumentEntryTest {
         assertThat(entry.getEntityIds()).containsExactlyInAnyOrder(ENTITY_1_ID, ENTITY_2_ID);
         assertThat(entry.getAdded()).isNull();
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test
     void testUpdateEntryWhenPartitionStateRestoreEmptySet() {
         var restore = new PropagationArgumentEntry(List.of());
-        restore.setIgnoreRemovedEntities(true);
+        restore.setSyncWithDb(true);
 
         boolean changed = entry.updateEntry(restore, ctx);
 
-        assertThat(changed).isFalse(); // expected no change, since we consider the removal of stale ids as no-op
+        assertThat(changed).isTrue(); // expected to be changed, so we re-check readiness for the state
         assertThat(entry.getEntityIds()).isEmpty();
         assertThat(entry.getAdded()).isNull();
         assertThat(entry.getRemoved()).isNull();
-        assertThat(entry.isIgnoreRemovedEntities()).isFalse();
+        assertThat(entry.isSyncWithDb()).isFalse();
     }
 
     @Test

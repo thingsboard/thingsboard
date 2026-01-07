@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -99,16 +99,20 @@ interface CalculatedFieldTypeTranslate {
 export const CalculatedFieldTypeTranslations = new Map<CalculatedFieldType, CalculatedFieldTypeTranslate>(
   [
     [CalculatedFieldType.SIMPLE, {
-      name: 'calculated-fields.type.simple'
+      name: 'calculated-fields.type.simple',
+      hint: 'calculated-fields.type.simple-hint',
     }],
     [CalculatedFieldType.SCRIPT, {
-      name: 'calculated-fields.type.script'
+      name: 'calculated-fields.type.script',
+      hint: 'calculated-fields.type.script-hint',
     }],
     [CalculatedFieldType.GEOFENCING, {
-      name: 'calculated-fields.type.geofencing'
+      name: 'calculated-fields.type.geofencing',
+      hint: 'calculated-fields.type.geofencing-hint',
     }],
     [CalculatedFieldType.PROPAGATION, {
-      name: 'calculated-fields.type.propagation'
+      name: 'calculated-fields.type.propagation',
+      hint: 'calculated-fields.type.propagation-hint',
     }],
     [CalculatedFieldType.RELATED_ENTITIES_AGGREGATION, {
       name: 'calculated-fields.type.related-entities-aggregation',
@@ -521,7 +525,7 @@ export const ArgumentEntityTypeParamsMap =new Map<ArgumentEntityType, ArgumentEn
 ])
 
 export const getCalculatedFieldCurrentEntityFilter = (entityName: string, entityId: EntityId) => {
-  switch (entityId.entityType) {
+  switch (entityId?.entityType) {
     case EntityType.ASSET_PROFILE:
       return {
         assetTypes: [entityName],
@@ -1079,3 +1083,14 @@ export interface CalculatedFieldsQuery {
   entities?: Array<string>;
   name?: Array<string>;
 }
+
+export const calculatedFieldMetricFilterDefaultScript =
+  '// Sample filter script to include only active and unoccupied parking spaces\n' +
+  '// Goal: Count only parking spaces that are active and currently free\n\n' +
+  'return active == true && occupied == false;';
+
+export const calculatedFieldMetricMapDefaultScript =
+  '// Sample map script to convert temperature from Fahrenheit to Celsius\n' +
+  '// Goal: Apply conversion per entity before aggregation (e.g., for average temperature)\n\n' +
+  'var temperatureC = (temperature - 32) / 1.8;\n' +
+  'return toFixed(temperatureC, 2);';

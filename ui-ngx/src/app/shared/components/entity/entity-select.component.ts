@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output } from '@angular/core';
+import { Component, DestroyRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -27,6 +27,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MatFormFieldAppearance } from '@angular/material/form-field';
 import { BaseData } from '@shared/models/base-data';
+import { EntityAutocompleteComponent } from '@shared/components/entity/entity-autocomplete.component';
 
 @Component({
   selector: 'tb-entity-select',
@@ -39,6 +40,8 @@ import { BaseData } from '@shared/models/base-data';
   }]
 })
 export class EntitySelectComponent implements ControlValueAccessor, OnInit {
+
+  @ViewChild('entityAutocompleteComponent') entityAutocompleteComponent!: EntityAutocompleteComponent;
 
   entitySelectFormGroup: UntypedFormGroup;
 
@@ -203,5 +206,9 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit {
 
   changeEntity(entity: BaseData<EntityId>): void {
     this.entityChanged.emit(entity);
+  }
+
+  entityAutocompleteMarkAsTouched() {
+    this.entityAutocompleteComponent.markAsTouched();
   }
 }

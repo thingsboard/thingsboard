@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -41,6 +42,7 @@ import java.util.Map;
 
 import static org.thingsboard.server.common.data.cf.configuration.PropagationCalculatedFieldConfiguration.PROPAGATION_CONFIG_ARGUMENT;
 
+@Slf4j
 public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState {
 
     private CalculatedFieldProcessingService cfProcessingService;
@@ -67,12 +69,17 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
         super.init(restored);
         if (restored) {
             cfProcessingService.fetchPropagationArgumentFromDb(ctx, entityId).ifPresent(fromDb -> {
-                fromDb.setIgnoreRemovedEntities(true);
+                fromDb.setSyncWithDb(true);
                 var updatedArgs = update(Map.of(PROPAGATION_CONFIG_ARGUMENT, fromDb), ctx);
                 if (updatedArgs.isEmpty()) {
                     return;
                 }
-                ctx.scheduleReevaluation(0L, actorCtx);
+                log.warn("[{}][{}] Propagation argument was out of sync during state restore and was reconciled with DB.", ctx.getCfId(), entityId);
+                var updatedPropagationArgument = (PropagationArgumentEntry) arguments.get(PROPAGATION_CONFIG_ARGUMENT);
+                if (updatedPropagationArgument.getAdded() != null) {
+                    log.warn("[{}][{}] New propagation entities were detected during restore. Scheduling reevaluation for new entities...", ctx.getCfId(), entityId);
+                    ctx.scheduleReevaluation(0L, actorCtx);
+                }
             });
         }
     }

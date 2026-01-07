@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1143,7 +1143,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
     protected void createEntityRelation(EntityId entityIdFrom, EntityId entityIdTo, String typeRelation) throws Exception {
         EntityRelation relation = new EntityRelation(entityIdFrom, entityIdTo, typeRelation);
-        doPost("/api/relation", relation);
+        doPost("/api/relation", relation).andExpect(status().isOk());
     }
 
     protected void deleteEntityRelation(EntityRelation entityRelation) throws Exception {

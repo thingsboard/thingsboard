@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,6 @@ import {
   CalculatedFieldArgument,
   CalculatedFieldConfiguration,
   CalculatedFieldInfo,
-  calculatedFieldsEntityTypeList,
   CalculatedFieldType
 } from '@shared/models/calculated-field.models';
 import { EntityId } from '@shared/models/id/entity-id';
@@ -39,8 +38,17 @@ import {
 import { TenantId } from '@shared/models/id/tenant-id';
 import { StringItemsOption } from '@shared/components/string-items-list.component';
 import { RelationTypes } from '@shared/models/relation.models';
-import { AlarmRule, AlarmRuleConditionType, AlarmRuleExpressionType } from '@shared/models/alarm-rule.models';
+import {
+  AlarmRule,
+  AlarmRuleConditionType,
+  alarmRuleEntityTypeList,
+  AlarmRuleExpressionType
+} from '@shared/models/alarm-rule.models';
 import { CalculatedFieldFormService } from '@core/services/calculated-field-form.service';
+import { AssetInfo } from '@shared/models/asset.models';
+import { DeviceInfo } from '@shared/models/device.models';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-alarm-rules',
@@ -55,10 +63,10 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
   @Input()
   entityName: string;
 
-  readonly ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
+  ownerId = new TenantId(getCurrentAuthUser(this.store).tenantId);
   readonly tenantId = getCurrentAuthUser(this.store).tenantId;
   readonly EntityType = EntityType;
-  readonly calculatedFieldsEntityTypeList = calculatedFieldsEntityTypeList;
+  readonly alarmRuleEntityTypeList = alarmRuleEntityTypeList;
   readonly CalculatedFieldType = CalculatedFieldType;
 
   private cfFormService = inject(CalculatedFieldFormService);
@@ -69,7 +77,8 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
               @Inject('entity') protected entityValue: CalculatedFieldInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: CalculatedFieldsTableConfig,
               protected fb: FormBuilder,
-              protected cd: ChangeDetectorRef) {
+              protected cd: ChangeDetectorRef,
+              private entityService: EntityService) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -111,9 +120,7 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
 
   updateForm(entity: CalculatedFieldInfo) {
     const { configuration = {} as CalculatedFieldConfiguration, type = CalculatedFieldType.ALARM, debugSettings = { failuresEnabled: true, allEnabled: true }, entityId = this.entityId, ...value } = entity ?? {};
-    setTimeout(() => {
-      this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
-    });
+    this.entityForm.patchValue({ configuration, debugSettings, entityId, ...value }, {emitEvent: false});
     if (!entityId) {
       this.entityForm.get('configuration').disable({emitEvent: false});
     }
@@ -134,6 +141,7 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
       if (this.isEditValue) {
         this.entityForm.enable({emitEvent: false});
         this.entityForm.get('entityId').disable({emitEvent: false});
+        this.getOwnerId(this.entityId);
       } else {
         this.entityForm.disable({emitEvent: false});
       }
@@ -170,6 +178,22 @@ export class AlarmRulesComponent extends EntityComponent<CalculatedFieldsTableEn
       }
     };
     this.configFormGroup.patchValue({clearRule: clearAlarmRule});
+  }
+
+  getOwnerId(entityId: EntityId) {
+    if (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.ASSET) {
+      this.entityService.getEntity(entityId.entityType, entityId.id, { ignoreLoading: true, ignoreErrors: true }).subscribe(
+        (entity: AssetInfo | DeviceInfo) => {
+          if (this.isAssignedToCustomer(entity)) {
+            this.ownerId = entity.customerId;
+          }
+        }
+      );
+    }
+  }
+
+  private isAssignedToCustomer(entity: AssetInfo | DeviceInfo): boolean {
+    return entity && entity.customerId && entity.customerId.id !== NULL_UUID;
   }
 
 }
