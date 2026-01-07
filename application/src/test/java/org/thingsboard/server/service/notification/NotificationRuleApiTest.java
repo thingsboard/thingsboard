@@ -812,13 +812,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationsDeduplication_resourcesShortage() throws Exception {
         loginSysAdmin();
+        NotificationTarget sysadmins = createNotificationTarget(new SystemAdministratorsFilter());
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
                 .ramThreshold(0.01f)
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
-        loginTenantAdmin();
+        createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", sysadmins.getId());
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
         for (int i = 0; i < 10; i++) {
@@ -848,13 +848,13 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     @Test
     public void testNotificationsResourcesShortage_whenThresholdChangeToMatchingFilter_thenSendNotification() throws Exception {
         loginSysAdmin();
+        NotificationTarget sysadmins = createNotificationTarget(new SystemAdministratorsFilter());
         ResourcesShortageNotificationRuleTriggerConfig triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
                 .ramThreshold(1f)
                 .cpuThreshold(1f)
                 .storageThreshold(1f)
                 .build();
-        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", createNotificationTarget(tenantAdminUserId).getId());
-        loginTenantAdmin();
+        NotificationRule rule = createNotificationRule(triggerConfig, "Warning: ${resource} shortage", "${resource} shortage", sysadmins.getId());
 
         Method method = DefaultSystemInfoService.class.getDeclaredMethod("saveCurrentMonolithSystemInfo");
         method.setAccessible(true);
@@ -863,7 +863,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         TimeUnit.SECONDS.sleep(5);
         assertThat(getMyNotifications(false, 100)).size().isZero();
 
-        loginSysAdmin();
         triggerConfig = ResourcesShortageNotificationRuleTriggerConfig.builder()
                 .ramThreshold(0.01f)
                 .cpuThreshold(1f)
@@ -871,7 +870,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .build();
         rule.setTriggerConfig(triggerConfig);
         saveNotificationRule(rule);
-        loginTenantAdmin();
 
         method.invoke(systemInfoService);
 
