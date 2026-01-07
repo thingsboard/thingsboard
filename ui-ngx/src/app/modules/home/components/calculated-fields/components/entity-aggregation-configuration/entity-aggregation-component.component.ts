@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -86,6 +86,8 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
   entityName: string;
 
   @Input() testScript: (expression?: string) => Observable<string>;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   readonly minAllowedAggregationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedAggregationIntervalInSecForCF;
   readonly intermediateAggregationIntervalInSecForCF = getCurrentAuthState(this.store).intermediateAggregationIntervalInSecForCF;

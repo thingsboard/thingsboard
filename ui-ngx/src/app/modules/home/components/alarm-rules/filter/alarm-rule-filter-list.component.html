@@ -40,11 +40,11 @@
           </div>
           <div class="flex max-w-92% flex-full flex-col">
             <div class="flex flex-row items-center justify-start">
-              <div class="flex-1 filters-text">{{ filterControl.value?.argument }}</div>
-              <div class="flex-1 filters-text">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.valueType) | translate }}</div>
+              <div class="filters-text flex-1">{{ filterControl.value?.argument }}</div>
+              <div class="filters-text flex-1">{{ FilterPredicateTypeTranslationMap.get(filterControl.value?.valueType) | translate }}</div>
               <button mat-icon-button color="primary" class="tb-budge-button"
                       type="button"
-                      (click)="editFilter(index)"
+                      (click)="editFilter(index, readonly)"
                       matTooltip="{{  'alarm-rule.edit-filter' | translate }}"
                       matTooltipPosition="above">
                 <mat-icon
@@ -53,11 +53,12 @@
                   matBadgeSize="small"
                   matBadge="*"
                 >
-                  edit
+                  {{ readonly ? 'visibility' : 'edit' }}
                 </mat-icon>
               </button>
               <button mat-icon-button color="primary"
                       type="button"
+                      [disabled]="disabled || readonly"
                       (click)="removeFilter(index)"
                       matTooltip="{{ 'alarm-rule.remove-filter' | translate }}"
                       matTooltipPosition="above">

@@ -79,6 +79,7 @@
                                              [entityId]="entityId"
                                              [tenantId]="tenantId"
                                              [ownerId]="ownerId"
+                                             [isEditValue]="isEditValue"
                                              [watchKeyChange]="true"
                                              [entityName]="entityName"/>
       </div>
@@ -97,14 +98,16 @@
             <tb-cf-alarm-rule formControlName="clearRule" class="flex-1" [arguments]="arguments" [testScript]="onTestScript.bind(this)" isClearCondition>
             </tb-cf-alarm-rule>
           </div>
-          <button mat-icon-button
-                  class="button-icon"
-                  type="button"
-                  (click)="removeClearAlarmRule()"
-                  matTooltip="{{ 'action.remove' | translate }}"
-                  matTooltipPosition="above">
-            <mat-icon>delete</mat-icon>
-          </button>
+          @if (isEditValue) {
+            <button mat-icon-button
+                    class="button-icon"
+                    type="button"
+                    (click)="removeClearAlarmRule()"
+                    matTooltip="{{ 'action.remove' | translate }}"
+                    matTooltipPosition="above">
+              <mat-icon>delete</mat-icon>
+            </button>
+          }
         </div>
         <div *ngIf="!configFormGroup.get('clearRule').value">
           <span translate class="tb-prompt flex items-center justify-center text-base">alarm-rule.no-clear-alarm-rule</span>

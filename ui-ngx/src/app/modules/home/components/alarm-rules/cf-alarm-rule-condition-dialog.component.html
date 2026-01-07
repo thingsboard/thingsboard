@@ -50,6 +50,7 @@
                 <tb-alarm-rule-filter-list
                   [operation]="conditionFormGroup.get('expression.operation').value"
                   [arguments]="arguments"
+                  [readonly]="readonly"
                   formControlName="filters">
                 </tb-alarm-rule-filter-list>
               </div>
@@ -75,7 +76,7 @@
                           matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
                           matTooltipPosition="above"
                           class="tb-mat-32"
-                          [disabled]="!argumentsList.length"
+                          [disabled]="!argumentsList.length || readonly"
                           (click)="onTestScript($event)">
                     <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
                   </button>
@@ -84,7 +85,7 @@
                   <button mat-button mat-raised-button color="primary"
                           type="button"
                           (click)="onTestScript($event)"
-                          [disabled]="!argumentsList.length">
+                          [disabled]="!argumentsList.length || readonly">
                     {{ 'calculated-fields.test-script-function' | translate }}
                   </button>
                 </div>
@@ -111,7 +112,7 @@
                                                  required>
                       </tb-alarm-rule-filter-text>
                     } @else {
-                      <span class="tb-prompt text-base justify-center">{{ 'alarm-rule.no-filter-preview' | translate }}</span>
+                      <span class="tb-prompt justify-center text-base">{{ 'alarm-rule.no-filter-preview' | translate }}</span>
                     }
                   </div>
                 </ng-template>
@@ -135,7 +136,7 @@
             <span>{{ 'alarm-rule.condition-type-hint' | translate }}</span>
           </div>
         }
-        @if (conditionFormGroup.get('type').value == AlarmConditionType.DURATION) {
+        @if (conditionFormGroup.get('type').value === AlarmConditionType.DURATION) {
           <div class="tb-form-panel stroked no-padding-bottom">
             <div class="flex flex-row items-center justify-between">
               <div class="tb-form-panel-title">{{ 'alarm-rule.value' | translate }}</div>
@@ -167,7 +168,7 @@
               </div>
             </div>
           </div>
-        } @else if (conditionFormGroup.get('type').value == AlarmConditionType.REPEATING) {
+        } @else if (conditionFormGroup.get('type').value === AlarmConditionType.REPEATING) {
           <div class="tb-form-panel stroked">
             <div class="flex flex-row items-center justify-between">
               <div class="tb-form-panel-title">{{ 'alarm-rule.value' | translate }}</div>

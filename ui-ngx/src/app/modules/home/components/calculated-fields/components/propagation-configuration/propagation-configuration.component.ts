@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -76,6 +76,8 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
 
   @Input({required: true})
   testScript: () => Observable<string>;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   propagateConfiguration = this.fb.group({
     arguments: this.fb.control({}, notEmptyObjectValidator()),

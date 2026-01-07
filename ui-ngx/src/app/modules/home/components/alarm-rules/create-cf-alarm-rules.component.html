@@ -49,7 +49,7 @@
     </div>
   }
   @if (!createAlarmRulesFormArray().controls.length) {
-    <span translate class="flex items-center justify-center tb-prompt text-base required" [class.required]="!disabled">
+    <span translate class="tb-prompt required flex items-center justify-center text-base" [class.required]="!disabled">
         alarm-rule.add-create-alarm-rule-prompt
     </span>
   }

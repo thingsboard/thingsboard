@@ -16,6 +16,7 @@
 
 import {
   AfterViewInit,
+  booleanAttribute,
   ChangeDetectorRef,
   Component,
   DestroyRef,
@@ -82,6 +83,7 @@ export class CalculatedFieldGeofencingZoneGroupsTableComponent implements Contro
   @Input({required: true}) tenantId: string;
   @Input({required: true}) entityName: string;
   @Input({required: true}) ownerId: EntityId;
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   @ViewChild(MatSort, { static: true }) sort: MatSort;
 

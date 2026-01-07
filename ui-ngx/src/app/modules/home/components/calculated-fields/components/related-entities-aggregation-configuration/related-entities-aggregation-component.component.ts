@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -75,6 +75,8 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
 
   @Input({required: true})
   testScript: (expression?: string) => Observable<string>;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   readonly ScriptLanguage = ScriptLanguage;
   readonly CalculatedFieldType = CalculatedFieldType;
