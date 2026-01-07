@@ -55,6 +55,7 @@ import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.transport.coap.CoapSessionMsgType;
@@ -562,8 +563,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
         @Override
         public void onTenantDeleted(DeviceId deviceId) {
-            cancelRpcSubscription(state, false);
-            cancelAttributeSubscription(state, false);
+            state.setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
+            onDeviceDeleted(deviceId);
         }
 
         @Override
@@ -818,47 +819,39 @@ public class DefaultCoapClientContext implements CoapClientContext {
     }
 
     private void cancelRpcSubscription(TbCoapClientState state) {
-        cancelRpcSubscription(state, true);
-    }
-
-    private void cancelRpcSubscription(TbCoapClientState state, boolean notifyCore) {
         if (state.getRpc() != null) {
             clientsByToken.remove(state.getRpc().getToken());
             CoapExchange exchange = state.getRpc().getExchange();
             state.setRpc(null);
-            if (notifyCore) {
+            if (state.shouldNotifyCore()) {
                 transportService.process(state.getSession(),
                         TransportProtos.SubscribeToRPCMsg.newBuilder().setUnsubscribe(true).build(),
                         new CoapResponseCodeCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
             }
             if (state.getAttrs() == null) {
-                closeAndCleanup(state, notifyCore);
+                closeAndCleanup(state);
             }
         }
     }
 
     private void cancelAttributeSubscription(TbCoapClientState state) {
-        cancelAttributeSubscription(state, true);
-    }
-
-    private void cancelAttributeSubscription(TbCoapClientState state, boolean notifyCore) {
         if (state.getAttrs() != null) {
             clientsByToken.remove(state.getAttrs().getToken());
             CoapExchange exchange = state.getAttrs().getExchange();
             state.setAttrs(null);
-            if (notifyCore) {
+            if (state.shouldNotifyCore()) {
                 transportService.process(state.getSession(),
                         TransportProtos.SubscribeToAttributeUpdatesMsg.newBuilder().setUnsubscribe(true).build(),
                         new CoapResponseCodeCallback(exchange, CoAP.ResponseCode.DELETED, CoAP.ResponseCode.INTERNAL_SERVER_ERROR));
             }
             if (state.getRpc() == null) {
-                closeAndCleanup(state, notifyCore);
+                closeAndCleanup(state);
             }
         }
     }
 
-    private void closeAndCleanup(TbCoapClientState state, boolean notifyCore) {
-        if (notifyCore) {
+    private void closeAndCleanup(TbCoapClientState state) {
+        if (state.shouldNotifyCore()) {
             transportService.process(state.getSession(), getSessionEventMsg(TransportProtos.SessionEvent.CLOSED), null);
         }
         transportService.deregisterSession(state.getSession());

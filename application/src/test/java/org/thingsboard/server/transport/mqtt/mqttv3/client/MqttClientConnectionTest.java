@@ -19,19 +19,30 @@ import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Mockito;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
+import org.thingsboard.server.common.transport.limits.TransportRateLimitService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
 import java.util.concurrent.TimeUnit;
 
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+
 @DaoSqlTest
 public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
+
+    @MockitoSpyBean
+    TransportRateLimitService rateLimitService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -79,10 +90,14 @@ public class MqttClientConnectionTest extends AbstractMqttClientConnectionTest {
         Assert.assertTrue(client.isConnected());
 
         loginSysAdmin();
+
+        Mockito.clearInvocations(rateLimitService);
         deleteTenant(savedTenant.getId());
 
         Awaitility.await()
                 .atMost(10, TimeUnit.SECONDS)
                 .until(() -> !client.isConnected());
+
+        verify(rateLimitService, never()).checkLimits(Mockito.any(), Mockito.any(), Mockito.any(), anyInt(), anyBoolean());
     }
 }

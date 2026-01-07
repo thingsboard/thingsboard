@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.MqttTransportContext;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.transport.mqtt.TopicType;
 import org.thingsboard.server.transport.mqtt.adaptors.BackwardCompatibilityAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
@@ -71,6 +72,10 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
     @Getter
     @Setter
     private boolean provisionOnly = false;
+
+    @Getter
+    @Setter
+    private SessionCloseReason sessionCloseReason;
 
     @Getter
     @Setter
@@ -131,6 +136,10 @@ public class DeviceSessionCtx extends MqttDeviceAwareSessionContext {
 
     public boolean isJsonPayloadType() {
         return payloadType.equals(TransportPayloadType.JSON);
+    }
+
+    public boolean shouldNotifyCore() {
+        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
     }
 
     @Override

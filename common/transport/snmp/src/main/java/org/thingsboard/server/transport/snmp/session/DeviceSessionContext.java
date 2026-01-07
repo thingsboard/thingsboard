@@ -34,6 +34,7 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.common.transport.session.DeviceAwareSessionContext;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.GetAttributeResponseMsg;
@@ -75,6 +76,10 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Getter
     private final List<ScheduledTask> queryingTasks = new LinkedList<>();
 
+    @Getter
+    @Setter
+    private SessionCloseReason sessionCloseReason;
+
     @Builder
     public DeviceSessionContext(TenantId tenantId, Device device, DeviceProfile deviceProfile, String token,
                                 SnmpDeviceProfileTransportConfiguration profileTransportConfiguration,
@@ -110,7 +115,8 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onTenantDeleted(DeviceId deviceId) {
-        snmpTransportContext.onDeviceDeleted(this, false);
+        sessionCloseReason = SessionCloseReason.TENANT_DELETED;
+        snmpTransportContext.onDeviceDeleted(this);
     }
 
     @Override
@@ -132,6 +138,10 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     public String getToken() {
         return token;
+    }
+
+    public boolean shouldNotifyCore() {
+        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
     }
 
     @Override
