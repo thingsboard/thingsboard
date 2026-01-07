@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
+import org.eclipse.californium.core.config.CoapConfig;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.springframework.context.annotation.Lazy;
@@ -514,7 +515,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
             if (attrs != null) {
                 try {
                     boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getAttrs());
-                    int requestId = getNextMsgId();
+                    boolean isMulticastRequest = AbstractSyncSessionCallback.isMulticastRequest(state.getAttrs());
+                    int requestId = getNextMsgId(isMulticastRequest);
                     Response response = state.getAdaptor().convertToPublish(msg);
                     response.getOptions().setObserve(attrs.getObserveCounter().getAndIncrement());
                     response.setConfirmable(conRequest);
@@ -578,7 +580,8 @@ public class DefaultCoapClientContext implements CoapClientContext {
             boolean sent = false;
             String error = null;
             boolean conRequest = AbstractSyncSessionCallback.isConRequest(state.getRpc());
-            int requestId = getNextMsgId();
+            boolean isMulticastRequest = AbstractSyncSessionCallback.isMulticastRequest(state.getRpc());
+            int requestId = getNextMsgId(isMulticastRequest);
             try {
                 Response response = state.getAdaptor().convertToPublish(msg, state.getConfiguration().getRpcRequestDynamicMessageBuilder());
                 response.getOptions().setObserve(state.getRpc().getObserveCounter().getAndIncrement());
@@ -807,8 +810,14 @@ public class DefaultCoapClientContext implements CoapClientContext {
         }
     }
 
-    protected int getNextMsgId() {
-        return ThreadLocalRandom.current().nextInt(NONE, MAX_MID + 1);
+    protected int getNextMsgId(boolean multicast) {
+        if (multicast) {
+            // Range [65000...65535]
+            return ThreadLocalRandom.current().nextInt(CoapConfig.DEFAULT_MULTICAST_BASE_MID, MAX_MID + 1);
+        } else {
+            // Range [0...64999]
+            return ThreadLocalRandom.current().nextInt(NONE, CoapConfig.DEFAULT_MULTICAST_BASE_MID);
+        }
     }
 
     private void cancelRpcSubscription(TbCoapClientState state) {
