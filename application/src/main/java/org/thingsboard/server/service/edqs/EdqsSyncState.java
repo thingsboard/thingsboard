@@ -13,20 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.edqs;
+package org.thingsboard.server.service.edqs;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.edqs.EdqsState.EdqsSyncStatus;
 
 import java.util.Set;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@JsonIgnoreProperties
-public class EdqsSyncRequest {
-    Set<ObjectType> objectTypes;
+public class EdqsSyncState {
+    private EdqsSyncStatus status;
+    private Set<ObjectType> objectTypes;
 }
