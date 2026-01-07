@@ -53,9 +53,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
-/**
- * Created by Valerii Sosliuk on 4/29/2017.
- */
 @Component
 @SqlDao
 public class JpaWidgetTypeDao extends JpaAbstractDao<WidgetTypeDetailsEntity, WidgetTypeDetails> implements WidgetTypeDao, TenantEntityDao<WidgetTypeDetails> {

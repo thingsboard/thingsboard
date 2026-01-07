@@ -41,6 +41,8 @@ public interface EventService {
 
     void removeEvents(TenantId tenantId, EntityId entityId);
 
+    void removeEvents(TenantId tenantId, EntityId entityId, Long startTime, Long endTime, EventType... types);
+
     void removeEvents(TenantId tenantId, EntityId entityId, EventFilter eventFilter, Long startTime, Long endTime);
 
     void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb);
