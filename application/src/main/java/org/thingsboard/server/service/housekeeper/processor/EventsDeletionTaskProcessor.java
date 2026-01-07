@@ -17,14 +17,12 @@ package org.thingsboard.server.service.housekeeper.processor;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.event.ErrorEventFilter;
-import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.EventType;
-import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
-import org.thingsboard.server.common.data.event.StatisticsEventFilter;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.dao.event.EventService;
+
+import java.util.Arrays;
 
 @Component
 @RequiredArgsConstructor
@@ -35,21 +33,8 @@ public class EventsDeletionTaskProcessor extends HousekeeperTaskProcessor<Housek
     @Override
     public void process(HousekeeperTask task) throws Exception {
         // Only delete non-debug events for deleted entities.
-        for (EventType eventType : EventType.values()) {
-            if (!eventType.isDebug()) {
-                EventFilter filter = createFilterForEventType(eventType);
-                eventService.removeEvents(task.getTenantId(), task.getEntityId(), filter, 0L, System.currentTimeMillis());
-            }
-        }
-    }
-
-    private EventFilter createFilterForEventType(EventType eventType) {
-        return switch (eventType) {
-            case ERROR -> new ErrorEventFilter();
-            case LC_EVENT -> new LifeCycleEventFilter();
-            case STATS -> new StatisticsEventFilter();
-            default -> throw new IllegalArgumentException("Unexpected non-debug event type: " + eventType);
-        };
+        EventType[] nonDebugEventTypes = Arrays.stream(EventType.values()).filter(eventType -> !eventType.isDebug()).toArray(EventType[]::new);
+        eventService.removeEvents(task.getTenantId(), task.getEntityId(), 0L, System.currentTimeMillis(), nonDebugEventTypes);
     }
 
     @Override

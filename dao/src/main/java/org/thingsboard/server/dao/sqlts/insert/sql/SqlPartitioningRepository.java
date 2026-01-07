@@ -54,7 +54,7 @@ public class SqlPartitioningRepository {
         getJdbcTemplate().execute(partition.getQuery());
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED)// executing non-transactionally, so that parent transaction is not aborted on partition save error
+    @Transactional(propagation = Propagation.NOT_SUPPORTED) // executing non-transactionally, so that parent transaction is not aborted on partition save error
     public void createPartitionIfNotExists(String table, long entityTs, long partitionDurationMs) {
         long partitionStartTs = calculatePartitionStartTime(entityTs, partitionDurationMs);
         Map<Long, SqlPartition> partitions = tablesPartitions.computeIfAbsent(table, t -> new ConcurrentHashMap<>());
