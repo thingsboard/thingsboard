@@ -144,7 +144,6 @@ public class TbHttpClientTest {
             config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
             config.setRequestMethod("GET");
             config.setUseSimpleClientHttpFactory(true);
-            config.setUseNewEncoding(true);
             config.setQueryParams(List.of(
                     new QueryParam("email", "${userEmail}"),              // ${} from metadata
                     new QueryParam("device", "${deviceName}"),            // ${} from metadata
@@ -192,7 +191,6 @@ public class TbHttpClientTest {
             var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
             config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path + "?data=" + paramValue);
             config.setRequestMethod("GET");
-            config.setUseNewEncoding(false);
             config.setQueryParams(null);
 
             var msg = TbMsg.newMsg()

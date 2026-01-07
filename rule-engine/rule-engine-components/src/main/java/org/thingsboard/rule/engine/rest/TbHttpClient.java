@@ -217,7 +217,7 @@ public class TbHttpClient {
             String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
 
             List<QueryParam> processedQueryParams;
-            if (config.isUseNewEncoding()) {
+            if (config.getQueryParams() != null) {
                 processedQueryParams = config.getQueryParams().stream()
                         .map(param -> {
                             var processedParamName = TbNodeUtils.processPattern(param.name(), msg);
@@ -312,9 +312,9 @@ public class TbHttpClient {
             queryParams.forEach(param -> builder.addParameter(param.name(), param.value()));
             return builder.build();
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("""
-                    Invalid request URL: '%s'. The URL must be valid and properly encoded.
-                    If URL contains special characters (e.g., spaces), they must be percent-encoded (e.g., '/my file/' should be '/my%%20file/').""".formatted(endpointUrl), e);
+            throw new IllegalArgumentException(
+                    "Invalid request URL: '" + endpointUrl + "'. The URL must be valid and properly encoded. " +
+                            "If URL contains special characters (e.g., spaces), they must be percent-encoded (e.g., '/my device/' should be '/my%20device/').", e);
         }
     }
 
@@ -327,10 +327,10 @@ public class TbHttpClient {
      * Pre-encoding the URL (e.g., {@code email=user%2Btag@test.com}) doesn't help
      * because {@code .encode()} will double-encode it to {@code email=user%252Btag@test.com}.
      * <p>
-     * Use {@link #buildEncodedUriNew} with a separate query params map,
+     * Use {@link #buildEncodedUriNew} with a separate query params list,
      * where values are encoded exactly once: {@code +} → {@code %2B}, {@code @} → {@code %40}.
      */
-    @Deprecated(since = "4.2.1.2", forRemoval = true) // fixme: remove in major 5.0
+    @Deprecated(since = "4.2.1.2", forRemoval = true)
     private URI buildEncodedUriLegacy(String endpointUrl) {
         return UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
     }

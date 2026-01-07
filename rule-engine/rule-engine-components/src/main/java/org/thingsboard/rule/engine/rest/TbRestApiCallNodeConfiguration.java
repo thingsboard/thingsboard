@@ -15,10 +15,8 @@
  */
 package org.thingsboard.rule.engine.rest;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.http.HttpHeaders;
@@ -37,7 +35,6 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
 
     private String restEndpointUrlPattern;
     private String requestMethod;
-    private boolean useNewEncoding;
     private List<@NotNull @Valid QueryParam> queryParams;
     private Map<String, String> headers;
     private boolean useSimpleClientHttpFactory;
@@ -55,31 +52,12 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private boolean ignoreRequestBody;
     private int maxInMemoryBufferSizeInKb;
 
-    @JsonIgnore
-    @AssertTrue(message = "query parameters must be non-null if new encoding is used")
-    public boolean isNewEncodingConfigValid() {
-        if (useNewEncoding) {
-            return queryParams != null;
-        }
-        return true;
-    }
-
-    @JsonIgnore
-    @AssertTrue(message = "query parameters must be null if old encoding is used")
-    public boolean isLegacyEncodingConfigValid() {
-        if (!useNewEncoding) {
-            return queryParams == null;
-        }
-        return true;
-    }
-
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
         TbRestApiCallNodeConfiguration configuration = new TbRestApiCallNodeConfiguration();
         configuration.setRestEndpointUrlPattern("http://localhost/api");
         configuration.setRequestMethod("POST");
         configuration.setHeaders(Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
-        configuration.setUseNewEncoding(true);
         configuration.setQueryParams(Collections.emptyList());
         configuration.setUseSimpleClientHttpFactory(false);
         configuration.setReadTimeoutMs(0);

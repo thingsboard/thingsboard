@@ -51,6 +51,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
@@ -59,7 +60,6 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -123,7 +123,6 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     public void shouldNotAllowNullQueryParamNames() {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setUseNewEncoding(true);
         config.setQueryParams(List.of(new QueryParam(null, "value")));
 
         // WHEN-THEN
@@ -139,7 +138,6 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     public void shouldNotAllowNullQueryParamValues() {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setUseNewEncoding(true);
         config.setQueryParams(List.of(new QueryParam("key", null)));
 
         // WHEN-THEN
@@ -152,33 +150,22 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void shouldAllowOnlyNullQueryParamsIfOldEncodingIsUsed() {
+    public void shouldNotAllowNullQueryParamEntries() {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setUseNewEncoding(false);
-        config.setQueryParams(List.of(new QueryParam("key", "value")));
+
+        var queryParams = new ArrayList<QueryParam>();
+        queryParams.add(new QueryParam("key", "value"));
+        queryParams.add(null);
+        config.setQueryParams(queryParams);
 
         // WHEN-THEN
         assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
                 .isInstanceOf(TbNodeException.class)
-                .hasRootCauseInstanceOf(DataValidationException.class)
-                .hasRootCauseMessage("'" + ruleNode.getName() + "' node configuration is invalid: query parameters must be null if old encoding is used")
-                .matches(e -> ((TbNodeException) e).isUnrecoverable());
-    }
-
-    @Test
-    public void shouldNotAllowNullQueryParamsIfNewEncodingIsUsed() {
-        // GIVEN
-        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setUseNewEncoding(true);
-        config.setQueryParams(null);
-
-        // WHEN-THEN
-        assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .hasRootCauseInstanceOf(DataValidationException.class)
-                .hasRootCauseMessage("'" + ruleNode.getName() + "' node configuration is invalid: query parameters must be non-null if new encoding is used")
-                .matches(e -> ((TbNodeException) e).isUnrecoverable());
+                .matches(e -> ((TbNodeException) e).isUnrecoverable())
+                .rootCause()
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("must not be null");
     }
 
     @Test
@@ -187,7 +174,6 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         var defaultConfig = new TbRestApiCallNodeConfiguration().defaultConfiguration();
 
         // THEN
-        assertTrue(defaultConfig.isUseNewEncoding());
         assertEquals(Collections.emptyList(), defaultConfig.getQueryParams());
     }
 
@@ -224,7 +210,6 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         var config = JacksonUtil.fromString(configJson, TbRestApiCallNodeConfiguration.class);
 
         // THEN
-        assertFalse(config.isUseNewEncoding());
         assertNull(config.getQueryParams());
     }
 
