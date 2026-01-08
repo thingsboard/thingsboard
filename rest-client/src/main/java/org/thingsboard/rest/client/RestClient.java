@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.concurrent.LazyInitializer;
+import org.apache.hc.core5.net.URIBuilder;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
@@ -157,11 +158,11 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.pat.ApiKey;
-import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.data.pat.ApiKey;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.plugin.ComponentDescriptor;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.query.AlarmCountQuery;
@@ -210,17 +211,21 @@ import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import java.io.Closeable;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.joining;
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 
 public class RestClient implements Closeable {
@@ -1588,6 +1593,33 @@ public class RestClient implements Closeable {
                 }, activeOnly).getBody();
     }
 
+    public List<DeviceProfileInfo> getDeviceProfileInfosByIds(Set<UUID> ids) {
+        URIBuilder builder;
+        try {
+            builder = new URIBuilder(baseURL);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid base URL: " + baseURL, e);
+        }
+
+        builder.appendPath("/api/deviceProfileInfos");
+
+        String commaSeparatedIds = ids.stream()
+                .filter(Objects::nonNull)
+                .map(UUID::toString)
+                .collect(joining(","));
+
+        builder.addParameter("deviceProfileIds", commaSeparatedIds);
+
+        URI uri;
+        try {
+            uri = builder.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Failed to construct API URI from base URL and provided params", e);
+        }
+
+        return restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<DeviceProfileInfo>>() {}).getBody();
+    }
+
     public JsonNode claimDevice(String deviceName, ClaimRequest claimRequest) {
         return restTemplate.exchange(
                 baseURL + "/api/customer/device/{deviceName}/claim",
@@ -1822,6 +1854,33 @@ public class RestClient implements Closeable {
                 HttpMethod.GET, HttpEntity.EMPTY,
                 new ParameterizedTypeReference<PageData<AssetProfileInfo>>() {
                 }, params).getBody();
+    }
+
+    public List<AssetProfileInfo> getAssetProfilesByIds(Set<UUID> ids) {
+        URIBuilder builder;
+        try {
+            builder = new URIBuilder(baseURL);
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("Invalid base URL: " + baseURL, e);
+        }
+
+        builder.appendPath("/api/assetProfileInfos");
+
+        String commaSeparatedIds = ids.stream()
+                .filter(Objects::nonNull)
+                .map(UUID::toString)
+                .collect(joining(","));
+
+        builder.addParameter("assetProfileIds", commaSeparatedIds);
+
+        URI uri;
+        try {
+            uri = builder.build();
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Failed to construct API URI from base URL and provided params", e);
+        }
+
+        return restTemplate.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<AssetProfileInfo>>() {}).getBody();
     }
 
     public Long countEntitiesByQuery(EntityCountQuery query) {
