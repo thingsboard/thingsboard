@@ -81,6 +81,13 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
         int totalRemoved = 0;
         int tenantsProcessed = 0;
 
+        // Clean up SYSADMIN's notification requests:
+        try {
+            totalRemoved += cleanUpByTenant(TenantId.SYS_TENANT_ID, expirationTime);
+        } catch (Exception e) {
+            log.warn("Failed to clean up notification requests for sysadmin {}", TenantId.SYS_TENANT_ID, e);
+        }
+        // Clean up notification requests for tenants
         PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 10_000);
         for (TenantId tenantId : tenants) {
             try {
