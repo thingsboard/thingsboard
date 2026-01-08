@@ -347,7 +347,7 @@ public class CoapClientIntegrationTest extends AbstractCoapIntegrationTest {
         CoapTestCallback callbackCoap = new CoapTestCallback();
 
         client.getObserveRelation(callbackCoap);
-        String awaitAlias = "await Subscribe To AttributesUpdates (client.getObserveRelation)";
+        String awaitAlias = "await subscribe to attributes updates";
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&

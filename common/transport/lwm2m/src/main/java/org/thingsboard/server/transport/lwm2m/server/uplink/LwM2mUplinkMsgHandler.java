@@ -59,6 +59,8 @@ public interface LwM2mUplinkMsgHandler {
 
     void onDeviceDelete(DeviceId deviceId);
 
+    void onTenantDelete(DeviceId deviceId);
+
     void onResourceUpdate(TransportProtos.ResourceUpdateMsg resourceUpdateMsgOpt);
 
     void onResourceDelete(TransportProtos.ResourceDeleteMsg resourceDeleteMsgOpt);

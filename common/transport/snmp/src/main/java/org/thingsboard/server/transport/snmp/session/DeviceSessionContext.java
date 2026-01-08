@@ -76,10 +76,6 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
     @Getter
     private final List<ScheduledTask> queryingTasks = new LinkedList<>();
 
-    @Getter
-    @Setter
-    private SessionCloseReason sessionCloseReason;
-
     @Builder
     public DeviceSessionContext(TenantId tenantId, Device device, DeviceProfile deviceProfile, String token,
                                 SnmpDeviceProfileTransportConfiguration profileTransportConfiguration,
@@ -115,7 +111,7 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     @Override
     public void onTenantDeleted(DeviceId deviceId) {
-        sessionCloseReason = SessionCloseReason.TENANT_DELETED;
+        setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
         snmpTransportContext.onDeviceDeleted(this);
     }
 
@@ -138,10 +134,6 @@ public class DeviceSessionContext extends DeviceAwareSessionContext implements S
 
     public String getToken() {
         return token;
-    }
-
-    public boolean shouldNotifyCore() {
-        return sessionCloseReason == null || sessionCloseReason != SessionCloseReason.TENANT_DELETED;
     }
 
     @Override

@@ -117,6 +117,7 @@ public class LwM2mSessionMsgListener implements GenericFutureListener<Future<? s
 
     @Override
     public void onTenantDeleted(DeviceId deviceId) {
-        onDeviceDeleted(deviceId);
+        log.trace("[{}] Device on delete", deviceId);
+        this.handler.onTenantDelete(deviceId);
     }
 }

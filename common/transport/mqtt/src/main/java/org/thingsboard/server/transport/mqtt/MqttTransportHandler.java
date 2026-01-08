@@ -1307,18 +1307,21 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void doDisconnect() {
         if (deviceSessionCtx.isConnected()) {
             log.debug("[{}] Client disconnected!", sessionId);
-            if (deviceSessionCtx.shouldNotifyCore()) {
+            boolean notifyCore = deviceSessionCtx.shouldNotifyCore();
+            if (notifyCore) {
                 transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
             }
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
-                gatewaySessionHandler.onDevicesDisconnect();
+                gatewaySessionHandler.onDevicesDisconnect(notifyCore);
             }
             if (sparkplugSessionHandler != null) {
-                // add Msg Telemetry node: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
-                sparkplugSessionHandler.sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
-                        deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
-                sparkplugSessionHandler.onDevicesDisconnect();
+                if (notifyCore) {
+                    // add Msg Telemetry node: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
+                    sparkplugSessionHandler.sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
+                            deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
+                }
+                sparkplugSessionHandler.onDevicesDisconnect(notifyCore);
             }
             deviceSessionCtx.setDisconnected();
         }

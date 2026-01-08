@@ -200,6 +200,10 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDevicesDisconnect() {
+        onDevicesDisconnect(true);
+    }
+
+    public void onDevicesDisconnect(boolean notifyCore) {
         log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
         try {
             deviceFutures.forEach((name, future) -> {
@@ -207,7 +211,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                     @Override
                     public void onSuccess(T result) {
                         log.debug("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
-                        deregisterSession(name, result);
+                        deregisterSession(name, result, notifyCore);
                     }
 
                     @Override
@@ -217,7 +221,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 }, MoreExecutors.directExecutor());
             });
 
-            devices.forEach(this::deregisterSession);
+            devices.forEach((deviceName, ctx) -> deregisterSession(deviceName, ctx, notifyCore));
         } catch (Exception e) {
             log.error("Gateway disconnect failure", e);
         }
@@ -814,7 +818,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx, boolean notifyCore) {
-        if (this.deviceSessionCtx.isSparkplug()) {
+        if (this.deviceSessionCtx.isSparkplug() && notifyCore) {
             sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
