@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -550,16 +550,6 @@ export const NotificationTypeIcons = new Map<NotificationType, string | null>([
   [NotificationType.TASK_PROCESSING_FAILURE, 'warning'],
   [NotificationType.RESOURCES_SHORTAGE, 'warning']
 ]);
-
-export const AlarmSeverityNotificationColors = new Map<AlarmSeverity, string>(
-  [
-    [AlarmSeverity.CRITICAL, '#D12730'],
-    [AlarmSeverity.MAJOR, '#FEAC0C'],
-    [AlarmSeverity.MINOR, '#F2DA05'],
-    [AlarmSeverity.WARNING, '#F66716'],
-    [AlarmSeverity.INDETERMINATE, '#00000061']
-  ]
-);
 
 export enum ActionButtonLinkType {
   LINK = 'LINK',

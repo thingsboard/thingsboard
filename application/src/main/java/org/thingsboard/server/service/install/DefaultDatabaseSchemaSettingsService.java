@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     // This list should include all versions that are compatible for the upgrade in 4 digits format (like 4.2.0.0, etc.).
     // The compatibility cycle usually breaks when we have some scripts written in Java that may not work after a new release.
-    private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("4.2.1.0");
+    // TODO: don't check the "patch" number, since upgrade is not required for patch releases
+    private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("4.2.1.0", "4.2.1.1", "4.2.1.2");
 
     private final ProjectInfo projectInfo;
     private final JdbcTemplate jdbcTemplate;

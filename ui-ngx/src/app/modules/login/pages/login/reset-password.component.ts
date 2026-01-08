@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UserPasswordPolicy } from '@shared/models/settings.models';
 import { passwordsMatchValidator, passwordStrengthValidator } from '@shared/models/password.models';
+import { finalize } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-reset-password',
@@ -64,10 +65,9 @@ export class ResetPasswordComponent {
       this.resetPassword.markAllAsTouched();
     } else {
       this.isLoading = true;
-      this.authService.resetPassword(this.resetToken, this.resetPassword.get('newPassword').value).subscribe({
-        next: () => this.router.navigateByUrl('login'),
-        error: () => {this.isLoading = false;}
-      });
+      this.authService.resetPassword(this.resetToken, this.resetPassword.get('newPassword').value).pipe(
+        finalize(() => {this.isLoading = false})
+      ).subscribe(() => this.router.navigateByUrl('login'));
     }
   }
 }

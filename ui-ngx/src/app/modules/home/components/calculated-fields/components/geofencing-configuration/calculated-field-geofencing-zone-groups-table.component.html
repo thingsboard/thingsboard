@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -96,20 +96,31 @@
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let geofenceZone;">
           <div class="tb-form-table-row-cell-buttons min-w-20">
-            <button type="button"
-                    mat-icon-button
-                    #button
-                    (click)="manageZone($event, button, geofenceZone)"
-                    [matTooltip]="'action.edit' | translate"
-                    [disabled]="disable"
-                    matTooltipPosition="above">
-              <mat-icon [matBadgeHidden]="geofenceZone.refEntityId?.id !== NULL_UUID"
-                        matBadgeColor="warn"
-                        matBadgeSize="small"
-                        matBadge="*">
-                edit
-              </mat-icon>
-            </button>
+            @if (disable) {
+              <button type="button"
+                      mat-icon-button
+                      #previewButton
+                      (click)="manageZone($event, previewButton, geofenceZone, true)"
+                      [matTooltip]="'calculated-fields.preview' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            } @else {
+              <button type="button"
+                      mat-icon-button
+                      #button
+                      (click)="manageZone($event, button, geofenceZone)"
+                      [matTooltip]="'action.edit' | translate"
+                      [disabled]="disable"
+                      matTooltipPosition="above">
+                <mat-icon [matBadgeHidden]="geofenceZone.refEntityId?.id !== NULL_UUID"
+                          matBadgeColor="warn"
+                          matBadgeSize="small"
+                          matBadge="*">
+                  edit
+                </mat-icon>
+              </button>
+            }
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, geofenceZone)"

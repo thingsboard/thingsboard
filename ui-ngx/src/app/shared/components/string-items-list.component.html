@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -52,7 +52,9 @@
     @for (value of filteredValues | async; track value.value) {
       <mat-option [value]="value"><span [innerHTML]="value.name | highlight:searchText"></span></mat-option>
     } @empty {
-      <mat-option [value]="null">{{ 'common.not-found' | translate }}</mat-option>
+      @if (!allowUserValue) {
+        <mat-option [value]="null">{{ 'common.not-found' | translate }}</mat-option>
+      }
     }
   </mat-autocomplete>
   <mat-hint [hidden]="!hint">

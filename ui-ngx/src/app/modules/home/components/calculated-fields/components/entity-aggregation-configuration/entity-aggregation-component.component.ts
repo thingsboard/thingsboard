@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -182,10 +182,12 @@ export class EntityAggregationComponentComponent implements ControlValueAccessor
       interval: {...value.interval, allowOffsetSec: isDefinedAndNotNull(value?.interval?.offsetSec)}
     }
     this.entityAggregationConfiguration.patchValue(data, {emitEvent: false});
-    this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
-    this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
-    this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
-    this.checkProduceIntermediate();
+    if (this.entityAggregationConfiguration.enabled) {
+      this.checkAggIntervalType(this.entityAggregationConfiguration.get('interval.type').value);
+      this.checkIntervalDuration(this.entityAggregationConfiguration.get('interval.allowOffsetSec').value);
+      this.checkWatermark(this.entityAggregationConfiguration.get('allowWatermark').value);
+      this.checkProduceIntermediate();
+    }
     this.updatedOffsetHint();
     setTimeout(() => {
       this.entityAggregationConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});

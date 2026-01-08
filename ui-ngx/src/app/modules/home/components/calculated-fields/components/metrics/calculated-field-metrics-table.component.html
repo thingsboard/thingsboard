@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -93,15 +93,26 @@
         <mat-header-cell *matHeaderCellDef class="w-20 min-w-20"/>
         <mat-cell *matCellDef="let metric;">
           <div class="tb-form-table-row-cell-buttons min-w-20">
-            <button type="button"
-                    mat-icon-button
-                    #button
-                    (click)="manageMetrics($event, button, metric)"
-                    [disabled]="disable"
-                    [matTooltip]="'action.edit' | translate"
-                    matTooltipPosition="above">
-              <mat-icon>edit</mat-icon>
-            </button>
+            @if (disable) {
+              <button type="button"
+                      mat-icon-button
+                      #previewButton
+                      (click)="manageMetrics($event, previewButton, metric, true)"
+                      [matTooltip]="'calculated-fields.preview' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>visibility</mat-icon>
+              </button>
+            } @else {
+              <button type="button"
+                      mat-icon-button
+                      #button
+                      (click)="manageMetrics($event, button, metric)"
+                      [disabled]="disable"
+                      [matTooltip]="'action.edit' | translate"
+                      matTooltipPosition="above">
+                <mat-icon>edit</mat-icon>
+              </button>
+            }
             <button type="button"
                     mat-icon-button
                     (click)="onDelete($event, metric)"

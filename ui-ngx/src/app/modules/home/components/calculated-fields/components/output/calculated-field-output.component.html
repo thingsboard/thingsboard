@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 -->
 <div class="tb-form-panel" [formGroup]="outputForm">
-  <div class="tb-form-panel-title">{{ 'calculated-fields.output' | translate }}</div>
+  <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ 'calculated-fields.output-hint' | translate }}">
+    {{ 'calculated-fields.output' | translate }}
+  </div>
   <div [class]=containerInputClass>
     <div class="flex gap-3 xs:flex-col">
       <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
@@ -28,7 +30,7 @@
         </mat-select>
       </mat-form-field>
       @if (outputForm.get('type').value === OutputType.Attribute
-      && (entityId.entityType === EntityType.DEVICE || entityId.entityType === EntityType.DEVICE_PROFILE)) {
+      && (entityId?.entityType === EntityType.DEVICE || entityId?.entityType === EntityType.DEVICE_PROFILE)) {
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <mat-label>{{ 'calculated-fields.attribute-scope' | translate }}</mat-label>
           <mat-select formControlName="scope" class="w-full">

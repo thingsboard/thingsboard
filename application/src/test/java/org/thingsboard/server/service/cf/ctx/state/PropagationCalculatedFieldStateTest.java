@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -317,7 +317,49 @@ public class PropagationCalculatedFieldStateTest {
     }
 
     @Test
-    void testPropapagationStateInitWithRestoredSetToTrue() {
+    void testPropagationStateInitRestoredTrueNoDbChanges_noReevaluation() {
+        initCtxAndState(false);
+
+        // existing state already matches DB snapshot
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry
+        );
+        state.update(initArgs, ctx);
+
+        // DB returns the same set
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(propagationArgEntry));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueOnlyRemovals_noReevaluation() {
+        initCtxAndState(false);
+
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry
+        );
+        state.update(initArgs, ctx);
+
+        // DB snapshot contains only ASSET_ID_1 (ASSET_ID_2 should be removed)
+        var fromDb = new PropagationArgumentEntry(List.of(ASSET_ID_1));
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropagationStateIsNotReadyInitRestoredTrueAddedEntities_scheduleReevaluation() {
         initCtxAndState(false);
         Map<String, ArgumentEntry> initArgs = Map.of(
                 TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
@@ -333,6 +375,75 @@ public class PropagationCalculatedFieldStateTest {
 
         verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
         verify(ctx).scheduleReevaluation(0L, state.getActorCtx());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueAddedEntities_scheduleReevaluation() {
+        initCtxAndState(false);
+
+        // existing missing ASSET_ID_2
+        var existing = new PropagationArgumentEntry(List.of(ASSET_ID_1));
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, existing
+        );
+        state.update(initArgs, ctx);
+        assertThat(state.isReady()).isTrue();
+
+        // DB snapshot contains both (ASSET_ID_2 should be "added")
+        var fromDb = new PropagationArgumentEntry(List.of(ASSET_ID_1, ASSET_ID_2));
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx).scheduleReevaluation(0L, state.getActorCtx());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueDbEmpty_clearsState_noReevaluation() {
+        initCtxAndState(false);
+
+        // existing has something
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, propagationArgEntry
+        );
+        state.update(initArgs, ctx);
+
+        // DB snapshot empty -> clear
+        var fromDb = new PropagationArgumentEntry(Collections.emptyList());
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
+    }
+
+    @Test
+    void testPropagationStateInitRestoredTrueBothEmpty_noReevaluation() {
+        initCtxAndState(false);
+
+        // Existing propagation argument is empty
+        Map<String, ArgumentEntry> initArgs = Map.of(
+                TEMPERATURE_ARGUMENT_NAME, temperatureArgumentEntry,
+                HUMIDITY_ARGUMENT_NAME, humidityArgumentEntry,
+                PROPAGATION_CONFIG_ARGUMENT, new PropagationArgumentEntry(Collections.emptyList())
+        );
+        state.update(initArgs, ctx);
+        assertThat(state.isReady()).isFalse();
+
+        // DB snapshot is also empty
+        var fromDb = new PropagationArgumentEntry(Collections.emptyList());
+        when(cfProcessingService.fetchPropagationArgumentFromDb(any(), any())).thenReturn(Optional.of(fromDb));
+
+        state.init(true);
+
+        verify(cfProcessingService).fetchPropagationArgumentFromDb(ctx, state.getEntityId());
+        verify(ctx, never()).scheduleReevaluation(anyLong(), any());
     }
 
     private CalculatedField getCalculatedField(boolean applyExpressionToResolvedArguments) {
