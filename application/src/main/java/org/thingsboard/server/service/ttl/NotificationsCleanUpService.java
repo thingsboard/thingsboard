@@ -29,6 +29,7 @@ import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.Date;
 import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.dao.model.ModelConstants.NOTIFICATION_TABLE_NAME;
@@ -95,14 +96,14 @@ public class NotificationsCleanUpService extends AbstractCleanUpService {
                 totalRemoved += tenantRemoved;
                 tenantsProcessed++;
                 if (tenantRemoved > 0) {
-                    log.debug("Removed {} notification requests for tenant {} older than {}", tenantRemoved, tenantId, expirationTime);
+                    log.trace("Removed {} notification requests for tenant {}", tenantRemoved, tenantId);
                 }
             } catch (Exception e) {
                 log.warn("Failed to clean up notification requests for tenant {}", tenantId, e);
             }
         }
 
-        log.info("Notification requests cleanup completed. Processed {} tenants, removed {} total records", tenantsProcessed, totalRemoved);
+        log.info("Notification requests cleanup completed. Processed {} tenants, removed {} total records older than {}", tenantsProcessed, totalRemoved, new Date(expirationTime));
     }
 
     private int cleanUpByTenant(TenantId tenantId, long expirationTime) {
