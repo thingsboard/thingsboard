@@ -1313,7 +1313,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             }
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
-                gatewaySessionHandler.onDevicesDisconnect(notifyCore);
+                gatewaySessionHandler.onDevicesDisconnect();
             }
             if (sparkplugSessionHandler != null) {
                 if (notifyCore) {
@@ -1321,7 +1321,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     sparkplugSessionHandler.sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                             deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
                 }
-                sparkplugSessionHandler.onDevicesDisconnect(notifyCore);
+                sparkplugSessionHandler.onDevicesDisconnect();
             }
             deviceSessionCtx.setDisconnected();
         }

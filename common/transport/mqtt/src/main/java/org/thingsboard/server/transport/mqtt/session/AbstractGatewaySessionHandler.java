@@ -200,10 +200,6 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     public void onDevicesDisconnect() {
-        onDevicesDisconnect(true);
-    }
-
-    public void onDevicesDisconnect(boolean notifyCore) {
         log.debug("[{}] Gateway disconnect [{}]", gateway.getTenantId(), gateway.getDeviceId());
         try {
             deviceFutures.forEach((name, future) -> {
@@ -211,7 +207,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                     @Override
                     public void onSuccess(T result) {
                         log.debug("[{}] Gateway disconnect [{}] device deregister callback [{}]", gateway.getTenantId(), gateway.getDeviceId(), name);
-                        deregisterSession(name, result, notifyCore);
+                        deregisterSession(name, result);
                     }
 
                     @Override
@@ -221,7 +217,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                 }, MoreExecutors.directExecutor());
             });
 
-            devices.forEach((deviceName, ctx) -> deregisterSession(deviceName, ctx, notifyCore));
+            devices.forEach(this::deregisterSession);
         } catch (Exception e) {
             log.error("Gateway disconnect failure", e);
         }
@@ -231,11 +227,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         deregisterSession(deviceName);
     }
 
-    public void onDeviceDeleted(String deviceName, boolean notifyCore) {
-        deregisterSession(deviceName, notifyCore);
-    }
-
-    public String getNodeId() {
+   public String getNodeId() {
         return context.getNodeId();
     }
 
@@ -244,13 +236,9 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     void deregisterSession(String deviceName) {
-        deregisterSession(deviceName, true);
-    }
-
-    void deregisterSession(String deviceName, boolean notifyCore) {
         MqttDeviceAwareSessionContext deviceSessionCtx = devices.remove(deviceName);
         if (deviceSessionCtx != null) {
-            deregisterSession(deviceName, deviceSessionCtx, notifyCore);
+            deregisterSession(deviceName, deviceSessionCtx);
         } else {
             log.debug("[{}][{}][{}] Device [{}] was already removed from the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);
         }
@@ -814,16 +802,12 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     }
 
     private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx) {
-        deregisterSession(deviceName, deviceSessionCtx, true);
-    }
-
-    private void deregisterSession(String deviceName, MqttDeviceAwareSessionContext deviceSessionCtx, boolean notifyCore) {
-        if (this.deviceSessionCtx.isSparkplug() && notifyCore) {
+        if (this.deviceSessionCtx.isSparkplug() && deviceSessionCtx.shouldNotifyCore()) {
             sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
                     deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
         }
         transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
-        if (notifyCore) {
+        if (deviceSessionCtx.shouldNotifyCore()) {
             transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
         }
         log.debug("[{}][{}][{}] Removed device [{}] from the gateway session", gateway.getTenantId(), gateway.getDeviceId(), sessionId, deviceName);

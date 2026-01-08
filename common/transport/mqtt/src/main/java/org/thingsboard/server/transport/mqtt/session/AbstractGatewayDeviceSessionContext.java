@@ -149,7 +149,7 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
     @Override
     public void onTenantDeleted(DeviceId deviceId) {
         setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
-        parent.onDeviceDeleted(this.getSessionInfo().getDeviceName(), shouldNotifyCore());
+        parent.onDeviceDeleted(this.getSessionInfo().getDeviceName());
     }
 
     private boolean isAckExpected(MqttMessage message) {
