@@ -31,7 +31,7 @@ public interface StatsFactory {
 
     <S> void createGauge(String type, String name, S stateObject, ToDoubleFunction<S> numberProvider, String... tags);
 
-    MessagesStats createMessagesStats(String key);
+    MessagesStats createMessagesStats(String key, String... tags);
 
     Timer createTimer(String key, String... tags);
 

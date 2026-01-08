@@ -52,7 +52,8 @@ class AbstractJsInvokeServiceTest {
     void setUp() {
         service = mock(AbstractJsInvokeService.class, Mockito.RETURNS_DEEP_STUBS);
 
-        ReflectionTestUtils.setField(service, "requestsCounter", mock(StatsCounter.class));
+        ReflectionTestUtils.setField(service, "invokeRequestsCounter", mock(StatsCounter.class));
+        ReflectionTestUtils.setField(service, "evalRequestsCounter", mock(StatsCounter.class));
         ReflectionTestUtils.setField(service, "evalCallback", mock(FutureCallback.class));
 
         // Make sure core checks always pass
