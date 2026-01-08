@@ -120,6 +120,8 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     [TimeUnit.SECONDS, SECOND/SECOND],
   ]);
 
+  minValueValidator = 0;
+
   private modelValue: number;
 
   private propagateChange: (value: any) => void = () => {};
@@ -144,8 +146,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
         );
       }
       if (isDefinedAndNotNull(this.minTime)) {
+        this.minValueValidator = this.minValue;
         validators.push((control: AbstractControl) =>
-          Validators.min(Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
+          Validators.min(this.minValueValidator)(control)
         );
       }
 
@@ -160,6 +163,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     this.timeInputForm.get('timeUnit').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
+      if (isDefinedAndNotNull(this.minTime)) {
+        this.minValueValidator = this.minValue;
+      }
       this.timeInputForm.get('time').updateValueAndValidity({onlySelf: true});
       this.timeInputForm.get('time').markAsTouched({onlySelf: true});
     });
@@ -169,6 +175,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     ).subscribe(value => {
       this.updatedModel(value);
     });
+  }
+
+  get minValue(): number {
+    return Math.ceil(this.minTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value));
   }
 
   get hasError(): string {
@@ -193,6 +203,9 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
             this.updatedAllowTimeUnitInterval(this.maxTime);
             this.timeInputForm.get('time').updateValueAndValidity({emitEvent: false});
           }
+        }
+        if (propName === 'minTime') {
+          this.minValueValidator = isDefinedAndNotNull(this.minTime) ? this.minValue : 0;
         }
       }
     }
