@@ -223,6 +223,10 @@ public class TenantControllerTest extends AbstractControllerTest {
         Tenant[] foundTenantsByTenant = doGet("/api/tenants?tenantIds=" + idsParam, Tenant[].class);
         assertThat(foundTenantsByTenant).isEmpty();
 
+        Tenant[] foundCurrentTenant = doGet("/api/tenants?tenantIds=" + tenantId, Tenant[].class);
+        assertThat(foundCurrentTenant).hasSize(1);
+        assertThat(foundCurrentTenant[0].getTenantId()).isEqualTo(tenantId);
+
         loginSysAdmin();
         for (Tenant savedTenant : savedTenants) {
             deleteTenant(savedTenant.getId());
