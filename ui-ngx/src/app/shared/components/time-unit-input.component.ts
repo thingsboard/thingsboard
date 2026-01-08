@@ -205,9 +205,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
           }
         }
         if (propName === 'minTime') {
-          if (isDefinedAndNotNull(this.minTime)) {
-            this.minValueValidator = this.minValue;
-          }
+          this.minValueValidator = isDefinedAndNotNull(this.minTime) ? this.minValue : 0;
         }
       }
     }
