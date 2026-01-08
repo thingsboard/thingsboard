@@ -262,17 +262,35 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
     }
 
     private void onTenantProfileUpdated(ComponentLifecycleMsg msg, TbCallback callback) {
+        checkCfIntervalForUpdate();
+
+        long maxRelatedEntitiesPerCfArgument = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
+        Set<CalculatedFieldCtx> cfsToReinit = new HashSet<>();
+        Stream.concat(
+                calculatedFields.values().stream(),
+                entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
+        ).forEach(ctx -> {
+            if (ctx.hasRelatedEntities() && ctx.getMaxRelatedEntitiesPerCfArgument() != maxRelatedEntitiesPerCfArgument) {
+                cfsToReinit.add(ctx);
+            }
+            ctx.setTenantProfileProperties();
+        });
+
+        if (!cfsToReinit.isEmpty()) {
+            MultipleTbCallback cfsReinitCallback = new MultipleTbCallback(cfsToReinit.size(), callback);
+            cfsToReinit.forEach(ctx -> applyToTargetCfEntityActors(ctx, cfsReinitCallback, (id, cb) -> initCfForEntity(id, ctx, StateAction.REINIT, cb)));
+        } else {
+            callback.onSuccess();
+        }
+    }
+
+    private void checkCfIntervalForUpdate() {
         long updatedCfCheckInterval = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval);
         if (cfCheckInterval != updatedCfCheckInterval) {
             cfCheckInterval = updatedCfCheckInterval;
             cancelReevaluationTask();
             scheduleCfsReevaluation();
         }
-        Stream.concat(
-                calculatedFields.values().stream(),
-                entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
-        ).forEach(CalculatedFieldCtx::setTenantProfileProperties);
-        callback.onSuccess();
     }
 
     private void onEntityCreated(ComponentLifecycleMsg msg, TbCallback callback) {
@@ -383,10 +401,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                 .toList();
 
         MultipleTbCallback directionCallback = new MultipleTbCallback(matchingCfs.size(), parentCallback);
-
-        matchingCfs.forEach(ctx ->
-                applyToTargetCfEntityActors(ctx, directionCallback, (entityId, cb) -> relationAction.accept(entityId, ctx, cb))
-        );
+        matchingCfs.forEach(ctx -> relationAction.accept(mainId, ctx, directionCallback));
     }
 
     private void onCfCreated(ComponentLifecycleMsg msg, TbCallback callback) throws CalculatedFieldException {
@@ -581,6 +596,10 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             if (byRelationPathQuery != null && !byRelationPathQuery.isEmpty()) {
                 switch (relation.direction()) {
                     case FROM -> {
+                        if (byRelationPathQuery.size() > 1) {
+                            throw new IllegalStateException("More than one relation found with direction 'TO' " +
+                                    "for relation type '" + relation.relationType() + "'. Found: " + byRelationPathQuery.size());
+                        }
                         EntityRelation entityRelation = byRelationPathQuery.get(0); // only one supported
                         EntityId relatedId = entityRelation.getFrom();
                         if (matchesCfEntity.test(relatedId)) {

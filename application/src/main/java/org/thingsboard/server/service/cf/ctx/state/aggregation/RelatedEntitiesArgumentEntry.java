@@ -66,10 +66,12 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs 
     @Override
     public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+            checkMaxRelatedEntitiesPerArgument(ctx);
             entityInputs.putAll(relatedEntitiesArgumentEntry.entityInputs);
             return true;
         } else if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
             if (entry.isForceResetPrevious()) {
+                checkMaxRelatedEntitiesPerArgument(ctx);
                 entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
                 return true;
             }
@@ -77,11 +79,21 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs 
             if (argumentEntry != null) {
                 argumentEntry.updateEntry(singleValueArgumentEntry, ctx);
             } else {
+                checkMaxRelatedEntitiesPerArgument(ctx);
                 entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
             }
             return true;
         } else {
             throw new IllegalArgumentException("Unsupported argument entry type for aggregation argument entry: " + entry.getType());
+        }
+    }
+
+    private void checkMaxRelatedEntitiesPerArgument(CalculatedFieldCtx ctx) {
+        if (entityInputs.size() >= ctx.getMaxRelatedEntitiesPerCfArgument()) {
+            throw new IllegalArgumentException(
+                    "Exceeded the maximum allowed related entities per argument '"
+                            + ctx.getMaxRelatedEntitiesPerCfArgument() + "'. Increase the limit in the tenant profile configuration."
+            );
         }
     }
 
