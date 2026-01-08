@@ -22,7 +22,7 @@
     @if (labelText && !inlineField) {
       <mat-label>{{ labelText }}</mat-label>
     }
-    <input type="number" min="0" step="1" matInput formControlName="time" placeholder="{{ 'widget-config.set' | translate }}">
+    <input type="number" [min]="minValueValidator" step="1" matInput formControlName="time" placeholder="{{ 'widget-config.set' | translate }}">
     <div matSuffix>
       <ng-content select="[matSuffix]"></ng-content>
     </div>
