@@ -22,9 +22,12 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
+import org.thingsboard.server.common.data.housekeeper.OtaDataDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.job.Job;
 import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
@@ -50,7 +53,7 @@ public class CleanUpService {
             EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_RULE, EntityType.AI_MODEL
     );
 
-    @TransactionalEventListener(fallbackExecution = true) // after transaction commit
+    @TransactionalEventListener(fallbackExecution = true)
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void handleEntityDeletionEvent(DeleteEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
@@ -63,6 +66,9 @@ public class CleanUpService {
             }
             if (entityType == EntityType.USER && event.getCause() != ActionCause.TENANT_DELETION) {
                 submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
+            }
+            if (entityType == EntityType.OTA_PACKAGE && StringUtils.isNotEmpty(event.getBody())) {
+                submitTask(new OtaDataDeletionHousekeeperTask(tenantId, (OtaPackageId) entityId, Long.parseLong(event.getBody())));
             }
         } catch (Throwable e) {
             log.error("[{}][{}][{}] Failed to handle entity deletion event", tenantId, entityType, entityId.getId(), e);
