@@ -382,7 +382,7 @@ public class CalculatedFieldControllerTest extends AbstractControllerTest {
 
         AggMetric metric = new AggMetric();
         metric.setInput(new AggKeyInput("en"));
-        metric.setDefaultValue(9999L);
+        metric.setDefaultValue(9999.0);
         config.setMetrics(Map.of("consumption", metric));
 
         config.setWatermark(new Watermark(TimeUnit.DAYS.toSeconds(1)));

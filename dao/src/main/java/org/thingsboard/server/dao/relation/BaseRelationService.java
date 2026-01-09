@@ -52,14 +52,15 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.relation.JpaRelationQueryExecutorService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -517,7 +518,8 @@ class BaseRelationService implements RelationService {
                 if (entityRelations == null || entityRelations.isEmpty()) {
                     return Collections.emptyList();
                 }
-                List<EntityRelation> relations = relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
+                List<EntityRelation> relations = new ArrayList<>(relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations);
+                relations.sort(Comparator.comparing(r -> r.getFrom().getId()));
                 return relations.size() > limit ? relations.subList(0, limit) : relations;
             }, directExecutor());
         }
@@ -545,7 +547,9 @@ class BaseRelationService implements RelationService {
                 case FROM -> findByFromAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
                 case TO -> findByToAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
             };
-            return relations.size() > limit ? relations.subList(0, limit) : relations;
+            ArrayList<EntityRelation> entityRelations = new ArrayList<>(relations);
+            entityRelations.sort(Comparator.comparing(r -> r.getFrom().getId()));
+            return entityRelations.size() > limit ? entityRelations.subList(0, limit) : entityRelations;
         }
         return relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
     }

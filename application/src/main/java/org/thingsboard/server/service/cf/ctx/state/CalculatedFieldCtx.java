@@ -129,6 +129,7 @@ public class CalculatedFieldCtx implements Closeable {
     private long scheduledUpdateIntervalMillis;
     private long cfCheckReevaluationIntervalMillis;
     private long alarmReevaluationIntervalMillis;
+    private long maxRelatedEntitiesPerCfArgument;
 
     private Argument propagationArgument;
     private boolean applyExpressionForResolvedArguments;
@@ -307,6 +308,7 @@ public class CalculatedFieldCtx implements Closeable {
         this.intermediateAggregationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getIntermediateAggregationIntervalInSecForCF));
         this.cfCheckReevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getCfReevaluationCheckInterval));
         this.alarmReevaluationIntervalMillis = TimeUnit.SECONDS.toMillis(apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getAlarmsReevaluationInterval));
+        this.maxRelatedEntitiesPerCfArgument = apiLimitService.getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
     }
 
     public double evaluateSimpleExpression(Expression expression, CalculatedFieldState state) {
@@ -754,6 +756,12 @@ public class CalculatedFieldCtx implements Closeable {
 
     private boolean isScheduledUpdateDisabled() {
         return scheduledUpdateIntervalMillis == DISABLED_INTERVAL_VALUE;
+    }
+
+    public boolean hasRelatedEntities() {
+        return CalculatedFieldType.GEOFENCING == cfType
+                || CalculatedFieldType.PROPAGATION == cfType
+                || CalculatedFieldType.RELATED_ENTITIES_AGGREGATION == cfType;
     }
 
     public boolean shouldFetchRelatedEntities(CalculatedFieldState state) {

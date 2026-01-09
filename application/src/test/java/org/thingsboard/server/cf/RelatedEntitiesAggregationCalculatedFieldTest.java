@@ -470,21 +470,47 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
 
     @Test
     public void testCreateRelation_checkAggregation() throws Exception {
-        createOccupancyCF(asset.getId());
-        checkInitialCalculation();
+        Asset asset2 = createAsset("Asset 2", assetProfile.getId());
+        Device device3 = createDevice("Device 3", "1234567890333");
+        Device device4 = createDevice("Device 4", "1234567890444");
 
-        Device device3 = createDevice("Device 3", deviceProfile.getId(), "1234567890333");
+        createEntityRelation(asset2.getId(), device3.getId(), "Contains");
+        createEntityRelation(asset2.getId(), device4.getId(), "Contains");
 
-        postTelemetry(device3.getId(), "{\"occupied\":true}");
+        createOccupancyCF(assetProfile.getId());
 
-        createEntityRelation(asset.getId(), device3.getId(), "Contains");
-
-        await().alias("create relation and perform aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
+        await().alias("create CF and perform initial aggregation").atMost(TIMEOUT, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     verifyTelemetry(asset.getId(), Map.of(
                             "freeSpaces", "1",
-                            "occupiedSpaces", "2",
+                            "occupiedSpaces", "1",
+                            "totalSpaces", "2"
+                    ));
+
+                    verifyTelemetry(asset2.getId(), Map.of(
+                            "freeSpaces", "2",
+                            "occupiedSpaces", "0",
+                            "totalSpaces", "2"
+                    ));
+                });
+
+        Device device5 = createDevice("Device 5", "1234567890555");
+        createEntityRelation(asset2.getId(), device5.getId(), "Contains");
+
+        await().alias("create relation and perform aggregation on asset 2")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    verifyTelemetry(asset.getId(), Map.of(
+                            "freeSpaces", "1",
+                            "occupiedSpaces", "1",
+                            "totalSpaces", "2"
+                    ));
+
+                    verifyTelemetry(asset2.getId(), Map.of(
+                            "freeSpaces", "3",
+                            "occupiedSpaces", "0",
                             "totalSpaces", "3"
                     ));
                 });
@@ -721,6 +747,43 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
                 });
     }
 
+    @Test
+    public void testUpdateMaxRelatedEntitiesPerArgument_checkAggregation() throws Exception {
+        loginSysAdmin();
+
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setMaxRelatedEntitiesToReturnPerCfArgument(1);
+        });
+
+        login("tenant@thingsboard.org", "testPassword");
+
+        createCountCF(asset.getId());
+
+        await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode numberOfDevices = getLatestTelemetry(asset.getId(), "numberOfDevices");
+                    assertThat(numberOfDevices).isNotNull();
+                    assertThat(numberOfDevices.get("numberOfDevices").get(0).get("value").asText()).isEqualTo("1");
+                });
+
+        loginSysAdmin();
+
+        updateDefaultTenantProfileConfig(tenantProfileConfig -> {
+            tenantProfileConfig.setMaxRelatedEntitiesToReturnPerCfArgument(10);
+        });
+
+        login("tenant@thingsboard.org", "testPassword");
+
+        await().alias("update max related entities per argument and perform initial aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    ObjectNode numberOfDevices = getLatestTelemetry(asset.getId(), "numberOfDevices");
+                    assertThat(numberOfDevices).isNotNull();
+                    assertThat(numberOfDevices.get("numberOfDevices").get(0).get("value").asText()).isEqualTo("2");
+                });
+    }
+
     private void checkInitialCalculation() {
         await().alias("create CF and perform initial aggregation").atMost(deduplicationInterval * 2, TimeUnit.SECONDS)
                 .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
@@ -826,6 +889,30 @@ public class RelatedEntitiesAggregationCalculatedFieldTest extends AbstractContr
         output.setDecimalsByDefault(0);
 
         return createAggCf("Occupied spaces", entityId,
+                new RelationPathLevel(EntitySearchDirection.FROM, "Contains"),
+                arguments,
+                aggMetrics,
+                output);
+    }
+
+    private CalculatedField createCountCF(EntityId entityId) {
+        Map<String, Argument> arguments = new HashMap<>();
+        Argument argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("active", ArgumentType.TS_LATEST, null));
+        argument.setDefaultValue("true");
+        arguments.put("active", argument);
+
+        Map<String, AggMetric> aggMetrics = new HashMap<>();
+
+        AggMetric avgMetric = new AggMetric();
+        avgMetric.setFunction(AggFunction.COUNT);
+        avgMetric.setInput(new AggKeyInput("active"));
+        aggMetrics.put("numberOfDevices", avgMetric);
+
+        TimeSeriesOutput output = new TimeSeriesOutput();
+        output.setDecimalsByDefault(0);
+
+        return createAggCf("Number of devices", entityId,
                 new RelationPathLevel(EntitySearchDirection.FROM, "Contains"),
                 arguments,
                 aggMetrics,

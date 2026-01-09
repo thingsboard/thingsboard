@@ -254,7 +254,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         AggMetric consumption = new AggMetric();
         consumption.setFunction(AggFunction.SUM);
         consumption.setInput(new AggKeyInput("en"));
-        consumption.setDefaultValue(9999L);
+        consumption.setDefaultValue(9999.0);
         aggMetrics.put("consumption", consumption);
 
         AggMetric avgEnergyConsumption = new AggMetric();
@@ -319,7 +319,7 @@ public class EntityAggregationCalculatedFieldTest extends AbstractControllerTest
         AggMetric consumption = new AggMetric();
         consumption.setFunction(AggFunction.SUM);
         consumption.setInput(new AggKeyInput("en"));
-        consumption.setDefaultValue(9999L);
+        consumption.setDefaultValue(9999.0);
         aggMetrics.put("consumption", consumption);
 
         AggMetric avgTemperature = new AggMetric();
