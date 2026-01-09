@@ -247,20 +247,8 @@ public abstract class AbstractCalculatedFieldProcessingService {
             }
 
             return switch (relation.direction()) {
-                case FROM -> relations.stream()
-                        .map(EntityRelation::getTo)
-                        .toList();
-                case TO -> {
-                    if (relations.size() > 1) {
-                        throw new IllegalStateException("More than one relation found with direction 'TO' " +
-                                        "for relation type '" + relation.relationType() + "'. Found: " + relations.size());
-                    }
-                    yield relations.stream()
-                        .map(EntityRelation::getFrom)
-                        .findFirst()
-                        .map(List::of)
-                        .orElseGet(Collections::emptyList);
-                }
+                case FROM -> relations.stream().map(EntityRelation::getTo).toList();
+                case TO -> relations.stream().map(EntityRelation::getFrom).toList();
             };
         }, calculatedFieldCallbackExecutor);
     }

@@ -595,22 +595,12 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
             Predicate<EntityId> matchesCfEntity = relatedEntity -> cfEntityId.equals(relatedEntity) || cfEntityId.equals(getProfileId(tenantId, relatedEntity));
             if (byRelationPathQuery != null && !byRelationPathQuery.isEmpty()) {
                 switch (relation.direction()) {
-                    case FROM -> {
-                        if (byRelationPathQuery.size() > 1) {
-                            throw new IllegalStateException("More than one relation found with direction 'TO' " +
-                                    "for relation type '" + relation.relationType() + "'. Found: " + byRelationPathQuery.size());
-                        }
-                        EntityRelation entityRelation = byRelationPathQuery.get(0); // only one supported
-                        EntityId relatedId = entityRelation.getFrom();
-                        if (matchesCfEntity.test(relatedId)) {
-                            result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), relatedId));
-                        }
-                    }
-                    case TO -> {
-                        byRelationPathQuery.stream()
-                                .filter(entityRelation -> matchesCfEntity.test(entityRelation.getTo()))
-                                .forEach(entityRelation -> result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo())));
-                    }
+                    case FROM -> byRelationPathQuery.stream()
+                            .filter(entityRelation -> matchesCfEntity.test(entityRelation.getFrom()))
+                            .forEach(entityRelation -> result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getFrom())));
+                    case TO -> byRelationPathQuery.stream()
+                            .filter(entityRelation -> matchesCfEntity.test(entityRelation.getTo()))
+                            .forEach(entityRelation -> result.add(new CalculatedFieldEntityCtxId(tenantId, cf.getCfId(), entityRelation.getTo())));
                 }
             }
         }
