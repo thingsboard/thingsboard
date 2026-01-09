@@ -67,7 +67,7 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
 
     @Override
     public List<NotificationTarget> findByTenantIdAndUsersFilterType(TenantId tenantId, UsersFilterType filterType) {
-        return DaoUtil.convertDataList(notificationTargetRepository.findByTenantIdAndSearchTextAndUsersFilterTypeIfPresent(tenantId.getId(), null,
+        return DaoUtil.convertDataList(notificationTargetRepository.findByTenantIdAndUsersFilterType(tenantId.getId(),
                 List.of(filterType.name()), DaoUtil.toPageable(new PageLink(Integer.MAX_VALUE))).getContent());
     }
 
