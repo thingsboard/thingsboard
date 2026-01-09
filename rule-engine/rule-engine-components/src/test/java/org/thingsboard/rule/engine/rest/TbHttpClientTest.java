@@ -143,7 +143,6 @@ public class TbHttpClientTest {
             var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
             config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
             config.setRequestMethod("GET");
-            config.setUseSimpleClientHttpFactory(true);
             config.setQueryParams(List.of(
                     new QueryParam("email", "${userEmail}"),              // ${} from metadata
                     new QueryParam("device", "${deviceName}"),            // ${} from metadata

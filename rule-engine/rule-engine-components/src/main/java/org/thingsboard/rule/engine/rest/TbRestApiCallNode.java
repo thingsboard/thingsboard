@@ -28,7 +28,9 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
+import java.util.Iterator;
 import java.util.List;
+import java.util.Set;
 
 import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
@@ -36,7 +38,7 @@ import static org.thingsboard.server.dao.service.ConstraintValidator.validateFie
         type = ComponentType.EXTERNAL,
         name = "rest api call",
         configClazz = TbRestApiCallNodeConfiguration.class,
-        version = 3,
+        version = 4,
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
                 "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
@@ -106,6 +108,22 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
                 if (!oldConfiguration.has(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB)) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB, 256);
+                }
+                break;
+            case 3:
+                Set<String> knownProperties = Set.of(
+                        "restEndpointUrlPattern", "requestMethod", "headers",
+                        "readTimeoutMs", "maxParallelRequestsCount", "parseToPlainText",
+                        "enableProxy", "useSystemProxyProperties", "proxyHost", "proxyPort",
+                        "proxyUser", "proxyPassword", "credentials", "ignoreRequestBody",
+                        "maxInMemoryBufferSizeInKb"
+                );
+                Iterator<String> fieldNames = oldConfiguration.fieldNames();
+                while (fieldNames.hasNext()) {
+                    if (!knownProperties.contains(fieldNames.next())) {
+                        hasChanges = true;
+                        fieldNames.remove();
+                    }
                 }
                 break;
             default:

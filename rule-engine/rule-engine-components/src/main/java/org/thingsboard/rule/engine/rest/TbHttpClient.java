@@ -130,10 +130,6 @@ public class TbHttpClient {
                     SslContext sslContext = config.getCredentials().initSslContext();
                     httpClient = httpClient.secure(t -> t.sslContext(sslContext));
                 }
-            } else if (config.isUseSimpleClientHttpFactory()) {
-                if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
-                    throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
-                }
             } else {
                 SslContext sslContext = config.getCredentials().initSslContext();
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));

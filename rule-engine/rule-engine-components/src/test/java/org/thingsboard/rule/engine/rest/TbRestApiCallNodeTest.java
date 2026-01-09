@@ -184,12 +184,10 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                 {
                     "restEndpointUrlPattern": "http://url?param=value",
                     "requestMethod": "GET",
-                    "useSimpleClientHttpFactory": false,
                     "parseToPlainText": false,
                     "ignoreRequestBody": false,
                     "enableProxy": false,
                     "useSystemProxyProperties": false,
-                    "proxyScheme": null,
                     "proxyHost": null,
                     "proxyPort": 0,
                     "proxyUser": null,
@@ -395,7 +393,58 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                 "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
                                 "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
                                 "\"credentials\": {\"type\": \"anonymous\"}," +
-                                "\"maxInMemoryBufferSizeInKb\": 256}")
+                                "\"maxInMemoryBufferSizeInKb\": 256}"),
+                // config for version 4 with upgrade from version 3
+                Arguments.of(3, """
+                                {
+                                    "restEndpointUrlPattern": "http://localhost/api",
+                                    "requestMethod": "POST",
+                                    "useSimpleClientHttpFactory": true,
+                                    "parseToPlainText": false,
+                                    "ignoreRequestBody": false,
+                                    "enableProxy": false,
+                                    "useSystemProxyProperties": false,
+                                    "proxyScheme": null,
+                                    "proxyHost": null,
+                                    "proxyPort": 0,
+                                    "proxyUser": null,
+                                    "proxyPassword": null,
+                                    "readTimeoutMs": 0,
+                                    "maxParallelRequestsCount": 0,
+                                    "headers": {
+                                        "Content-Type": "application/json"
+                                    },
+                                    "credentials": {
+                                        "type": "anonymous"
+                                    },
+                                    "maxInMemoryBufferSizeInKb": 256,
+                                    "trimQueue": true,
+                                    "maxQueueSize": 100,
+                                    "trimDoubleQuotes": false,
+                                    "useRedisQueueForMsgPersistence": false
+                                }""",
+                        true, """
+                                {
+                                    "restEndpointUrlPattern": "http://localhost/api",
+                                    "requestMethod": "POST",
+                                    "parseToPlainText": false,
+                                    "ignoreRequestBody": false,
+                                    "enableProxy": false,
+                                    "useSystemProxyProperties": false,
+                                    "proxyHost": null,
+                                    "proxyPort": 0,
+                                    "proxyUser": null,
+                                    "proxyPassword": null,
+                                    "readTimeoutMs": 0,
+                                    "maxParallelRequestsCount": 0,
+                                    "headers": {
+                                        "Content-Type": "application/json"
+                                    },
+                                    "credentials": {
+                                        "type": "anonymous"
+                                    },
+                                    "maxInMemoryBufferSizeInKb": 256
+                                }""")
         );
     }
 
