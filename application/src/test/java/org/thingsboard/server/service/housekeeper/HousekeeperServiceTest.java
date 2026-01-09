@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
@@ -34,7 +34,10 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
@@ -67,6 +70,8 @@ import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -83,15 +88,19 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.sql.ota.OtaPackageRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.usagerecord.ApiUsageStateDao;
 import org.thingsboard.server.gen.transport.TransportProtos.HousekeeperTaskProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
+import org.thingsboard.server.service.housekeeper.processor.OtaDataDeletionTaskProcessor;
 import org.thingsboard.server.service.housekeeper.processor.TsHistoryDeletionTaskProcessor;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -127,10 +136,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private HousekeeperService housekeeperService;
-    @SpyBean
+    @MockitoSpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
+    @MockitoSpyBean
+    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
+    @MockitoSpyBean
+    private OtaDataDeletionTaskProcessor otaDataDeletionTaskProcessor;
     @Autowired
     private EventService eventService;
     @Autowired
@@ -153,8 +166,10 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private CustomerService customerService;
     @Autowired
     private DashboardService dashboardService;
-    @SpyBean
-    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
+    @Autowired
+    private OtaPackageService otaPackageService;
+    @Autowired
+    private OtaPackageRepository otaPackageRepository;
 
     private TenantId tenantId;
 
@@ -305,6 +320,39 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyNoAlarms(userId);
         });
+    }
+
+    @Test
+    public void whenOtaPackageWithDataIsDeleted_thenCleanUpLargeObject() {
+        DeviceProfile deviceProfile = this.createDeviceProfile("Test Device Profile");
+        OtaPackage otaPackage = createOtaPackageWithData(deviceProfile.getId().getId(), "v1.0");
+
+        Long oid = otaPackageRepository.getDataOidById(otaPackage.getId().getId());
+        assertThat(oid).isNotNull();
+        assertThat(oid).isGreaterThan(0L);
+
+        otaPackageService.deleteOtaPackage(tenantId, otaPackage.getId());
+
+        await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
+            verify(otaDataDeletionTaskProcessor).process(argThat(task ->
+                    task.getEntityId().equals(otaPackage.getId()) &&
+                            task.getOid().equals(oid)
+            ));
+        });
+    }
+
+    @Test
+    public void whenOtaPackageWithNullOidIsDeleted_thenNoCleanupTask() throws Exception {
+        DeviceProfile deviceProfile = this.createDeviceProfile("Test Device Profile");
+        OtaPackage otaPackage = new OtaPackage(createOtaPackageWithUrl(deviceProfile.getId().getId(), "v2.0"));
+
+        Long oid = otaPackageRepository.getDataOidById(otaPackage.getId().getId());
+        assertThat(oid).isNull();
+
+        otaPackageService.deleteOtaPackage(tenantId, otaPackage.getId());
+
+        TimeUnit.SECONDS.sleep(2);
+        verify(otaDataDeletionTaskProcessor, never()).process(any());
     }
 
     @Test
@@ -657,6 +705,35 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         mobileApp.setPlatformType(platformType);
         mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
         return mobileApp;
+    }
+
+    private OtaPackage createOtaPackageWithData(java.util.UUID deviceProfileId, String version) {
+        OtaPackage otaPackage = new OtaPackage();
+        otaPackage.setTenantId(tenantId);
+        otaPackage.setDeviceProfileId(new org.thingsboard.server.common.data.id.DeviceProfileId(deviceProfileId));
+        otaPackage.setType(OtaPackageType.FIRMWARE);
+        otaPackage.setTitle("Test Firmware");
+        otaPackage.setVersion(version);
+        otaPackage.setFileName("firmware.bin");
+        otaPackage.setContentType("application/octet-stream");
+        otaPackage.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
+        otaPackage.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
+        otaPackage.setData(ByteBuffer.wrap(new byte[]{1, 2, 3, 4, 5}));
+        otaPackage.setDataSize(5L);
+        return otaPackageService.saveOtaPackage(otaPackage);
+    }
+
+    private OtaPackageInfo createOtaPackageWithUrl(java.util.UUID deviceProfileId, String version) {
+        OtaPackage otaPackage = new OtaPackage();
+        otaPackage.setTenantId(tenantId);
+        otaPackage.setDeviceProfileId(new org.thingsboard.server.common.data.id.DeviceProfileId(deviceProfileId));
+        otaPackage.setType(OtaPackageType.FIRMWARE);
+        otaPackage.setTitle("URL-Based Firmware");
+        otaPackage.setVersion(version);
+        otaPackage.setUrl("http://example.com/firmware.bin");
+        otaPackage.setFileName("firmware.bin");
+        otaPackage.setContentType("application/octet-stream");
+        return otaPackageService.saveOtaPackageInfo(otaPackage, true);
     }
 
 }

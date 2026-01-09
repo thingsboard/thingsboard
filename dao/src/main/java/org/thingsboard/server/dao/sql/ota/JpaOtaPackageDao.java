@@ -97,4 +97,9 @@ public class JpaOtaPackageDao extends JpaAbstractDao<OtaPackageEntity, OtaPackag
         return EntityType.OTA_PACKAGE;
     }
 
+    @Override
+    public Long getDataOidById(UUID id) {
+        return otaPackageRepository.getDataOidById(id);
+    }
+
 }

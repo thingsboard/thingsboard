@@ -23,10 +23,14 @@ import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.TenantEntityWithDataDao;
 
+import java.util.UUID;
+
 public interface OtaPackageDao extends Dao<OtaPackage>, TenantEntityWithDataDao, ExportableEntityDao<OtaPackageId, OtaPackage> {
 
     Long sumDataSizeByTenantId(TenantId tenantId);
 
     OtaPackage findOtaPackageByTenantIdAndTitleAndVersion(TenantId tenantId, String title, String version);
+
+    Long getDataOidById(UUID id);
 
 }
