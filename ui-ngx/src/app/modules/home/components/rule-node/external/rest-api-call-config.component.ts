@@ -18,20 +18,23 @@ import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { RuleNodeConfiguration, RuleNodeConfigurationComponent } from '@app/shared/models/rule-node.models';
 import { HttpRequestType, IntLimit } from '../rule-node-config.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-external-node-rest-api-call-config',
   templateUrl: './rest-api-call-config.component.html',
-  styleUrls: []
+  styleUrls: ['./rest-api-call-config.component.scss']
 })
 export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
 
   restApiCallConfigForm: UntypedFormGroup;
 
-  readonly proxySchemes: string[] = ['http', 'https'];
   readonly httpRequestTypes = Object.keys(HttpRequestType);
   readonly MemoryBufferSizeInKbLimit = 25000;
   readonly IntLimit = IntLimit;
+
+  isHeadersExpanded = false;
+  isQueryParamsExpanded = false;
 
   constructor(private fb: UntypedFormBuilder) {
     super();
@@ -45,12 +48,10 @@ export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
     this.restApiCallConfigForm = this.fb.group({
       restEndpointUrlPattern: [configuration ? configuration.restEndpointUrlPattern : null, [Validators.required]],
       requestMethod: [configuration ? configuration.requestMethod : null, [Validators.required]],
-      useSimpleClientHttpFactory: [configuration ? configuration.useSimpleClientHttpFactory : false, []],
       parseToPlainText: [configuration ? configuration.parseToPlainText : false, []],
       ignoreRequestBody: [configuration ? configuration.ignoreRequestBody : false, []],
       enableProxy: [configuration ? configuration.enableProxy : false, []],
       useSystemProxyProperties: [configuration ? configuration.enableProxy : false, []],
-      proxyScheme: [configuration ? configuration.proxyHost : null, []],
       proxyHost: [configuration ? configuration.proxyHost : null, []],
       proxyPort: [configuration ? configuration.proxyPort : null, []],
       proxyUser: [configuration ? configuration.proxyUser :null, []],
@@ -59,16 +60,22 @@ export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
       maxParallelRequestsCount: [configuration ? configuration.maxParallelRequestsCount : null, [Validators.min(0), Validators.max(IntLimit)]],
       headers: [configuration ? configuration.headers : null, []],
       credentials: [configuration ? configuration.credentials : null, []],
-      maxInMemoryBufferSizeInKb: [configuration ? configuration.maxInMemoryBufferSizeInKb : null, [Validators.min(1), Validators.max(this.MemoryBufferSizeInKbLimit)]]
+      maxInMemoryBufferSizeInKb: [configuration ? configuration.maxInMemoryBufferSizeInKb : null, [Validators.min(1), Validators.max(this.MemoryBufferSizeInKbLimit)]],
+      queryParams: [configuration ? configuration.queryParams : [], []],
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['useSimpleClientHttpFactory', 'enableProxy', 'useSystemProxyProperties'];
+    return ['enableProxy', 'useSystemProxyProperties'];
+  }
+
+  protected prepareInputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+    this.isQueryParamsExpanded = configuration && isDefinedAndNotNull(configuration.queryParams) && !!Object.keys(configuration.queryParams).length;
+    this.isHeadersExpanded = configuration && isDefinedAndNotNull(configuration.headers) && !!Object.keys(configuration.headers).length;
+    return super.prepareInputConfig(configuration);
   }
 
   protected updateValidators(emitEvent: boolean) {
-    const useSimpleClientHttpFactory: boolean = this.restApiCallConfigForm.get('useSimpleClientHttpFactory').value;
     const enableProxy: boolean = this.restApiCallConfigForm.get('enableProxy').value;
     const useSystemProxyProperties: boolean = this.restApiCallConfigForm.get('useSystemProxyProperties').value;
 
@@ -79,12 +86,7 @@ export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
     } else {
       this.restApiCallConfigForm.get('proxyHost').setValidators([]);
       this.restApiCallConfigForm.get('proxyPort').setValidators([]);
-
-      if (useSimpleClientHttpFactory) {
-        this.restApiCallConfigForm.get('readTimeoutMs').setValidators([]);
-      } else {
-        this.restApiCallConfigForm.get('readTimeoutMs').setValidators([Validators.min(0), Validators.max(IntLimit)]);
-      }
+      this.restApiCallConfigForm.get('readTimeoutMs').setValidators([Validators.min(0), Validators.max(IntLimit)]);
     }
 
     this.restApiCallConfigForm.get('readTimeoutMs').updateValueAndValidity({emitEvent});
