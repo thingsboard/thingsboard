@@ -27,6 +27,7 @@ import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 
@@ -142,6 +143,12 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
 
     @Override
     public void onDeviceDeleted(DeviceId deviceId) {
+        parent.onDeviceDeleted(this.getSessionInfo().getDeviceName());
+    }
+
+    @Override
+    public void onTenantDeleted(DeviceId deviceId) {
+        setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
         parent.onDeviceDeleted(this.getSessionInfo().getDeviceName());
     }
 

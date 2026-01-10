@@ -47,6 +47,8 @@ public interface SessionMsgListener {
 
     void onDeviceDeleted(DeviceId deviceId);
 
+    void onTenantDeleted(DeviceId deviceId);
+
     default void onUplinkNotification(UplinkNotificationMsg notificationMsg){};
 
     default void onToTransportUpdateCredentials(ToTransportUpdateCredentialsProto toTransportUpdateCredentials){}
