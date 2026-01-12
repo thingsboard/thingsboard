@@ -53,9 +53,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_GROU
 import static org.thingsboard.server.dao.model.ModelConstants.RELATION_TYPE_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
-/**
- * Created by Valerii Sosliuk on 5/29/2017.
- */
 @Slf4j
 @Component
 @SqlDao
@@ -260,9 +257,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
 
         if (!CollectionUtils.isEmpty(relationTypeGroups)) {
             sqlBuilder.append("AND relation_type_group IN (?");
-            for (int i = 1; i < relationTypeGroups.size(); i++) {
-                sqlBuilder.append(", ?");
-            }
+            sqlBuilder.append(", ?".repeat(Math.max(0, relationTypeGroups.size() - 1)));
             sqlBuilder.append(")");
             params.addAll(relationTypeGroups);
         }
@@ -289,8 +284,7 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
                     relation.setTypeGroup(RelationTypeGroup.valueOf((String) relationTypeGroup));
                     relation.setVersion((Long) version);
                     return relation;
-                })
-                .collect(Collectors.toList());
+                }).toList();
     }
 
     @Override
