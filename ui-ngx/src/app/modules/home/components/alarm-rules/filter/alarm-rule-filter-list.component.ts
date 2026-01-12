@@ -71,6 +71,9 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   @Input()
   operation: ComplexOperation = ComplexOperation.AND;
 
+  @Input()
+  readonly = false;
+
   filterListFormGroup = this.fb.group({
     filters: this.fb.array([])
   });
@@ -143,17 +146,17 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
     });
   }
 
-  public editFilter(index: number) {
+  public editFilter(index: number, readonly = false) {
     const filter: AlarmRuleFilter =
       (this.filterListFormGroup.get('filters') as FormArray).at(index).value;
-    this.openFilterDialog(filter).subscribe(result => {
+    this.openFilterDialog(filter, readonly).subscribe(result => {
       if (result) {
         (this.filterListFormGroup.get('filters') as FormArray).at(index).patchValue(result);
       }
     });
   }
 
-  private openFilterDialog(filter?: AlarmRuleFilter): Observable<AlarmRuleFilter> {
+  private openFilterDialog(filter?: AlarmRuleFilter, readonly = false): Observable<AlarmRuleFilter> {
     const isAdd = !filter;
     if (isAdd) {
       filter = {
@@ -171,7 +174,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
         filter: filter ? deepClone(filter) : null,
         isAdd,
         arguments: this.arguments,
-        usedArguments: this.getUsedArguments
+        usedArguments: this.getUsedArguments,
+        readonly
       }
     }).afterClosed();
   }

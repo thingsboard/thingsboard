@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input, OnChanges, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -71,6 +71,8 @@ export class GeofencingConfigurationComponent implements ControlValueAccessor, V
 
   @Input({required: true})
   ownerId: EntityId;
+
+  @Input({transform: booleanAttribute}) isEditValue = true;
 
   readonly minAllowedScheduledUpdateIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedScheduledUpdateIntervalInSecForCF;
   readonly DataKeyType = DataKeyType;

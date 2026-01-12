@@ -68,9 +68,9 @@ public class CalculatedFieldArgumentUtils {
     }
 
     public static ArgumentEntry createDefaultMetricArgumentEntry(String argKey, AggMetric metric) {
-        Long defaultValue = metric.getDefaultValue();
+        Double defaultValue = metric.getDefaultValue();
         if (defaultValue != null) {
-            return ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue.doubleValue()));
+            return ArgumentEntry.createSingleValueArgument(new DoubleDataEntry(argKey, defaultValue));
         }
         return new SingleValueArgumentEntry();
     }

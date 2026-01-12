@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -76,12 +76,15 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   @Input({required: true})
   testScript: (expression?: string) => Observable<string>;
 
+  @Input({transform: booleanAttribute}) isEditValue = true;
+
   readonly ScriptLanguage = ScriptLanguage;
   readonly CalculatedFieldType = CalculatedFieldType;
   readonly OutputType = OutputType;
   readonly Directions = Object.values(EntitySearchDirection) as Array<EntitySearchDirection>;
   readonly PropagationDirectionTranslations = PropagationDirectionTranslations;
   readonly minAllowedDeduplicationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedDeduplicationIntervalInSecForCF;
+  readonly maxRelatedEntitiesToReturnPerCfArgument = getCurrentAuthState(this.store).maxRelatedEntitiesToReturnPerCfArgument;
 
   relatedAggregationConfiguration = this.fb.group({
     relation: this.fb.group({

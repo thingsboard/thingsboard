@@ -17,7 +17,7 @@
 -->
 <div [formGroup]="relatedAggregationConfiguration" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.aggregation-path-related-entities' | translate }}">
+    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.aggregation-path-related-entities' | translate: {max: maxRelatedEntitiesToReturnPerCfArgument} }}">
       {{ 'calculated-fields.aggregation-path-related-entities' | translate }}
     </div>
     <div class="flex gap-3 xs:flex-col" formGroupName="relation">
@@ -48,6 +48,7 @@
                                             [entityId]="entityId"
                                             [tenantId]="tenantId"
                                             [entityName]="entityName"
+                                            [isEditValue]="isEditValue"
                                             [relation]="relatedAggregationConfiguration.get('relation').value"/>
   </div>
   <div class="tb-form-panel">

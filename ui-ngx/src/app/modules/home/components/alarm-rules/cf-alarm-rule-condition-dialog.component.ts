@@ -196,6 +196,10 @@ export class CfAlarmRuleConditionDialogComponent extends DialogComponent<CfAlarm
     this.updateValidators(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     this.updateSpecText(this.conditionFormGroup.get('type').value ?? AlarmRuleConditionType.SIMPLE);
     this.updateExpressionTypeValidator(this.condition?.expression?.type ?? 'SIMPLE');
+
+    if (this.readonly) {
+      this.conditionFormGroup.disable({emitEvent: false});
+    }
   }
 
   updateStaticValueValidator(type: AlarmRuleConditionType, dynamicValue: boolean) {

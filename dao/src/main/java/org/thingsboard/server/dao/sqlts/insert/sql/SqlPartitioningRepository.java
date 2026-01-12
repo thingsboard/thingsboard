@@ -41,7 +41,7 @@ public class SqlPartitioningRepository {
     @Autowired
     private JdbcTemplate jdbcTemplate;
 
-    private static final String SELECT_PARTITIONS_STMT = "SELECT tablename from pg_tables WHERE schemaname = 'public' and tablename like concat(?, '_%')";
+    private static final String SELECT_PARTITIONS_STMT = "SELECT tablename from pg_tables WHERE schemaname = current_schema() and tablename like concat(?, '_%')";
 
     private static final int PSQL_VERSION_14 = 140000;
     private volatile Integer currentServerVersion;

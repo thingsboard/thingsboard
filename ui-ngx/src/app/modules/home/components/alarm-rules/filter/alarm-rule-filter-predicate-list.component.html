@@ -31,7 +31,7 @@
       <mat-divider style="padding-bottom: 5px;"></mat-divider>
       <div class="predicate-list">
         @for (predicateControl of predicatesFormArray.controls; track predicateControl; let index = $index) {
-          <div class="flex flex-row items-stretch justify-start relative"
+          <div class="relative flex flex-row items-stretch justify-start"
                [class.key-filter-list-divider]="$index">
             @if (index) {
               <div class="filters-operation-container">

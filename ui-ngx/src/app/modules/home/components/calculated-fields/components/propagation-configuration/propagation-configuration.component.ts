@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input } from '@angular/core';
+import { booleanAttribute, Component, forwardRef, Input } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -43,6 +43,9 @@ import { map } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ScriptLanguage } from '@app/shared/models/rule-node.models';
 import { EntitySearchDirection } from '@shared/models/relation.models';
+import {Store} from "@ngrx/store";
+import {AppState} from "@core/core.state";
+import {getCurrentAuthState} from "@core/auth/auth.selectors";
 
 @Component({
   selector: 'tb-propagation-configuration',
@@ -77,6 +80,10 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
   @Input({required: true})
   testScript: () => Observable<string>;
 
+  @Input({transform: booleanAttribute}) isEditValue = true;
+
+  readonly maxRelatedEntitiesToReturnPerCfArgument = getCurrentAuthState(this.store).maxRelatedEntitiesToReturnPerCfArgument;
+
   propagateConfiguration = this.fb.group({
     arguments: this.fb.control({}, notEmptyObjectValidator()),
     applyExpressionToResolvedArguments: [false],
@@ -110,7 +117,8 @@ export class PropagationConfigurationComponent implements ControlValueAccessor, 
 
   private propagateChange: (config: CalculatedFieldPropagationConfiguration) => void = () => { };
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private store: Store<AppState>) {
     this.propagateConfiguration.get('applyExpressionToResolvedArguments').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe(() => {

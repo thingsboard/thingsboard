@@ -203,6 +203,7 @@ export class AlarmRuleFilterPredicateComponent implements ControlValueAccessor, 
         isAdd: false,
         arguments: this.arguments,
         argumentInUse: this.argumentInUse,
+        readonly: this.disabled
       }
     }).afterClosed().subscribe(
       (result) => {

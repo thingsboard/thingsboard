@@ -17,7 +17,7 @@
 -->
 <div [formGroup]="propagateConfiguration" class="tb-form-panel no-border no-padding">
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.propagation-path-related-entities' | translate }}">
+    <div class="tb-form-panel-title" tbTruncateWithTooltip tb-hint-tooltip-icon="{{ 'calculated-fields.hint.propagation-path-related-entities' | translate: {max: maxRelatedEntitiesToReturnPerCfArgument} }}">
       {{ 'calculated-fields.propagation-path-related-entities' | translate }}
     </div>
     <div class="flex gap-3 xs:flex-col" formGroupName="relation">
@@ -56,6 +56,7 @@
                                   [entityName]="entityName"
                                   [ownerId]="ownerId"
                                   [watchKeyChange]="true"
+                                  [isEditValue]="isEditValue"
                                   [isScript]="this.propagateConfiguration.get('applyExpressionToResolvedArguments').value"/>
   </div>
   <div class="tb-form-panel no-gap" [class.!hidden]="!this.propagateConfiguration.get('applyExpressionToResolvedArguments').value">
