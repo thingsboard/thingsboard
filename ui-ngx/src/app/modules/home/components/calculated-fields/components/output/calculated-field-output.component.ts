@@ -213,7 +213,7 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
 
   private updatedFormWithMode(): void {
     if (this.simpleMode && !this.hiddenName) {
-      this.outputForm.get('name').enable({emitEvent: false});
+      this.outputForm.get('name').enable({emitEvent: true});
     } else {
       this.outputForm.get('name').disable({emitEvent: false});
     }

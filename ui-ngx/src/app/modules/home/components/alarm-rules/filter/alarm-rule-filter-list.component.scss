@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../../../scss/constants";
+
 :host {
   .filter-title {
     padding: 12px 0;
@@ -45,11 +47,11 @@
     &-label {
       font-size: 15px;
       font-weight: 400;
-      color: #00695C;
+      color: $tb-primary-color;
       padding: 0 8px;
       border-radius: 4px;
-      border: 1px solid rgba(#00695C, 0.32);
-      background-color: rgba(#00695C, 0.04);
+      border: 1px solid rgba($tb-primary-color, 0.32);
+      background-color: rgba($tb-primary-color, 0.04);
     }
   }
 

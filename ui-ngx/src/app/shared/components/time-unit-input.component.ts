@@ -232,7 +232,7 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
   writeValue(sec: number) {
     if (sec !== this.modelValue) {
       if (isDefinedAndNotNull(sec) && isNumeric(sec) && Number(sec) !== 0) {
-        this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: false});
+        this.timeInputForm.patchValue(this.parseTime(sec), {emitEvent: true});
         this.modelValue = sec;
       } else {
         this.timeInputForm.patchValue({
