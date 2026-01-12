@@ -75,6 +75,11 @@ export class RestApiCallConfigComponent extends RuleNodeConfigurationComponent {
     return super.prepareInputConfig(configuration);
   }
 
+  protected prepareOutputConfig(configuration: RuleNodeConfiguration): RuleNodeConfiguration {
+    configuration.queryParams = isDefinedAndNotNull(configuration.queryParams) ? configuration.queryParams : [];
+    return super.prepareOutputConfig(configuration);
+  }
+
   protected updateValidators(emitEvent: boolean) {
     const enableProxy: boolean = this.restApiCallConfigForm.get('enableProxy').value;
     const useSystemProxyProperties: boolean = this.restApiCallConfigForm.get('useSystemProxyProperties').value;
