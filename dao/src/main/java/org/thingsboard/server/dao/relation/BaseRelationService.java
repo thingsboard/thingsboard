@@ -518,9 +518,14 @@ class BaseRelationService implements RelationService {
                 if (entityRelations == null || entityRelations.isEmpty()) {
                     return Collections.emptyList();
                 }
-                List<EntityRelation> relations = new ArrayList<>(relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations);
-                relations.sort(Comparator.comparing(r -> r.getFrom().getId()));
-                return relations.size() > limit ? relations.subList(0, limit) : relations;
+                List<EntityRelation> relations = relationFilter != null ? filterRelations(entityRelations, relationFilter) : entityRelations;
+                if (relations.size() > limit) {
+                    List<EntityRelation> limitedRelations = new ArrayList<>(relations);
+                    limitedRelations.sort(Comparator.comparing(r -> r.getFrom().getId()));
+                    return limitedRelations.subList(0, limit);
+                } else {
+                    return relations;
+                }
             }, directExecutor());
         }
         return executor.submit(() -> {
@@ -547,9 +552,13 @@ class BaseRelationService implements RelationService {
                 case FROM -> findByFromAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
                 case TO -> findByToAndType(tenantId, relationPathQuery.rootEntityId(), relationPathLevel.relationType(), RelationTypeGroup.COMMON);
             };
-            ArrayList<EntityRelation> entityRelations = new ArrayList<>(relations);
-            entityRelations.sort(Comparator.comparing(r -> r.getFrom().getId()));
-            return entityRelations.size() > limit ? entityRelations.subList(0, limit) : entityRelations;
+            if (relations.size() > limit) {
+                List<EntityRelation> limitedRelations = new ArrayList<>(relations);
+                limitedRelations.sort(Comparator.comparing(r -> r.getFrom().getId()));
+                return limitedRelations.subList(0, limit);
+            } else {
+                return relations;
+            }
         }
         return relationDao.findByRelationPathQuery(tenantId, relationPathQuery, limit);
     }

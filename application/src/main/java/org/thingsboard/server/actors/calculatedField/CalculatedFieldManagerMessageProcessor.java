@@ -265,7 +265,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
         checkCfIntervalForUpdate();
 
         long maxRelatedEntitiesPerCfArgument = systemContext.getApiLimitService().getLimit(tenantId, DefaultTenantProfileConfiguration::getMaxRelatedEntitiesToReturnPerCfArgument);
-        Set<CalculatedFieldCtx> cfsToReinit = new HashSet<>();
+        List<CalculatedFieldCtx> cfsToReinit = new ArrayList<>();
         Stream.concat(
                 calculatedFields.values().stream(),
                 entityIdCalculatedFields.values().stream().flatMap(Collection::stream)
