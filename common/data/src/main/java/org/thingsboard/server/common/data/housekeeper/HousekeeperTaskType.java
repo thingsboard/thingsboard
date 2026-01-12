@@ -33,7 +33,7 @@ public enum HousekeeperTaskType {
     DELETE_ENTITIES("entities deletion"),
     DELETE_CALCULATED_FIELDS("calculated fields deletion"),
     DELETE_JOBS("jobs deletion"),
-    DELETE_OTA_DATA("OTA data deletion");;
+    DELETE_OTA_DATA("OTA data deletion");
 
     private final String description;
 

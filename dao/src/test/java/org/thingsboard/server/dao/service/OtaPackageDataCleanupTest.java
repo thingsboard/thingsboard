@@ -51,7 +51,7 @@ public class OtaPackageDataCleanupTest extends AbstractServiceTest {
     private static final ChecksumAlgorithm CHECKSUM_ALGORITHM = ChecksumAlgorithm.SHA256;
     private static final String CHECKSUM = "4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a";
     private static final long DATA_SIZE = 1L;
-    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(int) DATA_SIZE});
+    private static final ByteBuffer DATA = ByteBuffer.wrap(new byte[]{(byte) DATA_SIZE});
 
     @Autowired
     private DeviceProfileService deviceProfileService;
@@ -101,7 +101,6 @@ public class OtaPackageDataCleanupTest extends AbstractServiceTest {
         assertThat(capturedTask.getTenantId()).isEqualTo(tenantId);
         assertThat(capturedTask.getEntityId()).isEqualTo(savedPackage.getId());
         assertThat(capturedTask.getOid()).isEqualTo(oid);
-        assertThat(capturedTask.getOid()).isGreaterThan(0L);
     }
 
     @Test

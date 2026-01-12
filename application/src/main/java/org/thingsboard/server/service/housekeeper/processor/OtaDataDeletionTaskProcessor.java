@@ -37,13 +37,13 @@ public class OtaDataDeletionTaskProcessor extends HousekeeperTaskProcessor<OtaDa
             return;
         }
 
-        try {
-            otaPackageRepository.deleteLargeObject(oid);
-            log.debug("[{}][{}] Successfully deleted large object with OID: {}", task.getTenantId(), task.getEntityId(), oid);
-        } catch (Exception e) {
-            log.warn("[{}][{}] Failed to delete large object with OID: {}. Error: {}", task.getTenantId(), task.getEntityId(), oid, e.getMessage());
-            throw e;
+        Integer result = otaPackageRepository.deleteLargeObject(oid);
+        if (result == null || result == -1) {
+            String errorMsg = String.format("Failed to delete large object with OID: %d. lo_unlink returned: %s", oid, result);
+            log.warn("[{}][{}] {}", task.getTenantId(), task.getEntityId(), errorMsg);
+            throw new RuntimeException(errorMsg);
         }
+        log.debug("[{}][{}] Successfully deleted large object with OID: {}", task.getTenantId(), task.getEntityId(), oid);
     }
 
     @Override
