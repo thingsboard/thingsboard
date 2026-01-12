@@ -29,6 +29,7 @@ import org.thingsboard.script.api.tbel.DefaultTbelInvokeService;
 import org.thingsboard.script.api.tbel.TbelInvokeService;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -45,8 +46,9 @@ import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.stats.DefaultStatsFactory;
-import org.thingsboard.server.dao.usagerecord.ApiLimitService;
+import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
 import org.thingsboard.server.service.cf.PropagationCalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
@@ -106,7 +108,10 @@ public class PropagationCalculatedFieldStateTest {
     private TbelInvokeService tbelInvokeService;
 
     @MockitoBean
-    private ApiLimitService apiLimitService;
+    private TenantProfile tenantProfile;
+
+    @MockitoBean
+    private TbTenantProfileCache tenantProfileCache;
 
     @MockitoBean
     private ActorSystemContext actorSystemContext;
@@ -117,9 +122,10 @@ public class PropagationCalculatedFieldStateTest {
     @BeforeEach
     void setUp() {
         when(actorSystemContext.getTbelInvokeService()).thenReturn(tbelInvokeService);
-        when(actorSystemContext.getApiLimitService()).thenReturn(apiLimitService);
         when(actorSystemContext.getCalculatedFieldProcessingService()).thenReturn(cfProcessingService);
-        when(apiLimitService.getLimit(any(), any())).thenReturn(1000L);
+        when(actorSystemContext.getTenantProfileCache()).thenReturn(tenantProfileCache);
+        when(tenantProfileCache.get(any(TenantId.class))).thenReturn(tenantProfile);
+        when(tenantProfile.getProfileConfiguration()).thenReturn(Optional.of(new DefaultTenantProfileConfiguration()));
     }
 
     void initCtxAndState(boolean applyExpressionToResolvedArguments) {
