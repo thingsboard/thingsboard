@@ -727,6 +727,41 @@ public class WebsocketApiTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testShouldSendWsUpdateMessageWhenTelemetryWasDeleted() throws Exception {
+        long now = System.currentTimeMillis() - 100;
+        TsKvEntry dataPoint = new BasicTsKvEntry(now, new LongDataEntry("temperature", 42L));
+        List<TsKvEntry> tsData = List.of(dataPoint);
+        sendTelemetry(device, tsData);
+
+        List<EntityKey> keys = List.of(new EntityKey(EntityKeyType.TIME_SERIES, "temperature"));
+        EntityDataUpdate update = getWsClient().subscribeLatestUpdate(keys, dtf);
+
+        Assert.assertEquals(1, update.getCmdId());
+        PageData<EntityData> pageData = update.getData();
+        Assert.assertNotNull(pageData);
+        Assert.assertEquals(1, pageData.getData().size());
+        Assert.assertEquals(device.getId(), pageData.getData().get(0).getEntityId());
+        Assert.assertNotNull(pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature"));
+        Assert.assertEquals(now, pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getTs());
+        Assert.assertEquals("42", pageData.getData().get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature").getValue());
+
+        // delete telemetry
+        getWsClient().registerWaitForUpdate();
+        doDeleteAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/delete?keys=temperature&deleteAllDataForKeys=true", String.class);
+        update = getWsClient().parseDataReply(getWsClient().waitForUpdate());
+
+        Assert.assertEquals(1, update.getCmdId());
+
+        List<EntityData> listData = update.getUpdate();
+        Assert.assertNotNull(listData);
+        Assert.assertEquals(1, listData.size());
+        Assert.assertEquals(device.getId(), listData.get(0).getEntityId());
+        Assert.assertNotNull(listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES));
+        TsValue tsValue = listData.get(0).getLatest().get(EntityKeyType.TIME_SERIES).get("temperature");
+        Assert.assertEquals(new TsValue(0, ""), tsValue);
+    }
+
+    @Test
     public void testEntityDataLatestAttrWsCmd() throws Exception {
         long now = System.currentTimeMillis();
         List<EntityKey> keys = List.of(new EntityKey(EntityKeyType.SERVER_ATTRIBUTE, "serverAttributeKey"));
