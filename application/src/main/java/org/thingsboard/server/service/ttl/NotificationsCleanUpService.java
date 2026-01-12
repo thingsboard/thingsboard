@@ -36,7 +36,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.NOTIFICATION_TABLE
 
 @Slf4j
 @Service
-@TbCoreComponent
 @ConditionalOnExpression("${sql.ttl.notifications.enabled:true} && ${sql.ttl.notifications.ttl:0} > 0")
 public class NotificationsCleanUpService extends AbstractCleanUpService {
 
