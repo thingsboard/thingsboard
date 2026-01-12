@@ -37,6 +37,7 @@ const emptyUserAuthState: AuthPayload = {
   minAllowedAggregationIntervalInSecForCF: 0,
   minAllowedScheduledUpdateIntervalInSecForCF: 0,
   maxRelationLevelPerCfArgument: 0,
+  maxRelatedEntitiesToReturnPerCfArgument: 0,
   maxDataPointsPerRollingArg: 0,
   maxDebugModeDurationMinutes: 0,
   intermediateAggregationIntervalInSecForCF: 0,
