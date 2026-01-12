@@ -65,7 +65,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
             throw new IllegalArgumentException("Unsupported argument entry type for propagation argument entry: " + entry.getType());
         }
         if (updated.getAdded() != null) {
-            return checkAdded(updated.getAdded());
+            return checkAdded(updated.getAdded(), ctx);
         }
         if (updated.getRemoved() != null) {
             return entityIds.remove(updated.getRemoved());
@@ -80,7 +80,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
                 return true;
             }
             boolean retained = entityIds.retainAll(dbEntityIds);
-            boolean added = checkAdded(dbEntityIds);
+            boolean added = checkAdded(dbEntityIds, ctx);
             return retained || added;
         }
         if (updated.isEmpty()) {
@@ -91,8 +91,14 @@ public class PropagationArgumentEntry implements ArgumentEntry {
         return true;
     }
 
-    private boolean checkAdded(Collection<EntityId> updatedIds) {
+    private boolean checkAdded(Collection<EntityId> updatedIds, CalculatedFieldCtx ctx) {
         for (EntityId id : updatedIds) {
+            if (entityIds.size() >= ctx.getMaxRelatedEntitiesPerCfArgument()) {
+                throw new IllegalArgumentException(
+                        "Exceeded the maximum allowed related entities per argument '"
+                                + ctx.getMaxRelatedEntitiesPerCfArgument() + "'. Increase the limit in the tenant profile configuration."
+                );
+            }
             if (entityIds.add(id)) {
                 if (added == null) {
                     added = new ArrayList<>();

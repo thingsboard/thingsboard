@@ -66,22 +66,33 @@ public class RelatedEntitiesArgumentEntry implements ArgumentEntry, HasLatestTs 
     @Override
     public boolean updateEntry(ArgumentEntry entry, CalculatedFieldCtx ctx) {
         if (entry instanceof RelatedEntitiesArgumentEntry relatedEntitiesArgumentEntry) {
+            checkRelatedEntitiesNumber(ctx);
             entityInputs.putAll(relatedEntitiesArgumentEntry.entityInputs);
-            return true;
         } else if (entry instanceof SingleValueArgumentEntry singleValueArgumentEntry) {
             if (entry.isForceResetPrevious()) {
+                checkRelatedEntitiesNumber(ctx);
                 entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
-                return true;
-            }
-            ArgumentEntry argumentEntry = entityInputs.get(singleValueArgumentEntry.getEntityId());
-            if (argumentEntry != null) {
-                argumentEntry.updateEntry(singleValueArgumentEntry, ctx);
             } else {
-                entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                ArgumentEntry argumentEntry = entityInputs.get(singleValueArgumentEntry.getEntityId());
+                if (argumentEntry != null) {
+                    argumentEntry.updateEntry(singleValueArgumentEntry, ctx);
+                } else {
+                    checkRelatedEntitiesNumber(ctx);
+                    entityInputs.put(singleValueArgumentEntry.getEntityId(), singleValueArgumentEntry);
+                }
             }
-            return true;
         } else {
             throw new IllegalArgumentException("Unsupported argument entry type for aggregation argument entry: " + entry.getType());
+        }
+        return true;
+    }
+
+    private void checkRelatedEntitiesNumber(CalculatedFieldCtx ctx) {
+        if (entityInputs.size() >= ctx.getMaxRelatedEntitiesPerCfArgument()) {
+            throw new IllegalArgumentException(
+                    "Exceeded the maximum allowed related entities per argument '"
+                            + ctx.getMaxRelatedEntitiesPerCfArgument() + "'. Increase the limit in the tenant profile configuration."
+            );
         }
     }
 

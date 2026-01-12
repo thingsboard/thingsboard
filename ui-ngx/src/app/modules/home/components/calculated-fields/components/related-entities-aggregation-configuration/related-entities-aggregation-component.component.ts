@@ -84,6 +84,7 @@ export class RelatedEntitiesAggregationComponentComponent implements ControlValu
   readonly Directions = Object.values(EntitySearchDirection) as Array<EntitySearchDirection>;
   readonly PropagationDirectionTranslations = PropagationDirectionTranslations;
   readonly minAllowedDeduplicationIntervalInSecForCF = getCurrentAuthState(this.store).minAllowedDeduplicationIntervalInSecForCF;
+  readonly maxRelatedEntitiesToReturnPerCfArgument = getCurrentAuthState(this.store).maxRelatedEntitiesToReturnPerCfArgument;
 
   relatedAggregationConfiguration = this.fb.group({
     relation: this.fb.group({
