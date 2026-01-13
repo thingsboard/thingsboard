@@ -81,7 +81,7 @@ public class BufferedRateExecutorStats {
     public void incrementRateLimitedTenant(TenantId tenantId){
         rateLimitedTenants.computeIfAbsent(tenantId,
                 tId -> {
-                    String key = StatsType.RATE_EXECUTOR.getName() + ".tenant";
+                    String key = StatsType.RATE_EXECUTOR.getName() + ".ratelimited";
                     return statsFactory.createDefaultCounter(key, TENANT_ID_TAG, tId.toString());
                 }
         )

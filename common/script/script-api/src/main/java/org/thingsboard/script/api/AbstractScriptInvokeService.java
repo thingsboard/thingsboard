@@ -44,7 +44,8 @@ import static java.lang.String.format;
 @Slf4j
 public abstract class AbstractScriptInvokeService implements ScriptInvokeService {
 
-    private static final String REQUESTS = "requests";
+    private static final String INVOKE_REQUESTS = "invoke_requests";
+    private static final String EVAL_REQUESTS = "eval_requests";
     private static final String INVOKE_RESPONSES = "invoke_responses";
     private static final String EVAL_RESPONSES = "eval_responses";
     private static final String FAILURES = "failures";
@@ -52,7 +53,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     protected final Map<UUID, BlockedScriptInfo> disabledScripts = new ConcurrentHashMap<>();
 
-    private StatsCounter requestsCounter;
+    private StatsCounter invokeRequestsCounter;
+    private StatsCounter evalRequestsCounter;
     private StatsCounter invokeResponsesCounter;
     private StatsCounter evalResponsesCounter;
     private StatsCounter failuresCounter;
@@ -102,7 +104,8 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void init() {
         String key = getStatsType().getName();
-        this.requestsCounter = statsFactory.createStatsCounter(key, REQUESTS);
+        this.invokeRequestsCounter = statsFactory.createStatsCounter(key, INVOKE_REQUESTS);
+        this.evalRequestsCounter = statsFactory.createStatsCounter(key, EVAL_REQUESTS);
         this.invokeResponsesCounter = statsFactory.createStatsCounter(key, INVOKE_RESPONSES);
         this.evalResponsesCounter = statsFactory.createStatsCounter(key, EVAL_RESPONSES);
         this.failuresCounter = statsFactory.createStatsCounter(key, FAILURES);
@@ -122,7 +125,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
 
     public void printStats() {
         if (isStatsEnabled()) {
-            int pushed = requestsCounter.getAndClear();
+            int pushed = invokeRequestsCounter.getAndClear() + evalRequestsCounter.getAndClear();
             int invoked = invokeResponsesCounter.getAndClear();
             int evaluated = evalResponsesCounter.getAndClear();
             int failed = failuresCounter.getAndClear();
@@ -154,7 +157,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
         }
 
         UUID scriptId = UUID.randomUUID();
-        requestsCounter.increment();
+        evalRequestsCounter.increment();
         return withTimeoutAndStatsCallback(scriptId, null,
                 doEvalScript(tenantId, scriptType, scriptBody, scriptId, argNames), evalCallback, getMaxEvalRequestsTimeout());
     }
@@ -173,7 +176,7 @@ public abstract class AbstractScriptInvokeService implements ScriptInvokeService
                     return Futures.immediateFailedFuture(handleScriptException(scriptId, null, t));
                 }
                 reportExecution(tenantId, customerId);
-                requestsCounter.increment();
+                invokeRequestsCounter.increment();
                 log.trace("[{}] InvokeScript uuid {} with timeout {}ms", tenantId, scriptId, getMaxInvokeRequestsTimeout());
                 var task = doInvokeFunction(scriptId, args);
 
