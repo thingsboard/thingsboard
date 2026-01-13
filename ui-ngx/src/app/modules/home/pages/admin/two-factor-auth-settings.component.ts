@@ -216,7 +216,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       }
     });
     this.twoFaFormGroup.patchValue(processFormValue);
-    this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter.tenantProfilesIds);
+    this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter?.tenantProfilesIds);
     this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').patchValue(this.filterByTenants, {onlySelf: true});
   }
 
