@@ -92,39 +92,87 @@ public class LwM2mBootstrapCertificateReloadTest {
     public void givenInit_whenCalled_thenShouldRegisterCertificateReloadCallback() {
         ReflectionTestUtils.setField(bootstrapService, "server", mockBootstrapServer);
 
-        ArgumentCaptor.forClass(Runnable.class);
+        bootstrapService.afterSingletonsInstantiated();
 
-        assertThat(bootstrapService).isNotNull();
+        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+        verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
+
+        assertThat(callbackCaptor.getValue()).isNotNull();
     }
 
     @Test
     public void givenReloadCallback_whenInvoked_thenShouldRecreateBootstrapServer() {
-        ReflectionTestUtils.setField(bootstrapService, "server", mockBootstrapServer);
+        LeshanBootstrapServer firstServer = mock(LeshanBootstrapServer.class);
+        LeshanBootstrapServer secondServer = mock(LeshanBootstrapServer.class);
 
-        ArgumentCaptor.forClass(Runnable.class);
+        ReflectionTestUtils.setField(bootstrapService, "server", firstServer);
 
-        assertThat(mockBootstrapServer).isNotNull();
+        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+        bootstrapService.afterSingletonsInstantiated();
+        verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
+
+        Runnable reloadCallback = callbackCaptor.getValue();
+        assertThat(reloadCallback).isNotNull();
+
+        reloadCallback.run();
+
+        verify(firstServer).destroy();
+        verify(secondServer, times(0)).destroy();
     }
 
     @Test
     public void givenBootstrapServerExists_whenRecreate_thenShouldDestroyOldServer() {
-        ReflectionTestUtils.setField(bootstrapService, "server", mockBootstrapServer);
+        LeshanBootstrapServer oldServer = mock(LeshanBootstrapServer.class);
+        ReflectionTestUtils.setField(bootstrapService, "server", oldServer);
 
-        assertThat(mockBootstrapServer).isNotNull();
+        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+        bootstrapService.afterSingletonsInstantiated();
+        verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
+
+        Runnable reloadCallback = callbackCaptor.getValue();
+        reloadCallback.run();
+
+        verify(oldServer).destroy();
     }
 
     @Test
     public void givenMultipleReloads_whenInvoked_thenShouldHandleSequentially() {
-        ReflectionTestUtils.setField(bootstrapService, "server", mockBootstrapServer);
+        LeshanBootstrapServer firstServer = mock(LeshanBootstrapServer.class);
+        LeshanBootstrapServer secondServer = mock(LeshanBootstrapServer.class);
+        LeshanBootstrapServer thirdServer = mock(LeshanBootstrapServer.class);
 
-        assertThat(bootstrapService).isNotNull();
+        ReflectionTestUtils.setField(bootstrapService, "server", firstServer);
+
+        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+        bootstrapService.afterSingletonsInstantiated();
+        verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
+
+        Runnable reloadCallback = callbackCaptor.getValue();
+
+        reloadCallback.run();
+        verify(firstServer, times(1)).destroy();
+
+        ReflectionTestUtils.setField(bootstrapService, "server", secondServer);
+        reloadCallback.run();
+        verify(secondServer, times(1)).destroy();
+
+        ReflectionTestUtils.setField(bootstrapService, "server", thirdServer);
+        reloadCallback.run();
+        verify(thirdServer, times(1)).destroy();
     }
 
     @Test
     public void givenNullServer_whenRecreate_thenShouldHandleGracefully() {
         ReflectionTestUtils.setField(bootstrapService, "server", null);
 
-        assertThat(bootstrapService).isNotNull();
+        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+        bootstrapService.afterSingletonsInstantiated();
+        verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
+
+        Runnable reloadCallback = callbackCaptor.getValue();
+
+        assertThat(reloadCallback).isNotNull();
+        reloadCallback.run();
     }
 
     @Test
@@ -132,9 +180,7 @@ public class LwM2mBootstrapCertificateReloadTest {
         SslCredentials oldCredentials = mockSslCredentials;
         SslCredentials newCredentials = mock(SslCredentials.class);
 
-        when(mockBootstrapConfig.getSslCredentials())
-                .thenReturn(oldCredentials)
-                .thenReturn(newCredentials);
+        when(mockBootstrapConfig.getSslCredentials()).thenReturn(oldCredentials).thenReturn(newCredentials);
 
         SslCredentials firstCall = mockBootstrapConfig.getSslCredentials();
         assertThat(firstCall).isEqualTo(oldCredentials);
@@ -143,6 +189,19 @@ public class LwM2mBootstrapCertificateReloadTest {
         assertThat(secondCall).isEqualTo(newCredentials);
 
         verify(mockBootstrapConfig, times(2)).getSslCredentials();
+    }
+
+    @Test
+    public void givenReloadCallback_whenInvokedWithException_thenShouldLogError() {
+        LeshanBootstrapServer faultyServer = mock(LeshanBootstrapServer.class);
+        ReflectionTestUtils.setField(bootstrapService, "server", faultyServer);
+
+        ArgumentCaptor<Runnable> callbackCaptor = ArgumentCaptor.forClass(Runnable.class);
+        bootstrapService.afterSingletonsInstantiated();
+        verify(mockBootstrapConfig).registerServerReloadCallback(callbackCaptor.capture());
+
+        Runnable reloadCallback = callbackCaptor.getValue();
+        assertThat(reloadCallback).isNotNull();
     }
 
 }

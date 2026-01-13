@@ -183,6 +183,7 @@ public class CertificateReloadManager implements SmartInitializingSingleton, Dis
                 byte[] hash = md.digest(bytes);
                 return Base64.getEncoder().encodeToString(hash);
             } catch (Exception e) {
+                log.warn("Failed to calculate checksum for certificate file: {}", path, e);
                 return "";
             }
         }
