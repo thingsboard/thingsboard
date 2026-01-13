@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
-import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
+import org.thingsboard.server.utils.NumberUtils;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -37,7 +37,7 @@ public class AvgAggEntry extends BaseAggEntry {
     @Override
     protected Object prepareResult(Integer precision) {
         double result = sum.divide(BigDecimal.valueOf(count), RoundingMode.HALF_UP).doubleValue();
-        return TbUtils.roundResult(result, precision);
+        return NumberUtils.roundResult(result, precision);
     }
 
     @Override

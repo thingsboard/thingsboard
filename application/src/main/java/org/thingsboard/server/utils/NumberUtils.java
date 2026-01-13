@@ -13,29 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
+package org.thingsboard.server.utils;
 
-import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
-import org.thingsboard.server.utils.NumberUtils;
+import static org.thingsboard.script.api.tbel.TbUtils.toFixed;
+import static org.thingsboard.script.api.tbel.TbUtils.toInt;
 
-public class MaxAggEntry extends BaseAggEntry {
+public class NumberUtils {
 
-    private double max = Double.MIN_VALUE;
-
-    @Override
-    protected void doUpdate(double value) {
-        if (value > max) {
-            max = value;
+    public static Object roundResult(double value, Integer precision) {
+        if (precision == null) {
+            return value;
         }
+        if (precision.equals(0)) {
+            return toInt(value);
+        }
+        return toFixed(value, precision);
     }
 
-    @Override
-    protected Object prepareResult(Integer precision) {
-        return NumberUtils.roundResult(max, precision);
-    }
-
-    @Override
-    public AggFunction getType() {
-        return AggFunction.MAX;
-    }
 }

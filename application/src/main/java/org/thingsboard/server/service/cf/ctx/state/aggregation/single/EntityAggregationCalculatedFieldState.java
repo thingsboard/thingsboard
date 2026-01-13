@@ -23,7 +23,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import org.thingsboard.common.util.DebugModeUtil;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.script.api.tbel.TbelCfArg;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
@@ -41,6 +40,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
+import org.thingsboard.server.utils.NumberUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -291,7 +291,7 @@ public class EntityAggregationCalculatedFieldState extends BaseCalculatedFieldSt
                 ArgumentEntry argumentEntry = entry.getValue();
                 if (!argumentEntry.isEmpty()) {
                     Object resultValue = argumentEntry.getValue() instanceof Number number
-                            ? TbUtils.roundResult(number.doubleValue(), precision)
+                            ? NumberUtils.roundResult(number.doubleValue(), precision)
                             : argumentEntry.getValue();
                     metricsNode.put(metricName, JacksonUtil.toString(resultValue));
                 }
