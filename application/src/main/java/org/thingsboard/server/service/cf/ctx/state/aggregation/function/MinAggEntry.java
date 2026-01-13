@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
 
 import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
-import org.thingsboard.server.utils.NumberUtils;
+import org.thingsboard.common.util.NumberUtils;
 
 public class MinAggEntry extends BaseAggEntry {
 

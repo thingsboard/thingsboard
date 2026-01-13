@@ -40,7 +40,7 @@ import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.BaseCalculatedFieldState;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 import org.thingsboard.server.service.cf.ctx.state.SingleValueArgumentEntry;
-import org.thingsboard.server.utils.NumberUtils;
+import org.thingsboard.common.util.NumberUtils;
 
 import java.time.Instant;
 import java.time.ZoneId;

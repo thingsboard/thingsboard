@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.utils;
+package org.thingsboard.common.util;
 
-import static org.thingsboard.script.api.tbel.TbUtils.toFixed;
-import static org.thingsboard.script.api.tbel.TbUtils.toInt;
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 
 public class NumberUtils {
+
+    public static boolean isNaN(double value) {
+        return Double.isNaN(value);
+    }
+
+    public static double toFixed(double value, int precision) {
+        return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).doubleValue();
+    }
+
+    public static float toFixed(float value, int precision) {
+        return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).floatValue();
+    }
+
+    public static int toInt(double value) {
+        return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
+    }
 
     public static Object roundResult(double value, Integer precision) {
         if (precision == null) {
