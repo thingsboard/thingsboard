@@ -68,7 +68,7 @@ public class CleanUpService {
                 submitTask(HousekeeperTask.unassignAlarms((User) event.getEntity()));
             }
             if (entityType == EntityType.OTA_PACKAGE && StringUtils.isNotEmpty(event.getBody())) {
-                submitTask(new OtaDataDeletionHousekeeperTask(tenantId, (OtaPackageId) entityId, Long.parseLong(event.getBody())));
+                submitTask(HousekeeperTask.deleteOtaData(tenantId, (OtaPackageId) entityId, Long.parseLong(event.getBody())));
             }
         } catch (Throwable e) {
             log.error("[{}][{}][{}] Failed to handle entity deletion event", tenantId, entityType, entityId.getId(), e);

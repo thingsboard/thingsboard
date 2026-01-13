@@ -27,6 +27,7 @@ import lombok.NonNull;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
@@ -92,6 +93,10 @@ public class HousekeeperTask implements Serializable {
 
     public static HousekeeperTask deleteJobs(TenantId tenantId, EntityId entityId) {
         return new HousekeeperTask(tenantId, entityId, HousekeeperTaskType.DELETE_JOBS);
+    }
+
+    public static HousekeeperTask deleteOtaData(TenantId tenantId, OtaPackageId otaPackageId, Long oid) {
+        return new OtaDataDeletionHousekeeperTask(tenantId, otaPackageId, oid);
     }
 
     @JsonIgnore
