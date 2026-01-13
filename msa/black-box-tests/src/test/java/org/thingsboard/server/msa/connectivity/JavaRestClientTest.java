@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa.connectivity;
 
 import com.google.gson.JsonObject;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.hc.client5.http.impl.classic.CloseableHttpClient;
 import org.apache.hc.client5.http.impl.classic.HttpClients;
 import org.apache.hc.client5.http.impl.io.PoolingHttpClientConnectionManagerBuilder;
@@ -26,7 +27,6 @@ import org.apache.hc.client5.http.ssl.NoopHostnameVerifier;
 import org.apache.hc.core5.ssl.SSLContexts;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.RestTemplate;
-import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
@@ -34,6 +34,10 @@ import org.testng.annotations.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rest.client.RestClient;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.DeviceProfileInfo;
+import org.thingsboard.server.common.data.DeviceProfileType;
+import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
@@ -41,6 +45,11 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.asset.AssetProfile;
+import org.thingsboard.server.common.data.asset.AssetProfileInfo;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
+import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
@@ -94,6 +103,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -109,8 +119,10 @@ public class JavaRestClientTest extends AbstractContainerTest {
     public static final String DEFAULT_NOTIFICATION_SUBJECT = "Just a test";
     public static final NotificationType DEFAULT_NOTIFICATION_TYPE = NotificationType.GENERAL;
     private RestClient restClient;
-    private Tenant tenant;
-    private User user;
+    private Tenant tenant1;
+    private Tenant tenant2;
+    private User tenantAdmin1;
+    private User tenantAdmin2;
 
     @BeforeClass
     public void beforeClass() throws Exception {
@@ -140,31 +152,45 @@ public class JavaRestClientTest extends AbstractContainerTest {
     public void setUp() throws Exception {
         restClient.login("sysadmin@thingsboard.org", "sysadmin");
 
-        // create tenant and tenant admin
-        tenant = new Tenant();
-        tenant.setTitle("Java Rest Client Test Tenant " + RandomStringUtils.randomAlphabetic(5));
-        tenant = restClient.saveTenant(tenant);
+        // create tenant 1 and tenant admin 1
+        tenant1 = new Tenant();
+        tenant1.setTitle("Java Rest Client Test Tenant " + RandomStringUtils.insecure().randomAlphabetic(5));
+        tenant1 = restClient.saveTenant(tenant1);
 
-        String email = RandomStringUtils.randomAlphabetic(5) + "@gmail.com";
-        user = restClient.saveUser(defaultTenantAdmin(tenant.getId(), email), false);
-        restClient.activateUser(user.getId(), "password123", false);
-        restClient.login(email, "password123");
+        String email1 = RandomStringUtils.insecure().randomAlphabetic(5) + "@gmail.com";
+        tenantAdmin1 = restClient.saveUser(defaultTenantAdmin(tenant1.getId(), email1), false);
+        restClient.activateUser(tenantAdmin1.getId(), "password123", false);
+
+        // create tenant 2 and tenant admin 2
+        tenant2 = new Tenant();
+        tenant2.setTitle("Java Rest Client Test Tenant " + RandomStringUtils.insecure().randomAlphabetic(5));
+        tenant2 = restClient.saveTenant(tenant2);
+
+        String email2 = RandomStringUtils.insecure().randomAlphabetic(5) + "@gmail.com";
+        tenantAdmin2 = restClient.saveUser(defaultTenantAdmin(tenant2.getId(), email2), false);
+        restClient.activateUser(tenantAdmin2.getId(), "password123", false);
+
+        // tenant 1 tenant admin by default
+        restClient.login(tenantAdmin1.getEmail(), "password123");
     }
 
     @AfterMethod
     public void tearDown() {
         restClient.login("sysadmin@thingsboard.org", "sysadmin");
-        if (tenant != null) {
-            restClient.deleteTenant(tenant.getId());
+        if (tenant1 != null) {
+            restClient.deleteTenant(tenant1.getId());
+        }
+        if (tenant2 != null) {
+            restClient.deleteTenant(tenant2.getId());
         }
     }
 
     @Test
     public void testGetAlarmsV2() {
-        Device device = restClient.saveDevice(defaultDevicePrototype(RandomStringUtils.randomAlphabetic(5)));
+        Device device = restClient.saveDevice(defaultDevicePrototype(RandomStringUtils.insecure().randomAlphabetic(5)));
         assertThat(device).isNotNull();
 
-        String type = "High temp" + RandomStringUtils.randomAlphabetic(5);
+        String type = "High temp" + RandomStringUtils.insecure().randomAlphabetic(5);
         Alarm alarm = Alarm.builder()
                 .originator(device.getId())
                 .severity(AlarmSeverity.CRITICAL)
@@ -202,7 +228,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
     @Test
     public void testTimeSeriesByReadTsKvQueries() {
-        Device device = restClient.saveDevice(defaultDevicePrototype(RandomStringUtils.randomAlphabetic(5)));
+        Device device = restClient.saveDevice(defaultDevicePrototype(RandomStringUtils.insecure().randomAlphabetic(5)));
         assertThat(device).isNotNull();
 
         DeviceCredentials deviceCredentials = restClient.getDeviceCredentialsByDeviceId(device.getId()).get();
@@ -230,7 +256,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
     @Test
     public void testFindNotifications() {
-        NotificationTarget notificationTarget = createNotificationTarget(user.getId());
+        NotificationTarget notificationTarget = createNotificationTarget(tenantAdmin1.getId());
         String notificationText1 = "Notification 1";
         NotificationTemplate notificationTemplate = createNotificationTemplate(DEFAULT_NOTIFICATION_TYPE, DEFAULT_NOTIFICATION_SUBJECT, notificationText1, new NotificationDeliveryMethod[]{WEB});
         NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), notificationTemplate.getId());
@@ -248,7 +274,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
 
         NotificationRequestPreview requestPreview = restClient.getNotificationRequestPreview(notificationRequest, 10);
         assertThat(requestPreview.getTotalRecipientsCount()).isEqualTo(1);
-        assertThat(requestPreview.getRecipientsPreview()).isEqualTo(List.of(user.getEmail()));
+        assertThat(requestPreview.getRecipientsPreview()).isEqualTo(List.of(tenantAdmin1.getEmail()));
 
         PageData<Notification> notifications = restClient.getNotifications(false, WEB, new PageLink(30));
         assertThat(notifications.getTotalElements()).isEqualTo(2);
@@ -316,7 +342,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         restClient.login("sysadmin@thingsboard.org", "sysadmin");
 
         Domain domain = new Domain();
-        String prefix = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+        String prefix = RandomStringUtils.insecure().randomAlphabetic(5).toLowerCase();
         domain.setName(prefix + ".test.com");
         Domain savedDomain = restClient.saveDomain(domain);
         assertThat(savedDomain.getName()).isEqualTo(domain.getName());
@@ -330,10 +356,10 @@ public class JavaRestClientTest extends AbstractContainerTest {
         restClient.login("sysadmin@thingsboard.org", "sysadmin");
 
         MobileApp mobileApp = new MobileApp();
-        String prefix = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+        String prefix = RandomStringUtils.insecure().randomAlphabetic(5).toLowerCase();
         mobileApp.setPkgName(prefix + "test.app.apple");
         mobileApp.setPlatformType(PlatformType.ANDROID);
-        mobileApp.setAppSecret(RandomStringUtils.randomAlphabetic(20));
+        mobileApp.setAppSecret(RandomStringUtils.insecure().randomAlphabetic(20));
         mobileApp.setStatus(MobileAppStatus.DRAFT);
 
         MobileApp savedMobileApp = restClient.saveMobileApp(mobileApp);
@@ -343,7 +369,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         assertThat(retrieved.getData()).hasSize(1);
 
         MobileAppBundle mobileAppBundle = new MobileAppBundle();
-        String bundlePrefix = RandomStringUtils.randomAlphabetic(5).toLowerCase();
+        String bundlePrefix = RandomStringUtils.insecure().randomAlphabetic(5).toLowerCase();
         mobileAppBundle.setTitle(bundlePrefix + "Test Bundle");
         mobileAppBundle.setAndroidAppId(savedMobileApp.getId());
 
@@ -357,7 +383,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
         filter.setUsersIds(Arrays.stream(usersIds).map(UUIDBased::getId).toList());
 
         NotificationTarget notificationTarget = new NotificationTarget();
-        notificationTarget.setName(filter + RandomStringUtils.randomNumeric(5));
+        notificationTarget.setName(filter + RandomStringUtils.insecure().randomNumeric(5));
         PlatformUsersNotificationTargetConfig targetConfig = new PlatformUsersNotificationTargetConfig();
         targetConfig.setUsersFilter(filter);
         notificationTarget.setConfiguration(targetConfig);
@@ -367,7 +393,7 @@ public class JavaRestClientTest extends AbstractContainerTest {
     private NotificationTemplate createNotificationTemplate(NotificationType notificationType, String subject,
                                                             String text, NotificationDeliveryMethod... deliveryMethods) {
         NotificationTemplate notificationTemplate = new NotificationTemplate();
-        notificationTemplate.setName("Notification template: " + RandomStringUtils.randomAlphabetic(5));
+        notificationTemplate.setName("Notification template: " + RandomStringUtils.insecure().randomAlphabetic(5));
         notificationTemplate.setNotificationType(notificationType);
         NotificationTemplateConfig config = new NotificationTemplateConfig();
         config.setDeliveryMethodsTemplates(new HashMap<>());
@@ -418,9 +444,9 @@ public class JavaRestClientTest extends AbstractContainerTest {
     public void testApiKeyOperations() {
         // Create an API key
         ApiKeyInfo apiKeyInfo = new ApiKeyInfo();
-        apiKeyInfo.setDescription("Test API Key " + RandomStringUtils.randomAlphabetic(5));
+        apiKeyInfo.setDescription("Test API Key " + RandomStringUtils.insecure().randomAlphabetic(5));
         apiKeyInfo.setEnabled(true);
-        apiKeyInfo.setUserId(user.getId());
+        apiKeyInfo.setUserId(tenantAdmin1.getId());
         apiKeyInfo.setExpirationTime(0);
 
         ApiKey savedApiKey = restClient.saveApiKey(apiKeyInfo);
@@ -428,18 +454,18 @@ public class JavaRestClientTest extends AbstractContainerTest {
         assertThat(savedApiKey.getId()).isNotNull();
         assertThat(savedApiKey.getDescription()).isEqualTo(apiKeyInfo.getDescription());
         assertThat(savedApiKey.isEnabled()).isTrue();
-        assertThat(savedApiKey.getUserId()).isEqualTo(user.getId());
-        assertThat(savedApiKey.getTenantId()).isEqualTo(tenant.getId());
+        assertThat(savedApiKey.getUserId()).isEqualTo(tenantAdmin1.getId());
+        assertThat(savedApiKey.getTenantId()).isEqualTo(tenant1.getId());
         assertThat(savedApiKey.getValue()).isNotNull();
 
         // Get user API keys
-        PageData<ApiKeyInfo> apiKeys = restClient.getUserApiKeys(user.getId(), new PageLink(10));
+        PageData<ApiKeyInfo> apiKeys = restClient.getUserApiKeys(tenantAdmin1.getId(), new PageLink(10));
         assertThat(apiKeys).isNotNull();
         assertThat(apiKeys.getData()).hasSize(1);
         assertThat(apiKeys.getData().get(0).getId()).isEqualTo(savedApiKey.getId());
 
         // Update API key description
-        String updatedDescription = "Updated description " + RandomStringUtils.randomAlphabetic(5);
+        String updatedDescription = "Updated description " + RandomStringUtils.insecure().randomAlphabetic(5);
         ApiKeyInfo updatedApiKeyInfo = restClient.updateApiKeyDescription(savedApiKey.getId(), updatedDescription);
         assertThat(updatedApiKeyInfo).isNotNull();
         assertThat(updatedApiKeyInfo.getDescription()).isEqualTo(updatedDescription);
@@ -458,8 +484,96 @@ public class JavaRestClientTest extends AbstractContainerTest {
         restClient.deleteApiKey(savedApiKey.getId());
 
         // Verify the API key is deleted
-        PageData<ApiKeyInfo> apiKeysAfterDelete = restClient.getUserApiKeys(user.getId(), new PageLink(10));
+        PageData<ApiKeyInfo> apiKeysAfterDelete = restClient.getUserApiKeys(tenantAdmin1.getId(), new PageLink(10));
         assertThat(apiKeysAfterDelete.getData()).isEmpty();
+    }
+
+    @Test
+    public void testGetDeviceProfileInfosByIds() {
+        var profileData = new DeviceProfileData();
+        profileData.setConfiguration(new DefaultDeviceProfileConfiguration());
+        profileData.setTransportConfiguration(new DefaultDeviceProfileTransportConfiguration());
+
+        // Create a device profile in tenant1 (current tenant)
+        var deviceProfile1 = new DeviceProfile();
+        deviceProfile1.setTenantId(tenant1.getId());
+        deviceProfile1.setName("Device Profile 1");
+        deviceProfile1.setType(DeviceProfileType.DEFAULT);
+        deviceProfile1.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile1.setProfileData(profileData);
+        deviceProfile1 = restClient.saveDeviceProfile(deviceProfile1);
+
+        var deviceProfile2 = new DeviceProfile();
+        deviceProfile2.setTenantId(tenant1.getId());
+        deviceProfile2.setName("Device Profile 2");
+        deviceProfile2.setType(DeviceProfileType.DEFAULT);
+        deviceProfile2.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile2.setProfileData(profileData);
+        deviceProfile2 = restClient.saveDeviceProfile(deviceProfile2);
+
+        // Create two more device profiles in tenant2 (different tenant)
+        restClient.login(tenantAdmin2.getEmail(), "password123");
+
+        var deviceProfile3 = new DeviceProfile();
+        deviceProfile3.setTenantId(tenant2.getId());
+        deviceProfile3.setName("Device Profile 3");
+        deviceProfile3.setType(DeviceProfileType.DEFAULT);
+        deviceProfile3.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile3.setProfileData(profileData);
+        deviceProfile3 = restClient.saveDeviceProfile(deviceProfile3);
+
+        var deviceProfile4 = new DeviceProfile();
+        deviceProfile4.setTenantId(tenant2.getId());
+        deviceProfile4.setName("Device Profile 4");
+        deviceProfile4.setType(DeviceProfileType.DEFAULT);
+        deviceProfile4.setTransportType(DeviceTransportType.DEFAULT);
+        deviceProfile4.setProfileData(profileData);
+        deviceProfile4 = restClient.saveDeviceProfile(deviceProfile4);
+
+        // Attempt to fetch profiles 1 and 3 while acting as Tenant 2.
+        // - Profile 1: Filtered out because it belongs to a different tenant.
+        // - Profile 2: Filtered out because it belongs to a different tenant and was not requested.
+        // - Profile 3: Should be returned.
+        // - Profile 4: Filtered out; it belongs to the correct tenant, but was not requested by ID.
+        List<DeviceProfileInfo> profiles = restClient.getDeviceProfileInfosByIds(Set.of(deviceProfile1.getUuidId(), deviceProfile3.getUuidId()));
+        assertThat(profiles).hasSize(1);
+        assertThat(profiles.get(0).getId()).isEqualTo(deviceProfile3.getId());
+    }
+
+    @Test
+    public void testGetAssetProfilesByIds() {
+        // Create two asset profiles in tenant1 (current tenant)
+        var assetProfile1 = new AssetProfile();
+        assetProfile1.setTenantId(tenant1.getId());
+        assetProfile1.setName("Asset Profile 1");
+        assetProfile1 = restClient.saveAssetProfile(assetProfile1);
+
+        var assetProfile2 = new AssetProfile();
+        assetProfile2.setTenantId(tenant1.getId());
+        assetProfile2.setName("Asset Profile 2");
+        assetProfile2 = restClient.saveAssetProfile(assetProfile2);
+
+        // Create two more asset profiles in tenant2 (different tenant)
+        restClient.login(tenantAdmin2.getEmail(), "password123");
+
+        var assetProfile3 = new AssetProfile();
+        assetProfile3.setTenantId(tenant2.getId());
+        assetProfile3.setName("Asset Profile 3");
+        assetProfile3 = restClient.saveAssetProfile(assetProfile3);
+
+        var assetProfile4 = new AssetProfile();
+        assetProfile4.setTenantId(tenant2.getId());
+        assetProfile4.setName("Asset Profile 4");
+        assetProfile4 = restClient.saveAssetProfile(assetProfile4);
+
+        // Attempt to fetch profiles 1 and 3 while acting as Tenant 2.
+        // - Profile 1: Filtered out because it belongs to a different tenant.
+        // - Profile 2: Filtered out because it belongs to a different tenant and was not requested.
+        // - Profile 3: Should be returned.
+        // - Profile 4: Filtered out; it belongs to the correct tenant, but was not requested by ID.
+        List<AssetProfileInfo> profiles = restClient.getAssetProfilesByIds(Set.of(assetProfile1.getUuidId(), assetProfile3.getUuidId()));
+        assertThat(profiles).hasSize(1);
+        assertThat(profiles.get(0).getId()).isEqualTo(assetProfile3.getId());
     }
 
 }
