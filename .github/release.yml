@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2025 The Thingsboard Authors
+# Copyright © 2016-2026 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -23,27 +23,19 @@ changelog:
       labels:
         - 'Major Core'
         - 'Major Rule Engine'
-      exclude:
-        labels:
-          - 'Bug'
+
     - title: 'Major UI'
       labels:
         - 'Major UI'
-      exclude:
-        labels:
-          - 'Bug'
+
     - title: 'Major Transport'
       labels:
         - 'Major Transport'
-      exclude:
-        labels:
-          - 'Bug'
+
     - title: 'Major Edge'
       labels:
         - 'Major Edge'
-      exclude:
-        labels:
-          - 'Bug'
+
     - title: 'Core & Rule Engine'
       labels:
         - 'Core'
@@ -51,38 +43,63 @@ changelog:
       exclude:
         labels:
           - 'Bug'
+
     - title: 'UI'
       labels:
         - 'UI'
       exclude:
         labels:
           - 'Bug'
+
     - title: 'Transport'
       labels:
         - 'Transport'
       exclude:
         labels:
           - 'Bug'
+
     - title: 'Edge'
       labels:
         - 'Edge'
       exclude:
         labels:
           - 'Bug'
+
     - title: 'Bug: Core & Rule Engine'
       labels:
-        - 'Core'
-        - 'Rule Engine'
         - 'Bug'
+      exclude:
+        labels:
+          - 'UI'
+          - 'Transport'
+          - 'Edge'
+
     - title: 'Bug: UI'
       labels:
-        - 'UI'
         - 'Bug'
+      exclude:
+        labels:
+          - 'Core'
+          - 'Rule Engine'
+          - 'Transport'
+          - 'Edge'
+
     - title: 'Bug: Transport'
       labels:
-        - 'Transport'
         - 'Bug'
+      exclude:
+        labels:
+          - 'Core'
+          - 'Rule Engine'
+          - 'UI'
+          - 'Edge'
+
     - title: 'Bug: Edge'
       labels:
-        - 'Edge'
         - 'Bug'
+      exclude:
+        labels:
+          - 'Core'
+          - 'Rule Engine'
+          - 'UI'
+          - 'Transport'

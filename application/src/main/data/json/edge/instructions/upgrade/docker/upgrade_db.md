@@ -1,4 +1,4 @@
-Create docker compose file for ThingsBoard Edge upgrade process:
+Create a docker compose file for ThingsBoard Edge upgrade process:
 
 ```bash
 > docker-compose-upgrade.yml && nano docker-compose-upgrade.yml
@@ -8,7 +8,6 @@ Create docker compose file for ThingsBoard Edge upgrade process:
 Add the following lines to the yml file:
 
 ```bash
-version: '3.8'
 services:
   mytbedge:
     restart: on-failure
@@ -40,7 +39,7 @@ volumes:
 {:copy-code}
 ```
 
-Execute the following command to start upgrade process:
+Execute the following command to start an upgrade process:
 
 ```bash
 docker compose -f docker-compose-upgrade.yml up --abort-on-container-exit
