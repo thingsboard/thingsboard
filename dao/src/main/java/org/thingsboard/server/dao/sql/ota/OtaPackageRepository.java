@@ -15,13 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.ota;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.OtaPackageEntity;
 
@@ -46,8 +45,7 @@ public interface OtaPackageRepository extends JpaRepository<OtaPackageEntity, UU
     Long getDataOidById(@Param("id") UUID id);
 
     @Transactional
-    @Modifying
     @Query(value = "SELECT lo_unlink(:oid)", nativeQuery = true)
-    Integer deleteLargeObject(@Param("oid") Long oid);
+    Integer unlinkLargeObject(@Param("oid") Long oid);
 
 }

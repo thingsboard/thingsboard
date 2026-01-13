@@ -55,4 +55,6 @@ public interface OtaPackageService extends EntityDaoService {
 
     long sumDataSizeByTenantId(TenantId tenantId);
 
+    Integer unlinkLargeObject(TenantId tenantId, Long oid);
+
 }

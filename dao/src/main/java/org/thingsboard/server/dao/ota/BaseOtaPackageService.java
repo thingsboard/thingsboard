@@ -222,6 +222,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
 
     private Long getDataOidById(TenantId tenantId, OtaPackageId otaPackageId) {
         try {
+            log.trace("Executing getDataOidById tenantId [{}], otaPackageId [{}]", tenantId, otaPackageId);
             return otaPackageDao.getDataOidById(otaPackageId.getId());
         } catch (Exception e) {
             log.warn("[{}][{}] Failed to retrieve OID before deletion", tenantId, otaPackageId, e);
@@ -237,6 +238,12 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     @Override
     public long sumDataSizeByTenantId(TenantId tenantId) {
         return otaPackageDao.sumDataSizeByTenantId(tenantId);
+    }
+
+    @Override
+    public Integer unlinkLargeObject(TenantId tenantId, Long oid) {
+        log.trace("Executing unlinkLargeObject, tenantId [{}], oid [{}]", tenantId, oid);
+        return otaPackageDao.unlinkLargeObject(oid);
     }
 
     @Override

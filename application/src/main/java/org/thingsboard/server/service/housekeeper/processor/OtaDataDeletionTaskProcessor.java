@@ -20,14 +20,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.housekeeper.OtaDataDeletionHousekeeperTask;
-import org.thingsboard.server.dao.sql.ota.OtaPackageRepository;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class OtaDataDeletionTaskProcessor extends HousekeeperTaskProcessor<OtaDataDeletionHousekeeperTask> {
 
-    private final OtaPackageRepository otaPackageRepository;
+    private final OtaPackageService otaPackageService;
 
     @Override
     public void process(OtaDataDeletionHousekeeperTask task) throws Exception {
@@ -37,7 +37,7 @@ public class OtaDataDeletionTaskProcessor extends HousekeeperTaskProcessor<OtaDa
             return;
         }
 
-        Integer result = otaPackageRepository.deleteLargeObject(oid);
+        Integer result = otaPackageService.unlinkLargeObject(task.getTenantId(), oid);
         if (result == null || result == -1) {
             String errorMsg = String.format("Failed to delete large object with OID: %d. lo_unlink returned: %s", oid, result);
             log.warn("[{}][{}] {}", task.getTenantId(), task.getEntityId(), errorMsg);

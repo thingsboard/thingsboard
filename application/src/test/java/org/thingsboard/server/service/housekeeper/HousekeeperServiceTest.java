@@ -51,6 +51,7 @@ import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
@@ -106,6 +107,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
@@ -325,7 +327,8 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     @Test
     public void whenOtaPackageWithDataIsDeleted_thenCleanUpLargeObject() {
         DeviceProfile deviceProfile = this.createDeviceProfile("Test Device Profile");
-        OtaPackage otaPackage = createOtaPackageWithData(deviceProfile.getId().getId(), "v1.0");
+        DeviceProfile savedProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        OtaPackage otaPackage = createOtaPackageWithData(savedProfile.getId().getId());
 
         Long oid = otaPackageRepository.getDataOidById(otaPackage.getId().getId());
         assertThat(oid).isNotNull();
@@ -334,17 +337,15 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         otaPackageService.deleteOtaPackage(tenantId, otaPackage.getId());
 
         await().atMost(10, TimeUnit.SECONDS).untilAsserted(() -> {
-            verify(otaDataDeletionTaskProcessor).process(argThat(task ->
-                    task.getEntityId().equals(otaPackage.getId()) &&
-                            task.getOid().equals(oid)
-            ));
+            verify(otaDataDeletionTaskProcessor).process(argThat(task -> task.getEntityId().equals(otaPackage.getId()) && task.getOid().equals(oid)));
         });
     }
 
     @Test
     public void whenOtaPackageWithNullOidIsDeleted_thenNoCleanupTask() throws Exception {
         DeviceProfile deviceProfile = this.createDeviceProfile("Test Device Profile");
-        OtaPackage otaPackage = new OtaPackage(createOtaPackageWithUrl(deviceProfile.getId().getId(), "v2.0"));
+        DeviceProfile savedProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        OtaPackageInfo otaPackage = createOtaPackageWithUrl(savedProfile.getId().getId());
 
         Long oid = otaPackageRepository.getDataOidById(otaPackage.getId().getId());
         assertThat(oid).isNull();
@@ -707,29 +708,29 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         return mobileApp;
     }
 
-    private OtaPackage createOtaPackageWithData(java.util.UUID deviceProfileId, String version) {
+    private OtaPackage createOtaPackageWithData(UUID deviceProfileId) {
         OtaPackage otaPackage = new OtaPackage();
         otaPackage.setTenantId(tenantId);
-        otaPackage.setDeviceProfileId(new org.thingsboard.server.common.data.id.DeviceProfileId(deviceProfileId));
+        otaPackage.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         otaPackage.setType(OtaPackageType.FIRMWARE);
         otaPackage.setTitle("Test Firmware");
-        otaPackage.setVersion(version);
+        otaPackage.setVersion("v1.0");
         otaPackage.setFileName("firmware.bin");
         otaPackage.setContentType("application/octet-stream");
         otaPackage.setChecksumAlgorithm(ChecksumAlgorithm.SHA256);
         otaPackage.setChecksum("4bf5122f344554c53bde2ebb8cd2b7e3d1600ad631c385a5d7cce23c7785459a");
-        otaPackage.setData(ByteBuffer.wrap(new byte[]{1, 2, 3, 4, 5}));
-        otaPackage.setDataSize(5L);
+        otaPackage.setData(ByteBuffer.wrap(new byte[]{(int) 1L}));
+        otaPackage.setDataSize(1L);
         return otaPackageService.saveOtaPackage(otaPackage);
     }
 
-    private OtaPackageInfo createOtaPackageWithUrl(java.util.UUID deviceProfileId, String version) {
-        OtaPackage otaPackage = new OtaPackage();
+    private OtaPackageInfo createOtaPackageWithUrl(UUID deviceProfileId) {
+        OtaPackageInfo otaPackage = new OtaPackageInfo();
         otaPackage.setTenantId(tenantId);
-        otaPackage.setDeviceProfileId(new org.thingsboard.server.common.data.id.DeviceProfileId(deviceProfileId));
+        otaPackage.setDeviceProfileId(new DeviceProfileId(deviceProfileId));
         otaPackage.setType(OtaPackageType.FIRMWARE);
         otaPackage.setTitle("URL-Based Firmware");
-        otaPackage.setVersion(version);
+        otaPackage.setVersion("v2.0");
         otaPackage.setUrl("http://example.com/firmware.bin");
         otaPackage.setFileName("firmware.bin");
         otaPackage.setContentType("application/octet-stream");
