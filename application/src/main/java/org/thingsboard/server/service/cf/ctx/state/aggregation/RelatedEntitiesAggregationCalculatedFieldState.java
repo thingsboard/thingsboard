@@ -183,7 +183,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     public void scheduleReevaluation() {
-        ScheduledFuture<?> future = ctx.scheduleReevaluation(deduplicationIntervalMs, actorCtx);
+        ScheduledFuture<?> future = ctx.scheduleReevaluation(getEnforcedDeduplicationIntervalMillis(), actorCtx);
         if (future != null) {
             reevaluationFuture = future;
         }
@@ -209,9 +209,13 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
     }
 
     private boolean shouldRecalculate() {
-        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - deduplicationIntervalMs;
+        boolean intervalPassed = lastMetricsEvalTs <= System.currentTimeMillis() - getEnforcedDeduplicationIntervalMillis();
         boolean argsUpdatedDuringInterval = lastArgsRefreshTs > lastMetricsEvalTs;
         return intervalPassed && argsUpdatedDuringInterval;
+    }
+
+    private long getEnforcedDeduplicationIntervalMillis() {
+        return Math.max(deduplicationIntervalMs, ctx.getMinDeduplicationIntervalMillis());
     }
 
     private Map<EntityId, Map<String, ArgumentEntry>> prepareInputs() {
