@@ -124,6 +124,7 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
     this.entityForm.patchValue({ type }, {emitEvent: false, onlySelf: true});
     setTimeout(() => {
       this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, ...value }, {emitEvent: false});
+      this.entityForm.get('type').updateValueAndValidity();
     });
   }
 
