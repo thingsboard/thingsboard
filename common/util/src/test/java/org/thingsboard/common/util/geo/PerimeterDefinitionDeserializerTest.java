@@ -15,10 +15,12 @@
  */
 package org.thingsboard.common.util.geo;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import org.junit.jupiter.api.Test;
 import org.thingsboard.common.util.JacksonUtil;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 public class PerimeterDefinitionDeserializerTest {
 
@@ -47,4 +49,44 @@ public class PerimeterDefinitionDeserializerTest {
         PolygonPerimeterDefinition poly = (PolygonPerimeterDefinition) def;
         assertThat(poly.getPolygonDefinition()).isEqualTo(json);
     }
+
+    @Test
+    void shouldThrowWhenCircleFieldIsMissing() {
+        // Missing "radius"
+        String badJson = """
+            {
+                "latitude": 48.8566,
+                "longitude": 2.3522
+            }
+            """;
+
+        String customError = "Custom error context";
+
+        assertThatThrownBy(() -> JacksonUtil.fromString(badJson, PerimeterDefinition.class, customError))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage(customError)
+                .hasCauseInstanceOf(JsonMappingException.class)
+                .rootCause()
+                .hasMessageContaining("CirclePerimeterDefinition missing required fields");
+    }
+
+    @Test
+    void shouldThrowWhenJsonIsGarbage() {
+        String garbageJson = "\"NotAnObjectOrArray\"";
+        String customError = "Garbage check";
+
+        assertThatThrownBy(() -> JacksonUtil.fromString(garbageJson, PerimeterDefinition.class, customError))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasCauseInstanceOf(JsonMappingException.class)
+                .rootCause()
+                .hasMessageContaining("Unknown JSON format");
+    }
+
+    @Test
+    void shouldReturnNullWhenInputIsNull() {
+        //noinspection ConstantConditions
+        PerimeterDefinition result = JacksonUtil.fromString(null, PerimeterDefinition.class, "Error");
+        assertThat(result).isNull();
+    }
+
 }

@@ -51,9 +51,10 @@ public class GeofencingZoneState {
         this.ts = attributeKvEntry.getLastUpdateTs();
         this.version = attributeKvEntry.getVersion();
         if (entry.getValueAsString() == null) {
-            throw new IllegalArgumentException("Perimeter attribute key '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
+            throw new IllegalArgumentException("Perimeter attribute '" + entry.getKey() + "' not found for Zone with id: " + zoneId);
         }
-        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class);
+        this.perimeterDefinition = JacksonUtil.fromString(entry.getValueAsString(), PerimeterDefinition.class,
+                "Invalid perimeter definition format for Zone with id: " + zoneId + ". Failed to parse attribute '" + entry.getKey() + "'");
     }
 
     public GeofencingZoneState(GeofencingZoneProto proto) {
