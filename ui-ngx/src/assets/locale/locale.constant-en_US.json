@@ -1666,6 +1666,7 @@
     "contact": {
         "country": "Country",
         "country-required": "Country is required.",
+        "country-object-required": "Please select a valid country from the list.",
         "city": "City",
         "state": "State / Province",
         "postal-code": "Zip / Postal Code",
