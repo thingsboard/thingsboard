@@ -516,7 +516,7 @@
             "within-time": "Within time",
             "within-time-pattern": "Time must be a positive integer.",
             "within-time-required": "Time is required.",
-            "force-2fa": "Force two-factor authentication",
+            "force-2fa": "Enforce two-factor authentication",
             "enforce-for": "Enforce for"
         },
         "jwt": {
