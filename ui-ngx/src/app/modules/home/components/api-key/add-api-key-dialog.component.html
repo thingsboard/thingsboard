@@ -45,6 +45,7 @@
     </mat-slide-toggle>
     <section class="flex gap-3">
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex-1">
+        <mat-label translate>api-key.expiration-date</mat-label>
         <mat-select formControlName="expirationTime" aria-label="Expiration date selector" (selectionChange)="onExpirationDateChange()">
           @for (value of expirationTimeOptions; track value) {
             <mat-option [value]="value">
