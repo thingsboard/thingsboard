@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.ArgumentEntryType;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
+import org.thingsboard.server.service.cf.ctx.state.HasEntityLimit;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,7 +31,7 @@ import java.util.List;
 import java.util.Set;
 
 @Data
-public class PropagationArgumentEntry implements ArgumentEntry {
+public class PropagationArgumentEntry implements ArgumentEntry, HasEntityLimit {
 
     private Set<EntityId> entityIds;
     private transient List<EntityId> added;
@@ -93,12 +94,7 @@ public class PropagationArgumentEntry implements ArgumentEntry {
 
     private boolean checkAdded(Collection<EntityId> updatedIds, CalculatedFieldCtx ctx) {
         for (EntityId id : updatedIds) {
-            if (entityIds.size() >= ctx.getMaxRelatedEntitiesPerCfArgument()) {
-                throw new IllegalArgumentException(
-                        "Exceeded the maximum allowed related entities per argument '"
-                                + ctx.getMaxRelatedEntitiesPerCfArgument() + "'. Increase the limit in the tenant profile configuration."
-                );
-            }
+            checkEntityLimit(entityIds.size(), ctx);
             if (entityIds.add(id)) {
                 if (added == null) {
                     added = new ArrayList<>();
