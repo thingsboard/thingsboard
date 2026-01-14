@@ -28,7 +28,6 @@
          formControlName="country"
          (focusin)="onFocus()"
          (blur)="checkInputAndAutoSelect()"
-         [required]="required"
          [matAutocomplete]="countryAutocomplete">
   <button *ngIf="countryFormGroup.get('country').value && !disabled"
           type="button"
