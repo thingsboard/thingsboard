@@ -15,13 +15,19 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="countryFormGroup" class="mat-block" subscriptSizing="{{subscriptSizing}}" [appearance]="appearance">
+<mat-form-field [formGroup]="countryFormGroup" class="mat-block" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
   <mat-label>{{ labelText }}</mat-label>
+  @if (countryFormGroup.get('country').value?.flag) {
+    <span matPrefix>
+      {{ countryFormGroup.get('country').value.flag }}
+    </span>
+  }
   <input matInput type="text"
          #countryInput
+         #autocompleteTrigger="matAutocompleteTrigger"
          formControlName="country"
          (focusin)="onFocus()"
-         (blur)="onTouched()"
+         (blur)="checkInputAndAutoSelect()"
          [required]="required"
          [matAutocomplete]="countryAutocomplete">
   <button *ngIf="countryFormGroup.get('country').value && !disabled"
@@ -54,5 +60,8 @@
   <mat-hint *ngIf="autocompleteHint">{{ autocompleteHint }}</mat-hint>
   <mat-error *ngIf="countryFormGroup.get('country').hasError('required')">
     {{ requiredText }}
+  </mat-error>
+  <mat-error *ngIf="countryFormGroup.get('country').hasError('requireMatch')">
+    {{ requiredMatchText }}
   </mat-error>
 </mat-form-field>
