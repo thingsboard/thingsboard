@@ -17,11 +17,13 @@
   .mat-form-field-appearance-fill {
     .mat-mdc-form-field-icon-prefix {
       align-self: baseline;
+    }
+  }
 
-      & > * {
-        color: initial;
-        padding-left: 8px;
-      }
+  .mat-mdc-form-field-icon-prefix {
+    & > * {
+      color: initial;
+      padding-left: 8px;
     }
   }
 }

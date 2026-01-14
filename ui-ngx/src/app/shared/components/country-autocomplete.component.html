@@ -61,7 +61,7 @@
   <mat-error *ngIf="countryFormGroup.get('country').hasError('required')">
     {{ requiredText }}
   </mat-error>
-  <mat-error *ngIf="countryFormGroup.get('country').hasError('requireMatch')">
-    {{ requiredMatchText }}
+  <mat-error *ngIf="countryFormGroup.get('country').hasError('objectRequired')">
+    {{ objectRequiredText }}
   </mat-error>
 </mat-form-field>

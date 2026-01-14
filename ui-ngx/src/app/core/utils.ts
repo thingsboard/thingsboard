@@ -999,11 +999,11 @@ export const validateEmail = (control: AbstractControl): ValidationErrors | null
   return emailRegex.test(control.value) ? null : {email: true};
 };
 
-export const requireMatch = (): ValidatorFn => {
+export const objectRequired = (): ValidatorFn => {
   return (control: AbstractControl): ValidationErrors | null => {
     const value = control.value;
-    if (value && typeof value === 'string') {
-      return { requireMatch: { value: value } };
+    if (value && !isObject(value)) {
+      return { objectRequired: true };
     }
     return null;
   };

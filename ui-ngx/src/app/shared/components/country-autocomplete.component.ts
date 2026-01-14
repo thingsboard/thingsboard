@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
+import {
+  Component,
+  ElementRef,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  Output,
+  SimpleChanges,
+  ViewChild
+} from '@angular/core';
 import { Country, CountryData } from '@shared/models/country.models';
 import {
   ControlValueAccessor,
@@ -26,7 +37,7 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { isNotEmptyStr, requireMatch } from '@core/utils';
+import { isNotEmptyStr, objectRequired } from '@core/utils';
 import { Observable, of } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
@@ -56,7 +67,7 @@ interface CountrySearchData extends Country {
     }
   ]
 })
-export class CountryAutocompleteComponent implements OnInit, ControlValueAccessor, Validator {
+export class CountryAutocompleteComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
   @Input()
   labelText = this.translate.instant('contact.country');
@@ -65,7 +76,7 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
   requiredText = this.translate.instant('contact.country-required');
 
   @Input()
-  requiredMatchText = this.translate.instant('contact.country-required-match');
+  objectRequiredText = this.translate.instant('contact.country-object-required');
 
   @Input()
   autocompleteHint: string;
@@ -111,15 +122,25 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
               private countryData: CountryData,
               private translate: TranslateService) {
     this.countryFormGroup = this.fb.group({
-      country: ['', requireMatch()]
+      country: ['', objectRequired()]
     });
   }
 
-  ngOnInit(): void {
-    if (this.required) {
-      this.countryFormGroup.get('country').addValidators(Validators.required);
-      this.countryFormGroup.get('country').updateValueAndValidity();
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.required) {
+      const requiredChanges = changes.required;
+      if (requiredChanges.currentValue !== requiredChanges.previousValue) {
+        if (requiredChanges.currentValue) {
+          this.countryFormGroup.get('country').addValidators(Validators.required);
+        } else {
+          this.countryFormGroup.get('country').removeValidators(Validators.required);
+        }
+        this.countryFormGroup.get('country').updateValueAndValidity();
+      }
     }
+  }
+
+  ngOnInit(): void {
     this.filteredCountries = this.countryFormGroup.get('country').valueChanges.pipe(
       debounceTime(150),
       tap(value => {
@@ -190,12 +211,10 @@ export class CountryAutocompleteComponent implements OnInit, ControlValueAccesso
     const value = control.value;
 
     if (value && typeof value === 'string') {
-      const filterValue = value.trim().toLowerCase();
-      const foundCountry = this.allCountries.find(c => c.name.toLowerCase() === filterValue);
-
-      if (foundCountry) {
-        control.setValue(foundCountry);
-        this.autocompleteTrigger.closePanel();
+      const foundCountry = this.fetchCountries(value);
+      if (foundCountry.length === 1) {
+        control.setValue(foundCountry[0]);
+        this.autocompleteTrigger?.closePanel();
       }
     }
 
