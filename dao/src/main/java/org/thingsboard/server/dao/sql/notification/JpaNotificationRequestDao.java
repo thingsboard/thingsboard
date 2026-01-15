@@ -98,8 +98,8 @@ public class JpaNotificationRequestDao extends JpaAbstractDao<NotificationReques
     }
 
     @Override
-    public int removeAllByCreatedTimeBefore(long ts) {
-        return notificationRequestRepository.deleteAllByCreatedTimeBefore(ts);
+    public int removeByTenantIdAndCreatedTimeBeforeBatch(TenantId tenantId, long ts, int batchSize) {
+        return notificationRequestRepository.deleteByTenantIdAndCreatedTimeBeforeBatch(tenantId.getId(), ts, batchSize);
     }
 
     @Override
