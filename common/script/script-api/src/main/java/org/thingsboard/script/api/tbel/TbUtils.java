@@ -26,6 +26,7 @@ import org.mvel2.execution.ExecutionHashMap;
 import org.mvel2.execution.ExecutionLinkedHashSet;
 import org.mvel2.util.MethodStub;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.NumberUtils;
 import org.thingsboard.common.util.geo.Coordinates;
 import org.thingsboard.common.util.geo.GeoUtil;
 import org.thingsboard.common.util.geo.RangeUnit;
@@ -35,7 +36,6 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.RoundingMode;
 import java.net.URLDecoder;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
@@ -258,15 +258,13 @@ public class TbUtils {
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
                 byte[].class, int.class, int.class, boolean.class)));
-        parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
+        parserConfig.addImport("toFixed", new MethodStub(NumberUtils.class.getMethod("toFixed",
                 double.class, int.class)));
-        parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
+        parserConfig.addImport("toFixed", new MethodStub(NumberUtils.class.getMethod("toFixed",
                 float.class, int.class)));
-        parserConfig.addImport("toInt", new MethodStub(TbUtils.class.getMethod("toInt",
+        parserConfig.addImport("toInt", new MethodStub(NumberUtils.class.getMethod("toInt",
                 double.class)));
-        parserConfig.addImport("roundResult", new MethodStub(TbUtils.class.getMethod("roundResult",
-                double.class, Integer.class)));
-        parserConfig.addImport("isNaN", new MethodStub(TbUtils.class.getMethod("isNaN",
+        parserConfig.addImport("isNaN", new MethodStub(NumberUtils.class.getMethod("isNaN",
                 double.class)));
         parserConfig.addImport("hexToBytes", new MethodStub(TbUtils.class.getMethod("hexToBytes",
                 ExecutionContext.class, String.class)));
@@ -1176,32 +1174,6 @@ public class TbUtils {
         return new String(hexChars, StandardCharsets.UTF_8);
     }
 
-    public static double toFixed(double value, int precision) {
-        return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).doubleValue();
-    }
-
-    public static float toFixed(float value, int precision) {
-        return BigDecimal.valueOf(value).setScale(precision, RoundingMode.HALF_UP).floatValue();
-    }
-
-    public static int toInt(double value) {
-        return BigDecimal.valueOf(value).setScale(0, RoundingMode.HALF_UP).intValue();
-    }
-
-    public static Object roundResult(double value, Integer precision) {
-        if (precision == null) {
-            return value;
-        }
-        if (precision.equals(0)) {
-            return toInt(value);
-        }
-        return toFixed(value, precision);
-    }
-
-    public static boolean isNaN(double value) {
-        return Double.isNaN(value);
-    }
-
     public static ExecutionHashMap<String, Object> toFlatMap(ExecutionContext ctx, Map<String, Object> json) {
         return toFlatMap(ctx, json, new ArrayList<>(), true);
     }
@@ -1219,7 +1191,6 @@ public class TbUtils {
         parseRecursive(json, map, excludeList, "", pathInKey);
         return map;
     }
-
 
     public static String encodeURI(String uri) {
         String encoded = URLEncoder.encode(uri, StandardCharsets.UTF_8);
