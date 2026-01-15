@@ -25,6 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
@@ -45,12 +46,24 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 
+import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
+
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.ALARM;
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.ENTITY_AGGREGATION;
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.GEOFENCING;
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.PROPAGATION;
+import static org.thingsboard.server.common.data.cf.CalculatedFieldType.RELATED_ENTITIES_AGGREGATION;
 
 @Slf4j
 @Component
 @TbCoreComponent
 public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor implements CalculatedFieldProcessor {
+
+    private static final Map<EdgeVersion, Set<CalculatedFieldType>> NEW_CF_TYPES_PER_EDGE_VERSION = Map.of(
+            EdgeVersion.V_4_3_0, Set.of(GEOFENCING, ALARM, PROPAGATION, RELATED_ENTITIES_AGGREGATION, ENTITY_AGGREGATION)
+    );
 
     @Override
     public ListenableFuture<Void> processCalculatedFieldMsgFromEdge(TenantId tenantId, Edge edge, CalculatedFieldUpdateMsg calculatedFieldUpdateMsg) {
@@ -91,7 +104,7 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED -> {
                 CalculatedField calculatedField = edgeCtx.getCalculatedFieldService().findById(edgeEvent.getTenantId(), calculatedFieldId);
-                if (calculatedField != null) {
+                if (calculatedField != null && isValidCfToSend(calculatedField.getType(), edgeVersion)) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
                     CalculatedFieldUpdateMsg calculatedFieldUpdateMsg = EdgeMsgConstructorUtils.constructCalculatedFieldUpdatedMsg(msgType, calculatedField);
                     return DownlinkMsg.newBuilder()
@@ -109,6 +122,14 @@ public class CalculatedFieldEdgeProcessor extends BaseCalculatedFieldProcessor i
             }
         }
         return null;
+    }
+
+    private boolean isValidCfToSend(CalculatedFieldType type, EdgeVersion edgeVersion) {
+        return NEW_CF_TYPES_PER_EDGE_VERSION.entrySet().stream().noneMatch(entry -> {
+            EdgeVersion v = entry.getKey();
+            Set<CalculatedFieldType> newCfTypes = entry.getValue();
+            return edgeVersion.getNumber() < v.getNumber() && newCfTypes.contains(type);
+        });
     }
 
     @Override
