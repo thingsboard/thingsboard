@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.service;
 
+import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Device;
@@ -27,6 +28,10 @@ import org.thingsboard.server.common.data.cf.configuration.ReferencedEntityKey;
 import org.thingsboard.server.common.data.cf.configuration.RelationPathQueryDynamicSourceConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.SimpleCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.TimeSeriesOutput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggKeyInput;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.AggMetric;
+import org.thingsboard.server.common.data.cf.configuration.aggregation.RelatedEntitiesAggregationCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.EntityCoordinates;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.cf.configuration.geofencing.ZoneGroupConfiguration;
@@ -36,8 +41,8 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
-import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -107,11 +112,11 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         int min = tbTenantProfileCache.get(tenantId)
                 .getDefaultProfileConfiguration()
                 .getMinAllowedScheduledUpdateIntervalInSecForCF();
-        int valueFromConfig = min - 10;
 
         // Enable scheduling with an interval below tenant min
         cfg.setScheduledUpdateEnabled(true);
-        cfg.setScheduledUpdateInterval(valueFromConfig);
+        int invalidInterval = RandomUtils.insecure().randomInt(1, min);
+        cfg.setScheduledUpdateInterval(invalidInterval);
 
         // Create & save Calculated Field
         CalculatedField cf = new CalculatedField();
@@ -125,8 +130,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         assertThatThrownBy(() -> calculatedFieldService.save(cf))
                 .isInstanceOf(DataValidationException.class)
                 .hasCauseInstanceOf(IllegalArgumentException.class)
-                .hasMessageStartingWith("Scheduled update interval is less than configured " +
-                        "minimum allowed interval in tenant profile: ");
+                .hasMessage("Scheduled update interval (" + invalidInterval +
+                        " seconds) is less than minimum allowed interval in tenant profile: " + min + " seconds");
     }
 
     @Test
@@ -251,6 +256,160 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
 
         assertThat(calculatedFieldService.findById(tenantId, savedCalculatedField.getId())).isNull();
+    }
+
+    @Test
+    public void testSaveRelatedEntitiesAggregationCF_shouldUseMinScheduledUpdateIntervalFromTenantProfileWhenNotSet() {
+        // GIVEN
+        var device = createTestDevice();
+
+        var cfg = new RelatedEntitiesAggregationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE));
+
+        var argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("temp", argument));
+
+        var metric = new AggMetric();
+        metric.setFunction(AggFunction.AVG);
+        metric.setInput(new AggKeyInput("temp"));
+        cfg.setMetrics(Map.of("avgTemp", metric));
+
+        var output = new TimeSeriesOutput();
+        output.setName("avgTemperature");
+        cfg.setOutput(output);
+
+        int minDeduplicationInterval = (int) tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMinAllowedDeduplicationIntervalInSecForCF();
+        cfg.setDeduplicationIntervalInSec(minDeduplicationInterval);
+
+        // Do NOT set scheduledUpdateInterval - it should default to tenant profile min value
+
+        var cf = new CalculatedField();
+        cf.setTenantId(tenantId);
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION);
+        cf.setName("Related Entities Aggregation CF - default scheduled interval test");
+        cf.setConfigurationVersion(0);
+        cf.setConfiguration(cfg);
+
+        // WHEN
+        CalculatedField saved = calculatedFieldService.save(cf);
+
+        // THEN
+        assertThat(saved).isNotNull();
+        assertThat(saved.getConfiguration()).isInstanceOf(RelatedEntitiesAggregationCalculatedFieldConfiguration.class);
+
+        var savedConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) saved.getConfiguration();
+        int expectedMinScheduledUpdateInterval = tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMinAllowedScheduledUpdateIntervalInSecForCF();
+
+        assertThat(savedConfig.getScheduledUpdateInterval()).isEqualTo(expectedMinScheduledUpdateInterval);
+
+        calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
+    }
+
+    @Test
+    public void testSaveRelatedEntitiesAggregationCF_shouldThrowWhenScheduledUpdateIntervalLessThanMinAllowed() {
+        // GIVEN
+        var device = createTestDevice();
+
+        var cfg = new RelatedEntitiesAggregationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE));
+
+        var argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("temp", argument));
+
+        var metric = new AggMetric();
+        metric.setFunction(AggFunction.AVG);
+        metric.setInput(new AggKeyInput("temp"));
+        cfg.setMetrics(Map.of("avgTemp", metric));
+
+        var output = new TimeSeriesOutput();
+        output.setName("avgTemperature");
+        cfg.setOutput(output);
+
+        int minDeduplicationInterval = (int) tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMinAllowedDeduplicationIntervalInSecForCF();
+        cfg.setDeduplicationIntervalInSec(minDeduplicationInterval);
+
+        int minScheduledUpdateInterval = tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMinAllowedScheduledUpdateIntervalInSecForCF();
+        int invalidInterval = RandomUtils.insecure().randomInt(1, minScheduledUpdateInterval);
+        cfg.setScheduledUpdateInterval(invalidInterval);
+
+        var cf = new CalculatedField();
+        cf.setTenantId(tenantId);
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION);
+        cf.setName("Related Entities Aggregation CF - invalid scheduled interval test");
+        cf.setConfigurationVersion(0);
+        cf.setConfiguration(cfg);
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> calculatedFieldService.save(cf))
+                .isInstanceOf(DataValidationException.class)
+                .hasCauseInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Scheduled update interval (" + invalidInterval +
+                        " seconds) is less than minimum allowed interval in tenant profile: " + minScheduledUpdateInterval + " seconds");
+    }
+
+    @Test
+    public void testSaveRelatedEntitiesAggregationCF_shouldAcceptValidScheduledUpdateInterval() {
+        // GIVEN
+        var device = createTestDevice();
+
+        var cfg = new RelatedEntitiesAggregationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE));
+
+        var argument = new Argument();
+        argument.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("temp", argument));
+
+        var metric = new AggMetric();
+        metric.setFunction(AggFunction.AVG);
+        metric.setInput(new AggKeyInput("temp"));
+        cfg.setMetrics(Map.of("avgTemp", metric));
+
+        var output = new TimeSeriesOutput();
+        output.setName("avgTemperature");
+        cfg.setOutput(output);
+
+        int minDeduplicationInterval = (int) tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMinAllowedDeduplicationIntervalInSecForCF();
+        cfg.setDeduplicationIntervalInSec(minDeduplicationInterval);
+
+        int minScheduledUpdateInterval = tbTenantProfileCache.get(tenantId)
+                .getDefaultProfileConfiguration()
+                .getMinAllowedScheduledUpdateIntervalInSecForCF();
+        int customScheduledUpdateInterval = minScheduledUpdateInterval + 100;
+        cfg.setScheduledUpdateInterval(customScheduledUpdateInterval);
+
+        var cf = new CalculatedField();
+        cf.setTenantId(tenantId);
+        cf.setEntityId(device.getId());
+        cf.setType(CalculatedFieldType.RELATED_ENTITIES_AGGREGATION);
+        cf.setName("Related Entities Aggregation CF - valid scheduled interval test");
+        cf.setConfigurationVersion(0);
+        cf.setConfiguration(cfg);
+
+        // WHEN
+        CalculatedField saved = calculatedFieldService.save(cf);
+
+        // THEN
+        assertThat(saved).isNotNull();
+        assertThat(saved.getConfiguration()).isInstanceOf(RelatedEntitiesAggregationCalculatedFieldConfiguration.class);
+
+        var savedConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) saved.getConfiguration();
+        assertThat(savedConfig.getScheduledUpdateInterval()).isEqualTo(customScheduledUpdateInterval);
+
+        calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
     }
 
     private CalculatedField saveValidCalculatedField() {
