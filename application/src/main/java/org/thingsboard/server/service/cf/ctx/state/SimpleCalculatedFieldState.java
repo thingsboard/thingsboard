@@ -22,13 +22,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 import lombok.EqualsAndHashCode;
 import net.objecthunter.exp4j.Expression;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.NumberUtils;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.service.cf.CalculatedFieldResult;
 import org.thingsboard.server.service.cf.TelemetryCalculatedFieldResult;
-import org.thingsboard.common.util.NumberUtils;
 
 import java.util.Map;
 
