@@ -11412,8 +11412,8 @@
                                 "label": "{i18n:api-usage.sms}",
                                 "state": "sms",
                                 "status": {
-                                    "name": "notificationApiState",
-                                    "label": "notificationApiState",
+                                    "name": "smsApiState",
+                                    "label": "smsApiState",
                                     "type": "timeseries",
                                     "settings": {},
                                     "color": "#2196f3"
