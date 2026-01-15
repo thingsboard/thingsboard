@@ -196,9 +196,14 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         log.trace("Executing deleteOtaPackage [{}]", otaPackageId);
         validateId(otaPackageId, id -> INCORRECT_OTA_PACKAGE_ID + id);
         try {
+            Long oid = getDataOidById(tenantId, otaPackageId);
             otaPackageDao.removeById(tenantId, otaPackageId.getId());
             publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
-            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(otaPackageId).build());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder()
+                    .tenantId(tenantId)
+                    .entityId(otaPackageId)
+                    .body(oid != null ? oid.toString() : null)
+                    .build());
         } catch (Exception t) {
             ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
             if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_firmware_device")) {
@@ -215,6 +220,16 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         }
     }
 
+    private Long getDataOidById(TenantId tenantId, OtaPackageId otaPackageId) {
+        try {
+            log.trace("Executing getDataOidById tenantId [{}], otaPackageId [{}]", tenantId, otaPackageId);
+            return otaPackageDao.getDataOidById(otaPackageId.getId());
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to retrieve OID before deletion", tenantId, otaPackageId, e);
+        }
+        return null;
+    }
+
     @Override
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         deleteOtaPackage(tenantId, (OtaPackageId) id);
@@ -226,10 +241,9 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
-    public void deleteOtaPackagesByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteOtaPackagesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        tenantOtaPackageRemover.removeEntities(tenantId, tenantId);
+    public Integer unlinkLargeObject(TenantId tenantId, Long oid) {
+        log.trace("Executing unlinkLargeObject, tenantId [{}], oid [{}]", tenantId, oid);
+        return otaPackageDao.unlinkLargeObject(oid);
     }
 
     @Override
@@ -237,19 +251,24 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         deleteOtaPackagesByTenantId(tenantId);
     }
 
-    private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =
-            new PaginatedRemover<>() {
+    @Override
+    public void deleteOtaPackagesByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteOtaPackagesByTenantId, tenantId [{}]", tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        tenantOtaPackageRemover.removeEntities(tenantId, tenantId);
+    }
 
-                @Override
-                protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
-                }
+    private final PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover = new PaginatedRemover<>() {
+        @Override
+        protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
-                    deleteOtaPackage(tenantId, entity.getId());
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
+            deleteOtaPackage(tenantId, entity.getId());
+        }
+    };
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
