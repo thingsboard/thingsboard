@@ -24,7 +24,6 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Output;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.util.CollectionsUtil;
 import org.thingsboard.server.service.cf.CalculatedFieldProcessingService;
@@ -171,8 +170,7 @@ public class PropagationCalculatedFieldState extends ScriptCalculatedFieldState 
             throw new IllegalArgumentException("Unsupported argument type: " + argumentEntry.getType() + " detected for argument: " + outputKey + ". " +
                                                "Only Latest telemetry or Attribute arguments supported for 'Arguments Only' propagation mode!");
         });
-        ObjectNode result = toSimpleResult(output.getType() == OutputType.TIME_SERIES, valuesNode);
-        telemetryCfBuilder.result(result);
+        telemetryCfBuilder.result(toResultNode(valuesNode));
         return telemetryCfBuilder.build();
     }
 
