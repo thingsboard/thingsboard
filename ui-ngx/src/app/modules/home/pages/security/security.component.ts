@@ -333,22 +333,24 @@ export class SecurityComponent extends PageComponent implements OnInit, OnDestro
   onChangePassword(form: FormGroupDirective): void {
     if (this.changePassword.valid) {
       this.authService.changePassword(this.changePassword.get('currentPassword').value,
-        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe(() => {
-          this.discardChanges(form);
-        },
-        (error) => {
-          if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
-            this.changePassword.get('currentPassword').setErrors({differencePassword: true});
-          } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
-            this.loadPasswordPolicy();
-          } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
-            this.changePassword.get('newPassword').setErrors({alreadyUsed: error.error.message});
-          } else {
-            this.store.dispatch(new ActionNotificationShow({
-              message: error.error.message,
-              type: 'error',
-              target: 'changePassword'
-            }));
+        this.changePassword.get('newPassword').value, {ignoreErrors: true}).subscribe({
+          next: () => {
+            this.discardChanges(form);
+          },
+          error: (error) => {
+            if (error.status === 400 && error.error.message === 'Current password doesn\'t match!') {
+              this.changePassword.get('currentPassword').setErrors({ differencePassword: true });
+            } else if (error.status === 400 && error.error.message.startsWith('Password must')) {
+              this.loadPasswordPolicy();
+            } else if (error.status === 400 && error.error.message.startsWith('Password was already used')) {
+              this.changePassword.get('newPassword').setErrors({ alreadyUsed: error.error.message });
+            } else {
+              this.store.dispatch(new ActionNotificationShow({
+                message: error.error.message,
+                type: 'error',
+                target: 'changePassword'
+              }));
+            }
           }
         });
     } else {
