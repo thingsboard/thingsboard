@@ -134,38 +134,13 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     if (isDefinedAndNotNull(this.maxTime)) {
       this.updatedAllowTimeUnitInterval(this.maxTime);
     }
-    if (this.required || this.maxTime || isDefinedAndNotNull(this.minTime) || this.stepMultipleOf) {
-      const timeControl = this.timeInputForm.get('time');
-      const validators = [Validators.pattern(/^\d*$/)];
-      if (this.required) {
-        validators.push(Validators.required);
-      }
-      if (this.maxTime) {
-        validators.push((control: AbstractControl) =>
-          Validators.max(Math.floor(this.maxTime / this.timeIntervalsInSec.get(this.timeInputForm.get('timeUnit').value)))(control)
-        );
-      }
-      if (isDefinedAndNotNull(this.minTime)) {
-        this.minValueValidator = this.minValue;
-        validators.push((control: AbstractControl) =>
-          Validators.min(this.minValueValidator)(control)
-        );
-      }
 
-      if (isDefinedAndNotNull(this.stepMultipleOf) && this.stepMultipleOf > 0) {
-        validators.push(this.createStepMultipleOfValidator());
-      }
-
-      timeControl.setValidators(validators);
-      timeControl.updateValueAndValidity({ emitEvent: false });
-    }
+    this.refreshTimeValidators();
 
     this.timeInputForm.get('timeUnit').valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
-      if (isDefinedAndNotNull(this.minTime)) {
-        this.minValueValidator = this.minValue;
-      }
+      this.refreshTimeValidators();
       this.timeInputForm.get('time').updateValueAndValidity({onlySelf: true});
       this.timeInputForm.get('time').markAsTouched({onlySelf: true});
     });
@@ -201,11 +176,10 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
           if (isDefinedAndNotNull(this.maxTime)) {
             this.timeUnits = Object.values(TimeUnit).filter(item => item !== TimeUnit.MILLISECONDS) as TimeUnit[];
             this.updatedAllowTimeUnitInterval(this.maxTime);
-            this.timeInputForm.get('time').updateValueAndValidity({emitEvent: false});
           }
         }
-        if (propName === 'minTime') {
-          this.minValueValidator = isDefinedAndNotNull(this.minTime) ? this.minValue : 0;
+        if (['minTime', 'maxTime', 'required', 'stepMultipleOf'].includes(propName)) {
+          this.refreshTimeValidators();
         }
       }
     }
@@ -312,4 +286,38 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
     }
   }
 
+  private refreshTimeValidators() {
+    const timeControl = this.timeInputForm.get('time');
+    if (!timeControl) return;
+
+    const currentUnit = this.timeInputForm.get('timeUnit')?.value as TimeUnit;
+    if (!currentUnit) return;
+
+    const secondsInUnit = this.timeIntervalsInSec.get(currentUnit) ?? 1;
+    const validators: ValidatorFn[] = [Validators.pattern(/^\d*$/)];
+
+    if (this.required) {
+      validators.push(Validators.required);
+    }
+
+    if (isDefinedAndNotNull(this.minTime)) {
+      this.minValueValidator = Math.ceil(this.minTime / secondsInUnit);
+      validators.push(Validators.min(this.minValueValidator));
+    } else {
+      this.minValueValidator = 0;
+      validators.push(Validators.min(this.minValueValidator));
+    }
+
+    if (isDefinedAndNotNull(this.maxTime)) {
+      const maxInCurrentUnit = Math.floor(this.maxTime / secondsInUnit);
+      validators.push(Validators.max(maxInCurrentUnit));
+    }
+
+    if (isDefinedAndNotNull(this.stepMultipleOf) && this.stepMultipleOf > 0) {
+      validators.push(this.createStepMultipleOfValidator());
+    }
+
+    timeControl.setValidators(validators);
+    timeControl.updateValueAndValidity({ onlySelf: true, emitEvent: false });
+  }
 }
