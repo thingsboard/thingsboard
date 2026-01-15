@@ -35,7 +35,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileConfiguration;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -101,6 +101,21 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         entityId = Objects.requireNonNullElse(entityId, tenantId);
         log.trace("Executing createDefaultUsageRecord [{}]", entityId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+
+        ApiUsageStateValue smsApiUsageState = ApiUsageStateValue.ENABLED;
+
+        DefaultTenantProfileConfiguration configuration = null;
+        if (entityId.getEntityType() == EntityType.TENANT && !entityId.equals(TenantId.SYS_TENANT_ID)) {
+            tenantId = (TenantId) entityId;
+            Tenant tenant = tenantService.findTenantById(tenantId);
+            TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
+            configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+
+            if (configuration.getSmsEnabled() != null && !configuration.getSmsEnabled()) {
+                smsApiUsageState = ApiUsageStateValue.DISABLED;
+            }
+        }
+
         ApiUsageState apiUsageState = new ApiUsageState();
         apiUsageState.setTenantId(tenantId);
         apiUsageState.setEntityId(entityId);
@@ -109,7 +124,7 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageState.setJsExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setTbelExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setDbStorageState(ApiUsageStateValue.ENABLED);
-        apiUsageState.setSmsExecState(ApiUsageStateValue.ENABLED);
+        apiUsageState.setSmsExecState(smsApiUsageState);
         apiUsageState.setEmailExecState(ApiUsageStateValue.ENABLED);
         apiUsageState.setAlarmExecState(ApiUsageStateValue.ENABLED);
         apiUsageStateValidator.validate(apiUsageState, ApiUsageState::getTenantId);
@@ -138,17 +153,12 @@ public class ApiUsageStateServiceImpl extends AbstractEntityService implements A
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.EMAIL.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
-                new StringDataEntry(ApiFeature.SMS.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
+                new StringDataEntry(ApiFeature.SMS.getApiStateKey(), smsApiUsageState.name())));
         apiUsageStates.add(new BasicTsKvEntry(saved.getCreatedTime(),
                 new StringDataEntry(ApiFeature.ALARM.getApiStateKey(), ApiUsageStateValue.ENABLED.name())));
         tsService.save(tenantId, saved.getId(), apiUsageStates, 0L);
 
-        if (entityId.getEntityType() == EntityType.TENANT && !entityId.equals(TenantId.SYS_TENANT_ID)) {
-            tenantId = (TenantId) entityId;
-            Tenant tenant = tenantService.findTenantById(tenantId);
-            TenantProfile tenantProfile = tenantProfileDao.findById(tenantId, tenant.getTenantProfileId().getId());
-            TenantProfileConfiguration configuration = tenantProfile.getProfileData().getConfiguration();
-
+        if (configuration != null) {
             List<TsKvEntry> profileThresholds = new ArrayList<>();
             for (ApiUsageRecordKey key : ApiUsageRecordKey.values()) {
                 if (key.getApiLimitKey() == null) continue;
