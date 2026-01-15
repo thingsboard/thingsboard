@@ -13,29 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.cf.ctx.state.aggregation.function;
+package org.thingsboard.server.service.cf.ctx.state;
 
-import org.thingsboard.server.common.data.cf.configuration.aggregation.AggFunction;
-import org.thingsboard.common.util.NumberUtils;
+public interface HasEntityLimit {
 
-public class MaxAggEntry extends BaseAggEntry {
-
-    private double max = Double.MIN_VALUE;
-
-    @Override
-    protected void doUpdate(double value) {
-        if (value > max) {
-            max = value;
+    default void checkEntityLimit(int currentEntitiesCount, CalculatedFieldCtx ctx) {
+        if (currentEntitiesCount >= ctx.getMaxRelatedEntitiesPerCfArgument()) {
+            throw new IllegalArgumentException(
+                    "Exceeded the maximum allowed related entities per argument '"
+                    + ctx.getMaxRelatedEntitiesPerCfArgument() + "'. Increase the limit in the tenant profile configuration."
+            );
         }
     }
 
-    @Override
-    protected Object prepareResult(Integer precision) {
-        return NumberUtils.roundResult(max, precision);
-    }
-
-    @Override
-    public AggFunction getType() {
-        return AggFunction.MAX;
-    }
 }

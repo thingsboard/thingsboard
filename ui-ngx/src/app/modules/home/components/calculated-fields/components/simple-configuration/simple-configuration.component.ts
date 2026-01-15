@@ -155,6 +155,7 @@ export class SimpleConfigurationComponent implements ControlValueAccessor, Valid
     this.simpleConfiguration.patchValue(formValue, {emitEvent: false});
     setTimeout(() => {
       this.simpleConfiguration.get('arguments').updateValueAndValidity({onlySelf: true});
+      this.simpleConfiguration.get('output').updateValueAndValidity({onlySelf: true});
     });
   }
 

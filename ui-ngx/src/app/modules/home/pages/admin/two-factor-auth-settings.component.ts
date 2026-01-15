@@ -83,6 +83,11 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       const providers = setting.providers.filter(provider => provider.enable);
       providers.forEach(provider => delete provider.enable);
       const enforcedUsersFilter = this.twoFaFormGroup.get('enforcedUsersFilter').value;
+      if (enforcedUsersFilter.filterByTenants) {
+        enforcedUsersFilter.tenantProfilesIds = null;
+      } else {
+        enforcedUsersFilter.tenantsIds = null;
+      }
       delete enforcedUsersFilter.filterByTenants;
       const config = Object.assign(setting, {providers}, {enforcedUsersFilter});
       this.filterByTenants = this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').value;
@@ -142,7 +147,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       verificationCodeCheckRateLimitEnable: [false],
       verificationCodeCheckRateLimitNumber: [{value: 3, disabled: true}, this.posIntValidation],
       verificationCodeCheckRateLimitTime: [{value: 900, disabled: true}, this.posIntValidation],
-      minVerificationCodeSendPeriod: ['30', [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
+      minVerificationCodeSendPeriod: [30, [Validators.required, Validators.min(5), Validators.pattern(/^\d*$/)]],
       providers: this.fb.array([])
     });
     Object.values(TwoFactorAuthProviderType).forEach(provider => {
@@ -216,7 +221,7 @@ export class TwoFactorAuthSettingsComponent extends PageComponent implements OnI
       }
     });
     this.twoFaFormGroup.patchValue(processFormValue);
-    this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter.tenantProfilesIds);
+    this.filterByTenants = isDefined(this.filterByTenants) ? this.filterByTenants : !Array.isArray(settings?.enforcedUsersFilter?.tenantProfilesIds);
     this.twoFaFormGroup.get('enforcedUsersFilter.filterByTenants').patchValue(this.filterByTenants, {onlySelf: true});
   }
 

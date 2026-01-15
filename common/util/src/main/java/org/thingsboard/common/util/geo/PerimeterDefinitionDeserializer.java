@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.ObjectCodec;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -32,6 +33,9 @@ public class PerimeterDefinitionDeserializer extends JsonDeserializer<PerimeterD
         JsonNode node = codec.readTree(p);
 
         if (node.isObject()) {
+            if (!node.has("latitude") || !node.has("longitude") || !node.has("radius")) {
+                throw JsonMappingException.from(p, "CirclePerimeterDefinition missing required fields. Received: " + node);
+            }
             double latitude = node.get("latitude").asDouble();
             double longitude = node.get("longitude").asDouble();
             double radius = node.get("radius").asDouble();
@@ -42,7 +46,7 @@ public class PerimeterDefinitionDeserializer extends JsonDeserializer<PerimeterD
             String polygonStrDefinition = mapper.writeValueAsString(node);
             return new PolygonPerimeterDefinition(polygonStrDefinition);
         }
-        throw new IOException("Failed to deserialize PerimeterDefinition from node: " + node);
+        throw JsonMappingException.from(p, "Unknown JSON format for PerimeterDefinition. Expected OBJECT (Circle) or ARRAY (Polygon), but found: " + node.getNodeType());
     }
 
 }

@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input } from '@angular/core';
 import { ControlValueAccessor, FormBuilder, FormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { DefaultTenantProfileConfiguration, FormControlsFrom } from '@shared/models/tenant.model';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, isUndefinedOrNull} from '@core/utils';
 import { RateLimitsType } from './rate-limits/rate-limits.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -170,6 +170,9 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
 
   writeValue(value: DefaultTenantProfileConfiguration | null): void {
     if (isDefinedAndNotNull(value)) {
+      if (isUndefinedOrNull(value.smsEnabled)) {
+        value.smsEnabled = true;
+      }
       this.maxSmsValidation(value.smsEnabled);
       this.tenantProfileConfigurationForm.patchValue(value, {emitEvent: false});
     }

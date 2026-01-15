@@ -109,7 +109,9 @@ export class AlarmRulesTableConfig extends EntityTableConfig<AlarmRuleTableEntit
     }
     this.tableTitle = this.pageMode ? '' : this.translate.instant('alarm-rule.alarm-rules');
     this.detailsPanelEnabled = this.pageMode;
-    this.entityResources = entityTypeResources.get(EntityType.CALCULATED_FIELD);
+    this.entityResources = {
+      helpLinkId: 'alarmRules'
+    };
     this.entityType = EntityType.CALCULATED_FIELD;
     this.entityTranslations = {
       type: 'alarm-rule.alarm-rule',

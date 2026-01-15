@@ -516,7 +516,7 @@
             "within-time": "Within time",
             "within-time-pattern": "Time must be a positive integer.",
             "within-time-required": "Time is required.",
-            "force-2fa": "Force two-factor authentication",
+            "force-2fa": "Enforce two-factor authentication",
             "enforce-for": "Enforce for"
         },
         "jwt": {
@@ -1000,7 +1000,8 @@
         "delete-api-key-text": "Be careful, after the confirmation key will become unrecoverable.",
         "delete-api-keys-title": "Are you sure you want to delete { count, plural, =1 {1 API key} other {# API keys} }?",
         "delete-api-keys-text": "Be careful, after the confirmation all selected keys will  become unrecoverable.",
-        "date": "Date",
+        "expiration-date": "Expiration date",
+        "date": "date",
         "description": "Description",
         "disable": "Disable",
         "edit-description": "Edit description",
@@ -1665,6 +1666,7 @@
     "contact": {
         "country": "Country",
         "country-required": "Country is required.",
+        "country-object-required": "Please select a valid country from the list.",
         "city": "City",
         "state": "State / Province",
         "postal-code": "Zip / Postal Code",
