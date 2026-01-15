@@ -124,13 +124,14 @@ export class CalculatedFieldComponent extends EntityComponent<CalculatedFieldsTa
     this.entityForm.patchValue({ type }, {emitEvent: false, onlySelf: true});
     setTimeout(() => {
       this.entityForm.patchValue({ configuration: preparedConfig, debugSettings, entityId, ...value }, {emitEvent: false});
+      this.entityForm.get('type').updateValueAndValidity();
     });
   }
 
   onTestScript(expression?: string): Observable<string> {
     return this.cfFormService.testScript(
       this.entity?.id?.id,
-      this.entityFormValue(),
+      this.entityValue,
       this.entitiesTableConfig.getTestScriptDialog.bind(this.entitiesTableConfig),
       this.destroyRef,
       expression

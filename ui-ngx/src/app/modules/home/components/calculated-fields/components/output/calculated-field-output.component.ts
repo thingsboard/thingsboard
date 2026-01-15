@@ -186,6 +186,9 @@ export class CalculatedFieldOutputComponent implements ControlValueAccessor, Val
       this.toggleScopeByOutputType(this.outputForm.get('type').value);
       this.updatedStrategy();
       this.updateTimeSeriesTtl(this.outputForm.get('strategy.saveTimeSeries').value);
+      if (this.outputForm.invalid) {
+        this.outputForm.updateValueAndValidity();
+      }
     }
   }
 
