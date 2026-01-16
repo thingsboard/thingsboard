@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.TbActorRef;
+import org.thingsboard.server.common.data.cf.configuration.OutputType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.service.cf.ctx.CalculatedFieldEntityCtxId;
@@ -142,8 +143,8 @@ public abstract class BaseCalculatedFieldState implements CalculatedFieldState, 
     protected void validateNewEntry(String key, ArgumentEntry newEntry) {
     }
 
-    protected ObjectNode toSimpleResult(boolean useLatestTs, ObjectNode valuesNode) {
-        if (!useLatestTs) {
+    protected ObjectNode toResultNode(ObjectNode valuesNode) {
+        if (ctx.getOutput().getType() == OutputType.ATTRIBUTES || !ctx.isUseLatestTs()) {
             return valuesNode;
         }
         long latestTs = getLatestTimestamp();

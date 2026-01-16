@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
@@ -27,7 +28,7 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel {
+public class PropagationCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements HasRelationPathLevel, HasUseLatestTsConfig {
 
     public static final String PROPAGATION_CONFIG_ARGUMENT = "propagationCtx";
 
@@ -36,6 +37,12 @@ public class PropagationCalculatedFieldConfiguration extends BaseCalculatedField
     private RelationPathLevel relation;
 
     private boolean applyExpressionToResolvedArguments;
+
+    @Override
+    @JsonIgnore
+    public boolean isUseLatestTs() {
+        return output.getType() == OutputType.TIME_SERIES;
+    }
 
     @Override
     public CalculatedFieldType getType() {
