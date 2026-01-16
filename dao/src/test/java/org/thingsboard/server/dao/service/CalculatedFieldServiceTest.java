@@ -19,6 +19,7 @@ import org.apache.commons.lang3.RandomUtils;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.cf.CalculatedField;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
@@ -42,6 +43,7 @@ import org.thingsboard.server.common.data.relation.RelationPathLevel;
 import org.thingsboard.server.dao.cf.CalculatedFieldService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.ArrayList;
@@ -62,6 +64,8 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
     private DeviceService deviceService;
     @Autowired
     private TbTenantProfileCache tbTenantProfileCache;
+    @Autowired
+    private TenantProfileService tenantProfileService;
 
     @Test
     public void testSaveCalculatedField() {
@@ -85,8 +89,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         assertThat(updatedCalculatedField.getName()).isEqualTo(savedCalculatedField.getName());
         assertThat(updatedCalculatedField.getVersion()).isEqualTo(savedCalculatedField.getVersion() + 1);
-
-        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
 
     @Test
@@ -224,8 +226,63 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         int savedInterval = geofencingCalculatedFieldConfiguration.getScheduledUpdateInterval();
         assertThat(savedInterval).isEqualTo(valueFromConfig);
+    }
 
-        calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
+    @Test
+    public void testSaveGeofencingCalculatedField_shouldAcceptZeroScheduledUpdateIntervalWhenTenantProfileAllows() {
+        // GIVEN
+        var device = createTestDevice();
+
+        // Store original value and update tenant profile to allow 0 as min scheduled update interval
+        TenantProfile tenantProfile = tenantProfileService.findTenantProfileById(tenantId, tenant.getTenantProfileId());
+        int originalMinScheduledUpdateInterval = tenantProfile.getDefaultProfileConfiguration().getMinAllowedScheduledUpdateIntervalInSecForCF();
+        tenantProfile.getDefaultProfileConfiguration().setMinAllowedScheduledUpdateIntervalInSecForCF(0);
+        tenantProfileService.saveTenantProfile(tenantId, tenantProfile);
+        tbTenantProfileCache.evict(tenantProfile.getId());
+
+        try {
+            // Build a valid Geofencing configuration
+            var cfg = new GeofencingCalculatedFieldConfiguration();
+
+            // Coordinates: TS_LATEST, no dynamic source
+            var entityCoordinates = new EntityCoordinates("latitude", "longitude");
+            cfg.setEntityCoordinates(entityCoordinates);
+
+            // Zone-group argument (ATTRIBUTE) — make it DYNAMIC so scheduling is enabled
+            var zoneGroupConfiguration = new ZoneGroupConfiguration("allowed", REPORT_TRANSITION_EVENTS_AND_PRESENCE_STATUS, false);
+            var dynamicSourceConfiguration = new RelationPathQueryDynamicSourceConfiguration();
+            dynamicSourceConfiguration.setLevels(List.of(new RelationPathLevel(EntitySearchDirection.FROM, EntityRelation.CONTAINS_TYPE)));
+            zoneGroupConfiguration.setRefDynamicSourceConfiguration(dynamicSourceConfiguration);
+            cfg.setZoneGroups(Map.of("allowed", zoneGroupConfiguration));
+
+            // Enable scheduling with interval = 0
+            cfg.setScheduledUpdateEnabled(true);
+            cfg.setScheduledUpdateInterval(0);
+
+            // Create Calculated Field
+            var cf = new CalculatedField();
+            cf.setTenantId(tenantId);
+            cf.setEntityId(device.getId());
+            cf.setType(CalculatedFieldType.GEOFENCING);
+            cf.setName("GF zero scheduled update interval test");
+            cf.setConfigurationVersion(0);
+            cf.setConfiguration(cfg);
+
+            // WHEN
+            CalculatedField saved = calculatedFieldService.save(cf);
+
+            // THEN
+            assertThat(saved).isNotNull();
+            assertThat(saved.getConfiguration()).isInstanceOf(GeofencingCalculatedFieldConfiguration.class);
+
+            var savedConfig = (GeofencingCalculatedFieldConfiguration) saved.getConfiguration();
+            assertThat(savedConfig.getScheduledUpdateInterval()).isEqualTo(0);
+        } finally {
+            // Restore original tenant profile value
+            tenantProfile.getProfileConfiguration().orElseThrow().setMinAllowedScheduledUpdateIntervalInSecForCF(originalMinScheduledUpdateInterval);
+            tenantProfileService.saveTenantProfile(tenantId, tenantProfile);
+            tbTenantProfileCache.evict(tenantProfile.getId());
+        }
     }
 
     @Test
@@ -245,8 +302,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
         CalculatedField fetchedCalculatedField = calculatedFieldService.findById(tenantId, savedCalculatedField.getId());
 
         assertThat(fetchedCalculatedField).isEqualTo(savedCalculatedField);
-
-        calculatedFieldService.deleteCalculatedField(tenantId, savedCalculatedField.getId());
     }
 
     @Test
@@ -307,8 +362,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
                 .getMinAllowedScheduledUpdateIntervalInSecForCF();
 
         assertThat(savedConfig.getScheduledUpdateInterval()).isEqualTo(expectedMinScheduledUpdateInterval);
-
-        calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
     }
 
     @Test
@@ -408,8 +461,6 @@ public class CalculatedFieldServiceTest extends AbstractServiceTest {
 
         var savedConfig = (RelatedEntitiesAggregationCalculatedFieldConfiguration) saved.getConfiguration();
         assertThat(savedConfig.getScheduledUpdateInterval()).isEqualTo(customScheduledUpdateInterval);
-
-        calculatedFieldService.deleteCalculatedField(tenantId, saved.getId());
     }
 
     private CalculatedField saveValidCalculatedField() {
