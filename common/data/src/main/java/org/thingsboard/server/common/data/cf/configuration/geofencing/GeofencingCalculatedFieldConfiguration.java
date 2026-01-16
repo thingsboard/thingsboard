@@ -46,7 +46,7 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
     private Map<String, ZoneGroupConfiguration> zoneGroups;
 
     private boolean scheduledUpdateEnabled;
-    private int scheduledUpdateInterval;
+    private Integer scheduledUpdateInterval;
 
     private Output output;
 
@@ -79,6 +79,9 @@ public class GeofencingCalculatedFieldConfiguration implements ArgumentsBasedCal
 
     @Override
     public void validate() {
+        if (scheduledUpdateEnabled && scheduledUpdateInterval == null) {
+            throw new IllegalArgumentException("Refresh interval is required when periodic zone group refresh is enabled.");
+        }
         zoneGroups.forEach((key, value) -> value.validate(key));
     }
 

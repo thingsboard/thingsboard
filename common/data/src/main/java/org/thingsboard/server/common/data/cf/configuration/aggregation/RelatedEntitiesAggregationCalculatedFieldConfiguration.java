@@ -44,7 +44,7 @@ public class RelatedEntitiesAggregationCalculatedFieldConfiguration implements A
     private Output output;
     private boolean useLatestTs;
 
-    private int scheduledUpdateInterval;
+    private Integer scheduledUpdateInterval;
 
     @Override
     public CalculatedFieldType getType() {
