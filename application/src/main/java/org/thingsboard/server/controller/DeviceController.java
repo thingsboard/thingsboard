@@ -14,7 +14,10 @@
  * limitations under the License.
  */
 package org.thingsboard.server.controller;
-
+import org.springframework.http.ResponseEntity;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -792,15 +795,35 @@ public class DeviceController extends BaseController {
                 new DeviceProfileId(UUID.fromString(deviceProfileId)),
                 OtaPackageType.valueOf(otaPackageType));
     }
-
-    @ApiOperation(value = "Import the bulk of devices (processDevicesBulkImport)",
-            notes = "There's an ability to import the bulk of devices using the only .csv file." + TENANT_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('TENANT_ADMIN')")
-    @PostMapping("/device/bulk_import")
-    public BulkImportResult<Device> processDevicesBulkImport(@RequestBody BulkImportRequest request) throws
-            Exception {
-        SecurityUser user = getCurrentUser();
-        return deviceBulkImportService.processBulkImport(request, user);
-    }
-
+    @ApiOperation(value = "Ping Device (pingDevice)",
+        notes = "Check if device is reachable based on last telemetry data. " +
+                "Returns device reachability status and last seen timestamp." +
+                TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+@PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
+@RequestMapping(value = "/device/ping/{deviceId}", method = RequestMethod.GET)
+@ResponseBody
+public Map<String, Object> pingDevice(@Parameter(description = DEVICE_ID_PARAM_DESCRIPTION)
+                                      @PathVariable(DEVICE_ID) String strDeviceId) throws ThingsboardException {
+    
+    checkParameter(DEVICE_ID, strDeviceId);
+    DeviceId deviceId = new DeviceId(toUUID(strDeviceId));
+    
+    // Check permissions
+    Device device = checkDeviceId(deviceId, Operation.READ);
+    
+    // Simple logic for reachability
+    long timeout = 5 * 60 * 1000; // 5 minutes
+    long lastSeenTime = device.getLastActivityTime() > 0 ? 
+                       device.getLastActivityTime() : device.getCreatedTime();
+    boolean reachable = (System.currentTimeMillis() - lastSeenTime) < timeout;
+    
+    // Create response according to requirements
+    Map<String, Object> response = new HashMap<>();
+    response.put("deviceId", deviceId.getId().toString());
+    response.put("reachable", reachable);
+    response.put("lastSeen", new Date(lastSeenTime).toString());
+    
+    return response;
+}
+    
 }
