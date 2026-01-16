@@ -34,7 +34,7 @@
     *ngIf="modelValue.entityType && !entityTypeNullUUID.has(modelValue.entityType)"
     class="flex-1"
     [appearance]="appearance"
-    [required]="required"
+    [required]="required && modelValue.entityType !== AliasEntityType.CURRENT_CUSTOMER"
     [entityType]="modelValue.entityType"
     [useEntityDisplayName]="useEntityDisplayName"
     (entityChanged)="changeEntity($event)"
