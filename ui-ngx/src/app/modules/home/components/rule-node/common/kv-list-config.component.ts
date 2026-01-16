@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnInit } from '@angular/core';
+import { Component, forwardRef, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -44,14 +44,12 @@ import { KvMapConfigOldComponent } from '@home/components/rule-node/common/kv-ma
 })
 export class KvListConfigComponent extends KvMapConfigOldComponent implements ControlValueAccessor, OnInit, Validator{
 
-  @Input() keyProperty: string = 'key';
-
   override writeValue(kvList: any): void {
     const keyValsControls: Array<AbstractControl> = [];
     if (Array.isArray(kvList) && kvList.length > 0) {
       for (const property of kvList) {
         keyValsControls.push(this.fb.group({
-          key: [property[this.keyProperty], [Validators.required]],
+          key: [property.key, [Validators.required]],
           value: [property.value, [Validators.required]]
         }))
       }
@@ -79,11 +77,7 @@ export class KvListConfigComponent extends KvMapConfigOldComponent implements Co
     if (this.required && !kvList.length || !this.kvListFormGroup.valid) {
       this.propagateChange(null);
     } else {
-      const result = kvList.map(entry => ({
-        [this.keyProperty]: entry.key,
-        value: entry.value
-      }));
-      this.propagateChange(result);
+      this.propagateChange(kvList);
     }
   }
 }
