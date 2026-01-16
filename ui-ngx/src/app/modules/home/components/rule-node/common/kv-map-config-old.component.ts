@@ -86,11 +86,11 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
 
   ngControl: NgControl;
 
-  private propagateChange = null;
+  public propagateChange = null;
 
   constructor(public translate: TranslateService,
               private injector: Injector,
-              private fb: FormBuilder,
+              protected fb: FormBuilder,
               private destroyRef: DestroyRef) {
     super();
   }
@@ -182,7 +182,7 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
     return null;
   }
 
-  private updateModel() {
+  protected updateModel() {
     const kvList: { key: string; value: string }[] = this.kvListFormGroup.get('keyVals').value;
     if (this.required && !kvList.length || !this.kvListFormGroup.valid) {
       this.propagateChange(null);

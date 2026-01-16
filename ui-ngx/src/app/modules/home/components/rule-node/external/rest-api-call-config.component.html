@@ -19,7 +19,7 @@
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title">Request URL</div>
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
-      <mat-label translate>rule-node-config.endpoint-url-pattern</mat-label>
+      <mat-label translate>rule-node-config.url</mat-label>
       <input required matInput formControlName="restEndpointUrlPattern">
       <mat-error *ngIf="restApiCallConfigForm.get('restEndpointUrlPattern').hasError('required')">
         {{ 'rule-node-config.endpoint-url-pattern-required' | translate }}
@@ -32,14 +32,15 @@
         <div [tb-hint-tooltip-icon]="'rule-node-config.query-params-hint' | translate" tooltipPosition="above"></div>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
-        <tb-kv-map-config-old
+        <tb-kv-list-config
           formControlName="queryParams"
           keyText="rule-node-config.query-params-name"
           keyRequiredText="rule-node-config.query-params-name-required"
           valText="rule-node-config.query-params-value"
           valRequiredText="rule-node-config.query-params-value-required"
-          emptyText="rule-node-config.query-params-empty">>
-        </tb-kv-map-config-old>
+          emptyText="rule-node-config.query-params-empty"
+          keyProperty="name">
+        </tb-kv-list-config>
       </ng-template>
     </mat-expansion-panel>
   </div>
