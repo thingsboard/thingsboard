@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.CalculatedFieldEventType;
 import org.thingsboard.server.common.data.cf.CalculatedFieldType;
 import org.thingsboard.server.common.data.cf.configuration.Argument;
 import org.thingsboard.server.common.data.cf.configuration.ArgumentType;
@@ -51,11 +52,15 @@ import org.thingsboard.server.common.data.debug.DebugSettings;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceConfiguration;
 import org.thingsboard.server.common.data.device.data.DefaultDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.DeviceData;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.page.SortOrder;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationPathLevel;
@@ -789,6 +794,79 @@ public class CalculatedFieldTest extends AbstractContainerTest {
         testRestClient.deleteDeviceIfExists(device_2_1.getId());
         testRestClient.deleteDeviceIfExists(device_2_2.getId());
         testRestClient.deleteAsset(asset2.getId());
+    }
+
+    @Test
+    public void testDebugEvents() {
+        // --- Arrange entities ---
+        String deviceToken = "12345678901";
+        Device device = testRestClient.postDevice(deviceToken, createDevice("Propagation Device", deviceProfileId));
+        Asset asset1 = testRestClient.postAsset(createAsset("Propagated Asset 1", null));
+
+        // Create relations FROM asset 1 TO device
+        EntityRelation rel1 = new EntityRelation(asset1.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel1);
+
+        // --- Build CF: PROPAGATION ---
+        CalculatedField saved = createPropagationCF(device.getId());
+
+        // Create relations FROM asset 2 TO device
+        Asset asset2 = testRestClient.postAsset(createAsset("Propagated Asset 2", null));
+        EntityRelation rel2 = new EntityRelation(asset2.getId(), device.getId(), EntityRelation.CONTAINS_TYPE);
+        testRestClient.postEntityRelation(rel2);
+
+        // Telemetry on device
+        testRestClient.postTelemetry(deviceToken, JacksonUtil.toJsonNode("{\"temperature\":25.1}"));
+
+        // Delete relation between asset 1 and device
+        testRestClient.deleteEntityRelation(asset1.getId(), EntityRelation.CONTAINS_TYPE, device.getId());
+
+        // --- Assert propagated calculation (arguments-only mode) ---
+        await().alias("check debug events")
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollInterval(POLL_INTERVAL, TimeUnit.SECONDS)
+                .untilAsserted(() -> {
+                    List<String> eventTypes = testRestClient.getEvents(saved.getId(), EventType.DEBUG_CALCULATED_FIELD, tenantId, new TimePageLink(4, 0, null, SortOrder.BY_CREATED_TIME_DESC)).getData().stream()
+                            .map(e -> e.getBody().get("msgType").asText())
+                            .toList();
+
+                    assertThat(eventTypes).as("Check sequence of debug events")
+                            .containsSequence(
+                                    CalculatedFieldEventType.RELATION_DELETED.name(),
+                                    TbMsgType.POST_TELEMETRY_REQUEST.name(),
+                                    CalculatedFieldEventType.RELATION_ADD_OR_UPDATE.name(),
+                                    CalculatedFieldEventType.INITIALIZED.name()
+                            );
+                });
+
+        testRestClient.deleteCalculatedFieldIfExists(saved.getId());
+        testRestClient.deleteDeviceIfExists(device.getId());
+        testRestClient.deleteAsset(asset1.getId());
+        testRestClient.deleteAsset(asset2.getId());
+    }
+
+    private CalculatedField createPropagationCF(EntityId entityId) {
+        CalculatedField cf = new CalculatedField();
+        cf.setEntityId(entityId);
+        cf.setType(CalculatedFieldType.PROPAGATION);
+        cf.setName("Propagation CF (args-only)");
+        cf.setConfigurationVersion(1);
+
+        PropagationCalculatedFieldConfiguration cfg = new PropagationCalculatedFieldConfiguration();
+        cfg.setRelation(new RelationPathLevel(EntitySearchDirection.TO, EntityRelation.CONTAINS_TYPE));
+        cfg.setApplyExpressionToResolvedArguments(false); // arguments-only mode
+
+        Argument arg = new Argument();
+        arg.setRefEntityKey(new ReferencedEntityKey("temperature", ArgumentType.TS_LATEST, null));
+        cfg.setArguments(Map.of("deviceTemperature", arg));
+
+        cfg.setOutput(new TimeSeriesOutput());
+
+        cf.setConfiguration(cfg);
+
+        cf.setDebugSettings(DebugSettings.all());
+
+        return testRestClient.postCalculatedField(cf);
     }
 
     private CalculatedField createOccupancyCF(EntityId entityId) {
