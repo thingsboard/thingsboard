@@ -67,6 +67,10 @@ export class KvMapConfigOldComponent extends PageComponent implements ControlVal
 
   @Input() hintText: string;
 
+  @Input() description: string;
+
+  @Input() emptyText: string;
+
   private requiredValue: boolean;
 
   get required(): boolean {
