@@ -141,7 +141,6 @@ export class TimeUnitInputComponent implements ControlValueAccessor, Validator, 
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
       this.refreshTimeValidators();
-      this.timeInputForm.get('time').updateValueAndValidity({onlySelf: true});
       this.timeInputForm.get('time').markAsTouched({onlySelf: true});
     });
 
