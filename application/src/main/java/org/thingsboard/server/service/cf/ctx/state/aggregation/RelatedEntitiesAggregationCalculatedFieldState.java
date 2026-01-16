@@ -201,7 +201,7 @@ public class RelatedEntitiesAggregationCalculatedFieldState extends BaseCalculat
                     .outputStrategy(output.getStrategy())
                     .type(output.getType())
                     .scope(output.getScope())
-                    .result(toSimpleResult(ctx.isUseLatestTs(), aggResult))
+                    .result(toResultNode(aggResult))
                     .build());
         } else {
             return Futures.immediateFuture(TelemetryCalculatedFieldResult.EMPTY);

@@ -384,7 +384,7 @@ public class CalculatedFieldManagerMessageProcessor extends AbstractContextAware
                                             EntityId mainId,
                                             MultipleTbCallback parentCallback,
                                             TriConsumer<EntityId, CalculatedFieldCtx, TbCallback> relationAction) {
-        if (isMyPartition(mainId, parentCallback)) {
+        if (!isMyPartition(mainId, parentCallback)) {
             return;
         }
         List<CalculatedFieldCtx> cfsByEntityIdAndProfile = getCalculatedFieldsByEntityIdAndProfile(mainId);
