@@ -159,14 +159,17 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
     protected List<Device> connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(int cntDevices, long ts) throws Exception {
         List<Device> devices = new ArrayList<>();
         clientWithCorrectNodeAccessTokenWithNDEATH();
-        MetricDataType metricDataType = Int32;
-        String key = "Node Metric int32";
+        String keyInt = "Node Metric int32";
         int valueDeviceInt32 = 1024;
-        SparkplugBProto.Payload.Metric metric = createMetric(valueDeviceInt32, ts, key, metricDataType, -1L);
+        SparkplugBProto.Payload.Metric metricInt = createMetric(valueDeviceInt32, ts, keyInt,  Int32, -1L);
+        String keyStringEmpty = "Node Metric String Empty";
+        String valueDeviceStringEmpty = "";
+        SparkplugBProto.Payload.Metric metricStringEmpty = createMetric(valueDeviceStringEmpty, ts, keyStringEmpty, MetricDataType.String, -1L);
         SparkplugBProto.Payload.Builder payloadBirthNode = SparkplugBProto.Payload.newBuilder()
                 .setTimestamp(ts)
                 .setSeq(getBdSeqNum());
-        payloadBirthNode.addMetrics(metric);
+        payloadBirthNode.addMetrics(metricInt);
+        payloadBirthNode.addMetrics(metricStringEmpty);
         payloadBirthNode.setTimestamp(ts);
         if (client.isConnected()) {
             client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.NBIRTH.name() + "/" + edgeNode,
@@ -174,14 +177,14 @@ public abstract class AbstractMqttV5ClientSparkplugTest extends AbstractMqttInte
         }
 
         valueDeviceInt32 = 4024;
-        metric = createMetric(valueDeviceInt32, ts, metricBirthName_Int32, metricBirthDataType_Int32, -1L);
+        metricInt = createMetric(valueDeviceInt32, ts, metricBirthName_Int32, metricBirthDataType_Int32, -1L);
         for (int i = 0; i < cntDevices; i++) {
             SparkplugBProto.Payload.Builder payloadBirthDevice = SparkplugBProto.Payload.newBuilder()
                     .setTimestamp(ts)
                     .setSeq(getSeqNum());
             String deviceName = deviceId + "_" + i;
 
-            payloadBirthDevice.addMetrics(metric);
+            payloadBirthDevice.addMetrics(metricInt);
             if (client.isConnected()) {
                 client.publish(TOPIC_ROOT_SPB_V_1_0 + "/" + groupId + "/" + SparkplugMessageType.DBIRTH.name() + "/" + edgeNode + "/" + deviceName,
                         payloadBirthDevice.build().toByteArray(), 0, false);
