@@ -109,7 +109,6 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB, 256);
                 }
-                break;
             case 3:
                 Set<String> knownProperties = Set.of(
                         "restEndpointUrlPattern", "requestMethod", "headers",
