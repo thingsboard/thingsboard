@@ -17,8 +17,8 @@
 import { Component, ElementRef, EventEmitter, forwardRef, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
-import { firstValueFrom, merge, Observable, of, Subject } from 'rxjs';
-import { catchError, debounceTime, map, share, switchMap, tap } from 'rxjs/operators';
+import { firstValueFrom, merge, Observable, of, shareReplay, Subject } from 'rxjs';
+import { catchError, debounceTime, first, map, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
@@ -29,6 +29,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual, objectRequired } from '@core/utils';
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
+import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -68,6 +69,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   private refresh$ = new Subject<Array<BaseData<EntityId>>>();
 
   private propagateChange: (value: any) => void = () => { };
+
+  private onTouched = () => { };
 
   @Input()
   set entityType(entityType: EntityType) {
@@ -153,6 +156,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @ViewChild('entityInput', {static: true}) entityInput: ElementRef;
 
+  @ViewChild('autocompleteTrigger') autocompleteTrigger: MatAutocompleteTrigger;
+
+
   get requiredErrorText(): string {
     if (this.requiredText && this.requiredText.length) {
       return this.requiredText;
@@ -180,7 +186,8 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
     this.propagateChange = fn;
   }
 
-  registerOnTouched(_fn: any): void {
+  registerOnTouched(fn: any): void {
+    this.onTouched = fn;
   }
 
   ngOnInit() {
@@ -204,7 +211,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           // startWith<string | BaseData<EntityId>>(''),
           map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
           switchMap(name => this.fetchEntities(name)),
-          share()
+          shareReplay(1)
         )
     );
   }
@@ -501,5 +508,23 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
 
   markAsTouched(): void {
     this.selectEntityFormGroup.get('entity').markAsTouched();
+  }
+
+  onBlur(): void {
+    this.onTouched();
+
+    if (!this.modelValue) {
+      this.filteredEntities.pipe(
+        first()
+      ).subscribe(entities => {
+        if (entities && entities.length === 1) {
+          const entity = entities[0];
+          this.selectEntityFormGroup.get('entity').setValue(entity, { emitEvent: false });
+          const newModelValue = this.useFullEntityId ? entity.id : entity.id.id;
+          this.updateView(newModelValue, entity);
+          this.autocompleteTrigger?.closePanel();
+        }
+      });
+    }
   }
 }
