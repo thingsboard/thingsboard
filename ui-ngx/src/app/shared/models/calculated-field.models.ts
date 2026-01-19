@@ -91,7 +91,7 @@ export enum CalculatedFieldType {
   ALARM = 'ALARM',
 }
 
-interface CalculatedFieldTypeTranslate {
+export interface CalculatedFieldTypeTranslate {
   name: string;
   hint?: string;
 }
