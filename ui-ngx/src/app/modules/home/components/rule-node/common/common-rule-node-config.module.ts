@@ -34,6 +34,7 @@ import { SelectAttributesComponent } from './select-attributes.component';
 import { AlarmStatusSelectComponent } from './alarm-status-select.component';
 import { ExampleHintComponent } from './example-hint.component';
 import { TimeUnitInputComponent } from './time-unit-input.component';
+import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list-config.component';
 
 @NgModule({
   declarations: [
@@ -52,7 +53,8 @@ import { TimeUnitInputComponent } from './time-unit-input.component';
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
-    TimeUnitInputComponent
+    TimeUnitInputComponent,
+    KvListConfigComponent
   ],
   imports: [
     CommonModule,
@@ -75,7 +77,8 @@ import { TimeUnitInputComponent } from './time-unit-input.component';
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
-    TimeUnitInputComponent
+    TimeUnitInputComponent,
+    KvListConfigComponent
   ]
 })
 

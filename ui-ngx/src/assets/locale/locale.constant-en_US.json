@@ -5411,6 +5411,7 @@
         "query-params-name-required": "Name is required",
         "query-params-value-required": "Value is required",
         "headers-empty": "No headers configured",
+        "url": "URL",
         "save-time-series": {
             "processing-settings": "Processing settings",
             "processing-settings-hint": "Define how incoming messages are processed. Basic processing settings allow you to select preconfigured strategies, while Advanced settings allow you to select individual processing strategies for each action.",
