@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.util.KeyValueEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -123,7 +124,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     public void shouldNotAllowNullQueryParamNames() {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setQueryParams(List.of(new QueryParam(null, "value")));
+        config.setQueryParams(List.of(new KeyValueEntry<>(null, "value")));
 
         // WHEN-THEN
         assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
@@ -131,14 +132,14 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                 .matches(e -> ((TbNodeException) e).isUnrecoverable())
                 .rootCause()
                 .isInstanceOf(DataValidationException.class)
-                .hasMessageContaining("query parameter names must be non-null");
+                .hasMessageContaining("query parameter names and values must be non-null");
     }
 
     @Test
     public void shouldNotAllowNullQueryParamValues() {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setQueryParams(List.of(new QueryParam("key", null)));
+        config.setQueryParams(List.of(new KeyValueEntry<>("key", null)));
 
         // WHEN-THEN
         assertThatThrownBy(() -> new TbRestApiCallNode().init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
@@ -146,7 +147,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                 .matches(e -> ((TbNodeException) e).isUnrecoverable())
                 .rootCause()
                 .isInstanceOf(DataValidationException.class)
-                .hasMessageContaining("query parameter values must be non-null");
+                .hasMessageContaining("query parameter names and values must be non-null");
     }
 
     @Test
@@ -154,8 +155,8 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
         var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
 
-        var queryParams = new ArrayList<QueryParam>();
-        queryParams.add(new QueryParam("key", "value"));
+        var queryParams = new ArrayList<KeyValueEntry<String, String>>();
+        queryParams.add(new KeyValueEntry<>("key", "value"));
         queryParams.add(null);
         config.setQueryParams(queryParams);
 

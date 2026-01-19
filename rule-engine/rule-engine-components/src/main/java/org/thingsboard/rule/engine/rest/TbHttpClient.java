@@ -216,7 +216,7 @@ public class TbHttpClient {
             if (config.getQueryParams() != null) {
                 processedQueryParams = config.getQueryParams().stream()
                         .map(param -> {
-                            var processedParamName = TbNodeUtils.processPattern(param.name(), msg);
+                            var processedParamName = TbNodeUtils.processPattern(param.key(), msg);
                             var processedParamValue = TbNodeUtils.processPattern(param.value(), msg);
                             return new QueryParam(processedParamName, processedParamValue);
                         })

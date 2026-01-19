@@ -31,6 +31,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.util.KeyValueEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -144,11 +145,11 @@ public class TbHttpClientTest {
             config.setRestEndpointUrlPattern("http://localhost:" + server.getPort() + path);
             config.setRequestMethod("GET");
             config.setQueryParams(List.of(
-                    new QueryParam("email", "${userEmail}"),              // ${} from metadata
-                    new QueryParam("device", "${deviceName}"),            // ${} from metadata
-                    new QueryParam("${dynamicParam}", "${dynamicValue}"), // ${} in both key and value
-                    new QueryParam("temp", "$[temperature]"),             // $[] from data
-                    new QueryParam("location", "$[sensor.location]")      // $[] from nested data
+                    new KeyValueEntry<>("email", "${userEmail}"),              // ${} from metadata
+                    new KeyValueEntry<>("device", "${deviceName}"),            // ${} from metadata
+                    new KeyValueEntry<>("${dynamicParam}", "${dynamicValue}"), // ${} in both key and value
+                    new KeyValueEntry<>("temp", "$[temperature]"),             // $[] from data
+                    new KeyValueEntry<>("location", "$[sensor.location]")      // $[] from nested data
             ));
 
             var metaData = new TbMsgMetaData();

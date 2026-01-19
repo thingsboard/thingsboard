@@ -15,7 +15,8 @@
  */
 package org.thingsboard.rule.engine.rest;
 
-import jakarta.validation.Valid;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import jakarta.validation.constraints.AssertTrue;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.springframework.http.HttpHeaders;
@@ -23,10 +24,12 @@ import org.springframework.http.MediaType;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.rule.engine.credentials.AnonymousCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
+import org.thingsboard.server.common.data.util.KeyValueEntry;
 
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 @Data
 public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestApiCallNodeConfiguration> {
@@ -35,7 +38,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String requestMethod;
     // null for legacy configs - triggers different URL encoding logic in TbHttpClient to preserve backward compatibility
     // all new/modified configs since introduction of this property are forced to have non-null value by UI (and use new encoding logic)
-    private List<@NotNull @Valid QueryParam> queryParams;
+    private List<@NotNull KeyValueEntry<String, String>> queryParams;
     private Map<String, String> headers;
     private int readTimeoutMs;
     private int maxParallelRequestsCount;
@@ -50,9 +53,23 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private boolean ignoreRequestBody;
     private int maxInMemoryBufferSizeInKb;
 
+    @JsonIgnore
+    @AssertTrue(message = "query parameter names and values must be non-null")
+    public boolean isValid() {
+        if (queryParams == null) {
+            return true; // @NotNull will handle this
+        }
+        for (KeyValueEntry<String, String> queryParam : queryParams) {
+            if (queryParam == null || queryParam.key() == null || queryParam.value() == null) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
-        TbRestApiCallNodeConfiguration configuration = new TbRestApiCallNodeConfiguration();
+        var configuration = new TbRestApiCallNodeConfiguration();
         configuration.setRestEndpointUrlPattern("http://localhost/api");
         configuration.setRequestMethod("POST");
         configuration.setHeaders(Collections.singletonMap(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE));
@@ -68,11 +85,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     }
 
     public ClientCredentials getCredentials() {
-        if (this.credentials == null) {
-            return new AnonymousCredentials();
-        } else {
-            return this.credentials;
-        }
+        return Objects.requireNonNullElseGet(credentials, AnonymousCredentials::new);
     }
 
 }
