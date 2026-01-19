@@ -40,6 +40,7 @@ import org.thingsboard.rule.engine.credentials.BasicCredentials;
 import org.thingsboard.rule.engine.credentials.ClientCredentials;
 import org.thingsboard.rule.engine.credentials.CredentialsType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.util.KeyValueEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import reactor.netty.http.client.HttpClient;
@@ -212,13 +213,13 @@ public class TbHttpClient {
 
             String endpointUrl = TbNodeUtils.processPattern(config.getRestEndpointUrlPattern(), msg);
 
-            List<QueryParam> processedQueryParams;
+            List<KeyValueEntry<String, String>> processedQueryParams;
             if (config.getQueryParams() != null) {
                 processedQueryParams = config.getQueryParams().stream()
                         .map(param -> {
                             var processedParamName = TbNodeUtils.processPattern(param.key(), msg);
                             var processedParamValue = TbNodeUtils.processPattern(param.value(), msg);
-                            return new QueryParam(processedParamName, processedParamValue);
+                            return new KeyValueEntry<>(processedParamName, processedParamValue);
                         })
                         .toList();
             } else {
@@ -274,7 +275,7 @@ public class TbHttpClient {
         return origin;
     }
 
-    public URI buildEncodedUri(String endpointUrl, List<QueryParam> queryParams) {
+    public URI buildEncodedUri(String endpointUrl, List<KeyValueEntry<String, String>> queryParams) {
         if (endpointUrl == null) {
             throw new RuntimeException("Url string cannot be null!");
         }
@@ -302,10 +303,10 @@ public class TbHttpClient {
         return uri;
     }
 
-    private URI buildEncodedUriNew(String endpointUrl, List<QueryParam> queryParams) {
+    private URI buildEncodedUriNew(String endpointUrl, List<KeyValueEntry<String, String>> queryParams) {
         try {
             URIBuilder builder = new URIBuilder(endpointUrl);
-            queryParams.forEach(param -> builder.addParameter(param.name(), param.value()));
+            queryParams.forEach(param -> builder.addParameter(param.key(), param.value()));
             return builder.build();
         } catch (URISyntaxException e) {
             throw new IllegalArgumentException(

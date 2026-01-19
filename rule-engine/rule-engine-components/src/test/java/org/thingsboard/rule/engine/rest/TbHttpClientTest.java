@@ -234,7 +234,7 @@ public class TbHttpClientTest {
 
     @ParameterizedTest(name = "{0}")
     @MethodSource
-    public void testQueryParamsEncoding(String endpointUrl, List<QueryParam> queryParams, String expectedEncodedUrl) {
+    public void testQueryParamsEncoding(String endpointUrl, List<KeyValueEntry<String, String>> queryParams, String expectedEncodedUrl) {
         // GIVEN
         Mockito.when(client.buildEncodedUri(any(), any())).thenCallRealMethod();
 
@@ -249,42 +249,42 @@ public class TbHttpClientTest {
         return Stream.of(
                 Arguments.of(
                         Named.named("ISO 8601 date-time in value", "http://somecompany/api/data/fetch"),
-                        List.of(new QueryParam("ts", "2016-08-01T09:06:06.0+02:00")),
+                        List.of(new KeyValueEntry<>("ts", "2016-08-01T09:06:06.0+02:00")),
                         "http://somecompany/api/data/fetch?ts=2016-08-01T09%3A06%3A06.0%2B02%3A00"
                 ),
                 Arguments.of(
                         Named.named("email with plus sign in value", "http://localhost:8080/api/user/sendActivationMail"),
-                        List.of(new QueryParam("email", "someperson+test1289@thingsboard.io")),
+                        List.of(new KeyValueEntry<>("email", "someperson+test1289@thingsboard.io")),
                         "http://localhost:8080/api/user/sendActivationMail?email=someperson%2Btest1289%40thingsboard.io"
                 ),
                 Arguments.of(
                         Named.named("plus mixed with spaces in value", "http://url/api"),
-                        List.of(new QueryParam("q", "a + b")),
+                        List.of(new KeyValueEntry<>("q", "a + b")),
                         "http://url/api?q=a%20%2B%20b"
                 ),
                 Arguments.of(
                         Named.named("colon in value", "http://url/api"),
-                        List.of(new QueryParam("time", "12:00")),
+                        List.of(new KeyValueEntry<>("time", "12:00")),
                         "http://url/api?time=12%3A00"
                 ),
                 Arguments.of(
                         Named.named("slash in value", "http://url"),
-                        List.of(new QueryParam("ref", "/home/user")),
+                        List.of(new KeyValueEntry<>("ref", "/home/user")),
                         "http://url?ref=%2Fhome%2Fuser"
                 ),
                 Arguments.of(
                         Named.named("comma and semicolon in value", "http://url"),
-                        List.of(new QueryParam("l", "a,b;c")),
+                        List.of(new KeyValueEntry<>("l", "a,b;c")),
                         "http://url?l=a%2Cb%3Bc"
                 ),
                 Arguments.of(
                         Named.named("ampersand and equals in value", "http://url"),
-                        List.of(new QueryParam("q", "key1=value1&key2=value2")),
+                        List.of(new KeyValueEntry<>("q", "key1=value1&key2=value2")),
                         "http://url?q=key1%3Dvalue1%26key2%3Dvalue2"
                 ),
                 Arguments.of(
                         Named.named("JSON in value", "http://url"),
-                        List.of(new QueryParam("json", """
+                        List.of(new KeyValueEntry<>("json", """
                                 {
                                     "string": "hello",
                                     "integer": 42,
@@ -307,44 +307,44 @@ public class TbHttpClientTest {
                 Arguments.of(
                         Named.named("UTF-8 in query", "http://url/cafes"),
                         List.of(
-                                new QueryParam("nom", "Le Goût Moderne"),
-                                new QueryParam("назва", "У Миколи \uD83D\uDE0B")
+                                new KeyValueEntry<>("nom", "Le Goût Moderne"),
+                                new KeyValueEntry<>("назва", "У Миколи \uD83D\uDE0B")
                         ),
                         "http://url/cafes?nom=Le%20Go%C3%BBt%20Moderne&%D0%BD%D0%B0%D0%B7%D0%B2%D0%B0=%D0%A3%20%D0%9C%D0%B8%D0%BA%D0%BE%D0%BB%D0%B8%20%F0%9F%98%8B"
                 ),
                 Arguments.of(
                         Named.named("empty value", "http://url/empty"),
-                        List.of(new QueryParam("name", "")),
+                        List.of(new KeyValueEntry<>("name", "")),
                         "http://url/empty?name="
                 ),
                 Arguments.of(
                         Named.named("blank value (spaces)", "http://url/empty"),
-                        List.of(new QueryParam("name", "  ")),
+                        List.of(new KeyValueEntry<>("name", "  ")),
                         "http://url/empty?name=%20%20"
                 ),
                 Arguments.of(
                         Named.named("empty key", "http://url/empty"),
-                        List.of(new QueryParam("", "value")),
+                        List.of(new KeyValueEntry<>("", "value")),
                         "http://url/empty?=value"
                 ),
                 Arguments.of(
                         Named.named("blank key (spaces)", "http://url/empty"),
-                        List.of(new QueryParam("  ", "value")),
+                        List.of(new KeyValueEntry<>("  ", "value")),
                         "http://url/empty?%20%20=value"
                 ),
                 Arguments.of(
                         Named.named("blank key with value that needs to be encoded", "http://url/empty"),
-                        List.of(new QueryParam("  ", "value1+value2")),
+                        List.of(new KeyValueEntry<>("  ", "value1+value2")),
                         "http://url/empty?%20%20=value1%2Bvalue2"
                 ),
                 Arguments.of(
                         Named.named("blank key and value", "http://url/empty"),
-                        List.of(new QueryParam("  ", "  ")),
+                        List.of(new KeyValueEntry<>("  ", "  ")),
                         "http://url/empty?%20%20=%20%20"
                 ),
                 Arguments.of(
                         Named.named("fragment with query params", "http://url#frag"),
-                        List.of(new QueryParam("docs", "مستندات عقدة القاعدة\n")),
+                        List.of(new KeyValueEntry<>("docs", "مستندات عقدة القاعدة\n")),
                         "http://url?docs=%D9%85%D8%B3%D8%AA%D9%86%D8%AF%D8%A7%D8%AA%20%D8%B9%D9%82%D8%AF%D8%A9%20%D8%A7%D9%84%D9%82%D8%A7%D8%B9%D8%AF%D8%A9%0A#frag"
                 ),
                 Arguments.of(
@@ -355,105 +355,105 @@ public class TbHttpClientTest {
                 Arguments.of(
                         Named.named("multiple query params (ordered)", "http://url/api"),
                         List.of(
-                                new QueryParam("param1", "value1"),
-                                new QueryParam("param2", "value2"),
-                                new QueryParam("param3", "value3")
+                                new KeyValueEntry<>("param1", "value1"),
+                                new KeyValueEntry<>("param2", "value2"),
+                                new KeyValueEntry<>("param3", "value3")
                         ),
                         "http://url/api?param1=value1&param2=value2&param3=value3"
                 ),
                 Arguments.of(
                         Named.named("hash (#) in value", "http://url/api"),
-                        List.of(new QueryParam("color", "#ff0000")),
+                        List.of(new KeyValueEntry<>("color", "#ff0000")),
                         "http://url/api?color=%23ff0000"
                 ),
                 Arguments.of(
                         Named.named("question mark (?) in value", "http://url/api"),
-                        List.of(new QueryParam("query", "what?")),
+                        List.of(new KeyValueEntry<>("query", "what?")),
                         "http://url/api?query=what%3F"
                 ),
                 Arguments.of(
                         Named.named("percent sign (%) in value", "http://url/api"),
-                        List.of(new QueryParam("discount", "50%")),
+                        List.of(new KeyValueEntry<>("discount", "50%")),
                         "http://url/api?discount=50%25"
                 ),
                 Arguments.of(
                         Named.named("already encoded string - double encoding", "http://url/api"),
-                        List.of(new QueryParam("encoded", "%20")),
+                        List.of(new KeyValueEntry<>("encoded", "%20")),
                         "http://url/api?encoded=%2520"
                 ),
                 Arguments.of(
                         Named.named("URL with port number", "http://localhost:8080/api/v1/data"),
-                        List.of(new QueryParam("key", "value")),
+                        List.of(new KeyValueEntry<>("key", "value")),
                         "http://localhost:8080/api/v1/data?key=value"
                 ),
                 Arguments.of(
                         Named.named("URL with userinfo (auth)", "http://user:password@hostname/path"),
-                        List.of(new QueryParam("secure", "true")),
+                        List.of(new KeyValueEntry<>("secure", "true")),
                         "http://user:password@hostname/path?secure=true"
                 ),
                 Arguments.of(
                         Named.named("IPv4 address in URL", "http://192.168.1.100:9090/endpoint"),
-                        List.of(new QueryParam("ip", "test")),
+                        List.of(new KeyValueEntry<>("ip", "test")),
                         "http://192.168.1.100:9090/endpoint?ip=test"
                 ),
                 Arguments.of(
                         Named.named("IPv6 address in URL", "http://[::1]:8080/api"),
-                        List.of(new QueryParam("ipv6", "true")),
+                        List.of(new KeyValueEntry<>("ipv6", "true")),
                         "http://[::1]:8080/api?ipv6=true"
                 ),
                 Arguments.of(
                         Named.named("HTTPS protocol", "https://secure.example.com/api"),
-                        List.of(new QueryParam("token", "abc123")),
+                        List.of(new KeyValueEntry<>("token", "abc123")),
                         "https://secure.example.com/api?token=abc123"
                 ),
                 Arguments.of(
                         Named.named("pipe (|) in value", "http://url/api"),
-                        List.of(new QueryParam("filter", "a|b|c")),
+                        List.of(new KeyValueEntry<>("filter", "a|b|c")),
                         "http://url/api?filter=a%7Cb%7Cc"
                 ),
                 Arguments.of(
                         Named.named("caret (^) and backtick (`) in value", "http://url/api"),
-                        List.of(new QueryParam("special", "a^b`c")),
+                        List.of(new KeyValueEntry<>("special", "a^b`c")),
                         "http://url/api?special=a%5Eb%60c"
                 ),
                 Arguments.of(
                         Named.named("tab character in value", "http://url/api"),
-                        List.of(new QueryParam("data", "col1\tcol2\tcol3")),
+                        List.of(new KeyValueEntry<>("data", "col1\tcol2\tcol3")),
                         "http://url/api?data=col1%09col2%09col3"
                 ),
                 Arguments.of(
                         Named.named("CRLF in value", "http://url/api"),
-                        List.of(new QueryParam("text", "line1\r\nline2")),
+                        List.of(new KeyValueEntry<>("text", "line1\r\nline2")),
                         "http://url/api?text=line1%0D%0Aline2"
                 ),
                 Arguments.of(
                         Named.named("square brackets in value", "http://url/api"),
-                        List.of(new QueryParam("array", "[1,2,3]")),
+                        List.of(new KeyValueEntry<>("array", "[1,2,3]")),
                         "http://url/api?array=%5B1%2C2%2C3%5D"
                 ),
                 Arguments.of(
                         Named.named("single and double quotes in value", "http://url/api"),
-                        List.of(new QueryParam("quoted", "He said \"Hello\" and 'Hi'")),
+                        List.of(new KeyValueEntry<>("quoted", "He said \"Hello\" and 'Hi'")),
                         "http://url/api?quoted=He%20said%20%22Hello%22%20and%20%27Hi%27"
                 ),
                 Arguments.of(
                         Named.named("angle brackets in value (XSS test)", "http://url/api"),
-                        List.of(new QueryParam("html", "<script>alert('xss')</script>")),
+                        List.of(new KeyValueEntry<>("html", "<script>alert('xss')</script>")),
                         "http://url/api?html=%3Cscript%3Ealert%28%27xss%27%29%3C%2Fscript%3E"
                 ),
                 Arguments.of(
                         Named.named("backslash in value", "http://url/api"),
-                        List.of(new QueryParam("path", "C:\\Users\\test")),
+                        List.of(new KeyValueEntry<>("path", "C:\\Users\\test")),
                         "http://url/api?path=C%3A%5CUsers%5Ctest"
                 ),
                 Arguments.of(
                         Named.named("at sign (@) in value", "http://url/api"),
-                        List.of(new QueryParam("contact", "user@domain.com")),
+                        List.of(new KeyValueEntry<>("contact", "user@domain.com")),
                         "http://url/api?contact=user%40domain.com"
                 ),
                 Arguments.of(
                         Named.named("URL as value", "http://url/api"),
-                        List.of(new QueryParam("redirect", "https://example.com/path?foo=bar")),
+                        List.of(new KeyValueEntry<>("redirect", "https://example.com/path?foo=bar")),
                         "http://url/api?redirect=https%3A%2F%2Fexample.com%2Fpath%3Ffoo%3Dbar"
                 ),
                 Arguments.of(
@@ -463,89 +463,89 @@ public class TbHttpClientTest {
                 ),
                 Arguments.of(
                         Named.named("underscore and hyphen in key/value", "http://url/api"),
-                        List.of(new QueryParam("my-key_name", "my-value_data")),
+                        List.of(new KeyValueEntry<>("my-key_name", "my-value_data")),
                         "http://url/api?my-key_name=my-value_data"
                 ),
                 Arguments.of(
                         Named.named("dots in key and value", "http://url/api"),
-                        List.of(new QueryParam("version.major", "1.2.3")),
+                        List.of(new KeyValueEntry<>("version.major", "1.2.3")),
                         "http://url/api?version.major=1.2.3"
                 ),
                 Arguments.of(
                         Named.named("multiple reserved chars combined", "http://url/api"),
-                        List.of(new QueryParam("complex", "a=1&b=2#section?query")),
+                        List.of(new KeyValueEntry<>("complex", "a=1&b=2#section?query")),
                         "http://url/api?complex=a%3D1%26b%3D2%23section%3Fquery"
                 ),
                 Arguments.of(
                         Named.named("trailing slash in URL", "http://url/api/"),
-                        List.of(new QueryParam("param", "value")),
+                        List.of(new KeyValueEntry<>("param", "value")),
                         "http://url/api/?param=value"
                 ),
                 Arguments.of(
                         Named.named("long value (1000 chars)", "http://url/api"),
-                        List.of(new QueryParam("long", "a".repeat(1000))),
+                        List.of(new KeyValueEntry<>("long", "a".repeat(1000))),
                         "http://url/api?long=" + "a".repeat(1000)
                 ),
                 Arguments.of(
                         Named.named("Chinese characters in value", "http://url/api"),
-                        List.of(new QueryParam("greeting", "你好世界")),
+                        List.of(new KeyValueEntry<>("greeting", "你好世界")),
                         "http://url/api?greeting=%E4%BD%A0%E5%A5%BD%E4%B8%96%E7%95%8C"
                 ),
                 Arguments.of(
                         Named.named("Japanese characters in value", "http://url/api"),
-                        List.of(new QueryParam("text", "こんにちは")),
+                        List.of(new KeyValueEntry<>("text", "こんにちは")),
                         "http://url/api?text=%E3%81%93%E3%82%93%E3%81%AB%E3%81%A1%E3%81%AF"
                 ),
                 Arguments.of(
                         Named.named("existing query params in URL", "http://url/api?existing=param"),
-                        List.of(new QueryParam("new", "value")),
+                        List.of(new KeyValueEntry<>("new", "value")),
                         "http://url/api?existing=param&new=value"
                 ),
                 Arguments.of(
                         Named.named("existing query and fragment in URL", "http://url/api?existing=param#section"),
-                        List.of(new QueryParam("additional", "data")),
+                        List.of(new KeyValueEntry<>("additional", "data")),
                         "http://url/api?existing=param&additional=data#section"
                 ),
                 Arguments.of(
                         Named.named("null byte in value", "http://url/api"),
-                        List.of(new QueryParam("data", "before\u0000after")),
+                        List.of(new KeyValueEntry<>("data", "before\u0000after")),
                         "http://url/api?data=before%00after"
                 ),
                 Arguments.of(
                         Named.named("form feed and vertical tab in value", "http://url/api"),
-                        List.of(new QueryParam("whitespace", "a\fb\u000Bc")),
+                        List.of(new KeyValueEntry<>("whitespace", "a\fb\u000Bc")),
                         "http://url/api?whitespace=a%0Cb%0Bc"
                 ),
                 Arguments.of(
                         Named.named("tilde (unreserved, not encoded)", "http://url/api"),
-                        List.of(new QueryParam("pattern", "~user")),
+                        List.of(new KeyValueEntry<>("pattern", "~user")),
                         "http://url/api?pattern=~user"
                 ),
                 Arguments.of(
                         Named.named("asterisk in value", "http://url/api"),
-                        List.of(new QueryParam("wildcard", "*.txt")),
+                        List.of(new KeyValueEntry<>("wildcard", "*.txt")),
                         "http://url/api?wildcard=%2A.txt"
                 ),
                 Arguments.of(
                         Named.named("curly braces in key", "http://url/api"),
-                        List.of(new QueryParam("{key}", "value")),
+                        List.of(new KeyValueEntry<>("{key}", "value")),
                         "http://url/api?%7Bkey%7D=value"
                 ),
                 Arguments.of(
                         Named.named("curly braces in value", "http://url/api"),
-                        List.of(new QueryParam("data", "{value}")),
+                        List.of(new KeyValueEntry<>("data", "{value}")),
                         "http://url/api?data=%7Bvalue%7D"
                 ),
                 Arguments.of(
                         Named.named("curly braces in both key and value", "http://url/api"),
-                        List.of(new QueryParam("{param}", "{data}")),
+                        List.of(new KeyValueEntry<>("{param}", "{data}")),
                         "http://url/api?%7Bparam%7D=%7Bdata%7D"
                 ),
                 Arguments.of(
                         Named.named("duplicate param names with different values", "http://url/api"),
                         List.of(
-                                new QueryParam("test", "a+b"),
-                                new QueryParam("test", "b c")
+                                new KeyValueEntry<>("test", "a+b"),
+                                new KeyValueEntry<>("test", "b c")
                         ),
                         "http://url/api?test=a%2Bb&test=b%20c"
                 )
