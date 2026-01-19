@@ -7580,7 +7580,7 @@
     "display-legend": "凡例を表示",
     "datasources": "データソース",
     "datasource": "データソース",
-    "maximum-datasources": "最大{ count, plural, =1 {1つのデータソースのみ許可されています。} other {#件のデータソースが許可されています。}}",
+    "maximum-datasources": "最大{ count, plural, =1 {1つのデータソースのみ許可されています。} other {#件のデータソースが許可されています。} }",
     "timeseries-key-error": "少なくとも1つの時系列データキーを指定する必要があります",
     "datasource-type": "タイプ",
     "datasource-parameters": "パラメータ",
