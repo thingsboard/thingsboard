@@ -130,7 +130,7 @@ export class CountryAutocompleteComponent implements OnInit, OnChanges, ControlV
     if (changes.required) {
       const requiredChanges = changes.required;
       if (requiredChanges.currentValue !== requiredChanges.previousValue) {
-        if (requiredChanges.currentValue) {
+        if (this.required) {
           this.countryFormGroup.get('country').addValidators(Validators.required);
         } else {
           this.countryFormGroup.get('country').removeValidators(Validators.required);

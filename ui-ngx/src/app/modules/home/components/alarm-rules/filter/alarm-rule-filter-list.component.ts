@@ -30,7 +30,8 @@ import { Observable } from 'rxjs';
 import {
   ComplexOperation,
   complexOperationTranslationMap,
-  EntityKeyValueType
+  EntityKeyValueType,
+  entityKeyValueTypesMap
 } from '@shared/models/query/query.models';
 import { MatDialog } from '@angular/material/dialog';
 import { deepClone } from '@core/utils';
@@ -38,11 +39,7 @@ import {
   AlarmRuleFilterDialogComponent,
   AlarmRuleFilterDialogData
 } from "@home/components/alarm-rules/filter/alarm-rule-filter-dialog.component";
-import {
-  AlarmRuleFilter,
-  areFilterAndPredicateArgumentsValid,
-  FilterPredicateTypeTranslationMap
-} from "@shared/models/alarm-rule.models";
+import { AlarmRuleFilter, areFilterAndPredicateArgumentsValid } from "@shared/models/alarm-rule.models";
 import { CalculatedFieldArgument } from "@shared/models/calculated-field.models";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 
@@ -83,7 +80,8 @@ export class AlarmRuleFilterListComponent implements ControlValueAccessor, Valid
   areFilterAndPredicateArgumentsValid = areFilterAndPredicateArgumentsValid;
 
   complexOperationTranslationMap = complexOperationTranslationMap;
-  FilterPredicateTypeTranslationMap = FilterPredicateTypeTranslationMap
+  entityKeyValueTypes = entityKeyValueTypesMap;
+  entityKeyValueTypeEnum = EntityKeyValueType;
 
   private propagateChange = (v: any) => { };
 
