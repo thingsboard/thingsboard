@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -223,7 +223,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         saveAttribute(tenantId, deviceId, AttributeScope.SERVER_SCOPE, "key2", "123");
 
         Awaitility.await().atMost(30, TimeUnit.SECONDS).untilAsserted(() -> {
-            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE.name());
+            List<String> keys = attributesService.findAllKeysByEntityIds(tenantId, List.of(deviceId), AttributeScope.SERVER_SCOPE);
             assertThat(keys).containsOnly("key1", "key2");
         });
     }

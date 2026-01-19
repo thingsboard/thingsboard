@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ import java.io.Serializable;
         @JsonSubTypes.Type(value = AnyTimeSchedule.class, name = "ANY_TIME"),
         @JsonSubTypes.Type(value = SpecificTimeSchedule.class, name = "SPECIFIC_TIME"),
         @JsonSubTypes.Type(value = CustomTimeSchedule.class, name = "CUSTOM")})
+@Deprecated
 public interface AlarmSchedule extends Serializable {
 
     AlarmScheduleType getType();

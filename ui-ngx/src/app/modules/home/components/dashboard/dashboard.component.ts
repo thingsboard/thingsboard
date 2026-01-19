@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ import { AppState } from '@core/core.state';
 import { PageComponent } from '@shared/components/page.component';
 import { AuthUser } from '@shared/models/user.model';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
-import { Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
+import { initModelFromDefaultTimewindow, Timewindow, toHistoryTimewindow } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
 import { GridsterComponent, GridsterConfig, GridType } from 'angular-gridster2';
 import {
@@ -223,9 +223,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   ngOnInit(): void {
     this.dashboardWidgets.parentDashboard = this.parentDashboard;
     this.dashboardWidgets.popoverComponent = this.popoverComponent;
-    if (!this.dashboardTimewindow) {
-      this.dashboardTimewindow = this.timeService.defaultTimewindow();
-    }
+    this.dashboardTimewindow = initModelFromDefaultTimewindow(this.dashboardTimewindow,
+      false, false, this.timeService, true, true);
     this.gridsterOpts = {
       gridType: this.gridType || GridType.ScrollVertical,
       keepFixedHeightInMobile: true,

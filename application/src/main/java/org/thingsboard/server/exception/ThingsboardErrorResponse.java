@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,7 +64,8 @@ public class ThingsboardErrorResponse {
             "\n\n* `32` - Item not found (HTTP: 404 - Not Found)" +
             "\n\n* `33` - Too many requests (HTTP: 429 - Too Many Requests)" +
             "\n\n* `34` - Too many updates (Too many updates over Websocket session)" +
-            "\n\n* `40` - Subscription violation (HTTP: 403 - Forbidden)",
+            "\n\n* `40` - Subscription violation (HTTP: 403 - Forbidden)" +
+            "\n\n* `41` - Entities limit exceeded (HTTP: 403 - Forbidden)",
             example = "10", type = "integer",
             accessMode = Schema.AccessMode.READ_ONLY)
     public ThingsboardErrorCode getErrorCode() {

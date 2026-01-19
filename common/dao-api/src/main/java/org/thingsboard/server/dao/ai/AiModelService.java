@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,8 @@ public interface AiModelService extends EntityDaoService {
 
     AiModel save(AiModel model);
 
+    AiModel save(AiModel model, boolean doValidate);
+
     Optional<AiModel> findAiModelById(TenantId tenantId, AiModelId modelId);
 
     PageData<AiModel> findAiModelsByTenantId(TenantId tenantId, PageLink pageLink);
@@ -36,6 +38,8 @@ public interface AiModelService extends EntityDaoService {
     Optional<AiModel> findAiModelByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 
     FluentFuture<Optional<AiModel>> findAiModelByTenantIdAndIdAsync(TenantId tenantId, AiModelId modelId);
+
+    Optional<AiModel> findAiModelByTenantIdAndName(TenantId tenantId, String name);
 
     boolean deleteByTenantIdAndId(TenantId tenantId, AiModelId modelId);
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,11 @@ import {
   TbPolygonCoordinate,
   TbPolygonCoordinates,
   TbPolygonRawCoordinate,
-  TbPolygonRawCoordinates
+  TbPolygonRawCoordinates,
+  TbPolylineCoordinate,
+  TbPolylineCoordinates,
+  TbPolylineRawCoordinate,
+  TbPolylineRawCoordinates
 } from '@shared/models/widget/maps/map.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DeepPartial } from '@shared/models/common';
@@ -179,5 +183,29 @@ export class TbGeoMap extends TbMap<GeoMapSettings> {
     return circleData;
   }
 
+  public polylineDataToCoordinates(expression: TbPolylineRawCoordinates): TbPolylineRawCoordinates {
+    return (expression).map((el: TbPolylineRawCoordinate) => {
+      if (!Array.isArray(el[0]) && !Array.isArray(el[1]) && el.length === 2) {
+        return el;
+      } else if (Array.isArray(el) && el.length) {
+        return this.polylineDataToCoordinates(el as TbPolylineRawCoordinates) as TbPolylineRawCoordinate;
+      } else {
+        return null;
+      }
+    }).filter(el => !!el);
+  }
 
+  public coordinatesToPolylineData(coordinates: TbPolylineCoordinates): TbPolylineRawCoordinates {
+    if (coordinates.length) {
+      return coordinates.map((point: TbPolylineCoordinate) => {
+        if (Array.isArray(point)) {
+          return this.coordinatesToPolylineData(point) as TbPolylineRawCoordinate;
+        } else {
+          const convertPoint = latLngPointToBounds(point, this.southWest, this.northEast);
+          return [convertPoint.lat, convertPoint.lng];
+        }
+      });
+    }
+    return [];
+  }
 }

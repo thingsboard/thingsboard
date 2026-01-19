@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_BUNDLE_
 import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_BUNDLE_OAUTH2_CLIENT_MOBILE_APP_BUNDLE_ID_PROPERTY;
 import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_BUNDLE_OAUTH2_CLIENT_TABLE_NAME;
 
-
 @Data
 @Entity
 @Table(name = MOBILE_APP_BUNDLE_OAUTH2_CLIENT_TABLE_NAME)
@@ -63,4 +62,5 @@ public final class MobileAppBundleOauth2ClientEntity implements ToData<MobileApp
         result.setOAuth2ClientId(new OAuth2ClientId(oauth2ClientId));
         return result;
     }
+
 }

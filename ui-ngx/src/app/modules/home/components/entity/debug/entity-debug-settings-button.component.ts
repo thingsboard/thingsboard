@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
 
   @Input() additionalActionConfig: AdditionalDebugActionConfig;
   @Input({required: true}) entityType: EntityType;
+  @Input() entityLabel: string;
 
   debugSettingsFormGroup = this.fb.group({
     failuresEnabled: [false],
@@ -124,6 +125,7 @@ export class EntityDebugSettingsButtonComponent implements ControlValueAccessor 
       debugConfig: {
         maxDebugModeDuration: this.maxDebugModeDuration,
         entityType: this.entityType,
+        entityLabel: this.entityLabel,
         additionalActionConfig: this.additionalActionConfig,
       },
       onSettingsAppliedFn: settings => {

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,10 @@
     limitations under the License.
 
 -->
-<mat-form-field [formGroup]="branchFormGroup" class="mat-block" [floatLabel]="(selectionMode || emptyPlaceholder) ? 'always' : 'auto'" subscriptSizing="{{ subscriptSizing }}" [appearance]="appearance">
+<mat-form-field [formGroup]="branchFormGroup" class="mat-block"
+                [floatLabel]="(selectionMode || emptyPlaceholder) ? 'always' : 'auto'"
+                [appearance]="appearance"
+                [subscriptSizing]="subscriptSizing">
   <mat-label>{{ 'version-control.branch' | translate }}</mat-label>
   <input matInput type="text" placeholder="{{emptyPlaceholder || ((loading ? 'common.loading' : 'version-control.select-branch') | translate)}}"
          #branchInput

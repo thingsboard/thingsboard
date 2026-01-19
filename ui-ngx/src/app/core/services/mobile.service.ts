@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -106,9 +106,9 @@ export class MobileService {
     }
   }
 
-  public handleMobileNavigation(path?: string, params?: Params) {
+  public handleMobileNavigation(path?: string, params?: Params, queryParams?: Params) {
     if (this.mobileApp) {
-      this.mobileChannel.callHandler(navigationHandler, path, params);
+      this.mobileChannel.callHandler(navigationHandler, path, params, queryParams);
     }
   }
 

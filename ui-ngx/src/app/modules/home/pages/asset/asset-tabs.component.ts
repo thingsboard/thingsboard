@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityTabsComponent } from '../../components/entity/entity-tabs.component';
 import { AssetInfo } from '@app/shared/models/asset.models';
+import { EntityId } from "@shared/models/id/entity-id";
 
 @Component({
   selector: 'tb-asset-tabs',
@@ -27,12 +28,19 @@ import { AssetInfo } from '@app/shared/models/asset.models';
 })
 export class AssetTabsComponent extends EntityTabsComponent<AssetInfo> {
 
+  ownerId: EntityId;
+
   constructor(protected store: Store<AppState>) {
     super(store);
   }
 
   ngOnInit() {
     super.ngOnInit();
+  }
+
+  protected setEntity(entity: AssetInfo) {
+    this.ownerId = entity.customerId.id !== this.nullUid ? entity.customerId : entity.tenantId;
+    super.setEntity(entity);
   }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,6 +84,12 @@ export class AddUserDialogComponent extends DialogComponent<AddUserDialogCompone
       this.user.authority = this.data.authority;
       this.user.tenantId = new TenantId(this.data.tenantId);
       this.user.customerId = new CustomerId(this.data.customerId);
+      if (!this.user.additionalInfo.lang) {
+        delete this.user.additionalInfo.lang;
+      }
+      if (!this.user.additionalInfo.unitSystem) {
+        delete this.user.additionalInfo.unitSystem;
+      }
       const sendActivationEmail = this.activationMethod === ActivationMethod.SEND_ACTIVATION_MAIL;
       this.userService.saveUser(this.user, sendActivationEmail).subscribe(
         (user) => {

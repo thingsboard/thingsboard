@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -127,7 +127,9 @@ public class LwM2MBootstrapConfig implements Serializable {
 
     private BootstrapConfig.ServerConfig setServerConfig (AbstractLwM2MBootstrapServerCredential serverCredential) {
         BootstrapConfig.ServerConfig serverConfig = new BootstrapConfig.ServerConfig();
-        serverConfig.shortId = serverCredential.getShortServerId();
+        if (serverCredential.getShortServerId() != null) {
+            serverConfig.shortId = serverCredential.getShortServerId();
+        }
         serverConfig.lifetime = serverCredential.getLifetime();
         serverConfig.defaultMinPeriod = serverCredential.getDefaultMinPeriod();
         serverConfig.notifIfDisabled = serverCredential.isNotifIfDisabled();

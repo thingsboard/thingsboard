@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,6 +30,8 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.COMMENT_DELETED;
+
 @Service
 @AllArgsConstructor
 public class DefaultTbAlarmCommentService extends AbstractTbEntityService implements TbAlarmCommentService {
@@ -59,9 +61,10 @@ public class DefaultTbAlarmCommentService extends AbstractTbEntityService implem
         if (alarmComment.getType() == AlarmCommentType.OTHER) {
             alarmComment.setType(AlarmCommentType.SYSTEM);
             alarmComment.setUserId(null);
-            alarmComment.setComment(JacksonUtil.newObjectNode().put("text",
-                    String.format("User %s deleted his comment",
-                            (user.getFirstName() == null || user.getLastName() == null) ? user.getName() : user.getFirstName() + " " + user.getLastName())));
+            alarmComment.setComment(JacksonUtil.newObjectNode()
+                    .put("text", String.format(COMMENT_DELETED.getText(), user.getTitle()))
+                    .put("subtype", COMMENT_DELETED.name())
+                    .put("userName", user.getTitle()));
             AlarmComment savedAlarmComment = checkNotNull(alarmCommentService.saveAlarmComment(alarm.getTenantId(), alarmComment));
             logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarm, alarm.getCustomerId(), ActionType.DELETED_COMMENT, user, savedAlarmComment);
         } else {

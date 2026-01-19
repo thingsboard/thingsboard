@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy.asset;
 
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.NameConflictStrategy;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -26,6 +27,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 public interface TbAssetService {
 
     Asset save(Asset asset, User user) throws Exception;
+
+    Asset save(Asset asset, NameConflictStrategy nameConflictStrategy, User user) throws Exception;
 
     void delete(Asset asset, User user);
 

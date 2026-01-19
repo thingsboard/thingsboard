@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,13 @@ import org.springframework.stereotype.Service;
 @Service
 @Profile("install")
 @Slf4j
-public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaService
-        implements EntityDatabaseSchemaService {
+public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaService implements EntityDatabaseSchemaService {
+
     public static final String SCHEMA_ENTITIES_SQL = "schema-entities.sql";
     public static final String SCHEMA_ENTITIES_IDX_SQL = "schema-entities-idx.sql";
     public static final String SCHEMA_ENTITIES_IDX_PSQL_ADDON_SQL = "schema-entities-idx-psql-addon.sql";
-    public static final String SCHEMA_VIEWS_AND_FUNCTIONS_SQL = "schema-views-and-functions.sql";
+    public static final String SCHEMA_VIEWS_SQL = "schema-views.sql";
+    public static final String SCHEMA_FUNCTIONS_SQL = "schema-functions.sql";
 
     public SqlEntityDatabaseSchemaService() {
         super(SCHEMA_ENTITIES_SQL, SCHEMA_ENTITIES_IDX_SQL);
@@ -49,8 +50,10 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
 
     @Override
     public void createOrUpdateViewsAndFunctions() throws Exception {
-        log.info("Installing SQL DataBase schema views and functions: " + SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
-        executeQueryFromFile(SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
+        log.info("Installing SQL DataBase schema views: " + SCHEMA_VIEWS_SQL);
+        executeQueryFromFile(SCHEMA_VIEWS_SQL);
+        log.info("Installing SQL DataBase schema functions: " + SCHEMA_FUNCTIONS_SQL);
+        executeQueryFromFile(SCHEMA_FUNCTIONS_SQL);
     }
 
 }

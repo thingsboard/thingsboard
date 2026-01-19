@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmStatusFilter;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.id.NameLabelAndCustomerDetails;
 import org.thingsboard.server.common.data.notification.info.AlarmCommentNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;
 import org.thingsboard.server.common.data.notification.rule.trigger.AlarmCommentTrigger;
@@ -57,11 +58,14 @@ public class AlarmCommentTriggerProcessor implements NotificationRuleTriggerProc
     @Override
     public RuleOriginatedNotificationInfo constructNotificationInfo(AlarmCommentTrigger trigger) {
         Alarm alarm = trigger.getAlarm();
-        String originatorName;
+        String originatorName, originatorLabel;
         if (alarm instanceof AlarmInfo) {
             originatorName = ((AlarmInfo) alarm).getOriginatorName();
+            originatorLabel = ((AlarmInfo) alarm).getOriginatorLabel();
         } else {
-            originatorName = entityService.fetchEntityName(trigger.getTenantId(), alarm.getOriginator()).orElse("");
+            var infoOpt = entityService.fetchNameLabelAndCustomerDetails(trigger.getTenantId(), alarm.getOriginator());
+            originatorName = infoOpt.map(NameLabelAndCustomerDetails::getName).orElse(null);
+            originatorLabel = infoOpt.map(NameLabelAndCustomerDetails::getLabel).orElse(null);
         }
         return AlarmCommentNotificationInfo.builder()
                 .comment(trigger.getComment().getComment().get("text").asText())
@@ -73,6 +77,7 @@ public class AlarmCommentTriggerProcessor implements NotificationRuleTriggerProc
                 .alarmType(alarm.getType())
                 .alarmOriginator(alarm.getOriginator())
                 .alarmOriginatorName(originatorName)
+                .alarmOriginatorLabel(originatorLabel)
                 .alarmSeverity(alarm.getSeverity())
                 .alarmStatus(alarm.getStatus())
                 .alarmCustomerId(alarm.getCustomerId())

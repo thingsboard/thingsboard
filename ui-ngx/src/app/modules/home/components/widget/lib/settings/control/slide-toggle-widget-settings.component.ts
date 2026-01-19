@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { TargetDevice, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { TargetDevice, WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -30,6 +30,8 @@ import { deepClone } from '@core/utils';
 export class SlideToggleWidgetSettingsComponent extends WidgetSettingsComponent {
 
   slideToggleWidgetSettingsForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {

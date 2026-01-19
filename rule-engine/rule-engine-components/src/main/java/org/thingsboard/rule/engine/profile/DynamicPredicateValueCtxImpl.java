@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @Slf4j
+@Deprecated
 public class DynamicPredicateValueCtxImpl implements DynamicPredicateValueCtx {
     private final TenantId tenantId;
     private CustomerId customerId;

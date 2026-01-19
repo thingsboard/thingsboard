@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ import org.thingsboard.server.dao.dashboard.DashboardInfoDao;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 import org.thingsboard.server.dao.rule.RuleChainDao;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
@@ -91,7 +91,9 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Primary
 public class BaseResourceService extends AbstractCachedEntityService<ResourceInfoCacheKey, TbResourceInfo, ResourceInfoEvictEvent> implements ResourceService {
 
-    public static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
+    protected static final String INCORRECT_RESOURCE_ID = "Incorrect resourceId ";
+    protected static final int MAX_ENTITIES_TO_FIND = 10;
+
     protected final TbResourceDao resourceDao;
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
@@ -100,7 +102,6 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final RuleChainDao ruleChainDao;
     private final Map<EntityType, ResourceContainerDao<?>> resourceLinkContainerDaoMap = new HashMap<>();
     private final Map<EntityType, ResourceContainerDao<?>> generalResourceContainerDaoMap = new HashMap<>();
-    protected static final int MAX_ENTITIES_TO_FIND = 10;
 
     @PostConstruct
     public void init() {

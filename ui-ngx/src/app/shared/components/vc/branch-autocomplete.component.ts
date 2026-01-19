@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -57,6 +57,9 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
   @Input()
   subscriptSizing: SubscriptSizing = 'fixed';
 
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
+
   private requiredValue: boolean;
 
   get required(): boolean {
@@ -92,9 +95,6 @@ export class BranchAutocompleteComponent implements ControlValueAccessor, OnInit
 
   @Input()
   emptyPlaceholder: string;
-
-  @Input()
-  appearance: MatFormFieldAppearance = 'fill';
 
   @ViewChild('branchAutocomplete') matAutocomplete: MatAutocomplete;
   @ViewChild('branchInput', { read: MatAutocompleteTrigger, static: true }) autoCompleteTrigger: MatAutocompleteTrigger;

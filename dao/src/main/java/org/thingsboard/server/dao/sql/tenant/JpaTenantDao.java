@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,6 +96,11 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     @Override
     public Tenant findTenantByName(TenantId tenantId, String name) {
         return DaoUtil.getData(tenantRepository.findFirstByTitle(name));
+    }
+
+    @Override
+    public List<Tenant> findTenantsByIds(UUID tenantId, List<UUID> tenantIds) {
+        return DaoUtil.convertDataList(tenantRepository.findTenantsByIdIn(tenantIds));
     }
 
     @Override

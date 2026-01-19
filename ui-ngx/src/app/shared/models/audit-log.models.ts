@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import { CustomerId } from './id/customer-id';
 import { EntityId } from './id/entity-id';
 import { UserId } from './id/user-id';
 import { TenantId } from './id/tenant-id';
+import { isArraysEqualIgnoreUndefined } from "@core/utils";
 
 export enum AuditLogMode {
   TENANT,
@@ -132,3 +133,11 @@ export interface AuditLog extends BaseData<AuditLogId> {
   actionStatus: ActionStatus;
   actionFailureDetails: string;
 }
+
+export interface AuditLogFilter {
+  actionTypes: string[];
+}
+
+export const auditLogFilterEquals = (filter1?: AuditLogFilter, filter2?: AuditLogFilter): boolean => {
+  return isArraysEqualIgnoreUndefined(filter1.actionTypes, filter2.actionTypes);
+};

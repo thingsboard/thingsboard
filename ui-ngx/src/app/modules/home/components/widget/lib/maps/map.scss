@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -168,6 +168,9 @@ div.tb-widget .tb-widget-content.tb-no-interaction {
               }
               &.tb-draw-circle {
                 mask-image: url('data:image/svg+xml,<svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg"><path d="M16.5 6.75H14.9775C14.025 4.0575 11.4825 2.25 8.625 2.25C6.83479 2.25 5.1179 2.96116 3.85203 4.22703C2.58616 5.4929 1.875 7.20979 1.875 9C1.875 12.75 4.8975 15.75 8.625 15.75C11.4825 15.75 14.025 13.95 15 11.25H16.5M15 8.25V9.75H13.5V8.25M13.365 11.25C12.495 13.08 10.65 14.25 8.625 14.25C5.73 14.25 3.375 11.9025 3.375 9C3.375 6.105 5.73 3.75 8.625 3.75C10.65 3.75 12.495 4.9275 13.3575 6.75H12V11.25"/></svg>');
+              }
+              &.tb-draw-polyline {
+                 mask-image: url('data:image/svg+xml,<svg height="18px" viewBox="0 -960 960 960" width="18px"  xmlns="http://www.w3.org/2000/svg"><path d="M600-96v-86L317-336H144v-216h152l112-132v-180h216v216H472L360-516v121l240 131v-48h216v216H600ZM480-720h72v-72h-72v72ZM216-408h72v-72h-72v72Zm456 240h72v-72h-72v72ZM516-755ZM252-444Zm455 240Z"/></svg>');
               }
               &.tb-close {
                 background: #D12730;

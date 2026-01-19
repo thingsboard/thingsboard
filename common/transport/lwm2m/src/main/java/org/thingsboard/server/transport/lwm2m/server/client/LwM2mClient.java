@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,7 +66,9 @@ import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.BOOTSTRAP_TRIGGER_PARAMS_ID;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.REGISTRATION_TRIGGER_PARAMS_ID;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
@@ -342,6 +344,10 @@ public class LwM2mClient {
 
     public String isValidObjectVersion(String path) {
         LwM2mPath pathIds = getLwM2mPathFromString(path);
+        if (pathIds.isResource() && (pathIds.toString().equals(REGISTRATION_TRIGGER_PARAMS_ID ) ||
+                pathIds.toString().equals(BOOTSTRAP_TRIGGER_PARAMS_ID))) {
+            return "";
+        }
         LwM2m.Version verSupportedObject = this.getSupportedObjectVersion(pathIds.getObjectId());
         if (verSupportedObject == null) {
             return String.format("Specified object id %s absent in the list supported objects of the client or is security object!", pathIds.getObjectId());

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -73,6 +73,20 @@
             <div class="fixed-title-width" translate>widget-action.map-item-tooltip.finish-draw-circle</div>
             <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <input matInput placeholder="{{ mapItemTooltipsDefaultTranslate.finishCircle | translate }}" formControlName="finishCircle">
+            </mat-form-field>
+          </div>
+        }
+        @case (MapItemType.polyline) {
+          <div class="tb-form-row">
+            <div class="fixed-title-width" translate>widget-action.map-item-tooltip.start-draw-polyline</div>
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input matInput placeholder="{{ mapItemTooltipsDefaultTranslate.startPolyline | translate }}" formControlName="firstVertex">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <div class="fixed-title-width" translate>widget-action.map-item-tooltip.finish-draw-polyline</div>
+            <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+              <input matInput placeholder="{{ mapItemTooltipsDefaultTranslate.finishPolyline | translate }}" formControlName="continueLine">
             </mat-form-field>
           </div>
         }

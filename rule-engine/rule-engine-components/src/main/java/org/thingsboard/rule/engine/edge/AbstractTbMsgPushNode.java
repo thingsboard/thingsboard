@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.ACTIVITY_EVENT;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_ACK;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CLEAR;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_CREATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_SEVERITY_UPDATED;
+import static org.thingsboard.server.common.data.msg.TbMsgType.ALARM_UPDATED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_DELETED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.ATTRIBUTES_UPDATED;
 import static org.thingsboard.server.common.data.msg.TbMsgType.CONNECT_EVENT;
@@ -78,7 +81,7 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
     }
 
     protected S buildEvent(TbMsg msg, TbContext ctx) {
-        if (msg.isTypeOf(ALARM)) {
+        if (msg.isTypeOneOf(ALARM, ALARM_CREATED, ALARM_UPDATED, ALARM_SEVERITY_UPDATED)) {
             EdgeEventActionType actionType = getAlarmActionType(msg);
             return buildEvent(ctx.getTenantId(), actionType, getUUIDFromMsgData(msg), getAlarmEventType(), null);
         } else if (msg.isTypeOneOf(ALARM_ACK, ALARM_CLEAR)) {
@@ -182,7 +185,8 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
 
     protected boolean isSupportedMsgType(TbMsg msg) {
         return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED, TIMESERIES_UPDATED,
-                ALARM, ALARM_ACK, ALARM_CLEAR, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT, TO_SERVER_RPC_REQUEST);
+                ALARM, ALARM_CREATED, ALARM_UPDATED, ALARM_SEVERITY_UPDATED, ALARM_ACK, ALARM_CLEAR, CONNECT_EVENT,
+                DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT, TO_SERVER_RPC_REQUEST);
     }
 
 }

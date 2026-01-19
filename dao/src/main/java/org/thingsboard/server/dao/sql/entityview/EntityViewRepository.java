@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.edqs.fields.EntityViewFields;
 import org.thingsboard.server.dao.ExportableEntityRepository;
 import org.thingsboard.server.dao.model.sql.EntityViewEntity;
@@ -29,9 +30,6 @@ import org.thingsboard.server.dao.model.sql.EntityViewInfoEntity;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * Created by Victor Basanets on 8/31/2017.
- */
 public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UUID>, ExportableEntityRepository<EntityViewEntity> {
 
     @Query("SELECT new org.thingsboard.server.dao.model.sql.EntityViewInfoEntity(e, c.title, c.additionalInfo) " +
@@ -118,9 +116,15 @@ public interface EntityViewRepository extends JpaRepository<EntityViewEntity, UU
 
     EntityViewEntity findByTenantIdAndName(UUID tenantId, String name);
 
+    @Query("SELECT new org.thingsboard.server.common.data.EntityInfo(a.id, 'ENTITY_VIEW', a.name) " +
+            "FROM EntityViewEntity a WHERE a.tenantId = :tenantId AND a.name LIKE CONCAT(:prefix, '%')")
+    List<EntityInfo> findEntityInfosByNamePrefix(UUID tenantId, String prefix);
+
     List<EntityViewEntity> findAllByTenantIdAndEntityId(UUID tenantId, UUID entityId);
 
     boolean existsByTenantIdAndEntityId(UUID tenantId, UUID entityId);
+
+    List<EntityViewEntity> findEntityViewsByTenantIdAndIdIn(UUID tenantId, List<UUID> entityViewIds);
 
     @Query("SELECT DISTINCT ev.type FROM EntityViewEntity ev WHERE ev.tenantId = :tenantId")
     List<String> findTenantEntityViewTypes(@Param("tenantId") UUID tenantId);

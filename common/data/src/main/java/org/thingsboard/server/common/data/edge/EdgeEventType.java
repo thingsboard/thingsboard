@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,7 +47,8 @@ public enum EdgeEventType {
     TB_RESOURCE(true, EntityType.TB_RESOURCE),
     OAUTH2_CLIENT(true, EntityType.OAUTH2_CLIENT),
     DOMAIN(true, EntityType.DOMAIN),
-    CALCULATED_FIELD(false, EntityType.CALCULATED_FIELD);
+    CALCULATED_FIELD(false, EntityType.CALCULATED_FIELD),
+    AI_MODEL(true, EntityType.AI_MODEL);
 
     private final boolean allEdgesRelated;
 

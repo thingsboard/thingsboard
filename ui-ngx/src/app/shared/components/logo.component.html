@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,5 +15,17 @@
     limitations under the License.
 
 -->
-<img (click)="gotoThingsboard()" [src]="logo"
-         aria-label="logo" class="tb-logo-title flex-1"/>
+@if (isExternal) {
+  <a [href]="link" [target]="target">
+    <ng-container *ngTemplateOutlet="logo"></ng-container>
+  </a>
+} @else {
+  <a [routerLink]="link" [target]="target">
+    <ng-container *ngTemplateOutlet="logo"></ng-container>
+  </a>
+}
+
+<ng-template #logo>
+  <img [src]="src" aria-label="logo" alt="Logo"/>
+</ng-template>
+

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,8 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 
 /**
- * During Install or upgrade the validation is suppressed to keep existing data
+ * During Install or upgrade, the validation is suppressed to keep existing data
  * */
-
 @Primary
 @Profile("install")
 @Component

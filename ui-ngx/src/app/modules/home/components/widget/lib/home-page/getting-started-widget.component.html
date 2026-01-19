@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -166,11 +166,11 @@
           <ng-template matStepLabel>
             <div class="flex items-center justify-between">
               <div translate>widgets.getting-started.tenant-admin.step4.title</div>
-              <a *ngIf="matStepper.selectedIndex === 3" mat-button color="primary" routerLink="/profiles/deviceProfiles">{{ 'widgets.getting-started.tenant-admin.step4.alarm-rules' | translate }}</a>
+              <a *ngIf="matStepper.selectedIndex === 3" mat-button color="primary" routerLink="/alarms/alarm-rules">{{ 'widgets.getting-started.tenant-admin.step4.alarm-rules' | translate }}</a>
             </div>
           </ng-template>
           <div [innerHTML]="'widgets.getting-started.tenant-admin.step4.content' | translate | safe: 'html'"></div>
-          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/getting-started-guides/helloworld/#step-4-configure-alarm-rules" target="_blank">
+          <a mat-stroked-button color="primary" href="https://thingsboard.io/docs/user-guide/alarm-rules/" target="_blank">
             <mat-icon>description</mat-icon>{{ 'widgets.getting-started.tenant-admin.step4.how-to-configure-alarm-rules' | translate }}</a>
         </mat-step>
         <mat-step [completed]="gettingStarted.maxSelectedIndex > 3">

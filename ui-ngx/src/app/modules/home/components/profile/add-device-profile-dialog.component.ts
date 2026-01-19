@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -85,8 +85,6 @@ export class AddDeviceProfileDialogComponent extends
 
   transportConfigFormGroup: UntypedFormGroup;
 
-  alarmRulesFormGroup: UntypedFormGroup;
-
   provisionConfigFormGroup: UntypedFormGroup;
 
   serviceType = ServiceType.TB_RULE_ENGINE;
@@ -132,12 +130,6 @@ export class AddDeviceProfileDialogComponent extends
       this.deviceProfileTransportTypeChanged();
     });
 
-    this.alarmRulesFormGroup = this.fb.group(
-      {
-        alarms: [null]
-      }
-    );
-
     this.provisionConfigFormGroup = this.fb.group(
       {
         provisionConfiguration: [{
@@ -176,8 +168,6 @@ export class AddDeviceProfileDialogComponent extends
       case 1:
         return this.transportConfigFormGroup;
       case 2:
-        return this.alarmRulesFormGroup;
-      case 3:
         return this.provisionConfigFormGroup;
     }
   }
@@ -199,7 +189,6 @@ export class AddDeviceProfileDialogComponent extends
         profileData: {
           configuration: createDeviceProfileConfiguration(DeviceProfileType.DEFAULT),
           transportConfiguration: this.transportConfigFormGroup.get('transportConfiguration').value,
-          alarms: this.alarmRulesFormGroup.get('alarms').value,
           provisionConfiguration: deviceProvisionConfiguration
         }
       };

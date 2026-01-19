@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,24 +15,20 @@
     limitations under the License.
 
 -->
-<mat-tab *ngIf="entity"
-         label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
-  <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
-                      [active]="attributesTab.isActive"
-                      [entityId]="entity.id"
-                      [entityName]="entity.name">
-  </tb-attribute-table>
-</mat-tab>
-<mat-tab *ngIf="entity"
-         label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
-  <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
-                      disableAttributeScopeSelection
-                      [active]="telemetryTab.isActive"
-                      [entityId]="entity.id"
-                      [entityName]="entity.name">
-  </tb-attribute-table>
-</mat-tab>
-<mat-tab *ngIf="entity"
-         label="{{ 'alarm.alarms' | translate }}" #alarmsTab="matTab">
-  <tb-alarm-table [active]="alarmsTab.isActive" [entityId]="entity.id"></tb-alarm-table>
-</mat-tab>
+@if (entity) {
+  <mat-tab label="{{ 'attribute.attributes' | translate }}" #attributesTab="matTab">
+    <tb-attribute-table [defaultAttributeScope]="attributeScopes.SERVER_SCOPE"
+                        [active]="attributesTab.isActive"
+                        [entityId]="entity.id"
+                        [entityName]="entity.name">
+    </tb-attribute-table>
+  </mat-tab>
+  <mat-tab label="{{ 'attribute.latest-telemetry' | translate }}" #telemetryTab="matTab">
+    <tb-attribute-table [defaultAttributeScope]="latestTelemetryTypes.LATEST_TELEMETRY"
+                        disableAttributeScopeSelection
+                        [active]="telemetryTab.isActive"
+                        [entityId]="entity.id"
+                        [entityName]="entity.name">
+    </tb-attribute-table>
+  </mat-tab>
+}

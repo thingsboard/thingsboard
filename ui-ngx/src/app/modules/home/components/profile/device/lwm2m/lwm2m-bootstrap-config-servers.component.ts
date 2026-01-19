@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DialogService } from '@core/services/dialog.service';
 import { MatDialog } from '@angular/material/dialog';
 import { Lwm2mBootstrapAddConfigServerDialogComponent } from '@home/components/profile/device/lwm2m/lwm2m-bootstrap-add-config-server-dialog.component';
-import { mergeMap, takeUntil } from 'rxjs/operators';
+import { filter, mergeMap, takeUntil } from 'rxjs/operators';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Lwm2mSecurityType } from '@shared/models/lwm2m-security-config.models';
 
@@ -164,10 +164,8 @@ export class Lwm2mBootstrapConfigServersComponent implements OnInit, ControlValu
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
       }).afterClosed();
     const addServerConfigObs = addDialogObs.pipe(
+      filter((isBootstrap) => isBootstrap !== null),
       mergeMap((isBootstrap) => {
-        if (isBootstrap === null) {
-          return of(null);
-        }
         return this.deviceProfileService.getLwm2mBootstrapSecurityInfoBySecurityType(isBootstrap, Lwm2mSecurityType.NO_SEC);
       })
     );

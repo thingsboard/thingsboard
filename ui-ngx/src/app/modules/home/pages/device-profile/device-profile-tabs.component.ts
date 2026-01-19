@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
 
   isTransportTypeChanged = false;
 
+  hasOldRules = false;
+  alarmRulesOldVersion = false;
+
   constructor(protected store: Store<AppState>,
               private destroyRef: DestroyRef) {
     super(store);
@@ -57,6 +60,8 @@ export class DeviceProfileTabsComponent extends EntityTabsComponent<DeviceProfil
 
   protected setEntity(entity: DeviceProfile) {
     this.isTransportTypeChanged = false;
+    this.hasOldRules = !!entity?.profileData?.alarms?.length;
+    this.alarmRulesOldVersion = false;
     super.setEntity(entity);
   }
 

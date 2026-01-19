@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class AlarmAssignmentTriggerProcessor implements NotificationRuleTriggerP
                 .alarmType(alarmInfo.getType())
                 .alarmOriginator(alarmInfo.getOriginator())
                 .alarmOriginatorName(alarmInfo.getOriginatorName())
+                .alarmOriginatorLabel(alarmInfo.getOriginatorLabel())
                 .alarmSeverity(alarmInfo.getSeverity())
                 .alarmStatus(alarmInfo.getStatus())
                 .alarmCustomerId(alarmInfo.getCustomerId())

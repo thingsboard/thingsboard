@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ public class EdgeEventSourcingListener {
             return;
         }
         try {
-            if (EntityType.TENANT == entityType || EntityType.EDGE == entityType || EntityType.AI_MODEL == entityType) {
+            if (EntityType.TENANT == entityType || EntityType.EDGE == entityType) {
                 return;
             }
             log.trace("[{}] DeleteEntityEvent called: {}", tenantId, event);
@@ -227,7 +227,7 @@ public class EdgeEventSourcingListener {
                     break;
                 case TENANT:
                     return !event.getCreated();
-                case API_USAGE_STATE, EDGE, AI_MODEL:
+                case API_USAGE_STATE, EDGE:
                     return false;
                 case DOMAIN:
                     if (entity instanceof Domain domain) {

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.action;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.FluentFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -49,6 +49,7 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.function.Consumer;
 
+import static com.google.common.util.concurrent.Futures.immediateFuture;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -112,8 +113,8 @@ class TbClearAlarmNodeTest {
                 .endTs(oldEndDate)
                 .build();
 
-        when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, "SomeType")).thenReturn(activeAlarm);
+        when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(immediateFuture(null));
+        when(alarmServiceMock.findLatestActiveByOriginatorAndTypeAsync(tenantId, msgOriginator, "SomeType")).thenReturn(FluentFuture.from(immediateFuture(activeAlarm)));
         when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)
@@ -172,8 +173,8 @@ class TbClearAlarmNodeTest {
                 .build();
         expectedAlarm.setId(id);
 
-        when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(Futures.immediateFuture(null));
-        when(alarmServiceMock.findAlarmById(tenantId, id)).thenReturn(activeAlarm);
+        when(alarmDetailsScriptMock.executeJsonAsync(msg)).thenReturn(immediateFuture(null));
+        when(alarmServiceMock.findAlarmByIdAsync(tenantId, id)).thenReturn(immediateFuture(activeAlarm));
         when(alarmServiceMock.clearAlarm(eq(activeAlarm.getTenantId()), eq(activeAlarm.getId()), anyLong(), nullable(JsonNode.class)))
                 .thenReturn(AlarmApiCallResult.builder()
                         .successful(true)

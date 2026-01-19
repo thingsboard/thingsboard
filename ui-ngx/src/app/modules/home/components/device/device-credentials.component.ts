@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { generateSecret, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { DeviceId } from "@shared/models/id/device-id";
 
 @Component({
   selector: 'tb-device-credentials',
@@ -88,6 +89,8 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   credentialTypeNamesMap = credentialTypeNames;
 
+  deviceId: DeviceId;
+
   private propagateChange = null;
   private propagateChangePending = false;
 
@@ -126,6 +129,7 @@ export class DeviceCredentialsComponent implements ControlValueAccessor, OnInit,
 
   writeValue(value: DeviceCredentials | null): void {
     if (isDefinedAndNotNull(value)) {
+      this.deviceId = value.deviceId;
       const credentialsType = this.credentialsTypes.includes(value.credentialsType) ? value.credentialsType : this.credentialsTypes[0];
       this.deviceCredentialsFormGroup.patchValue({
         credentialsType,

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -89,7 +89,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
     return this.fb.group({
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.LWM2M_MODEL, Validators.required],
-      fileName: [entity ? entity.fileName : null, Validators.required],
+      fileName: [entity ? entity.fileName : null],
       data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []],
       descriptor: this.fb.group({
         mediaType: ['']

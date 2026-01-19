@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,12 +20,14 @@ import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.ai.AiModel;
 import org.thingsboard.server.common.data.id.AiModelId;
+import org.thingsboard.server.common.data.id.ApiKeyId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.UserId;
+import org.thingsboard.server.common.data.pat.ApiKeyInfo;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
-@Component(value = "tenantAdminPermissions")
+@Component
 public class TenantAdminPermissions extends AbstractPermissions {
 
     public TenantAdminPermissions() {
@@ -59,9 +61,15 @@ public class TenantAdminPermissions extends AbstractPermissions {
         put(Resource.MOBILE_APP_BUNDLE, tenantEntityPermissionChecker);
         put(Resource.JOB, tenantEntityPermissionChecker);
         put(Resource.AI_MODEL, aiModelPermissionChecker);
+        put(Resource.API_KEY, apiKeysPermissionChecker);
     }
 
     public static final PermissionChecker tenantEntityPermissionChecker = new PermissionChecker() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return true;
+        }
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, EntityId entityId, HasTenantId entity) {
@@ -73,7 +81,7 @@ public class TenantAdminPermissions extends AbstractPermissions {
     };
 
     private static final PermissionChecker tenantPermissionChecker =
-            new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY) {
+            new PermissionChecker.GenericPermissionChecker(Operation.READ, Operation.READ_ATTRIBUTES, Operation.READ_TELEMETRY, Operation.DELETE) {
 
                 @Override
                 @SuppressWarnings("unchecked")
@@ -158,6 +166,20 @@ public class TenantAdminPermissions extends AbstractPermissions {
 
         @Override
         public boolean hasPermission(SecurityUser user, Operation operation, AiModelId entityId, AiModel entity) {
+            return user.getTenantId().equals(entity.getTenantId());
+        }
+
+    };
+
+    private static final PermissionChecker<ApiKeyId, ApiKeyInfo> apiKeysPermissionChecker = new PermissionChecker<>() {
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation) {
+            return true;
+        }
+
+        @Override
+        public boolean hasPermission(SecurityUser user, Operation operation, ApiKeyId entityId, ApiKeyInfo entity) {
             return user.getTenantId().equals(entity.getTenantId());
         }
 

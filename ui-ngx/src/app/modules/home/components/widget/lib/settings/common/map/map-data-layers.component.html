@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@
       </div>
       <div *ngIf="dataLayerType === 'polygons'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polygon.polygon-key</div>
       <div *ngIf="dataLayerType === 'circles'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.circle.circle-key</div>
+      <div *ngIf="dataLayerType === 'polylines'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polyline.polyline-key</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="dataLayersFormArray().controls.length; else noDataLayers" class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"

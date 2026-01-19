@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -117,24 +117,26 @@ public class DeviceConnectivityUtil {
         dockerComposeBuilder.append("\n");
         dockerComposeBuilder.append("    # Environment variables\n");
         dockerComposeBuilder.append("    environment:\n");
-        dockerComposeBuilder.append("      - host=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append("\n");
-        dockerComposeBuilder.append("      - port=1883\n");
+        dockerComposeBuilder.append("      - TB_GW_HOST=").append(isLocalhost(host) ? HOST_DOCKER_INTERNAL : host).append("\n");
+        dockerComposeBuilder.append("      - TB_GW_PORT=1883\n");
         switch (deviceCredentials.getCredentialsType()) {
             case ACCESS_TOKEN:
-                dockerComposeBuilder.append("      - accessToken=").append(deviceCredentials.getCredentialsId()).append("\n");
+                dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=accessToken\n");
+                dockerComposeBuilder.append("      - TB_GW_ACCESS_TOKEN=").append(deviceCredentials.getCredentialsId()).append("\n");
                 break;
             case MQTT_BASIC:
+                dockerComposeBuilder.append("      - TB_GW_SECURITY_TYPE=usernamePassword\n");
                 BasicMqttCredentials credentials = JacksonUtil.fromString(deviceCredentials.getCredentialsValue(),
                         BasicMqttCredentials.class);
                 if (credentials != null) {
                     if (StringUtils.isNotEmpty(credentials.getClientId())) {
-                        dockerComposeBuilder.append("      - clientId=").append(credentials.getClientId()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_CLIENT_ID=").append(credentials.getClientId()).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getUserName())) {
-                        dockerComposeBuilder.append("      - username=").append(credentials.getUserName()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_USERNAME=").append(credentials.getUserName()).append("\n");
                     }
                     if (StringUtils.isNotEmpty(credentials.getPassword())) {
-                        dockerComposeBuilder.append("      - password=").append(credentials.getPassword()).append("\n");
+                        dockerComposeBuilder.append("      - TB_GW_PASSWORD=").append(credentials.getPassword()).append("\n");
                     }
                 }
                 break;

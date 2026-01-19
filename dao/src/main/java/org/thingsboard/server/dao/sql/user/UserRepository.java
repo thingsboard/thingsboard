@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,15 +23,13 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.edqs.fields.UserFields;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.dao.model.sql.UserEntity;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-/**
- * @author Valerii Sosliuk
- */
 public interface UserRepository extends JpaRepository<UserEntity, UUID> {
 
     UserEntity findByEmail(String email);
@@ -80,4 +78,11 @@ public interface UserRepository extends JpaRepository<UserEntity, UUID> {
     List<UserFields> findNextBatch(@Param("id") UUID id, Limit limit);
 
     int countByTenantIdAndAuthority(UUID tenantId, Authority authority);
+
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(u, uc.enabled) " +
+            "FROM UserEntity u JOIN UserCredentialsEntity uc ON u.id = uc.userId WHERE u.id = :userId ")
+    TbPair<UserEntity, Boolean> findUserAuthDetailsByUserId(@Param("userId") UUID userId);
+
+    List<UserEntity> findUsersByTenantIdAndIdIn(UUID tenantId, List<UUID> userIds);
+
 }

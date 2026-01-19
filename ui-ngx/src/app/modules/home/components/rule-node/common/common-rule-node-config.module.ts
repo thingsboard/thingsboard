@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ import { RelationsQueryConfigOldComponent } from './relations-query-config-old.c
 import { SelectAttributesComponent } from './select-attributes.component';
 import { AlarmStatusSelectComponent } from './alarm-status-select.component';
 import { ExampleHintComponent } from './example-hint.component';
-import { TimeUnitInputComponent } from './time-unit-input.component';
 import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list-config.component';
 
 @NgModule({
@@ -53,7 +52,6 @@ import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
-    TimeUnitInputComponent,
     KvListConfigComponent
   ],
   imports: [
@@ -77,7 +75,6 @@ import { KvListConfigComponent } from '@home/components/rule-node/common/kv-list
     SelectAttributesComponent,
     AlarmStatusSelectComponent,
     ExampleHintComponent,
-    TimeUnitInputComponent,
     KvListConfigComponent
   ]
 })

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
+import java.io.Serial;
 import java.util.Set;
 
 @Data
@@ -29,6 +30,9 @@ import java.util.Set;
 @NoArgsConstructor
 @Builder
 public class AlarmCommentNotificationRuleTriggerConfig implements NotificationRuleTriggerConfig {
+
+    @Serial
+    private static final long serialVersionUID = -9164282098882339645L;
 
     private Set<String> alarmTypes;
     private Set<AlarmSeverity> alarmSeverities;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.user;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserAuthDetails;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
@@ -102,4 +103,9 @@ public interface UserDao extends Dao<User>, TenantEntityDao<User> {
     PageData<User> findByAuthorityAndTenantProfilesIds(Authority authority, List<TenantProfileId> tenantProfilesIds, PageLink pageLink);
 
     int countTenantAdmins(UUID tenantId);
+
+    UserAuthDetails findUserAuthDetailsByUserId(UUID tenantId, UUID userId);
+
+    List<User> findUsersByTenantIdAndIds(UUID tenantId, List<UUID> userIds);
+
 }

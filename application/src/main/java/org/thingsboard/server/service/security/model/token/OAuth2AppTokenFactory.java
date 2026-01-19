@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.security.Keys;
+import io.jsonwebtoken.security.SignatureException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
@@ -43,8 +43,7 @@ public class OAuth2AppTokenFactory {
         Jws<Claims> jwsClaims;
         try {
             jwsClaims = Jwts.parser().verifyWith(Keys.hmacShaKeyFor(Base64.getDecoder().decode(appSecret))).build().parseSignedClaims(appToken);
-        }
-        catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException | SignatureException ex) {
+        } catch (UnsupportedJwtException | MalformedJwtException | IllegalArgumentException | SignatureException ex) {
             throw new IllegalArgumentException("Invalid Application token: ", ex);
         } catch (ExpiredJwtException expiredEx) {
             throw new IllegalArgumentException("Application token expired", expiredEx);

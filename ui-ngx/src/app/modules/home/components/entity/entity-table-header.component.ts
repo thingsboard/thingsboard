@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,8 +17,6 @@
 import { BaseData, HasId } from '@shared/models/base-data';
 import { PageComponent } from '@shared/components/page.component';
 import { Directive, Input, OnInit } from '@angular/core';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
 import { PageLink } from '@shared/models/page/page-link';
 
@@ -41,8 +39,8 @@ export abstract class EntityTableHeaderComponent<T extends BaseData<HasId>,
     return this.entitiesTableConfigValue;
   }
 
-  protected constructor(protected store: Store<AppState>) {
-    super(store);
+  protected constructor(...args: unknown[]) {
+    super();
   }
 
   ngOnInit() {

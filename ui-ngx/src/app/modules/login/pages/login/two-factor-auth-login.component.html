@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2025 The Thingsboard Authors
+    Copyright © 2016-2026 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -41,11 +41,11 @@
           <div tb-toast class="flex flex-col">
             <p class="mat-body">{{ providerDescription }}</p>
             <div class="code-block flex flex-row gap-2">
-              <mat-form-field class="mat-block tb-appearance-transparent flex-1">
+              <mat-form-field class="mat-block tb-autofilled flex-1" appearance="outline">
                 <input matInput formControlName="verificationCode"
                        required [maxlength]="maxLengthInput" type="text"
                        [attr.inputmode]="inputMode" [pattern]="pattern"
-                       autocomplete="off"
+                       autocomplete="one-time-code"
                        placeholder="{{ providersData.get(selectedProvider).placeholder | translate }}"/>
                 <mat-error *ngIf="verificationForm.get('verificationCode').getError('required') ||
                                   verificationForm.get('verificationCode').getError('minlength') ||
@@ -62,7 +62,7 @@
               </mat-form-field>
             </div>
             <span style="height: 50px;"></span>
-            <button mat-raised-button
+            <button mat-flat-button
                     color="accent"
                     [disabled]="(isLoading$ | async) || verificationForm.invalid"
                     type="submit">

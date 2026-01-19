@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,7 +24,8 @@ import {
   DataKey,
   Datasource,
   datasourcesHasAggregation,
-  datasourcesHasOnlyComparisonAggregation, WidgetConfig
+  datasourcesHasOnlyComparisonAggregation, WidgetConfig,
+  widgetTitleAutocompleteValues
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -61,6 +62,8 @@ export class EntitiesTableBasicConfigComponent extends BasicWidgetConfigComponen
   }
 
   entitiesTableWidgetConfigForm: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

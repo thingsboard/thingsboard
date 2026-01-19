@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -113,13 +113,13 @@ public class RpkLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         RPKClientCredential clientCredentials = new RPKClientCredential();
         clientCredentials.setEndpoint(clientEndpoint);
         clientCredentials.setKey(Base64.encodeBase64String(certificate.getPublicKey().getEncoded()));
-        Security securityBs = rpkBootstrap(SECURE_URI_BS,
+        Security securityRpkBs = rpkBootstrap(SECURE_URI_BS,
                 certificate.getPublicKey().getEncoded(),
                 privateKey.getEncoded(),
                 serverX509CertBs.getPublicKey().getEncoded());
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(RPK, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, clientPrivateKeyFromCertTrust, certificate, RPK, false);
-        this.basicTestConnection(null, securityBs,
+        this.basicTestConnection(null, securityRpkBs,
                 deviceCredentials,
                 clientEndpoint,
                 transportConfiguration,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,13 +26,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 
-import java.util.concurrent.TimeUnit;
-
 @AllArgsConstructor
 @Slf4j
 public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
-    // Subtract from queueStartTs to ensure no data is lost due to potential misordering of edge events by created_time.
-    private static final long MISORDERING_COMPENSATION_MILLIS = TimeUnit.SECONDS.toMillis(60);
 
     private final Long queueStartTs;
     private Long seqIdStart;
@@ -40,6 +36,10 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
     private boolean seqIdNewCycleStarted;
     private Long maxReadRecordsCount;
     private final EdgeEventService edgeEventService;
+    // Subtract from queueStartTs to compensate for possible misalignment between `created_time` and `seqId`.
+    // This ensures early events with lower seqId are not skipped due to partitioning by `created_time`.
+    // See: edge_event is partitioned by created_time but sorted by seqId during retrieval.
+    private final long misorderingCompensationMillis;
 
     @Override
     public PageLink getPageLink(int pageSize) {
@@ -48,7 +48,7 @@ public class GeneralEdgeEventFetcher implements EdgeEventFetcher {
                 0,
                 null,
                 null,
-                queueStartTs > 0 ? queueStartTs - MISORDERING_COMPENSATION_MILLIS : 0,
+                queueStartTs > 0 ? queueStartTs - misorderingCompensationMillis : 0,
                 System.currentTimeMillis());
     }
 

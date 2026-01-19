@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
 
   @Input({ transform: booleanAttribute }) failuresEnabled = false;
   @Input({ transform: booleanAttribute }) allEnabled = false;
+  @Input() entityLabel = '';
   @Input() entityType: EntityType;
   @Input() allEnabledUntil = 0;
   @Input() maxDebugModeDuration = getCurrentAuthState(this.store).maxDebugModeDurationMinutes * MINUTE;
@@ -64,7 +65,6 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
   maxMessagesCount: string;
   maxTimeFrameDuration: number;
   initialAllEnabled: boolean;
-  entityLabel: string;
 
   isDebugAllActive$ = this.debugAllControl.valueChanges.pipe(
     startWith(this.debugAllControl.value),
@@ -109,7 +109,9 @@ export class EntityDebugSettingsPanelComponent extends PageComponent implements 
     this.onFailuresControl.patchValue(this.failuresEnabled);
     this.debugAllControl.patchValue(this.allEnabled);
     this.initialAllEnabled = this.allEnabled || this.allEnabledUntil > new Date().getTime();
-    this.entityLabel = entityTypeTranslations.has(this.entityType) ? entityTypeTranslations.get(this.entityType).type : 'debug-settings.entity';
+    if (!this.entityLabel) {
+      this.entityLabel = entityTypeTranslations.has(this.entityType) ? entityTypeTranslations.get(this.entityType).type : 'debug-settings.entity';
+    }
   }
 
   onCancel(): void {

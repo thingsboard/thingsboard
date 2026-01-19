@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -200,7 +200,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             attributesToFetch.add(SOFTWARE_URL);
         }
 
-        var clientSettings = clientContext.getProfile(client.getRegistration()).getClientLwM2mSettings();
+        var clientProfile = clientContext.getProfile(client.getRegistration());
+        var clientSettings = clientProfile != null ? clientProfile.getClientLwM2mSettings() : null;
         if (clientSettings != null) {
             initFwStrategy(client, clientSettings);
             initSwStrategy(client, clientSettings);
@@ -532,7 +533,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             } else {
                 strategy = info.getDeliveryMethod() == FirmwareDeliveryMethod.PULL.code ? LwM2MFirmwareUpdateStrategy.OBJ_5_TEMP_URL : LwM2MFirmwareUpdateStrategy.OBJ_5_BINARY;
             }
-            Boolean useObject19ForOtaInfo = clientContext.getProfile(client.getRegistration()).getClientLwM2mSettings().getUseObject19ForOtaInfo();
+            var clientProfile =  clientContext.getProfile(client.getRegistration());
+            Boolean useObject19ForOtaInfo = clientProfile != null ? clientProfile.getClientLwM2mSettings().getUseObject19ForOtaInfo() : null;
             if (useObject19ForOtaInfo != null && useObject19ForOtaInfo){
                 sendInfoToObject19ForOta(client, FW_INFO_19_INSTANCE_ID, response, otaPackageId);
             }
@@ -558,7 +560,8 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
         if (TransportProtos.ResponseStatus.SUCCESS.equals(response.getResponseStatus())) {
             UUID otaPackageId = new UUID(response.getOtaPackageIdMSB(), response.getOtaPackageIdLSB());
             LwM2MSoftwareUpdateStrategy strategy = info.getStrategy();
-            Boolean useObject19ForOtaInfo = clientContext.getProfile(client.getRegistration()).getClientLwM2mSettings().getUseObject19ForOtaInfo();
+            var clientProfile = clientContext.getProfile(client.getRegistration());
+            Boolean useObject19ForOtaInfo = clientProfile != null ? clientProfile.getClientLwM2mSettings().getUseObject19ForOtaInfo() : null;
             if (useObject19ForOtaInfo != null && useObject19ForOtaInfo){
                 sendInfoToObject19ForOta(client, SW_INFO_19_INSTANCE_ID, response, otaPackageId);
             }
@@ -647,8 +650,9 @@ public class DefaultLwM2MOtaUpdateService extends LwM2MExecutorAwareService impl
             LwM2MClientSwOtaInfo info = otaInfoStore.getSw(endpoint);
             if (info == null) {
                 var profile = clientContext.getProfile(client.getRegistration());
-                info = new LwM2MClientSwOtaInfo(endpoint, profile.getClientLwM2mSettings().getSwUpdateResource(),
-                        LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(profile.getClientLwM2mSettings().getSwUpdateStrategy()));
+                OtherConfiguration clientLwM2mSettings = profile == null ? new OtherConfiguration() : profile.getClientLwM2mSettings();
+                info = new LwM2MClientSwOtaInfo(endpoint, clientLwM2mSettings.getSwUpdateResource(),
+                        LwM2MSoftwareUpdateStrategy.fromStrategySwByCode(clientLwM2mSettings.getSwUpdateStrategy()));
                 update(info);
             }
             return info;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
  */
 package org.thingsboard.server.service.cf;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import lombok.Data;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.cf.configuration.OutputType;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+import org.thingsboard.server.common.data.id.CalculatedFieldId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.msg.TbMsg;
 
-@Data
-public final class CalculatedFieldResult {
+import java.util.List;
+import java.util.Objects;
 
-    private final OutputType type;
-    private final AttributeScope scope;
-    private final JsonNode result;
+public interface CalculatedFieldResult {
 
-    public boolean isEmpty() {
-        return result == null || result.isMissingNode() || result.isNull() ||
-                (result.isObject() && result.isEmpty()) ||
-                (result.isArray() && result.isEmpty()) ||
-                (result.isTextual() && result.asText().isEmpty());
+    TbMsg toTbMsg(EntityId entityId, String cfName, List<CalculatedFieldId> cfIds);
+
+    String stringValue();
+
+    boolean isEmpty();
+
+    default JsonElement toJsonElement() {
+        return JsonParser.parseString(Objects.requireNonNull(stringValue()));
     }
 
 }

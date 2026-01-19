@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,11 +28,12 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 @Slf4j
 public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthNullTest extends AbstractSecurityLwM2MIntegrationDtlsCidLengthTest {
 
+    private static final Integer  serverDtlsCidLength = null;
 
     protected void  testNoSecDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testNoSecDtlsCidLength(dtlsCidLength, null);
+        testNoSecDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
     }
     protected void  testPskDtlsCidLength(Integer dtlsCidLength) throws Exception {
-        testPskDtlsCidLength(dtlsCidLength, null);
+        testPskDtlsCidLength(dtlsCidLength, serverDtlsCidLength);
     }
 }

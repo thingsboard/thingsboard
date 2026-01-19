@@ -1,0 +1,251 @@
+<!--
+
+    Copyright © 2016-2026 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form [formGroup]="conditionFormGroup" (ngSubmit)="save()">
+  <mat-toolbar color="primary">
+    <h2>{{ (readonly ? 'alarm-rule.alarm-rule-condition' : 'alarm-rule.edit-alarm-rule-condition') | translate }}</h2>
+    <span class="flex-1"></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-padding no-border">
+      <div class="tb-form-panel stroked">
+        <div class="flex flex-row items-center justify-between" formGroupName="expression">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.mode' | translate }}</div>
+          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs">
+            <tb-toggle-option [value]="AlarmRuleExpressionType.SIMPLE">{{ 'alarm-rule.expression-type.simple' | translate }}</tb-toggle-option>
+            <tb-toggle-option [value]="AlarmRuleExpressionType.TBEL">{{ 'alarm-rule.expression-type.script' | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        <div class="tb-form-panel no-padding no-border">
+          <div class="flex flex-1 flex-col" formGroupName="expression">
+            @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
+              <div class="tb-form-panel stroked">
+                <div class="flex flex-row items-center justify-between">
+                  <div class="tb-form-panel-title">{{ 'alarm-rule.argument-filters' | translate }}</div>
+                  <tb-toggle-select formControlName="operation"
+                                    selectMediaBreakpoint="xs">
+                    <tb-toggle-option [value]="ComplexOperation.AND">{{ complexOperationTranslationMap.get(ComplexOperation.AND) | translate }}</tb-toggle-option>
+                    <tb-toggle-option [value]="ComplexOperation.OR">{{ complexOperationTranslationMap.get(ComplexOperation.OR) | translate }}</tb-toggle-option>
+                  </tb-toggle-select>
+                </div>
+                <tb-alarm-rule-filter-list
+                  [operation]="conditionFormGroup.get('expression.operation').value"
+                  [arguments]="arguments"
+                  [readonly]="readonly"
+                  formControlName="filters">
+                </tb-alarm-rule-filter-list>
+              </div>
+            } @else {
+              <div class="tb-form-panel no-gap stroked">
+                <div class="tb-form-panel-title tb-required">{{ 'alarm-rule.script' | translate }}</div>
+                <tb-js-func formControlName="expression"
+                            functionName="expression"
+                            class="tb-alarm-rule-script"
+                            [disableUndefinedCheck]="true"
+                            [scriptLanguage]="scriptLanguage.TBEL"
+                            [functionArgs]="functionArgs"
+                            [highlightRules]="argumentsHighlightRules"
+                            [editorCompleter]="argumentsEditorCompleter"
+                            noValidate="true"
+                            [helpPopupStyle]="{ width: '1200px' }"
+                            helpId="alarm-rule/expression_fn">
+                  <div toolbarPrefixButton
+                       class="tb-primary-background tbel-script-lang-chip">{{ 'alarm-rule.tbel' | translate }}
+                  </div>
+                  <button toolbarSuffixButton
+                          mat-icon-button
+                          matTooltip="{{ 'calculated-fields.test-script-function' | translate }}"
+                          matTooltipPosition="above"
+                          class="tb-mat-32"
+                          [disabled]="!argumentsList.length || readonly"
+                          (click)="onTestScript($event)">
+                    <mat-icon class="material-icons" color="primary">bug_report</mat-icon>
+                  </button>
+                </tb-js-func>
+                <div>
+                  <button mat-button mat-raised-button color="primary"
+                          type="button"
+                          (click)="onTestScript($event)"
+                          [disabled]="!argumentsList.length || readonly">
+                    {{ 'calculated-fields.test-script-function' | translate }}
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+
+          @if (conditionFormGroup.get('expression.type').value === AlarmRuleExpressionType.SIMPLE) {
+            <div class="tb-form-panel no-gap stroked">
+              <mat-expansion-panel class="tb-settings" [expanded]="true">
+                <mat-expansion-panel-header>
+                  {{ 'alarm-rule.filter-preview' | translate }}
+                </mat-expansion-panel-header>
+                <ng-template matExpansionPanelContent>
+                  <div>
+                    @if (specText) {
+                      <span class="spec-text">{{ specText }}</span>
+                    }
+                    @if (conditionFormGroup.get('expression.filters').value?.length) {
+                      <tb-alarm-rule-filter-text [alarmRuleExpression]="conditionFormGroup.get('expression').value"
+                                                 [arguments]="arguments"
+                                                 class="flex-1"
+                                                 [nowrap]="false"
+                                                 required>
+                      </tb-alarm-rule-filter-text>
+                    } @else {
+                      <span class="tb-prompt justify-center text-base">{{ 'alarm-rule.no-filter-preview' | translate }}</span>
+                    }
+                  </div>
+                </ng-template>
+              </mat-expansion-panel>
+            </div>
+          }
+      </div>
+    </div>
+
+      <section class="tb-form-panel stroked">
+        <div class="flex flex-row items-center justify-between">
+          <div class="tb-form-panel-title">{{ 'alarm-rule.type' | translate }}</div>
+          <tb-toggle-select formControlName="type" selectMediaBreakpoint="xs" [disabled]="isNoData">
+            <tb-toggle-option *ngFor="let alarmConditionType of alarmConditionTypes" [value]="alarmConditionType">
+              {{ alarmConditionTypeTranslation.get(alarmConditionType) | translate }}
+            </tb-toggle-option>
+          </tb-toggle-select>
+        </div>
+        @if (isNoData) {
+          <div class="tb-form-hint tb-primary-fill max-args-warning flex items-center gap-2">
+            <span>{{ 'alarm-rule.condition-type-hint' | translate }}</span>
+          </div>
+        }
+        @if (conditionFormGroup.get('type').value === AlarmConditionType.DURATION) {
+          <div class="tb-form-panel stroked no-padding-bottom">
+            <div class="flex flex-row items-center justify-between">
+              <div class="tb-form-panel-title">{{ 'alarm-rule.value' | translate }}</div>
+              <tb-toggle-select [formControl]="durationDynamicModeControl"
+                                selectMediaBreakpoint="xs">
+                <tb-toggle-option [value]="false">{{ 'alarm-rule.static' | translate }}</tb-toggle-option>
+                <tb-toggle-option [value]="true">{{ 'alarm-rule.dynamic' | translate }}</tb-toggle-option>
+              </tb-toggle-select>
+            </div>
+            <div class="flex flex-row gap-2 xs:flex-col">
+              <div class="flex-1" [class.!hidden]="durationDynamicModeControl.value">
+                <ng-container *ngTemplateOutlet="staticValueTemplate; context:{type: AlarmConditionType.DURATION, groupName: 'value'}"></ng-container>
+              </div>
+              <div class="flex-1" [class.!hidden]="!durationDynamicModeControl.value">
+                <ng-container *ngTemplateOutlet="dynamicValueTemplate; context:{groupName: 'value'}"></ng-container>
+              </div>
+              <div class="max-w-23% flex-full xs:max-w-full">
+                <mat-form-field class="mat-block" appearance="outline">
+                  <mat-select formControlName="unit" required
+                              placeholder="{{ 'alarm-rule.condition-duration-time-unit' | translate }}">
+                    <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">
+                      {{ timeUnitTranslations.get(timeUnit) | translate }}
+                    </mat-option>
+                  </mat-select>
+                  <mat-error *ngIf="conditionFormGroup.get('unit').hasError('required')">
+                    {{ 'alarm-rule.condition-duration-time-unit-required' | translate }}
+                  </mat-error>
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+        } @else if (conditionFormGroup.get('type').value === AlarmConditionType.REPEATING) {
+          <div class="tb-form-panel stroked">
+            <div class="flex flex-row items-center justify-between">
+              <div class="tb-form-panel-title">{{ 'alarm-rule.value' | translate }}</div>
+              <tb-toggle-select [formControl]="repeatingDynamicModeControl" selectMediaBreakpoint="xs">
+                <tb-toggle-option [value]="false">{{ 'alarm-rule.static' | translate }}</tb-toggle-option>
+                <tb-toggle-option [value]="true">{{ 'alarm-rule.dynamic' | translate }}</tb-toggle-option>
+              </tb-toggle-select>
+            </div>
+            <div class="flex flex-1 flex-row gap-2">
+              <div class="flex-1" [class.!hidden]="repeatingDynamicModeControl.value">
+                <ng-container *ngTemplateOutlet="staticValueTemplate; context:{type: AlarmConditionType.REPEATING, groupName: 'count'}"></ng-container>
+              </div>
+              <div class="flex-1" [class.!hidden]="!repeatingDynamicModeControl.value">
+                <ng-container *ngTemplateOutlet="dynamicValueTemplate; context:{type: AlarmConditionType.REPEATING, groupName: 'count'}"></ng-container>
+              </div>
+            </div>
+          </div>
+        }
+      </section>
+    </div>
+  </div>
+  <div mat-dialog-actions class="flex items-center justify-end">
+    <button mat-button color="primary"
+            type="button"
+            (click)="cancel()" cdkFocusInitial>
+      {{ (readonly ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    @if (!readonly) {
+      <button mat-raised-button color="primary"
+              type="submit"
+              [disabled]="conditionFormGroup.invalid || !conditionFormGroup.dirty || !filtersValid">
+        {{ 'action.save' | translate }}
+      </button>
+    }
+  </div>
+
+  <ng-template #staticValueTemplate let-type="type" let-groupName="groupName">
+    <div class="flex flex-1 flex-row items-center gap-2" [formGroupName]="groupName">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
+        <input type="number" matInput
+               step="1" min="1" max="2147483647"
+               formControlName="staticValue">
+        <mat-label>{{ defaultValuePlaceholder | translate }}</mat-label>
+        @if (conditionFormGroup.get(groupName).get('staticValue').hasError('required')) {
+          <mat-error>{{ defaultValueRequiredError | translate }}</mat-error>
+        } @else if (conditionFormGroup.get(groupName).get('staticValue').hasError('min')) {
+          <mat-error>{{ defaultValueRangeError | translate }}</mat-error>
+        } @else if (conditionFormGroup.get(groupName).get('staticValue').hasError('max')) {
+          <mat-error>{{ defaultValueRangeError | translate }}</mat-error>
+        } @else if (conditionFormGroup.get(groupName).get('staticValue').hasError('pattern')) {
+          <mat-error>{{ defaultValuePatternError | translate }}</mat-error>
+        }
+        @if (type === AlarmConditionType.REPEATING) {
+          <mat-hint translate>alarm-rule.condition-repeating-value-hint</mat-hint>
+        }
+      </mat-form-field>
+    </div>
+  </ng-template>
+  <ng-template #dynamicValueTemplate let-type="type" let-groupName="groupName">
+    <ng-container [formGroupName]="groupName">
+      <mat-form-field class="flex flex-1" appearance="outline">
+        <mat-label translate>alarm-rule.value-argument</mat-label>
+        <mat-select formControlName="dynamicValueArgument" placeholder="{{ 'action.set' | translate }}">
+          @for (argument of argumentsList; track argument) {
+            <mat-option [value]="argument">{{ argument }}</mat-option>
+          }
+        </mat-select>
+        @if (conditionFormGroup.get(groupName).get('dynamicValueArgument').hasError('required')) {
+          <mat-error>
+            {{ 'calculated-fields.hint.argument-name-required' | translate }}
+          </mat-error>
+        }
+        @if (type === AlarmConditionType.REPEATING) {
+          <mat-hint translate>alarm-rule.condition-repeating-value-hint</mat-hint>
+        }
+      </mat-form-field>
+    </ng-container>
+  </ng-template>
+</form>
+

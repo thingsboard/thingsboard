@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -108,12 +108,13 @@ export class AiConfigComponent extends RuleNodeConfigurationComponent {
     return this.translate.instant(`rule-node-config.ai.response-format-hint-${this.aiConfigForm.get('responseFormat.type').value}`);
   }
 
-  createModelAi(formControl: string) {
+  createModelAi(name: string, formControl: string) {
     this.dialog.open<AIModelDialogComponent, AIModelDialogData, AiModel>(AIModelDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
-        isAdd: true
+        isAdd: true,
+        name
       }
     }).afterClosed()
       .subscribe((model) => {

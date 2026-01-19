@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@ import {
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { IAliasController } from '@core/api/widget-api.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-time-series-chart-axis-settings-panel',
@@ -31,6 +34,15 @@ import { coerceBoolean } from '@shared/decorators/coercion';
   encapsulation: ViewEncapsulation.None
 })
 export class TimeSeriesChartAxisSettingsPanelComponent implements OnInit {
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   axisType: 'xAxis' | 'yAxis' = 'xAxis';

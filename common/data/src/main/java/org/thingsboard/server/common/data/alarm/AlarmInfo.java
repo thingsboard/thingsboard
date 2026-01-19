@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,14 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serial;
+
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
 @Schema
 public class AlarmInfo extends Alarm {
 
+    @Serial
     private static final long serialVersionUID = 2807343093519543363L;
 
     @Getter
@@ -37,6 +40,10 @@ public class AlarmInfo extends Alarm {
     @Setter
     @Schema(description = "Alarm originator label", example = "Thermostat label")
     private String originatorLabel;
+
+    @Setter
+    @Schema(description = "Originator display name", example = "Thermostat")
+    private String originatorDisplayName;
 
     @Getter
     @Setter
@@ -51,10 +58,15 @@ public class AlarmInfo extends Alarm {
         super(alarm);
     }
 
+    public String getOriginatorDisplayName() {
+        return originatorDisplayName != null ? originatorDisplayName : (originatorLabel != null ? originatorLabel : originatorName);
+    }
+
     public AlarmInfo(AlarmInfo alarmInfo) {
         super(alarmInfo);
-        this.originatorName = alarmInfo.originatorName;
-        this.originatorLabel = alarmInfo.originatorLabel;
+        this.originatorName = alarmInfo.getOriginatorName();
+        this.originatorLabel = alarmInfo.getOriginatorLabel();
+        this.originatorDisplayName = alarmInfo.getOriginatorDisplayName();
         this.assignee = alarmInfo.getAssignee();
     }
 

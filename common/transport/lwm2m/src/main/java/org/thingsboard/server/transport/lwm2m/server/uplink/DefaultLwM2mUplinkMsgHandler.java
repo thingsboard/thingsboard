@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -94,6 +94,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttrib
 import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MWriteAttributesRequest;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeCallback;
 import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MObserveCompositeRequest;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeCallback;
+import org.thingsboard.server.transport.lwm2m.server.downlink.composite.TbLwM2MReadCompositeRequest;
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfig;
 import org.thingsboard.server.transport.lwm2m.server.model.LwM2MModelConfigService;
@@ -418,7 +420,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             });
             if (!clients.isEmpty()) {
                 var oldProfile = clientContext.getProfile(clients.get(0).getRegistration());
-                this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
+                if (oldProfile != null) this.onDeviceProfileUpdate(clients, oldProfile, deviceProfile);
             }
         } catch (Exception e) {
             log.warn("[{}] failed to update profile: {} [{}]", deviceProfile.getId(), e.getMessage(), deviceProfile);
@@ -502,14 +504,30 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void sendReadRequests(LwM2mClient lwM2MClient, Lwm2mDeviceProfileTransportConfiguration profile, Set<String> supportedObjects) {
         try {
             Set<String> targetIds = new HashSet<>(profile.getObserveAttr().getAttribute());
+            Boolean initAttrTelAsObsStrategy = profile.getObserveAttr().getInitAttrTelAsObsStrategy();
             targetIds.addAll(profile.getObserveAttr().getTelemetry());
             targetIds = diffSets(profile.getObserveAttr().getObserve(), targetIds);
             targetIds = targetIds.stream().filter(target -> isSupportedTargetId(supportedObjects, target)).collect(Collectors.toSet());
-
-            CountDownLatch latch = new CountDownLatch(targetIds.size());
-            targetIds.forEach(versionedId -> sendReadRequest(lwM2MClient, versionedId,
-                    new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
-            latch.await(config.getTimeout(), TimeUnit.MILLISECONDS);
+            if (!targetIds.isEmpty()) {
+                TelemetryObserveStrategy observeStrategy = profile.getObserveAttr().getObserveStrategy();
+                long timeoutMs = config.getTimeout();
+                if (initAttrTelAsObsStrategy && observeStrategy != SINGLE) {
+                    switch (observeStrategy) {
+                        case COMPOSITE_ALL -> {
+                            sendReadCompositeRequest(lwM2MClient, targetIds.toArray(new String[0]));
+                        }
+                        case COMPOSITE_BY_OBJECT -> {
+                            Map<Integer, String[]> versionedObjectIds = groupByObjectIdVersionedIds(targetIds);
+                            versionedObjectIds.forEach((k, v) -> sendReadCompositeRequest(lwM2MClient, v));
+                        }
+                    }
+                } else {
+                    CountDownLatch latch = new CountDownLatch(targetIds.size());
+                    targetIds.forEach(versionedId -> sendReadSingleRequest(lwM2MClient, versionedId,
+                            new TbLwM2MLatchCallback<>(latch, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId))));
+                    latch.await(timeoutMs, TimeUnit.MILLISECONDS);
+                }
+            }
         } catch (InterruptedException e) {
             log.error("[{}] Failed to await Read requests!", lwM2MClient.getEndpoint(), e);
         } catch (Exception e) {
@@ -536,17 +554,11 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                         if (!completed) log.trace("[{}] Timeout occurred during SINGLE observe init", lwM2MClient.getEndpoint());
                     }
                     case COMPOSITE_ALL -> {
-                        CountDownLatch latch = new CountDownLatch(targetIds.size());
                         sendObserveCompositeRequest(lwM2MClient, targetIds.toArray(new String[0]));
-                        boolean completed = latch.await(timeoutMs, TimeUnit.MILLISECONDS);
-                        if (!completed) log.trace("[{}] Timeout occurred during COMPOSITE_ALL observe init", lwM2MClient.getEndpoint());
                     }
                     case COMPOSITE_BY_OBJECT -> {
                         Map<Integer, String[]> versionedObjectIds = groupByObjectIdVersionedIds(targetIds);
-                        CountDownLatch latch = new CountDownLatch(versionedObjectIds.size());
                         versionedObjectIds.forEach((k, v) -> sendObserveCompositeRequest(lwM2MClient, v));
-                        boolean completed = latch.await(timeoutMs, TimeUnit.MILLISECONDS);
-                        if (!completed) log.trace("[{}] Timeout occurred during COMPOSITE_BY_OBJECT observe init", lwM2MClient.getEndpoint());
                     }
                 }
             }
@@ -569,23 +581,22 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
-    private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId) {
-        sendReadRequest(lwM2MClient, versionedId, new TbLwM2MReadCallback(this, logService, lwM2MClient, versionedId));
-    }
-
-    private void sendReadRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
+    private void sendReadSingleRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ReadRequest, ReadResponse> callback) {
         TbLwM2MReadRequest request = TbLwM2MReadRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendReadRequest(lwM2MClient, request, callback);
     }
 
-    private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId) {
-        sendObserveRequest(lwM2MClient, versionedId, new TbLwM2MObserveCallback(this, logService, lwM2MClient, versionedId));
+    private void sendReadCompositeRequest(LwM2mClient lwM2MClient, String[] versionedIds) {
+        TbLwM2MReadCompositeRequest request = TbLwM2MReadCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
+        var mainCallback = new TbLwM2MReadCompositeCallback(this, logService, lwM2MClient, versionedIds);
+        defaultLwM2MDownlinkMsgHandler.sendReadCompositeRequest(lwM2MClient, request, mainCallback );
     }
 
     private void sendObserveRequest(LwM2mClient lwM2MClient, String versionedId, DownlinkRequestCallback<ObserveRequest, ObserveResponse> callback) {
         TbLwM2MObserveRequest request = TbLwM2MObserveRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
         defaultLwM2MDownlinkMsgHandler.sendObserveRequest(lwM2MClient, request, callback);
     }
+
     private void sendObserveCompositeRequest(LwM2mClient lwM2MClient, String[] versionedIds) {
 
         TbLwM2MObserveCompositeRequest request = TbLwM2MObserveCompositeRequest.builder().versionedIds(versionedIds).timeout(clientContext.getRequestTimeout(lwM2MClient)).build();
@@ -714,8 +725,10 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
 
     private void onDeviceUpdate(LwM2mClient lwM2MClient, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         var oldProfile = clientContext.getProfile(lwM2MClient.getRegistration());
-        deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), oldProfile, deviceProfile));
-        lwM2MClient.onDeviceUpdate(device, deviceProfileOpt);
+        if (oldProfile != null) {
+            deviceProfileOpt.ifPresent(deviceProfile -> this.onDeviceProfileUpdate(Collections.singletonList(lwM2MClient), oldProfile, deviceProfile));
+            lwM2MClient.onDeviceUpdate(device, deviceProfileOpt);
+        }
     }
 
     /**
@@ -729,45 +742,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         Set<String> paths = updateResource.getPaths();
         ResultsAddKeyValueProto results = new ResultsAddKeyValueProto();
         var profile = clientContext.getProfile(registration);
-        List<TransportProtos.KeyValueProto> resultAttributes = new ArrayList<>();
-        Set<String> attributes = profile.getObserveAttr().getAttribute().stream()
-                .filter(paths::contains)
-                .collect(Collectors.toSet());
-        if (!attributes.isEmpty()){
-            attributes.stream()
-                    .map(attr -> this.getKvToThingsBoard(attr, registration))
-                    .filter(Objects::nonNull)
-                    .forEach(resultAttributes::add);
-        }
-        List<TransportProtos.KeyValueProto> resultTelemetries = new ArrayList<>();
-        Set<String> telemetries = profile.getObserveAttr().getTelemetry().stream()
-                .filter(paths::contains)
-                .collect(Collectors.toSet());
-        if (!telemetries.isEmpty()){
-            telemetries.stream()
-                    .map(telemetry -> this.getKvToThingsBoard(telemetry, registration))
-                    .filter(Objects::nonNull)
-                    .forEach(resultTelemetries::add);
-        }
-        if (resultAttributes.size() > 0) {
-            results.setResultAttributes(resultAttributes);
-        }
-        if (resultTelemetries.size() > 0) {
-            results.setResultTelemetries(resultTelemetries);
-        }
-        return results;
-    }
-
-    private ResultsAddKeyValueProto getParametersFromProfile(Registration registration, Set<String> path) {
-        if (!path.isEmpty()) {
-            ResultsAddKeyValueProto results = new ResultsAddKeyValueProto();
-            var profile = clientContext.getProfile(registration);
+        if (profile != null) {
             List<TransportProtos.KeyValueProto> resultAttributes = new ArrayList<>();
             Set<String> attributes = profile.getObserveAttr().getAttribute().stream()
-                    .map(LwM2MTransportUtil::fromVersionedIdToObjectId)
-                    .filter(path::contains)
+                    .filter(paths::contains)
                     .collect(Collectors.toSet());
-            if (!attributes.isEmpty()){
+            if (!attributes.isEmpty()) {
                 attributes.stream()
                         .map(attr -> this.getKvToThingsBoard(attr, registration))
                         .filter(Objects::nonNull)
@@ -775,10 +755,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             }
             List<TransportProtos.KeyValueProto> resultTelemetries = new ArrayList<>();
             Set<String> telemetries = profile.getObserveAttr().getTelemetry().stream()
-                    .map(LwM2MTransportUtil::fromVersionedIdToObjectId)
-                    .filter(path::contains)
+                    .filter(paths::contains)
                     .collect(Collectors.toSet());
-            if (!telemetries.isEmpty()){
+            if (!telemetries.isEmpty()) {
                 telemetries.stream()
                         .map(telemetry -> this.getKvToThingsBoard(telemetry, registration))
                         .filter(Objects::nonNull)
@@ -790,14 +769,15 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             if (resultTelemetries.size() > 0) {
                 results.setResultTelemetries(resultTelemetries);
             }
-            return results;
         }
-        return null;
+        return results;
     }
 
     private TransportProtos.KeyValueProto getKvToThingsBoard(String pathIdVer, Registration registration) {
         LwM2mClient lwM2MClient = this.clientContext.getClientByEndpoint(registration.getEndpoint());
-        Map<String, String> names = clientContext.getProfile(lwM2MClient.getRegistration()).getObserveAttr().getKeyName();
+        var clientProfile = clientContext.getProfile(lwM2MClient.getRegistration());
+        if (clientProfile == null) return null;
+        Map<String, String> names = clientProfile.getObserveAttr().getKeyName();
         if (names != null && names.containsKey(pathIdVer)) {
             String resourceName = names.get(pathIdVer);
             if (resourceName != null && !resourceName.isEmpty()) {
@@ -860,7 +840,8 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             ResourceUpdateResult updateResource = new ResourceUpdateResult(lwM2MClient);
             request.getObjectInstances().forEach(instance ->
                             instance.getResources().forEach((resId, lwM2mResource) ->{
-                                this.updateResourcesValue(updateResource, lwM2mResource, versionId + "/" + resId, Mode.REPLACE, 0);
+                                String path = versionId.endsWith("/") ? versionId + resId : versionId + "/" + resId;
+                                this.updateResourcesValue(updateResource, lwM2mResource, path, Mode.REPLACE, 0);
                             })
             );
             clientContext.update(lwM2MClient);
@@ -887,10 +868,12 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void onDeviceProfileUpdate(List<LwM2mClient> clients, Lwm2mDeviceProfileTransportConfiguration oldProfileTransportConfiguration, DeviceProfile deviceProfile) {
         if (clientContext.profileUpdate(deviceProfile) != null) {
             var newProfileTransportConfiguration = clientContext.getProfile(clients.get(0).getRegistration());
-            ParametersUpdateAnalyzeResult parametersUpdate = getParametersUpdate(oldProfileTransportConfiguration, newProfileTransportConfiguration);
-            ParametersObserveAnalyzeResult parametersObserve = getParametersObserve(oldProfileTransportConfiguration.getObserveAttr(), newProfileTransportConfiguration.getObserveAttr(), deviceProfile.getId().getId());
-            compareAndSetWriteAttributesObservations(clients, parametersUpdate, parametersObserve);
-            updateValueOta(clients, newProfileTransportConfiguration, oldProfileTransportConfiguration);
+            if (newProfileTransportConfiguration != null) {
+                ParametersUpdateAnalyzeResult parametersUpdate = getParametersUpdate(oldProfileTransportConfiguration, newProfileTransportConfiguration);
+                ParametersObserveAnalyzeResult parametersObserve = getParametersObserve(oldProfileTransportConfiguration.getObserveAttr(), newProfileTransportConfiguration.getObserveAttr(), deviceProfile.getId().getId());
+                compareAndSetWriteAttributesObservations(clients, parametersUpdate, parametersObserve);
+                updateValueOta(clients, newProfileTransportConfiguration, oldProfileTransportConfiguration);
+            }
         }
     }
 

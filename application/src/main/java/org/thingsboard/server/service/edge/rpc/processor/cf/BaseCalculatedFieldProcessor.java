@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ public abstract class BaseCalculatedFieldProcessor extends BaseEdgeProcessor {
             }
 
             String calculatedFieldName = calculatedField.getName();
-            CalculatedField calculatedFieldByName = edgeCtx.getCalculatedFieldService().findByEntityIdAndName(calculatedField.getEntityId(), calculatedFieldName);
+            CalculatedField calculatedFieldByName = edgeCtx.getCalculatedFieldService().findByEntityIdAndTypeAndName(calculatedField.getEntityId(), calculatedField.getType(), calculatedFieldName);
             if (calculatedFieldByName != null && !calculatedFieldByName.getId().equals(calculatedFieldId)) {
                 calculatedFieldName = calculatedFieldName + "_" + StringUtils.randomAlphabetic(15);
                 log.warn("[{}] calculatedField with name {} already exists. Renaming calculatedField name to {}",

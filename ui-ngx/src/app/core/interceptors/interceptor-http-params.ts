@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@ import { InterceptorConfig } from './interceptor-config';
 export class InterceptorHttpParams extends HttpParams {
   constructor(
     public interceptorConfig: InterceptorConfig,
-    params?: { [param: string]: string | string[] }
+    params?: { [param: string]: string | number | boolean | ReadonlyArray<string | number | boolean>; }
   ) {
     super({ fromObject: params });
   }

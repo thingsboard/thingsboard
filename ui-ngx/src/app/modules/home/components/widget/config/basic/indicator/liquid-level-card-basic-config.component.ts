@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,7 @@ import {
   datasourcesHasOnlyComparisonAggregation,
   DatasourceType,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -125,6 +126,8 @@ export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigCompon
   totalVolumeValuePreviewFn = this._totalVolumeValuePreviewFn.bind(this);
 
   datePreviewFn = this._datePreviewFn.bind(this);
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   private keySearchText: string;
   private latestKeySearchTextResult: Array<string>;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,14 +15,12 @@
  */
 package org.thingsboard.server.actors.calculatedField;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Builder;
 import lombok.Getter;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.service.cf.ctx.state.ArgumentEntry;
 import org.thingsboard.server.service.cf.ctx.state.CalculatedFieldCtx;
 
-import java.util.Map;
 import java.util.UUID;
 
 @Getter
@@ -32,8 +30,8 @@ public class CalculatedFieldException extends Exception {
     private final CalculatedFieldCtx ctx;
     private final EntityId eventEntity;
     private final UUID msgId;
-    private final TbMsgType msgType;
-    private Map<String, ArgumentEntry> arguments;
+    private final String msgType;
+    private JsonNode arguments;
     private String errorMessage;
     private Exception cause;
 

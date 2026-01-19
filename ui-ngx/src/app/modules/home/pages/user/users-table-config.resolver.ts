@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -158,6 +158,12 @@ export class UsersTableConfigResolver  {
     user.tenantId = new TenantId(this.tenantId);
     user.customerId = new CustomerId(this.customerId);
     user.authority = this.authority;
+    if (!user.additionalInfo.lang) {
+      delete user.additionalInfo.lang;
+    }
+    if (!user.additionalInfo.unitSystem) {
+      delete user.additionalInfo.unitSystem;
+    }
     return this.userService.saveUser(user);
   }
 

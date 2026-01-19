@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -70,11 +70,10 @@ public class TbCaffeineCacheConfiguration {
     }
 
     private CaffeineCache buildCache(String name, CacheSpecs cacheSpec) {
-
-        final Caffeine<Object, Object> caffeineBuilder
-                = Caffeine.newBuilder()
+        Caffeine<Object, Object> caffeineBuilder = Caffeine.newBuilder()
                 .weigher(collectionSafeWeigher())
                 .maximumWeight(cacheSpec.getMaxSize())
+                .recordStats()
                 .ticker(ticker());
         if (!cacheSpec.getTimeToLiveInMinutes().equals(0)) {
             caffeineBuilder.expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ public final class CacheConstants {
     public static final String SENT_NOTIFICATIONS_CACHE = "sentNotifications";
     public static final String TRENDZ_SETTINGS_CACHE = "trendzSettings";
     public static final String AI_MODEL_CACHE = "aiModel";
+    public static final String API_KEYS_CACHE = "apiKeys";
 
     public static final String ASSET_PROFILE_CACHE = "assetProfiles";
     public static final String ATTRIBUTES_CACHE = "attributes";

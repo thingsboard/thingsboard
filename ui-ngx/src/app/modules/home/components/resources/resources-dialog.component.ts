@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -98,18 +98,17 @@ export class ResourcesDialogComponent extends DialogComponent<ResourcesDialogCom
           resources.push({
             resourceType: resource.resourceType,
             data,
-            fileName: resource.fileName[index],
             title: resource.title
           });
         });
-        this.resourceService.saveResources(resources, {resendRequest: true}).pipe(
+        this.resourceService.uploadResources(resources, {resendRequest: true}).pipe(
           map((response) => response[0])
         ).subscribe(result => this.dialogRef.close(result));
       } else {
         if (resource.resourceType !== ResourceType.GENERAL) {
           delete resource.descriptor;
         }
-        this.resourceService.saveResource(resource).subscribe(result => this.dialogRef.close(result));
+        this.resourceService.uploadResource(resource).subscribe(result => this.dialogRef.close(result));
       }
     }
   }

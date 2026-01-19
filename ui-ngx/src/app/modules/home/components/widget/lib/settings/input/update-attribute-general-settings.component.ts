@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { widgetTitleAutocompleteValues } from '@app/shared/public-api';
 
 export interface UpdateAttributeGeneralSettings {
   widgetTitle: string;
@@ -77,6 +78,8 @@ export class UpdateAttributeGeneralSettingsComponent extends PageComponent imple
 
   @Input()
   hasLabelValue = true;
+  
+  predefinedValues = widgetTitleAutocompleteValues;
 
   private modelValue: UpdateAttributeGeneralSettings;
 

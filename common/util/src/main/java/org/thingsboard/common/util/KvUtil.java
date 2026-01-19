@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -58,6 +58,37 @@ public class KvUtil {
                 }
             default:
                 return null;
+        }
+    }
+
+    public static Long getLongValue(KvEntry entry) {
+        switch (entry.getDataType()) {
+            case LONG -> {
+                return entry.getLongValue().orElse(null);
+            }
+            case DOUBLE -> {
+                return entry.getDoubleValue().map(Double::longValue).orElse(null);
+            }
+            case BOOLEAN -> {
+                return entry.getBooleanValue().map(b -> b ? 1L : 0L).orElse(null);
+            }
+            case STRING -> {
+                try {
+                    return Long.parseLong(entry.getStrValue().orElse(""));
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+            case JSON -> {
+                try {
+                    return Long.parseLong(entry.getJsonValue().orElse(""));
+                } catch (RuntimeException e) {
+                    return null;
+                }
+            }
+            default -> {
+                return null;
+            }
         }
     }
 

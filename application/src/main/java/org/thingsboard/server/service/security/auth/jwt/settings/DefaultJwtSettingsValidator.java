@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.bouncycastle.util.Arrays;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
-import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.exception.DataValidationException;
 
 import java.util.Base64;
 import java.util.Optional;
@@ -66,7 +66,7 @@ public class DefaultJwtSettingsValidator implements JwtSettingsValidator {
             throw new DataValidationException("JWT token signing key should be a Base64 encoded string representing at least 512 bits of data!");
         }
 
-        System.arraycopy(decodedKey, 0, RandomUtils.nextBytes(decodedKey.length), 0, decodedKey.length); //secure memory
+        System.arraycopy(decodedKey, 0, RandomUtils.secure().randomBytes(decodedKey.length), 0, decodedKey.length); // secure memory
     }
 
 }

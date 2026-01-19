@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,8 +35,10 @@ public class EntitiesSchemaSqlTest extends AbstractServiceTest {
 
     @Value("${classpath:sql/schema-entities.sql}")
     private Path installEntitiesPath;
-    @Value("${classpath:sql/schema-views-and-functions.sql}")
+    @Value("${classpath:sql/schema-views.sql}")
     private Path installViewsPath;
+    @Value("${classpath:sql/schema-functions.sql}")
+    private Path installFunctionsPath;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -45,10 +47,12 @@ public class EntitiesSchemaSqlTest extends AbstractServiceTest {
     public void testRepeatedInstall() throws IOException {
         String entitiesScript = Files.readString(installEntitiesPath);
         String viewsScript = Files.readString(installViewsPath);
+        String functionsScript = Files.readString(installFunctionsPath);
         try {
             for (int i = 1; i <= 2; i++) {
                 jdbcTemplate.execute(entitiesScript);
                 jdbcTemplate.execute(viewsScript);
+                jdbcTemplate.execute(functionsScript);
             }
         } catch (Exception e) {
             Assertions.fail("Failed to execute reinstall", e);

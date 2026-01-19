@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,15 +15,34 @@
  */
 package org.thingsboard.server.queue.common.state;
 
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.consumer.PartitionedQueueConsumerManager;
+import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.Collections;
+import java.util.Set;
+
+import static org.thingsboard.server.common.msg.queue.TopicPartitionInfo.withTopic;
 
 public class DefaultQueueStateService<E extends TbQueueMsg, S extends TbQueueMsg> extends QueueStateService<E, S> {
 
     public DefaultQueueStateService(PartitionedQueueConsumerManager<E> eventConsumer) {
         super(eventConsumer, Collections.emptyList());
+    }
+
+    @Override
+    protected void addPartitions(QueueKey queueKey, Set<TopicPartitionInfo> partitions, RestoreCallback callback) {
+        if (callback != null) {
+            for (TopicPartitionInfo partition : partitions) {
+                callback.onPartitionRestored(partition);
+            }
+            callback.onAllPartitionsRestored();
+        }
+        eventConsumer.addPartitions(partitions);
+        for (PartitionedQueueConsumerManager<?> consumer : otherConsumers) {
+            consumer.addPartitions(withTopic(partitions, consumer.getTopic()));
+        }
     }
 
 }

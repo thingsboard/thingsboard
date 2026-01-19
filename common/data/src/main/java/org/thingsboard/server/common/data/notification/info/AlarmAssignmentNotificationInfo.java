@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2025 The Thingsboard Authors
+ * Copyright © 2016-2026 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,6 +53,7 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
     private UUID alarmId;
     private EntityId alarmOriginator;
     private String alarmOriginatorName;
+    private String alarmOriginatorLabel;
     private AlarmSeverity alarmSeverity;
     private AlarmStatus alarmStatus;
     private CustomerId alarmCustomerId;
@@ -77,7 +78,8 @@ public class AlarmAssignmentNotificationInfo implements RuleOriginatedNotificati
                 "alarmStatus", alarmStatus.toString(),
                 "alarmOriginatorEntityType", alarmOriginator.getEntityType().getNormalName(),
                 "alarmOriginatorId", alarmOriginator.getId().toString(),
-                "alarmOriginatorName", alarmOriginatorName
+                "alarmOriginatorName", alarmOriginatorName,
+                "alarmOriginatorLabel", alarmOriginatorLabel
         );
     }
 

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2025 The Thingsboard Authors
+/// Copyright © 2016-2026 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -375,6 +375,12 @@ import {
   ValueStepperWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/control/value-stepper-widget-settings.component';
 import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings/map/map-widget-settings.component';
+import {
+  ApiUsageWidgetSettingsComponent
+} from "@home/components/widget/lib/settings/cards/api-usage-widget-settings.component";
+import {
+  ApiUsageDataKeyRowComponent
+} from "@home/components/widget/lib/settings/cards/api-usage-data-key-row.component";
 
 @NgModule({
   declarations: [
@@ -508,7 +514,9 @@ import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent,
-    MapWidgetSettingsComponent
+    MapWidgetSettingsComponent,
+    ApiUsageWidgetSettingsComponent,
+    ApiUsageDataKeyRowComponent
   ],
   imports: [
     CommonModule,
@@ -647,7 +655,8 @@ import { MapWidgetSettingsComponent } from '@home/components/widget/lib/settings
     LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent,
-    MapWidgetSettingsComponent
+    MapWidgetSettingsComponent,
+    ApiUsageWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
