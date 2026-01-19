@@ -67,26 +67,10 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "sum by (job,quantile) (ruleEngine_Main_seconds)*1000",
+          "expr": "sum by (job, queue, quantile) (ruleEngine_seconds)*1000",
           "interval": "",
-          "legendFormat": "Main {{job}} Quantile - {{quantile}}, ms",
+          "legendFormat": "{{queue}} {{job}} Quantile - {{quantile}}, ms",
           "refId": "B"
-        },
-        {
-          "exemplar": true,
-          "expr": "sum by (job,quantile) (ruleEngine_HighPriority_seconds)*1000",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "HighPriority  {{job}} Quantile - {{quantile}}, ms",
-          "refId": "A"
-        },
-        {
-          "exemplar": true,
-          "expr": "sum by (job,quantile) (ruleEngine_SequentialByOriginator_seconds)*1000",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "SequentialByOriginator  {{job}} Quantile - {{quantile}}, ms",
-          "refId": "C"
         }
       ],
       "thresholds": [],
@@ -179,26 +163,10 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "ruleEngine_Main_seconds_max *1000",
+          "expr": "ruleEngine_seconds_max *1000",
           "interval": "",
-          "legendFormat": "Max - {{job}}, ms",
+          "legendFormat": "{{queue}} - {{job}}, ms",
           "refId": "A"
-        },
-        {
-          "exemplar": true,
-          "expr": "ruleEngine_HighPriority_seconds_max *1000",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "HighPriority - {{job}}, ms",
-          "refId": "B"
-        },
-        {
-          "exemplar": true,
-          "expr": "ruleEngine_SequentialByOriginator_seconds_max *1000",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "SequentialByOriginator - {{job}}, ms",
-          "refId": "C"
         }
       ],
       "thresholds": [],
@@ -291,26 +259,10 @@
       "targets": [
         {
           "exemplar": true,
-          "expr": "(increase(ruleEngine_Main_seconds_sum[1m])  / increase(ruleEngine_Main_seconds_count[1m])) * 1000",
+          "expr": "(increase(ruleEngine_seconds_sum[1m])  / increase(ruleEngine_seconds_count[1m])) * 1000",
           "interval": "",
-          "legendFormat": "Main  {{job}}",
+          "legendFormat": "{{queue}} {{job}}",
           "refId": "A"
-        },
-        {
-          "exemplar": true,
-          "expr": "(increase(ruleEngine_HighPriority_seconds_sum[1m])  / increase(ruleEngine_HighPriority_seconds_count[1m])) * 1000",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "HighPriority {{job}}",
-          "refId": "B"
-        },
-        {
-          "exemplar": true,
-          "expr": "(increase(ruleEngine_SequentialByOriginator_seconds_sum[1m])  / increase(ruleEngine_SequentialByOriginator_seconds_count[1m])) * 1000",
-          "hide": false,
-          "interval": "",
-          "legendFormat": "SequentialByOriginator {{job}}",
-          "refId": "C"
         }
       ],
       "thresholds": [],
