@@ -33,7 +33,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
 
     private String restEndpointUrlPattern;
     private String requestMethod;
-    // null for legacy configs - triggers different URL encoding logic in TbHttpClient to preserver backward compatibility
+    // null for legacy configs - triggers different URL encoding logic in TbHttpClient to preserve backward compatibility
     // all new/modified configs since introduction of this property are forced to have non-null value by UI (and use new encoding logic)
     private List<@NotNull @Valid QueryParam> queryParams;
     private Map<String, String> headers;
