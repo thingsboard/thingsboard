@@ -55,6 +55,15 @@
             class="tb-error">
     warning
   </mat-icon>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="entityNotValidText | translate"
+            *ngIf="inlineField && selectEntityFormGroup.get('entity').hasError('objectRequired')
+                            && selectEntityFormGroup.get('entity').touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete class="tb-autocomplete"
                     #entityAutocomplete="matAutocomplete"
                     [displayWith]="displayEntityFn">
@@ -81,5 +90,8 @@
   </mat-autocomplete>
   <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('required')">
     {{ requiredErrorText | translate }}
+  </mat-error>
+  <mat-error *ngIf="!inlineField && selectEntityFormGroup.get('entity').hasError('objectRequired')">
+    {{ entityNotValidText | translate }}
   </mat-error>
 </mat-form-field>
