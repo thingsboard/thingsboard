@@ -423,6 +423,11 @@
             <groupId>org.thingsboard.langchain4j</groupId>
             <artifactId>langchain4j-ollama</artifactId>
         </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
