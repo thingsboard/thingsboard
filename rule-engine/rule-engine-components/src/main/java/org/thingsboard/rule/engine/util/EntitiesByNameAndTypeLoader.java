@@ -24,13 +24,6 @@ import java.util.List;
 
 public class EntitiesByNameAndTypeLoader {
 
-    private static final List<EntityType> AVAILABLE_ENTITY_TYPES = List.of(
-            EntityType.DEVICE,
-            EntityType.ASSET,
-            EntityType.ENTITY_VIEW,
-            EntityType.EDGE,
-            EntityType.USER);
-
     public static EntityId findEntityId(TbContext ctx, EntityType entityType, String entityName) {
         BaseData<? extends EntityId> targetEntity;
         switch (entityType) {
@@ -56,12 +49,6 @@ public class EntitiesByNameAndTypeLoader {
             throw new IllegalStateException("Failed to find " + entityType.getNormalName().toLowerCase() + " with name '" + entityName + "'!");
         }
         return targetEntity.getId();
-    }
-
-    public static void checkEntityType(EntityType entityType) {
-        if (!AVAILABLE_ENTITY_TYPES.contains(entityType)) {
-            throw new IllegalStateException("Unexpected entity type " + entityType.name());
-        }
     }
 
 }
