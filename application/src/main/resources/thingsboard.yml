@@ -1330,7 +1330,7 @@ transport:
         # URL of gateways dashboard repository
         repository_url: "${TB_GATEWAY_DASHBOARD_SYNC_REPOSITORY_URL:https://github.com/thingsboard/gateway-management-extensions-dist.git}"
         # Branch of gateways dashboard repository to work with
-        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.0.0}"
+        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.2}"
         # Fetch frequency in hours for gateways dashboard repository
         fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
