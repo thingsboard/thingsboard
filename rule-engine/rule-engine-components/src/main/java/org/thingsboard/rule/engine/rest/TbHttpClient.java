@@ -326,7 +326,7 @@ public class TbHttpClient {
      * Use {@link #buildEncodedUriNew} with a separate query params list,
      * where values are encoded exactly once: {@code +} → {@code %2B}, {@code @} → {@code %40}.
      */
-    @Deprecated(since = "4.2.1.2", forRemoval = true)
+    @Deprecated(forRemoval = true)
     private URI buildEncodedUriLegacy(String endpointUrl) {
         return UriComponentsBuilder.fromUriString(endpointUrl).build().encode().toUri();
     }
