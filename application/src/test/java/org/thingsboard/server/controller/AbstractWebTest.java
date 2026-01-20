@@ -404,7 +404,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
         jdbcTemplate.execute("TRUNCATE TABLE notification");
 
-        log.info("Executed web test teardown");
+        log.debug("Executed web test teardown");
     }
 
     private void verifyNoTenantsLeft() throws Exception {
