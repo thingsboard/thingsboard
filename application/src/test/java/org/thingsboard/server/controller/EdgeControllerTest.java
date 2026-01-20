@@ -36,7 +36,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -121,7 +124,12 @@ import static org.thingsboard.server.edge.AbstractEdgeTest.CONNECT_MESSAGE_COUNT
 public class EdgeControllerTest extends AbstractControllerTest {
 
     public static final String EDGE_HOST = "localhost";
-    public static final int EDGE_PORT = 7070;
+    public static final int EDGE_PORT = TestSocketUtils.findAvailableTcpPort();
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.debug("edges.rpc.port = {}", EDGE_PORT);
+        registry.add("edges.rpc.port", () -> EDGE_PORT);
+    }
 
     private IdComparator<Edge> idComparator = new IdComparator<>();
 
