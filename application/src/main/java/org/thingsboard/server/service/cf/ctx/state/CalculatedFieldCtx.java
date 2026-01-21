@@ -726,6 +726,9 @@ public class CalculatedFieldCtx implements Closeable {
                 return true;
             }
         }
+        if (cfType == CalculatedFieldType.PROPAGATION && !propagationArgument.equals(other.propagationArgument)) {
+            return true;
+        }
         if (hasGeofencingZoneGroupConfigurationChanges(other)) {
             return true;
         }
