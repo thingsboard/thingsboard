@@ -15,7 +15,7 @@
 ///
 
 import { Component } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
+import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -31,8 +31,6 @@ export class SendRpcWidgetSettingsComponent extends WidgetSettingsComponent {
   sendRpcWidgetSettingsForm: UntypedFormGroup;
 
   contentTypes = ContentType;
-
-  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
