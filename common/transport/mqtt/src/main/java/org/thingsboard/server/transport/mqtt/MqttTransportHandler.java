@@ -73,6 +73,7 @@ import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.common.transport.auth.TransportDeviceInfo;
 import org.thingsboard.server.common.transport.auth.ValidateDeviceCredentialsResponse;
 import org.thingsboard.server.common.transport.service.SessionMetaData;
+import org.thingsboard.server.common.transport.session.SessionCloseReason;
 import org.thingsboard.server.common.transport.util.SslUtil;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ProvisionDeviceResponseMsg;
@@ -1306,15 +1307,20 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void doDisconnect() {
         if (deviceSessionCtx.isConnected()) {
             log.debug("[{}] Client disconnected!", sessionId);
-            transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+            boolean notifyCore = deviceSessionCtx.shouldNotifyCore();
+            if (notifyCore) {
+                transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
+            }
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
                 gatewaySessionHandler.onDevicesDisconnect();
             }
             if (sparkplugSessionHandler != null) {
-                // add Msg Telemetry node: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
-                sparkplugSessionHandler.sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
-                        deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
+                if (notifyCore) {
+                    // add Msg Telemetry node: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
+                    sparkplugSessionHandler.sendSparkplugStateOnTelemetry(deviceSessionCtx.getSessionInfo(),
+                            deviceSessionCtx.getDeviceInfo().getDeviceName(), OFFLINE, new Date().getTime());
+                }
                 sparkplugSessionHandler.onDevicesDisconnect();
             }
             deviceSessionCtx.setDisconnected();
@@ -1596,6 +1602,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         if (gatewaySessionHandler != null) {
             gatewaySessionHandler.onGatewayDelete(deviceId);
         }
+    }
+
+    @Override
+    public void onTenantDeleted(DeviceId deviceId) {
+        deviceSessionCtx.setSessionCloseReason(SessionCloseReason.TENANT_DELETED);
+        onDeviceDeleted(deviceId);
     }
 
     public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {
