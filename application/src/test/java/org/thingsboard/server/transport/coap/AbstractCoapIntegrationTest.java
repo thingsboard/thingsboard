@@ -62,7 +62,7 @@ public abstract class AbstractCoapIntegrationTest extends AbstractTransportInteg
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
-        log.info("coap.bind_port = {}", COAP_PORT);
+        log.warn("coap.bind_port = {}", COAP_PORT);
         registry.add("coap.bind_port", () -> COAP_PORT);
     }
 

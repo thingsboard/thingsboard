@@ -82,7 +82,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
 
     @DynamicPropertySource
     static void props(DynamicPropertyRegistry registry) {
-        log.info("coap.dtls.bind_port = {}", COAPS_PORT);
+        log.warn("coap.dtls.bind_port = {}", COAPS_PORT);
         registry.add("coap.dtls.bind_port", () -> COAPS_PORT);
     }
 
@@ -297,6 +297,7 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
             socket.setReuseAddress(true);
             return true;
         } catch (IOException e) {
+            log.warn("Failed to open UDP port on port " + port, e);
             return false;
         }
     }
