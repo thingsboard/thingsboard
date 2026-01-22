@@ -142,4 +142,52 @@ export class SegmentedButtonBasicConfigComponent extends BasicWidgetConfigCompon
     return this.widgetConfig;
   }
 
+
+  protected validatorTriggers(): string[] {
+    return ['appearance.leftAppearance.showLabel', 'appearance.leftAppearance.showIcon', 'appearance.rightAppearance.showLabel', 'appearance.rightAppearance.showIcon',];
+  }
+
+  protected updateValidators(emitEvent: boolean) {
+    const showLeftLabel: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.showLabel').value;
+    const showRightLabel: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.showLabel').value;
+
+    const showLeftIcon: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.showIcon').value;
+    const showRightIcon: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.showIcon').value;
+
+    if (showLeftLabel) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.label').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.labelFont').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.label').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.labelFont').disable({emitEvent});
+    }
+
+    if (showRightLabel) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.label').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.labelFont').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.label').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.labelFont').disable({emitEvent});
+    }
+
+    if (showLeftIcon) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.icon').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSize').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSizeUnit').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.icon').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSize').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSizeUnit').disable({emitEvent});
+    }
+
+    if (showRightIcon) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.icon').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSize').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSizeUnit').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.icon').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSize').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSizeUnit').disable({emitEvent});
+    }
+  }
 }
