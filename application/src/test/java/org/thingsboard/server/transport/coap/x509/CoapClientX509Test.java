@@ -97,6 +97,9 @@ public class CoapClientX509Test {
         if (clientX509 != null) {
             clientX509.shutdown();
         }
+        if (dtlsConnector != null) {
+            dtlsConnector.destroy();
+        }
     }
 
     public CoapResponse postMethod(String requestBody) throws ConnectorException, IOException {
