@@ -16,7 +16,10 @@
 package org.thingsboard.server.transport.coap;
 
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -40,6 +43,7 @@ import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadCo
 import org.thingsboard.server.common.data.device.profile.TransportPayloadTypeConfiguration;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.transport.AbstractTransportIntegrationTest;
+import org.thingsboard.server.utils.PortFinder;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -51,6 +55,16 @@ import static org.junit.Assert.assertNotNull;
 })
 @Slf4j
 public abstract class AbstractCoapIntegrationTest extends AbstractTransportIntegrationTest {
+
+    public static final String COAP_HOST = "localhost";
+    public static final int COAP_PORT = PortFinder.findAvailableUdpPort();
+    public static final String COAP_BASE_URL = "coap://" + COAP_HOST + ":" + COAP_PORT + "/api/v1/";
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.info("coap.bind_port = {}", COAP_PORT);
+        registry.add("coap.bind_port", () -> COAP_PORT);
+    }
 
     protected final byte[] EMPTY_PAYLOAD = new byte[0];
     protected CoapTestClient client;

@@ -30,8 +30,6 @@ public abstract class AbstractTransportIntegrationTest extends AbstractControlle
 
     protected static final int DEFAULT_WAIT_TIMEOUT_SECONDS = 30;
 
-    protected static final String COAP_BASE_URL = "coap://localhost:5683/api/v1/";
-
     protected static final AtomicInteger atomicInteger = new AtomicInteger(2);
 
     public static final String DEVICE_TELEMETRY_PROTO_SCHEMA = "syntax =\"proto3\";\n" +
