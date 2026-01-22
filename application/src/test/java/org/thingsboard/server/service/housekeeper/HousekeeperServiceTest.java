@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
@@ -127,9 +127,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private HousekeeperService housekeeperService;
-    @SpyBean
+    @MockitoSpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
     @Autowired
     private EventService eventService;
@@ -153,7 +153,7 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private CustomerService customerService;
     @Autowired
     private DashboardService dashboardService;
-    @SpyBean
+    @MockitoSpyBean
     private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
 
     private TenantId tenantId;
@@ -482,11 +482,11 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
         Mockito.clearInvocations(housekeeperService);
         doCallRealMethod().when(tsHistoryDeletionTaskProcessor).process(any());
         TimeUnit.SECONDS.sleep(2);
-        verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, null)));
+        verify(housekeeperService, never()).processTask(argThat(getTaskMatcher(device.getId(), HousekeeperTaskType.DELETE_TS_HISTORY, null)), false);
     }
 
     private void verifyTaskProcessing(EntityId entityId, HousekeeperTaskType taskType, int expectedAttempt) throws Exception {
-        verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)));
+        verify(housekeeperService).processTask(argThat(getTaskMatcher(entityId, taskType, task -> task.getAttempt() == expectedAttempt)), false);
     }
 
     private ArgumentMatcher<ToHousekeeperServiceMsg> getTaskMatcher(EntityId entityId, HousekeeperTaskType taskType,
