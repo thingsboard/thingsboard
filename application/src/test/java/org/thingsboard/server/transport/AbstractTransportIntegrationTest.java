@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @Slf4j
 public abstract class AbstractTransportIntegrationTest extends AbstractControllerTest {
 
-    protected static final int DEFAULT_WAIT_TIMEOUT_SECONDS = 30;
+    public static final int DEFAULT_WAIT_TIMEOUT_SECONDS = 30;
 
     protected static final AtomicInteger atomicInteger = new AtomicInteger(2);
 

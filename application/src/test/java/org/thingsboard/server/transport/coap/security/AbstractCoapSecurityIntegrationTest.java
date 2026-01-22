@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
-import org.springframework.test.util.TestSocketUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.Device;
@@ -44,7 +43,6 @@ import org.thingsboard.server.utils.PortFinder;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.DatagramSocket;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -55,9 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -178,16 +174,10 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         CoapClientX509Test clientX509 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey,
                 "CoapX509TrustNo_" + FeatureType.TELEMETRY.name(), deviceProfile.getId(), fixedPort);
         clientX509.disconnect();
-        await("Need to make port " + fixedPort + " free")
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> isUDPPortAvailable(fixedPort));
         CoapClientX509Test clientX509_01 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey_01,
                 "CoapX509TrustNo_" + FeatureType.TELEMETRY.name() + "_01", deviceProfile.getId(),
                 fixedPort, PAYLOAD_VALUES_STR_01);
         clientX509_01.disconnect();
-        await("Await to make port " + fixedPort + " free")
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> isUDPPortAvailable(fixedPort));
     }
 
     private CoapClientX509Test clientX509UpdateTest(FeatureType featureType, CertPrivateKey certPrivateKey,
@@ -291,14 +281,5 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         }
     }
 
-    private static boolean isUDPPortAvailable(int port) {
-        try (DatagramSocket socket = new DatagramSocket(port)) {
-            socket.setReuseAddress(true);
-            return true;
-        } catch (IOException e) {
-            log.warn("Failed to open UDP port on port " + port, e);
-            return false;
-        }
-    }
 }
 
