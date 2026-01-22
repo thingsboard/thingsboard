@@ -68,6 +68,7 @@ import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,10 @@ public class EdgeImitator {
     //This addressing the issue: DeviceEdgeTest>AbstractEdgeTest.setupEdgeTest:212->AbstractEdgeTest.verifyEdgeConnectionAndInitialData:306->AbstractEdgeTest.validateMsgsCnt:387 » ConcurrentModification
     public List<AbstractMessage> getDownlinkMsgs() {
         return downlinkMsgs.stream().toList();
+    }
+
+    public Deque<AbstractMessage> getDownlinkMsgsDeque() {
+        return downlinkMsgs;
     }
 
     @Getter
