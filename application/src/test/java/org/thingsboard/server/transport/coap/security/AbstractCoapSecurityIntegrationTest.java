@@ -45,7 +45,6 @@ import org.thingsboard.server.utils.PortFinder;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.DatagramSocket;
-import java.net.ServerSocket;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
