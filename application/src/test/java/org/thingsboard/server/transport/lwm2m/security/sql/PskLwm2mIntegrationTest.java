@@ -136,7 +136,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
                 ON_REGISTRATION_SUCCESS,
                 true);
 
-        awaitObserveReadAll(1, lwm2mDevice.getId().getId().toString());
+        awaitObserveReadAll(1, lwm2mDevice.getId().getId().toString(), "before client stops for the first time");
         lwM2MTestClient.stop(true);
 
         DeviceProfile foundDeviceProfile = doGet("/api/deviceProfile/" + lwm2mDevice.getDeviceProfileId().getId().toString(), DeviceProfile.class);
@@ -146,7 +146,7 @@ public class PskLwm2mIntegrationTest extends AbstractSecurityLwM2MIntegrationTes
         Assert.assertNotNull(lwm2mDeviceProfileManyParams);
 
         lwM2MTestClient.start(true);
-        awaitObserveReadAll(1, lwm2mDevice.getId().getId().toString());
+        awaitObserveReadAll(1, lwm2mDevice.getId().getId().toString(), "second after client restart");
         awaitUpdateReg(3);
     }
 
