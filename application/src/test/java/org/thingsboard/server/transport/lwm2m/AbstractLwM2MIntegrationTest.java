@@ -19,6 +19,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import jnr.ffi.annotations.In;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
 import org.awaitility.core.ConditionTimeoutException;
@@ -672,10 +673,9 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         try {
             if (lwM2MTestClient != null && lwM2MTestClient.getLeshanClient() != null) {
                 boolean serverAlive = false;
-                for (int port = AbstractLwM2MIntegrationTest.port; port <= securityPortBs; port++) {
-                    try (ServerSocket socket = new ServerSocket(port)) {
-                         log.info("Port {} is free.", port);
-                    } catch (IOException e) {
+                List<Integer> ports = List.of(LWM2M_PORT, LWM2MS_PORT, LWM2MS_BOOTSTRAP_PORT, LWM2MS_BOOTSTRAP_PORT);
+                for (Integer port : ports) {
+                    if (!PortFinder.isUDPPortAvailable(port)) {
                         log.debug("Port {} is busy — CoAP server still active.", port);
                         serverAlive = true;
                         break;
