@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -41,22 +42,22 @@ public class DefaultNativeAssetRepository extends AbstractNativeRepository imple
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(Pageable pageable) {
         String PROFILE_ASSET_ID_INFO_QUERY = "SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset ORDER BY created_time ASC LIMIT %s OFFSET %s";
-        return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, row -> {
-            AssetId id = new AssetId((UUID) row.get("id"));
-            AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
-            var tenantIdObj = row.get("tenantId");
-            return ProfileEntityIdInfo.create(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), profileId, id);
-        });
+        return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
     }
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
         String PROFILE_ASSET_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, asset_profile_id as profileId, id as id FROM asset WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
-        return find(COUNT_QUERY, PROFILE_ASSET_ID_INFO_QUERY, pageable, row -> {
-            AssetId id = new AssetId((UUID) row.get("id"));
-            AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
-            var tenantIdObj = row.get("tenantId");
-            return ProfileEntityIdInfo.create(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), profileId, id);
-        });
+        String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM asset WHERE tenant_id = '%s';", tenantId);
+        return find(COUNT_QUERY_BY_TENANT, PROFILE_ASSET_ID_INFO_QUERY, pageable, DefaultNativeAssetRepository::toInfo);
     }
+
+    private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {
+        var tenantIdObj = row.get("tenantId");
+        UUID tenantId = tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId();
+        AssetId id = new AssetId((UUID) row.get("id"));
+        AssetProfileId profileId = new AssetProfileId((UUID) row.get("profileId"));
+        return ProfileEntityIdInfo.create(tenantId, profileId, id);
+    }
+
 }

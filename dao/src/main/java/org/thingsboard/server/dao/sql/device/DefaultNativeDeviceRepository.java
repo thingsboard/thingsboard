@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 
+import java.util.Map;
 import java.util.UUID;
 
 @Repository
@@ -53,23 +54,22 @@ public class DefaultNativeDeviceRepository extends AbstractNativeRepository impl
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfos(Pageable pageable) {
         String PROFILE_DEVICE_ID_INFO_QUERY = "SELECT tenant_id as tenantId, device_profile_id as profileId, id as id FROM device ORDER BY created_time ASC LIMIT %s OFFSET %s";
-        return find(COUNT_QUERY, PROFILE_DEVICE_ID_INFO_QUERY, pageable, row -> {
-            DeviceId id = new DeviceId((UUID) row.get("id"));
-            DeviceProfileId profileId = new DeviceProfileId((UUID) row.get("profileId"));
-            var tenantIdObj = row.get("tenantId");
-            return ProfileEntityIdInfo.create(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), profileId, id);
-        });
+        return find(COUNT_QUERY, PROFILE_DEVICE_ID_INFO_QUERY, pageable, DefaultNativeDeviceRepository::toInfo);
     }
 
     @Override
     public PageData<ProfileEntityIdInfo> findProfileEntityIdInfosByTenantId(UUID tenantId, Pageable pageable) {
         String PROFILE_DEVICE_ID_INFO_QUERY = String.format("SELECT tenant_id as tenantId, device_profile_id as profileId, id as id FROM device WHERE tenant_id = '%s' ORDER BY created_time ASC LIMIT %%s OFFSET %%s", tenantId);
-        return find(COUNT_QUERY, PROFILE_DEVICE_ID_INFO_QUERY, pageable, row -> {
-            DeviceId id = new DeviceId((UUID) row.get("id"));
-            DeviceProfileId profileId = new DeviceProfileId((UUID) row.get("profileId"));
-            var tenantIdObj = row.get("tenantId");
-            return ProfileEntityIdInfo.create(tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId(), profileId, id);
-        });
+        String COUNT_QUERY_BY_TENANT = String.format("SELECT count(id) FROM device WHERE tenant_id = '%s';", tenantId);
+        return find(COUNT_QUERY_BY_TENANT, PROFILE_DEVICE_ID_INFO_QUERY, pageable, DefaultNativeDeviceRepository::toInfo);
+    }
+
+    private static ProfileEntityIdInfo toInfo(Map<String, Object> row) {
+        var tenantIdObj = row.get("tenantId");
+        UUID tenantId = tenantIdObj != null ? (UUID) tenantIdObj : TenantId.SYS_TENANT_ID.getId();
+        DeviceId id = new DeviceId((UUID) row.get("id"));
+        DeviceProfileId profileId = new DeviceProfileId((UUID) row.get("profileId"));
+        return ProfileEntityIdInfo.create(tenantId, profileId, id);
     }
 
 }
