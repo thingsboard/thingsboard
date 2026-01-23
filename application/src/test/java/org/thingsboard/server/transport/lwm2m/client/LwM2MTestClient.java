@@ -33,7 +33,6 @@ import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
 import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
-import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mObjectEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.resource.listener.ObjectsListenerAdapter;
@@ -142,7 +141,7 @@ public class LwM2MTestClient {
     private Map<LwM2MClientState, Integer> clientDtlsCid;
     private LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
-    private LwM2mTemperatureSensor lwM2mTemperatureSensor12;
+    private LwM2mTemperatureSensor lwM2MTemperatureSensor12;
     private String deviceIdStr;
     private int clientPort;
 
@@ -161,7 +160,7 @@ public class LwM2MTestClient {
         if (securityLwm2m != null && securityLwm2m.getId() != null) {
             forceNullSecurityId(securityLwm2m);
         }
-        if (securityBs!= null && securityBs.getId() != null) {
+        if (securityBs != null && securityBs.getId() != null) {
             forceNullSecurityId(securityBs);
         }
         if (securityBs != null && securityLwm2m != null) {
@@ -170,7 +169,7 @@ public class LwM2MTestClient {
         } else if (securityBs != null) {
             log.warn("Security BS only: securityBs: [{}] ", securityBs.getId());
             initializer.setInstancesForObject(SECURITY, securityBs);
-        } else if (securityLwm2m != null){
+        } else if (securityLwm2m != null) {
             // SECURITY
             log.warn("Security Lwm2m only: security Lwm2m  [{}]", securityLwm2m.getId());
             initializer.setInstancesForObject(SECURITY, securityLwm2m);
@@ -191,8 +190,8 @@ public class LwM2MTestClient {
         locationParams.getPos();
         initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
         LwM2mTemperatureSensor lwM2mTemperatureSensor0 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0);
-        lwM2mTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2mTemperatureSensor12);
+        lwM2MTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2MTemperatureSensor12);
 
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
 
@@ -213,7 +212,9 @@ public class LwM2MTestClient {
                         builder.setSessionListener(new DtlsSessionLogger(clientStates, clientDtlsCid));
 
                         return builder;
-                    };
+                    }
+
+                    ;
                 };
             }
         };
@@ -479,7 +480,7 @@ public class LwM2MTestClient {
             if (isStartLw) {
                 this.awaitClientAfterStartConnectLw();
             }
-            lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
+            lwM2MTemperatureSensor12.setLeshanClient(leshanClient);
             fwLwM2MDevice.setLeshanClient(leshanClient);
         }
     }
@@ -554,5 +555,6 @@ public class LwM2MTestClient {
             log.error("[forceNullSecurityId] Failed to set id=null for {}", security.getClass(), e);
         }
     }
+
 }
 
