@@ -19,7 +19,8 @@
 @import './scss/constants';
 
 @include mat.all-component-typographies();
-@include mat.core();
+@include mat.elevation-classes();
+@include mat.app-background();
 
 $tb-mat-indigo: (
   50: #e8eaf6,
