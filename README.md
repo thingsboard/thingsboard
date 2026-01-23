@@ -123,9 +123,9 @@ ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that 
 
 [![SCADA Swimming pool](https://github.com/user-attachments/assets/68fd9e29-99f1-4c16-8c4c-476f4ccb20c0 "SCADA Swimming pool")](https://thingsboard.io/use-cases/scada/)
 
-[**Fleet tracking**](https://thingsboard.io/use-cases/fleet-tracking/)
+[**Site fleet tracking**](https://thingsboard.io/use-cases/site-fleet-tracking/)
 
-[![Fleet tracking](https://github.com/user-attachments/assets/d6ce0766-b138-4a42-86aa-7112a543026c "Fleet tracking")](https://thingsboard.io/use-cases/fleet-tracking/)
+[![Site fleet tracking](https://github.com/user-attachments/assets/d6ce0766-b138-4a42-86aa-7112a543026c "Site fleet tracking")](https://thingsboard.io/use-cases/site-fleet-tracking/)
 
 [**Smart farming**](https://thingsboard.io/use-cases/smart-farming/)
 
