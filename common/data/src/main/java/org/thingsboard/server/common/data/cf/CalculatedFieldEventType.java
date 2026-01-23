@@ -13,21 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.cf.configuration;
+package org.thingsboard.server.common.data.cf;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+public enum CalculatedFieldEventType {
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration, HasUseLatestTsConfig {
+    INITIALIZED,
+    UPDATED,
 
-    private boolean useLatestTs;
+    TENANT_PROFILE_UPDATED,
+    OWNER_CHANGED,
+    RELATION_ADD_OR_UPDATE,
+    RELATION_DELETED,
 
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SIMPLE;
-    }
+    REEVALUATION_MSG
 
 }

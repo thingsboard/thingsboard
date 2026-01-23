@@ -15,19 +15,8 @@
  */
 package org.thingsboard.server.common.data.cf.configuration;
 
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.cf.CalculatedFieldType;
+public interface HasUseLatestTsConfig {
 
-@Data
-@EqualsAndHashCode(callSuper = true)
-public class SimpleCalculatedFieldConfiguration extends BaseCalculatedFieldConfiguration implements ExpressionBasedCalculatedFieldConfiguration, HasUseLatestTsConfig {
-
-    private boolean useLatestTs;
-
-    @Override
-    public CalculatedFieldType getType() {
-        return CalculatedFieldType.SIMPLE;
-    }
+    boolean isUseLatestTs();
 
 }
