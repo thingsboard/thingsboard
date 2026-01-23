@@ -2,6 +2,10 @@
 ## Running tests in parallel with a reasonable memory usage
 
 ```bash
+export MAVEN_OPTS="-Xmx1024m"
+export NODE_OPTIONS="--max_old_space_size=4096"
+export SUREFIRE_JAVA_OPTS="-Xmx1200m -Xss256k -XX:+ExitOnOutOfMemoryError"
+
 mvn clean install -T6 -DskipTests
 mvn test -pl='!application,!dao,!ui-ngx,!msa/js-executor,!msa/web-ui' -T4
 mvn test -pl dao -Dparallel=packages -DforkCount=4
