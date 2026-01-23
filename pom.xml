@@ -69,7 +69,7 @@
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>
         <os-maven-plugin.version>1.7.1</os-maven-plugin.version>
-        <surefire.version>3.2.5</surefire.version>
+        <surefire.version>3.5.4</surefire.version>
         <jar-plugin.version>3.4.0</jar-plugin.version>
         <springdoc-swagger.version>2.8.8TB</springdoc-swagger.version>
         <swagger-annotations.version>2.2.30</swagger-annotations.version>
@@ -127,7 +127,7 @@
         <jeasy.version>5.0.0</jeasy.version>
         <!--      BLACKBOX TEST SCOPE     -->
         <testng.version>7.10.1</testng.version>
-        <testcontainers.version>1.20.6</testcontainers.version>
+        <testcontainers.version>1.21.4</testcontainers.version>
         <testcontainers-junit4-mock.version>1.0.2</testcontainers-junit4-mock.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <webdrivermanager.version>6.1.0</webdrivermanager.version>
@@ -171,6 +171,16 @@
             <activation>
                 <activeByDefault>true</activeByDefault>
             </activation>
+        </profile>
+        <profile>
+            <id>default-surefire-java-opts</id>
+            <activation>
+                <property>
+                    <name>!env.SUREFIRE_JAVA_OPTS</name> </property>
+            </activation>
+            <properties>
+                <env.SUREFIRE_JAVA_OPTS> </env.SUREFIRE_JAVA_OPTS>
+            </properties>
         </profile>
         <!-- download sources under target/dependencies -->
         <!-- mvn package -Pdownload-dependencies -Dclassifier=sources dependency:copy-dependencies -->
@@ -662,8 +672,11 @@
                     <version>${surefire.version}</version>
                     <configuration>
                         <argLine>
-                            -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=20
-                            --add-opens java.base/java.lang.reflect=ALL-UNNAMED
+                            -XX:+UseStringDeduplication -XX:MaxGCPauseMillis=200
+                            --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
+                            -Dqueue.edqs.local.rocksdb_path="target/rocksdb/fork_${surefire.forkNumber}/edqs"
+                            -Dqueue.calculated_fields.rocks_db_path="target/rocksdb/fork_${surefire.forkNumber}/cf"
+                            ${env.SUREFIRE_JAVA_OPTS}
                         </argLine>
                     </configuration>
                 </plugin>
