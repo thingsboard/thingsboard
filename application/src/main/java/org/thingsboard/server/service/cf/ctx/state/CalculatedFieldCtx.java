@@ -387,7 +387,7 @@ public class CalculatedFieldCtx implements Closeable {
             tbelExpressions.put(expression, engine);
         } catch (Exception e) {
             initialized = false;
-            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+            throw new RuntimeException("Failed to initialize CF context. The script expression is invalid. Please check for syntax errors or unsupported functions.", e);
         }
     }
 
@@ -404,7 +404,7 @@ public class CalculatedFieldCtx implements Closeable {
             simpleExpressions.put(expression, compiledExpression);
         } else {
             initialized = false;
-            throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+            throw new RuntimeException("Failed to initialize CF context. The expression has invalid syntax or unknown variables. Ensure all mathematical operators are correct.");
         }
     }
 
