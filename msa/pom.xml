@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.3.0.1-SNAPSHOT</version>
+        <version>4.4.0-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>msa</artifactId>
@@ -133,7 +133,7 @@
                 </property>
             </activation>
             <properties>
-                <docker.lts.tag>4.3.0-latest</docker.lts.tag>
+                <docker.lts.tag>4.4.0-latest</docker.lts.tag>
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
             </properties>
             <build>
