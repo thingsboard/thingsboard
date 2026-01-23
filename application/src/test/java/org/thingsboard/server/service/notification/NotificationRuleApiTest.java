@@ -237,12 +237,12 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("bool", BooleanNode.TRUE);
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType);
 
         long ts = System.currentTimeMillis();
-        await().atMost(15, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> clients.values().stream().allMatch(client -> client.getLastDataUpdate() != null));
         clients.forEach((expectedDelay, wsClient) -> {
             Notification notification = wsClient.getLastDataUpdate().getUpdate();
@@ -290,8 +290,8 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         alarm.setOriginator(device.getId());
         alarm = doPost("/api/alarm", alarm, Alarm.class);
 
-        await().atMost(15, TimeUnit.SECONDS)
-                .pollDelay(2, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .pollDelay(1, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     List<Notification> notifications = getMyNotifications(false, 10);
                     assertThat(notifications).singleElement().matches(notification -> {
@@ -344,7 +344,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .set("bool", BooleanNode.TRUE);
         doPost("/api/plugins/telemetry/" + device.getId() + "/" + DataConstants.SHARED_SCOPE, attr);
 
-        await().atMost(10, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType) != null);
         Alarm alarm = alarmSubscriptionService.findLatestByOriginatorAndType(tenantId, device.getId(), alarmType);
         getWsClient().waitForUpdate(true);
@@ -354,14 +354,14 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         assertThat(notification.getInfo()).asInstanceOf(type(AlarmNotificationInfo.class))
                 .extracting(AlarmNotificationInfo::getAlarmId).isEqualTo(alarm.getUuidId());
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> findNotificationRequests(EntityType.ALARM).getTotalElements() == escalationTable.size());
         NotificationRequestInfo scheduledNotificationRequest = findNotificationRequests(EntityType.ALARM).getData().stream()
                 .filter(NotificationRequest::isScheduled)
                 .findFirst().orElse(null);
         assertThat(scheduledNotificationRequest).extracting(NotificationRequest::getInfo).isEqualTo(notification.getInfo());
 
         alarmSubscriptionService.clearAlarm(tenantId, alarm.getId(), System.currentTimeMillis(), null);
-        await().atMost(5, TimeUnit.SECONDS).untilAsserted(() -> {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             assertThat(findNotificationRequests(EntityType.ALARM).getData()).filteredOn(NotificationRequest::isScheduled).isEmpty();
         });
     }
@@ -479,7 +479,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         }
 
         loginTenantAdmin();
-        List<Notification> notifications = await().atMost(15, TimeUnit.SECONDS)
+        List<Notification> notifications = await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getMyNotifications(true, 10).stream()
                         .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
                         .collect(Collectors.toList()), list -> list.size() == 3);
@@ -499,7 +499,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         });
 
         loginSysAdmin();
-        notifications = await().atMost(15, TimeUnit.SECONDS)
+        notifications = await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getMyNotifications(true, 10).stream()
                         .filter(notification -> notification.getType() == NotificationType.RATE_LIMITS)
                         .collect(Collectors.toList()), list -> list.size() == 1);
@@ -720,7 +720,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .updateInfo(new UpdateMessage(true, "CHANGED", "test",
                         "test", "test", "test"))
                 .build());
-        await().atMost(5, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });
@@ -803,7 +803,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         method.setAccessible(true);
         method.invoke(systemInfoService);
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
@@ -830,7 +830,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                     .build());
             TimeUnit.MILLISECONDS.sleep(300);
         }
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
@@ -842,7 +842,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
                 .serviceType("serviceType")
                 .serviceId("serviceId")
                 .build());
-        await("").atMost(5, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
+        await("").atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> assertThat(getMyNotifications(false, 100)).size().isOne());
     }
 
     @Test
@@ -873,7 +873,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         method.invoke(systemInfoService);
 
-        await().atMost(10, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).until(() -> getMyNotifications(false, 100).size() == 1);
         Notification notification = getMyNotifications(false, 100).get(0);
         assertThat(notification.getSubject()).isEqualTo("Warning: RAM shortage");
         assertThat(notification.getText()).isEqualTo("RAM shortage");
