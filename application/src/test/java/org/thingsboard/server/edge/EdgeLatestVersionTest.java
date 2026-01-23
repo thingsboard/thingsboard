@@ -25,7 +25,8 @@ public class EdgeLatestVersionTest {
         String projectVersionDigits = projectVersion.replaceAll("\\D", "");
         String currentHighestEdgeVersionDigits = currentHighestEdgeVersion.name().replaceAll("\\D", "");
 
-        Assert.assertEquals(projectVersionDigits, currentHighestEdgeVersionDigits);
+        String msg = "EdgeVersion enum in edge.proto is out of sync. Please add respective " + projectVersionDigits + " to EdgeVersion";
+        Assert.assertEquals(msg, projectVersionDigits, currentHighestEdgeVersionDigits);
     }
 
 }
