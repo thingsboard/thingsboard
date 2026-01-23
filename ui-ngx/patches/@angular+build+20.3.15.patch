@@ -1,30 +1,30 @@
 diff --git a/node_modules/@angular/build/src/tools/angular/compilation/angular-compilation.js b/node_modules/@angular/build/src/tools/angular/compilation/angular-compilation.js
-index 625c621..4fc8bd8 100755
+index 53168ea..f07c80a 100755
 --- a/node_modules/@angular/build/src/tools/angular/compilation/angular-compilation.js
 +++ b/node_modules/@angular/build/src/tools/angular/compilation/angular-compilation.js
-@@ -68,8 +68,6 @@ class AngularCompilation {
+@@ -78,8 +78,6 @@ class AngularCompilation {
              allowEmptyCodegenFiles: false,
              annotationsAs: 'decorators',
              enableResourceInlining: false,
 -            supportTestBed: false,
 -            supportJitMode: false,
-         }));
-     }
-     async diagnoseFiles(modes = DiagnosticModes.All) {
+             // Disable removing of comments as TS is quite aggressive with these and can
+             // remove important annotations, such as /* @__PURE__ */ and comments like /* vite-ignore */.
+             removeComments: false,
 diff --git a/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js b/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
-index b03875c..8c48101 100755
+index ee68408..4144f20 100755
 --- a/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
 +++ b/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
-@@ -79,7 +79,7 @@ function createCompilerPlugin(pluginOptions, styleOptions) {
+@@ -90,7 +90,7 @@ function createCompilerPlugin(pluginOptions, compilationOrFactory, stylesheetBun
                  sourcemap: !!pluginOptions.sourcemap,
                  thirdPartySourcemaps: pluginOptions.thirdPartySourcemaps,
                  advancedOptimizations: pluginOptions.advancedOptimizations,
--                jit: pluginOptions.jit,
-+                jit: true, // pluginOptions.jit,
+-                jit: pluginOptions.jit || pluginOptions.includeTestMetadata,
++                jit: true, //pluginOptions.jit || pluginOptions.includeTestMetadata,
              }, environment_options_1.maxWorkers, cacheStore?.createCache('jstransformer'));
              // Setup defines based on the values used by the Angular compiler-cli
              build.initialOptions.define ??= {};
-@@ -385,12 +385,14 @@ function createCompilerPlugin(pluginOptions, styleOptions) {
+@@ -448,12 +448,14 @@ function createCompilerPlugin(pluginOptions, compilationOrFactory, stylesheetBun
              async function hasSideEffects(path) {
                  if (!pluginOptions.advancedOptimizations) {
                      return undefined;
