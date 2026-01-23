@@ -21,9 +21,10 @@ import { EntityTabsComponent } from '../../components/entity/entity-tabs.compone
 import { Dashboard } from '@shared/models/dashboard.models';
 
 @Component({
-  selector: 'tb-dashboard-tabs',
-  templateUrl: './dashboard-tabs.component.html',
-  styleUrls: []
+    selector: 'tb-dashboard-tabs',
+    templateUrl: './dashboard-tabs.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class DashboardTabsComponent extends EntityTabsComponent<Dashboard> {
 

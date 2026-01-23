@@ -67,13 +67,14 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 export type TbPopoverTrigger = 'click' | 'focus' | 'hover' | null;
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: '[tb-popover]',
-  exportAs: 'tbPopover',
-  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
-  host: {
-    '[class.tb-popover-open]': 'visible'
-  }
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: '[tb-popover]',
+    exportAs: 'tbPopover',
+    // eslint-disable-next-line @angular-eslint/no-host-metadata-property
+    host: {
+        '[class.tb-popover-open]': 'visible'
+    },
+    standalone: false
 })
 export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
 
@@ -300,13 +301,13 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
 }
 
 @Component({
-  selector: 'tb-popover',
-  exportAs: 'tbPopoverComponent',
-  animations: [popoverMotion],
-  changeDetection: ChangeDetectionStrategy.OnPush,
-  encapsulation: ViewEncapsulation.None,
-  styleUrls: ['./popover.component.scss'],
-  template: `
+    selector: 'tb-popover',
+    exportAs: 'tbPopoverComponent',
+    animations: [popoverMotion],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    encapsulation: ViewEncapsulation.None,
+    styleUrls: ['./popover.component.scss'],
+    template: `
     <ng-template
       #overlay="cdkConnectedOverlay"
       cdkConnectedOverlay
@@ -360,7 +361,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
         </div>
       </div>
     </ng-template>
-  `
+  `,
+    standalone: false
 })
 export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
 

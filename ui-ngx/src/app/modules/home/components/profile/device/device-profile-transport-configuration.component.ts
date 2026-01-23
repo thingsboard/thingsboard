@@ -32,21 +32,22 @@ import { deepClone } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-device-profile-transport-configuration',
-  templateUrl: './device-profile-transport-configuration.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-device-profile-transport-configuration',
+    templateUrl: './device-profile-transport-configuration.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 

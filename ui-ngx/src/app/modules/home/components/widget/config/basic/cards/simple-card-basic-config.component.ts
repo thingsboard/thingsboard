@@ -36,9 +36,10 @@ import { isUndefined } from '@core/utils';
 import { getLabel, setLabel } from '@shared/models/widget-settings.models';
 
 @Component({
-  selector: 'tb-simple-card-basic-config',
-  templateUrl: './simple-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-simple-card-basic-config',
+    templateUrl: './simple-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class SimpleCardBasicConfigComponent extends BasicWidgetConfigComponent {
 

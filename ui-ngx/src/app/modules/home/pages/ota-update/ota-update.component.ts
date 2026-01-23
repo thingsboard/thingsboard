@@ -34,8 +34,9 @@ import { filter, startWith, takeUntil } from 'rxjs/operators';
 import { isNotEmptyStr } from '@core/utils';
 
 @Component({
-  selector: 'tb-ota-update',
-  templateUrl: './ota-update.component.html'
+    selector: 'tb-ota-update',
+    templateUrl: './ota-update.component.html',
+    standalone: false
 })
 export class OtaUpdateComponent extends EntityComponent<OtaPackage> implements OnInit, OnDestroy {
 

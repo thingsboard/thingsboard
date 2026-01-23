@@ -41,20 +41,21 @@ import {
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-profile-lwm2m-device-config-server',
-  templateUrl: './lwm2m-device-config-server.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
-      multi: true
-    },
-  ]
+    selector: 'tb-profile-lwm2m-device-config-server',
+    templateUrl: './lwm2m-device-config-server.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => Lwm2mDeviceConfigServerComponent),
+            multi: true
+        },
+    ],
+    standalone: false
 })
 
 export class Lwm2mDeviceConfigServerComponent implements OnInit, ControlValueAccessor, Validator, OnDestroy {

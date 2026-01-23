@@ -54,10 +54,11 @@ export interface AddDeviceProfileDialogData {
 }
 
 @Component({
-  selector: 'tb-add-device-profile-dialog',
-  templateUrl: './add-device-profile-dialog.component.html',
-  providers: [],
-  styleUrls: ['./add-device-profile-dialog.component.scss']
+    selector: 'tb-add-device-profile-dialog',
+    templateUrl: './add-device-profile-dialog.component.html',
+    providers: [],
+    styleUrls: ['./add-device-profile-dialog.component.scss'],
+    standalone: false
 })
 export class AddDeviceProfileDialogComponent extends
   DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> {

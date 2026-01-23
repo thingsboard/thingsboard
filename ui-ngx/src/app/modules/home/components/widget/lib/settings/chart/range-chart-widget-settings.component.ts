@@ -43,9 +43,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-range-chart-widget-settings',
-  templateUrl: './range-chart-widget-settings.component.html',
-  styleUrls: []
+    selector: 'tb-range-chart-widget-settings',
+    templateUrl: './range-chart-widget-settings.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
 

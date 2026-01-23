@@ -23,16 +23,17 @@ import { map, tap } from 'rxjs/operators';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 
 @Component({
-  selector: 'tb-math-function-autocomplete',
-  templateUrl: './math-function-autocomplete.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MathFunctionAutocompleteComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-math-function-autocomplete',
+    templateUrl: './math-function-autocomplete.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MathFunctionAutocompleteComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MathFunctionAutocompleteComponent implements ControlValueAccessor, OnInit {
 

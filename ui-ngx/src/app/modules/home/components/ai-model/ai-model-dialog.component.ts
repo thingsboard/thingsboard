@@ -46,9 +46,10 @@ export interface AIModelDialogData {
 }
 
 @Component({
-  selector: 'tb-ai-model-dialog',
-  templateUrl: './ai-model-dialog.component.html',
-  styleUrls: ['./ai-model-dialog.component.scss']
+    selector: 'tb-ai-model-dialog',
+    templateUrl: './ai-model-dialog.component.html',
+    styleUrls: ['./ai-model-dialog.component.scss'],
+    standalone: false
 })
 export class AIModelDialogComponent extends DialogComponent<AIModelDialogComponent, AiModel> {
 

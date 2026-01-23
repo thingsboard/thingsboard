@@ -38,11 +38,12 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { getSourceTbUnitSymbol, isNotEmptyTbUnits, TbUnit } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-time-series-chart-threshold-settings-panel',
-  templateUrl: './time-series-chart-threshold-settings-panel.component.html',
-  providers: [],
-  styleUrls: ['./time-series-chart-threshold-settings-panel.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-time-series-chart-threshold-settings-panel',
+    templateUrl: './time-series-chart-threshold-settings-panel.component.html',
+    providers: [],
+    styleUrls: ['./time-series-chart-threshold-settings-panel.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
 

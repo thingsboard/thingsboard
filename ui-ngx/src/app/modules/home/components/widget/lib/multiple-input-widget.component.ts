@@ -134,9 +134,10 @@ interface MultipleInputWidgetSource {
 }
 
 @Component({
-  selector: 'tb-multiple-input-widget ',
-  templateUrl: './multiple-input-widget.component.html',
-  styleUrls: ['./multiple-input-widget.component.scss']
+    selector: 'tb-multiple-input-widget ',
+    templateUrl: './multiple-input-widget.component.html',
+    styleUrls: ['./multiple-input-widget.component.scss'],
+    standalone: false
 })
 export class MultipleInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

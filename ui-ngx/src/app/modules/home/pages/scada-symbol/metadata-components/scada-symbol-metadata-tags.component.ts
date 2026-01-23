@@ -49,22 +49,23 @@ const tagIsEmpty = (tag: ScadaSymbolTag): boolean =>
   !tag.stateRenderFunction && !tag.actions?.click?.actionFunction;
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-tags',
-  templateUrl: './scada-symbol-metadata-tags.component.html',
-  styleUrls: ['./scada-symbol-metadata-tags.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-tags',
+    templateUrl: './scada-symbol-metadata-tags.component.html',
+    styleUrls: ['./scada-symbol-metadata-tags.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolMetadataTagsComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, OnInit, Validator, OnChanges {
 

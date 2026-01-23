@@ -36,8 +36,9 @@ import { base64toString, isDefinedAndNotNull, stringToBase64 } from '@core/utils
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
-  selector: 'tb-js-resource',
-  templateUrl: './js-resource.component.html'
+    selector: 'tb-js-resource',
+    templateUrl: './js-resource.component.html',
+    standalone: false
 })
 export class JsResourceComponent extends EntityComponent<Resource> implements OnInit, OnDestroy {
 

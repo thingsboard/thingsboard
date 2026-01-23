@@ -54,21 +54,22 @@ import { deepClone, mergeDeep } from '@core/utils';
 import { MatDialog } from '@angular/material/dialog';
 
 @Component({
-  selector: 'tb-map-settings',
-  templateUrl: './map-settings.component.html',
-  styleUrls: ['./../../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapSettingsComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MapSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-map-settings',
+    templateUrl: './map-settings.component.html',
+    styleUrls: ['./../../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapSettingsComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MapSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MapSettingsComponent implements OnInit, ControlValueAccessor, Validator, OnChanges {
 

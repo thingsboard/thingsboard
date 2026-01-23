@@ -23,9 +23,10 @@ import {
 } from '@home/components/rule-node/rule-node-config.models';
 
 @Component({
-  selector: 'tb-external-node-kafka-config',
-  templateUrl: './kafka-config.component.html',
-  styleUrls: []
+    selector: 'tb-external-node-kafka-config',
+    templateUrl: './kafka-config.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class KafkaConfigComponent extends RuleNodeConfigurationComponent {
 

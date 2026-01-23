@@ -40,9 +40,10 @@ import {
 import { getSourceTbUnitSymbol } from '@shared/models/unit.models';
 
 @Component({
-  selector: 'tb-label-value-card-basic-config',
-  templateUrl: './label-value-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-label-value-card-basic-config',
+    templateUrl: './label-value-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class LabelValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
 

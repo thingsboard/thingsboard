@@ -31,14 +31,15 @@ import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/uti
 import { coerceArray, coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
-  selector: 'tb-entity-autocomplete',
-  templateUrl: './entity-autocomplete.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => EntityAutocompleteComponent),
-    multi: true
-  }]
+    selector: 'tb-entity-autocomplete',
+    templateUrl: './entity-autocomplete.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntityAutocompleteComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit {
 

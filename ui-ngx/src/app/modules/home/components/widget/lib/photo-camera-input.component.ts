@@ -50,10 +50,11 @@ interface PhotoCameraInputWidgetSettings {
 
 // @dynamic
 @Component({
-  selector: 'tb-photo-camera-widget',
-  templateUrl: './photo-camera-input.component.html',
-  styleUrls: ['./photo-camera-input.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-photo-camera-widget',
+    templateUrl: './photo-camera-input.component.html',
+    styleUrls: ['./photo-camera-input.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class PhotoCameraInputWidgetComponent extends PageComponent implements OnInit, OnDestroy {
 

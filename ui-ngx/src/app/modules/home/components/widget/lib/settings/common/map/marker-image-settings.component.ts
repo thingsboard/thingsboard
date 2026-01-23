@@ -24,16 +24,17 @@ import {
 } from '@home/components/widget/lib/settings/common/map/marker-image-settings-panel.component';
 
 @Component({
-  selector: 'tb-marker-image-settings',
-  templateUrl: './marker-image-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MarkerImageSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-marker-image-settings',
+    templateUrl: './marker-image-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MarkerImageSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class MarkerImageSettingsComponent implements ControlValueAccessor {
 

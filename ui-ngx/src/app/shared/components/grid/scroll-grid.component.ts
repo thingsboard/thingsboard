@@ -43,10 +43,11 @@ export interface ItemSizeStrategy {
 }
 
 @Component({
-  selector: 'tb-scroll-grid',
-  templateUrl: './scroll-grid.component.html',
-  styleUrls: ['./scroll-grid.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scroll-grid',
+    templateUrl: './scroll-grid.component.html',
+    styleUrls: ['./scroll-grid.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChanges, OnDestroy {
 

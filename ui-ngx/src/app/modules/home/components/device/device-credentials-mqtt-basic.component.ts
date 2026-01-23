@@ -32,20 +32,22 @@ import { takeUntil } from 'rxjs/operators';
 import { generateSecret, isDefinedAndNotNull, isEmptyStr } from '@core/utils';
 
 @Component({
-  selector: 'tb-device-credentials-mqtt-basic',
-  templateUrl: './device-credentials-mqtt-basic.component.html',
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DeviceCredentialsMqttBasicComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DeviceCredentialsMqttBasicComponent),
-      multi: true,
-    }],
-  styleUrls: []
+    selector: 'tb-device-credentials-mqtt-basic',
+    templateUrl: './device-credentials-mqtt-basic.component.html',
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DeviceCredentialsMqttBasicComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DeviceCredentialsMqttBasicComponent),
+            multi: true,
+        }
+    ],
+    styleUrls: [],
+    standalone: false
 })
 export class DeviceCredentialsMqttBasicComponent implements ControlValueAccessor, Validator, OnDestroy {
 

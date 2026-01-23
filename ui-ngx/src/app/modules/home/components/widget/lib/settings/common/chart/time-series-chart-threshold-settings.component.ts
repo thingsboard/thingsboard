@@ -30,16 +30,17 @@ import {
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-settings-panel.component';
 
 @Component({
-  selector: 'tb-time-series-chart-threshold-settings',
-  templateUrl: './time-series-chart-threshold-settings.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimeSeriesChartThresholdSettingsComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-time-series-chart-threshold-settings',
+    templateUrl: './time-series-chart-threshold-settings.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimeSeriesChartThresholdSettingsComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimeSeriesChartThresholdSettingsComponent implements OnInit, ControlValueAccessor {
 

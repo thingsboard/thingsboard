@@ -33,16 +33,17 @@ import { UtilsService } from '@core/services/utils.service';
 import { EntityService } from '@core/http/entity.service';
 
 @Component({
-  selector: 'tb-entity-subtype-list',
-  templateUrl: './entity-subtype-list.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntitySubTypeListComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-entity-subtype-list',
+    templateUrl: './entity-subtype-list.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => EntitySubTypeListComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class EntitySubTypeListComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
 

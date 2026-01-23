@@ -21,11 +21,12 @@ import { merge } from 'rxjs';
 import { takeUntilDestroyed, toObservable } from '@angular/core/rxjs-interop';
 
 @Directive({
-  selector: '[tbTruncateWithTooltip]',
-  hostDirectives: [{
-    directive: MatTooltip,
-    inputs: ['matTooltipClass', 'matTooltipTouchGestures'],
-  }]
+    selector: '[tbTruncateWithTooltip]',
+    hostDirectives: [{
+            directive: MatTooltip,
+            inputs: ['matTooltipClass', 'matTooltipTouchGestures'],
+        }],
+    standalone: false
 })
 export class TruncateWithTooltipDirective implements OnInit {
 

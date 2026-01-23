@@ -41,10 +41,11 @@ import { getAce } from '@shared/models/ace/ace.models';
 import { beautifyCss, beautifyHtml } from '@shared/models/beautify.models';
 
 @Component({
-  selector: 'tb-custom-action-pretty-resources-tabs',
-  templateUrl: './custom-action-pretty-resources-tabs.component.html',
-  styleUrls: ['./custom-action-pretty-resources-tabs.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-custom-action-pretty-resources-tabs',
+    templateUrl: './custom-action-pretty-resources-tabs.component.html',
+    styleUrls: ['./custom-action-pretty-resources-tabs.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class CustomActionPrettyResourcesTabsComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 

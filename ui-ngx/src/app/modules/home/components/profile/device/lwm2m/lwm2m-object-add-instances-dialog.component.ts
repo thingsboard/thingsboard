@@ -29,8 +29,9 @@ export interface Lwm2mObjectAddInstancesData {
 }
 
 @Component({
-  selector: 'tb-lwm2m-object-add-instances',
-  templateUrl: './lwm2m-object-add-instances-dialog.component.html'
+    selector: 'tb-lwm2m-object-add-instances',
+    templateUrl: './lwm2m-object-add-instances-dialog.component.html',
+    standalone: false
 })
 export class Lwm2mObjectAddInstancesDialogComponent extends DialogComponent<Lwm2mObjectAddInstancesDialogComponent, object>
   implements OnInit {

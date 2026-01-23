@@ -128,11 +128,12 @@ import { CompiledTbFunction, compileTbFunction, isNotEmptyTbFunction } from '@sh
 import { HttpClient } from '@angular/common/http';
 
 @Component({
-  selector: 'tb-widget',
-  templateUrl: './widget.component.html',
-  styleUrls: ['./widget.component.scss'],
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-widget',
+    templateUrl: './widget.component.html',
+    styleUrls: ['./widget.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class WidgetComponent extends PageComponent implements OnInit, OnChanges, OnDestroy {
 

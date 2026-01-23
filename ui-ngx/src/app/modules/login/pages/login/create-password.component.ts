@@ -26,9 +26,10 @@ import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'tb-create-password',
-  templateUrl: './create-password.component.html',
-  styleUrls: ['./create-password.component.scss']
+    selector: 'tb-create-password',
+    templateUrl: './create-password.component.html',
+    styleUrls: ['./create-password.component.scss'],
+    standalone: false
 })
 export class CreatePasswordComponent extends PageComponent implements OnInit, OnDestroy {
 

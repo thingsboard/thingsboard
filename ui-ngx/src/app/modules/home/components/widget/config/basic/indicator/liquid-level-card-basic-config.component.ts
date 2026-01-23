@@ -66,9 +66,10 @@ import { UtilsService } from '@core/services/utils.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-liquid-level-card-basic-config',
-  templateUrl: './liquid-level-card-basic-config.component.html',
-  styleUrls: ['../basic-config.scss']
+    selector: 'tb-liquid-level-card-basic-config',
+    templateUrl: './liquid-level-card-basic-config.component.html',
+    styleUrls: ['../basic-config.scss'],
+    standalone: false
 })
 export class LiquidLevelCardBasicConfigComponent extends BasicWidgetConfigComponent {
 

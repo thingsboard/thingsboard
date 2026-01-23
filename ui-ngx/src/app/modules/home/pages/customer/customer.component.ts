@@ -29,9 +29,10 @@ import { AuthState } from '@core/auth/auth.models';
 import { CountryData } from '@shared/models/country.models';
 
 @Component({
-  selector: 'tb-customer',
-  templateUrl: './customer.component.html',
-  styleUrls: ['./customer.component.scss']
+    selector: 'tb-customer',
+    templateUrl: './customer.component.html',
+    styleUrls: ['./customer.component.scss'],
+    standalone: false
 })
 export class CustomerComponent extends ContactBasedComponent<Customer> {
 

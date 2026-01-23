@@ -50,9 +50,10 @@ export interface DeviceCheckConnectivityDialogData {
 }
 
 @Component({
-  selector: 'tb-device-check-connectivity-dialog',
-  templateUrl: './device-check-connectivity-dialog.component.html',
-  styleUrls: ['./device-check-connectivity-dialog.component.scss']
+    selector: 'tb-device-check-connectivity-dialog',
+    templateUrl: './device-check-connectivity-dialog.component.html',
+    styleUrls: ['./device-check-connectivity-dialog.component.scss'],
+    standalone: false
 })
 export class DeviceCheckConnectivityDialogComponent extends
   DialogComponent<DeviceCheckConnectivityDialogComponent> implements OnInit, OnDestroy {

@@ -46,9 +46,10 @@ export interface RecipientNotificationDialogData {
 }
 
 @Component({
-  selector: 'tb-target-notification-dialog',
-  templateUrl: './recipient-notification-dialog.component.html',
-  styleUrls: ['recipient-notification-dialog.component.scss']
+    selector: 'tb-target-notification-dialog',
+    templateUrl: './recipient-notification-dialog.component.html',
+    styleUrls: ['recipient-notification-dialog.component.scss'],
+    standalone: false
 })
 export class RecipientNotificationDialogComponent extends
   DialogComponent<RecipientNotificationDialogComponent, NotificationTarget> implements OnDestroy {

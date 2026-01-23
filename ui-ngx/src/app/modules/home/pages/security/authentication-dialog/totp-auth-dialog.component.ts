@@ -31,9 +31,10 @@ import { MatStepper } from '@angular/material/stepper';
 import { unwrapModule } from '@core/utils';
 
 @Component({
-  selector: 'tb-totp-auth-dialog',
-  templateUrl: './totp-auth-dialog.component.html',
-  styleUrls: ['./authentication-dialog.component.scss']
+    selector: 'tb-totp-auth-dialog',
+    templateUrl: './totp-auth-dialog.component.html',
+    styleUrls: ['./authentication-dialog.component.scss'],
+    standalone: false
 })
 export class TotpAuthDialogComponent extends DialogComponent<TotpAuthDialogComponent> {
 
