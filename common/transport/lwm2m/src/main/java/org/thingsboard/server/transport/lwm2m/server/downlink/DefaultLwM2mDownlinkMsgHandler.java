@@ -50,6 +50,8 @@ import org.eclipse.leshan.core.request.SimpleDownlinkRequest;
 import org.eclipse.leshan.core.request.WriteAttributesRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
+import org.eclipse.leshan.core.request.argument.Arguments;
+import org.eclipse.leshan.core.request.argument.InvalidArgumentException;
 import org.eclipse.leshan.core.request.exception.ClientSleepingException;
 import org.eclipse.leshan.core.request.exception.InvalidRequestException;
 import org.eclipse.leshan.core.request.exception.TimeoutException;
@@ -116,6 +118,7 @@ import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.thingsboard.server.common.transport.util.JsonUtils.isBase64;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertMultiResourceValuesFromRpcBody;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.createModelsDefault;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.equalsResourceTypeGetSimpleName;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.getVerFromPathIdVerOrId;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.validateVersionedId;
@@ -281,8 +284,11 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             } else if (resourceModelExecute.operations.isExecutable()) {
                 ExecuteRequest downlink;
                 if (request.getParams() != null && !resourceModelExecute.multiple) {
-                    downlink = new ExecuteRequest(request.getObjectId(), (String) this.converter.convertValue(request.getParams(),
-                            resourceModelExecute.type, ResourceModel.Type.STRING, new LwM2mPath(request.getObjectId())));
+                    Object params = request.getParams();
+                    ResourceModel.Type resourceModel = resourceModelExecute.type == ResourceModel.Type.NONE ? equalsResourceTypeGetSimpleName(params) : resourceModelExecute.type;
+                    String args = (String) this.converter.convertValue(params, resourceModel, ResourceModel.Type.STRING, new LwM2mPath(request.getObjectId()));
+                    Arguments arguments = Arguments.parse(args);
+                    downlink = new ExecuteRequest(request.getObjectId(), arguments);
                 } else {
                     downlink = new ExecuteRequest(request.getObjectId());
                 }
@@ -290,7 +296,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             } else {
                 callback.onValidationError(request.toString(), "Resource with " + request.getVersionedId() + " is not executable.");
             }
-        } catch (InvalidRequestException e) {
+        } catch (InvalidRequestException | InvalidArgumentException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
     }
