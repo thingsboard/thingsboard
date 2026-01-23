@@ -125,7 +125,7 @@ ThingsBoard is a scalable, user-friendly, and device-agnostic IoT platform that 
 
 [**Fleet tracking**](https://thingsboard.io/use-cases/fleet-tracking/)
 
-[![Fleet tracking](https://github.com/user-attachments/assets/9e8938ba-ee0c-4599-9494-d74b7de8a63d "Fleet tracking")](https://thingsboard.io/use-cases/fleet-tracking/)
+[![Fleet tracking](https://github.com/user-attachments/assets/d6ce0766-b138-4a42-86aa-7112a543026c "Fleet tracking")](https://thingsboard.io/use-cases/fleet-tracking/)
 
 [**Smart farming**](https://thingsboard.io/use-cases/smart-farming/)
 
