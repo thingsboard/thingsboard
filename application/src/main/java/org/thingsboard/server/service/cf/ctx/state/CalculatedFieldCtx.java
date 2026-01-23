@@ -310,7 +310,7 @@ public class CalculatedFieldCtx {
     }
 
     public String getSizeExceedsLimitMessage() {
-        return "Failed to init CF state. State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
+        return "State size exceeds limit of " + (maxStateSize / 1024) + "Kb!";
     }
 
 }

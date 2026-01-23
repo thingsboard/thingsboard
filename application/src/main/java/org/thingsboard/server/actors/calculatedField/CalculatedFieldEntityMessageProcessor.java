@@ -131,11 +131,12 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             if (state.isSizeOk()) {
                 processStateIfReady(ctx, Collections.singletonList(ctx.getCfId()), state, null, null, msg.getCallback());
             } else {
-                throw new RuntimeException(ctx.getSizeExceedsLimitMessage());
+                throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).errorMessage(ctx.getSizeExceedsLimitMessage()).build();
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
-                throw cfe;
+                persistDebugErrorIfEnabled(cfe, msg.getCallback());
+                return;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
@@ -200,6 +201,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
                 }
             }
         } catch (Exception e) {
+            if (e instanceof CalculatedFieldException cfe) {
+                persistDebugErrorIfEnabled(cfe, callback);
+                return;
+            }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
     }
@@ -223,7 +228,8 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
-                throw cfe;
+                persistDebugErrorIfEnabled(cfe, callback);
+                return;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
@@ -483,6 +489,21 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             return TbMsgType.valueOf(proto.getTbMsgType());
         }
         return null;
+    }
+
+    private void persistDebugErrorIfEnabled(CalculatedFieldException cfe, TbCallback callback) {
+        if (DebugModeUtil.isDebugFailuresAvailable(cfe.getCtx().getCalculatedField())) {
+            String message;
+            if (cfe.getErrorMessage() != null) {
+                message = cfe.getErrorMessage();
+            } else if (cfe.getCause() != null) {
+                message = cfe.getCause().getMessage();
+            } else {
+                message = "N/A";
+            }
+            systemContext.persistCalculatedFieldDebugEvent(tenantId, cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
+        }
+        callback.onSuccess();
     }
 
 }
