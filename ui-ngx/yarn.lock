@@ -392,12 +392,12 @@
   optionalDependencies:
     lmdb "3.4.2"
 
-"@angular/cdk@19.2.19":
-  version "19.2.19"
-  resolved "https://registry.yarnpkg.com/@angular/cdk/-/cdk-19.2.19.tgz#25ba3b8f565e6bcd9cd59159c0d9a4244cf3c7ee"
-  integrity sha512-PCpJagurPBqciqcq4Z8+3OtKLb7rSl4w/qBJoIMua8CgnrjvA1i+SWawhdtfI1zlY8FSwhzLwXV0CmWWfFzQPg==
+"@angular/cdk@20.2.14":
+  version "20.2.14"
+  resolved "https://registry.yarnpkg.com/@angular/cdk/-/cdk-20.2.14.tgz#5da8d29a0688cf0c6f58db77aee8afa0a05faaea"
+  integrity sha512-7bZxc01URbiPiIBWThQ69XwOxVduqEKN4PhpbF2AAyfMc/W8Hcr4VoIJOwL0O1Nkq5beS8pCAqoOeIgFyXd/kg==
   dependencies:
-    parse5 "^7.1.2"
+    parse5 "^8.0.0"
     tslib "^2.3.0"
 
 "@angular/cli@20.3.15":
@@ -471,10 +471,10 @@
   resolved "https://registry.yarnpkg.com/@angular/language-service/-/language-service-20.3.16.tgz#8d570c24ca2347a2c884b96be34077e181e08ff3"
   integrity sha512-0A/tSQPq5geIz2mMcZA5fzzbzT39v+ADQksnfPr8htNxtkYWy+EI5+d0+++k59NuvjLY4uTBqhRTRB9b1PKrjw==
 
-"@angular/material@19.2.19":
-  version "19.2.19"
-  resolved "https://registry.yarnpkg.com/@angular/material/-/material-19.2.19.tgz#dd10669e260109c4f944303dcff3d92fed2e5566"
-  integrity sha512-auIE6JUzTIA3LyYklh9J/T7u64crmphxUBgAa0zcOMDog6SYfwbNe9YeLQqua5ek4OUAOdK/BHHfVl5W5iaUoQ==
+"@angular/material@20.2.14":
+  version "20.2.14"
+  resolved "https://registry.yarnpkg.com/@angular/material/-/material-20.2.14.tgz#93027a9eb052d639e8e4f1bd7a3d65e072dc2702"
+  integrity sha512-IbAgV6XLsvmHiJzxycVhcNC1PA4M30qi+ERCOir6cT333Bxm8vDV32gsOjfL52uzG5YRARroPC+8s1XqR2oxeA==
   dependencies:
     tslib "^2.3.0"
 
@@ -2345,10 +2345,10 @@
     rw "^1.3.3"
     tinyqueue "^3.0.0"
 
-"@mat-datetimepicker/core@~15.0.2":
-  version "15.0.2"
-  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-15.0.2.tgz#ea0749b7c749dc2975c28d570a623ca3a212f05e"
-  integrity sha512-2vyKub5uCSAWoKC7UlUbNFOwHrHu9gdaK1xluMiimj8GibkxuP0uh2AP1tRsYz2514CAFvsSkD39X6qy0kz7Iw==
+"@mat-datetimepicker/core@~16.0.1":
+  version "16.0.1"
+  resolved "https://registry.yarnpkg.com/@mat-datetimepicker/core/-/core-16.0.1.tgz#f2b19b6ed85f83a83f93be866af1a9564ac0d978"
+  integrity sha512-WknoCOBP3E9VQfRrFGQ5oQlm6EHvfaGjjlHdat7mP0qdfIHqq1efVXZ4/0aXEhiV6s9KM5m4y9ZUfJDLWIz0Zg==
   dependencies:
     tslib "~2.8.1"
 
@@ -5635,7 +5635,7 @@ enhanced-resolve@^5.17.4:
     graceful-fs "^4.2.4"
     tapable "^2.2.0"
 
-entities@^4.2.0, entities@^4.5.0:
+entities@^4.2.0:
   version "4.5.0"
   resolved "https://registry.yarnpkg.com/entities/-/entities-4.5.0.tgz#5d268ea5e7113ec74c4d033b79ea5a35a488fb48"
   integrity sha512-V0hjH4dGPh9Ao5p0MoRY6BVqtwCjhz6vI5LT8AJ55H+4g9/4vbHx1I54fS0XuclLhDHArPQCiMjDxjaL8fPxhw==
@@ -8756,13 +8756,6 @@ parse5-sax-parser@^8.0.0:
   integrity sha512-/dQ8UzHZwnrzs3EvDj6IkKrD/jIZyTlB+8XrHJvcjNgRdmWruNdN9i9RK/JtxakmlUdPwKubKPTCqvbTgzGhrw==
   dependencies:
     parse5 "^8.0.0"
-
-parse5@^7.1.2:
-  version "7.2.1"
-  resolved "https://registry.yarnpkg.com/parse5/-/parse5-7.2.1.tgz#8928f55915e6125f430cc44309765bf17556a33a"
-  integrity sha512-BuBYQYlv1ckiPdQi/ohiivi9Sagc9JG+Ozs0r7b/0iK3sKmrb0b9FdWdBbOdx6hBCM/F9Ir82ofnBhtZOjCRPQ==
-  dependencies:
-    entities "^4.5.0"
 
 parse5@^8.0.0:
   version "8.0.0"
