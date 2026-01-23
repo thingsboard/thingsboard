@@ -21,6 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
 import org.junit.Assert;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.CoapDeviceType;
@@ -37,10 +39,10 @@ import org.thingsboard.server.transport.coap.AbstractCoapIntegrationTest;
 import org.thingsboard.server.transport.coap.x509.CertPrivateKey;
 import org.thingsboard.server.transport.coap.x509.CoapClientX509Test;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
+import org.thingsboard.server.utils.PortFinder;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.ServerSocket;
 import java.security.GeneralSecurityException;
 import java.security.KeyStore;
 import java.security.PrivateKey;
@@ -51,9 +53,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 
-import static org.awaitility.Awaitility.await;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -70,7 +70,17 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
         "transport.coap.enabled=true",
 })
 public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIntegrationTest {
-    private static final String COAPS_BASE_URL = "coaps://localhost:5684/api/v1/";
+
+    public static final String COAPS_HOST = "localhost";
+    public static final int COAPS_PORT = PortFinder.findAvailableUdpPort();
+    public static final String COAPS_BASE_URL = "coaps://" + COAPS_HOST + ":" + COAPS_PORT + "/api/v1/";
+
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("coap.dtls.bind_port = {}", COAPS_PORT);
+        registry.add("coap.dtls.bind_port", () -> COAPS_PORT);
+    }
+
     protected final String CREDENTIALS_PATH = "coap/credentials/";
     protected final String CREDENTIALS_PATH_CLIENT = CREDENTIALS_PATH + "client/";
     protected final String CREDENTIALS_PATH_CLIENT_CERT_PEM = CREDENTIALS_PATH_CLIENT + "cert.pem";
@@ -160,13 +170,10 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         CertPrivateKey certPrivateKey = new CertPrivateKey(CREDENTIALS_PATH_CLIENT_CERT_PEM, CREDENTIALS_PATH_CLIENT_KEY_PEM);
         CertPrivateKey certPrivateKey_01 = new CertPrivateKey(CREDENTIALS_PATH_CLIENT + "cert_01.pem",
                 CREDENTIALS_PATH_CLIENT + "key_01.pem");
-        Integer fixedPort =  getFreePort();
+        int fixedPort =  PortFinder.findAvailableUdpPort();
         CoapClientX509Test clientX509 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey,
                 "CoapX509TrustNo_" + FeatureType.TELEMETRY.name(), deviceProfile.getId(), fixedPort);
         clientX509.disconnect();
-        await("Need to make port " + fixedPort + " free")
-                .atMost(40, TimeUnit.SECONDS)
-                .until(() -> isPortAvailable(fixedPort));
         CoapClientX509Test clientX509_01 = clientX509UpdateTest(FeatureType.ATTRIBUTES, certPrivateKey_01,
                 "CoapX509TrustNo_" + FeatureType.TELEMETRY.name() + "_01", deviceProfile.getId(),
                 fixedPort, PAYLOAD_VALUES_STR_01);
@@ -274,19 +281,5 @@ public abstract class AbstractCoapSecurityIntegrationTest extends AbstractCoapIn
         }
     }
 
-    private static int getFreePort() throws IOException {
-        try (ServerSocket socket = new ServerSocket(0)) {
-            return socket.getLocalPort();
-        }
-    }
-
-    private static boolean isPortAvailable(int port) {
-        try (ServerSocket serverSocket = new ServerSocket(port)) {
-            serverSocket.setReuseAddress(true);
-            return true;
-        } catch (IOException e) {
-            return false;
-        }
-    }
 }
 

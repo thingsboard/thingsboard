@@ -68,10 +68,12 @@ import org.thingsboard.server.gen.edge.v1.WidgetsBundleUpdateMsg;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.TimeUnit;
@@ -102,8 +104,17 @@ public class EdgeImitator {
 
     @Getter
     private EdgeConfiguration configuration;
-    @Getter
-    private final List<AbstractMessage> downlinkMsgs;
+    private final ConcurrentLinkedDeque<AbstractMessage> downlinkMsgs;
+
+    //Returns collection copy as Unmodifiable list
+    //This addressing the issue: DeviceEdgeTest>AbstractEdgeTest.setupEdgeTest:212->AbstractEdgeTest.verifyEdgeConnectionAndInitialData:306->AbstractEdgeTest.validateMsgsCnt:387 » ConcurrentModification
+    public List<AbstractMessage> getDownlinkMsgs() {
+        return downlinkMsgs.stream().toList();
+    }
+
+    public Deque<AbstractMessage> getDownlinkMsgsDeque() {
+        return downlinkMsgs;
+    }
 
     @Getter
     private UplinkResponseMsg latestResponseMsg;
@@ -112,7 +123,7 @@ public class EdgeImitator {
         edgeRpcClient = new EdgeGrpcClient();
         messagesLatch = new CountDownLatch(0);
         responsesLatch = new CountDownLatch(0);
-        downlinkMsgs = new ArrayList<>();
+        downlinkMsgs = new ConcurrentLinkedDeque<>();
         ignoredTypes = new ArrayList<>();
         this.routingKey = routingKey;
         this.routingSecret = routingSecret;
@@ -452,7 +463,7 @@ public class EdgeImitator {
     }
 
     public AbstractMessage getLatestMessage() {
-        return downlinkMsgs.get(downlinkMsgs.size() - 1);
+        return downlinkMsgs.peekLast();
     }
 
     public void ignoreType(Class<? extends AbstractMessage> type) {

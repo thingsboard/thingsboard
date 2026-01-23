@@ -114,7 +114,7 @@ public class CalculatedFieldCtx {
                 initialized = true;
             } catch (Exception e) {
                 initialized = false;
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.", e);
+                throw new RuntimeException("Failed to initialize CF context. The script expression is invalid. Please check for syntax errors or unsupported functions.", e);
             }
         } else {
             if (isValidExpression(expression)) {
@@ -128,7 +128,7 @@ public class CalculatedFieldCtx {
                 initialized = true;
             } else {
                 initialized = false;
-                throw new RuntimeException("Failed to init calculated field ctx. Invalid expression syntax.");
+                throw new RuntimeException("Failed to initialize CF context. The expression has invalid syntax or unknown variables. Ensure all mathematical operators are correct.");
             }
         }
     }
