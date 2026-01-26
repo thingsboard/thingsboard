@@ -184,6 +184,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
   public sourceIndex: number;
   public noDataDisplayMessageText: string;
   public hasRowAction: boolean;
+  public isDashboardTimewindow: boolean;
   private setCellButtonAction: boolean;
 
   private cellContentCache: Array<any> = [];
@@ -251,6 +252,7 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
     this.data = this.ctx.data;
     this.latestData = this.ctx.latestData;
     this.datasources = this.ctx.datasources;
+    this.isDashboardTimewindow = this.ctx.widgetConfig.useDashboardTimewindow;
     this.initialize();
     this.ctx.updateWidgetParams();
 
