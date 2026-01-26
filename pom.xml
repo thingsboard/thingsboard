@@ -172,16 +172,6 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
         </profile>
-        <profile>
-            <id>default-surefire-java-opts</id>
-            <activation>
-                <property>
-                    <name>!env.SUREFIRE_JAVA_OPTS</name> </property>
-            </activation>
-            <properties>
-                <env.SUREFIRE_JAVA_OPTS> </env.SUREFIRE_JAVA_OPTS>
-            </properties>
-        </profile>
         <!-- download sources under target/dependencies -->
         <!-- mvn package -Pdownload-dependencies -Dclassifier=sources dependency:copy-dependencies -->
         <profile>
@@ -676,7 +666,6 @@
                             --add-opens=java.base/java.lang.reflect=ALL-UNNAMED
                             -Dqueue.edqs.local.rocksdb_path="target/rocksdb/fork_${surefire.forkNumber}/edqs"
                             -Dqueue.calculated_fields.rocks_db_path="target/rocksdb/fork_${surefire.forkNumber}/cf"
-                            ${env.SUREFIRE_JAVA_OPTS}
                         </argLine>
                     </configuration>
                 </plugin>
