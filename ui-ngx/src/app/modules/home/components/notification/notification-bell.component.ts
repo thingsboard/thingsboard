@@ -26,7 +26,7 @@ import {
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
 import { distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
 import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
@@ -74,7 +74,7 @@ export class NotificationBellComponent implements OnDestroy {
     this.unsubscribeSubscription();
   }
 
-  showNotification($event: Event, createVersionButton: MatButton) {
+  showNotification($event: Event, createVersionButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

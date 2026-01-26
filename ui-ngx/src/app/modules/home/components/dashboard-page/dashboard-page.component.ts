@@ -146,7 +146,7 @@ import { SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
 
 import { IAliasController } from '@core/api/widget-api.models';
-import { MatButton } from '@angular/material/button';
+import { MatButton, MatIconButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { catchError, distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
@@ -1754,7 +1754,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     });
   }
 
-  toggleVersionControl($event: Event, versionControlButton: MatButton) {
+  toggleVersionControl($event: Event, versionControlButton: MatButton | MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

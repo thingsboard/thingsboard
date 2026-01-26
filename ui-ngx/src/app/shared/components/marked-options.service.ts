@@ -70,47 +70,47 @@ export class MarkedOptionsService implements MarkedOptions {
       }
     };
     marked.use({tokenizer});
-    this.renderer.code = (code: string, language: string | undefined, isEscaped: boolean) => {
-      const codeContext = processCode(code);
+    this.renderer.code = (code: Tokens.Code) => {
+      const codeContext = processCode(code.text);
+      code.text = codeContext.code;
       if (codeContext.copyCode) {
-        const content = postProcessCodeContent(this.renderer2.code(codeContext.code, language, isEscaped), codeContext);
+        const content = postProcessCodeContent(this.renderer2.code(code), codeContext);
         this.id++;
         return this.wrapCopyCode(this.id, content, codeContext);
       } else {
-        return this.wrapDiv(postProcessCodeContent(this.renderer2.code(codeContext.code, language, isEscaped), codeContext));
+        return this.wrapDiv(postProcessCodeContent(this.renderer2.code(code), codeContext));
       }
     };
-    this.renderer.table = (header: string, body: string) => {
+    this.renderer.table = (token: Tokens.Table) => {
       let autoLayout = false;
-      if (header.includes(autoBlock)) {
-        autoLayout = true;
-        header = header.replace(autoBlock, '');
+      for (const h of token.header) {
+        if (h.text.includes(autoBlock)) {
+          autoLayout = true;
+          h.text = h.text.replace(autoBlock, '');
+        }
       }
-      let table = this.renderer2.table(header, body);
+      let table = this.renderer2.table(token);
       if (autoLayout) {
         table = table.replace('<table', '<table class="auto"');
       }
       return table;
     };
-    this.renderer.tablecell = (content: string, flags: {
-      header: boolean;
-      align: 'center' | 'left' | 'right' | null;
-    }) => {
-      const codeContext = processCode(content);
+    this.renderer.tablecell = (token: Tokens.TableCell) => {
+      const codeContext = processCode(token.text);
       codeContext.multiline = false;
       if (codeContext.copyCode) {
         this.id++;
-        content = this.wrapCopyCode(this.id, codeContext.code, codeContext);
+        token.text = this.wrapCopyCode(this.id, codeContext.code, codeContext);
       }
-      return this.renderer2.tablecell(content, flags);
+      return this.renderer2.tablecell(token);
     };
-    this.renderer.link = (href: string | null, title: string | null, text: string) => {
-      if (text.endsWith(targetBlankBlock)) {
-        text = text.substring(0, text.length - targetBlankBlock.length);
-        const content = this.renderer2.link(href, title, text);
+    this.renderer.link = (token: Tokens.Link) => {
+      if (token.text.endsWith(targetBlankBlock)) {
+        token.text = token.text.substring(0, token.text.length - targetBlankBlock.length);
+        const content = this.renderer2.link(token);
         return content.replace('<a href=', '<a target="_blank" href=');
       } else {
-        return this.renderer2.link(href, title, text);
+        return this.renderer2.link(token);
       }
     };
     this.document.addEventListener('selectionchange', this.onSelectionChange.bind(this));

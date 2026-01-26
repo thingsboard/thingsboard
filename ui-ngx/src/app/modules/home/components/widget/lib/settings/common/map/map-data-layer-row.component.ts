@@ -32,7 +32,7 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CirclesDataLayerSettings,
@@ -244,7 +244,7 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
     );
   }
 
-  editDataLayer($event: Event, matButton: MatButton) {
+  editDataLayer($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }

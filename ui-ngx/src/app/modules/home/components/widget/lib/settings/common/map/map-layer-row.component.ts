@@ -34,7 +34,7 @@ import {
   UntypedFormGroup,
   Validators
 } from '@angular/forms';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -173,7 +173,7 @@ export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
     return this.translate.instant(translationKey);
   }
 
-  editLayer($event: Event, matButton: MatButton) {
+  editLayer($event: Event, matButton: MatIconButton) {
     if ($event) {
       $event.stopPropagation();
     }
