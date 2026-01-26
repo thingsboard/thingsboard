@@ -77,7 +77,11 @@ public class ApiKeyController extends BaseController {
         User user = checkUserId(apiKeyInfo.getUserId(), Operation.WRITE);
         apiKeyInfo.setTenantId(user.getTenantId());
         checkEntity(apiKeyInfo.getId(), apiKeyInfo, Resource.API_KEY);
-        return checkNotNull(apiKeyService.saveApiKey(apiKeyInfo.getTenantId(), apiKeyInfo));
+        ApiKey savedApiKey = checkNotNull(apiKeyService.saveApiKey(apiKeyInfo.getTenantId(), apiKeyInfo));
+        if (apiKeyInfo.getId() != null) {
+            savedApiKey.setValue(null);
+        }
+        return savedApiKey;
     }
 
     @ApiOperation(value = "Get User Api Keys (getUserApiKeys)",
@@ -121,7 +125,7 @@ public class ApiKeyController extends BaseController {
         ApiKey apiKey = checkApiKeyId(apiKeyId, Operation.WRITE);
         checkUserId(apiKey.getUserId(), Operation.WRITE);
         apiKey.setDescription(description.orElse(null));
-        return apiKeyService.saveApiKey(apiKey.getTenantId(), apiKey);
+        return new ApiKeyInfo(apiKeyService.saveApiKey(apiKey.getTenantId(), apiKey));
     }
 
     @ApiOperation(value = "Enable or disable API key (enableApiKey)",
@@ -137,7 +141,7 @@ public class ApiKeyController extends BaseController {
         ApiKey apiKey = checkApiKeyId(apiKeyId, Operation.WRITE);
         checkUserId(apiKey.getUserId(), Operation.WRITE);
         apiKey.setEnabled(enabledValue);
-        return apiKeyService.saveApiKey(apiKey.getTenantId(), apiKey);
+        return new ApiKeyInfo(apiKeyService.saveApiKey(apiKey.getTenantId(), apiKey));
     }
 
     @ApiOperation(value = "Delete API key by ID (deleteApiKey)",
