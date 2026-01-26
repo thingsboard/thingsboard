@@ -42,6 +42,12 @@
     <!--    <logger name="org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mRedisRegistrationStore" level="TRACE"/>-->
     <!--    <logger name="org.thingsboard.server.transport.lwm2m.security.diffPort" level="TRACE"/>-->
 
+    <!-- Avoiding multiple logs like: The cache 'relations' is not recording statistics. No meters except 'cache.size' will be registered. Call 'Caffeine#recordStats()' prior to building the cache for metrics to be recorded.-->
+    <logger name="io.micrometer.core.instrument.binder.cache.CaffeineCacheMetrics" level="ERROR"/>
+
+    <!-- Log MvcMock result with status >=400 -->
+    <logger name="org.springframework.test.web.servlet.result" level="DEBUG"/>
+
     <root level="WARN">
         <appender-ref ref="console"/>
     </root>
