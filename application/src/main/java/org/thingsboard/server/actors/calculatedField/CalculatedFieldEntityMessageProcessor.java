@@ -66,7 +66,6 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.service.cf.ctx.state.TsRollingArgumentEntry.getValueForTsRecord;
 
-
 /**
  * @author Andrew Shvayka
  */
@@ -135,8 +134,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
-                persistDebugErrorIfEnabled(cfe, msg.getCallback());
-                return;
+                throw cfe;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
@@ -202,8 +200,7 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
-                persistDebugErrorIfEnabled(cfe, callback);
-                return;
+                throw cfe;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
         }
@@ -228,7 +225,10 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             }
         } catch (Exception e) {
             if (e instanceof CalculatedFieldException cfe) {
-                persistDebugErrorIfEnabled(cfe, callback);
+                if (DebugModeUtil.isDebugFailuresAvailable(cfe.getCtx().getCalculatedField())) {
+                    systemContext.persistCalculatedFieldDebugError(cfe);
+                }
+                callback.onSuccess();
                 return;
             }
             throw CalculatedFieldException.builder().ctx(ctx).eventEntity(entityId).cause(e).build();
@@ -489,21 +489,6 @@ public class CalculatedFieldEntityMessageProcessor extends AbstractContextAwareM
             return TbMsgType.valueOf(proto.getTbMsgType());
         }
         return null;
-    }
-
-    private void persistDebugErrorIfEnabled(CalculatedFieldException cfe, TbCallback callback) {
-        if (DebugModeUtil.isDebugFailuresAvailable(cfe.getCtx().getCalculatedField())) {
-            String message;
-            if (cfe.getErrorMessage() != null) {
-                message = cfe.getErrorMessage();
-            } else if (cfe.getCause() != null) {
-                message = cfe.getCause().getMessage();
-            } else {
-                message = "N/A";
-            }
-            systemContext.persistCalculatedFieldDebugEvent(tenantId, cfe.getCtx().getCfId(), cfe.getEventEntity(), cfe.getArguments(), cfe.getMsgId(), cfe.getMsgType(), null, message);
-        }
-        callback.onSuccess();
     }
 
 }
