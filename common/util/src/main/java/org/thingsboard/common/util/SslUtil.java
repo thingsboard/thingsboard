@@ -105,29 +105,72 @@ public class SslUtil {
 
     private static PrivateKey readPrivateKey(Reader reader, String passStr) throws IOException, PKCSException {
         char[] password = getPassword(passStr);
-        PrivateKey privateKey = null;
         JcaPEMKeyConverter keyConverter = new JcaPEMKeyConverter();
         try (PEMParser pemParser = new PEMParser(reader)) {
             Object object;
             while ((object = pemParser.readObject()) != null) {
-                if (object instanceof PEMEncryptedKeyPair) {
-                    PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password);
-                    privateKey = keyConverter.getKeyPair(((PEMEncryptedKeyPair) object).decryptKeyPair(decProv)).getPrivate();
-                    break;
-                } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
-                    InputDecryptorProvider decProv =
-                            new JcePKCSPBEInputDecryptorProviderBuilder().setProvider(DEFAULT_PROVIDER).build(password);
-                    privateKey = keyConverter.getPrivateKey(((PKCS8EncryptedPrivateKeyInfo) object).decryptPrivateKeyInfo(decProv));
-                    break;
-                } else if (object instanceof PEMKeyPair) {
-                    privateKey = keyConverter.getKeyPair((PEMKeyPair) object).getPrivate();
-                    break;
-                } else if (object instanceof PrivateKeyInfo) {
-                    privateKey = keyConverter.getPrivateKey((PrivateKeyInfo) object);
+                PrivateKey key = extractPrivateKeyFromObject(object, keyConverter, password);
+                if (key != null) {
+                    return key;
                 }
             }
         }
-        return privateKey;
+        return null;
+    }
+
+    /**
+     * Extracts a PrivateKey from a PEM object based on its type.
+     * This method handles different PEM object types (encrypted/unencrypted key pairs and key info).
+     *
+     * @param object the PEM object to extract the key from
+     * @param keyConverter the converter to use for key extraction
+     * @param password the password for decryption (if needed)
+     * @return the extracted PrivateKey, or null if the object type is not recognized
+     * @throws PKCSException if there's an error during decryption
+     */
+    private static PrivateKey extractPrivateKeyFromObject(Object object, JcaPEMKeyConverter keyConverter, char[] password) throws PKCSException {
+        if (object instanceof PEMEncryptedKeyPair) {
+            return extractFromEncryptedKeyPair((PEMEncryptedKeyPair) object, keyConverter, password);
+        } else if (object instanceof PKCS8EncryptedPrivateKeyInfo) {
+            return extractFromPKCS8EncryptedInfo((PKCS8EncryptedPrivateKeyInfo) object, keyConverter, password);
+        } else if (object instanceof PEMKeyPair) {
+            return extractFromKeyPair((PEMKeyPair) object, keyConverter);
+        } else if (object instanceof PrivateKeyInfo) {
+            return extractFromPrivateKeyInfo((PrivateKeyInfo) object, keyConverter);
+        }
+        return null;
+    }
+
+    /**
+     * Extracts a PrivateKey from an encrypted PEM key pair.
+     */
+    private static PrivateKey extractFromEncryptedKeyPair(PEMEncryptedKeyPair encryptedKeyPair, JcaPEMKeyConverter keyConverter, char[] password) throws PKCSException {
+        PEMDecryptorProvider decProv = new JcePEMDecryptorProviderBuilder().build(password);
+        return keyConverter.getKeyPair(encryptedKeyPair.decryptKeyPair(decProv)).getPrivate();
+    }
+
+    /**
+     * Extracts a PrivateKey from a PKCS8 encrypted private key info.
+     */
+    private static PrivateKey extractFromPKCS8EncryptedInfo(PKCS8EncryptedPrivateKeyInfo encryptedInfo, JcaPEMKeyConverter keyConverter, char[] password) throws PKCSException {
+        InputDecryptorProvider decProv = new JcePKCSPBEInputDecryptorProviderBuilder()
+                .setProvider(DEFAULT_PROVIDER)
+                .build(password);
+        return keyConverter.getPrivateKey(encryptedInfo.decryptPrivateKeyInfo(decProv));
+    }
+
+    /**
+     * Extracts a PrivateKey from an unencrypted PEM key pair.
+     */
+    private static PrivateKey extractFromKeyPair(PEMKeyPair keyPair, JcaPEMKeyConverter keyConverter) {
+        return keyConverter.getKeyPair(keyPair).getPrivate();
+    }
+
+    /**
+     * Extracts a PrivateKey from a private key info object.
+     */
+    private static PrivateKey extractFromPrivateKeyInfo(PrivateKeyInfo keyInfo, JcaPEMKeyConverter keyConverter) throws PKCSException {
+        return keyConverter.getPrivateKey(keyInfo);
     }
 
     public static char[] getPassword(String passStr) {
