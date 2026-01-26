@@ -52,11 +52,11 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
         try {
             TenantProfile savedTenantProfile = checkNotNull(tenantProfileService.saveTenantProfile(tenantId, tenantProfile));
             tenantProfileCache.put(savedTenantProfile);
+            logEntityActionService.logEntityAction(tenantId, savedTenantProfile.getId(), savedTenantProfile, null,
+                    actionType, user);
 
             List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
             tbQueueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
-            logEntityActionService.logEntityAction(tenantId, savedTenantProfile.getId(), savedTenantProfile, null,
-                    actionType, user);
 
             return savedTenantProfile;
         } catch (ThingsboardException e) {
@@ -91,14 +91,9 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
     public TenantProfile setDefaultTenantProfile(TenantId tenantId, TenantProfile tenantProfile, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UPDATED;
         try {
-            boolean changed = tenantProfileService.setDefaultTenantProfile(tenantId, tenantProfile.getId());
-            TenantProfile result = tenantProfileService.findTenantProfileById(tenantId, tenantProfile.getId());
-            if (changed && result != null) {
-                // Update application-level cache
-                tenantProfileCache.put(result);
-            }
-            logEntityActionService.logEntityAction(tenantId, result != null ? result.getId() : tenantProfile.getId(), result, null, actionType, user);
-            return result != null ? result : tenantProfile;
+            TenantProfile savedTenantProfile = tenantProfileService.setDefaultTenantProfile(tenantId, tenantProfile.getId());
+            logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), savedTenantProfile, null, actionType, user);
+            return savedTenantProfile;
         } catch (DataValidationException e) {
             log.error("Failed to set default tenant profile due to data validation [{}]", tenantProfile, e);
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT_PROFILE), tenantProfile, actionType, user, e);

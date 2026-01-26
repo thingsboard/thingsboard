@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
@@ -25,12 +26,12 @@ import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
-import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.queue.ProcessingStrategy;
 import org.thingsboard.server.common.data.queue.ProcessingStrategyType;
@@ -42,7 +43,6 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfi
 import org.thingsboard.server.common.data.validation.RateLimit;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.queue.TbQueueCallback;
-import org.awaitility.Awaitility;
 
 import java.lang.reflect.Field;
 import java.util.ArrayList;
@@ -191,7 +191,8 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Assert.assertEquals(savedTenantProfile.getName(), foundDefaultTenantProfile.getName());
         Assert.assertEquals(savedTenantProfile.getId(), foundDefaultTenantProfile.getId());
 
-        awaitAuditLog("Wait for async audit log to be persisted (UPDATED expected for NEW DEFAULT Tenant Profile)", savedTenantProfile.getId(), ActionType.UPDATED);    }
+        awaitAuditLog("Wait for async audit log to be persisted (UPDATED expected for NEW DEFAULT Tenant Profile)", savedTenantProfile.getId(), ActionType.UPDATED);
+    }
 
     @Test
     public void testSaveTenantProfileWithEmptyName() throws Exception {

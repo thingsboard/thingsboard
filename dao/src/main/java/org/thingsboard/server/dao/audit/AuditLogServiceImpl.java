@@ -119,7 +119,7 @@ public class AuditLogServiceImpl implements AuditLogService {
     public <E extends HasName, I extends EntityId> ListenableFuture<Void>
     logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
                     ActionType actionType, Exception e, Object... additionalInfo) {
-        if (canLog(entityId.getEntityType(), actionType) || tenantId.isSysTenantId()) {
+        if (canLog(entityId.getEntityType(), actionType) || (tenantId != null && tenantId.isSysTenantId())) {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
