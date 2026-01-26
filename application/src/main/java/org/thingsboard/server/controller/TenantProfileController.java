@@ -187,7 +187,7 @@ public class TenantProfileController extends BaseController {
             oldProfile = checkTenantProfileId(tenantProfile.getId(), Operation.WRITE);
         }
 
-        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile);
+        return tbTenantProfileService.save(getTenantId(), tenantProfile, oldProfile, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Tenant Profile (deleteTenantProfile)",
@@ -200,7 +200,7 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile profile = checkTenantProfileId(tenantProfileId, Operation.DELETE);
-        tbTenantProfileService.delete(getTenantId(), profile);
+        tbTenantProfileService.delete(getTenantId(), profile, getCurrentUser());
     }
 
     @ApiOperation(value = "Make tenant profile default (setDefaultTenantProfile)",
@@ -214,7 +214,7 @@ public class TenantProfileController extends BaseController {
         checkParameter("tenantProfileId", strTenantProfileId);
         TenantProfileId tenantProfileId = new TenantProfileId(toUUID(strTenantProfileId));
         TenantProfile tenantProfile = checkTenantProfileId(tenantProfileId, Operation.WRITE);
-        tenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfileId);
+        tenantProfile = tbTenantProfileService.setDefaultTenantProfile(getTenantId(), tenantProfile, getCurrentUser());
         return tenantProfile;
     }
 
