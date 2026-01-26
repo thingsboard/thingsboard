@@ -22,10 +22,13 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.gson.JsonObject;
 import com.google.protobuf.AbstractMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
@@ -84,12 +87,19 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.gen.edge.v1.UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE;
+import static org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest.MQTT_PORT;
 
 @TestPropertySource(properties = {
         "transport.mqtt.enabled=true"
 })
+@Slf4j
 @DaoSqlTest
 public class DeviceEdgeTest extends AbstractEdgeTest {
+    @DynamicPropertySource
+    static void props(DynamicPropertyRegistry registry) {
+        log.warn("transport.mqtt.bind_port = {}", MQTT_PORT);
+        registry.add("transport.mqtt.bind_port", () -> MQTT_PORT);
+    }
 
     private static final String DEFAULT_DEVICE_TYPE = "default";
 

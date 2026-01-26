@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.cf.ctx.state.geofencing;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -136,7 +135,7 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState imp
                 .outputStrategy(ctx.getOutput().getStrategy())
                 .type(outputType)
                 .scope(ctx.getOutput().getScope())
-                .result(toResultNode(outputType, valuesNode))
+                .result(toResultNode(valuesNode))
                 .build();
         if (relationFutures.isEmpty()) {
             return Futures.immediateFuture(result);
@@ -184,10 +183,6 @@ public class GeofencingCalculatedFieldState extends BaseCalculatedFieldState imp
                 resultNode.put(statusKey, aggregationResult.status().name());
             }
         }
-    }
-
-    private JsonNode toResultNode(OutputType outputType, ObjectNode valuesNode) {
-        return toSimpleResult(outputType == OutputType.TIME_SERIES, valuesNode);
     }
 
     private GeofencingEvalResult aggregateZoneGroup(List<GeofencingEvalResult> zoneResults) {
