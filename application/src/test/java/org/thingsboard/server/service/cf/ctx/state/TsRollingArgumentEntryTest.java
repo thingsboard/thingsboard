@@ -17,6 +17,9 @@ package org.thingsboard.server.service.cf.ctx.state;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 
@@ -26,9 +29,13 @@ import java.util.TreeMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+@ExtendWith(MockitoExtension.class)
 public class TsRollingArgumentEntryTest {
 
     private TsRollingArgumentEntry entry;
+
+    @Mock
+    private CalculatedFieldCtx ctx;
 
     private final long ts = System.currentTimeMillis();
 
@@ -51,7 +58,7 @@ public class TsRollingArgumentEntryTest {
     void testUpdateEntryWhenSingleValueEntryPassed() {
         SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, new DoubleDataEntry("key", 23.0), 123L);
 
-        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.updateEntry(newEntry, ctx)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(4);
         assertThat(entry.getTsRecords().get(ts - 10)).isEqualTo(23.0);
     }
@@ -64,7 +71,7 @@ public class TsRollingArgumentEntryTest {
         values.put(ts - 5, 1.0);
         newEntry.setTsRecords(values);
 
-        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.updateEntry(newEntry, ctx)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(5);
         assertThat(entry.getTsRecords()).isEqualTo(Map.of(
                 ts - 40, 10.0,
@@ -79,7 +86,7 @@ public class TsRollingArgumentEntryTest {
     void testUpdateEntryWhenValueIsNotNumber() {
         SingleValueArgumentEntry newEntry = new SingleValueArgumentEntry(ts - 10, new StringDataEntry("key", "string"), 123L);
 
-        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.updateEntry(newEntry, ctx)).isTrue();
         assertThat(entry.getTsRecords().get(ts - 10)).isNaN();
     }
 
@@ -93,7 +100,7 @@ public class TsRollingArgumentEntryTest {
         newEntry.setTsRecords(values);
 
         entry = new TsRollingArgumentEntry(3, 30000L);
-        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.updateEntry(newEntry, ctx)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(1);
         assertThat(entry.getTsRecords()).isEqualTo(Map.of(
                 ts - 5, 0.0
@@ -111,7 +118,7 @@ public class TsRollingArgumentEntryTest {
         newEntry.setTsRecords(values);
 
         entry = new TsRollingArgumentEntry(3, 30000L);
-        assertThat(entry.updateEntry(newEntry)).isTrue();
+        assertThat(entry.updateEntry(newEntry, ctx)).isTrue();
         assertThat(entry.getTsRecords()).hasSize(3);
         assertThat(entry.getTsRecords()).isEqualTo(Map.of(
                 ts - 18, 0.0,

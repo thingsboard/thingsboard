@@ -77,7 +77,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
                 case ALARM_CLEAR_RPC_MESSAGE:
                     Alarm alarmToClear = edgeCtx.getAlarmService().findAlarmById(tenantId, alarmId);
                     if (alarmToClear != null) {
-                        edgeCtx.getAlarmService().clearAlarm(tenantId, alarmId, alarm.getClearTs(), alarm.getDetails());
+                        edgeCtx.getAlarmService().clearAlarm(tenantId, alarmId, alarm.getClearTs(), alarm.getDetails(), true);
                     }
                     break;
                 case ENTITY_DELETED_RPC_MESSAGE:

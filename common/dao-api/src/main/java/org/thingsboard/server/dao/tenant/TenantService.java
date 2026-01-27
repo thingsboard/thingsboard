@@ -55,4 +55,6 @@ public interface TenantService extends EntityDaoService {
 
     PageData<TenantId> findTenantsIds(PageLink pageLink);
 
+    List<Tenant> findTenantsByIds(TenantId callerId, List<TenantId> tenantIds);
+
 }

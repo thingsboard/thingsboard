@@ -56,6 +56,7 @@ export interface DataKeyConfigDialogData {
   hideDataKeyColor?: boolean;
   hideDataKeyUnits?: boolean;
   hideDataKeyDecimals?: boolean;
+  hideDataKeyAggregation?: boolean;
   supportsUnitConversion?: boolean
 }
 

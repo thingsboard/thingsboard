@@ -40,7 +40,7 @@ import {
   MapDataLayerType,
   MapType,
   MarkersDataLayerSettings,
-  PolygonsDataLayerSettings,
+  PolygonsDataLayerSettings, PolylinesDataLayerSettings,
   TripsDataLayerSettings,
   updateDataKeyToNewDsType
 } from '@shared/models/widget/maps/map.models';
@@ -150,6 +150,11 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
         this.removeDataLayerText = 'widgets.maps.data-layer.circle.remove-circle';
         this.dataLayerFormGroup.addControl('circleKey', this.fb.control(null, Validators.required));
         break;
+      case 'polylines':
+        this.editDataLayerText = 'widgets.maps.data-layer.polyline.polyline-configuration';
+        this.removeDataLayerText = 'widgets.maps.data-layer.polyline.remove-polyline';
+        this.dataLayerFormGroup.addControl('polylineKey', this.fb.control(null, Validators.required));
+        break;
     }
     this.dataLayerFormGroup.valueChanges.pipe(
       takeUntilDestroyed(this.destroyRef)
@@ -225,16 +230,24 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
           }, {emitEvent: false}
         );
         break;
+      case 'polylines':
+        const polylinesDataLayer = value as PolylinesDataLayerSettings;
+        this.dataLayerFormGroup.patchValue(
+          {
+            polylineKey: polylinesDataLayer?.polylineKey
+          }, {emitEvent: false}
+        );
+        break;
     }
     this.updateValidators();
     this.cd.markForCheck();
   }
 
-  editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey') {
+  editKey(keyType: 'xKey' | 'yKey' | 'polygonKey' | 'circleKey' | 'polylineKey') {
     const targetDataKey: DataKey = this.dataLayerFormGroup.get(keyType).value;
     this.context.editKey(targetDataKey,
       this.dataLayerFormGroup.get('dsDeviceId').value, this.dataLayerFormGroup.get('dsEntityAliasId').value,
-      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest).subscribe(
+      this.dataLayerType === 'trips' ? widgetType.timeseries : widgetType.latest, false).subscribe(
       (updatedDataKey) => {
         if (updatedDataKey) {
           this.dataLayerFormGroup.get(keyType).patchValue(updatedDataKey);
@@ -293,6 +306,13 @@ export class MapDataLayerRowComponent implements ControlValueAccessor, OnInit {
         const circleKey: DataKey = this.dataLayerFormGroup.get('circleKey').value;
         if (updateDataKeyToNewDsType(circleKey, newDsType)) {
           this.dataLayerFormGroup.get('circleKey').patchValue(circleKey, {emitEvent: false});
+          updateModel = true;
+        }
+        break;
+      case 'polylines':
+        const polylineKey: DataKey = this.dataLayerFormGroup.get('polylineKey').value;
+        if (updateDataKeyToNewDsType(polylineKey, newDsType)) {
+          this.dataLayerFormGroup.get('polylineKey').patchValue(polylineKey, {emitEvent: false});
           updateModel = true;
         }
         break;

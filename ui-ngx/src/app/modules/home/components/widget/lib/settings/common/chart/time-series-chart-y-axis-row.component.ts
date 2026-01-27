@@ -42,6 +42,8 @@ import {
 import { deepClone } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { TimeSeriesChartYAxesPanelComponent } from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axes-panel.component';
+import { ValueSourceType } from '@shared/models/widget-settings.models';
 
 @Component({
   selector: 'tb-time-series-chart-y-axis-row',
@@ -85,6 +87,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   constructor(private fb: UntypedFormBuilder,
               private translate: TranslateService,
               private popoverService: TbPopoverService,
+              private timeSeriesChartYAxesPanel: TimeSeriesChartYAxesPanelComponent,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private cd: ChangeDetectorRef,
@@ -97,8 +100,8 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       position: [null, []],
       units: [null, []],
       decimals: [null, []],
-      min: [null, []],
-      max: [null, []],
+      min: this.createLimitFormGroup(),
+      max: this.createLimitFormGroup(),
       show: [null, []]
     });
     this.axisFormGroup.valueChanges.pipe(
@@ -132,17 +135,19 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
 
   writeValue(value: TimeSeriesChartYAxisSettings): void {
     this.modelValue = value;
-    this.axisFormGroup.patchValue(
-      {
-        label: value.label,
-        position: value.position,
-        units: value.units,
-        decimals: value.decimals,
-        min: value.min,
-        max: value.max,
-        show: value.show,
-      }, {emitEvent: false}
-    );
+    const min = this.normalizeLimit(value.min);
+    const max = this.normalizeLimit(value.max);
+
+    this.axisFormGroup.patchValue({
+      label: value.label,
+      position: value.position,
+      units: value.units,
+      decimals: value.decimals,
+      min,
+      max,
+      show: value.show,
+    }, { emitEvent: false });
+
     this.updateValidators();
     this.cd.markForCheck();
   }
@@ -165,7 +170,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
           axisType: 'yAxis',
           panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
           axisSettings: deepClone(this.modelValue),
-          advanced: this.advanced
+          advanced: this.advanced,
+          aliasController: this.timeSeriesChartYAxesPanel.aliasController,
+          dataKeyCallbacks: this.timeSeriesChartYAxesPanel.dataKeyCallbacks,
+          datasource: this.timeSeriesChartYAxesPanel.datasource
         },
         isModal: true
       });
@@ -190,6 +198,10 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     }
   }
 
+  checkIsConstantLimit(limit: 'min' | 'max') {
+    return this.axisFormGroup.get(`${limit}.type`)?.value === ValueSourceType.constant;
+  }
+
   private updateValidators() {
     const show: boolean = this.axisFormGroup.get('show').value;
     if (show) {
@@ -203,10 +215,21 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       this.axisFormGroup.get('units').disable({emitEvent: false});
       this.axisFormGroup.get('decimals').disable({emitEvent: false});
     }
+    if(!this.checkIsConstantLimit('min')){
+      this.axisFormGroup.get('min').disable({emitEvent: false});
+    } else {
+      this.axisFormGroup.get('min').enable({emitEvent: false});
+    }
+    if(!this.checkIsConstantLimit('max')){
+      this.axisFormGroup.get('max').disable({emitEvent: false});
+    } else {
+      this.axisFormGroup.get('max').enable({emitEvent: false});
+    }
+
   }
 
   private updateModel() {
-    const value = this.axisFormGroup.value;
+    const value = this.axisFormGroup.getRawValue();
     this.modelValue.label = value.label;
     this.modelValue.position = value.position;
     this.modelValue.units = value.units;
@@ -215,5 +238,40 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
     this.modelValue.max = value.max;
     this.modelValue.show = value.show;
     this.propagateChange(this.modelValue);
+  }
+
+  private createLimitFormGroup() {
+    return this.fb.group({
+      type: [ValueSourceType.constant, []],
+      value: [null, []],
+      latestKey: [null, []],
+      latestKeyType: [null, []],
+      entityAlias: [null, []],
+      entityKey: [null, []],
+      entityKeyType: [null, []]
+    });
+  }
+
+  private normalizeLimit(limit: any) {
+    const base = {
+      type: ValueSourceType.constant,
+      value: null,
+      latestKey: null,
+      latestKeyType: null,
+      entityAlias: null,
+      entityKey: null,
+      entityKeyType: null
+    };
+
+    if (limit == null) return base;
+
+    if (typeof limit === 'number' || typeof limit === 'string') {
+      return { ...base, type: ValueSourceType.constant, value: Number(limit) };
+    }
+
+    return {
+      ...base,
+      ...limit,
+    };
   }
 }

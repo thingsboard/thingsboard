@@ -28,7 +28,7 @@
       class="tb-chip-row-ellipsis"
       [removable]="!disabled"
       (removed)="remove(entity)">
-      {{entity.name}}
+      {{ displayEntityFn(entity) }}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? placeholderText : '' }}"
@@ -51,7 +51,7 @@
                     class="tb-autocomplete"
                     [displayWith]="displayEntityFn">
     <mat-option *ngFor="let entity of filteredEntities | async" [value]="entity">
-      <span [innerHTML]="entity.name | highlight:searchText"></span>
+      <span [innerHTML]="displayEntityFn(entity) | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
       <div (click)="$event.stopPropagation()">

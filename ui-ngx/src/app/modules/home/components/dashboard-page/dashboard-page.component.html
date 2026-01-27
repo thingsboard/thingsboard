@@ -73,9 +73,8 @@
               <mat-icon>layers</mat-icon>
               {{'dashboard.states-short' | translate}}
             </button>
-        </ng-container>
-          <img *ngIf="showDashboardLogo()" [src]="dashboardLogo | image | async"
-               aria-label="dashboard_logo" class="dashboard_logo"/>
+          </ng-container>
+          <tb-logo *ngIf="showDashboardLogo()" [link]="dashboardLogoLink" [src]="dashboardLogo | image | async" class="dashboard_logo"></tb-logo>
         </div>
         <div class="tb-dashboard-action-panel">
           <button [class.!hidden]="!showCloseToolbar()" mat-icon-button class="close-action"
@@ -199,6 +198,7 @@
           <ng-container *ngIf="isEdit; else timewindowTemplate">
             <tb-timewindow class="lt-xl:!hidden" asButton
                            flatButton
+                           showSaveAsDefault
                            [displayTimewindowValue]="false"
                            [isEdit]="true"
                            tooltipPosition="below"
@@ -208,6 +208,7 @@
             </tb-timewindow>
             <tb-timewindow class="gt-lg:!hidden"
                            hideLabel
+                           showSaveAsDefault
                            [isEdit]="true"
                            tooltipPosition="below"
                            aggregation="true"
@@ -223,14 +224,18 @@
                              tooltipPosition="below"
                              aggregation="true"
                              timezone="true"
-                             [(ngModel)]="dashboardCtx.dashboardTimewindow">
+                             [showSaveAsDefault]="!readonly"
+                             [(ngModel)]="dashboardCtx.dashboardTimewindow"
+                             (saveAsDefault)="saveDashboard()">>
               </tb-timewindow>
               <tb-timewindow class="lt-lg:!hidden"
                              [isEdit]="false"
                              tooltipPosition="below"
                              aggregation="true"
                              timezone="true"
-                             [(ngModel)]="dashboardCtx.dashboardTimewindow">
+                             [showSaveAsDefault]="!readonly"
+                             [(ngModel)]="dashboardCtx.dashboardTimewindow"
+                             (saveAsDefault)="saveDashboard()">>
               </tb-timewindow>
             </ng-container>
           </ng-template>

@@ -25,6 +25,7 @@ import {
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
+  widgetTitleAutocompleteValues,
 } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
@@ -83,6 +84,8 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
     const layout: ValueCardLayout = this.valueCardWidgetConfigForm.get('layout').value;
     return layout !== ValueCardLayout.simplified;
   }
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,

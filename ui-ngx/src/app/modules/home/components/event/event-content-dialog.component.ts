@@ -23,7 +23,7 @@ import { Ace } from 'ace-builds';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ContentType, contentTypesMap } from '@shared/models/constants';
-import { getAce } from '@shared/models/ace/ace.models';
+import { getAce, updateEditorSize } from '@shared/models/ace/ace.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { beautifyJs } from '@shared/models/beautify.models';
 import { of } from 'rxjs';
@@ -40,40 +40,38 @@ export interface EventContentDialogData {
   templateUrl: './event-content-dialog.component.html',
   styleUrls: ['./event-content-dialog.component.scss']
 })
-export class EventContentDialogComponent extends DialogComponent<EventContentDialogData> implements OnInit, OnDestroy {
+export class EventContentDialogComponent extends DialogComponent<EventContentDialogComponent> implements OnInit, OnDestroy {
 
   @ViewChild('eventContentEditor', {static: true})
   eventContentEditorElmRef: ElementRef;
 
-  content: string;
   title: string;
-  contentType: ContentType;
-  aceEditor: Ace.Editor;
+  showBorder = false;
+
+  private contentType: ContentType;
+  private aceEditor: Ace.Editor;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: EventContentDialogData,
-              public dialogRef: MatDialogRef<EventContentDialogComponent>,
+              protected dialogRef: MatDialogRef<EventContentDialogComponent>,
               private renderer: Renderer2) {
     super(store, router, dialogRef);
   }
 
   ngOnInit(): void {
-    this.content = this.data.content;
     this.title = this.data.title;
     this.contentType = this.data.contentType;
 
-    this.createEditor(this.eventContentEditorElmRef, this.content);
+    this.createEditor(this.eventContentEditorElmRef, this.data.content);
   }
 
   ngOnDestroy(): void {
-    if (this.aceEditor) {
-      this.aceEditor.destroy();
-    }
+    this.aceEditor?.destroy();
     super.ngOnDestroy();
   }
 
-  isJson(str) {
+  private isJson(str: string) {
     try {
       return isLiteralObject(JSON.parse(str));
     } catch (e) {
@@ -81,78 +79,53 @@ export class EventContentDialogComponent extends DialogComponent<EventContentDia
     }
   }
 
-  createEditor(editorElementRef: ElementRef, content: string) {
+  private createEditor(editorElementRef: ElementRef, content: string) {
     const editorElement = editorElementRef.nativeElement;
     let mode = 'java';
     let content$: Observable<string> = null;
     if (this.contentType) {
       mode = contentTypesMap.get(this.contentType).code;
       if (this.contentType === ContentType.JSON && content) {
-        content$ = beautifyJs(content, {indent_size: 4});
+        content$ = beautifyJs(content, {indent_size: 2});
       } else if (this.contentType === ContentType.BINARY && content) {
         try {
           const decodedData = base64toString(content);
           if (this.isJson(decodedData)) {
             mode = 'json';
-            content$ = beautifyJs(decodedData, {indent_size: 4});
+            content$ = beautifyJs(decodedData, {indent_size: 2});
           } else {
             content$ = of(decodedData);
           }
-        } catch (e) {}
+        } catch (e) {/**/}
       }
     }
     if (!content$) {
       content$ = of(content);
     }
 
-    content$.subscribe(
-      (processedContent) => {
-        let editorOptions: Partial<Ace.EditorOptions> = {
-          mode: `ace/mode/${mode}`,
-          theme: 'ace/theme/github',
-          showGutter: false,
-          showPrintMargin: false,
-          readOnly: true
-        };
-
-        const advancedOptions = {
-          enableSnippets: false,
-          enableBasicAutocompletion: false,
-          enableLiveAutocompletion: false
-        };
-
-        editorOptions = {...editorOptions, ...advancedOptions};
-        getAce().subscribe(
-          (ace) => {
-            this.aceEditor = ace.edit(editorElement, editorOptions);
-            this.aceEditor.session.setUseWrapMode(false);
-            this.aceEditor.setValue(processedContent, -1);
-            this.updateEditorSize(editorElement, processedContent, this.aceEditor);
-          }
-        );
-      }
-    );
+    content$.subscribe((processedContent) => {
+      const isJSON = mode === 'json' && processedContent !== '{}';
+      this.showBorder = isJSON;
+      const editorOptions: Partial<Ace.EditorOptions> = {
+        mode: `ace/mode/${mode}`,
+        theme: 'ace/theme/github',
+        showGutter: isJSON,
+        showFoldWidgets: true,
+        foldStyle: 'markbeginend',
+        showPrintMargin: false,
+        readOnly: true,
+        enableSnippets: false,
+        enableBasicAutocompletion: false,
+        enableLiveAutocompletion: false,
+      };
+      getAce().subscribe(
+        (ace) => {
+          this.aceEditor = ace.edit(editorElement, editorOptions);
+          this.aceEditor.session.setUseWrapMode(false);
+          this.aceEditor.setValue(processedContent, -1);
+          updateEditorSize(editorElement, processedContent, this.aceEditor, this.renderer, {showGutter: isJSON});
+        }
+      )
+    });
   }
-
-  updateEditorSize(editorElement: any, content: string, editor: Ace.Editor) {
-    let newHeight = 400;
-    let newWidth = 600;
-    if (content && content.length > 0) {
-      const lines = content.split('\n');
-      newHeight = 17 * lines.length + 16;
-      let maxLineLength = 0;
-      lines.forEach((row) => {
-        const line = row.replace(/\t/g, '    ').replace(/\n/g, '');
-        const lineLength = line.length;
-        maxLineLength = Math.max(maxLineLength, lineLength);
-      });
-      newWidth = 9 * maxLineLength + 16;
-    }
-    // newHeight = Math.min(400, newHeight);
-    this.renderer.setStyle(editorElement, 'minHeight', newHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'height', newHeight.toString() + 'px');
-    this.renderer.setStyle(editorElement, 'width', newWidth.toString() + 'px');
-    editor.resize();
-  }
-
 }

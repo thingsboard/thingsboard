@@ -21,14 +21,15 @@ import { AppState } from '@core/core.state';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { isDefinedAndNotNull, isUndefined, mergeDeep, mergeDeepIgnoreArray } from '@core/utils';
+import { isDefinedAndNotNull, isUndefined, mergeDeepIgnoreArray } from '@core/utils';
 import { mapWidgetDefaultSettings, MapWidgetSettings } from '@home/components/widget/lib/maps/map-widget.models';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
-import { WidgetConfig } from '@shared/models/widget.models';
+import { WidgetConfig, widgetTitleAutocompleteValues } from '@shared/models/widget.models';
 import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
+import { MapModelDefinition } from '@shared/models/widget/maps/map-model.definition';
 
 @Component({
   selector: 'tb-map-basic-config',
@@ -40,6 +41,8 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
   mapWidgetConfigForm: UntypedFormGroup;
 
   trip = false;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
@@ -85,6 +88,8 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
     this.mapWidgetConfigForm = this.fb.group({
       mapSettings: [settings, []],
 
+      timewindowConfig: [getTimewindowConfig(configData.config), []],
+
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
       titleFont: [configData.config.titleFont, []],
@@ -104,15 +109,10 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 
       actions: [configData.config.actions || {}, []]
     });
-    if (this.trip) {
-      this.mapWidgetConfigForm.addControl('timewindowConfig', this.fb.control(getTimewindowConfig(configData.config)))
-    }
   }
 
   protected prepareOutputConfig(config: any): WidgetConfigComponentData {
-    if (this.trip) {
-      setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
-    }
+    setTimewindowConfig(this.widgetConfig.config, config.timewindowConfig);
     this.widgetConfig.config.settings = config.mapSettings || {};
 
     this.widgetConfig.config.showTitle = config.showTitle;
@@ -182,6 +182,22 @@ export class MapBasicConfigComponent extends BasicWidgetConfigComponent {
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
     config.enableFullscreen = buttons.includes('fullscreen');
+  }
+
+  public get displayTimewindowConfig(): boolean {
+    if (this.trip) {
+      return true;
+    } else {
+      return this.widget ? MapModelDefinition.hasTimewindow(this.widget) : false;
+    }
+  }
+
+  public get onlyHistoryTimewindow(): boolean {
+    if (this.trip) {
+      return false;
+    } else {
+      return this.widget ? MapModelDefinition.datasourcesHasOnlyComparisonAggregation(this.widget) : false;
+    }
   }
 
 }

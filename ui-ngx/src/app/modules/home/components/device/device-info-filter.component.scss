@@ -33,3 +33,13 @@
     }
   }
 }
+
+
+::ng-deep {
+  .tb-device-filter-config-component {
+    max-width: 100%;
+    width: 500px;
+    min-width: 100%;
+    flex: 1;
+  }
+}

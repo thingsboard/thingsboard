@@ -26,9 +26,12 @@ import org.apache.http.ssl.SSLContexts;
 import org.testng.annotations.AfterSuite;
 import org.testng.annotations.BeforeSuite;
 import org.testng.annotations.Listeners;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
+import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.device.profile.AllowCreateNewDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.CheckPreProvisionedDevicesDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
@@ -39,6 +42,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import java.net.URI;
 import java.util.Map;
 import java.util.Random;
+import java.util.function.Consumer;
 
 
 @Slf4j
@@ -184,6 +188,14 @@ public abstract class AbstractContainerTest {
         deviceProfile.setProfileData(deviceProfileData);
         deviceProfile.setProvisionDeviceKey(testProvisionDeviceKey);
         return testRestClient.postDeviceProfile(deviceProfile);
+    }
+
+    protected void updateDefaultTenantProfile(Consumer<TenantProfile> updater) {
+        EntityInfo defaultTenantProfileInfo = testRestClient.getDefaultTenantProfileInfo();
+        TenantProfile oldTenantProfile = testRestClient.getTenantProfileById(defaultTenantProfileInfo.getId().getId().toString());
+        TenantProfile tenantProfile = JacksonUtil.clone(oldTenantProfile);
+        updater.accept(tenantProfile);
+        testRestClient.postTenantProfile(tenantProfile);
     }
 
 }

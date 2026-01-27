@@ -24,8 +24,8 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.DataConstants;
@@ -96,15 +96,15 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
     private RuleEngineStatisticsService ruleEngineStatisticsService;
     @Autowired
     private StatsFactory statsFactory;
-    @SpyBean
-    private TimeseriesDao timeseriesDao;
     @Autowired
     private QueueStatsService queueStatsService;
-    @SpyBean
+    @MockitoSpyBean
+    private TimeseriesDao timeseriesDao;
+    @MockitoSpyBean
     private PartitionService partitionService;
-    @SpyBean
+    @MockitoSpyBean
     private TimeseriesService timeseriesService;
-    @SpyBean
+    @MockitoSpyBean
     private ActorSystemContext actorSystemContext;
 
     @Test

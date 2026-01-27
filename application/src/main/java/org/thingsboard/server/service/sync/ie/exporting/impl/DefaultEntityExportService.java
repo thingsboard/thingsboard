@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.sync.ie.exporting.impl;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
@@ -24,6 +25,9 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.cf.CalculatedField;
+import org.thingsboard.server.common.data.cf.configuration.AlarmCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.ArgumentsBasedCalculatedFieldConfiguration;
+import org.thingsboard.server.common.data.cf.configuration.geofencing.GeofencingCalculatedFieldConfiguration;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -153,11 +157,28 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         List<CalculatedField> calculatedFields = calculatedFieldService.findCalculatedFieldsByEntityId(ctx.getTenantId(), entityId);
         calculatedFields.forEach(calculatedField -> {
             calculatedField.setEntityId(getExternalIdOrElseInternal(ctx, entityId));
-            calculatedField.getConfiguration().getArguments().values().forEach(argument -> {
-                if (argument.getRefEntityId() != null) {
-                    argument.setRefEntityId(getExternalIdOrElseInternal(ctx, argument.getRefEntityId()));
+            if (calculatedField.getConfiguration() instanceof ArgumentsBasedCalculatedFieldConfiguration argBasedConfig) {
+                if (argBasedConfig instanceof GeofencingCalculatedFieldConfiguration geofencingCfg) {
+                    geofencingCfg.getZoneGroups().values().forEach(zoneGroupConfiguration -> {
+                        if (zoneGroupConfiguration.getRefEntityId() != null) {
+                            zoneGroupConfiguration.setRefEntityId(getExternalIdOrElseInternal(ctx, zoneGroupConfiguration.getRefEntityId()));
+                        }
+                    });
+                } else {
+                    argBasedConfig.getArguments().values().forEach(argument -> {
+                        if (argument.getRefEntityId() != null) {
+                            argument.setRefEntityId(getExternalIdOrElseInternal(ctx, argument.getRefEntityId()));
+                        }
+                    });
                 }
-            });
+            }
+            if (calculatedField.getConfiguration() instanceof AlarmCalculatedFieldConfiguration alarmCfConfig) {
+                alarmCfConfig.getAllRules().map(Pair::getValue).forEach(rule -> {
+                    if (rule.getDashboardId() != null) {
+                        rule.setDashboardId(getExternalIdOrElseInternal(ctx, rule.getDashboardId()));
+                    }
+                });
+            }
         });
         return calculatedFields;
     }

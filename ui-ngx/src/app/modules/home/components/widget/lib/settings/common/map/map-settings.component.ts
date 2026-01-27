@@ -145,6 +145,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       markers: [null, []],
       polygons: [null, []],
       circles: [null, []],
+      polylines: [null, []],
       additionalDataSources: [null, []],
       controlsPosition: [null, []],
       zoomActions: [null, []],
@@ -180,7 +181,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     });
     merge(this.mapSettingsFormGroup.get('markers').valueChanges,
           this.mapSettingsFormGroup.get('polygons').valueChanges,
-          this.mapSettingsFormGroup.get('circles').valueChanges
+          this.mapSettingsFormGroup.get('circles').valueChanges,
+          this.mapSettingsFormGroup.get('polylines').valueChanges
     ).pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(() => {
@@ -282,6 +284,10 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
       dragModeButtonSettingsEnabled = polygons.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
     }
     if (!dragModeButtonSettingsEnabled) {
+      const polylines: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('polylines').value;
+      dragModeButtonSettingsEnabled = polylines.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
+    }
+    if (!dragModeButtonSettingsEnabled) {
       const circles: MapDataLayerSettings[] = this.mapSettingsFormGroup.get('circles').value;
       dragModeButtonSettingsEnabled = circles.some(d => d.edit && d.edit.enabledActions && d.edit.enabledActions.includes(DataLayerEditAction.move));
     }
@@ -298,7 +304,8 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
     this.propagateChange(this.modelValue);
   }
 
-  private editKey(key: DataKey, deviceId: string, entityAliasId: string, _widgetType = widgetType.latest): Observable<DataKey> {
+  private editKey(key: DataKey, deviceId: string, entityAliasId: string, _widgetType = widgetType.latest,
+                  hideDataKeyAggregation = true): Observable<DataKey> {
     return this.dialog.open<DataKeyConfigDialogComponent, DataKeyConfigDialogData, DataKey>(DataKeyConfigDialogComponent,
       {
         disableClose: true,
@@ -315,6 +322,7 @@ export class MapSettingsComponent implements OnInit, ControlValueAccessor, Valid
           hideDataKeyColor: true,
           hideDataKeyDecimals: true,
           hideDataKeyUnits: true,
+          hideDataKeyAggregation: hideDataKeyAggregation,
           widget: this.widget,
           dashboard: null,
           dataKeySettingsForm: null,

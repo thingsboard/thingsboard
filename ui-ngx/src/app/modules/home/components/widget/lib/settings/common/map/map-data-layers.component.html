@@ -27,6 +27,7 @@
       </div>
       <div *ngIf="dataLayerType === 'polygons'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polygon.polygon-key</div>
       <div *ngIf="dataLayerType === 'circles'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.circle.circle-key</div>
+      <div *ngIf="dataLayerType === 'polylines'" class="tb-form-table-header-cell tb-key-header" translate>widgets.maps.data-layer.polyline.polyline-key</div>
       <div class="tb-form-table-header-cell tb-actions-header"></div>
     </div>
     <div *ngIf="dataLayersFormArray().controls.length; else noDataLayers" class="tb-form-table-body tb-drop-list max-h-64 overflow-y-auto"

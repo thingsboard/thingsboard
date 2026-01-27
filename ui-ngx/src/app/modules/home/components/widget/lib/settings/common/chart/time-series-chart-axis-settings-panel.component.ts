@@ -22,6 +22,9 @@ import {
   TimeSeriesChartYAxisSettings
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { IAliasController } from '@core/api/widget-api.models';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-time-series-chart-axis-settings-panel',
@@ -31,6 +34,15 @@ import { coerceBoolean } from '@shared/decorators/coercion';
   encapsulation: ViewEncapsulation.None
 })
 export class TimeSeriesChartAxisSettingsPanelComponent implements OnInit {
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   axisType: 'xAxis' | 'yAxis' = 'xAxis';

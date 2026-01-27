@@ -28,7 +28,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
@@ -64,7 +63,6 @@ public class TwoFactorAuthController extends BaseController {
     private final SystemSecurityService systemSecurityService;
     private final UserService userService;
 
-
     @ApiOperation(value = "Request 2FA verification code (requestTwoFaVerificationCode)",
             notes = "Request 2FA verification code." + NEW_LINE +
                     "To make a request to this endpoint, you need an access token with the scope of PRE_VERIFICATION_TOKEN, " +
@@ -92,30 +90,28 @@ public class TwoFactorAuthController extends BaseController {
         SecurityUser user = getCurrentUser();
         boolean verificationSuccess = twoFactorAuthService.checkVerificationCode(user, providerType, verificationCode, true);
         if (verificationSuccess) {
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, null);
-            user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
-            return tokenFactory.createTokenPair(user);
+            logLogInAction(servletRequest, user, null);
+            return createTokenPair(user);
         } else {
-            ThingsboardException error = new ThingsboardException("Verification code is incorrect", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-            systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
+            IllegalArgumentException error = new IllegalArgumentException("Verification code is incorrect");
+            logLogInAction(servletRequest, user, error);
             throw error;
         }
     }
 
-
     @ApiOperation(value = "Get available 2FA providers (getAvailableTwoFaProviders)", notes =
             "Get the list of 2FA provider infos available for user to use. Example:\n" +
-                    "```\n[\n" +
-                    "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
-                    "  {\n    \"type\": \"TOTP\",\n    \"default\": false,\n    \"contact\": null\n  },\n" +
-                    "  {\n    \"type\": \"SMS\",\n    \"default\": false,\n    \"contact\": \"+38********12\"\n  }\n" +
-                    "]\n```")
+            "```\n[\n" +
+            "  {\n    \"type\": \"EMAIL\",\n    \"default\": true,\n    \"contact\": \"ab*****ko@gmail.com\"\n  },\n" +
+            "  {\n    \"type\": \"TOTP\",\n    \"default\": false,\n    \"contact\": null\n  },\n" +
+            "  {\n    \"type\": \"SMS\",\n    \"default\": false,\n    \"contact\": \"+38********12\"\n  }\n" +
+            "]\n```")
     @GetMapping("/providers")
     @PreAuthorize("hasAuthority('PRE_VERIFICATION_TOKEN')")
     public List<TwoFaProviderInfo> getAvailableTwoFaProviders() throws ThingsboardException {
         SecurityUser user = getCurrentUser();
         Optional<PlatformTwoFaSettings> platformTwoFaSettings = twoFaConfigManager.getPlatformTwoFaSettings(user.getTenantId(), true);
-        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user.getId())
+        return twoFaConfigManager.getAccountTwoFaSettings(user.getTenantId(), user)
                 .map(settings -> settings.getConfigs().values()).orElse(Collections.emptyList())
                 .stream().map(config -> {
                     String contact = null;
@@ -137,6 +133,32 @@ public class TwoFactorAuthController extends BaseController {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    @ApiOperation(value = "Get regular token pair after successfully configuring 2FA",
+            notes = "Checks 2FA is configured, returning token pair on success.")
+    @PostMapping("/login")
+    @PreAuthorize("hasAuthority('MFA_CONFIGURATION_TOKEN')")
+    public JwtPair authenticateByTwoFaConfigurationToken(HttpServletRequest servletRequest) throws ThingsboardException {
+        SecurityUser user = getCurrentUser();
+        if (twoFactorAuthService.isTwoFaEnabled(user.getTenantId(), user)) {
+            logLogInAction(servletRequest, user, null);
+            return createTokenPair(user);
+        } else {
+            IllegalArgumentException error = new IllegalArgumentException("2FA is not configured");
+            logLogInAction(servletRequest, user, error);
+            throw error;
+        }
+    }
+
+    private JwtPair createTokenPair(SecurityUser user) {
+        log.debug("[{}][{}] Creating token pair for user", user.getTenantId(), user.getId());
+        user = new SecurityUser(userService.findUserById(user.getTenantId(), user.getId()), true, user.getUserPrincipal());
+        return tokenFactory.createTokenPair(user);
+    }
+
+    private void logLogInAction(HttpServletRequest servletRequest, SecurityUser user, Exception error) {
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(servletRequest), ActionType.LOGIN, error);
     }
 
     @Data

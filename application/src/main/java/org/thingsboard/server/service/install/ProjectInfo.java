@@ -19,14 +19,17 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.info.BuildProperties;
 import org.springframework.stereotype.Component;
 
+import java.util.Optional;
+
 @Component
 @RequiredArgsConstructor
 public class ProjectInfo {
 
-    private final BuildProperties buildProperties;
+    private final Optional<BuildProperties> buildProperties;
 
     public String getProjectVersion() {
-        return buildProperties.getVersion().replaceAll("[^\\d.]", "");
+        return buildProperties.orElseThrow(() -> new IllegalStateException("Build properties are missing. Please rebuild the project with maven"))
+                .getVersion().replaceAll("[^\\d.]", "");
     }
 
     public String getProductType() {

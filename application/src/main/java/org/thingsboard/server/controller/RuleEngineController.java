@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -60,7 +61,10 @@ import static org.thingsboard.server.controller.ControllerConstants.ENTITY_TYPE_
 @RequestMapping(TbUrlConstants.RULE_ENGINE_URL_PREFIX)
 @Slf4j
 public class RuleEngineController extends BaseController {
-    public static final int DEFAULT_TIMEOUT = 10000;
+
+    @Value("${server.rest.rule_engine.response_timeout:10000}")
+    public int defaultResponseTimeout;
+
     private static final String MSG_DESCRIPTION_PREFIX = "Creates the Message with type 'REST_API_REQUEST' and payload taken from the request body. ";
     private static final String MSG_DESCRIPTION = "This method allows you to extend the regular platform API with the power of Rule Engine. You may use default and custom rule nodes to handle the message. " +
             "The generated message contains two important metadata fields:\n\n" +
@@ -85,7 +89,7 @@ public class RuleEngineController extends BaseController {
     public DeferredResult<ResponseEntity> handleRuleEngineRequest(
             @Parameter(description = "A JSON value representing the message.", required = true)
             @RequestBody String requestBody) throws ThingsboardException {
-        return handleRuleEngineRequest(null, null, null, DEFAULT_TIMEOUT, requestBody);
+        return handleRuleEngineRequest(null, null, null, defaultResponseTimeout, requestBody);
     }
 
     @ApiOperation(value = "Push entity message to the rule engine (handleRuleEngineRequest)",
@@ -104,7 +108,7 @@ public class RuleEngineController extends BaseController {
             @PathVariable("entityId") String entityIdStr,
             @Parameter(description = "A JSON value representing the message.", required = true)
             @RequestBody String requestBody) throws ThingsboardException {
-        return handleRuleEngineRequest(entityType, entityIdStr, null, DEFAULT_TIMEOUT, requestBody);
+        return handleRuleEngineRequest(entityType, entityIdStr, null, defaultResponseTimeout, requestBody);
     }
 
     @ApiOperation(value = "Push entity message with timeout to the rule engine (handleRuleEngineRequest)",

@@ -61,6 +61,8 @@ import org.thingsboard.server.service.subscription.TbSubscriptionUtils;
 
 import java.util.Collection;
 
+import static org.thingsboard.server.common.data.alarm.AlarmCommentSubType.SEVERITY_CHANGED;
+
 /**
  * Created by ashvayka on 27.03.18.
  */
@@ -102,7 +104,12 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details) {
-        return withWsCallback(alarmService.clearAlarm(tenantId, alarmId, clearTs, details));
+        return clearAlarm(tenantId, alarmId, clearTs, details, true);
+    }
+
+    @Override
+    public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId alarmId, long clearTs, JsonNode details, boolean pushEvent) {
+        return withWsCallback(alarmService.clearAlarm(tenantId, alarmId, clearTs, details, pushEvent));
     }
 
     @Override
@@ -246,8 +253,11 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
                 AlarmComment.AlarmCommentBuilder alarmComment = AlarmComment.builder()
                         .alarmId(alarm.getId())
                         .type(AlarmCommentType.SYSTEM)
-                        .comment(JacksonUtil.newObjectNode().put("text",
-                                String.format("Alarm severity was updated from %s to %s", result.getOldSeverity(), alarm.getSeverity())));
+                        .comment(JacksonUtil.newObjectNode()
+                                .put("text", String.format(SEVERITY_CHANGED.getText(), result.getOldSeverity(), alarm.getSeverity()))
+                                .put("subtype", SEVERITY_CHANGED.name())
+                                .put("oldSeverity", result.getOldSeverity().name())
+                                .put("newSeverity", alarm.getSeverity().name()));
                 if (request != null && request.getUserId() != null) {
                     alarmComment.userId(request.getUserId());
                 }

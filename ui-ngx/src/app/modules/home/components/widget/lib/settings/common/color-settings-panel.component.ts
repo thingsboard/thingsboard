@@ -34,7 +34,6 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'tb-color-settings-panel',
@@ -107,12 +106,6 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
-    this.colorSettingsFormGroup.get('type').valueChanges.pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe(() => {
-      this.updateValidators();
-      setTimeout(() => {this.popover?.updatePosition();}, 0);
-    });
     this.updateValidators();
   }
 

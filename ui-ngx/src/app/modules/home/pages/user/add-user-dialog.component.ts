@@ -84,6 +84,12 @@ export class AddUserDialogComponent extends DialogComponent<AddUserDialogCompone
       this.user.authority = this.data.authority;
       this.user.tenantId = new TenantId(this.data.tenantId);
       this.user.customerId = new CustomerId(this.data.customerId);
+      if (!this.user.additionalInfo.lang) {
+        delete this.user.additionalInfo.lang;
+      }
+      if (!this.user.additionalInfo.unitSystem) {
+        delete this.user.additionalInfo.unitSystem;
+      }
       const sendActivationEmail = this.activationMethod === ActivationMethod.SEND_ACTIVATION_MAIL;
       this.userService.saveUser(this.user, sendActivationEmail).subscribe(
         (user) => {

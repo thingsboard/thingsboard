@@ -106,9 +106,9 @@ export class MobileService {
     }
   }
 
-  public handleMobileNavigation(path?: string, params?: Params) {
+  public handleMobileNavigation(path?: string, params?: Params, queryParams?: Params) {
     if (this.mobileApp) {
-      this.mobileChannel.callHandler(navigationHandler, path, params);
+      this.mobileChannel.callHandler(navigationHandler, path, params, queryParams);
     }
   }
 

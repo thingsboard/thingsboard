@@ -173,6 +173,11 @@
         </ng-container>
       </section>
     </ng-container>
+    @if (saveAsDefaultAvailable) {
+      <mat-checkbox class="tb-timewindow-form-checkbox" [formControl]="saveTimewindowControl">
+        {{ 'timewindow.save-current-settings-as-default' | translate }}
+      </mat-checkbox>
+    }
   </div>
 
   <ng-template #timezoneSelectionPanel>

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 
 @Data
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Deprecated
 public class DurationAlarmConditionSpec implements AlarmConditionSpec {
 
     private TimeUnit unit;

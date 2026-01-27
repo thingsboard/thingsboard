@@ -37,6 +37,7 @@ import { ComponentClusteringMode } from '@shared/models/component-descriptor.mod
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ServiceType } from '@shared/models/queue.models';
 import { takeUntil } from 'rxjs/operators';
+import { AdditionalDebugActionConfig } from '@home/components/entity/debug/entity-debug-settings.model';
 
 @Component({
   selector: 'tb-rule-node',
@@ -63,6 +64,9 @@ export class RuleNodeDetailsComponent extends PageComponent implements OnInit, O
   @Input()
   @coerceBoolean()
   isAdd = false;
+
+  @Input()
+  additionalActionConfig: AdditionalDebugActionConfig;
 
   @Output()
   initRuleNode = new EventEmitter<void>();

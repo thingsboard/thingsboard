@@ -21,7 +21,7 @@ import { AliasEntityType, EntityType, entityTypeTranslations } from '@app/shared
 import { EntityService } from '@core/http/entity.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { MatFormFieldAppearance } from '@angular/material/form-field';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-entity-type-select',
@@ -52,8 +52,16 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @coerceBoolean()
   showLabel: boolean;
 
+  private labelValue = this.translate.instant('entity.type');
+
+  get label(): string {
+    return this.labelValue;
+  }
+
   @Input()
-  label = this.translate.instant('entity.type');
+  set label(value: string) {
+    this.labelValue = value ?? this.translate.instant('entity.type');
+  }
 
   @Input()
   @coerceBoolean()
@@ -67,6 +75,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
 
   @Input()
   appearance: MatFormFieldAppearance = 'fill';
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
 
   @Input()
   @coerceBoolean()
@@ -169,5 +180,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     } else {
       return '';
     }
+  }
+
+  markAsTouched(): void {
+    this.entityTypeFormGroup.get('entityType').markAsTouched();
   }
 }

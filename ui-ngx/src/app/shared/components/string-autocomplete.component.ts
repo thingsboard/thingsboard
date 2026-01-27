@@ -14,26 +14,24 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  Input,
-  forwardRef,
-  OnInit,
-  ViewChild,
-  ElementRef
-} from '@angular/core';
+import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
 import {
   ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
+  FormBuilder,
   FormControl,
-  Validators,
-  FormBuilder
+  NG_VALUE_ACCESSOR,
+  ValidatorFn,
+  Validators
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
-import { tap, map, switchMap, take } from 'rxjs/operators';
+import { map, switchMap, take, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+
+export interface ErrorMessageConfig {
+  [errorKey: string]: string;
+}
 
 @Component({
   selector: 'tb-string-autocomplete',
@@ -86,6 +84,12 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   errorText: string;
 
   @Input()
+  controlValidators: ValidatorFn[] = [];
+
+  @Input()
+  errorMessages: ErrorMessageConfig;
+
+  @Input()
   @coerceBoolean()
   showInlineError = false;
 
@@ -106,7 +110,17 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   }
 
   ngOnInit() {
-    this.selectionFormControl = this.fb.control('', this.required ? [Validators.required] : []);
+    const validators = [Validators.pattern(/.*\S.*/)];
+    if (this.controlValidators?.length) {
+     validators.push(...this.controlValidators);
+      const parentHasRequired = this.controlValidators.some(v => v === Validators.required);
+      if (this.required && !parentHasRequired) {
+        validators.push(Validators.required);
+      }
+    } else if (this.required) {
+      validators.push(Validators.required);
+    }
+    this.selectionFormControl = this.fb.control('', validators);
     this.filteredOptions$ = this.selectionFormControl.valueChanges
       .pipe(
         tap(value => this.updateView(value)),
@@ -152,7 +166,7 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
   updateView(value: string) {
     this.searchText = value ? value : '';
     if (this.modelValue !== value) {
-      this.modelValue = value;
+      this.modelValue = value?.trim();
       this.propagateChange(this.modelValue);
     }
   }
@@ -179,5 +193,19 @@ export class StringAutocompleteComponent implements ControlValueAccessor, OnInit
       this.nameInput.nativeElement.blur();
       this.nameInput.nativeElement.focus();
     }, 0);
+  }
+
+  get getErrorMessage(): string {
+    if (!this.selectionFormControl.errors) {
+      return '';
+    }
+    if (this.errorMessages) {
+      for (const errorKey in this.selectionFormControl.errors) {
+        if (this.errorMessages[errorKey]) {
+          return this.errorMessages[errorKey];
+        }
+      }
+    }
+    return this.errorText;
   }
 }

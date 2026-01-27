@@ -106,6 +106,7 @@
             <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill tb-rulenode-details flex-1" [(selectedIndex)]="selectedRuleNodeTabIndex">
               <mat-tab label="{{ 'rulenode.details' | translate }}">
                 <tb-rule-node #tbRuleNode
+                              [additionalActionConfig]="additionalActionConfig"
                               [ruleNode]="editingRuleNode"
                               [ruleChainId]="ruleChain.id?.id"
                               [ruleChainType]="ruleChainType"

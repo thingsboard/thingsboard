@@ -36,9 +36,6 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Created by ashvayka on 13.07.17.
- */
 @Data
 @MappedSuperclass
 public abstract class BaseSqlEntity<D> implements BaseEntity<D> {

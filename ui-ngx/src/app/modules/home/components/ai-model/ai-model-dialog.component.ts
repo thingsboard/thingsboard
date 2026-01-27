@@ -43,6 +43,7 @@ import { TranslateService } from '@ngx-translate/core';
 export interface AIModelDialogData {
   AIModel?: AiModel;
   isAdd?: boolean;
+  name?: string;
 }
 
 @Component({
@@ -128,6 +129,10 @@ export class AIModelDialogComponent extends DialogComponent<AIModelDialogCompone
         contextLength: [this.data.AIModel ? this.data.AIModel.configuration?.contextLength : null]
       })
     });
+
+    if (this.data.name) {
+      this.aiModelForms.get('name').patchValue(this.data.name, {emitEvent: false});
+    }
 
     this.aiModelForms.get('configuration.provider').valueChanges.pipe(
       takeUntilDestroyed()

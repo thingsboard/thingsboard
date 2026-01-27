@@ -17,9 +17,11 @@
 import { Component, DestroyRef, forwardRef, Input, OnInit } from '@angular/core';
 import {
   ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormBuilder,
   UntypedFormGroup,
+  ValidationErrors, Validator,
   Validators
 } from '@angular/forms';
 import {
@@ -32,6 +34,9 @@ import { merge } from 'rxjs';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { WidgetService } from '@core/http/widget.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { IAliasController } from '@app/core/public-api';
+import { Datasource } from '@app/shared/public-api';
+import { DataKeysCallbacks } from '@home/components/widget/lib/settings/common/key/data-keys.component.models';
 
 @Component({
   selector: 'tb-time-series-chart-axis-settings',
@@ -42,10 +47,15 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => TimeSeriesChartAxisSettingsComponent),
+      multi: true
     }
   ]
 })
-export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor {
+export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValueAccessor, Validator {
 
   @Input()
   @coerceBoolean()
@@ -60,6 +70,15 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
   defaultXAxisTicksFormat = defaultXAxisTicksFormat;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
 
   @Input()
   disabled: boolean;
@@ -145,6 +164,12 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   }
 
   registerOnTouched(_fn: any): void {
+  }
+
+  validate(): ValidationErrors | null {
+    return this.axisSettingsFormGroup.valid ? null : {
+      axisSettings: false
+    };
   }
 
   setDisabledState(isDisabled: boolean): void {

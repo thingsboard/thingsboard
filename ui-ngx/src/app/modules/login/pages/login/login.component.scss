@@ -23,45 +23,49 @@
     margin-top: 36px;
     margin-bottom: 76px;
     background-color: #eee;
+    --mdc-elevated-card-container-elevation: none;
     .tb-login-form {
       @media #{$mat-gt-xs} {
-        width: 550px !important;
+        width: 480px !important;
       }
 
       .forgot-password {
-        padding: 0 0.5em 1em;
-        .tb-reset-password {
-          padding: 0 6px;
-        }
+        --mat-text-button-horizontal-padding: 0;
+        --mdc-text-button-container-height: 20px;
       }
 
       .tb-action-button{
-        padding: 20px 0 16px;
+        margin: 20px 0 16px;
+      }
+    }
+
+    .container-divider {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      margin-bottom: 16px;
+
+      .mat-divider-horizontal{
+        --mat-divider-color: var(--mdc-outlined-text-field-outline-color);
+      }
+
+      .text {
+        padding-right: 8px;
+        padding-left: 8px;
+        font-size: 16px;
+        line-height: 24px;
       }
     }
 
     .oauth-container{
-      padding: 0;
-
-      .container-divider {
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-
-        .line {
-          flex: 1;
-        }
-
-        .mat-divider-horizontal{
-          position: relative;
-        }
-
-        .text {
-          padding-right: 10px;
-          padding-left: 10px;
-        }
+      .title {
+        font-size: 20px;
+        line-height: 24px;
+        letter-spacing: .1px;
+        text-align: center;
+        margin-bottom: 4px;
       }
 
       .material-icons{
@@ -71,15 +75,33 @@
 
       a.login-with-button {
         color: rgba(black, 0.87);
-        background-color: map-get($tb-dark-theme-background, raised-button);
+        background-color: #ffffff;
+      }
 
-        &:hover {
-          border-bottom: 0;
+      .login-button-container {
+        a.login-with-button {
+          max-width: 170px;
+          min-width: 60px;
+          flex-grow: 1;
+          flex-basis: 130px;
+
+          .tb-mat-20 {
+            margin-right: 12px;
+          }
         }
 
-        .icon {
-          height: 20px;
-          width: 20px;
+        &:has(> :nth-child(1):last-child) {
+          a.login-with-button {
+            max-width: 100%;
+          }
+        }
+
+        &:has(> :nth-child(2):last-child),
+        &:has(> :nth-child(4):last-child) {
+          a.login-with-button {
+            max-width: 100%;
+            flex-basis: 180px;
+          }
         }
       }
     }
