@@ -12,7 +12,7 @@ index 53168ea..f07c80a 100755
              // remove important annotations, such as /* @__PURE__ */ and comments like /* vite-ignore */.
              removeComments: false,
 diff --git a/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js b/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
-index ee68408..4144f20 100755
+index ee68408..ac15cbf 100755
 --- a/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
 +++ b/node_modules/@angular/build/src/tools/esbuild/angular/compiler-plugin.js
 @@ -90,7 +90,7 @@ function createCompilerPlugin(pluginOptions, compilationOrFactory, stylesheetBun
@@ -41,3 +41,14 @@ index ee68408..4144f20 100755
              }
          },
      };
+@@ -554,9 +556,7 @@ function createCompilerOptionsTransformer(setupWarnings, pluginOptions, preserve
+             sourceRoot: undefined,
+             preserveSymlinks,
+             externalRuntimeStyles: pluginOptions.externalRuntimeStyles,
+-            _enableHmr: !!pluginOptions.templateUpdates,
+-            supportTestBed: !!pluginOptions.includeTestMetadata,
+-            supportJitMode: !!pluginOptions.includeTestMetadata,
++            _enableHmr: !!pluginOptions.templateUpdates
+         };
+     };
+ }
