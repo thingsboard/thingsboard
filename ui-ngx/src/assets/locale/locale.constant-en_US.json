@@ -669,7 +669,8 @@
             "unassigned-from-deleted-user": "Alarm was unassigned because user {{userName}} - was deleted",
             "comment-deleted": "User {{userName}} deleted his comment",
             "severity-changed": "Alarm severity was updated from {{oldSeverity}} to {{newSeverity}}"
-        }
+        },
+        "alarm-not-valid": "Please select an existing alarm from the list."
     },
     "alarm-activity": {
         "add": "Add a comment...",
@@ -821,7 +822,8 @@
         "unassign-asset-from-edge-text": "After the confirmation the asset will be unassigned and won't be accessible by the edge.",
         "unassign-assets-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 asset} other {# assets} }?",
         "unassign-assets-from-edge-text": "After the confirmation all selected assets will be unassigned and won't be accessible by the edge.",
-        "selected-assets": "{ count, plural, =1 {1 asset} other {# assets} } selected"
+        "selected-assets": "{ count, plural, =1 {1 asset} other {# assets} } selected",
+        "asset-not-valid": "Please select an existing asset from the list."
     },
     "attribute": {
         "attributes": "Attributes",
@@ -1656,7 +1658,8 @@
         "password": "Password",
         "password-required": "Password is required.",
         "token": "Token",
-        "token-required": "Token is required."
+        "token-required": "Token is required.",
+        "model-not-valid": "Please select an existing AI model from the list."
     },
     "confirm-on-exit": {
         "message": "You have unsaved changes. Are you sure you want to leave this page?",
@@ -1781,7 +1784,8 @@
         "search": "Search customers",
         "selected-customers": "{ count, plural, =1 {1 customer} other {# customers} } selected",
         "edges": "Customer edge instances",
-        "manage-edges": "Manage edges"
+        "manage-edges": "Manage edges",
+        "customer-not-valid": "Please select an existing customer from the list."
     },
     "css-size": {
         "size-value-required": "Size value is required",
@@ -2025,7 +2029,8 @@
         },
         "view-format-type-grid": "Grid",
         "view-format-type-list": "List",
-        "view-format": "View format"
+        "view-format": "View format",
+        "dashboard-not-valid": "Please select an existing dashboard from the list."
     },
     "datakey": {
         "settings": "Settings",
@@ -2284,6 +2289,7 @@
         "unassign-devices-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 device} other {# devices} }?",
         "unassign-devices-from-edge-text": "After the confirmation all selected devices will be unassigned and won't be accessible by the edge.",
         "time": "Time",
+        "device-not-valid": "Please select an existing device from the list.",
         "connectivity": {
             "check-connectivity": "Check connectivity",
             "device-created-check-connectivity": "Device created. Let's check connectivity!",
@@ -2433,7 +2439,8 @@
         "export": "Export asset profile",
         "export-failed-error": "Unable to export asset profile: {{error}}",
         "asset-profile-file": "Asset profile file",
-        "invalid-asset-profile-file-error": "Unable to import asset profile: Invalid asset profile data structure."
+        "invalid-asset-profile-file-error": "Unable to import asset profile: Invalid asset profile data structure.",
+        "asset-profile-not-valid": "Please select an existing asset profile from the list."
     },
     "device-profile": {
         "device-profile": "Device profile",
@@ -2861,7 +2868,8 @@
             "timeout-ms-required": "Timeout is required.",
             "user-name": "User name",
             "user-name-required": "User name is required."
-        }
+        },
+        "device-profile-not-valid": "Please select an existing device profile from the list."
     },
     "dialog": {
         "close": "Close dialog",
@@ -2969,7 +2977,8 @@
         "upgrade-instructions": "Upgrade Instructions",
         "widget-datasource-error": "This widget supports only EDGE entity datasource",
         "connected": "Connected",
-        "disconnected": "Disconnected"
+        "disconnected": "Disconnected",
+        "edge-not-valid": "Please select an existing edge from the list."
     },
     "edge-event": {
         "type-dashboard": "Dashboard",
@@ -3205,7 +3214,8 @@
         "login-here": "Login here",
         "to-increase-limit": "to increase limit.",
         "increase-limit-request-sent-title": "We have sent an automated request to your System Administrator to increase the limit",
-        "increase-limit-request-sent-text": "Please allow some time for them to review the request and update the settings. You may need to refresh this page to see the changes."
+        "increase-limit-request-sent-text": "Please allow some time for them to review the request and update the settings. You may need to refresh this page to see the changes.",
+        "entity-not-valid": "Please select an existing entity from the list."
     },
     "entity-field": {
         "created-time": "Created time",
@@ -3338,7 +3348,8 @@
         "unassign-entity-views-from-edge-action-title": "Unassign { count, plural, =1 {1 entity view} other {# entity views} } from edge",
         "unassign-entity-view-from-edge": "Unassign entity view",
         "unassign-entity-views-from-edge-title": "Are you sure you want to unassign { count, plural, =1 {1 entity view} other {# entity views} }?",
-        "unassign-entity-views-from-edge-text": "After the confirmation all selected entity views will be unassigned and won't be accessible by the edge."
+        "unassign-entity-views-from-edge-text": "After the confirmation all selected entity views will be unassigned and won't be accessible by the edge.",
+        "entity-view-not-valid": "Please select an existing entity view from the list."
     },
     "event": {
         "event-type": "Event type",
@@ -5164,7 +5175,8 @@
         "unset-auto-assign-to-edge-title": "Are you sure you do not want to assign the edge rule chain '{{ruleChainName}}' to edge(s) on creation?",
         "unset-auto-assign-to-edge-text": "After the confirmation the edge rule chain will no longer be automatically assigned to edge(s) on creation.",
         "unassign-rulechain-title": "Are you sure you want to unassign the rulechain '{{ruleChainName}}'?",
-        "unassign-rulechains": "Unassign rulechains"
+        "unassign-rulechains": "Unassign rulechains",
+        "rulechain-not-valid": "Please select an existing rule chain from the list."
     },
     "rulenode": {
         "rule-node-events": "Rule node events",
@@ -6148,7 +6160,8 @@
         "list-of-queue-statistics": "{ count, plural, =1 {One queue statistic} other {List of # queue statistics} }",
         "selected-queue-statistics": "{ count, plural, =1 {1 queue statistic} other {# queue statistics} } selected",
         "no-queue-statistics-text": "No queue statistics found",
-        "queue-statistics-starts-with": "Queue statistics whose names start with '{{prefix}}'"
+        "queue-statistics-starts-with": "Queue statistics whose names start with '{{prefix}}'",
+        "queue-statistics-not-valid": "Please select existing queue statistics from the list."
     },
     "server-error": {
         "general": "General server error",
@@ -6194,7 +6207,8 @@
         "search": "Search tenants",
         "selected-tenants": "{ count, plural, =1 {1 tenant} other {# tenants} } selected",
         "isolated-tb-rule-engine": "Use isolated ThingsBoard Rule Engine queues",
-        "isolated-tb-rule-engine-details": "Each tenant will have dedicated Rule Engine queues"
+        "isolated-tb-rule-engine-details": "Each tenant will have dedicated Rule Engine queues",
+        "tenant-not-valid": "Please select an existing tenant from the list."
     },
     "tenant-profile": {
         "tenant-profile": "Tenant profile",
@@ -7202,7 +7216,8 @@
         "copyId": "Copy user Id",
         "idCopiedMessage": "User Id has been copied to clipboard",
         "user-list": "User list",
-        "user-list-required": "User list is required"
+        "user-list-required": "User list is required",
+        "user-not-valid": "Please select an existing user from the list."
     },
     "value": {
         "type": "Value type",
@@ -7486,7 +7501,9 @@
           "auto": "Auto",
           "wi-fi": "Wi-Fi",
           "ble": "BLE",
-          "soft-ap": "Soft AP"
+          "soft-ap": "Soft AP",
+          "application-not-valid": "Please select an existing mobile application from the list.",
+          "bundle-not-valid": "Please select an existing mobile bundle from the list."
         },
         "custom-action-function": "Custom action function",
         "custom-pretty-function": "Custom action (with HTML template) function",
@@ -9550,7 +9567,8 @@
             "notification-types": "Notification types",
             "notification-type": "Notification type",
             "search-type": "Search type",
-            "any-type": "Any type"
+            "any-type": "Any type",
+            "notification-recipient-not-valid": "Please select an existing recipient from the list."
         },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
