@@ -138,6 +138,7 @@
   "resolutions": {
     "ace-builds": "1.43.6",
     "tinymce": "6.8.6",
-    "@babel/core": "7.28.3"
+    "@babel/core": "7.28.3",
+    "esbuild": "0.25.9"
   }
 }
