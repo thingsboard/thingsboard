@@ -241,7 +241,13 @@ public class DefaultLwM2MRpcRequestHandler implements LwM2MRpcRequestHandler {
     }
 
     private void sendExecuteRequest(LwM2mClient client, TransportProtos.ToDeviceRpcRequestMsg requestMsg, String versionedId) {
+        RpcExecuteRequest requestBody = JacksonUtil.fromString(requestMsg.getParams(), RpcExecuteRequest.class);
         TbLwM2MExecuteRequest downlink = TbLwM2MExecuteRequest.builder().versionedId(versionedId).timeout(clientContext.getRequestTimeout(client)).build();
+        if (!requestMsg.getParams().isEmpty()) {
+            downlink = TbLwM2MExecuteRequest.builder().versionedId(versionedId)
+                    .params(requestBody.getValue())
+                    .timeout(clientContext.getRequestTimeout(client)).build();
+        }
         var mainCallback = new TbLwM2MExecuteCallback(logService, client, versionedId);
         var rpcCallback = new RpcEmptyResponseCallback<>(transportService, client, requestMsg, mainCallback);
         downlinkHandler.sendExecuteRequest(client, downlink, rpcCallback);

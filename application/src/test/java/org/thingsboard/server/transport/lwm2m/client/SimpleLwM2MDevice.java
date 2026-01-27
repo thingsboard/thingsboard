@@ -160,7 +160,14 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
         if (!arguments.isEmpty())
             withArguments = " with arguments " + arguments;
         log.info("Execute on Device resource /{}/{}/{} {}", getModel().id, getId(), resourceId, withArguments);
-        return ExecuteResponse.success();
+        switch (resourceId) {
+            case 4:
+                return ExecuteResponse.success();
+            case 5:
+                return ExecuteResponse.success();
+            default:
+                return super.execute(identity, resourceId, arguments);
+        }
     }
 
     @Override
