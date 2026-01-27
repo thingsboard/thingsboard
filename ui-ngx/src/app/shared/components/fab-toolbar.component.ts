@@ -74,6 +74,9 @@ export class FabActionsDirective implements OnInit {
     selector: 'mat-fab-toolbar',
     templateUrl: './fab-toolbar.component.html',
     styleUrls: ['./fab-toolbar.component.scss'],
+    host: {
+      '[class]': 'color ? "mat-" + color : ""',
+    },
     encapsulation: ViewEncapsulation.None,
     standalone: false
 })

@@ -62,6 +62,7 @@ const funcIriPattern = /^url\(['"]?#(.*?)['"]?\)$/;
     host: {
         role: 'img',
         class: 'mat-icon notranslate',
+        '[class]': 'color ? "mat-" + color : ""',
         '[attr.data-mat-icon-type]': '!_useSvgIcon ? "font" : "svg"',
         '[attr.data-mat-icon-name]': '_svgName',
         '[attr.data-mat-icon-namespace]': '_svgNamespace',

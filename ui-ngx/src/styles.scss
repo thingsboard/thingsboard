@@ -1311,4 +1311,6 @@ pre.tb-highlight {
  * TAILWIND CSS
  ***************/
 
-@import "tailwindcss";
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

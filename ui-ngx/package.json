@@ -101,7 +101,6 @@
     "@angular/cli": "20.3.15",
     "@angular/compiler-cli": "20.3.16",
     "@angular/language-service": "20.3.16",
-    "@tailwindcss/postcss": "^4.1.18",
     "@types/ace-diff": "^2.1.4",
     "@types/canvas-gauges": "^2.1.8",
     "@types/flot": "^0.0.36",
@@ -131,7 +130,7 @@
     "patch-package": "^8.0.1",
     "postcss": "^8.5.6",
     "postinstall-prepare": "^2.0.0",
-    "tailwindcss": "^4.1.18",
+    "tailwindcss": "^3.4.19",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.53.1"
