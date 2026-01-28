@@ -196,7 +196,7 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
         log.trace("Executing deleteOtaPackage [{}]", otaPackageId);
         validateId(otaPackageId, id -> INCORRECT_OTA_PACKAGE_ID + id);
         try {
-            Long oid = otaPackageDao.getDataOidById(otaPackageId.getId());
+            Long oid = getDataOidById(tenantId, otaPackageId);
             otaPackageDao.removeById(tenantId, otaPackageId.getId());
             unlinkDataIfPresent(tenantId, otaPackageId, oid);
             publishEvictEvent(new OtaPackageCacheEvictEvent(otaPackageId));
@@ -215,6 +215,16 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
                 throw t;
             }
         }
+    }
+
+    private Long getDataOidById(TenantId tenantId, OtaPackageId otaPackageId) {
+        try {
+            log.trace("Executing getDataOidById tenantId [{}], otaPackageId [{}]", tenantId, otaPackageId);
+            return otaPackageDao.getDataOidById(otaPackageId.getId());
+        } catch (Exception e) {
+            log.warn("[{}][{}] Failed to retrieve OID before deletion", tenantId, otaPackageId, e);
+        }
+        return null;
     }
 
     private void unlinkDataIfPresent(TenantId tenantId, OtaPackageId otaPackageId, Long oid) {
