@@ -24,13 +24,14 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<div mat-dialog-content class="flex flex-col">
-  <label translate class="tb-title no-padding">audit-log.action-data</label>
-  <div #actionDataEditor class="tb-audit-log-action-data">
+<div mat-dialog-content class="flex flex-col gap-8" style="padding:16px;">
+  <div class="flex max-h-fit min-h-0 flex-1 flex-col">
+    <span translate class="tb-form-panel-hint">audit-log.action-data</span>
+    <div #actionDataEditor class="tb-audit-log size-full min-h-12 max-w-full"></div>
   </div>
-  <span style="min-height: 30px;"></span>
-  <label [class.!hidden]="!displayFailureDetails" translate class="tb-title no-padding">audit-log.failure-details</label>
-  <div #failureDetailsEditor [class.!hidden]="!displayFailureDetails" class="tb-audit-log-failure-details">
+  <div class="flex max-h-fit min-h-0 flex-1 flex-col" [class.!hidden]="!displayFailureDetails">
+    <span translate class="tb-form-panel-hint">audit-log.failure-details</span>
+    <div #failureDetailsEditor class="tb-audit-log size-full min-h-12 max-w-full"></div>
   </div>
 </div>
 <div mat-dialog-actions class="flex items-center justify-end">

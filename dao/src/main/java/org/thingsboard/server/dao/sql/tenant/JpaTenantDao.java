@@ -99,6 +99,11 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
     }
 
     @Override
+    public List<Tenant> findTenantsByIds(UUID tenantId, List<UUID> tenantIds) {
+        return DaoUtil.convertDataList(tenantRepository.findTenantsByIdIn(tenantIds));
+    }
+
+    @Override
     public List<TenantFields> findNextBatch(UUID id, int batchSize) {
         return tenantRepository.findNextBatch(id, Limit.of(batchSize));
     }

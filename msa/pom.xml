@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>4.2.1.2-SNAPSHOT</version>
+        <version>4.3.0.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>msa</artifactId>
@@ -32,7 +32,7 @@
     <properties>
         <main.dir>${basedir}/..</main.dir>
         <docker.repo>thingsboard</docker.repo>
-        <docker.base.image>thingsboard/openjdk17:bookworm-slim</docker.base.image>
+        <docker.base.image>thingsboard/openjdk25:trixie-slim</docker.base.image>
         <dockerfile.skip>true</dockerfile.skip>
         <blackBoxTests.skip>true</blackBoxTests.skip>
         <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
@@ -133,7 +133,7 @@
                 </property>
             </activation>
             <properties>
-                <docker.lts.tag>4.2.1-latest</docker.lts.tag>
+                <docker.lts.tag>4.3.0-latest</docker.lts.tag>
                 <docker.skip.latest.tag>false</docker.skip.latest.tag>
             </properties>
             <build>

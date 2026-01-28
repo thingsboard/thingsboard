@@ -40,10 +40,11 @@ import org.thingsboard.server.gen.edge.v1.ResourceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
-import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
@@ -264,7 +265,7 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
     }
 
     @Test
-    public void testSendDeleteEntityViewOnEdgeToCloud() throws Exception {
+    public void testSendDeleteDashboardOnEdgeToCloud() throws Exception {
         Dashboard savedDashboard = saveDashboardOnCloudAndVerifyDeliveryToEdge();
 
         UplinkMsg.Builder upLinkMsgBuilder = UplinkMsg.newBuilder();
@@ -281,12 +282,10 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         edgeImitator.expectResponsesAmount(1);
         edgeImitator.sendUplinkMsg(upLinkMsgBuilder.build());
         Assert.assertTrue(edgeImitator.waitForResponses());
-        DashboardInfo dashboardInfo = doGet("/api/dashboard/info/" + savedDashboard.getUuidId(), DashboardInfo.class);
-        Assert.assertNotNull(dashboardInfo);
-        List<DashboardInfo> edgeAssets = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/dashboards?",
-                new TypeReference<PageData<DashboardInfo>>() {
-                }, new PageLink(100)).getData();
-        Assert.assertFalse(edgeAssets.contains(dashboardInfo));
+
+        await().atMost(30, TimeUnit.SECONDS).untilAsserted(() ->
+                doGet("/api/dashboard/info/" + savedDashboard.getUuidId(), DashboardInfo.class, status().isNotFound())
+        );
     }
 
     private Dashboard saveDashboardOnCloudAndVerifyDeliveryToEdge() throws Exception {
@@ -300,10 +299,10 @@ public class DashboardEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForMessages());
         Optional<DashboardUpdateMsg> dashboardUpdateMsgOpt = edgeImitator.findMessageByType(DashboardUpdateMsg.class);
         Assert.assertTrue(dashboardUpdateMsgOpt.isPresent());
-        DashboardUpdateMsg entityViewUpdateMsg = dashboardUpdateMsgOpt.get();
-        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, entityViewUpdateMsg.getMsgType());
-        Assert.assertEquals(savedDashboard.getUuidId().getMostSignificantBits(), entityViewUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedDashboard.getUuidId().getLeastSignificantBits(), entityViewUpdateMsg.getIdLSB());
+        DashboardUpdateMsg dashboardUpdateMsg = dashboardUpdateMsgOpt.get();
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, dashboardUpdateMsg.getMsgType());
+        Assert.assertEquals(savedDashboard.getUuidId().getMostSignificantBits(), dashboardUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedDashboard.getUuidId().getLeastSignificantBits(), dashboardUpdateMsg.getIdLSB());
         return savedDashboard;
     }
 

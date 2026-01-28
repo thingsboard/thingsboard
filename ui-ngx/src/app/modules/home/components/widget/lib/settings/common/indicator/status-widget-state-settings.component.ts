@@ -22,6 +22,7 @@ import {
   StatusWidgetStateSettings
 } from '@home/components/widget/lib/indicator/status-widget.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { widgetTitleAutocompleteValues } from '@app/shared/public-api';
 
 @Component({
   selector: 'tb-status-widget-state-settings',
@@ -50,6 +51,8 @@ export class StatusWidgetStateSettingsComponent implements OnInit, OnChanges, Co
   private propagateChange = null;
 
   public stateSettingsFormGroup: UntypedFormGroup;
+
+  predefinedValues = widgetTitleAutocompleteValues;
 
   constructor(private fb: UntypedFormBuilder,
               private destroyRef: DestroyRef) {

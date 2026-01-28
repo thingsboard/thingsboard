@@ -30,7 +30,8 @@ public class DefaultDatabaseSchemaSettingsService implements DatabaseSchemaSetti
 
     // This list should include all versions that are compatible for the upgrade in 4 digits format (like 4.2.0.0, etc.).
     // The compatibility cycle usually breaks when we have some scripts written in Java that may not work after a new release.
-    private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("4.2.1.0");
+    // TODO: don't check the "patch" number, since upgrade is not required for patch releases
+    private static final List<String> SUPPORTED_VERSIONS_FOR_UPGRADE = List.of("4.3.0.0");
 
     private final ProjectInfo projectInfo;
     private final JdbcTemplate jdbcTemplate;

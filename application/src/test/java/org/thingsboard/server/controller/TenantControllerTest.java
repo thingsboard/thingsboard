@@ -27,8 +27,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -68,6 +68,7 @@ import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -77,6 +78,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -109,11 +111,11 @@ public class TenantControllerTest extends AbstractControllerTest {
 
     ListeningExecutorService executor;
 
-    @SpyBean
+    @MockitoSpyBean
     private PartitionService partitionService;
-    @SpyBean
+    @MockitoSpyBean
     private ActorSystemContext actorContext;
-    @SpyBean
+    @MockitoSpyBean
     private TbQueueAdmin queueAdmin;
 
     @Before
@@ -188,6 +190,51 @@ public class TenantControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testFindTenantsByIds() throws Exception {
+        loginSysAdmin();
+
+        List<Tenant> savedTenants = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Tenant tenant = new Tenant();
+            tenant.setTitle("My tenant " + i);
+            savedTenants.add(saveTenant(tenant));
+        }
+
+        String idsParam = savedTenants.stream()
+                .map(t -> t.getId().getId().toString())
+                .collect(Collectors.joining(","));
+
+        Tenant[] foundTenants = doGet("/api/tenants?tenantIds=" + idsParam, Tenant[].class);
+
+        Assert.assertNotNull(foundTenants);
+        Assert.assertEquals(savedTenants.size(), foundTenants.length);
+
+        Map<UUID, Tenant> foundById = Arrays.stream(foundTenants)
+                .collect(Collectors.toMap(t -> t.getId().getId(), Function.identity()));
+
+        for (Tenant savedTenant : savedTenants) {
+            UUID id = savedTenant.getId().getId();
+            Tenant foundTenant = foundById.get(id);
+            Assert.assertNotNull("Tenant not found for id " + id, foundTenant);
+            Assert.assertEquals(savedTenant, foundTenant);
+        }
+
+        loginTenantAdmin();
+        Tenant[] foundTenantsByTenant = doGet("/api/tenants?tenantIds=" + idsParam, Tenant[].class);
+        assertThat(foundTenantsByTenant).isEmpty();
+
+        Tenant[] foundCurrentTenant = doGet("/api/tenants?tenantIds=" + tenantId, Tenant[].class);
+        assertThat(foundCurrentTenant).hasSize(1);
+        assertThat(foundCurrentTenant[0].getTenantId()).isEqualTo(tenantId);
+
+        loginSysAdmin();
+        for (Tenant savedTenant : savedTenants) {
+            deleteTenant(savedTenant.getId());
+        }
+    }
+
+
+    @Test
     public void testFindTenantInfoById() throws Exception {
         loginSysAdmin();
         Tenant tenant = new Tenant();
@@ -244,14 +291,36 @@ public class TenantControllerTest extends AbstractControllerTest {
     }
 
     @Test
+    public void testDeleteTenantByTenantAdmin() throws Exception {
+        loginSysAdmin();
+        Tenant tenant = new Tenant();
+        tenant.setTitle("My tenant");
+        Tenant savedTenant = saveTenant(tenant);
+
+        //login as tenant admin
+        User tenantAdminUser = new User();
+        tenantAdminUser.setAuthority(Authority.TENANT_ADMIN);
+        tenantAdminUser.setTenantId(savedTenant.getId());
+        tenantAdminUser.setEmail("tenantToDelete@thingsboard.io");
+
+        createUserAndLogin(tenantAdminUser, TENANT_ADMIN_PASSWORD);
+
+        String tenantIdStr = savedTenant.getId().getId().toString();
+        deleteTenant(savedTenant.getId());
+        loginSysAdmin();
+        doGet("/api/tenant/" + tenantIdStr)
+                .andExpect(status().isNotFound())
+                .andExpect(statusReason(containsString(msgErrorNoFound("Tenant", tenantIdStr))));
+    }
+
+    @Test
     public void testFindTenants() throws Exception {
         loginSysAdmin();
-        List<Tenant> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<Tenant> pageData = doGetTypedWithPageLink("/api/tenants?", PAGE_DATA_TENANT_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
-        tenants.addAll(pageData.getData());
+        List<Tenant> tenants = new ArrayList<>(pageData.getData());
 
         Mockito.reset(tbClusterService);
 
@@ -377,12 +446,11 @@ public class TenantControllerTest extends AbstractControllerTest {
     @Test
     public void testFindTenantInfos() throws Exception {
         loginSysAdmin();
-        List<TenantInfo> tenants = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<TenantInfo> pageData = doGetTypedWithPageLink("/api/tenantInfos?", PAGE_DATA_TENANT_INFO_TYPE_REF, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getData().size());
-        tenants.addAll(pageData.getData());
+        List<TenantInfo> tenants = new ArrayList<>(pageData.getData());
 
         List<ListenableFuture<TenantInfo>> createFutures = new ArrayList<>(56);
         for (int i = 0; i < 56; i++) {

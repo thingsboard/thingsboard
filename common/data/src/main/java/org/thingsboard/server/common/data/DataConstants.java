@@ -41,6 +41,7 @@ public class DataConstants {
     public static final String EDGE_ID = "edgeId";
     public static final String DEVICE_ID = "deviceId";
     public static final String GATEWAY_PARAMETER = "gateway";
+    public static final String CF_NAME_METADATA_KEY = "calculatedFieldName";
 
     public static final String OVERWRITE_ACTIVITY_TIME_PARAMETER = "overwriteActivityTime";
     public static final String COAP_TRANSPORT_NAME = "COAP";

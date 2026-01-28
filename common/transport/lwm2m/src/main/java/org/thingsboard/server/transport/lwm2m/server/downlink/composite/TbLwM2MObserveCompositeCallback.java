@@ -23,6 +23,8 @@ import org.thingsboard.server.transport.lwm2m.server.downlink.TbLwM2MUplinkTarge
 import org.thingsboard.server.transport.lwm2m.server.log.LwM2MTelemetryLogService;
 import org.thingsboard.server.transport.lwm2m.server.uplink.LwM2mUplinkMsgHandler;
 
+import java.util.concurrent.CountDownLatch;
+
 @Slf4j
 public class TbLwM2MObserveCompositeCallback extends TbLwM2MUplinkTargetedCallback<ObserveCompositeRequest, ObserveCompositeResponse> {
 

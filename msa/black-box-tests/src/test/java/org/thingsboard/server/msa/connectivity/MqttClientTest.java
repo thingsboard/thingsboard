@@ -81,7 +81,7 @@ import java.util.concurrent.TimeoutException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.fail;
-import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
+import static org.thingsboard.server.common.data.AttributeScope.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
 @DisableUIListeners
@@ -577,7 +577,7 @@ public class MqttClientTest extends AbstractContainerTest {
         Awaitility
                 .await()
                 .alias("Check device disconnect.")
-                .atMost(TIMEOUT*timeoutMultiplier, TimeUnit.SECONDS)
+                .atMost(TIMEOUT * timeoutMultiplier, TimeUnit.SECONDS)
                 .until(() -> !returnCodeByteValue.isEmpty());
 
         assertThat(returnCodeByteValueSecondClient).isEmpty();

@@ -22,6 +22,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.common.util.JacksonUtil;
@@ -43,6 +44,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKey;
@@ -342,6 +344,26 @@ class ProtoUtilsTest {
         assertThat(toDeviceRpcRequestActorMsg.getTenantId()).isEqualTo(tenantId);
         assertThat(toDeviceRpcRequestActorMsg.getServiceId()).isEqualTo(serviceId);
         assertThat(toDeviceRpcRequestActorMsg.getMsg()).isEqualTo(request);
+    }
+
+    @ParameterizedTest
+    @EnumSource(EntityType.class)
+    void testEntityIdProto_toProto_fromProto(EntityType entityType) {
+        UUID uuid = UUID.fromString("51a514d7-ea8f-496d-b567-f6e76f0f9b83");
+
+        EntityId original = EntityIdFactory.getByTypeAndUuid(entityType, uuid);
+        assertThat(original).isNotNull();
+
+        // toProto
+        TransportProtos.EntityIdProto proto = ProtoUtils.toProto(original);
+        assertThat(proto).isNotNull();
+        assertThat(proto.getType().getNumber()).isEqualTo(entityType.getProtoNumber());
+        assertThat(proto.getEntityIdMSB()).isEqualTo(uuid.getMostSignificantBits());
+        assertThat(proto.getEntityIdLSB()).isEqualTo(uuid.getLeastSignificantBits());
+
+        // fromProto
+        EntityId restored = ProtoUtils.fromProto(proto);
+        assertThat(restored).isNotNull().isEqualTo(original);
     }
 
 }

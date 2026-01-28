@@ -100,6 +100,9 @@ server:
     rate_limits:
       # Limit that prohibits resetting the password for the user too often. The value of the rate limit. By default, no more than 5 requests per hour
       reset_password_per_user: "${RESET_PASSWORD_PER_USER_RATE_LIMIT_CONFIGURATION:5:3600}"
+    rule_engine:
+      # Default timeout for waiting response of REST API request to Rule Engine in milliseconds
+      response_timeout: "${DEFAULT_RULE_ENGINE_RESPONSE_TIMEOUT:10000}"
 
 # Application info parameters
 app:
@@ -148,6 +151,12 @@ security:
     tokenSigningKey: "${JWT_TOKEN_SIGNING_KEY:thingsboardDefaultSigningKey}" # Base64 encoded
   # Enable/disable access to Tenant Administrators JWT token by System Administrator or Customer Users JWT token by Tenant Administrator
   user_token_access_enabled: "${SECURITY_USER_TOKEN_ACCESS_ENABLED:true}"
+  # API key parameters
+  api_key:
+    # Prefix for the auto-generated API key. For example, tb_Ood4dQMxWvMH-76z3E_Cv0mZaBWT0Clk3hRSO0P_jNQ
+    value_prefix: "${SECURITY_API_KEY_VALUE_PREFIX:tb_}"
+    # Length of the auto-generated API key. Max is 255
+    value_bytes_size: "${SECURITY_API_KEY_VALUE_PREFIX:64}"
   # Enable/disable case-sensitive username login
   user_login_case_sensitive: "${SECURITY_USER_LOGIN_CASE_SENSITIVE:true}"
   claim:
@@ -208,7 +217,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.2.1}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-4.3}"
 
 # Database telemetry parameters
 database:
@@ -427,6 +436,9 @@ sql:
       enabled: "${SQL_TTL_NOTIFICATIONS_ENABLED:true}" # Enable/disable TTL (Time To Live) for notification center records
       ttl: "${SQL_TTL_NOTIFICATIONS_SECS:2592000}" # Default value - 30 days
       checking_interval_ms: "${SQL_TTL_NOTIFICATIONS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
+    api_keys:
+      enabled: "${SQL_TTL_API_KEYS_ENABLED:true}" # Enable/disable TTL (Time To Live) for expired api keys records
+      checking_interval_ms: "${SQL_TTL_API_KEYS_CHECKING_INTERVAL_MS:86400000}" # Default value - 1 day
   relations:
     max_level: "${SQL_RELATIONS_MAX_LEVEL:50}" # This value has to be reasonably small to prevent infinite recursion as early as possible
     pool_size: "${SQL_RELATIONS_POOL_SIZE:4}" # This value has to be reasonably small to prevent the relation query from blocking all other DB calls
@@ -504,14 +516,14 @@ actors:
     response_timeout_ms: "${ACTORS_RPC_RESPONSE_TIMEOUT_MS:30000}"
     # Close transport session if RPC delivery timed out. If enabled, RPC will be reverted to the queued state.
     # Note:
-    # - For MQTT transport:
-    #   - QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.
-    #   - QoS level 1: This feature applies, as an acknowledgment is expected.
-    #   - QoS level 2: Unsupported.
-    # - For CoAP transport:
-    #   - Confirmable requests: This feature applies, as delivery confirmation is expected.
-    #   - Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.
-    # - For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.
+    # <ul><li> For MQTT transport:
+    #   <ul><li> QoS level 0: This feature does not apply, as no acknowledgment is expected, and therefore no timeout is triggered.</li>
+    #   <li> QoS level 1: This feature applies, as an acknowledgment is expected.</li>
+    #   <li> QoS level 2: Unsupported.</li></ul></li>
+    # <li> For CoAP transport:
+    #   <ul><li> Confirmable requests: This feature applies, as delivery confirmation is expected.</li>
+    #   <li> Non-confirmable requests: This feature does not apply, as no delivery acknowledgment is expected.</li></ul></li>
+    # <li> For HTTP and SNPM transports: RPC is considered delivered immediately, and there is no logic to await acknowledgment.</li></ul>
     close_session_on_rpc_delivery_timeout: "${ACTORS_RPC_CLOSE_SESSION_ON_RPC_DELIVERY_TIMEOUT:false}"
   statistics:
     # Enable/disable actor statistics
@@ -662,6 +674,9 @@ cache:
     aiModel:
       timeToLiveInMinutes: "${CACHE_SPECS_AI_MODEL_TTL:1440}" # AI model cache TTL
       maxSize: "${CACHE_SPECS_AI_MODEL_MAX_SIZE:10000}" # 0 means the cache is disabled
+    apiKeys:
+      timeToLiveInMinutes: "${CACHE_SPECS_API_KEYS_TTL:1440}" # API keys cache TTL
+      maxSize: "${CACHE_SPECS_API_KEYS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -682,6 +697,9 @@ cache:
   tbResourceData:
     timeToLiveInMinutes: "${CACHE_SPECS_RESOURCE_DATA_TTL:10080}" # TB resource data cache TTL
     maxSize: "${CACHE_SPECS_RESOURCE_DATA_MAX_SIZE:100000}" # 0 means the cache is disabled
+  userAuthDetails:
+    timeToLiveInMinutes: "${CACHE_SPECS_USER_AUTH_DETAILS_TTL:120}" # User auth details cache TTL
+    maxSize: "${CACHE_SPECS_USER_AUTH_DETAILS_MAX_SIZE:200000}" # 0 means the cache is disabled
 
 # Spring data parameters
 spring.data.redis.repositories.enabled: false # Disable this because it is not required.
@@ -715,13 +733,13 @@ redis:
     # if set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   sentinel:
-    # name of the master node
+    # Name of the master node
     master: "${REDIS_MASTER:}"
-    # comma-separated list of "host:port" pairs of sentinels
+    # Comma-separated list of "host:port" pairs of sentinels
     sentinels: "${REDIS_SENTINELS:}"
-    # password to authenticate with sentinel
+    # Password to authenticate with sentinel
     password: "${REDIS_SENTINEL_PASSWORD:}"
-    # if set false will be used pool config build from values of the pool config section
+    # If set false will be used pool config build from values of the pool config section
     useDefaultPoolConfig: "${REDIS_USE_DEFAULT_POOL_CONFIG:true}"
   # db index
   db: "${REDIS_DB:0}"
@@ -1023,10 +1041,10 @@ transport:
   activity:
     # This property specifies the strategy for reporting activity events within each reporting period.
     # The accepted values are 'FIRST', 'LAST', 'FIRST_AND_LAST' and 'ALL'.
-    # - 'FIRST': Only the first activity event in each reporting period is reported.
-    # - 'LAST': Only the last activity event in the reporting period is reported.
-    # - 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.
-    # - 'ALL': All activity events in the reporting period are reported.
+    # <ul><li> 'FIRST': Only the first activity event in each reporting period is reported.</li>
+    # <li> 'LAST': Only the last activity event in the reporting period is reported.</li>
+    # <li> 'FIRST_AND_LAST': Both the first and last activity events in the reporting period are reported.</li>
+    # <li> 'ALL': All activity events in the reporting period are reported.</li></ul>
     reporting_strategy: "${TB_TRANSPORT_ACTIVITY_REPORTING_STRATEGY:LAST}"
   json:
     # Cast String data types to Numeric if possible when processing Telemetry/Attributes JSON
@@ -1144,16 +1162,16 @@ transport:
     dtls:
       # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
       retransmission_timeout: "${LWM2M_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # CoAP DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
-      # Default: off
+      # LWM2M DTLS connection ID length for LWM2M. RFC 9146, Connection Identifier for DTLS 1.2
+      # Default: off. <br>
       # Control usage of DTLS connection ID length (CID).
-      # - 'off' to deactivate it.
-      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-      # - A positive value defines generated CID size in bytes.
-      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:}"
+      # <ul> <li> 'off' to deactivate it. </li>
+      # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+      # <li> A positive value defines generated CID size in bytes.</li>
+      # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic). </li>
+      # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used </li>
+      # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used </li> </ul>
+      connection_id_length: "${LWM2M_DTLS_CONNECTION_ID_LENGTH:8}"
     server:
       # LwM2M Server ID
       id: "${LWM2M_SERVER_ID:123}"
@@ -1198,7 +1216,7 @@ transport:
       # Enable/disable Bootstrap Server
       enabled: "${LWM2M_ENABLED_BS:true}"
       # Default value in LwM2M client after start in mode Bootstrap for the object : name "LWM2M Security" field: "Short Server ID" (deviceProfile: Bootstrap.BOOTSTRAP SERVER.Short ID)
-      id: "${LWM2M_SERVER_ID_BS:111}"
+      id: "${LWM2M_SERVER_ID_BS:0}"
       # LwM2M bootstrap server bind address. Bind to all interfaces by default
       bind_address: "${LWM2M_BS_BIND_ADDRESS:0.0.0.0}"
       # LwM2M bootstrap server bind port
@@ -1312,7 +1330,7 @@ transport:
         # URL of gateways dashboard repository
         repository_url: "${TB_GATEWAY_DASHBOARD_SYNC_REPOSITORY_URL:https://github.com/thingsboard/gateway-management-extensions-dist.git}"
         # Branch of gateways dashboard repository to work with
-        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.0.0}"
+        branch: "${TB_GATEWAY_DASHBOARD_SYNC_BRANCH:release/4.3.0}"
         # Fetch frequency in hours for gateways dashboard repository
         fetch_frequency: "${TB_GATEWAY_DASHBOARD_SYNC_FETCH_FREQUENCY:24}"
 
@@ -1335,15 +1353,15 @@ coap:
     # CoAP DTLS bind port
     bind_port: "${COAP_DTLS_BIND_PORT:5684}"
     # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
-    # Default: off
+    # Default: off. <br>
     # Control usage of DTLS connection ID length (CID).
-    # - 'off' to deactivate it.
-    # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-    # - A positive value defines generated CID size in bytes.
-    # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-    # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-    # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # <ul> <li> 'off' to deactivate it. </li>
+    # <li> 'on' to activate Connection ID support (same as CID 0 or more 0). </li>
+    # <li> A positive value defines generated CID size in bytes.</li>
+    # <li> A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).</li>
+    # <li> A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used</li>
+    # <li> A value that are > 4: MultiNodeConnectionIdGenerator is used</li> </ul>
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:8}"
     # Specify the MTU (Maximum Transmission Unit).
     # Should be used if LAN MTU is not used, e.g. if IP tunnels are used or if the client uses a smaller value than the LAN MTU.
     # Default = 1024
@@ -1359,13 +1377,13 @@ coap:
     # In order to negotiate smaller maximum fragment lengths,
     # clients MAY include an extension of type "max_fragment_length" in the (extended) client hello.
     # The "extension_data" field of this extension SHALL contain:
-    # enum {
+    # <pre> enum {
     #   2^9(1) == 512,
     #   2^10(2) == 1024,
     #   2^11(3) == 2048,
     #   2^12(4) == 4096,
     #   (255)
-    # } MaxFragmentLength;
+    # } MaxFragmentLength; </pre>
     # TLS already requires clients and servers to support fragmentation of handshake messages.
     max_fragment_length: "${COAP_DTLS_MAX_FRAGMENT_LENGTH:1024}"
     # Server DTLS credentials
@@ -1451,7 +1469,7 @@ device:
       pem_cert_file: "${DEVICE_CONNECTIVITY_COAPS_CA_ROOT_CERT:cafile.pem}"
     gateway:
       # The docker tag for thingsboard/tb-gateway image used in docker-compose file for gateway launch
-      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.7-stable}"
+      image_version: "${DEVICE_CONNECTIVITY_GATEWAY_IMAGE_VERSION:3.8-stable}"
 
 # Edges parameters
 edges:
@@ -1490,6 +1508,11 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+    # Time (in milliseconds) to subtract from the start timestamp when fetching edge events.
+    # This compensates for possible misordering between `created_time` (used for partitioning)
+    # and `seqId` (used for sorting). Without this, events with smaller seqId but larger created_time
+    # might be skipped, especially across partition boundaries.
+    misordering_compensation_millis: "${EDGES_MISORDERING_COMPENSATION_MILLIS:60000}"
   # Max number of high priority edge events per edge session. No persistence - stored in memory
   max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
@@ -1544,6 +1567,8 @@ swagger:
   version: "${SWAGGER_VERSION:}"
   # The group name (definition) on the API doc UI page.
   group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
+  # Control the initial display state of API operations and tags (none or list)
+  doc_expansion: "${SWAGGER_DOC_EXPANSION:list}"
 
 # Queue configuration parameters
 queue:

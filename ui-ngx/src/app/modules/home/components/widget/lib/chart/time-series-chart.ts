@@ -54,13 +54,15 @@ import {
   getFocusedSeriesIndex,
   measureAxisNameSize
 } from '@home/components/widget/lib/chart/echarts-widget.models';
-import { DateFormatProcessor, ValueSourceType } from '@shared/models/widget-settings.models';
+import { DateFormatProcessor, ValueSourceConfig, ValueSourceType } from '@shared/models/widget-settings.models';
 import {
   formattedDataFormDatasourceData,
   formatValue,
   isDefined,
   isDefinedAndNotNull,
   isEqual,
+  isNumber,
+  isString,
   mergeDeep
 } from '@core/utils';
 import { DataKey, Datasource, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
@@ -286,9 +288,36 @@ export class TbTimeSeriesChart {
           }
         }
       }
+
+      for (const yAxis of this.yAxisList) {
+        const minType = (yAxis.settings.min as ValueSourceConfig).type;
+        const maxType = (yAxis.settings.max as ValueSourceConfig).type;
+        if (minType === ValueSourceType.latestKey && yAxis.minLatestDataKey) {
+          const data = this.ctx.latestData.find(d => d.dataKey === yAxis.minLatestDataKey);
+          if (data?.data[0]) {
+            const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
+            if (yAxis.option.min !== value) {
+              yAxis.option.min = value;
+              update = true;
+            }
+          }
+        }
+
+        if (maxType === ValueSourceType.latestKey && yAxis.maxLatestDataKey) {
+          const data = this.ctx.latestData.find(d => d.dataKey === yAxis.maxLatestDataKey);
+          if (data?.data[0]) {
+            const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
+            if (yAxis.option.max !== value) {
+              yAxis.option.max = value;
+              update = true;
+            }
+          }
+        }
+      }
     }
     if (this.timeSeriesChart && update) {
       this.updateSeriesData();
+      this.updateAxisLimits();
     }
   }
 
@@ -550,7 +579,10 @@ export class TbTimeSeriesChart {
   private setupYAxes(): void {
     const yAxisSettingsList = Object.values(this.settings.yAxes);
     yAxisSettingsList.sort((a1, a2) => a1.order - a2.order);
+    const axisLimitDatasources: Datasource[] = [];
     for (const yAxisSettings of yAxisSettingsList) {
+      yAxisSettings.min = this.normalizeAxisLimit(yAxisSettings.min);
+      yAxisSettings.max = this.normalizeAxisLimit(yAxisSettings.max);
       const axisSettings = mergeDeep<TimeSeriesChartYAxisSettings>({} as TimeSeriesChartYAxisSettings,
         defaultTimeSeriesChartYAxisSettings, yAxisSettings);
       const units = isNotEmptyTbUnits(axisSettings.units) ? axisSettings.units : this.ctx.units;
@@ -563,7 +595,80 @@ export class TbTimeSeriesChart {
         axisSettings.ticksFormatter = this.stateValueConverter.ticksFormatter;
       }
       const yAxis = createTimeSeriesYAxis(unitSymbol, decimals, axisSettings, this.ctx.utilsService, this.darkMode, unitConvertor);
+      if (isDefinedAndNotNull(axisSettings.min)) {
+        this.processYAxisLimit(axisSettings.min as ValueSourceConfig, 'min', yAxis, axisLimitDatasources, unitConvertor);
+      }
+      if (isDefinedAndNotNull(axisSettings.max)) {
+        this.processYAxisLimit(axisSettings.max as ValueSourceConfig, 'max', yAxis, axisLimitDatasources, unitConvertor);
+      }
       this.yAxisList.push(yAxis);
+    }
+    this.subscribeForAxisLimits(axisLimitDatasources);
+  }
+
+  private processYAxisLimit(
+    limit: ValueSourceConfig,
+    limitType: 'min' | 'max',
+    yAxis: TimeSeriesChartYAxis,
+    axisLimitDatasources: Datasource[],
+    unitConvertor?: (value: number) => number
+  ): void {
+    if (limit && typeof limit === 'object' && 'type' in limit) {
+      if (limit.type === ValueSourceType.latestKey) {
+        let latestDataKey: DataKey = null;
+        if (this.ctx.datasources.length) {
+          for (const datasource of this.ctx.datasources) {
+            latestDataKey = datasource.latestDataKeys?.find(d =>
+              (d.type === DataKeyType.function && d.label === limit.latestKey) ||
+              (d.type !== DataKeyType.function && d.name === limit.latestKey &&
+                d.type === limit.latestKeyType));
+            if (latestDataKey) {
+              break;
+            }
+          }
+        }
+        if (latestDataKey) {
+          if (limitType === 'min') {
+            yAxis.minLatestDataKey = latestDataKey;
+          } else {
+            yAxis.maxLatestDataKey = latestDataKey;
+          }
+        }
+      } else if (limit.type === ValueSourceType.entity) {
+        const entityAliasId = this.ctx.aliasController.getEntityAliasId(limit.entityAlias);
+        if (entityAliasId) {
+          let datasource = axisLimitDatasources.find(d => d.entityAliasId === entityAliasId);
+          const entityDataKey: DataKey = {
+            type: limit.entityKeyType,
+            name: limit.entityKey,
+            label: limit.entityKey,
+            settings: {
+              yAxisId: yAxis.id,
+              axisLimit: limitType
+            }
+          };
+          if (datasource) {
+            datasource.dataKeys.push(entityDataKey);
+          } else {
+            datasource = {
+              type: DatasourceType.entity,
+              name: limit.entityAlias,
+              aliasName: limit.entityAlias,
+              entityAliasId,
+              dataKeys: [entityDataKey]
+            };
+            axisLimitDatasources.push(datasource);
+          }
+        }
+      } else if (limit.type === ValueSourceType.constant) {
+        const value = unitConvertor && isDefinedAndNotNull(limit.value) ? unitConvertor(limit.value) : limit.value;
+        if (limitType === 'min') {
+          yAxis.option.min = value;
+        } else {
+          yAxis.option.max = value;
+        }
+      }
+      return;
     }
   }
 
@@ -619,6 +724,50 @@ export class TbTimeSeriesChart {
         }
       };
       this.ctx.subscriptionApi.createSubscription(thresholdsSourcesSubscriptionOptions, true).subscribe();
+    }
+  }
+
+  private subscribeForAxisLimits(datasources: Datasource[]) {
+    if (datasources.length) {
+      const axisLimitsSubscriptionOptions: WidgetSubscriptionOptions = {
+        datasources,
+        useDashboardTimewindow: false,
+        type: widgetType.latest,
+        callbacks: {
+          onDataUpdated: (subscription) => {
+            let update = false;
+            if (subscription.data) {
+              for (const yAxis of this.yAxisList) {
+                for (const data of subscription.data) {
+                  if (data.dataKey.settings?.yAxisId === yAxis.id) {
+                    const limitType = data.dataKey.settings.axisLimit as ('min' | 'max');
+                    if (data.data[0]) {
+                      const value = this.parseAxisLimitData(data.data[0][1], yAxis.unitConvertor);
+                      if (isDefinedAndNotNull(value)) {
+                        if (limitType === 'min') {
+                          if (yAxis.option.min !== value) {
+                            yAxis.option.min = value;
+                            update = true;
+                          }
+                        } else {
+                          if (yAxis.option.max !== value) {
+                            yAxis.option.max = value;
+                            update = true;
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            if (this.timeSeriesChart && update) {
+              this.updateAxisLimits();
+            }
+          }
+        }
+      };
+      this.ctx.subscriptionApi.createSubscription(axisLimitsSubscriptionOptions, true).subscribe();
     }
   }
 
@@ -713,6 +862,24 @@ export class TbTimeSeriesChart {
       this.updateAxes();
     }
   }
+
+  private parseAxisLimitData = (data: any, unitConvertor?: (value: number) => number): number => {
+    let value: number;
+    if (isDefinedAndNotNull(data)) {
+      if (isNumber(data)) {
+        value = data;
+      } else if (isString(data)) {
+        value = Number(data);
+      }
+    }
+    if (isDefinedAndNotNull(value) && !isNaN(value)) {
+      if (unitConvertor) {
+        return unitConvertor(value);
+      }
+      return value;
+    }
+    return null;
+  };
 
   private updateSeries(): void {
     this.timeSeriesChartOptions.series = generateChartData(this.dataItems, this.thresholdItems,
@@ -836,6 +1003,16 @@ export class TbTimeSeriesChart {
     return changed;
   }
 
+  private updateAxisLimits(): void {
+    if (this.timeSeriesChart && !this.timeSeriesChart.isDisposed()) {
+      this.timeSeriesChartOptions.yAxis = this.yAxisList.map(axis => axis.option);
+      this.timeSeriesChart.setOption(this.timeSeriesChartOptions, {
+        replaceMerge: ['yAxis']
+      });
+      this.updateAxes();
+    }
+  }
+
   private scaleYAxis(yAxis: TimeSeriesChartYAxis): boolean {
     if (!this.stateData) {
       const axisBarDataItems = this.dataItems.filter(d => d.yAxisId === yAxis.id && d.enabled &&
@@ -902,5 +1079,22 @@ export class TbTimeSeriesChart {
       });
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions);
     }
+  }
+
+  private normalizeAxisLimit(limit: string | number | ValueSourceConfig): string | number | ValueSourceConfig  {
+    if (!limit) {
+      return {
+        type: ValueSourceType.constant,
+        value: null,
+        entityAlias: null
+      };
+    } else if (typeof limit === 'number' || typeof limit === 'string') {
+      return {
+        type: ValueSourceType.constant,
+        value: Number(limit),
+        entityAlias: null
+      };
+    }
+    return limit;
   }
 }

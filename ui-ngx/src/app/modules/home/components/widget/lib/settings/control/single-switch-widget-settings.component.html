@@ -86,9 +86,16 @@
         {{ 'widgets.single-switch.label' | translate }}
       </mat-slide-toggle>
       <div class="flex flex-1 flex-row items-center justify-start gap-2">
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
+        <tb-string-pattern-autocomplete class="flex flex-1"
+                                      appearance="outline"
+                                      brackets="curly"
+                                      subscriptSizing="dynamic"
+                                      predefinedValuesButton="true"
+                                      [disabled]="!singleSwitchWidgetSettingsForm.get('showLabel').value"
+                                      [predefinedValues]="predefinedValues"
+                                      placeholderText="{{ 'widget-config.set' | translate }}"
+                                      formControlName="label"
+       ></tb-string-pattern-autocomplete>
         <tb-font-settings formControlName="labelFont"
                           [previewText]="singleSwitchWidgetSettingsForm.get('label').value">
         </tb-font-settings>

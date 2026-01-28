@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.notification.targets.platform;
 import lombok.Data;
 
 @Data
-public class SystemAdministratorsFilter implements UsersFilter {
+public class SystemAdministratorsFilter implements SystemLevelUsersFilter {
 
     @Override
     public UsersFilterType getType() {

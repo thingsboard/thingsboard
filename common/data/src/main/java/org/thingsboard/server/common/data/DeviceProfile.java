@@ -114,6 +114,9 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
         this.description = deviceProfile.getDescription();
         this.image = deviceProfile.getImage();
         this.isDefault = deviceProfile.isDefault();
+        this.type = deviceProfile.getType();
+        this.transportType = deviceProfile.getTransportType();
+        this.provisionType = deviceProfile.getProvisionType();
         this.defaultRuleChainId = deviceProfile.getDefaultRuleChainId();
         this.defaultDashboardId = deviceProfile.getDefaultDashboardId();
         this.defaultQueueName = deviceProfile.getDefaultQueueName();

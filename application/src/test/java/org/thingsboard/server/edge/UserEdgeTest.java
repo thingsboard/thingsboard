@@ -15,15 +15,22 @@
  */
 package org.thingsboard.server.edge;
 
-import com.google.protobuf.AbstractMessage;
+import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.test.web.servlet.ResultMatcher;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.EdgeUtils;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.UserCredentialsId;
+import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -32,11 +39,15 @@ import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsRequestMsg;
 import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
+import org.thingsboard.server.service.edge.EdgeMsgConstructorUtils;
 import org.thingsboard.server.service.security.model.ChangePasswordRequest;
 
 import java.util.Optional;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.dao.user.UserServiceImpl.DEFAULT_TOKEN_LENGTH;
 
 @DaoSqlTest
 public class UserEdgeTest extends AbstractEdgeTest {
@@ -44,164 +55,76 @@ public class UserEdgeTest extends AbstractEdgeTest {
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
 
+    private static final String DEFAULT_FIRST_NAME = "Boris";
+    private static final String DEFAULT_LAST_NAME = "Johnson";
+    private static final String UPDATED_LAST_NAME = "Borisov";
+    private static final String DEFAULT_TENANT_ADMIN_EMAIL = "tenantAdmin@thingsboard.org";
+    private static final String DEFAULT_CUSTOMER_USER_EMAIL = "customerUser@thingsboard.org";
+
     @Test
     public void testCreateUpdateDeleteTenantUser() throws Exception {
         // create user
-        edgeImitator.expectMessageAmount(3);
-        User newTenantAdmin = new User();
-        newTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
-        newTenantAdmin.setTenantId(tenantId);
-        newTenantAdmin.setEmail("tenantAdmin@thingsboard.org");
-        newTenantAdmin.setFirstName("Boris");
-        newTenantAdmin.setLastName("Johnson");
-        User savedTenantAdmin = createUser(newTenantAdmin, "tenant");
-        Assert.assertTrue(edgeImitator.waitForMessages()); // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
-        Optional<UserUpdateMsg> userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
-        Assert.assertTrue(userUpdateMsgOpt.isPresent());
-        UserUpdateMsg userUpdateMsg = userUpdateMsgOpt.get();
-        User userMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
-        Assert.assertNotNull(userMsg);
-        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
-        Assert.assertEquals(savedTenantAdmin.getId(), userMsg.getId());
-        Assert.assertEquals(savedTenantAdmin.getAuthority(), userMsg.getAuthority());
-        Assert.assertEquals(savedTenantAdmin.getEmail(), userMsg.getEmail());
-        Assert.assertEquals(savedTenantAdmin.getFirstName(), userMsg.getFirstName());
-        Assert.assertEquals(savedTenantAdmin.getLastName(), userMsg.getLastName());
-        Optional<UserCredentialsUpdateMsg> userCredentialsUpdateMsgOpt = edgeImitator.findMessageByType(UserCredentialsUpdateMsg.class);
-        Assert.assertTrue(userCredentialsUpdateMsgOpt.isPresent());
+        User newTenantAdmin = buildUser(Authority.TENANT_ADMIN, null);
+        User savedTenantAdmin = createAndVerifyUserOnEdge(newTenantAdmin);
 
         // update user
-        edgeImitator.expectMessageAmount(2);
-        savedTenantAdmin.setLastName("Borisov");
-        savedTenantAdmin = doPost("/api/user", savedTenantAdmin, User.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
-        Assert.assertTrue(userUpdateMsgOpt.isPresent());
-        userUpdateMsg = userUpdateMsgOpt.get();
-        userMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
-        Assert.assertNotNull(userMsg);
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
-        Assert.assertEquals(savedTenantAdmin.getLastName(), userMsg.getLastName());
+        updateAndVerifyUserLastName(savedTenantAdmin);
 
         // update user credentials
         login(savedTenantAdmin.getEmail(), "tenant");
-
-        edgeImitator.expectMessageAmount(1);
-        ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
-        changePasswordRequest.setCurrentPassword("tenant");
-        changePasswordRequest.setNewPassword("newTenant");
-        doPost("/api/auth/changePassword", changePasswordRequest);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof UserCredentialsUpdateMsg);
-        UserCredentialsUpdateMsg userCredentialsUpdateMsg = (UserCredentialsUpdateMsg) latestMessage;
-        UserCredentials userCredentialsMsg = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
-        Assert.assertNotNull(userCredentialsMsg);
-        Assert.assertEquals(savedTenantAdmin.getId(), userCredentialsMsg.getUserId());
-        Assert.assertTrue(passwordEncoder.matches(changePasswordRequest.getNewPassword(), userCredentialsMsg.getPassword()));
-
+        updateAndVerifyUserCredentials(savedTenantAdmin);
         loginTenantAdmin();
 
         // delete user
-        edgeImitator.expectMessageAmount(1);
-        doDelete("/api/user/" + savedTenantAdmin.getUuidId())
-                .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof UserUpdateMsg);
-        userUpdateMsg = (UserUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, userUpdateMsg.getMsgType());
-        Assert.assertEquals(savedTenantAdmin.getUuidId().getMostSignificantBits(), userUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedTenantAdmin.getUuidId().getLeastSignificantBits(), userUpdateMsg.getIdLSB());
+        deleteAndVerifyUser(savedTenantAdmin);
     }
 
     @Test
     public void testCreateUpdateDeleteCustomerUser() throws Exception {
         // create customer
-        edgeImitator.expectMessageAmount(1);
-        Customer customer = new Customer();
-        customer.setTitle("Edge Customer");
-        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
-        Assert.assertFalse(edgeImitator.waitForMessages(5));
-
-        // assign edge to customer
-        edgeImitator.expectMessageAmount(2);
-        doPost("/api/customer/" + savedCustomer.getUuidId()
-                + "/edge/" + edge.getUuidId(), Edge.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
+        Customer savedCustomer = createAndAssignCustomerToEdge();
 
         // create user
-        edgeImitator.expectMessageAmount(3);
-        User customerUser = new User();
-        customerUser.setAuthority(Authority.CUSTOMER_USER);
-        customerUser.setTenantId(tenantId);
-        customerUser.setCustomerId(savedCustomer.getId());
-        customerUser.setEmail("customerUser@thingsboard.org");
-        customerUser.setFirstName("John");
-        customerUser.setLastName("Edwards");
-        User savedCustomerUser = createUser(customerUser, "customer");
-        Assert.assertTrue(edgeImitator.waitForMessages());  // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
-        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
-        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
-        Optional<UserUpdateMsg> userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
-        Assert.assertTrue(userUpdateMsgOpt.isPresent());
-        UserUpdateMsg userUpdateMsg = userUpdateMsgOpt.get();
-        User userMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
-        Assert.assertNotNull(userMsg);
-        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomerUser.getId(), userMsg.getId());
-        Assert.assertEquals(savedCustomerUser.getCustomerId(), userMsg.getCustomerId());
-        Assert.assertEquals(savedCustomerUser.getAuthority(), userMsg.getAuthority());
-        Assert.assertEquals(savedCustomerUser.getEmail(), userMsg.getEmail());
-        Assert.assertEquals(savedCustomerUser.getFirstName(), userMsg.getFirstName());
-        Assert.assertEquals(savedCustomerUser.getLastName(), userMsg.getLastName());
+        User customerUser = buildUser(Authority.CUSTOMER_USER, savedCustomer.getId());
+        User savedCustomerUser = createAndVerifyUserOnEdge(customerUser);
 
         // update user
-        edgeImitator.expectMessageAmount(2);
-        savedCustomerUser.setLastName("Addams");
-        savedCustomerUser = doPost("/api/user", savedCustomerUser, User.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
-        Assert.assertTrue(userUpdateMsgOpt.isPresent());
-        userUpdateMsg = userUpdateMsgOpt.get();
-        userMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
-        Assert.assertNotNull(userMsg);
-        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomerUser.getLastName(), userMsg.getLastName());
+        updateAndVerifyUserLastName(savedCustomerUser);
 
         // update user credentials
         login(savedCustomerUser.getEmail(), "customer");
-
-        edgeImitator.expectMessageAmount(1);
-        ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
-        changePasswordRequest.setCurrentPassword("customer");
-        changePasswordRequest.setNewPassword("newCustomer");
-        doPost("/api/auth/changePassword", changePasswordRequest);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof UserCredentialsUpdateMsg);
-        UserCredentialsUpdateMsg userCredentialsUpdateMsg = (UserCredentialsUpdateMsg) latestMessage;
-        UserCredentials userCredentialsMsg = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
-        Assert.assertNotNull(userCredentialsMsg);
-        Assert.assertEquals(savedCustomerUser.getId(), userCredentialsMsg.getUserId());
-        Assert.assertTrue(passwordEncoder.matches(changePasswordRequest.getNewPassword(), userCredentialsMsg.getPassword()));
-
+        updateAndVerifyUserCredentials(savedCustomerUser);
         loginTenantAdmin();
 
         // delete user
-        edgeImitator.expectMessageAmount(1);
-        doDelete("/api/user/" + savedCustomerUser.getUuidId())
-                .andExpect(status().isOk());
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof UserUpdateMsg);
-        userUpdateMsg = (UserUpdateMsg) latestMessage;
-        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, userUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomerUser.getUuidId().getMostSignificantBits(), userUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedCustomerUser.getUuidId().getLeastSignificantBits(), userUpdateMsg.getIdLSB());
+        deleteAndVerifyUser(savedCustomerUser);
+    }
 
+    @Test
+    public void testSendUserToCloudFromEdge() throws Exception {
+        // create customer
+        Customer savedCustomer = createAndAssignCustomerToEdge();
+
+        // create uplinkMsg with user and userCredentials
+        UserId userId = new UserId(UUID.randomUUID());
+        UserCredentialsId userCredentialsId = new UserCredentialsId(UUID.randomUUID());
+        UplinkMsg uplinkMsg = buildUserUplinkMsg(userId, savedCustomer.getId(), userCredentialsId);
+
+        User userFromCloud = verifyMsgOnCloud(uplinkMsg, userId, false);
+        assertUserCredentialsFlags(userFromCloud, false, false);
+
+        // create uplinkMsg with enabled userCredentials
+        UplinkMsg uplinkMsgWithEnabledCredentials = constructUserCredentialsUplinkMsg(userCredentialsId, userId);
+
+        User cloudUserWithCredentials = verifyMsgOnCloud(uplinkMsgWithEnabledCredentials, userId, false);
+        assertUserCredentialsFlags(cloudUserWithCredentials, true, true);
+
+        // create uplinkMsg with user the same email
+        UserId secondUserId = new UserId(UUID.randomUUID());
+        UserCredentialsId secondCredentialsId = new UserCredentialsId(UUID.randomUUID());
+        UplinkMsg uplinkMsgForUserExistingEmail = buildUserUplinkMsg(secondUserId, savedCustomer.getId(), secondCredentialsId);
+
+        verifyMsgOnCloud(uplinkMsgForUserExistingEmail, secondUserId, true);
     }
 
     @Test
@@ -221,39 +144,215 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForResponses());
         Assert.assertTrue(edgeImitator.waitForMessages());
 
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof UserCredentialsUpdateMsg);
-        UserCredentialsUpdateMsg userCredentialsUpdateMsg = (UserCredentialsUpdateMsg) latestMessage;
-        UserCredentials userCredentialsMsg = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
-        Assert.assertNotNull(userCredentialsMsg);
-        Assert.assertEquals(tenantAdminUserId, userCredentialsMsg.getUserId());
-    }
-
-    @Test
-    public void sendUserCredentialsRequest() throws Exception {
-        UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
-        UserCredentialsRequestMsg.Builder userCredentialsRequestMsgBuilder = UserCredentialsRequestMsg.newBuilder();
-        userCredentialsRequestMsgBuilder.setUserIdMSB(tenantAdminUserId.getId().getMostSignificantBits());
-        userCredentialsRequestMsgBuilder.setUserIdLSB(tenantAdminUserId.getId().getLeastSignificantBits());
-        testAutoGeneratedCodeByProtobuf(userCredentialsRequestMsgBuilder);
-        uplinkMsgBuilder.addUserCredentialsRequestMsg(userCredentialsRequestMsgBuilder.build());
-
-        testAutoGeneratedCodeByProtobuf(uplinkMsgBuilder);
-
-        edgeImitator.expectResponsesAmount(1);
-        edgeImitator.expectMessageAmount(1);
-        edgeImitator.sendUplinkMsg(uplinkMsgBuilder.build());
-        Assert.assertTrue(edgeImitator.waitForResponses());
-        Assert.assertTrue(edgeImitator.waitForMessages());
-
-        AbstractMessage latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof UserCredentialsUpdateMsg);
-        UserCredentialsUpdateMsg userCredentialsUpdateMsg = (UserCredentialsUpdateMsg) latestMessage;
+        UserCredentialsUpdateMsg userCredentialsUpdateMsg = getLatestUserCredentialsUpdateMsg();
         UserCredentials userCredentialsMsg = JacksonUtil.fromString(userCredentialsUpdateMsg.getEntity(), UserCredentials.class, true);
         Assert.assertNotNull(userCredentialsMsg);
         Assert.assertEquals(tenantAdminUserId, userCredentialsMsg.getUserId());
 
         testAutoGeneratedCodeByProtobuf(userCredentialsUpdateMsg);
+    }
+
+    @Test
+    public void testSendUserDeleteFromEdgeToCloud() throws Exception {
+        // create customer
+        Customer savedCustomer = createAndAssignCustomerToEdge();
+
+        // create user
+        User customerUser = buildUser(Authority.CUSTOMER_USER, savedCustomer.getId());
+        User savedCustomerUser = createAndVerifyUserOnEdge(customerUser);
+
+        // simulate user removal event from edge to cloud
+        UserUpdateMsg.Builder userUpdateMsg = UserUpdateMsg.newBuilder().setMsgType(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE)
+                .setIdMSB(savedCustomerUser.getUuidId().getMostSignificantBits())
+                .setIdLSB(savedCustomerUser.getUuidId().getLeastSignificantBits());
+
+        UplinkMsg uplink = UplinkMsg.newBuilder()
+                .setUplinkMsgId(EdgeUtils.nextPositiveInt())
+                .addUserUpdateMsg(userUpdateMsg).build();
+
+        testAutoGeneratedCodeByProtobuf(userUpdateMsg);
+
+        // expect edge message sent & cloud message response
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplink);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        loginTenantAdmin();
+        Awaitility.await().atMost(10, TimeUnit.SECONDS)
+                .until(() -> {
+                    try {
+                        doGet("/api/user/" + savedCustomerUser.getId(), User.class, status().isNotFound());
+                        return true;
+                    } catch (Throwable ex) {
+                        return false;
+                    }
+                });
+    }
+
+    private Customer createAndAssignCustomerToEdge() throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        Customer customer = new Customer();
+        customer.setTitle("Edge Customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+        Assert.assertFalse(edgeImitator.waitForMessages(5));
+
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/customer/" + savedCustomer.getUuidId() + "/edge/" + edge.getUuidId(), Edge.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        return savedCustomer;
+    }
+
+    private User buildUser(Authority authority, CustomerId customerId) {
+        User user = new User();
+
+        user.setAuthority(authority);
+        user.setTenantId(tenantId);
+        user.setCustomerId(customerId);
+        user.setEmail(authority == Authority.TENANT_ADMIN ? DEFAULT_TENANT_ADMIN_EMAIL : DEFAULT_CUSTOMER_USER_EMAIL);
+        user.setFirstName(DEFAULT_FIRST_NAME);
+        user.setLastName(DEFAULT_LAST_NAME);
+
+        return user;
+    }
+
+    private User createAndVerifyUserOnEdge(User user) throws Exception {
+        String password = user.getAuthority() == Authority.TENANT_ADMIN ? "tenant" : "customer";
+
+        // wait 3 messages - x1 user update msg and x2 user credentials update msgs (create + authenticate user)
+        edgeImitator.expectMessageAmount(3);
+        User savedUser = createUser(user, password);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+        Assert.assertEquals(1, edgeImitator.findAllMessagesByType(UserUpdateMsg.class).size());
+        Assert.assertEquals(2, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
+
+        UserUpdateMsg userUpdateMsg = getLatestUserUpdateMsg();
+        User userMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
+        Assert.assertNotNull(userMsg);
+        Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
+        Assert.assertEquals(savedUser.getId(), userMsg.getId());
+        Assert.assertEquals(savedUser.getCustomerId(), userMsg.getCustomerId());
+        Assert.assertEquals(savedUser.getAuthority(), userMsg.getAuthority());
+        Assert.assertEquals(savedUser.getEmail(), userMsg.getEmail());
+        Assert.assertEquals(savedUser.getFirstName(), userMsg.getFirstName());
+        Assert.assertEquals(savedUser.getLastName(), userMsg.getLastName());
+
+        return savedUser;
+    }
+
+    private void updateAndVerifyUserLastName(User user) throws Exception {
+        user.setLastName(UPDATED_LAST_NAME);
+
+        edgeImitator.expectMessageAmount(2);
+        doPost("/api/user", user, User.class);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        UserUpdateMsg userUpdateMsg = getLatestUserUpdateMsg();
+        User userFromMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
+        Assert.assertNotNull(userFromMsg);
+        Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
+        Assert.assertEquals(UPDATED_LAST_NAME, userFromMsg.getLastName());
+    }
+
+    private void updateAndVerifyUserCredentials(User user) throws Exception {
+        String password = user.getAuthority() == Authority.TENANT_ADMIN ? "tenant" : "customer";
+        String newPassword = "new" + password;
+
+        edgeImitator.expectMessageAmount(1);
+        ChangePasswordRequest changePasswordRequest = new ChangePasswordRequest();
+        changePasswordRequest.setCurrentPassword(password);
+        changePasswordRequest.setNewPassword(newPassword);
+        doPost("/api/auth/changePassword", changePasswordRequest);
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        UserCredentialsUpdateMsg msg = getLatestUserCredentialsUpdateMsg();
+        UserCredentials creds = JacksonUtil.fromString(msg.getEntity(), UserCredentials.class, true);
+        Assert.assertNotNull(creds);
+        Assert.assertEquals(user.getId(), creds.getUserId());
+        Assert.assertTrue(passwordEncoder.matches(newPassword, creds.getPassword()));
+    }
+
+    private void deleteAndVerifyUser(User savedTenantAdmin) throws Exception {
+        edgeImitator.expectMessageAmount(1);
+        doDelete("/api/user/" + savedTenantAdmin.getUuidId())
+                .andExpect(status().isOk());
+        Assert.assertTrue(edgeImitator.waitForMessages());
+
+        UserUpdateMsg userUpdateMsg = getLatestUserUpdateMsg();
+        Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, userUpdateMsg.getMsgType());
+        Assert.assertEquals(savedTenantAdmin.getUuidId().getMostSignificantBits(), userUpdateMsg.getIdMSB());
+        Assert.assertEquals(savedTenantAdmin.getUuidId().getLeastSignificantBits(), userUpdateMsg.getIdLSB());
+    }
+
+    private UplinkMsg buildUserUplinkMsg(UserId userId, CustomerId customerId, UserCredentialsId userCredentialsUuid) {
+        User customerUser = buildUser(Authority.CUSTOMER_USER, customerId);
+        customerUser.setId(userId);
+        UserCredentials userCredentials = buildCredentials(userCredentialsUuid, userId, false);
+        userCredentials.setActivateToken(StringUtils.randomAlphanumeric(DEFAULT_TOKEN_LENGTH));
+
+        UserUpdateMsg userUpdateMsg = EdgeMsgConstructorUtils.constructUserUpdatedMsg(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, customerUser);
+        UserCredentialsUpdateMsg userCredentialsMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+
+        return UplinkMsg.newBuilder()
+                .addUserUpdateMsg(userUpdateMsg)
+                .addUserCredentialsUpdateMsg(userCredentialsMsg)
+                .build();
+    }
+
+    private UserCredentials buildCredentials(UserCredentialsId userCredentialsUuid, UserId userId, boolean enabled) {
+        UserCredentials userCredentials = new UserCredentials();
+
+        userCredentials.setId(userCredentialsUuid);
+        userCredentials.setUserId(userId);
+        userCredentials.setEnabled(enabled);
+        userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
+
+        return userCredentials;
+    }
+
+    private User verifyMsgOnCloud(UplinkMsg uplinkMsg, UserId userId, boolean emailExist) throws Exception {
+        edgeImitator.expectResponsesAmount(1);
+        edgeImitator.sendUplinkMsg(uplinkMsg);
+        Assert.assertTrue(edgeImitator.waitForResponses());
+
+        User userFromCloud = doGet("/api/user/" + userId, User.class);
+        Assert.assertNotNull(userFromCloud);
+
+        if (emailExist) {
+            Assert.assertNotEquals(DEFAULT_CUSTOMER_USER_EMAIL, userFromCloud.getEmail());
+        } else {
+            Assert.assertEquals(DEFAULT_CUSTOMER_USER_EMAIL, userFromCloud.getEmail());
+        }
+        return userFromCloud;
+    }
+
+    private UplinkMsg constructUserCredentialsUplinkMsg(UserCredentialsId userCredentialsUuid, UserId userId) {
+        UserCredentials userCredentials = buildCredentials(userCredentialsUuid, userId, true);
+        userCredentials.setPassword("password");
+        UserCredentialsUpdateMsg credsMsg = EdgeMsgConstructorUtils.constructUserCredentialsUpdatedMsg(userCredentials);
+
+        return UplinkMsg.newBuilder()
+                .addUserCredentialsUpdateMsg(credsMsg)
+                .build();
+    }
+
+    private void assertUserCredentialsFlags(User user, boolean enabled, boolean activated) {
+        JsonNode info = user.getAdditionalInfo();
+        Assert.assertNotNull(info);
+        Assert.assertEquals(enabled, info.get("userCredentialsEnabled").asBoolean());
+        Assert.assertEquals(activated, info.get("userActivated").asBoolean());
+    }
+
+    private UserUpdateMsg getLatestUserUpdateMsg() {
+        Optional<UserUpdateMsg> opt = edgeImitator.findMessageByType(UserUpdateMsg.class);
+        Assert.assertTrue(opt.isPresent());
+        return opt.get();
+    }
+
+    private UserCredentialsUpdateMsg getLatestUserCredentialsUpdateMsg() {
+        Optional<UserCredentialsUpdateMsg> opt = edgeImitator.findMessageByType(UserCredentialsUpdateMsg.class);
+        Assert.assertTrue(opt.isPresent());
+        return opt.get();
     }
 
 }

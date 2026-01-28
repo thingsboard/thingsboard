@@ -32,12 +32,16 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -215,12 +219,78 @@ public class TbResourceController extends BaseController {
                     "\n\nResource combination of the title with the key is unique in the scope of tenant. " +
                     "Remove 'id', 'tenantId' from the request body example (below) to create new Resource entity." +
                     SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Deprecated // resource should be save or update with an upload request
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping(value = "/resource")
     public TbResourceInfo saveResource(@Parameter(description = "A JSON value representing the Resource.")
                                        @RequestBody TbResource resource) throws Exception {
         resource.setTenantId(getTenantId());
         checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+        return tbResourceService.save(resource, getCurrentUser());
+    }
+
+    @ApiOperation(value = "Upload Resource via Multipart File (uploadResource)",
+            notes = "Create the Resource using multipart file upload. " +
+                    "\n\nResource combination of the title with the key is unique in the scope of tenant. " +
+                    SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PostMapping(value = "/resource/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public TbResourceInfo uploadResource(@Parameter(description = "Resource title.", example = "Title")
+                                         @RequestPart(name = "title", required = false) String title,
+                                         @Parameter(description = "Resource type.")
+                                         @RequestPart(name = "resourceType") String resourceTypeStr,
+                                         @Parameter(description = "Resource descriptor (JSON).")
+                                         @RequestPart(name = "descriptor", required = false) String descriptor,
+                                         @Parameter(description = "Resource sub type.")
+                                         @RequestPart(name = "resourceSubType", required = false) String resourceSubTypeStr,
+                                         @Parameter(description = "Resource file.")
+                                         @RequestPart MultipartFile file) throws Exception {
+        TbResource resource = new TbResource();
+        resource.setTenantId(getTenantId());
+        resource.setTitle(StringUtils.isNotEmpty(title) ? title : file.getOriginalFilename());
+        ResourceType resourceType = ResourceType.valueOf(resourceTypeStr);
+        resource.setResourceType(resourceType);
+
+        if (StringUtils.isNotEmpty(descriptor)) {
+            resource.setDescriptor(JacksonUtil.toJsonNode(descriptor));
+        } else {
+            String mediaType = resourceType.getMediaType() != null ? resourceType.getMediaType() : file.getContentType();
+            resource.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mediaType));
+        }
+
+        if (StringUtils.isNotEmpty(resourceSubTypeStr)) {
+            resource.setResourceSubType(ResourceSubType.valueOf(resourceSubTypeStr));
+        }
+        resource.setFileName(file.getOriginalFilename());
+        resource.setData(file.getBytes());
+
+        checkEntity(resource.getId(), resource, Resource.TB_RESOURCE);
+        return tbResourceService.save(resource, getCurrentUser());
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PutMapping(value = "/resource/{id}/data", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public TbResourceInfo updateResourceData(@Parameter(description = "Unique identifier of the Resource to update", required = true)
+                                             @PathVariable UUID id,
+                                             @Parameter(description = "Resource file.")
+                                             @RequestPart MultipartFile file) throws Exception {
+        TbResourceId tbResourceId = new TbResourceId(id);
+        TbResource resource = checkResourceId(tbResourceId, Operation.WRITE);
+        resource.setFileName(file.getOriginalFilename());
+        resource.setData(file.getBytes());
+        return tbResourceService.save(resource, getCurrentUser());
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PutMapping("/resource/{id}/info")
+    public TbResourceInfo updateResourceInfo(@Parameter(description = "Unique identifier of the Resource to update", required = true)
+                                             @PathVariable UUID id,
+                                             @Parameter(description = "A JSON value representing the Resource Info.")
+                                             @RequestBody TbResourceInfo resourceInfo) throws Exception {
+        TbResourceId tbResourceId = new TbResourceId(id);
+        checkResourceInfoId(tbResourceId, Operation.WRITE);
+        resourceInfo.setId(tbResourceId);
+        TbResource resource = new TbResource(resourceInfo);
         return tbResourceService.save(resource, getCurrentUser());
     }
 

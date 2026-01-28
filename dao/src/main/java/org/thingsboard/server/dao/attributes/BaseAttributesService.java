@@ -28,7 +28,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ObjectType;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.edqs.AttributeKv;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -93,11 +92,11 @@ public class BaseAttributesService implements AttributesService {
     }
 
     @Override
-    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds, String scope) {
-        if (StringUtils.isEmpty(scope)) {
+    public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds, AttributeScope scope) {
+        if (scope == null) {
             return attributesDao.findAllKeysByEntityIds(tenantId, entityIds);
         } else {
-            return attributesDao.findAllKeysByEntityIdsAndAttributeType(tenantId, entityIds, scope);
+            return attributesDao.findAllKeysByEntityIdsAndScope(tenantId, entityIds, scope);
         }
     }
 

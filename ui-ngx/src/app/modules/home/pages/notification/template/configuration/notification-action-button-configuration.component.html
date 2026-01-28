@@ -44,8 +44,8 @@
           </mat-error>
         </mat-form-field>
       </div>
-      <div class="flex flex-row xs:flex-col gt-xs:gap-2">
-        <mat-form-field class="max-w-30% flex-full xs:max-w-full">
+      <div class="grid gt-sm:grid-cols-3 gt-sm:gap-4">
+        <mat-form-field class="mat-block">
           <mat-label translate>notification.action-type</mat-label>
           <mat-select formControlName="linkType">
             <mat-option *ngFor="let actionButtonLinkType of actionButtonLinkTypes"
@@ -54,32 +54,28 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field class="flex-1"
-                        *ngIf="actionButtonConfigForm.get('linkType').value === actionButtonLinkType.LINK; else dashboardSelector">
-          <mat-label translate>notification.link</mat-label>
-          <input matInput formControlName="link" required>
-          <mat-error
-            *ngIf="actionButtonConfigForm.get('link').hasError('required')">
-            {{ 'notification.link-required' | translate }}
-          </mat-error>
-          <mat-error
-            *ngIf="actionButtonConfigForm.get('link').hasError('maxlength')">
-            {{ 'notification.link-max-length' | translate :
-                {length: actionButtonConfigForm.get('link').getError('maxlength').requiredLength}
-            }}
-          </mat-error>
-        </mat-form-field>
-        <ng-template #dashboardSelector>
-          <tb-dashboard-autocomplete
-            class="max-w-35% flex-full xs:max-w-full"
-            required
-            formControlName="dashboardId">
+        @if(actionButtonConfigForm.get('linkType').value === actionButtonLinkType.LINK) {
+          <mat-form-field class="gt-sm:col-span-2">
+            <mat-label translate>notification.link</mat-label>
+            <input matInput formControlName="link" required>
+            <mat-error
+              *ngIf="actionButtonConfigForm.get('link').hasError('required')">
+              {{ 'notification.link-required' | translate }}
+            </mat-error>
+            <mat-error
+              *ngIf="actionButtonConfigForm.get('link').hasError('maxlength')">
+              {{ 'notification.link-max-length' | translate :
+              {length: actionButtonConfigForm.get('link').getError('maxlength').requiredLength}
+              }}
+            </mat-error>
+          </mat-form-field>
+        } @else {
+          <tb-dashboard-autocomplete required formControlName="dashboardId">
           </tb-dashboard-autocomplete>
-          <tb-dashboard-state-autocomplete class="max-w-35% flex-full xs:max-w-full"
-                                           [dashboardId]="actionButtonConfigForm.get('dashboardId').value"
+          <tb-dashboard-state-autocomplete [dashboardId]="actionButtonConfigForm.get('dashboardId').value"
                                            formControlName="dashboardState">
           </tb-dashboard-state-autocomplete>
-        </ng-template>
+        }
       </div>
       <mat-slide-toggle formControlName="setEntityIdInState" class="toggle"
                         *ngIf="actionButtonConfigForm.get('linkType').value === actionButtonLinkType.DASHBOARD">

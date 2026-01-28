@@ -15,59 +15,63 @@
     limitations under the License.
 
 -->
-<section *ngIf="!versionLoadResult$" class="flex flex-col" style="height: 100%;">
-  <mat-toolbar>
-    <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
-    <span class="flex-1"></span>
-  </mat-toolbar>
-  <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
-                    *ngIf="isLoading$ | async">
-  </mat-progress-bar>
-  <form [formGroup]="loadVersionFormGroup" class="flex flex-col" style="flex: 1; padding: 16px 0; overflow-y: auto; overflow-x: hidden">
-    <tb-entity-types-version-load
-      formControlName="entityTypes">
-    </tb-entity-types-version-load>
-  </form>
-  <div tb-hint-tooltip-icon="{{ 'version-control.rollback-on-error-hint' | translate }}" [formGroup]="loadVersionFormGroup">
-    <mat-slide-toggle formControlName="rollbackOnError">
-      {{ 'version-control.rollback-on-error' | translate }}
-    </mat-slide-toggle>
-  </div>
-  <div class="flex items-center justify-end gap-2" style="padding-top: 16px;">
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.cancel' | translate }}
-    </button>
-    <button mat-raised-button color="primary"
-            type="button"
-            (click)="restore()"
-            [disabled]="(isLoading$ | async) || loadVersionFormGroup.invalid">
-      {{ 'action.restore' | translate }}
-    </button>
-  </div>
-</section>
-<section *ngIf="versionLoadResult$">
-  <div *ngIf="(versionLoadResult$ | async)?.done && !entityTypeLoadResults?.length && !errorMessage" class="mat-headline-6 vc-result-message">
+@if (!versionLoadResult$) {
+  <section class="flex flex-col" style="height: 100%;">
+    <mat-toolbar>
+      <h2>{{ 'version-control.restore-entities-from-version' | translate: {versionName} }}</h2>
+      <span class="flex-1"></span>
+    </mat-toolbar>
+    <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
+                      [class.hidden]="(isLoading$ | async) === false">
+    </mat-progress-bar>
+    <form [formGroup]="loadVersionFormGroup" class="flex flex-col" style="flex: 1; padding: 16px 0; overflow-y: auto; overflow-x: hidden">
+      <tb-entity-types-version-load
+        formControlName="entityTypes">
+      </tb-entity-types-version-load>
+    </form>
+    <div tb-hint-tooltip-icon="{{ 'version-control.rollback-on-error-hint' | translate }}" [formGroup]="loadVersionFormGroup">
+      <mat-slide-toggle formControlName="rollbackOnError">
+        {{ 'version-control.rollback-on-error' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="flex items-center justify-end gap-2" style="padding-top: 16px;">
+      <button mat-button color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async)"
+              (click)="cancel()" cdkFocusInitial>
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button mat-raised-button color="primary"
+              type="button"
+              (click)="restore()"
+              [disabled]="(isLoading$ | async) || loadVersionFormGroup.invalid">
+        {{ 'action.restore' | translate }}
+      </button>
+    </div>
+  </section>
+} @else {
+  <div [class.hidden]="!((versionLoadResult$ | async)?.done && !entityTypeLoadResults?.length && !errorMessage)" class="mat-headline-6 vc-result-message">
     {{ 'version-control.no-entities-restored' | translate }}
   </div>
-  <div *ngIf="errorMessage" class="mat-headline-6 vc-result-message error" [innerHTML]="errorMessage"></div>
-  <div *ngFor="let entityTypeLoadResult of entityTypeLoadResults" class="mat-headline-6 vc-result-message">{{ entityTypeLoadResultMessage(entityTypeLoadResult) }}</div>
-  <div *ngIf="(versionLoadResult$ | async)?.done || hasError; else progress" class="flex items-center justify-end gap-2">
-    <button mat-button color="primary"
-            type="button"
-            [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
-      {{ 'action.close' | translate }}
-    </button>
-  </div>
-  <ng-template #progress>
+  <div [class.hidden]="!errorMessage" class="mat-headline-6 vc-result-message error" [innerHTML]="errorMessage"></div>
+  @for (entityTypeLoadResult of entityTypeLoadResults; track entityTypeLoadResult.entityType) {
+    <div class="mat-headline-6 vc-result-message">{{ entityTypeLoadResultMessage(entityTypeLoadResult) }}</div>
+  }
+  @if ((versionLoadResult$ | async)?.done || hasError) {
+    <div class="flex items-center justify-end gap-2">
+      <button mat-button color="primary"
+              type="button"
+              [disabled]="(isLoading$ | async)"
+              (click)="cancel()" cdkFocusInitial>
+        {{ 'action.close' | translate }}
+      </button>
+    </div>
+  } @else {
     <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.restoring-entities-from-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>
       </div>
     </section>
-  </ng-template>
-</section>
+  }
+}

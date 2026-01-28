@@ -29,7 +29,7 @@ import { AssetProfileRoutingModule } from './asset-profile-routing.module';
     CommonModule,
     SharedModule,
     HomeComponentsModule,
-    AssetProfileRoutingModule
+    AssetProfileRoutingModule,
   ]
 })
 export class AssetProfileModule { }

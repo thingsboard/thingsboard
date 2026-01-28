@@ -1,0 +1,98 @@
+/**
+ * Copyright © 2016-2026 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import "constants";
+
+:host {
+  .highlighted-text {
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    z-index: 1;
+    pointer-events: none;
+    padding-top: var(--mat-form-field-filled-with-label-container-padding-top);
+    padding-bottom: var(--mat-form-field-filled-with-label-container-padding-bottom);
+    font: inherit;
+    letter-spacing: inherit;
+    text-decoration: inherit;
+    text-transform: inherit;
+    overflow: hidden;
+    color: var(--mdc-filled-text-field-input-text-color, var(--mat-app-on-surface));
+
+    &.disabled {
+      color: var(--mdc-filled-text-field-disabled-input-text-color);
+    }
+  }
+
+  .input-field-highlight {
+    position: relative;
+    background: transparent;
+    z-index: 2;
+    color: transparent;
+    width: 100%;
+  }
+}
+
+:host ::ng-deep {
+
+  .mdc-text-field--outlined .mat-mdc-form-field-infix {
+    .highlighted-text {
+      padding-top: var(--mat-form-field-container-vertical-padding);
+      padding-bottom: var(--mat-form-field-container-vertical-padding);
+    }
+  }
+
+  .highlighted-text {
+    .highlight {
+      color: $tb-secondary-color;
+      text-shadow: 0 0 0.5px var($tb-secondary-color, var(--mat-app-on-surface));
+    }
+
+    &.disabled {
+      .highlight {
+        color: $tb-primary-color-light;
+        text-shadow: 0 0 0.5px var($tb-primary-color-light, var(--mdc-filled-text-field-disabled-input-text-color));
+      }
+    }
+  }
+}
+
+::ng-deep {
+  div.tb-sting-pattern-autocomplete-panel {
+    width: 100%;
+    max-height: 256px;
+    visibility: visible;
+    transform-origin: center top;
+    overflow: auto;
+    padding: 8px 0;
+    box-sizing: border-box;
+    position: static;
+    border-radius: var(--mat-autocomplete-container-shape, var(--mat-app-corner-extra-small));
+    box-shadow: var(--mat-autocomplete-container-elevation-shadow);
+    background-color: var(--mat-autocomplete-background-color, var(--mat-app-surface-container))
+  }
+
+  .cdk-overlay-pane:not(.mat-mdc-autocomplete-panel-above) & {
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+  }
+
+  .mat-mdc-autocomplete-panel-above & {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    transform-origin: center bottom;
+  }
+
+}

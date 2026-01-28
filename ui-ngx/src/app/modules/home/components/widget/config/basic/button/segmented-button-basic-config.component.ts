@@ -20,7 +20,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { Datasource, TargetDevice, } from '@shared/models/widget.models';
+import { Datasource, TargetDevice, widgetTitleAutocompleteValues, } from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { ValueType } from '@shared/models/constants';
 import { getTargetDeviceFromDatasources } from '@shared/models/widget-settings.models';
@@ -48,7 +48,7 @@ export class SegmentedButtonBasicConfigComponent extends BasicWidgetConfigCompon
     const datasources: Datasource[] = this.segmentedButtonWidgetConfigForm.get('datasources').value;
     return getTargetDeviceFromDatasources(datasources);
   }
-
+  predefinedValues = widgetTitleAutocompleteValues;
   segmentedButtonAppearanceType: SegmentedButtonAppearanceType = 'first';
   segmentedButtonColorStylesType: SegmentedButtonColorStylesType = 'selected';
 
@@ -142,4 +142,52 @@ export class SegmentedButtonBasicConfigComponent extends BasicWidgetConfigCompon
     return this.widgetConfig;
   }
 
+
+  protected validatorTriggers(): string[] {
+    return ['appearance.leftAppearance.showLabel', 'appearance.leftAppearance.showIcon', 'appearance.rightAppearance.showLabel', 'appearance.rightAppearance.showIcon',];
+  }
+
+  protected updateValidators(emitEvent: boolean) {
+    const showLeftLabel: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.showLabel').value;
+    const showRightLabel: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.showLabel').value;
+
+    const showLeftIcon: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.showIcon').value;
+    const showRightIcon: boolean = this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.showIcon').value;
+
+    if (showLeftLabel) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.label').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.labelFont').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.label').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.labelFont').disable({emitEvent});
+    }
+
+    if (showRightLabel) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.label').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.labelFont').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.label').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.labelFont').disable({emitEvent});
+    }
+
+    if (showLeftIcon) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.icon').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSize').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSizeUnit').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.icon').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSize').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.leftAppearance.iconSizeUnit').disable({emitEvent});
+    }
+
+    if (showRightIcon) {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.icon').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSize').enable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSizeUnit').enable({emitEvent});
+    } else {
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.icon').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSize').disable({emitEvent});
+      this.segmentedButtonWidgetConfigForm.get('appearance.rightAppearance.iconSizeUnit').disable({emitEvent});
+    }
+  }
 }

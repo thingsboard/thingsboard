@@ -201,6 +201,23 @@ export function deleteNullProperties(obj: any) {
   });
 }
 
+export function deleteFalseProperties(obj: Record<string, any>): void  {
+  if (isUndefinedOrNull(obj)) {
+    return;
+  }
+  Object.keys(obj).forEach((propName) => {
+    if (obj[propName] === false || isUndefinedOrNull(obj[propName])) {
+      delete obj[propName];
+    } else if (isObject(obj[propName])) {
+      deleteFalseProperties(obj[propName]);
+    } else if (Array.isArray(obj[propName])) {
+      (obj[propName] as any[]).forEach((elem) => {
+        deleteFalseProperties(elem);
+      });
+    }
+  });
+}
+
 export function objToBase64(obj: any): string {
   const json = JSON.stringify(obj);
   return btoa(encodeURIComponent(json).replace(/%([0-9A-F]{2})/g,
@@ -776,6 +793,74 @@ export function deepTrim<T>(obj: T): T {
     }
     return acc;
   }, (Array.isArray(obj) ? [] : {}) as T);
+}
+
+const isValidValue = (value: any): boolean => {
+  return (
+    value !== undefined &&
+    value !== null &&
+    value !== '' &&
+    !Number.isNaN(value)
+  );
+};
+
+export function deepClean<T extends Record<string, any> | any[]>(obj: T, {
+  cleanKeys = [],
+  cleanOnlyKey = false
+} = {}): T {
+  const keysToRemove = new Set(cleanKeys);
+
+  const clean = (input: any): any => {
+    if (Array.isArray(input)) {
+      const result: any[] = [];
+      for (const item of input) {
+        const value = clean(item);
+
+        if (cleanOnlyKey) {
+          result.push(value);
+          continue;
+        }
+
+        if (isValidValue(value)) {
+          const isEmptyArray = Array.isArray(value) && value.length === 0;
+          const isEmptyObj = isLiteralObject(value) && Object.keys(value).length === 0;
+
+          if (!isEmptyArray && !isEmptyObj) {
+            result.push(value);
+          }
+        }
+      }
+      return result;
+    }
+
+    if (isLiteralObject(input)) {
+      const result: Record<string, any> = {};
+
+      for (const key in input) {
+        if (keysToRemove.has(key)) continue;
+
+        const value = clean(input[key]);
+
+        if (cleanOnlyKey) {
+          result[key] = value;
+          continue;
+        }
+
+        if (isValidValue(value)) {
+          const isEmptyArray = Array.isArray(value) && value.length === 0;
+          const isEmptyObj = isLiteralObject(value) && Object.keys(value).length === 0;
+
+          if (!isEmptyArray && !isEmptyObj) {
+            result[key] = value;
+          }
+        }
+      }
+      return result;
+    }
+    return input;
+  };
+
+  return clean(obj);
 }
 
 export function generateSecret(length?: number): string {
