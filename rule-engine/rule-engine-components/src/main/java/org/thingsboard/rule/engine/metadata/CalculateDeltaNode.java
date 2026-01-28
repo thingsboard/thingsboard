@@ -17,6 +17,8 @@ package org.thingsboard.rule.engine.metadata;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.github.benmanes.caffeine.cache.LoadingCache;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -37,9 +39,11 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Duration;
 import java.util.Map;
 
 @RuleNode(
@@ -58,7 +62,7 @@ import java.util.Map;
 public class CalculateDeltaNode implements TbNode {
 
     private Map<EntityId, ValueWithTs> cache;
-    private Map<EntityId, SemaphoreWithTbMsgQueue> locks;
+    private LoadingCache<EntityId, SemaphoreWithTbMsgQueue> queues;
 
     private CalculateDeltaNodeConfiguration config;
 
@@ -74,7 +78,9 @@ public class CalculateDeltaNode implements TbNode {
         if (config.isAddPeriodBetweenMsgs() && StringUtils.isBlank(config.getPeriodValueKey())) {
             throw new TbNodeException("Period value key should be specified!", true);
         }
-        locks = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.WEAK);
+        queues = Caffeine.newBuilder()
+                .expireAfterAccess(Duration.ofDays(1L))
+                .build(SemaphoreWithTbMsgQueue::new);
         if (config.isUseCache()) {
             cache = new ConcurrentReferenceHashMap<>(16, ConcurrentReferenceHashMap.ReferenceType.SOFT);
         }
@@ -91,13 +97,18 @@ public class CalculateDeltaNode implements TbNode {
             ctx.tellNext(msg, TbNodeConnectionType.OTHER);
             return;
         }
-        locks.computeIfAbsent(msg.getOriginator(), SemaphoreWithTbMsgQueue::new)
-                .addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
+        var processingQueue = queues.get(msg.getOriginator());
+        processingQueue.addToQueueAndTryProcess(msg, ctx, this::processMsgAsync);
+    }
+
+    @Override
+    public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
+        queues.asMap().keySet().removeIf(entityId -> !ctx.isLocalEntity(entityId));
     }
 
     @Override
     public void destroy() {
-        locks.clear();
+        queues.invalidateAll();
         if (config.isUseCache()) {
             cache.clear();
         }
