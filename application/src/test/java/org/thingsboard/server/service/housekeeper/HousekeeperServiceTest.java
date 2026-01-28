@@ -23,8 +23,8 @@ import org.junit.Test;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
@@ -127,10 +127,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 })
 public class HousekeeperServiceTest extends AbstractControllerTest {
 
-    @SpyBean
+    @MockitoSpyBean
     private HousekeeperService housekeeperService;
-    @SpyBean
+    @MockitoSpyBean
     private HousekeeperReprocessingService housekeeperReprocessingService;
+    @MockitoSpyBean
+    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
     @Autowired
     private EventService eventService;
     @Autowired
@@ -153,8 +155,6 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
     private CustomerService customerService;
     @Autowired
     private DashboardService dashboardService;
-    @SpyBean
-    private TsHistoryDeletionTaskProcessor tsHistoryDeletionTaskProcessor;
 
     private TenantId tenantId;
 
