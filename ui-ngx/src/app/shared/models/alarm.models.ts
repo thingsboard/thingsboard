@@ -27,7 +27,8 @@ import { AlarmCommentId } from '@shared/models/id/alarm-comment-id';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmFilter } from '@shared/models/query/query.models';
 import { HasTenantId } from '@shared/models/entity.models';
-import { isNotEmptyStr } from '@core/utils';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
+import { defaults } from 'lodash';
 
 export enum AlarmsMode {
   ALL,
@@ -354,18 +355,20 @@ export class AlarmQueryV2 {
 
 export const getUserDisplayName = (alarmAssignee: AlarmAssignee |  AlarmCommentInfo) => {
   let displayName = '';
-  if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
-    if (alarmAssignee.firstName) {
-      displayName += alarmAssignee.firstName;
-    }
-    if (alarmAssignee.lastName) {
-      if (displayName.length > 0) {
-        displayName += ' ';
+  if (isDefinedAndNotNull(alarmAssignee)) {
+   if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
+      if (alarmAssignee.firstName) {
+       displayName += alarmAssignee.firstName;
       }
-      displayName += alarmAssignee.lastName;
+      if (alarmAssignee.lastName) {
+        if (displayName.length > 0) {
+          displayName += ' ';
+        }
+        displayName += alarmAssignee.lastName;
+      }
+    }   else {
+      displayName = alarmAssignee.email;
     }
-  } else {
-    displayName = alarmAssignee.email;
   }
   return displayName;
 };
