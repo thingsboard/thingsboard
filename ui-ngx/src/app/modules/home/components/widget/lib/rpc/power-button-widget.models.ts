@@ -426,7 +426,7 @@ export abstract class PowerButtonShape {
     }
   }
 
-  public drawOnShape(onCenterGroup?: G, label?: boolean, labelWeight?: string, circleStroke?: boolean, mask?: Circle) {
+  public drawOnShape(onCenterGroup?: G, label?: boolean, labelWeight?: string, circleStroke?: boolean, mask?: Circle, onDrawingFinished?: () => void) {
     if (this.icons.onButtonIcon.showIcon) {
       this.createIconElement(this.icons.onButtonIcon.icon, this.icons.onButtonIcon.iconSize).subscribe(icon => {
         this.onPowerSymbolIcon = icon.center(cx, cy);
@@ -435,6 +435,9 @@ export abstract class PowerButtonShape {
         }
         if (isDefinedAndNotNull(mask)) {
           this.createMask(mask, [this.onPowerSymbolIcon]);
+        }
+        if (isDefinedAndNotNull(onDrawingFinished)) {
+          onDrawingFinished();
         }
       });
     } else {
@@ -723,15 +726,17 @@ class DefaultPowerButtonShape extends PowerButtonShape {
     this.outerBorderMask = this.svgShape.circle(powerButtonShapeSize - 20).center(cx, cy);
     this.createMask(this.outerBorder, [this.outerBorderMask]);
     this.centerGroup = this.svgShape.group();
-    this.drawOffShape(this.centerGroup, true);
-    this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 20).center(cx, cy);
-    this.drawOnShape(null, true, '', false, this.onCircleShape);
-    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 20, cx, cy, 0, 0);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
-    this.onCenterTimeLine(this.pressedTimeline, true);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 20, cx, cy, 0, 0);
     this.pressedShadow.timeline(this.pressedTimeline);
+
+    this.drawOffShape(this.centerGroup, true);
+    this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 20).center(cx, cy);
+    this.drawOnShape(null, true, '', false, this.onCircleShape, () => {
+      this.onCenterTimeLine(this.pressedTimeline, true);
+    });
   }
 
   protected drawColorState(mainColor: PowerButtonColor) {
@@ -784,15 +789,17 @@ class SimplifiedPowerButtonShape extends PowerButtonShape {
     this.outerBorderMask = this.svgShape.circle(powerButtonShapeSize - 4).center(cx, cy);
     this.createMask(this.outerBorder, [this.outerBorderMask]);
     this.centerGroup = this.svgShape.group();
-    this.drawOffShape(this.centerGroup, true);
-    this.onCircleShape = this.svgShape.circle(powerButtonShapeSize).center(cx, cy);
-    this.drawOnShape(null, true, '', false, this.onCircleShape)
-    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 4, cx, cy, 0, 0);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
-    this.onCenterTimeLine(this.pressedTimeline, true);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 4, cx, cy, 0, 0);
     this.pressedShadow.timeline(this.pressedTimeline);
+
+    this.drawOffShape(this.centerGroup, true);
+    this.onCircleShape = this.svgShape.circle(powerButtonShapeSize).center(cx, cy);
+    this.drawOnShape(null, true, '', false, this.onCircleShape, () => {
+      this.onCenterTimeLine(this.pressedTimeline, true);
+    });
   }
 
   protected drawColorState(mainColor: PowerButtonColor) {
@@ -850,17 +857,19 @@ class OutlinedPowerButtonShape extends PowerButtonShape {
     this.innerBorderMask = this.svgShape.circle(powerButtonShapeSize - 24).center(cx, cy);
     this.createMask(this.innerBorder, [this.innerBorderMask]);
     this.centerGroup = this.svgShape.group();
-    this.drawOffShape(this.centerGroup, true);
-    this.onCenterGroup = this.svgShape.group();
-    this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 28).center(cx, cy).addTo(this.onCenterGroup);
-    this.drawOnShape(null, true, '', false, this.onCircleShape)
-    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 0, 0);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
     this.onCenterGroup.timeline(this.pressedTimeline);
-    this.onCenterTimeLine(this.pressedTimeline, true);
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 0, 0);
     this.pressedShadow.timeline(this.pressedTimeline);
+
+    this.drawOffShape(this.centerGroup, true);
+    this.onCenterGroup = this.svgShape.group();
+    this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 28).center(cx, cy).addTo(this.onCenterGroup);
+    this.drawOnShape(null, true, '', false, this.onCircleShape, () => {
+      this.onCenterTimeLine(this.pressedTimeline, true);
+    });
   }
 
   protected drawColorState(mainColor: PowerButtonColor) {
@@ -918,7 +927,7 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
   }
 
   protected drawOnCenter() {
-    this.drawOnShape(null, true, '400', false, this.onCircleShape);
+    this.drawOnShape(null, true, '400', false, this.onCircleShape,  () => this.addOnCenterTimeLine(this.pressedTimeline));
   }
 
   protected addOnCenterTimeLine(pressedTimeline: Timeline) {
@@ -953,13 +962,13 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.centerGroup = this.svgShape.group();
     this.drawOffCenter(this.centerGroup);
     this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 24).center(cx, cy);
-    this.drawOnCenter();
-    this.innerShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 3, 0.3);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
-    this.addOnCenterTimeLine(this.pressedTimeline);
     this.innerShadow.timeline(this.pressedTimeline);
+
+    this.drawOnCenter();
+    this.innerShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 3, 0.3);
   }
 
   protected drawColorState(mainColor: PowerButtonColor){
@@ -1139,7 +1148,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
   private innerBorderMask: Circle;
   protected onCircleShape: Circle;
   private pressedShadow: InnerShadowCircle;
-  private pressedTimeline: Timeline;
+  protected pressedTimeline: Timeline;
   private centerGroup: G;
   private onCenterGroup: G;
 
@@ -1148,7 +1157,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
   }
 
   protected drawOnCenter() {
-    this.drawOnShape(null, true, '800', false, this.onCircleShape);
+    this.drawOnShape(null, true, '800', false, this.onCircleShape, () => this.addOnCenterTimeLine(this.pressedTimeline));
   }
 
   protected addOnCenterTimeLine(pressedTimeline: Timeline) {
@@ -1181,15 +1190,15 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     this.onCenterGroup = this.svgShape.group();
     this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 30).center(cx, cy)
     .addTo(this.onCenterGroup);
-    this.drawOnCenter();
-    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 30, cx, cy, 0, 0);
-    this.backgroundShape.addClass('tb-small-shadow');
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
     this.onCenterGroup.timeline(this.pressedTimeline);
-    this.addOnCenterTimeLine(this.pressedTimeline);
     this.pressedShadow.timeline(this.pressedTimeline);
+
+    this.drawOnCenter();
+    this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 30, cx, cy, 0, 0);
+    this.backgroundShape.addClass('tb-small-shadow');
   }
 
   protected drawColorState(mainColor: PowerButtonColor){
@@ -1242,7 +1251,7 @@ class OutlinedIconPowerButtonShape extends OutlinedVolumePowerButtonShape {
   }
 
   protected drawOnCenter() {
-    this.drawOnShape(null, false, '', true, this.onCircleShape);
+    this.drawOnShape(null, false, '', true, this.onCircleShape, () => this.addOnCenterTimeLine(this.pressedTimeline));
   }
 
   protected addOnCenterTimeLine(pressedTimeline: Timeline) {
