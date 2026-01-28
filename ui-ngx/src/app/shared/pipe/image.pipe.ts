@@ -39,7 +39,7 @@ export class ImagePipe implements PipeTransform {
               private sanitizer: DomSanitizer,
               private zone: NgZone) { }
 
-  transform(urlData: string | UrlHolder, args?: any): Observable<SafeUrl | string> {
+  transform(urlData: string | UrlHolder, args?: any, triggerUpdate?: number): Observable<SafeUrl | string> {
     const ignoreLoadingImage = !!args?.ignoreLoadingImage;
     const asString = !!args?.asString;
     const emptyUrl = args?.emptyUrl || NO_IMAGE_DATA_URI;
