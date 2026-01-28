@@ -3559,7 +3559,7 @@
         "duplicate-filter": "Filter with same name is already exists.",
         "filters": "Filters",
         "unable-delete-filter-title": "Unable to delete filter",
-        "unable-delete-filter-text": "Filter '{{filter}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
+        "unable-delete-filter-text": "Filter '{{filter}}' can't be deleted as it is used by the following widget(s):<br/>{{widgetsList}}",
         "duplicate-filter-error": "Duplicate filter found '{{filter}}'.<br>Filters must be unique within the dashboard.",
         "missing-key-filters-error": "Key filters are missing for filter '{{filter}}'.",
         "filter": "Filter",
