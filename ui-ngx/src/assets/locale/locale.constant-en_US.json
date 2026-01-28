@@ -292,7 +292,7 @@
             "copy-redirect-uri": "Copy redirect URI",
             "registration-id": "Registration ID",
             "registration-id-required": "Registration ID is required.",
-            "registration-id-unique": "Registration ID need to unique for the system.",
+            "registration-id-unique": "Registration ID must be unique for the system.",
             "scope": "Scope",
             "scope-required": "Scope is required.",
             "tenant-name-pattern": "Tenant name pattern",
