@@ -297,7 +297,7 @@
             "scope-required": "Scope is required.",
             "tenant-name-pattern": "Tenant name pattern",
             "tenant-name-pattern-required": "Tenant name pattern is required.",
-            "tenant-name-pattern-max-length": "Tenant name pattern ishould be less than 256",
+            "tenant-name-pattern-max-length": "Tenant name pattern should be less than 256",
             "tenant-name-strategy": "Tenant name strategy",
             "type": "Mapper type",
             "uri-pattern-error": "Invalid URI format.",
