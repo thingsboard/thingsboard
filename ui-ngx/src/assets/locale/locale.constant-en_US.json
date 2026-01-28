@@ -3561,7 +3561,7 @@
         "unable-delete-filter-title": "Unable to delete filter",
         "unable-delete-filter-text": "Filter '{{filter}}' can't be deleted as it used by the following widget(s):<br/>{{widgetsList}}",
         "duplicate-filter-error": "Duplicate filter found '{{filter}}'.<br>Filters must be unique within the dashboard.",
-        "missing-key-filters-error": "Key filters is missing for filter '{{filter}}'.",
+        "missing-key-filters-error": "Key filters are missing for filter '{{filter}}'.",
         "filter": "Filter",
         "editable": "Editable",
         "editable-hint": "Allow user to change the filter value in dashboards.",
