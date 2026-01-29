@@ -122,9 +122,9 @@
     "autoprefixer": "^10.4.23",
     "directory-tree": "^3.5.2",
     "eslint": "~9.39.2",
-    "eslint-plugin-import": "latest",
-    "eslint-plugin-jsdoc": "^62.4.0",
-    "eslint-plugin-prefer-arrow": "latest",
+    "eslint-plugin-import": "^2.32.0",
+    "eslint-plugin-jsdoc": "^62.4.1",
+    "eslint-plugin-prefer-arrow": "^1.2.3",
     "eslint-plugin-tailwindcss": "^3.18.2",
     "ngrx-store-freeze": "^0.2.4",
     "patch-package": "^8.0.1",
@@ -133,7 +133,7 @@
     "tailwindcss": "^3.4.19",
     "ts-node": "^10.9.2",
     "typescript": "~5.9.3",
-    "typescript-eslint": "^8.53.1"
+    "typescript-eslint": "^8.54.0"
   },
   "resolutions": {
     "ace-builds": "1.43.6",
