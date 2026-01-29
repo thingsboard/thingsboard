@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -220,11 +222,9 @@ public class WidgetsBundleController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Get all Widget Bundles (getWidgetsBundles)",
-            notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetsBundles", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetsBundles")
     public List<WidgetsBundle> getWidgetsBundles() throws ThingsboardException {
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundles(getTenantId()));
@@ -232,6 +232,14 @@ public class WidgetsBundleController extends BaseController {
             TenantId tenantId = getCurrentUser().getTenantId();
             return checkNotNull(widgetsBundleService.findAllTenantWidgetsBundlesByTenantId(tenantId));
         }
+    }
+
+    @ApiOperation(value = "Get all Widget Bundles (getWidgetsBundlesV2)",
+            notes = "Returns an array of Widget Bundle objects that are available for current user." + WIDGET_BUNDLE_DESCRIPTION + " " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles/all")
+    public List<WidgetsBundle> getWidgetsBundlesV2() throws ThingsboardException {
+        return getWidgetsBundles();
     }
 
 }

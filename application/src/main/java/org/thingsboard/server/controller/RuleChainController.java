@@ -278,7 +278,7 @@ public class RuleChainController extends BaseController {
     @ApiOperation(value = "Get Rule Chains (getRuleChains)",
             notes = "Returns a page of Rule Chains owned by tenant. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/ruleChains", params = {"pageSize", "page"})
+    @GetMapping(value = "/ruleChains")
     public PageData<RuleChain> getRuleChains(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -406,7 +406,7 @@ public class RuleChainController extends BaseController {
 
     @ApiOperation(value = "Export Rule Chains", notes = "Exports all tenant rule chains as one JSON." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/ruleChains/export", params = {"limit"})
+    @GetMapping(value = "/ruleChains/export")
     public RuleChainData exportRuleChains(
             @Parameter(description = "A limit of rule chains to export.", required = true)
             @RequestParam("limit") int limit) throws ThingsboardException {
@@ -502,7 +502,7 @@ public class RuleChainController extends BaseController {
     @ApiOperation(value = "Get Edge Rule Chains (getEdgeRuleChains)",
             notes = "Returns a page of Rule Chains assigned to the specified edge. " + RULE_CHAIN_DESCRIPTION + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @GetMapping(value = "/edge/{edgeId}/ruleChains", params = {"pageSize", "page"})
+    @GetMapping(value = "/edge/{edgeId}/ruleChains")
     public PageData<RuleChain> getEdgeRuleChains(
             @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(EDGE_ID) String strEdgeId,

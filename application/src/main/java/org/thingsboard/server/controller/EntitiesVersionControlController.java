@@ -234,7 +234,7 @@ public class EntitiesVersionControlController extends BaseController {
             "}" +
             MARKDOWN_CODE_BLOCK_END +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/version/{entityType}/{externalEntityUuid}", params = {"branch", "pageSize", "page"})
+    @GetMapping(value = "/version/{entityType}/{externalEntityUuid}")
     public DeferredResult<PageData<EntityVersion>> listEntityVersions(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                       @PathVariable EntityType entityType,
                                                                       @Parameter(description = "A string value representing external entity id. This is `externalId` property of an entity, or otherwise if not set - simply id of this entity.")
@@ -263,7 +263,7 @@ public class EntitiesVersionControlController extends BaseController {
             "If specified branch does not exist - empty page data will be returned. " +
             "The response structure is the same as for `listEntityVersions` API method." +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/version/{entityType}", params = {"branch", "pageSize", "page"})
+    @GetMapping(value = "/version/{entityType}")
     public DeferredResult<PageData<EntityVersion>> listEntityTypeVersions(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                           @PathVariable EntityType entityType,
                                                                           @Parameter(description = BRANCH_PARAM_DESCRIPTION, required = true)
@@ -288,7 +288,7 @@ public class EntitiesVersionControlController extends BaseController {
             "If specified branch does not exist - empty page data will be returned. " +
             "The response format is the same as for `listEntityVersions` API method." +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/version", params = {"branch", "pageSize", "page"})
+    @GetMapping(value = "/version")
     public DeferredResult<PageData<EntityVersion>> listVersions(@Parameter(description = BRANCH_PARAM_DESCRIPTION, required = true)
                                                                 @RequestParam String branch,
                                                                 @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
@@ -355,7 +355,7 @@ public class EntitiesVersionControlController extends BaseController {
             "Returns an object with current entity data and the one at a specific version. " +
             "Entity data structure is the same as stored in a repository. " +
             TENANT_AUTHORITY_PARAGRAPH)
-    @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}", params = {"versionId"})
+    @GetMapping(value = "/diff/{entityType}/{internalEntityUuid}")
     public DeferredResult<EntityDataDiff> compareEntityDataToVersion(@Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true)
                                                                      @PathVariable EntityType entityType,
                                                                      @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)

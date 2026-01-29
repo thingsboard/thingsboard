@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -153,8 +154,7 @@ public class CustomerController extends BaseController {
             notes = "Returns a page of customers owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customers", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customers")
     public PageData<Customer> getCustomers(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -174,8 +174,7 @@ public class CustomerController extends BaseController {
     @ApiOperation(value = "Get Tenant Customer by Customer title (getTenantCustomer)",
             notes = "Get the Customer using Customer Title. " + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/tenant/customers", params = {"customerTitle"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/customers")
     public Customer getTenantCustomer(
             @Parameter(description = "A string value representing the Customer title.")
             @RequestParam String customerTitle) throws ThingsboardException {

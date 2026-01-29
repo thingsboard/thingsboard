@@ -276,8 +276,7 @@ public class UserController extends BaseController {
             notes = "Returns a page of users owned by tenant or customer. The scope depends on authority of the user that performs the request." +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/users")
     public PageData<User> getUsers(
             @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
             @RequestParam int pageSize,
@@ -339,8 +338,7 @@ public class UserController extends BaseController {
     @ApiOperation(value = "Get Tenant Users (getTenantAdmins)",
             notes = "Returns a page of users owned by tenant. " + PAGE_DATA_PARAMETERS + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/tenant/{tenantId}/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/tenant/{tenantId}/users")
     public PageData<User> getTenantAdmins(
             @Parameter(description = TENANT_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(TENANT_ID) String strTenantId,
@@ -363,8 +361,7 @@ public class UserController extends BaseController {
     @ApiOperation(value = "Get Customer Users (getCustomerUsers)",
             notes = "Returns a page of users owned by customer. " + PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/users", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/customer/{customerId}/users")
     public PageData<User> getCustomerUsers(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -412,8 +409,7 @@ public class UserController extends BaseController {
                     "Search is been executed by email, firstName and lastName fields. " +
                     PAGE_DATA_PARAMETERS + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/users/assign/{alarmId}", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/users/assign/{alarmId}")
     public PageData<UserEmailInfo> getUsersForAssign(
             @Parameter(description = ALARM_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("alarmId") String strAlarmId,

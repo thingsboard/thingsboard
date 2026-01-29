@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -85,12 +86,10 @@ public class QueueStatsController extends BaseController {
         return checkNotNull(queueStatsService.findQueueStatsById(getTenantId(), queueStatsId));
     }
 
-    @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIds)",
-            notes = "Fetch the Queue stats objects based on the provided ids. ")
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/queueStats", params = {"queueStatsIds"})
     public List<QueueStats> getQueueStatsByIds(
-            @Parameter(description = "A list of queue stats ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("queueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
         checkArrayParameter("queueStatsIds", strQueueStatsIds);
         List<QueueStatsId> queueStatsIds = new ArrayList<>();
@@ -98,5 +97,15 @@ public class QueueStatsController extends BaseController {
             queueStatsIds.add(new QueueStatsId(toUUID(queueStatsId)));
         }
         return queueStatsService.findQueueStatsByIds(getTenantId(), queueStatsIds);
+    }
+
+    @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIdsV2)",
+            notes = "Fetch the Queue stats objects based on the provided ids. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/queueStats/list")
+    public List<QueueStats> getQueueStatsByIdsV2(
+            @Parameter(description = "A list of queue stats ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("queueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
+        return getQueueStatsByIds(strQueueStatsIds);
     }
 }

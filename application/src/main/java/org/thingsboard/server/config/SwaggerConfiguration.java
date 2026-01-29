@@ -240,7 +240,7 @@ public class SwaggerConfiguration {
         return GroupedOpenApi.builder()
                 .group(groupName)
                 .pathsToMatch(apiPath)
-                .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
+                //.addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer)) // removed to meet open-api standard
                 .addOperationCustomizer(operationCustomizer())
                 .addOpenApiCustomizer(customOpenApiCustomizer())
                 .build();

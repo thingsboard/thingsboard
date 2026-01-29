@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -212,11 +213,9 @@ public class WidgetTypeController extends AutoCommitController {
         }
     }
 
-    @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypesByBundleAlias) (Deprecated)",
-            notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypes", params = {"isSystem", "bundleAlias"})
     @Deprecated
     public List<WidgetType> getBundleWidgetTypesByBundleAlias(
             @Parameter(description = "System or Tenant", required = true)
@@ -236,8 +235,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
             notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetTypes", params = {"widgetsBundleId"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypes", params = {"widgetsBundleId"})
     public List<WidgetType> getBundleWidgetTypes(
             @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
@@ -245,11 +243,9 @@ public class WidgetTypeController extends AutoCommitController {
         return checkNotNull(widgetTypeService.findWidgetTypesByWidgetsBundleId(getTenantId(), widgetsBundleId));
     }
 
-    @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypesDetailsByBundleAlias) (Deprecated)",
-            notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypesDetails", params = {"isSystem", "bundleAlias"})
     @Deprecated
     public List<WidgetTypeDetails> getBundleWidgetTypesDetailsByBundleAlias(
             @Parameter(description = "System or Tenant", required = true)
@@ -266,11 +262,9 @@ public class WidgetTypeController extends AutoCommitController {
         return checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
     }
 
-    @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypesDetails)",
-            notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetTypesDetails", params = {"widgetsBundleId"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypesDetails", params = {"widgetsBundleId"})
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(
             @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId,
@@ -291,8 +285,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get all Widget type fqns for specified Bundle (getBundleWidgetTypeFqns)",
             notes = "Returns an array of Widget Type fqns that belong to specified Widget Bundle." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetTypeFqns", params = {"widgetsBundleId"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypeFqns")
     public List<String> getBundleWidgetTypeFqns(
             @Parameter(description = "Widget Bundle Id", required = true)
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
@@ -300,11 +293,9 @@ public class WidgetTypeController extends AutoCommitController {
         return checkNotNull(widgetTypeService.findWidgetFqnsByWidgetsBundleId(getTenantId(), widgetsBundleId));
     }
 
-    @ApiOperation(value = "Get Widget Type Info objects (getBundleWidgetTypesInfosByBundleAlias) (Deprecated)",
-            notes = "Get the Widget Type Info objects based on the provided parameters. " + WIDGET_TYPE_INFO_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetTypesInfos", params = {"isSystem", "bundleAlias"})
     @Deprecated
     public List<WidgetTypeInfo> getBundleWidgetTypesInfosByBundleAlias(
             @Parameter(description = "System or Tenant", required = true)
@@ -354,11 +345,9 @@ public class WidgetTypeController extends AutoCommitController {
                 widgetTypeDeprecatedFilter, widgetTypes, pageLink));
     }
 
-    @ApiOperation(value = "Get Widget Type (getWidgetTypeByBundleAliasAndTypeAlias) (Deprecated)",
-            notes = "Get the Widget Type based on the provided parameters. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetType", params = {"isSystem", "bundleAlias", "alias"})
     @Deprecated
     public WidgetType getWidgetTypeByBundleAliasAndTypeAlias(
             @Parameter(description = "System or Tenant", required = true)
@@ -382,8 +371,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get Widget Type (getWidgetType)",
             notes = "Get the Widget Type by FQN. " + WIDGET_TYPE_DESCRIPTION + AVAILABLE_FOR_ANY_AUTHORIZED_USER, hidden = true)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/widgetType", params = {"fqn"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetType", params = {"fqn"})
     public WidgetType getWidgetType(
             @Parameter(description = "Widget Type fqn", required = true)
             @RequestParam String fqn) throws ThingsboardException {
