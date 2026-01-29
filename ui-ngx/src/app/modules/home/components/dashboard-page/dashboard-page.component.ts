@@ -33,7 +33,8 @@ import {
   StaticProvider,
   ViewChild,
   ViewContainerRef,
-  ViewEncapsulation
+  ViewEncapsulation,
+  DOCUMENT
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
@@ -143,7 +144,7 @@ import {
 } from '@home/components/dashboard-page/dashboard-image-dialog.component';
 import { SafeUrl } from '@angular/platform-browser';
 import cssjs from '@core/css/css';
-import { DOCUMENT } from '@angular/common';
+
 import { IAliasController } from '@core/api/widget-api.models';
 import { MatButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
