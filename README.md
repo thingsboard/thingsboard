@@ -8,15 +8,14 @@
 <br>
 <div align="center">
  
-💡 [Get started](https://thingsboard.io/docs/getting-started-guides/helloworld/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;▶️ [Live demo](https://demo.thingsboard.io/signup)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
+💡 [Get started](https://thingsboard.io/docs/getting-started-guides/helloworld/)&ensp;•&ensp;🌐 [Website](https://thingsboard.io/)&ensp;•&ensp;📚 [Documentation](https://thingsboard.io/docs/)&ensp;•&ensp;📔 [Blog](https://thingsboard.io/blog/)&ensp;•&ensp;🔗 [LinkedIn](https://www.linkedin.com/company/thingsboard/posts/?feedView=all)
 
 </div>
 
 ## 🚀 Installation options
 
-* Install ThingsBoard [On-premise](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise)
-* Try [ThingsBoard Cloud](https://thingsboard.io/installations/)
-* or [Use our Live demo](https://demo.thingsboard.io/signup)
+* Install ThingsBoard [on-premises](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise)
+* or use [ThingsBoard Cloud](https://thingsboard.io/installations/)
 
 ## 💡 Getting started with ThingsBoard
 
