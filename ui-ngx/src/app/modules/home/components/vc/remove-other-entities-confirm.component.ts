@@ -23,9 +23,10 @@ import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 
 @Component({
-  selector: 'tb-remove-other-entities-confirm',
-  templateUrl: './remove-other-entities-confirm.component.html',
-  styleUrls: []
+    selector: 'tb-remove-other-entities-confirm',
+    templateUrl: './remove-other-entities-confirm.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class RemoveOtherEntitiesConfirmComponent extends PageComponent implements OnInit {
 

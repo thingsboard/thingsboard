@@ -75,26 +75,27 @@ import { FormProperty } from '@shared/models/dynamic-form.models';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
-  selector: 'tb-data-keys',
-  templateUrl: './data-keys.component.html',
-  styleUrls: ['./data-keys.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => DataKeysComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => DataKeysComponent),
-      multi: true,
-    },
-    {
-      provide: ErrorStateMatcher,
-      useExisting: DataKeysComponent
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-data-keys',
+    templateUrl: './data-keys.component.html',
+    styleUrls: ['./data-keys.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => DataKeysComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => DataKeysComponent),
+            multi: true,
+        },
+        {
+            provide: ErrorStateMatcher,
+            useExisting: DataKeysComponent
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChanges, ErrorStateMatcher, Validator {
 

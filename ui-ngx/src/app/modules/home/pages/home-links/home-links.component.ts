@@ -23,10 +23,11 @@ import { ActivatedRoute } from '@angular/router';
 import { HomeDashboard } from '@shared/models/dashboard.models';
 
 @Component({
-  selector: 'tb-home-links',
-  templateUrl: './home-links.component.html',
-  styleUrls: ['./home-links.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-home-links',
+    templateUrl: './home-links.component.html',
+    styleUrls: ['./home-links.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class HomeLinksComponent implements OnInit {
 

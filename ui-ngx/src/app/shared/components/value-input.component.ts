@@ -46,16 +46,17 @@ export interface ValueInputLayout {
 }
 
 @Component({
-  selector: 'tb-value-input',
-  templateUrl: './value-input.component.html',
-  styleUrls: ['./value-input.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ValueInputComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-value-input',
+    templateUrl: './value-input.component.html',
+    styleUrls: ['./value-input.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ValueInputComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class ValueInputComponent implements OnInit, OnDestroy, OnChanges, ControlValueAccessor {
 

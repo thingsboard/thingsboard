@@ -35,9 +35,10 @@ import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
 
 @Component({
-  selector: 'tb-notification-bell',
-  templateUrl: './notification-bell.component.html',
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'tb-notification-bell',
+    templateUrl: './notification-bell.component.html',
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class NotificationBellComponent implements OnDestroy {
 

@@ -20,9 +20,10 @@ import { FormBuilder, FormGroup } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 
 @Component({
-  selector: 'tb-aggregation-options-config-panel',
-  templateUrl: './aggregation-options-config-panel.component.html',
-  styleUrls: ['./aggregation-options-config-panel.component.scss']
+    selector: 'tb-aggregation-options-config-panel',
+    templateUrl: './aggregation-options-config-panel.component.html',
+    styleUrls: ['./aggregation-options-config-panel.component.scss'],
+    standalone: false
 })
 export class AggregationOptionsConfigPanelComponent implements OnInit {
 

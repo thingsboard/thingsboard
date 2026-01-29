@@ -57,9 +57,10 @@ import { AdminService } from '@core/http/admin.service';
 import { FormBuilder } from '@angular/forms';
 
 @Component({
-  selector: 'tb-entity-versions-table',
-  templateUrl: './entity-versions-table.component.html',
-  styleUrls: ['./entity-versions-table.component.scss']
+    selector: 'tb-entity-versions-table',
+    templateUrl: './entity-versions-table.component.html',
+    styleUrls: ['./entity-versions-table.component.scss'],
+    standalone: false
 })
 export class EntityVersionsTableComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
 

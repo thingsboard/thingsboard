@@ -25,9 +25,10 @@ import {
 import { MqttVersion } from '@shared/models/mqtt.models';
 
 @Component({
-  selector: 'tb-external-node-azure-iot-hub-config',
-  templateUrl: './azure-iot-hub-config.component.html',
-  styleUrls: ['./mqtt-config.component.scss']
+    selector: 'tb-external-node-azure-iot-hub-config',
+    templateUrl: './azure-iot-hub-config.component.html',
+    styleUrls: ['./mqtt-config.component.scss'],
+    standalone: false
 })
 export class AzureIotHubConfigComponent extends RuleNodeConfigurationComponent {
 

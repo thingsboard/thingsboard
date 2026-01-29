@@ -26,9 +26,10 @@ import { PageComponent } from '@shared/components/page.component';
 import { finalize } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-login',
-  templateUrl: './login.component.html',
-  styleUrls: ['./login.component.scss']
+    selector: 'tb-login',
+    templateUrl: './login.component.html',
+    styleUrls: ['./login.component.scss'],
+    standalone: false
 })
 export class LoginComponent extends PageComponent implements OnInit {
 

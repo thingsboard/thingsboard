@@ -28,9 +28,10 @@ import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.model
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-show-notification-popover',
-  templateUrl: './show-notification-popover.component.html',
-  styleUrls: ['show-notification-popover.component.scss']
+    selector: 'tb-show-notification-popover',
+    templateUrl: './show-notification-popover.component.html',
+    styleUrls: ['show-notification-popover.component.scss'],
+    standalone: false
 })
 export class ShowNotificationPopoverComponent extends PageComponent implements OnDestroy {
 

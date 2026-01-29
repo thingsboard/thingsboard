@@ -39,8 +39,9 @@ class MatFabToolbarBase {
 const MatFabToolbarMixinBase: _Constructor<CanColor> & typeof MatFabToolbarBase = mixinColor(MatFabToolbarBase);
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'mat-fab-trigger'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'mat-fab-trigger',
+    standalone: false
 })
 export class FabTriggerDirective {
 
@@ -50,8 +51,9 @@ export class FabTriggerDirective {
 }
 
 @Directive({
-  // eslint-disable-next-line @angular-eslint/directive-selector
-  selector: 'mat-fab-actions'
+    // eslint-disable-next-line @angular-eslint/directive-selector
+    selector: 'mat-fab-actions',
+    standalone: false
 })
 export class FabActionsDirective implements OnInit {
 
@@ -68,11 +70,12 @@ export class FabActionsDirective implements OnInit {
 
 // @dynamic
 @Component({
-  // eslint-disable-next-line @angular-eslint/component-selector
-  selector: 'mat-fab-toolbar',
-  templateUrl: './fab-toolbar.component.html',
-  styleUrls: ['./fab-toolbar.component.scss'],
-  encapsulation: ViewEncapsulation.None
+    // eslint-disable-next-line @angular-eslint/component-selector
+    selector: 'mat-fab-toolbar',
+    templateUrl: './fab-toolbar.component.html',
+    styleUrls: ['./fab-toolbar.component.scss'],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class FabToolbarComponent extends MatFabToolbarMixinBase implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 

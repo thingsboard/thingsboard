@@ -26,9 +26,10 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 
 @Component({
-  selector: 'tb-queue',
-  templateUrl: './queue.component.html',
-  styleUrls: []
+    selector: 'tb-queue',
+    templateUrl: './queue.component.html',
+    styleUrls: [],
+    standalone: false
 })
 export class QueueComponent extends EntityComponent<QueueInfo> {
   entityForm: UntypedFormGroup;

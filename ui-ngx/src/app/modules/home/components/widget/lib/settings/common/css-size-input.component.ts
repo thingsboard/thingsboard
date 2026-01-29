@@ -31,21 +31,22 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-css-size-input',
-  templateUrl: './css-size-input.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CssSizeInputComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CssSizeInputComponent),
-      multi: true,
-    }
-  ]
+    selector: 'tb-css-size-input',
+    templateUrl: './css-size-input.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CssSizeInputComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CssSizeInputComponent),
+            multi: true,
+        }
+    ],
+    standalone: false
 })
 export class CssSizeInputComponent implements OnInit, ControlValueAccessor, Validator {
 

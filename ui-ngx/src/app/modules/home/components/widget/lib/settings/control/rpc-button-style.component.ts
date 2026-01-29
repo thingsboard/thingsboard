@@ -29,16 +29,17 @@ export interface RpcButtonStyle {
 }
 
 @Component({
-  selector: 'tb-rpc-button-style',
-  templateUrl: './rpc-button-style.component.html',
-  styleUrls: ['./../widget-settings.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => RpcButtonStyleComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-rpc-button-style',
+    templateUrl: './rpc-button-style.component.html',
+    styleUrls: ['./../widget-settings.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => RpcButtonStyleComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class RpcButtonStyleComponent extends PageComponent implements OnInit, ControlValueAccessor {
 

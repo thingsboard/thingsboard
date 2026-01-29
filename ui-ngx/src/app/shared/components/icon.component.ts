@@ -63,23 +63,24 @@ const funcIriAttributeSelector = funcIriAttributes.map(attr => `[${attr}]`).join
 const funcIriPattern = /^url\(['"]?#(.*?)['"]?\)$/;
 
 @Component({
-  template: '<span style="display: none;" #iconNameContent><ng-content></ng-content></span>',
-  selector: 'tb-icon',
-  exportAs: 'tbIcon',
-  styleUrls: [],
-  // eslint-disable-next-line @angular-eslint/no-inputs-metadata-property
-  inputs: ['color'],
-  // eslint-disable-next-line @angular-eslint/no-host-metadata-property
-  host: {
-    role: 'img',
-    class: 'mat-icon notranslate',
-    '[attr.data-mat-icon-type]': '_useSvgIcon ? "svg" : (_useImageIcon ? null : "font")',
-    '[attr.data-mat-icon-name]': '_svgName',
-    '[attr.data-mat-icon-namespace]': '_svgNamespace',
-    '[class.mat-icon-no-color]': 'color !== "primary" && color !== "accent" && color !== "warn"',
-  },
-  encapsulation: ViewEncapsulation.None,
-  changeDetection: ChangeDetectionStrategy.OnPush,
+    template: '<span style="display: none;" #iconNameContent><ng-content></ng-content></span>',
+    selector: 'tb-icon',
+    exportAs: 'tbIcon',
+    styleUrls: [],
+    // eslint-disable-next-line @angular-eslint/no-inputs-metadata-property
+    inputs: ['color'],
+    // eslint-disable-next-line @angular-eslint/no-host-metadata-property
+    host: {
+        role: 'img',
+        class: 'mat-icon notranslate',
+        '[attr.data-mat-icon-type]': '_useSvgIcon ? "svg" : (_useImageIcon ? null : "font")',
+        '[attr.data-mat-icon-name]': '_svgName',
+        '[attr.data-mat-icon-namespace]': '_svgNamespace',
+        '[class.mat-icon-no-color]': 'color !== "primary" && color !== "accent" && color !== "warn"',
+    },
+    encapsulation: ViewEncapsulation.None,
+    changeDetection: ChangeDetectionStrategy.OnPush,
+    standalone: false
 })
 export class TbIconComponent extends _TbIconBase
                              implements AfterContentInit, AfterViewChecked, CanColor, OnDestroy {

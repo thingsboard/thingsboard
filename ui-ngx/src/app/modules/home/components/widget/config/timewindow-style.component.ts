@@ -23,16 +23,17 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { TimewindowStylePanelComponent } from '@home/components/widget/config/timewindow-style-panel.component';
 
 @Component({
-  selector: 'tb-timewindow-style',
-  templateUrl: './timewindow-style.component.html',
-  styleUrls: [],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => TimewindowStyleComponent),
-      multi: true
-    }
-  ]
+    selector: 'tb-timewindow-style',
+    templateUrl: './timewindow-style.component.html',
+    styleUrls: [],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => TimewindowStyleComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class TimewindowStyleComponent implements OnInit, ControlValueAccessor {
 

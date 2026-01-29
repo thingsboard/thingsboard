@@ -60,17 +60,18 @@ import {
 } from '@home/components/widget/lib/settings/common/map/map-layer-settings-panel.component';
 
 @Component({
-  selector: 'tb-map-layer-row',
-  templateUrl: './map-layer-row.component.html',
-  styleUrls: ['./map-layer-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MapLayerRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-map-layer-row',
+    templateUrl: './map-layer-row.component.html',
+    styleUrls: ['./map-layer-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MapLayerRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MapLayerRowComponent implements ControlValueAccessor, OnInit {
 

@@ -58,22 +58,23 @@ import { TranslateService } from '@ngx-translate/core';
 import { DisplayPopoverConfig } from '@shared/components/popover.models';
 
 @Component({
-  selector: 'tb-mobile-menu-item-row',
-  templateUrl: './mobile-page-item-row.component.html',
-  styleUrls: ['./mobile-page-item-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MobilePageItemRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MobilePageItemRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-mobile-menu-item-row',
+    templateUrl: './mobile-page-item-row.component.html',
+    styleUrls: ['./mobile-page-item-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => MobilePageItemRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => MobilePageItemRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class MobilePageItemRowComponent implements ControlValueAccessor, OnInit, Validator {
 

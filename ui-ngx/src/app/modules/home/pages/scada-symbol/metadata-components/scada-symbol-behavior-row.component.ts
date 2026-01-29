@@ -91,22 +91,23 @@ export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
 };
 
 @Component({
-  selector: 'tb-scada-symbol-metadata-behavior-row',
-  templateUrl: './scada-symbol-behavior-row.component.html',
-  styleUrls: ['./scada-symbol-behavior-row.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
-      multi: true
-    }
-  ],
-  encapsulation: ViewEncapsulation.None
+    selector: 'tb-scada-symbol-metadata-behavior-row',
+    templateUrl: './scada-symbol-behavior-row.component.html',
+    styleUrls: ['./scada-symbol-behavior-row.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => ScadaSymbolBehaviorRowComponent),
+            multi: true
+        }
+    ],
+    encapsulation: ViewEncapsulation.None,
+    standalone: false
 })
 export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, OnInit, Validator {
 

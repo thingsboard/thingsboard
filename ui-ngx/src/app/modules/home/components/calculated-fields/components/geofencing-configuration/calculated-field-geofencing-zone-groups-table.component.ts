@@ -61,21 +61,22 @@ import {
 } from '@home/components/calculated-fields/components/geofencing-configuration/calculated-field-geofencing-zone-groups-panel.component';
 
 @Component({
-  selector: 'tb-calculated-field-geofencing-zone-groups-table',
-  templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
-  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-geofencing-zone-groups-table',
+    templateUrl: './calculated-field-geofencing-zone-groups-table.component.html',
+    styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldGeofencingZoneGroupsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldGeofencingZoneGroupsTableComponent implements ControlValueAccessor, Validator, AfterViewInit {
 

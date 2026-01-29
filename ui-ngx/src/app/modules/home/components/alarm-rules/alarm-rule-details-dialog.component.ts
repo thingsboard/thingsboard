@@ -28,10 +28,11 @@ export interface AlarmRuleDetailsDialogData {
 }
 
 @Component({
-  selector: 'tb-edit-alarm-details-dialog',
-  templateUrl: './alarm-rule-details-dialog.component.html',
-  providers: [],
-  styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
+    selector: 'tb-edit-alarm-details-dialog',
+    templateUrl: './alarm-rule-details-dialog.component.html',
+    providers: [],
+    styleUrls: ['./cf-alarm-rules-dialog.component.scss'],
+    standalone: false
 })
 export class AlarmRuleDetailsDialogComponent extends DialogComponent<AlarmRuleDetailsDialogComponent, string> {
 

@@ -52,17 +52,18 @@ import { deepClone } from '@core/utils';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Component({
-  selector: 'tb-quick-link',
-  templateUrl: './quick-link.component.html',
-  styleUrls: ['./link.component.scss'],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => QuickLinkComponent),
-      multi: true
-    },
-    {provide: ErrorStateMatcher, useExisting: QuickLinkComponent}
-  ]
+    selector: 'tb-quick-link',
+    templateUrl: './quick-link.component.html',
+    styleUrls: ['./link.component.scss'],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => QuickLinkComponent),
+            multi: true
+        },
+        { provide: ErrorStateMatcher, useExisting: QuickLinkComponent }
+    ],
+    standalone: false
 })
 export class QuickLinkComponent extends PageComponent implements OnInit, ControlValueAccessor, ErrorStateMatcher {
 

@@ -59,21 +59,22 @@ import { AceHighlightRules } from '@shared/models/ace/ace.models';
 import { Observable } from "rxjs";
 
 @Component({
-  selector: 'tb-calculated-field-metrics-table',
-  templateUrl: './calculated-field-metrics-table.component.html',
-  styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
-      multi: true
-    }
-  ],
+    selector: 'tb-calculated-field-metrics-table',
+    templateUrl: './calculated-field-metrics-table.component.html',
+    styleUrls: [`../calculated-field-arguments/calculated-field-arguments-table.component.scss`],
+    providers: [
+        {
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
+            multi: true
+        },
+        {
+            provide: NG_VALIDATORS,
+            useExisting: forwardRef(() => CalculatedFieldMetricsTableComponent),
+            multi: true
+        }
+    ],
+    standalone: false
 })
 export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValueAccessor, Validator, AfterViewInit {
 

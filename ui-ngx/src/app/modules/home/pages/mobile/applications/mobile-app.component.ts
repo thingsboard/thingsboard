@@ -31,9 +31,10 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { EditorPanelComponent } from '@home/pages/mobile/common/editor-panel.component';
 
 @Component({
-  selector: 'tb-mobile-app',
-  templateUrl: './mobile-app.component.html',
-  styleUrls: ['./mobile-app.component.scss']
+    selector: 'tb-mobile-app',
+    templateUrl: './mobile-app.component.html',
+    styleUrls: ['./mobile-app.component.scss'],
+    standalone: false
 })
 export class MobileAppComponent extends EntityComponent<MobileApp> {
 

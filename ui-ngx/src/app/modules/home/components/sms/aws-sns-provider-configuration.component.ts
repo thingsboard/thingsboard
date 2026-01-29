@@ -28,14 +28,15 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 
 @Component({
-  selector: 'tb-aws-sns-provider-configuration',
-  templateUrl: './aws-sns-provider-configuration.component.html',
-  styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => AwsSnsProviderConfigurationComponent),
-    multi: true
-  }]
+    selector: 'tb-aws-sns-provider-configuration',
+    templateUrl: './aws-sns-provider-configuration.component.html',
+    styleUrls: [],
+    providers: [{
+            provide: NG_VALUE_ACCESSOR,
+            useExisting: forwardRef(() => AwsSnsProviderConfigurationComponent),
+            multi: true
+        }],
+    standalone: false
 })
 export class AwsSnsProviderConfigurationComponent implements ControlValueAccessor, OnInit {
 
