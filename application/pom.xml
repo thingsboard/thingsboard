@@ -458,6 +458,7 @@
                 <configuration>
                     <systemPropertyVariables>
                         <spring.config.name>thingsboard</spring.config.name>
+                        <project.version>${project.version}</project.version>
                     </systemPropertyVariables>
                     <excludes>
                         <exclude>**/nosql/*Test.java</exclude>
