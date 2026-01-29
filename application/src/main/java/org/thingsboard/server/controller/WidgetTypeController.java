@@ -232,8 +232,7 @@ public class WidgetTypeController extends AutoCommitController {
         return checkNotNull(widgetTypeService.findWidgetTypesByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
     }
 
-    @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
-            notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @Hidden
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetTypes", params = {"widgetsBundleId"})
     public List<WidgetType> getBundleWidgetTypes(
@@ -241,6 +240,16 @@ public class WidgetTypeController extends AutoCommitController {
             @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         return checkNotNull(widgetTypeService.findWidgetTypesByWidgetsBundleId(getTenantId(), widgetsBundleId));
+    }
+
+    @ApiOperation(value = "Get all Widget types for specified Bundle (getBundleWidgetTypes)",
+            notes = "Returns an array of Widget Type objects that belong to specified Widget Bundle." + WIDGET_TYPE_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/widgetsBundles/{widgetsBundleId}/widgetTypes")
+    public List<WidgetType> getBundleWidgetTypesV2(
+            @Parameter(description = "Widget Bundle Id", required = true)
+            @RequestParam("widgetsBundleId") String strWidgetsBundleId) throws ThingsboardException {
+        return getBundleWidgetTypes(strWidgetsBundleId);
     }
 
     @Hidden
@@ -262,7 +271,8 @@ public class WidgetTypeController extends AutoCommitController {
         return checkNotNull(widgetTypeService.findWidgetTypesDetailsByWidgetsBundleId(getTenantId(), widgetsBundle.getId()));
     }
 
-    @Hidden
+    @ApiOperation(value = "Get all Widget types details for specified Bundle (getBundleWidgetTypesDetails)",
+            notes = "Returns an array of Widget Type Details objects that belong to specified Widget Bundle." + WIDGET_TYPE_DETAILS_DESCRIPTION + " " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @GetMapping(value = "/widgetTypesDetails", params = {"widgetsBundleId"})
     public List<WidgetTypeDetails> getBundleWidgetTypesDetails(

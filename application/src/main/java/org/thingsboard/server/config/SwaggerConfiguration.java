@@ -147,7 +147,7 @@ public class SwaggerConfiguration {
                 .bearerFormat("/api/auth/login|X-Authorization");
 
         var openApi = new OpenAPI()
-                .components(new Components().addSecuritySchemes("HTTP login form", securityScheme))
+                .components(new Components().addSecuritySchemes("http_login_form", securityScheme))
                 .info(info);
         addDefaultSchemas(openApi);
         addLoginOperation(openApi);
