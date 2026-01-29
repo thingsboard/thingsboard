@@ -14,8 +14,7 @@
 
 ## 🚀 Installation options
 
-* Install ThingsBoard [on-premises](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise)
-* or use [ThingsBoard Cloud](https://thingsboard.io/installations/)
+Install ThingsBoard [on-premises](https://thingsboard.io/docs/user-guide/install/installation-options/?ceInstallType=onPremise) or use [ThingsBoard Cloud](https://thingsboard.io/installations/).
 
 ## 💡 Getting started with ThingsBoard
 
