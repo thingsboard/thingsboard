@@ -114,7 +114,10 @@
             "stylePreprocessorOptions": {
               "includePaths": [
                 "src/scss"
-              ]
+              ],
+              "sass": {
+                "silenceDeprecations": ["mixed-decls", "color-functions", "global-builtin", "import"]
+              }
             },
             "scripts": [
               "node_modules/tinycolor2/dist/tinycolor-min.js",

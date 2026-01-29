@@ -58,7 +58,6 @@ import { distinct, take } from 'rxjs/operators';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
@@ -102,7 +101,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   outerMargin: boolean;
 
   @Input()
-  displayGrid: displayGrids = 'onDrag&Resize';
+  displayGrid: 'always' | 'onDrag&Resize' | 'none' = 'onDrag&Resize';
 
   @Input()
   gridType: GridType;

@@ -41,7 +41,7 @@ import {
   CalculatedFieldAggMetric,
   CalculatedFieldAggMetricValue,
 } from '@shared/models/calculated-field.models';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { isDefinedAndNotNull, isEqual } from '@core/utils';
@@ -154,7 +154,7 @@ export class CalculatedFieldMetricsTableComponent implements OnInit, ControlValu
     this.metricsFormArray.markAsDirty();
   }
 
-  manageMetrics($event: Event, matButton: MatButton, metric = {} as CalculatedFieldAggMetricValue, readonly: boolean = false): void {
+  manageMetrics($event: Event, matButton: MatIconButton, metric = {} as CalculatedFieldAggMetricValue, readonly: boolean = false): void {
     $event?.stopPropagation();
     if (this.popoverComponent && !this.popoverComponent.tbHidden) {
       this.popoverComponent.hide();

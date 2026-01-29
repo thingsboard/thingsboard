@@ -1,0 +1,20 @@
+diff --git a/node_modules/@angular/core/fesm2022/debug_node.mjs b/node_modules/@angular/core/fesm2022/debug_node.mjs
+index cdeef4b..2c8101f 100755
+--- a/node_modules/@angular/core/fesm2022/debug_node.mjs
++++ b/node_modules/@angular/core/fesm2022/debug_node.mjs
+@@ -9421,13 +9421,13 @@ function findDirectiveDefMatches(tView, tNode) {
+             if (isNodeMatchingSelectorList(tNode, def.selectors, /* isProjectionMode */ false)) {
+                 matches ??= [];
+                 if (isComponentDef(def)) {
+-                    if (ngDevMode) {
++                    //if (ngDevMode) {
+                         assertTNodeType(tNode, 2 /* TNodeType.Element */, `"${tNode.value}" tags cannot be used as component hosts. ` +
+                             `Please use a different tag to activate the ${stringify(def.type)} component.`);
+                         if (matches.length && isComponentDef(matches[0])) {
+                             throwMultipleComponentError(tNode, matches.find(isComponentDef).type, def.type);
+                         }
+-                    }
++                    //}
+                     matches.unshift(def);
+                 }
+                 else {

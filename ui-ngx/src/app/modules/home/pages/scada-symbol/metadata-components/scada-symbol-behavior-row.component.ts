@@ -47,7 +47,7 @@ import {
   scadaSymbolBehaviorTypeTranslations, updateBehaviorDefaultSettings
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { deepClone, isUndefinedOrNull } from '@core/utils';
-import { MatButton } from '@angular/material/button';
+import { MatIconButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   ScadaSymbolBehaviorPanelComponent
@@ -115,7 +115,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   idInput: ElementRef<HTMLInputElement>;
 
   @ViewChild('editButton')
-  editButton: MatButton;
+  editButton: MatIconButton;
 
   scadaSymbolBehaviorTypes = scadaSymbolBehaviorTypes;
   scadaSymbolBehaviorTypeTranslations = scadaSymbolBehaviorTypeTranslations;
@@ -196,7 +196,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     this.cd.markForCheck();
   }
 
-  editBehavior($event: Event, matButton: MatButton, add = false, editCanceled = () => {}) {
+  editBehavior($event: Event, matButton: MatIconButton, add = false, editCanceled = () => {}) {
     if ($event) {
       $event.stopPropagation();
     }

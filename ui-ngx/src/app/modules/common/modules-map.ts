@@ -351,7 +351,10 @@ class ModulesMap implements IModulesMap {
 
   private modulesMap: {[key: string]: any} = {
     '@angular/animations': AngularAnimations,
-    '@angular/core': AngularCore,
+    '@angular/core': {...AngularCore, ɵɵStandaloneFeature: () => {}, ɵɵInputTransformsFeature: () => {}, ɵɵpropertyInterpolate: (...args) => {
+        // @ts-ignore
+        return AngularCore.ɵɵproperty(...args);
+      }},
     '@angular/common': AngularCommon,
     '@angular/common/http': HttpClientModule,
     '@angular/forms': AngularForms,

@@ -88,7 +88,7 @@ export class AppComponent {
     if (!env.production) {
       console.log(`Default Lang: ${env.defaultLang}`);
     }
-    this.translate.setDefaultLang(env.defaultLang);
+    this.translate.setFallbackLang(env.defaultLang);
   }
 
   setupAuth() {
