@@ -44,16 +44,16 @@
   }
 
   .tb-usage-items-progress {
-    --mdc-linear-progress-track-height: 8px;
-    --mdc-linear-progress-active-indicator-height: 8px;
+    --mat-progress-bar-track-height: 8px;
+    --mat-progress-bar-active-indicator-height: 8px;
     width: 34px;
     @media #{$mat-md} {
       display: none;
     }
     .mat-mdc-progress-bar {
       &.critical {
-        --mdc-linear-progress-track-color: rgba(209, 39, 48, 0.06);
-        --mdc-linear-progress-active-indicator-color: #D12730;
+        --mat-progress-bar-track-color: rgba(209, 39, 48, 0.06);
+        --mat-progress-bar-active-indicator-color: #D12730;
       }
     }
     .mdc-linear-progress {
