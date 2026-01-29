@@ -16,7 +16,6 @@
     <logger name="org.testcontainers" level="INFO" />
     <logger name="org.eclipse.leshan" level="INFO"/>
     <logger name="org.thingsboard.server.controller.AbstractWebTest" level="INFO"/>
-    <logger name="org.thingsboard.server.controller.TenantProfileController" level="INFO"/>
     <logger name="org.thingsboard.server.service.script" level="INFO"/>
 
     <!-- mute TelemetryEdgeSqlTest that causes a lot of randomly generated errors -->

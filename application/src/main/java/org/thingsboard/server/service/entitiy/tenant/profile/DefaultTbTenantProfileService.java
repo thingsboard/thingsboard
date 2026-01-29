@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.service.entitiy.tenant.profile;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -34,6 +34,8 @@ import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.entitiy.queue.TbQueueService;
 
 import java.util.List;
+
+import static org.thingsboard.server.common.data.EntityType.TENANT_PROFILE;
 
 @Slf4j
 @Service
@@ -60,48 +62,48 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
 
             return savedTenantProfile;
         } catch (ThingsboardException e) {
-            log.error("Failed to save tenant profile because ThingsboardException [{}]", tenantProfile, e);
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT_PROFILE), tenantProfile, actionType, user, e);
+            log.debug("Failed to save tenant profile because ThingsboardException [{}]", tenantProfile, e);
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(tenantProfile.getId(), TENANT_PROFILE), tenantProfile, actionType, user, e);
             throw e;
         } catch (DataValidationException e) {
-            log.error("Failed to save tenant profile because data validation [{}]", tenantProfile, e);
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT_PROFILE), tenantProfile, actionType, user, e);
-            throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            log.debug("Failed to save tenant profile because data validation [{}]", tenantProfile, e);
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(tenantProfile.getId(), TENANT_PROFILE), tenantProfile, actionType, user, e);
+            throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         } catch (Exception e) {
-            log.error("Failed to save tenant profile because Exception [{}]", tenantProfile, e);
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT_PROFILE), tenantProfile, actionType, user, e);
-            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
+            log.debug("Failed to save tenant profile because Exception [{}]", tenantProfile, e);
+            logEntityActionService.logEntityAction(tenantId, getOrEmptyId(tenantProfile.getId(), TENANT_PROFILE), tenantProfile, actionType, user, e);
+            throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.GENERAL);
         }
 
     }
 
     @Override
-    public void delete(TenantId tenantId, TenantProfile tenantProfile, User user) throws ThingsboardException {
+    public void delete(TenantId tenantId, @NotNull TenantProfile tenantProfile, User user) throws ThingsboardException {
         ActionType actionType = ActionType.DELETED;
         try {
             tenantProfileService.deleteTenantProfile(tenantId, tenantProfile.getId());
             logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), tenantProfile, null, actionType, user);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), tenantProfile, null, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), tenantProfile, null, actionType, user, e);
             throw e;
         }
     }
 
     @Override
-    public TenantProfile setDefaultTenantProfile(TenantId tenantId, TenantProfile tenantProfile, User user) throws ThingsboardException {
+    public TenantProfile setDefaultTenantProfile(TenantId tenantId, @NotNull TenantProfile tenantProfile, User user) throws ThingsboardException {
         ActionType actionType = ActionType.UPDATED;
         try {
             TenantProfile savedTenantProfile = tenantProfileService.setDefaultTenantProfile(tenantId, tenantProfile.getId());
             logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), savedTenantProfile, null, actionType, user);
             return savedTenantProfile;
         } catch (DataValidationException e) {
-            log.error("Failed to set default tenant profile due to data validation [{}]", tenantProfile, e);
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT_PROFILE), tenantProfile, actionType, user, e);
-            throw new ThingsboardException(e.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            log.debug("Failed to set default tenant profile due to data validation [{}]", tenantProfile, e);
+            logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), tenantProfile, actionType, user, e);
+            throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         } catch (Exception e) {
-            log.error("Failed to set default tenant profile [{}]", tenantProfile, e);
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TENANT_PROFILE), tenantProfile, actionType, user, e);
-            throw new ThingsboardException(e, ThingsboardErrorCode.GENERAL);
+            log.debug("Failed to set default tenant profile [{}]", tenantProfile, e);
+            logEntityActionService.logEntityAction(tenantId, tenantProfile.getId(), tenantProfile, actionType, user, e);
+            throw new ThingsboardException(e.getMessage(), e, ThingsboardErrorCode.GENERAL);
         }
     }
 }

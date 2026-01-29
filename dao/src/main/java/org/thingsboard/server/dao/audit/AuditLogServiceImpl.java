@@ -20,6 +20,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -117,7 +118,7 @@ public class AuditLogServiceImpl implements AuditLogService {
 
     @Override
     public <E extends HasName, I extends EntityId> ListenableFuture<Void>
-    logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, I entityId, E entity,
+    logEntityAction(TenantId tenantId, CustomerId customerId, UserId userId, String userName, @NotNull I entityId, E entity,
                     ActionType actionType, Exception e, Object... additionalInfo) {
         if (canLog(entityId.getEntityType(), actionType) || (tenantId != null && tenantId.isSysTenantId())) {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
