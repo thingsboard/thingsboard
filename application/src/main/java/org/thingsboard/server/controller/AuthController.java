@@ -132,7 +132,7 @@ public class AuthController extends BaseController {
                     "If token is valid, returns '303 See Other' (redirect) response code with the correct address of 'Create Password' page and same 'activateToken' specified in the URL parameters. " +
                     "If token is not valid, returns '409 Conflict'. " +
                     "If token is expired, redirects to error page.")
-    @GetMapping(value = "/noauth/activate", params = {"activateToken"})
+    @GetMapping(value = "/noauth/activate")
     public ResponseEntity<?> checkActivateToken(
             @Parameter(description = "The activate token string.")
             @RequestParam(value = "activateToken") String activateToken) {
@@ -172,7 +172,7 @@ public class AuthController extends BaseController {
                     "If token is valid, returns '303 See Other' (redirect) response code with the correct address of 'Reset Password' page and same 'resetToken' specified in the URL parameters. " +
                     "If token is not valid, returns '409 Conflict'. " +
                     "If token is expired, redirects to error page.")
-    @GetMapping(value = "/noauth/resetPassword", params = {"resetToken"})
+    @GetMapping(value = "/noauth/resetPassword")
     public ResponseEntity<?> checkResetToken(
             @Parameter(description = "The reset token string.")
             @RequestParam(value = "resetToken") String resetToken) {
